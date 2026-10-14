@@ -15,8 +15,8 @@ namespace app.type.item.@null;
 /// question (<c>HasValue</c>, <c>IsInitialized</c>), never this item's.</para>
 ///
 /// <para>Always falsy; <c>null == null</c> true and equal to nothing else;
-/// equality-only (no <see cref="global::app.data.IOrderableValue"/> — the
-/// sort-last policy lives on <c>Compare</c>, not the wrapper). Bare wire form is
+/// equality-only: its <see cref="Order"/> answers equal to null, not equal to anything
+/// else. Bare wire form is
 /// <c>null</c>.</para>
 /// </summary>
 [global::app.Attributes.PlangType("null")]

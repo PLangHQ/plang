@@ -23,8 +23,8 @@ public enum Visibility
 public sealed partial class @this
 {
 
-    // A goal is a plain C# host — carried by plang as clr<goal>, navigated/written/read by
-    // reflection off its [Store]/[Out] props (the * kind's Output/Read). No item.@this base.
+    // A goal is an item (this.Item.cs): plang carries it as itself, written and read through its
+    // [Store]/[Out] props.
 
     // Read-time scalars are `internal set`, not `init`: the reader constructs the goal SHELL first
     // (so its steps and sub-goals can be born holding it) and fills these as they arrive off the

@@ -17,9 +17,8 @@ namespace app.type.item.text;
 /// the <c>is string</c> consumer-switches collapse into method calls.</para>
 ///
 /// <para><b>Case policy.</b> Order and value-equality are <em>ordinal,
-/// case-insensitive</em> — matching the historical <c>ScalarComparer</c> string
-/// behavior so <c>"abc" == "ABC"</c> and sort order are unchanged after text
-/// flows native. <see cref="object.Equals(object)"/>/<see cref="GetHashCode"/>
+/// case-insensitive</em>, in its own Order: <c>"abc" == "ABC"</c>, and they
+/// sort together. <see cref="object.Equals(object)"/>/<see cref="GetHashCode"/>
 /// align with that policy so a <c>text</c> works as a <c>HashSet</c> member /
 /// dict key without surprise.</para>
 ///

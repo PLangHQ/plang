@@ -6,10 +6,9 @@ namespace app.type.item.@bool;
 /// turtles stop: every other type's truthiness may delegate; <c>bool</c>'s
 /// <see cref="IsTruthy"/> <em>is</em> the value it wraps.
 ///
-/// <para><b>Equality-only.</b> <c>bool</c> deliberately does NOT implement
-/// <see cref="global::app.data.IOrderableValue"/> — there is no natural order,
-/// so <c>Compare.Order(bool, bool)</c> throws, matching the equality-only policy
-/// dict carries. The bare wire form is lowercase <c>true</c>/<c>false</c>.</para>
+/// <para><b>Equality-only.</b> There is no natural order: its <see cref="Order"/>
+/// answers only equal or not equal (incomparable for a value that isn't a bool), as
+/// dict's does. The bare wire form is lowercase <c>true</c>/<c>false</c>.</para>
 /// </summary>
 [global::app.Attributes.PlangType("bool")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,

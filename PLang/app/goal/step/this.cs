@@ -10,7 +10,7 @@ namespace app.goal.step;
 /// </summary>
 public sealed partial class @this
 {
-    // A step is a plain C# host — carried as clr<step>, reflected off its [Store] props.
+    // A step is an item (this.Item.cs), written and read through its [Store] props.
 
 
     [Store, LlmBuilder, Debug, Default]

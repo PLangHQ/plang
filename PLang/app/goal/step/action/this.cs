@@ -7,7 +7,7 @@ namespace app.goal.step.action;
 /// </summary>
 public partial class @this
 {
-    // An action is a plain C# host — carried as clr<action>, reflected off its [Store] props.
+    // An action is an item (this.Item.cs), written and read through its [Store] props.
 
     private global::app.module.@this? _module;
 

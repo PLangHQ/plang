@@ -74,7 +74,7 @@ The questions asked through it (`data/Operator.cs`):
   is true; a failed operand is the answer.
 - `Ordered` :65 reads through `Compare` (the loud value door): a reference to nothing fails with VariableNotFound,
   and that failure is the answer (`%event.guest% > 5`), not "cannot order". A NotFound Left handed in by
-  `list.where` (an item's own missing field) is still no match.
+  `list.query`'s where (an item's own missing field) is still no match.
 
 Presence callers (`HasValue`, never truthiness): the generator's typed slots (`Emission/Property/Data/this.cs:161,163`
 — a written `false` beats the setting and `[Default]`), http `Body` (`http/code/Default.cs:68`), crypto hash/verify

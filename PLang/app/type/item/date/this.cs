@@ -2,10 +2,8 @@ namespace app.type.item.date;
 
 /// <summary>
 /// PLang <c>date</c> value — its own type, backed by <see cref="System.DateOnly"/>.
-/// <b>Distinct from <c>datetime</c></b>: the historical collapse (ScalarComparer
-/// coerced <c>DateOnly → DateTimeOffset</c> and classed it <c>datetime</c>) ends
-/// with this wrapper. Order/equality are day-precision; the bare wire form is
-/// ISO <c>yyyy-MM-dd</c>.
+/// <b>Distinct from <c>datetime</c></b>: a day, with no time of day. Its own Order
+/// compares and equates at day precision; the bare wire form is ISO <c>yyyy-MM-dd</c>.
 /// </summary>
 [global::app.Attributes.PlangType("date")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,

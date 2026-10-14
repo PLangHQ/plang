@@ -19,12 +19,11 @@ namespace app.type.item;
 /// narrowed subtype (<c>number</c>/<c>dict</c>/<c>Ask</c>) inherits no dead
 /// un-narrowed state (OBP smell #6).</para>
 ///
-/// <para><b>The universal contract is truthiness + the lazy narrow only.</b>
-/// Ordering (<see cref="global::app.data.IOrderableValue"/>) and value-equality
-/// (<see cref="global::app.data.IEquatableValue"/>) stay opt-in interfaces — a
-/// value implements them only when it honors them (<c>list</c> orders, <c>dict</c>
-/// does not). <c>item</c> must <b>not</b> implement either, or <c>dict : item</c>
-/// would inherit an order it can't honor (its <c>Compare.Order</c> throws).</para>
+/// <para><b>Ordering and equality belong to the value.</b> Every value compares through
+/// <see cref="Compare"/>, which hands the comparison to the higher-ranked side's
+/// <see cref="Order"/>. A value with an order answers less/greater; one without
+/// (<c>bool</c>, <c>dict</c>, <c>null</c>) answers only equal or not equal; the base
+/// answers identity.</para>
 /// </summary>
 [global::app.Attributes.PlangType("item")]
 public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this>

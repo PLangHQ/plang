@@ -2,9 +2,8 @@ namespace app.type.item.time;
 
 /// <summary>
 /// PLang <c>time</c> value — its own type, backed by <see cref="System.TimeOnly"/>.
-/// Today <c>ScalarComparer</c> has no <c>TimeOnly</c> arm at all (time is
-/// unhandled); this wrapper closes that gap. Order/equality are within
-/// time-of-day; the bare wire form is ISO <c>HH:mm:ss[.fffffff]</c>.
+/// Its own Order compares and equates within the time of day; the bare wire form
+/// is ISO <c>HH:mm:ss[.fffffff]</c>.
 /// </summary>
 [global::app.Attributes.PlangType("time")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
