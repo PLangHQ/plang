@@ -123,7 +123,10 @@ section.band { background: var(--band); }
 .spec dd { font-size: clamp(21px, 2.6vw, 28px); font-weight: 600; letter-spacing: -0.015em; }
 
 /* Identity story */
-.story { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; max-width: 880px; margin: 0 auto; align-items: stretch; }
+.story { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; max-width: 880px; margin: 0 auto; align-items: start; }
+.path.short { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 72px); }
+.path h4 { margin: 4px 0 0; font-size: 15px; font-weight: 600; }
+.path ol + h4 { margin-top: 10px; padding-top: 16px; border-top: 1px solid var(--line); }
 .path { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 16px; align-content: start; min-width: 0; }
 .path h3 { margin: 0; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .path.short h3 { color: var(--accent); }
@@ -141,7 +144,7 @@ section.band { background: var(--band); }
 .gone ul { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .gone li { font-size: 15px; padding: 7px 14px; border: 1px solid var(--line); border-radius: 980px; color: var(--muted); text-decoration: line-through; text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
 .sub-h { text-align: center; font-size: clamp(22px, 2.8vw, 30px); letter-spacing: -0.02em; margin: clamp(56px, 8vw, 88px) 0 28px; text-wrap: balance; }
-@media (max-width: 760px) { .story { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .story { grid-template-columns: minmax(0, 1fr); } .path.short { position: static; } }
 
 /* Identity */
 .ids { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
@@ -362,15 +365,31 @@ footer a:hover { color: var(--fg); }
     <div class="story">
       <div class="path">
         <h3>Today</h3>
+        <h4>What the user goes through</h4>
         <ol>
-          <li>Sign up with email and password</li>
-          <li>Hash the password, store it</li>
-          <li>Log in, compare hashes</li>
-          <li>Create a session, set a cookie</li>
-          <li>On every request: read the cookie, look up the session</li>
+          <li>Pick a username</li>
+          <li>Pick a password that meets the rules</li>
+          <li>Confirm the email address</li>
+          <li>Log in</li>
+          <li>Forget the password, reset it, log in again</li>
+        </ol>
+        <h4>What you build</h4>
+        <ol>
+          <li>Users table with email, password hash and salt</li>
+          <li>Signup form and endpoint, with validation</li>
+          <li>Email verification: tokens, expiry, sending mail</li>
+          <li>Password hashing with bcrypt or Argon2</li>
+          <li>Login form and endpoint</li>
+          <li>Sessions: storage, expiry, renewal</li>
+          <li>Cookies: HttpOnly, Secure, SameSite</li>
+          <li>CSRF protection</li>
+          <li>Auth middleware on every route</li>
+          <li>Password reset: tokens, emails, expiry</li>
+          <li>Rate limiting and account lockout</li>
+          <li>Two-factor authentication</li>
+          <li>Breach detection and notices</li>
           <li class="end"><code>user.id = 4821</code></li>
         </ol>
-        <p class="fine">Then add password resets, 2FA, lockouts and breach notices.</p>
       </div>
       <div class="path short">
         <h3>With plang</h3>
