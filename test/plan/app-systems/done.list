@@ -1,4 +1,4 @@
-app-systems: what is done (stages 1–12, except 10b's (C)).
+app-systems: what is done (stages 1–12; 10b closed on its C# pins, decision 696, its plang test TypedListHoldsItsType waiting on the next branch's kinded Type choices).
 
 1  Run → Start: the entry verb of every executable object
 3  One set of types: each type owns its name, aliases and kinds; kinds live on their types

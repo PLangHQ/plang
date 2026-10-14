@@ -1,6 +1,6 @@
 ## Now
 
-Done: 1–8h, 9a–9c, 10a, 10b's (A) and (B), 10c–10e, 11a–11c (see `test/plan/app-systems/done.list`). Stages 1–12 done (12b: 291), except 10b's (C), which waits on Ingi. Batch 3 done (292–293). **The inherited failures, fixed (302–334):** against the parent (builder-formal `bd00000d4`) the branch had 0 regressions; of the 116 it inherited, 80 are fixed, rewritten or deleted with their decision. **The coder is holding;** the 36 left wait on Ingi (below) or the ISnapshot redesign.
+**2026-10-14: in review for the merge up to runtime2.** The plan's stages 1–12 are done (10b closed on its C# pins, 696; see `test/plan/app-systems/done.list`). Feature-frozen (665). The codeanalyzer passed (725), the tester found no merge blocker (729), security passed (730); the auditor is checking off the plans on the line (731–). Every reviewer finding and what became of it: `review-findings.md`. What waits for the next branch: `next-branch.md`. C# baseline: the 6 carried snapshot tests; plang 245/16/12/3, every red owned (`.bot/app-systems/builder/baseline.md`).
 
 ## 2026-09-29 afternoon: what waits on Ingi (36 failing C# tests, each with its owner in `.bot/app-systems/coder/v14/baseline-after-fixes.md`)
 
