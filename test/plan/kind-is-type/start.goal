@@ -1,0 +1,66 @@
+/ kind-is-type: a kind is a type, a type is named by its namespace, and a format type owns its bytes.
+/ This goal is the plan's index and its proof: each stage is a goal, each comment a behaviour we want,
+/ and the step under it runs the test that proves it. Tests live under this plan's folder at the path of
+/ what they test. The plang here is intent: the test-designer writes each test so it builds and goes red
+/ before its stage, the coder makes it green. The text is start.md; checks tests can't show are there too.
+Start
+- call Stage0
+- call Stage1
+- call Stage2
+- call Stage3
+- call Stage4
+
+Stage0
+/ a goal's path is where its .pr is found (the coder builds this stage with its own pins, decision 745)
+/ a goal moved with its .build folder runs at its new path
+- call /plan/kind-is-type/goal/MovedGoalRunsWhereItIs
+/ an app's .pr whose old "path" says /system/ gets no os trust: its real folder is the app's
+- call /plan/kind-is-type/goal/AppGoalNeverPassesAsSystem
+/ an old .pr with "path" and "prPath" reads as it did
+- call /plan/kind-is-type/goal/OldPrReadsAsBefore
+
+Stage1
+/ a type is named by its namespace, and a developer writes the shortest unique tail
+/ "as text" finds the text type as before
+- call /plan/kind-is-type/app/type/ShortNameFindsTheType
+/ "llm.setting" finds the llm settings class, a type of its own
+- call /plan/kind-is-type/app/type/SettingClassIsAType
+/ a short name two types share is refused, naming the longer names to choose from
+- call /plan/kind-is-type/app/type/SharedShortNameIsRefused
+
+Stage2
+/ a kind is a type: a type's kind is another type, and the written form stays {name, kind}
+/ "set %n% = 1.5 as decimal" keeps decimal: %n!type.kind% is decimal, a type under number
+- call /plan/kind-is-type/app/type/number/DecimalIsANumber
+/ a json value is a text: "is %x% a text" is true, and its kind is json
+- call /plan/kind-is-type/app/type/text/JsonIsAText
+/ a list of path knows its element: [0] is born a path
+- call /plan/kind-is-type/app/type/list/ListKnowsItsElement
+/ a kind nests: a list of lists of path
+- call /plan/kind-is-type/app/type/list/KindNests
+/ a separator is a text with five named values; any characters are allowed too
+- call /plan/kind-is-type/app/type/separator/NamedValuesBelongToTheType
+/ a strict kind is checked: an image that isn't a gif is refused as a gif
+- call /plan/kind-is-type/app/type/image/StrictKindIsChecked
+
+Stage3
+/ a format type owns its work: its bytes stay raw until first use, then it parses itself
+/ a json file read and written on unchanged is byte-for-byte the same
+- call /plan/kind-is-type/app/type/json/PassedOnUnread
+/ the first read into a json file parses it into a plang dict: "%cfg% is dict" is true
+- call /plan/kind-is-type/app/type/json/ReadIntoIsADict
+/ a json array parses into a plang list
+- call /plan/kind-is-type/app/type/json/ArrayIsAList
+/ a csv file the same way, through its own type
+- call /plan/kind-is-type/app/type/csv/ReadIntoIsATable
+
+Stage4
+/ the builder offers kinded types by name, and a generic asks for its element
+/ each of the baseline's five sentences builds what it says (the builder measures 5/5)
+- call /plan/kind-is-type/module/variable/set/AsDecimalKeepsDecimal
+- call /plan/kind-is-type/module/variable/set/AsListOfPathKeepsTheElement
+- call /plan/kind-is-type/module/variable/set/AsJsonKeepsJson
+- call /plan/kind-is-type/module/file/read/AsTextKeepsText
+- call /plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso
+/ the guards don't move: no "as", no type; "as text" stays text
+- call /plan/kind-is-type/module/variable/set/NoAsNoType
