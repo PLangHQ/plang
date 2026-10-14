@@ -1,49 +1,36 @@
+using System.Text.Json;
+
 namespace PLang.Tests.App.Types;
 
 /// <summary>
-/// A kind nests (ruling 1): a type's kind is itself a type, and that type can carry its
-/// own kind. The target shape — a type <c>list</c> whose kind is a <c>list</c> whose kind
-/// is <c>path</c> — writes as <c>{list, kind: {list, kind: path}}</c> and navigates as
-/// <c>outer.kind.kind.Name == "path"</c>. Lives in C# because today's formal plang
-/// written-type grammar (<c>name&lt;kind&gt;</c>) is one level deep, so a plang test can't
-/// express the proof without the surface this stage introduces.
+/// A kind nests (ruling 1): a type's kind is itself a type, so <c>{list, kind: {list, kind: path}}</c>
+/// is the written form of a list of lists of path. The proof is a round-trip through the type's own
+/// serializer: a Data carrying this nested-kind Type serializes to the structured JSON and
+/// deserializes back into a type that still carries the inner kind — no flattening, no walking
+/// through <c>kind.Name</c>. Today the type serializer's reader (<c>type/serializer/Reader.cs</c>)
+/// reads <c>kind</c> as a bare string (line 33: <c>reader.String()</c>), so a nested-kind JSON
+/// trips at the inner <c>{</c>.
 /// </summary>
-public class KindNestsTests
+public class KindNestsTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/test").Testing();
+    private readonly global::app.@this _app = new global::app.@this("/tmp/kindnests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    [After(Test)]
-    public async Task Dispose() => await _app.DisposeAsync();
+    private global::app.data.@this FromJson(string json)
+        => _app.actor.list.User.Context.Format("application/plang").Deserialize(json, _app.actor.list.User.Context);
 
-    // Target (ruling 1): a type's kind is itself a type. Constructing `list<list<path>>`
-    // today puts the whole "list<path>" string into the kind's Name, so the outer type's
-    // kind doesn't separate — kind.Name is "list<path>" rather than "list". After stage 2
-    // the kind IS a type and its Name reads as "list" (the inner's own `kind.Name` is "path").
+    // The structured JSON for a Data whose Type is `list<list<path>>` — the nested-kind form the plan names.
+    private const string NestedJson = "{\"name\":\"grid\",\"type\":{\"name\":\"list\",\"kind\":{\"name\":\"list\",\"kind\":\"path\"}},\"value\":[[\"a.txt\"]]}";
+
+    // Read the nested-kind form through the type's own wire. After stage 2 the reader
+    // recurses into the inner kind and the resulting Type carries both levels: outer is
+    // list, outer's kind is itself a list, and that inner kind is path. Today reader.String()
+    // on the inner `{` throws, so the deserialize itself fails.
     [Test]
-    public async Task AListOfListsOfPath_HasAKindWhoseInnerKindIsPath()
+    public async Task TheNestedWrittenForm_RoundTripsThroughTheTypeSerializer()
     {
-        var ctx = _app.actor.list.User.Context;
-        var outer = _app.type.list[new global::app.type.@this("list", "list<path>"), ctx];
-        // After stage 2: outer.kind.Name is "list" (the kind is a type, "list" the name of that type).
-        // Today: outer.kind.Name is "list<path>" (the kind is a flat string of the whole inner face).
-        await Assert.That(outer.kind.Name).IsEqualTo("list");
-    }
-
-    // The written form a nested kind round-trips through is `{list, kind: {list, kind: path}}` —
-    // Face() renders it, Read() parses it back to the same type.
-    // Today `type.@this.ToString()` (type/this.cs:547) renders `name<kind.Name>`, so a nested
-    // kind becomes "list<list<path>>" only by the kind's Name already carrying "list<path>"
-    // as one glued string — not the structured nest ruling 1 names.
-    [Test]
-    public async Task TheWrittenForm_RoundTrips_ListOfListOfPath()
-    {
-        var ctx = _app.actor.list.User.Context;
-        var outer = _app.type.list[new global::app.type.@this("list", "list<path>"), ctx];
-        // The structured proof: after stage 2 the outer's kind IS a `list` type with its
-        // own `path` kind, so a plang-visible "inner kind" reads as "path". Today there is
-        // no inner kind — the Name is a glued string — so this reads whatever reflects
-        // that absence (empty / the glued string / an error).
-        var inner = _app.type.list[new global::app.type.@this(outer.kind.Name), ctx];
-        await Assert.That(inner.kind.Name).IsEqualTo("path");
+        var read = FromJson(NestedJson);
+        await Assert.That(read.Type?.Name).IsEqualTo("list");
+        await Assert.That(read.Type?.kind).IsAssignableTo<global::app.type.@this>();
     }
 }

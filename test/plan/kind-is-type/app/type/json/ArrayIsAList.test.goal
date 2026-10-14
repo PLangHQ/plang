@@ -1,0 +1,6 @@
+/ A json array parses into a plang list (ruling 5), through the json type's own parse,
+/ not as a JsonElement carrier.
+ArrayIsAList
+- read list.json, write to %l%
+- condition.if(Left=%l%, Operator="is", Right="list") { variable.set(Name=%isList%, Value=true) }
+- assert.equals(Expected=true, Actual=%isList%, Message="parsed json array is a plang list")

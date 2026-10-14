@@ -1,0 +1,244 @@
+{
+  "name": "ReadIntoIsATable",
+  "comment": "A csv file reads into a plang table through its own type (ruling 5). Same shape as\njson → dict: the format type owns the parse. report.csv has a header + two rows.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read report.csv, write to %r%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "report.csv"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%r%",
+              "variable": [
+                {
+                  "text": "%r%",
+                  "code": [
+                    {
+                      "variable": "r"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "csv"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses variable.set, which the decider was not sure of (0.89)"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "condition.if(Left=%r%, Operator=\"is\", Right=\"table\") { variable.set(Name=%isTable%, Value=true) }",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%r%",
+              "variable": [
+                {
+                  "text": "%r%",
+                  "code": [
+                    {
+                      "variable": "r"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "is"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "table"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%isTable%, Value=true)",
+              "line": {
+                "number": 5
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%isTable%",
+                      "variable": [
+                        {
+                          "text": "%isTable%",
+                          "code": [
+                            {
+                              "variable": "isTable"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=true, Actual=%isTable%, Message=\"parsed csv is a plang table\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%isTable%",
+              "variable": [
+                {
+                  "text": "%isTable%",
+                  "code": [
+                    {
+                      "variable": "isTable"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "parsed csv is a plang table"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/app/type/csv/ReadIntoIsATable.test.goal",
+  "prPath": "/plan/kind-is-type/app/type/csv/.build/readintoisatable.test.pr",
+  "hash": "eacaa1b07782ff0d0b5f95bcc0d9cb838cb512aab232cd2674c385a7d35318a9"
+}

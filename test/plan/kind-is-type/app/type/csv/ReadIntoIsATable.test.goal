@@ -1,0 +1,6 @@
+/ A csv file reads into a plang table through its own type (ruling 5). Same shape as
+/ json → dict: the format type owns the parse. report.csv has a header + two rows.
+ReadIntoIsATable
+- read report.csv, write to %r%
+- condition.if(Left=%r%, Operator="is", Right="table") { variable.set(Name=%isTable%, Value=true) }
+- assert.equals(Expected=true, Actual=%isTable%, Message="parsed csv is a plang table")

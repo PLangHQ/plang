@@ -1,0 +1,8 @@
+/ A format type owns its parse (ruling 5): the first read into a json file parses it
+/ into a plang dict, not a JsonElement carrier. The developer-visible proof: `%cfg% is dict`
+/ is true, so the dict operator sees it as a dict (Cut2 / Narrow baseline is red today
+/ because parsed json is a C# JsonElement, not a plang value).
+ReadIntoIsADict
+- read config.json, write to %cfg%
+- condition.if(Left=%cfg%, Operator="is", Right="dict") { variable.set(Name=%isDict%, Value=true) }
+- assert.equals(Expected=true, Actual=%isDict%, Message="parsed json is a plang dict")

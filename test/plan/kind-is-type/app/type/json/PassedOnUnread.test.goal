@@ -1,0 +1,12 @@
+/ A format type keeps its raw bytes until first use (ruling 6): a json file read and
+/ written back on, unchanged, is byte-for-byte the same. config.json is spelled with
+/ unusual whitespace and keys out of order so any re-parse-and-write would reformat and
+/ the hashes would diverge. The copy is deleted at the end. If this is green today (today's
+/ file passthrough already preserves bytes), mark it a guard — stage 3 must keep it green.
+PassedOnUnread
+- read config.json, write to %cfg%
+- write %cfg% to copy.json
+- hash config.json using sha256, write to %origHash%
+- hash copy.json using sha256, write to %copyHash%
+- file.delete copy.json
+- assert.equals(Expected=%origHash%, Actual=%copyHash%, Message="bytes pass through byte-for-byte")

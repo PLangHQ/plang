@@ -1,12 +1,12 @@
 {
   "name": "ModuleTypeIsNamedByItsModule",
-  "comment": "A module's type is named by its module (ruling 7, decision 752). A type's name is its\nnamespace read from a root, like a file path, with no search for a unique tail — a\nmodule's type drops `app.module.` and its `type.` folder. So app.module.window.type.window\nis named `window.window`, app.module.screen.type.screen.window is named `screen.window`,\nand bare `window` is nobody's name.",
+  "comment": "A module's type is named by its module (ruling 7, decisions 752 + 761). A type's name\nis its namespace read from a root, like a file path, with no search for a unique tail.\nA module's main type takes the module's name (decision 761): the window module's\nprimary type is named `window`; a type inside another module's folder is reached by\nthat module (screen's window kind is `screen.window`). A written name is a path —\nbare `page` reaches no type, because the window module's page is `window.page`.",
   "step": [
     {
       "index": 0,
-      "text": "set %w% = %!app.type[\"window.window\"]%",
+      "text": "set %w% = %!app.type[\"window\"]%",
       "line": {
-        "number": 7
+        "number": 8
       },
       "code": [
         {
@@ -36,10 +36,10 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!app.type[\"window.window\"]%",
+              "value": "%!app.type[\"window\"]%",
               "variable": [
                 {
-                  "text": "%!app.type[\"window.window\"]%",
+                  "text": "%!app.type[\"window\"]%",
                   "code": [
                     {
                       "variable": "!app"
@@ -49,7 +49,7 @@
                     },
                     {
                       "index": {
-                        "text": "window.window"
+                        "text": "window"
                       }
                     }
                   ]
@@ -71,9 +71,9 @@
     },
     {
       "index": 1,
-      "text": "assert %w.name% equals \"window.window\"",
+      "text": "assert %w.name% equals \"window\"",
       "line": {
-        "number": 8
+        "number": 9
       },
       "code": [
         {
@@ -83,7 +83,14 @@
             {
               "name": "Expected",
               "type": {
-                "name": "text",
+                "name": "text"
+              },
+              "value": "window"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
                 "template": "plang"
               },
               "value": "%w.name%",
@@ -100,13 +107,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "text"
-              },
-              "value": "window.window"
             }
           ]
         }
@@ -116,7 +116,7 @@
       "index": 2,
       "text": "set %sw% = %!app.type[\"screen.window\"]%",
       "line": {
-        "number": 9
+        "number": 10
       },
       "code": [
         {
@@ -183,7 +183,7 @@
       "index": 3,
       "text": "assert %sw.name% equals \"screen.window\"",
       "line": {
-        "number": 10
+        "number": 11
       },
       "code": [
         {
@@ -193,7 +193,14 @@
             {
               "name": "Expected",
               "type": {
-                "name": "text",
+                "name": "text"
+              },
+              "value": "screen.window"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
                 "template": "plang"
               },
               "value": "%sw.name%",
@@ -210,13 +217,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "text"
-              },
-              "value": "screen.window"
             }
           ]
         }
@@ -224,9 +224,9 @@
     },
     {
       "index": 4,
-      "text": "set %none% = %!app.type[\"window\"]%",
+      "text": "set %none% = %!app.type[\"page\"]%",
       "line": {
-        "number": 11
+        "number": 12
       },
       "code": [
         {
@@ -256,10 +256,10 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!app.type[\"window\"]%",
+              "value": "%!app.type[\"page\"]%",
               "variable": [
                 {
-                  "text": "%!app.type[\"window\"]%",
+                  "text": "%!app.type[\"page\"]%",
                   "code": [
                     {
                       "variable": "!app"
@@ -269,7 +269,7 @@
                     },
                     {
                       "index": {
-                        "text": "window"
+                        "text": "page"
                       }
                     }
                   ]
@@ -293,7 +293,7 @@
       "index": 5,
       "text": "assert %none% is null",
       "line": {
-        "number": 12
+        "number": 13
       },
       "code": [
         {
@@ -327,5 +327,5 @@
   "visibility": "Public",
   "path": "/plan/kind-is-type/app/type/ModuleTypeIsNamedByItsModule.test.goal",
   "prPath": "/plan/kind-is-type/app/type/.build/moduletypeisnamedbyitsmodule.test.pr",
-  "hash": "cf56687e2957fd801b1c4333bf7b739156b9ab8b6b907ad6d764ec1764413c59"
+  "hash": "ee07cc6b3ce61adca8ecfd2a4a63af4f8d47e7ac62e5c228a872a75bfd9cc8ac"
 }
