@@ -123,3 +123,5 @@ Each finding the reviewer bots report, checked against the code before it goes a
 | F4 Landlock 3 doesn't scope the network | the sandbox's own doc says so (`terminal/code/Sandbox.cs:27–29`) | carry (when the kernel has Landlock's network scope) |
 
 **Security's verdict: PASS, no merge blocker.** Agreed; F1 is a bug to fix if the shape is small.
+
+**F1 traced (the coder): latent, not reachable today.** A signature read live gets `Expires` = the earlier of the signer's expiry and Created + its window (`signature/this.cs:66–74`), and the wire reader, the only maker of a Live signature (`data/schema/signature.cs:96–101`), always passes the signing setting's Expiry (default 5 min). Sign-then-verify without the wire is Origin.Signed, so step 6 doesn't run. Both auto-signers sign with no Expires, and live reads still get Created + 5 min. Only a hand-built Live signature with no window throws (a 500, fails safe). Security's "a legitimate caller reaches it" doesn't hold. **Ruled C (731):** the signature's constructor refuses Live with no window; the window is unchanged.
