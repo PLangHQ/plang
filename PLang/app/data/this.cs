@@ -747,11 +747,24 @@ public class @this<T> : @this
 
     public static @this<T> Ok(T value, type? type = null) => new("", value, type);
 
-    /// <summary>Settles as a <typeparamref name="T"/> slot: what the reference names, held whole and still typed
-    /// — it converts at its door, when read. A miss stays the miss (no value): a typed hold would make it a
+    /// <summary>Settles as a <typeparamref name="T"/> slot: what the reference names, made into a
+    /// <typeparamref name="T"/> — a typed slot is the action's promise, and an action answering its slot answers
+    /// one. A value already a <typeparamref name="T"/> is handed over as it is; one that isn't is made by
+    /// <typeparamref name="T"/>'s own build, content not yet read still unread (it reads at its first use); one
+    /// <typeparamref name="T"/> declines answers why. A miss stays the miss (no value): a typed hold would make it a
     /// present null.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Settle()
-        => await base.Settle() is var settled && !ReferenceEquals(settled, this) && settled.IsInitialized ? From(settled) : settled;
+    {
+        var settled = await base.Settle();
+        if (ReferenceEquals(settled, this) || !settled.IsInitialized) return settled;
+        if (settled.Success && settled.Peek() is not (T or global::app.type.item.@null.@this))
+        {
+            // the settle's own copy, made into the slot's type
+            try { settled.Declare(settled.Context.App.type.list[typeof(T)], settled.Context); }
+            catch (global::app.error.DeclinedException declined) { return settled.Context.Error(declined.Error); }
+        }
+        return From(settled);
+    }
     public new static @this<T> FromError(global::app.error.Error error) => new() { Error = error };
 
     /// <summary>Typed absent slot — non-null Data, <c>IsInitialized == false</c>. The
