@@ -27,6 +27,7 @@ Start
 - write each test start.goal names for stages 1–4, at its path
 - build each from test/ and run it: it fails today for the reason its behaviour names
 - list each test, its stage, and why it's red (quoted) in .bot/kind-is-type/test-designer/tests.md
+- at the end of each stage: `git pull --rebase`, commit the stage's tests (and their .pr, fixtures, tests.md, start.goal edits), push, and send the hash; never `reset --hard` over uncommitted work
 LIMITS: tests only; no production C#, no teaching edits; never hand-edit a .pr; stage 0 is the coder's
 DONE WHEN: every stage 1–4 test exists, builds (or is marked red-because-unbuildable for stage 4), and is red for its own reason
 REPLY: a message to the architect in the Done/HASH/CHECK/OPEN shape, text first
