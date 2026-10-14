@@ -97,6 +97,7 @@ A format type keeps its raw bytes until first use, then parses itself into plang
 - if %cfg% is dict, …                  → true: parsed json is a plang dict
 - read 'list.json', write to %l%       → after the first read into it, %l% is a plang list
 - read 'report.csv', write to %r%      → the same through the csv type: a table at first use
+- (an action whose dict slot is given %cfg%, unread)   → still unread when the action answers; the first read goes through the json type (today the made value loses json and can't read: decision 758)
 ```
 
 Goes: item's json navigator (walking a `JsonElement`, its own count, first and last).
