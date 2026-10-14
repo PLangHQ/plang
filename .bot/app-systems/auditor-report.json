@@ -1,0 +1,61 @@
+{
+  "bot": "auditor",
+  "branch": "app-systems",
+  "version": "v1",
+  "status": "pass",
+  "summary": "app-systems pre-merge auditor review: PASS. Every plan on the line since runtime2 (scalars-as-native, settings-config-unification, cli-app-property-override, module-discovery, builder-formal, app-systems, clr-navigators, compare-redesign, context-never-null, goal-graph-singular, navigation-driven-record-builder, wire-source-split) and every test plan (test/plan/{app-systems,task,list-query,snapshot}) checked off: done or carried with a named decision. One new finding (F-GGS-1, orphan .pr in pre-singular shape, dead code, one-line delete) — non-blocking. Reviewer findings routed cleanly by architect: zero blocks, five fixes landed (codeanalyzer batch 1 + three builder/coder commits), the rest carried with reasons. The locked-core surface golden (gate 173/174) holds; no un-cited surface edit. Known carries to next branch: 10b (C) typed-list-element plang test (closed on C# pins per 696), UnknownSettingIsAnError, 717 the {item, json} door, task plan's ~14 plang tests (C# backstopped), snapshot plan's plang tests (665), the four codeanalyzer surface asks (F2.3, F4.1, F5.2, F8.1), security F2/F3/F4, stale comments the architect is batching.",
+  "report": ".bot/app-systems/auditor/v1/report.md",
+  "findings": [
+    {
+      "id": "F-GGS-1",
+      "severity": "low",
+      "disposition": "carry",
+      "area": "goal-graph-singular / bootstrap",
+      "title": "Orphan built file `os/system/.build/debug.pr` in pre-singular shape",
+      "file": "os/system/.build/debug.pr",
+      "line": 1,
+      "summary": "Contents use the pre-singular wire keys 'steps', 'actions', 'parameters'. Last committed 50351d8b9 (2026-04-27, pre-goal-graph-singular). No `os/system/debug.goal` beside it to regenerate from, and grep in PLang/ finds no reference — unreachable from the runtime. The two siblings os/system/.build/{app,test}.pr are singular. Residual leftover from before the plural→singular migration; the bootstrap set the plan named is otherwise clean.",
+      "fix_direction": "git rm os/system/.build/debug.pr. One-line delete, no runtime path affected."
+    }
+  ],
+  "verified_clean": [
+    "scalars-as-native: 7 stages (item apex + 8 wrappers + Data<T> where T:item constraint + ScalarComparer collapsed); nothing on next-branch.md references it",
+    "settings-config-unification: PLang/app/config/ dissolved, module/setting/ renamed, IConfig/IConfigure/ModuleView/http.configure/Config records deleted, For<T>/Apply<TConfig>/Resolve<T> surface gone, context.Setting.Of<T>() the live door",
+    "cli-app-property-override: app.Build/Debug/Test nullable public-set; CommandLineParser syntactic; Flags.Parse/Shorthand retired; call.setting record present",
+    "module-discovery: app.module lowercase; MarkdownTeaching/getTypes.cs/RegisterModuleChoiceTypes/Describe/StepActions/BuildTypeEntries(modules) all gone; module/test/report.cs reshaped as render-call; junit evolved into a kind.Report per decision 272 (3af9c084d)",
+    "builder-formal: decider v5/v6, formal round-trip 58/58, prompt C beats B (round 6 da8d2497a: 174/174, 0 silent, 0 loud; round 7 3820e0ee5: 173/174); plang reader/writer at PLang/app/goal/step/action/formal/; pick.list.Agree gate present; Properties.schema + @store case gone",
+    "app-systems branch plan: stages 1-12 done except 10b (C) carried on C# pins per 696",
+    "clr-navigators: v1 (apex-doesn't-mask, item.Kind[json/*], container-materializes-to-scalar guard) landed via 936b5fdf9 + a954acfb2 + 19eb299b2 + a48bd3755; 717 carried",
+    "compare-redesign: Comparison enum present; async Value()/Peek() in data/this.cs; item.Compare in type/item/this.cs:135; Operator.cs:71/225 awaits it; PLNG003 the public-surface gate; stage 11 carried via 717",
+    "context-never-null: Data._context non-null (data/this.cs:34, _context = null! + born-with-ctor); Wire._context non-null (ArgumentNullException throw); ContextLessFallback deleted; Step.Context deleted",
+    "goal-graph-singular: singular folders; goal/this.Item.cs:9 and action/this.Item.cs:16 are items with ICreate (per be6bbf294/3839f4b86/84c5a2802); modifier→clause via 8g; build.actions renamed to build.goals per 9c (13497c68c)",
+    "navigation-driven-record-builder: catalog/ absent; type/convert/ slim to OwnedClr record; SetValueOnObject/type.Build/convert.OfStatic/GoalReadOptions grep clean; snapshot stays item-with-override as named exception",
+    "wire-source-split: source + wire classes present (item/source.cs:14, item/wire/this.cs:21); _format mime string eliminated; Serializers[_format] gone; one-render-door spine per rulings 5/9; json ruling 6c/8 landed",
+    "get-builder-running: summary.md decisions landed (ff3b0dd9c step check, cee6039d5 on-error chain, 527769af8 fix suggestion, fa1130a07 Settle→SourceError, c4da3717d TypeSafe, b7b23509b Tests→labels; modifier.list deferred into app-systems 8g clause/)",
+    "test/plan/app-systems: 12-stage walk per done.list",
+    "test/plan/task: carry per 729; 14 plang tests short, backstopped at TaskTests.cs (39 C# tests)",
+    "test/plan/list-query: T3 fixed; WhereUnsetVariableIsNotFound passes",
+    "test/plan/snapshot: full plan carried per 665; C# tests tagged [Property('carried','test/plan/snapshot')]"
+  ],
+  "reviewer_findings_review": {
+    "codeanalyzer_v1": "PASS re-confirmed. Batch-1 fixes landed (71c21e302); F2.3/F4.1/F5.2/F8.1 carried as surface asks to Ingi. Severity fits PLang's bar.",
+    "tester_v23": "No merge blocker re-confirmed. T1 LlmCache cache-hit assertion landed (8f8e0bebf); T3 list-query index and T5/StepResult asserts landed (9e74112f3). T2/T4a/T4b carried.",
+    "security_v1": "PASS re-confirmed. F1 traced latent-not-reachable per decision 731; F2/F3/F4 carried as named by the architect."
+  },
+  "locked_surface_check": "The gate 173/174 surface golden pins the locked core. Codeanalyzer scans across areas 1-8 found no un-cited surface edit; every locked-surface change on the diff traces to a named decision (242 9c, 262 batch 2, 272 10d slice 4, 291 12b, 681 Sensitive, 677 pick-list carried). No surface edit without Ingi's yes.",
+  "carried_to_next_branch": [
+    "10b (C): plang test TypedListHoldsItsType waits on the kinded-Type-choice item (696)",
+    "UnknownSettingIsAnError (builder drops the set it doesn't know)",
+    "717 the {item, json} door (json kind parses into clr(JsonElement); fix: parse into native dict/list)",
+    "F-GGS-1 orphan os/system/.build/debug.pr (this report; delete)",
+    "snapshot plan plang tests (665; carried as a whole)",
+    "task plan ~14 plang tests short (C# backstopped at TaskTests.cs)",
+    "codeanalyzer surface asks F2.3/F4.1/F5.2/F8.1 (surface changes requiring Ingi)",
+    "security F2 case-sensitivity split; F3 standing grants dedup by Path only; F4 Landlock network scope",
+    "stale comments the architect is batching (goal/this.cs:26-27, action/this.cs:10; type/item/{date,text,time}/this.cs ScalarComparer references; type/item/this.cs:23-24 + bool/this.cs:10 + null/this.cs:18 IOrderableValue/IEquatableValue references; kind/reflection/Tagged.cs:8 Normalize reference)"
+  ],
+  "worktree": "/workspace/app-systems",
+  "tip": "24866f3e1",
+  "base": "0ea5a4b94 (runtime2)",
+  "diff": "977 files, +54k -32k across PLang/"
+}
