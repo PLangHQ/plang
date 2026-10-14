@@ -1,0 +1,84 @@
+{
+  "bot": "security",
+  "branch": "app-systems",
+  "version": "v1",
+  "status": "pass",
+  "summary": "app-systems pre-merge security review (areas 1-6 of security.md): no merge blockers. Decision 382 (os/ write hole) still closed; FilePath canonicalization regression still closed; terminal sandbox fails closed on non-Linux / Landlock<3; signing pipeline + nonce replay sound; [Sensitive] does not cross Out wire; settings store partitions per actor via '<actor>!<path>' key with hard-coded closed-set actor names. Four non-blocking findings (all carry): F1 live-signature-no-expiry NRE in VerifyAsync step 6; F2 case-sensitivity split between GlobMatches and Places; F3 standing in-memory grants dedup only by Path (invariant depends on ctor call order); F4 Landlock sandbox doesn't scope network (documented in the Sandbox.cs doc comment itself). Semgrep: 24 hits, all baseline-accounted (22 serializer-hygiene audit list, 1 gated Assembly.LoadFrom, 1 Display.Gate false positive).",
+  "report": ".bot/app-systems/security/v1/report.md",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "low",
+      "disposition": "carry",
+      "area": "signing",
+      "title": "VerifyAsync NRE on live signature with no Expires",
+      "file": "PLang/app/module/signing/code/Ed25519.cs",
+      "line": 129,
+      "summary": "Step 6 (nonce record) dereferences signature.Expires!.Value for Origin.Live signatures. SignAsync accepts Expires==null and produces exactly such signatures. Step 1 (expiry) returns false when Expires is null, so step 6 is reached. Step 5's try/catch does not cover step 6, so an NRE escapes. Fails safe (no false 'verified: true'), but SignAsync and VerifyAsync disagree on whether live signatures may have no expiry.",
+      "fix_direction": "Either refuse Expires==null in SignAsync on live, or skip step 6's nonce record when Expires is null, or require Expires for live and have step 1 refuse the no-expires case explicitly."
+    },
+    {
+      "id": "F2",
+      "severity": "low",
+      "disposition": "carry",
+      "area": "permissions",
+      "title": "Case-sensitivity split between GlobMatches and Places",
+      "file": "PLang/app/type/item/permission/this.cs",
+      "line": 109,
+      "summary": "The standing /os/** grant uses Match.glob, compiled by GlobMatches to a case-sensitive regex. Places (PLang/app/type/item/path/file/this.Validate.cs:80-83) uses StringComparison.OrdinalIgnoreCase for its os/ overlay match. On case-insensitive filesystems the two sides can in principle diverge; today no path producer actually mismatches casing, so the finding is latent.",
+      "fix_direction": "Honour the platform's path comparison in GlobMatches for file-scheme paths (RegexOptions.IgnoreCase under RootComparison == OrdinalIgnoreCase)."
+    },
+    {
+      "id": "F3",
+      "severity": "low",
+      "disposition": "carry",
+      "area": "permissions",
+      "title": "Standing in-memory grants deduped only by Path",
+      "file": "PLang/app/actor/permission/this.cs",
+      "line": 36,
+      "summary": "The in-memory grant store keys standing grants by Path only; a later Stand(verbs...) replaces the earlier verb set. System actor rights depend on the base ctor's read+execute Stand being overwritten by actor/list/this.cs:15-17's wider Stand. Nothing in the type system enforces the call order.",
+      "fix_direction": "Make System's extended rights explicit (e.g. a protected Baseline() virtual the actor ctor calls, overridden on System) rather than relying on a later Stand overwrite."
+    },
+    {
+      "id": "F4",
+      "severity": "informational",
+      "disposition": "carry",
+      "area": "terminal",
+      "title": "Terminal sandbox does not scope the network",
+      "file": "PLang/app/module/terminal/code/Sandbox.cs",
+      "line": 27,
+      "summary": "Landlock 3 does not scope the network namespace; sandboxed child processes can reach any TCP/UDP endpoint. The code's own XML doc states this openly. Linux 6.12 extends Landlock to network; WSL 6.6 does not have it. Carried from the architect's own disclosure to make it audit-visible.",
+      "fix_direction": "Track as a known Landlock-3 limitation. Revisit when PLang's minimum kernel bumps to 6.12."
+    }
+  ],
+  "verified_clean": [
+    "Decision 382: os/ write hole closed — holds",
+    "FilePath canonicalization (pattern_authgate_canonicalization.md standing finding) — closed and still holds; every FilePath construction site routes through the single canonicalizing ctor",
+    "Assembly loading: single gated loader at path/file/this.Operations.cs:34 (AuthGate(execute))",
+    "Archive unpack: ..-escape prevented, absolute symlinks anchored to unpack folder, each entry kind gated",
+    "Terminal sandbox fails closed on non-Linux / Landlock<3",
+    "[Sensitive] excluded from Out view, masked in Debug, present in Store only; json.Writer fails closed on unknown types",
+    "Settings store partitions per actor via '<actor>!<path>' key with hard-coded actor-name closed set",
+    "Signing: 9-step VerifyAsync, Ed25519, nonce replay via app cache, ToSigningBytes thread-safe (local MemoryStream)",
+    "No System.IO.* outside path.file.** surface (PLNG002 enforces at build error)",
+    "No Console.* writes in production outside the documented PlangConsole/Program.cs:26 process boundary",
+    "Pre-auth deserializer MaxReadDepth=64 (prior security v1 F1 fix) still in place"
+  ],
+  "known_not_findings": [
+    "[Sensitive] vs sensitive type duplication: carried (next-branch.md, decision 681)",
+    "Transcript key rotation: skipped by Ingi",
+    "Decision 312 (goal values rendered out): ruled not a leak (690)",
+    "Decision 712 (who may name another actor): open brainstorm — reported today's reality (nothing)"
+  ],
+  "tooling": {
+    "semgrep": {
+      "command": "scripts/semgrep-scan.sh",
+      "findings": 24,
+      "baseline_known": "22 serializer-hygiene audit list + 1 gated Assembly.LoadFrom + 1 Display.Gate false positive",
+      "new": 0
+    },
+    "build": "./dev.sh build (clean)",
+    "worktree": "/workspace/plang-app-systems-security on origin/app-systems (52904b8e0)"
+  },
+  "next_bot": "auditor"
+}
