@@ -398,7 +398,7 @@ footer a:hover { color: var(--fg); }
     write to <span class="v">%user%</span>
 <span class="d">-</span> if <span class="v">%user%</span> is empty then insert into user <span class="v">%Identity%</span>,
     write to <span class="v">%user%</span>
-<span class="d">-</span> return <span class="v">%user%</span></pre>
+<span class="d">-</span> write out <span class="v">%user%</span></pre>
         <p class="fine"><code class="inline">%Identity%</code> is the caller, taken from the signature on the request. It arrives with every request, so there is nothing to log in to.</p>
       </div>
     </div>
@@ -812,7 +812,7 @@ footer a:hover { color: var(--fg); }
 <pre class="cb"><span class="g">Login</span>
 <span class="d">-</span> select * from users where identity=<span class="v">%Identity%</span>, write to <span class="v">%user%</span>
 <span class="d">-</span> if <span class="v">%user%</span> is empty then insert into user <span class="v">%Identity%</span>, write to <span class="v">%user%</span>
-<span class="d">-</span> return <span class="v">%user%</span></pre>
+<span class="d">-</span> write out <span class="v">%user%</span></pre>
       <p>Nothing to log in to, no password to store and no API key to leak. <code>%MyIdentity%</code> is you. <code>%Identity%</code> is whoever is calling. How the signature itself works is in <a class="link" href="#docs-signatures">Signatures</a>.</p>
 
       <h2>Actors</h2>
