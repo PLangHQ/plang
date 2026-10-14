@@ -1,12 +1,13 @@
 using PLang.Tests.App.Types.PathTests.Contract;
-using Browser = app.module.browser.type.browser.@this;
+using Page = app.module.browser.type.page.@this;
 
 namespace PLang.Tests.App.Modules.browser;
 
 /// <summary>
 /// The browser is started trusted (a goal of plang's own starts Chromium), so a page it is sent to must not read for
-/// the caller what the caller couldn't read itself (finding 1 of 579): a <c>file://</c> page is read as the caller —
-/// asked when it is outside the caller's root, as any read is — and a website is the browser's normal job.
+/// the caller what the caller couldn't read itself (finding 1 of 579): a file page is read as the caller first — asked
+/// when it is outside the caller's root, as any read is — and only then has an address. A website is the browser's
+/// job: its url goes as written, unasked (decision 759).
 /// </summary>
 public class ReadableTests : IDisposable
 {
@@ -34,18 +35,30 @@ public class ReadableTests : IDisposable
 
     private global::app.actor.context.@this Context => _app.actor.list.User.Context;
 
-    [Test]
-    public async Task AFilePageOutsideTheCallersRoot_IsAsked()
+    private async Task<Page> PageOf(string text)
     {
-        var refused = await Browser.Readable(new Uri(Path.Combine(_outside, "secret.html")).AbsoluteUri, Context);
-        await Assert.That(refused).IsNotNull().Because("a file outside the caller's root is read as the caller: asked, and the answer was no");
-        await Assert.That(refused!.Error!.Key).IsEqualTo("PermissionDenied");
+        var made = new global::app.data.@this("Url", (global::app.type.item.text.@this)text, context: Context);
+        return (await made.Value<Page>())!;
     }
 
     [Test]
-    public async Task AFilePageInTheCallersRoot_AndAWebsite_AreNotAsked()
+    public async Task AFilePageOutsideTheCallersRoot_IsAsked_AndHasNoAddress()
     {
-        await Assert.That(await Browser.Readable(new Uri(Path.Combine(_root, "page.html")).AbsoluteUri, Context)).IsNull();
-        await Assert.That(await Browser.Readable("https://mbl.is", Context)).IsNull();
+        var page = await PageOf(new Uri(Path.Combine(_outside, "secret.html")).AbsoluteUri);
+        var address = await page.Address(Context);
+        await Assert.That(address.Success).IsFalse().Because("a file outside the caller's root is read as the caller: asked, and the answer was no");
+        await Assert.That(address.Error!.Key).IsEqualTo("PermissionDenied");
+    }
+
+    [Test]
+    public async Task AFilePageInTheRoot_IsItsFile_AndAWebsite_IsItsUrlAsWritten_Unasked()
+    {
+        var mine = await (await PageOf("/page.html")).Address(Context);
+        await Assert.That(mine.Success).IsTrue();
+        await Assert.That((await mine.Value())!.ToString()).IsEqualTo(new Uri(Path.Combine(_root, "page.html")).AbsoluteUri);
+        var site = await (await PageOf("https://mbl.is/x?b=2&a=1#part")).Address(Context);
+        await Assert.That(site.Success).IsTrue().Because("a website is the browser's job, not plang reading the web: nothing is asked");
+        await Assert.That((await site.Value())!.ToString()).IsEqualTo("https://mbl.is/x?b=2&a=1#part")
+            .Because("its query and #part go as written");
     }
 }

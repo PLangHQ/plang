@@ -1,12 +1,12 @@
-using Browser = app.module.browser.type.browser.@this;
 using OnScreen = app.module.browser.type.browser.screen.@this;
+using Page = app.module.browser.type.page.@this;
 
 namespace PLang.Tests.App.Modules.browser;
 
 /// <summary>
-/// A page is given as plang names it — a path from the app's root (<c>/app/writer/start.html</c>), never
-/// <c>file://</c> — and a window says its page the same way: the path goes to Chromium as that file's address, and the
-/// address comes back as the path. An address and words to search for are as typed in an address field.
+/// A page is named as plang names it — a path from the app's root (<c>/app/writer/start.html</c>), never
+/// <c>file://</c> — and a window says its page the same way: the page goes to Chromium as its file's address, and the
+/// address comes back as the path. Typed in an address bar, a name with a dot is a website, words a search.
 /// </summary>
 public class WhereTests : IDisposable
 {
@@ -30,20 +30,22 @@ public class WhereTests : IDisposable
     private global::app.actor.context.@this Context => _app.actor.list.User.Context;
 
     [Test]
-    public async Task APlangPath_IsThatFilesAddress_AndComesBackAsThePath()
+    public async Task APlangPath_IsItsFilesAddress_AndComesBackAsThePath()
     {
-        var address = Browser.Where("/app/writer/start.html", Context);
+        var made = new global::app.data.@this("Url", (global::app.type.item.text.@this)"/app/writer/start.html", context: Context);
+        var page = (await made.Value<Page>())!;
+        await Assert.That(page.ToString()).IsEqualTo("/app/writer/start.html");
+        var address = (await (await page.Address(Context)).Value())!.ToString();
         await Assert.That(address).IsEqualTo(new Uri(Path.Combine(_root, "app", "writer", "start.html")).AbsoluteUri);
         await Assert.That(OnScreen.Shown(address, Context)).IsEqualTo("/app/writer/start.html")
             .Because("a window says its page as plang names it, never file://");
     }
 
     [Test]
-    public async Task AnAddress_AndWords_AreAsTyped()
+    public async Task Typed_ANameWithADot_IsAWebsite_Words_ASearch_APath_ItsPage()
     {
-        await Assert.That(Browser.Where("https://mbl.is/x", Context)).IsEqualTo("https://mbl.is/x");
-        await Assert.That(Browser.Where("mbl.is", Context)).IsEqualTo("https://mbl.is");
-        await Assert.That(Browser.Where("plang os", Context)).IsEqualTo("https://duckduckgo.com/?q=plang%20os");
-        await Assert.That(OnScreen.Shown("https://mbl.is/x", Context)).IsEqualTo("https://mbl.is/x");
+        await Assert.That(Page.Typed("mbl.is", Context).ToString()).IsEqualTo("https://mbl.is");
+        await Assert.That(Page.Typed("plang os", Context).ToString()).IsEqualTo("https://duckduckgo.com/?q=plang%20os");
+        await Assert.That(Page.Typed("/app/writer/start.html", Context).ToString()).IsEqualTo("/app/writer/start.html");
     }
 }

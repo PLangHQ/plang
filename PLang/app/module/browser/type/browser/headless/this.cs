@@ -30,12 +30,12 @@ public sealed class @this : browser.@this
         _format = format;
     }
 
-    /// <summary>Starts headless Chromium on <paramref name="url"/>, frames <paramref name="width"/>×<paramref name="height"/>
-    /// in <paramref name="format"/> to <paramref name="onFrame"/>.</summary>
+    /// <summary>Starts headless Chromium on <paramref name="url"/> (its address once read as the caller,
+    /// <see cref="browser.@this.Opened"/>), frames <paramref name="width"/>×<paramref name="height"/> in
+    /// <paramref name="format"/> to <paramref name="onFrame"/>.</summary>
     internal static async Task<global::app.data.@this<browser.@this>> Start(string url, int width, int height,
         string format, int quality, global::app.goal.step.action.@this? onFrame, global::app.actor.context.@this context)
     {
-        if (await Readable(url, context) is { } refused) return global::app.data.@this<browser.@this>.From(refused);
         var (program, failed) = await Started("Headless", context);
         if (program == null) return global::app.data.@this<browser.@this>.From(failed!);
         var cdp = new cdp.@this(program.pipe!);

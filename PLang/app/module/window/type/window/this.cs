@@ -91,14 +91,20 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             : context.Error(new global::app.error.ActionError($"Nowhere to go: Url is {url.Peek()}", "UrlMissing", 400));
 
     /// <summary>Goes to what was typed: a plang path (<c>/app/writer/start.html</c>), an address (<c>mbl.is</c> is
-    /// <c>https://mbl.is</c>), or words to search for. One of plang's own pages is read as the one who sends it there.</summary>
+    /// <c>https://mbl.is</c>), or words to search for. The page is read as the one who sends it there.</summary>
     internal async Task<Data> Navigate(string typed, Context context)
     {
-        var url = global::app.module.browser.type.browser.@this.Where(typed, context);
-        if (await global::app.module.browser.type.browser.@this.Readable(url, context) is { } refused) return refused;
-        await (await Page()).Navigate(url);
+        global::app.module.browser.type.page.@this page;
+        try { page = global::app.module.browser.type.page.@this.Typed(typed, context); }
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
+        var address = await page.Address(context);
+        if (!address.Success || await address.Value() is not { } found) return address;
+        await Go(found.ToString());
         return context.Ok();
     }
+
+    /// <summary>Goes to <paramref name="address"/>, as Chromium takes it — read as the sender already.</summary>
+    internal async Task Go(string address) => await (await Page()).Navigate(address);
 
     /// <summary>Gives its page <paramref name="message"/>: a <c>message</c> event, origin <c>"plang"</c>, its data the
     /// message as text (a dict or list as its json).</summary>

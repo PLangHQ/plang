@@ -160,12 +160,12 @@ public sealed class @this : browser.@this
     internal static global::app.module.screen.type.screen.display.code.Address AddressOf(string address, global::app.actor.context.@this context)
         => new(Shown(address, context), address);
 
-    /// <summary>Starts Chromium on <paramref name="display"/>, its first page <paramref name="url"/> the desktop; what a
-    /// page of plang's own says goes to <paramref name="onMessage"/>.</summary>
+    /// <summary>Starts Chromium on <paramref name="display"/>, its first page the desktop — <paramref name="url"/>, its
+    /// address once read as the caller (<see cref="browser.@this.Opened"/>); what a page of plang's own says goes to
+    /// <paramref name="onMessage"/>.</summary>
     internal static async Task<global::app.data.@this<browser.@this>> Start(Display display, string url,
         global::app.goal.step.action.@this? onMessage, global::app.actor.context.@this context)
     {
-        if (await Readable(url, context) is { } refused) return global::app.data.@this<browser.@this>.From(refused);
         var (program, failed) = await Started("Screen", context);
         if (program == null) return global::app.data.@this<browser.@this>.From(failed!);
         var cdp = new cdp.@this(program.pipe!);
@@ -187,7 +187,7 @@ public sealed class @this : browser.@this
             // the desktop is the first page, its app window blank: shown as window 0, then sent where it goes
             var desktop = await FirstPage(cdp);
             await browser.window.ShowDesktop(desktop, url, context);
-            if (await browser.Desktop.Navigate(url, context) is { Success: false } refusedThere) return global::app.data.@this<browser.@this>.From(refusedThere);
+            await browser.Desktop.Go(url);
             display.Followed += browser.window.Follow;
             // the host's codecs, now (known already) or when it says them: pages' videos go to it from then on
             display.Wayland.CodecsKnown += codecs => _ = browser.Codecs(codecs, context);
@@ -214,10 +214,12 @@ public sealed class @this : browser.@this
     }
 
     /// <summary>A page in a window of its own (<c>window.open</c>): an app window on plang's blank page handed to the running Chromium
-    /// (<c>/system/browser/Window</c>), then sent to <paramref name="url"/> — read as the caller when it is a file.</summary>
-    internal async Task<global::app.data.@this> Open(string url, global::app.actor.context.@this context)
+    /// (<c>/system/browser/Window</c>), then sent to <paramref name="page"/> — read as the caller first.</summary>
+    internal async Task<global::app.data.@this> Open(page.@this page, global::app.actor.context.@this context)
     {
-        if (await Readable(url, context) is { } refused) return refused;
+        var address = await page.Address(context);
+        if (!address.Success || await address.Value() is not { } given) return address;
+        var url = given.ToString();
         var before = (await Cdp.Pages()).Select(p => p.target).ToHashSet();
         var found = await context.App.goal.list.Find("/system/browser/Window", context.call.Goal);
         if (!found.Success || await found.Value() is not { } goal) return found;
@@ -228,9 +230,9 @@ public sealed class @this : browser.@this
         {
             if ((await Cdp.Pages()).FirstOrDefault(p => !before.Contains(p.target)) is { target: { } fresh })
             {
-                var page = await Cdp.Attach(fresh);
-                try { await page.Ask("Page.navigate", new JsonObject { ["url"] = url }); }
-                finally { await page.Detach(); }
+                var attached = await Cdp.Attach(fresh);
+                try { await attached.Ask("Page.navigate", new JsonObject { ["url"] = url }); }
+                finally { await attached.Detach(); }
                 return context.Ok();
             }
             await Task.Delay(250);

@@ -16,8 +16,12 @@ public sealed class Chromium : IBrowser
     public async Task<data.@this<type.browser.@this>> Start(start action)
     {
         var context = action.Context;
-        // the page as Chromium's address: a plang path (/system/plangos/desktop.html) is that file's
-        var url = type.browser.@this.Where((await action.Url.Value())!.Clr<string>()!, context);
+        // the page, as Chromium takes it: its address (a file read as the caller first)
+        if (await action.Url.Value() is not type.page.@this page)
+            return data.@this<type.browser.@this>.From(context.Error(new global::app.error.ActionError($"No page to open: Url is {action.Url.Peek()}", "UrlMissing", 400)));
+        var address = await page.Address(context);
+        if (!address.Success || await address.Value() is not { } found) return data.@this<type.browser.@this>.From(address);
+        var url = found.ToString();
         if (action.Screen != null && await action.Screen.Value() is Display display)
             return await type.browser.screen.@this.Start(display, url,
                 action.OnMessage == null ? null : await action.OnMessage.Value(), context);

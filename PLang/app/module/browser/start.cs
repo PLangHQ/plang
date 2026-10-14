@@ -12,8 +12,8 @@ namespace app.module.browser;
 [RequiresCapability("browser")]
 public partial class start : IContext
 {
-    /// <summary>The page to open.</summary>
-    public partial data.@this<global::app.type.item.text.@this> Url { get; init; }
+    /// <summary>The page to open: a plang path (<c>/system/plangos/desktop.html</c>; read as the caller), or a website.</summary>
+    public partial data.@this<type.page.@this> Url { get; init; }
 
     /// <summary>Frame width in pixels. Default 1920.</summary>
     [Default(1920)]

@@ -3576,6 +3576,8 @@ type number
   .min(b: number) : number
   .max(b: number) : number
 
+type page
+
 type parallel
 
 type path
@@ -3733,7 +3735,7 @@ action browser.send
   Browser : browser required
 
 action browser.start
-  Url : text required
+  Url : page required
   Width : number
   Height : number
   Format : text
@@ -4319,7 +4321,7 @@ action window.navigate
   Browser : browser
 
 action window.open
-  Url : text required
+  Url : page required
   Browser : browser required
 
 action window.post
