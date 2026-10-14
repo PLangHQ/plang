@@ -1,12 +1,12 @@
 {
   "name": "AsJsonKeepsJson",
-  "comment": "Stage 4 (ruling 8): `set %x% = '{\"a\":1}' as json` builds Type=json. Red today — the\nbaseline is `dict` 5/5, so the builder treats json as \"parse to dict\"; %x!type.name%\nreads \"dict\".",
+  "comment": "Stage 4 (ruling 8): `set %x% = '{\"a\":1}' as json` lands %x% as `{text, kind: json}`\nper decision 749 + ruling 1 (name stays parent, sub-sort rides as kind). Red today —\nthe baseline is dict 5/5; %x!type.name% reads \"dict\" (not \"text\"), so the first assert\nfails before the kind can be checked.",
   "step": [
     {
       "index": 0,
       "text": "set %x% = \"{\\\"a\\\":1}\" as json",
       "line": {
-        "number": 5
+        "number": 6
       },
       "code": [
         {
@@ -59,9 +59,9 @@
     },
     {
       "index": 1,
-      "text": "assert.equals(Expected=\"json\", Actual=%x!type.name%, Message=\"type.name is json, not dict\")",
+      "text": "assert.equals(Expected=\"text\", Actual=%x!type.name%, Message=\"type.name is text\")",
       "line": {
-        "number": 6
+        "number": 7
       },
       "code": [
         {
@@ -73,7 +73,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "json"
+              "value": "text"
             },
             {
               "name": "Actual",
@@ -104,7 +104,63 @@
               "type": {
                 "name": "text"
               },
-              "value": "type.name is json, not dict"
+              "value": "type.name is text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"json\", Actual=%x!type.kind.name%, Message=\"type.kind.name is json\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "json"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%x!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "type.kind.name is json"
             }
           ]
         }
@@ -115,5 +171,5 @@
   "visibility": "Public",
   "path": "/plan/kind-is-type/module/variable/set/AsJsonKeepsJson.test.goal",
   "prPath": "/plan/kind-is-type/module/variable/set/.build/asjsonkeepsjson.test.pr",
-  "hash": "e9b60a5489164d3f8ba920de44b37be59ca8fda65d88796eb012223a48b97fa9"
+  "hash": "7fac6b0572f1d0c522efa2a0a8d2650a0f363605e55b9ab5851316f86e63bc81"
 }

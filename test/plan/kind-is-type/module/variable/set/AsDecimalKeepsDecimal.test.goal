@@ -1,6 +1,8 @@
-/ Stage 4 (ruling 8): the builder offers kinded types by name. `set %n% = "1.5" as decimal`
-/ builds Type=decimal and lands %n% whose type.name is "decimal". Red today — the baseline
-/ measurement is `number` 5/5, so the builder drops the kind; %n!type.name% reads "number".
+/ Stage 4 (ruling 8): the builder offers kinded types by name. Per decision 749 + ruling 1
+/ the type's name stays its parent and the sub-sort rides as its kind: `set %n% = "1.5" as
+/ decimal` lands %n% as `{number, kind: decimal}`. Today's name assert is green already
+/ (baseline: number 5/5), so the kind.name assert is the red one.
 AsDecimalKeepsDecimal
 - set %n% = "1.5" as decimal
-- assert.equals(Expected="decimal", Actual=%n!type.name%, Message="type.name is decimal, not number")
+- assert.equals(Expected="number", Actual=%n!type.name%, Message="type.name is number")
+- assert.equals(Expected="decimal", Actual=%n!type.kind.name%, Message="type.kind.name is decimal")

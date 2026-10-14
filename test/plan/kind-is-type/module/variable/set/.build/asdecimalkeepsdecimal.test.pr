@@ -1,12 +1,12 @@
 {
   "name": "AsDecimalKeepsDecimal",
-  "comment": "Stage 4 (ruling 8): the builder offers kinded types by name. `set %n% = \"1.5\" as decimal`\nbuilds Type=decimal and lands %n% whose type.name is \"decimal\". Red today — the baseline\nmeasurement is `number` 5/5, so the builder drops the kind; %n!type.name% reads \"number\".",
+  "comment": "Stage 4 (ruling 8): the builder offers kinded types by name. Per decision 749 + ruling 1\nthe type's name stays its parent and the sub-sort rides as its kind: `set %n% = \"1.5\" as\ndecimal` lands %n% as `{number, kind: decimal}`. Today's name assert is green already\n(baseline: number 5/5), so the kind.name assert is the red one.",
   "step": [
     {
       "index": 0,
       "text": "set %n% = \"1.5\" as decimal",
       "line": {
-        "number": 5
+        "number": 6
       },
       "code": [
         {
@@ -59,9 +59,9 @@
     },
     {
       "index": 1,
-      "text": "assert.equals(Expected=\"decimal\", Actual=%n!type.name%, Message=\"type.name is decimal, not number\")",
+      "text": "assert.equals(Expected=\"number\", Actual=%n!type.name%, Message=\"type.name is number\")",
       "line": {
-        "number": 6
+        "number": 7
       },
       "code": [
         {
@@ -73,7 +73,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "decimal"
+              "value": "number"
             },
             {
               "name": "Actual",
@@ -104,7 +104,63 @@
               "type": {
                 "name": "text"
               },
-              "value": "type.name is decimal, not number"
+              "value": "type.name is number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"decimal\", Actual=%n!type.kind.name%, Message=\"type.kind.name is decimal\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "decimal"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%n!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "type.kind.name is decimal"
             }
           ]
         }
@@ -115,5 +171,5 @@
   "visibility": "Public",
   "path": "/plan/kind-is-type/module/variable/set/AsDecimalKeepsDecimal.test.goal",
   "prPath": "/plan/kind-is-type/module/variable/set/.build/asdecimalkeepsdecimal.test.pr",
-  "hash": "fe2a3d8ce2946aa6650aa87d0e1214140229a75c434d9d6f7960b44f1de7187d"
+  "hash": "455114c001d2003491e218a31b7ce717f29cdc056d8ba7b2f79d22915c059e64"
 }
