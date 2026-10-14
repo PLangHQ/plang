@@ -41,11 +41,25 @@ public class WhereTests : IDisposable
             .Because("a window says its page as plang names it, never file://");
     }
 
+    private async Task<string?> TypedAs(string typed) => (await Page.Typed(typed, Context).Value())?.ToString();
+
     [Test]
     public async Task Typed_ANameWithADot_IsAWebsite_Words_ASearch_APath_ItsPage()
     {
-        await Assert.That(Page.Typed("mbl.is", Context).ToString()).IsEqualTo("https://mbl.is");
-        await Assert.That(Page.Typed("plang os", Context).ToString()).IsEqualTo("https://duckduckgo.com/?q=plang%20os");
-        await Assert.That(Page.Typed("/app/writer/start.html", Context).ToString()).IsEqualTo("/app/writer/start.html");
+        await Assert.That(await TypedAs("mbl.is")).IsEqualTo("https://mbl.is");
+        await Assert.That(await TypedAs("plang os")).IsEqualTo("https://duckduckgo.com/?q=plang%20os");
+        await Assert.That(await TypedAs("/app/writer/start.html")).IsEqualTo("/app/writer/start.html");
+        await Assert.That(await TypedAs("https://mbl.is/x#part")).IsEqualTo("https://mbl.is/x#part");
+    }
+
+    [Test]
+    public async Task Typed_ASchemeThatIsNeitherAFileNorAWebsite_IsNotAPage()
+    {
+        foreach (var typed in new[] { "about:blank", "chrome://settings", "javascript:alert(1)", "data:text/html,<p>x</p>" })
+        {
+            var page = Page.Typed(typed, Context);
+            await Assert.That(page.Success).IsFalse().Because($"{typed}: a browser here shows files and websites only");
+            await Assert.That(page.Error!.Key).IsEqualTo("NotAPage");
+        }
     }
 }

@@ -9,7 +9,11 @@ public sealed class @this : page.@this
 {
     private readonly global::app.type.item.path.file.@this _path;
 
-    public @this(global::app.type.item.path.file.@this path) => _path = path;
+    private @this(global::app.type.item.path.file.@this path) => _path = path;
+
+    /// <summary>The page a file's path is; another path is not this kind's.</summary>
+    internal static @this? Create(global::app.type.item.path.@this path)
+        => path is global::app.type.item.path.file.@this file ? new @this(file) : null;
 
     /// <summary>The file, as plang names it.</summary>
     [global::app.Out] public global::app.type.item.path.@this Path => _path;

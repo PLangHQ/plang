@@ -94,9 +94,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <c>https://mbl.is</c>), or words to search for. The page is read as the one who sends it there.</summary>
     internal async Task<Data> Navigate(string typed, Context context)
     {
-        global::app.module.browser.type.page.@this page;
-        try { page = global::app.module.browser.type.page.@this.Typed(typed, context); }
-        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
+        var typedPage = global::app.module.browser.type.page.@this.Typed(typed, context);
+        if (!typedPage.Success || await typedPage.Value() is not { } page) return typedPage;
         var address = await page.Address(context);
         if (!address.Success || await address.Value() is not { } found) return address;
         await Go(found.ToString());
