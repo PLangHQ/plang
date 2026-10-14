@@ -122,6 +122,25 @@ section.band { background: var(--band); }
 .spec dt { color: var(--muted); font-size: 17px; }
 .spec dd { font-size: clamp(21px, 2.6vw, 28px); font-weight: 600; letter-spacing: -0.015em; }
 
+/* Identity story */
+.story { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; max-width: 880px; margin: 0 auto; align-items: stretch; }
+.path { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+.path h3 { margin: 0; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.path.short h3 { color: var(--accent); }
+.path ol { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 10px; }
+.path li { counter-increment: s; display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; font-size: 16px; align-items: baseline; }
+.path li::before { content: counter(s); font: 12px var(--mono); color: var(--muted); }
+.path li.end::before { content: "→"; color: var(--fg); }
+.path li.end code { font: 600 15px var(--mono); overflow-wrap: anywhere; }
+.path.short li.end code { color: var(--accent); }
+.path .fine { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+.gone { max-width: 880px; margin: 40px auto 0; display: grid; gap: 14px; justify-items: center; }
+.gone h3 { margin: 0; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.gone ul { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.gone li { font-size: 15px; padding: 7px 14px; border: 1px solid var(--line); border-radius: 980px; color: var(--muted); text-decoration: line-through; text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
+.sub-h { text-align: center; font-size: clamp(22px, 2.8vw, 30px); letter-spacing: -0.02em; margin: clamp(56px, 8vw, 88px) 0 28px; text-wrap: balance; }
+@media (max-width: 760px) { .story { grid-template-columns: minmax(0, 1fr); } }
+
 /* Identity */
 .ids { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .id { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 14px; min-width: 0; }
@@ -334,15 +353,48 @@ footer a:hover { color: var(--fg); }
 <section class="band">
   <div class="wrap">
     <div class="head">
-      <h2>No passwords. No accounts.</h2>
-      <p>Every person and every app has its own identity. It proves who you are without anyone holding a password for you.</p>
+      <h2>A password is a lookup.</h2>
+      <p>Signup forms, login pages, reset emails, session cookies. All of it exists to answer one question: which <code class="inline">user.id</code> is this?</p>
     </div>
+
+    <div class="story">
+      <div class="path">
+        <h3>Today</h3>
+        <ol>
+          <li>Sign up with email and password</li>
+          <li>Hash the password, store it</li>
+          <li>Log in, compare hashes</li>
+          <li>Create a session, set a cookie</li>
+          <li>On every request: read the cookie, look up the session</li>
+          <li class="end"><code>user.id = 4821</code></li>
+        </ol>
+        <p class="fine">Then add password resets, 2FA, lockouts and breach notices.</p>
+      </div>
+      <div class="path short">
+        <h3>With plang</h3>
+        <ol>
+          <li>Every person has a key pair</li>
+          <li>Every request is signed with it</li>
+          <li class="end"><code>user.id = 7f3a·91c2·e04d·5b18</code></li>
+        </ol>
+        <p class="fine">The public key is the id. It arrives with every request. There is no login step.</p>
+      </div>
+    </div>
+
+    <div class="gone">
+      <h3>What goes away</h3>
+      <ul>
+        <li>Password tables</li><li>Hashing and salting</li><li>Login pages</li><li>Reset emails</li><li>Session cookies</li><li>Leaked password dumps</li><li>Credential stuffing</li><li>Phished passwords</li><li>API keys between apps</li>
+      </ul>
+    </div>
+
+    <h3 class="sub-h">No passwords. No accounts. People and apps alike.</h3>
     <div class="ids">
       <div class="id"><div class="who"><span class="mark">A</span><span>Anna<span class="kind">Person</span></span></div><code>key 7f3a·91c2·e04d·5b18</code></div>
       <div class="id"><div class="who"><span class="mark app">CT</span><span>Club Times<span class="kind">App</span></span></div><code>key 2c88·0a7e·f913·64d0</code></div>
       <div class="id"><div class="who"><span class="mark">B</span><span>Bjarni<span class="kind">Person</span></span></div><code>key b51e·3d06·a2f7·c98b</code></div>
     </div>
-    <p class="under">They connect directly, with no middleman in between.</p>
+    <p class="under">They connect directly, with no middleman in between. <a class="link" href="#docs-identity">How identity works ›</a></p>
   </div>
 </section>
 
