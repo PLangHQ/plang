@@ -39,14 +39,87 @@ Ingi: "a strong type is information for the LLM": a slot typed `separator` tells
 
 ## Stages
 
-Each stage ends with its tests built and run; each test goes red without its change.
+Each stage ends with its tests built and run; each test goes red without its change. Each stage reads: why, in a sentence or two; the plang a developer writes, with `→` what happens; what goes away. (The shape is the coder's, from its 2026-09-28 "a timer is a value" proposal; Ingi: "I think that would help with the plan we are giving out".)
 
-- **0. A goal's path is where its `.pr` is found** (ruling 9). A goal moved with its `.build/` runs at its new path, is found held on its second load, and reads its relative files from its real folder; an app's `.pr` whose old `"path"` claims `/system/` gets no os trust; an old `.pr` reads as before; plang's own goals still read as `/system/…`.
-- **1. Types named by namespace** (ruling 7). `text`, `number`, `list` resolve as before (`list` is plang's own list, though more than ten collection types end in `list`); `llm.setting` resolves to the llm settings class; `window.window` and `screen.window` each find their module's type, and `window` alone finds none; the settings rows read and save as before. If one written name ever resolves under two roots, it's refused naming both (a module named like a concept).
-- **2. A kind is a type** (rulings 1–3). Each family's kinds become types under their parent; the kind slot holds a type; "is %x% a text?" stays true for a json value; named values are their type's list. The kind/strict tests, DataTypeReadsEntity, BareLiteralJudgedByForm and DoublePlusDecimal_Errors pass.
-- **3. A format type owns its work** (rulings 4–6). A json file read and written on unchanged is byte-for-byte; the first read into it parses into a plang dict or list; `%cfg% is dict` is true (Cut2, Narrow pass); a csv and an md the same way through their own types.
-- **4. The builder offers kinded types** (ruling 8). The baseline's five rows build what the step says, 5/5 each; the two guards (`set %n% = 5`, `as text`) don't move; TypedListHoldsItsType and Plane_DataKeyVsProperty build and pass. The teaching-edit rule applies: the decider fixtures and page goldens re-pinned, diffs read.
-- **5. The leftovers go** (the demolition list below).
+### 0. A goal's path is where its `.pr` is found (ruling 9; landed, fcaf1055d)
+
+A `.pr` stored its own path, and plang believed it: a moved goal ran its old path, and an app's `.pr` could claim to be one of plang's own.
+
+```
+myapp/Start.goal + .build/start.pr, moved to myapp2/
+- (run myapp2's Start)                 → it runs as /Start.goal in myapp2, and is found held on its second load
+- read 'notes.txt'                     → myapp2/notes.txt, not the old folder's
+myapp/.build/start.pr saying "path": "/system/Start.goal"
+- start program 'sh'                   → asked: its folder is the app's, so no os trust
+/system/error/Show.goal (plang's own)  → still /system/error/Show.goal, and trusted
+```
+
+Goes: the stored `"path"` and `"prPath"`; an old `.pr`'s name is read from the end of its `"path"`.
+
+### 1. A type is named by its path from a root (ruling 7)
+
+A type's name is its namespace, read from the root it lives under, so no two types can share a name and the settings classes need no family of their own.
+
+```
+- set %s% = "hi" as text               → text, plang's own (app.type.item.text), as before
+- set %l% = [1, 2] as list             → list, plang's own, though goal.list, type.list, … also end in list
+- write out %!app.type["llm.setting"].name%     → llm.setting: the llm settings class is a type of its own
+- write out %!app.type["window.window"].name%   → window.window; and screen.window finds the screen's
+- write out %!app.type["window"]%      → nothing: a module's type is named by its module
+- save %!llm.setting%                  → saved and read back as before
+```
+
+Goes: the `[PlangType("…")]` words; the `setting` family as a kind (decision 48).
+
+### 2. A kind is a type (rulings 1–3)
+
+A type's kind is another type, written `{name, kind}` as today. The builder and the run can then name and keep `decimal`, `json`, `list<path>`.
+
+```
+- set %n% = "1.5" as decimal           → %n!type% is {number, kind: decimal}; decimal is a type under number
+- if %x% is text, …                    → true for a json value: json is under text
+- set %files% = ["a.txt"] as list of path   → %files[0]% is born a path, at its first read
+- set %grid% = [[...]] as list of list of path   → a kind nests
+- split %x% by ","                     → Separator is "comma", one of separator's named values; "with ' | '" keeps any characters
+- set %img% = %bytes% as image/gif, strict  → refused when the bytes aren't a gif
+```
+
+Goes: each family's kind classes as codecs beside their type (number, duration, size, template, separator, bool, path's schemes), as the coder's trace finds them.
+
+### 3. A format type owns its work (rulings 4–6)
+
+A format type keeps its raw bytes until first use, then parses itself into plang values. No C# object travels in their place.
+
+```
+- read 'config.json', write to %cfg%   → %cfg% holds the file's bytes, unread
+- write %cfg% to 'copy.json'           → the bytes pass through, byte for byte, still unread
+- write out %cfg.db%                   → the json type parses itself: "plang"
+- if %cfg% is dict, …                  → true: parsed json is a plang dict
+- read 'list.json', write to %l%       → after the first read into it, %l% is a plang list
+- read 'report.csv', write to %r%      → the same through the csv type: a table at first use
+```
+
+Goes: item's json navigator (walking a `JsonElement`, its own count, first and last).
+
+### 4. The builder offers kinded types (ruling 8)
+
+The Type question lists every type by its name, kinds included, and a generic asks for its element. The baseline's five wrong rows build what the step says.
+
+```
+- set %n% = "1.5" as decimal           → Type=decimal                          (today: number 5/5)
+- set %files% = [...] as list of path  → Type=list, and "a list of what?" → path   (today: list 2/5, path 3/5)
+- set %x% = '{"a":1}' as json          → Type=json                             (today: dict 5/5)
+- read 'notes.md' as text              → Type=text                             (today: {file, kind: md} 5/5)
+- set %d% = "PT30S" as iso duration    → Type=iso                              (today: duration 5/5)
+- set %n% = 5                          → no Type, as before (guard)
+- set %s% = "hi" as text               → text, as before (guard)
+```
+
+Measured by the builder: 5 builds each, fresh, `"cache":"skip"`, counted with jq. The teaching-edit rule applies (the decider fixtures and page goldens re-pinned, diffs read).
+
+### 5. The leftovers go
+
+The demolition list below, each checked by grep.
 
 ## Demolition (what must not survive)
 
