@@ -111,3 +111,15 @@ Each finding the reviewer bots report, checked against the code before it goes a
 **The tester's verdict: no merge blocker.** Agreed.
 
 **The builder's fixes (9e74112f3):** GoalCallReturn asserts `equals 42` (red with 41, put back); the list-query index points at `WhereUnsetVariableIsNotFound`; StepResult asserts `%!data% is true`, not "hello": after `set %x% = "hello"` the step's answer is the set's success (`name.Set`), which the run showed (`Actual: true`). That answer differs from `set default`'s (the existing value, `variable/set.cs:130–134`), so what a set answers is on next-branch.md for Ingi. Suite 245/16/12/3.
+
+## security (plang-a4), areas 1–6 (1aa3b7c05; report `.bot/app-systems/security/v1/report.md`, `security-report.json`)
+
+| finding | checked | status |
+|---|---|---|
+| 382 holds: every actor gets read+execute on `/os/**` (`actor/permission/this.cs:29`), the system actor adds write+delete (`actor/list/this.cs:15–17`); a user's write under `/os/` is asked; the gate's path canonicalization still holds; the terminal sandbox fails closed (PermissionNotEnforced without Landlock 3); `[Sensitive]` kept out of Out, masked in Debug; settings rows per actor; PLNG002 holds | its report | cleared |
+| F1 `signing.verify` throws on a live signature with no expiry: SignAsync allows `Expires` null (`signing/code/Ed25519.cs:36–37`); `signature.Expired` answers false for null (`type/item/signature/this.cs:80`); step 6 reads `signature.Expires!.Value` (`Ed25519.cs:129`) | read: confirmed; fails safe (the throw becomes a failed verify), but a legitimate sign-then-verify without an expiry fails | coder: trace first (does auto-signing reach it?), the shape is a replay-window choice |
+| F2 the `/os/**` grant's glob is case-sensitive (`permission/this.cs:109–139`) while `Places` compares ignoring case (`path/file/this.Validate.cs:80–83`) | latent: both sides come from `app.OsAbsolutePath` today | carry (next-branch) |
+| F3 standing grants keyed by path only, so the system actor's rights depend on the order of two `Stand` calls (`actor/permission/this.cs:36–47`) | intended overwrite today; an order dependence | carry (next-branch) |
+| F4 Landlock 3 doesn't scope the network | the sandbox's own doc says so (`terminal/code/Sandbox.cs:27–29`) | carry (when the kernel has Landlock's network scope) |
+
+**Security's verdict: PASS, no merge blocker.** Agreed; F1 is a bug to fix if the shape is small.
