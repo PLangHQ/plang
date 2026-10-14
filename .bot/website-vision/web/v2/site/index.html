@@ -351,20 +351,26 @@ footer a:hover { color: var(--fg); }
   <div class="wrap">
     <div class="head">
       <h2>Everything is signed.</h2>
-      <p>What you send arrives exactly as you sent it. If anything changes on the way, it is rejected before it runs.</p>
+      <p>Every request, response and message carries an Ed25519 signature from the sender's identity. No auth code to write. No API keys to rotate.</p>
     </div>
     <div class="msgs">
       <div class="msg ok">
-        <div class="meta"><span>From Bjarni → Club Times</span><span>Signed by b51e·3d06</span></div>
-        <p class="text">10 km, 51:40</p>
-        <p class="status">✓ Verified. Saved.</p>
+        <div class="meta"><span>POST /runs · from Bjarni</span><span>X-Signature: ed25519 b51e·3d06…</span></div>
+        <p class="text"><code class="inline">{ "distance": "10 km", "time": "51:40" }</code></p>
+        <p class="status">✓ Identity, hash, nonce and expiry check out.</p>
       </div>
       <div class="msg bad">
-        <div class="meta"><span>From Bjarni → Club Times</span><span>Signed by b51e·3d06</span></div>
-        <p class="text">10 km, <del>51:40</del> <ins>41:40</ins></p>
-        <p class="status">✕ Changed after signing. Rejected.</p>
+        <div class="meta"><span>Same request, body edited in transit</span><span>Signature unchanged</span></div>
+        <p class="text"><code class="inline">{ "distance": "10 km", "time": "<ins>41:40</ins>" }</code></p>
+        <p class="status">✕ DataHashMismatch</p>
+      </div>
+      <div class="msg bad">
+        <div class="meta"><span>Same request, captured and sent again</span><span>Nonce already seen</span></div>
+        <p class="text"><code class="inline">{ "distance": "10 km", "time": "51:40" }</code></p>
+        <p class="status">✕ NonceReplay</p>
       </div>
     </div>
+    <p class="under">Keccak-256 hash, Ed25519 signature, one-time nonce, optional expiry and purpose. <a class="link" href="#docs-signatures">How signatures work ›</a></p>
   </div>
 </section>
 
