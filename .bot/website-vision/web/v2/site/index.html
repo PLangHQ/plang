@@ -425,8 +425,47 @@ footer a:hover { color: var(--fg); }
   <div class="wrap">
     <div class="head">
       <h2>Everything is signed.</h2>
-      <p>Every request, response and message carries an Ed25519 signature from the sender's identity. No auth code to write. No API keys to rotate.</p>
+      <p>Trusting data from another system usually means API keys, HMAC and a table of used nonces. In plang, every request carries an Ed25519 signature from the sender's identity.</p>
     </div>
+
+    <div class="story">
+      <div class="path">
+        <h3>Today</h3>
+        <h4>What the integrator goes through</h4>
+        <ol>
+          <li>Create an account on the other service</li>
+          <li>Generate an API key in its dashboard</li>
+          <li>Copy the secret into a config file or vault</li>
+          <li>Rotate it when it leaks</li>
+        </ol>
+        <h4>What you build</h4>
+        <ol>
+          <li>Secret storage for every partner</li>
+          <li>A canonical request format: method, path, headers, body</li>
+          <li>HMAC signing on the sending side</li>
+          <li>Timestamp header and a clock-skew window</li>
+          <li>Nonce store to block replays</li>
+          <li>Constant-time signature check on the receiving side</li>
+          <li>Body hash, so edited payloads are caught</li>
+          <li>Key rotation with an overlap period</li>
+          <li>Scopes and expiry per key</li>
+          <li>Webhook verification, once per provider</li>
+          <li>Logging and alerts for failed checks</li>
+          <li class="end"><code>request is from partner 17</code></li>
+        </ol>
+      </div>
+      <div class="path short">
+        <h3>With plang</h3>
+<pre class="login"><span class="g">SendRun</span>
+<span class="d">-</span> post https://club.example/runs, <span class="v">%run%</span>
+
+<span class="g">SaveRun</span>
+<span class="d">-</span> insert into runs <span class="v">%run%</span>, runner=<span class="v">%Identity%</span></pre>
+        <p class="fine">Signed when it leaves, with hash, nonce and timestamp. <code class="inline">%Identity%</code> on the other side is who sent it.</p>
+      </div>
+    </div>
+
+    <h3 class="sub-h">What the signature catches</h3>
     <div class="msgs">
       <div class="msg ok">
         <div class="meta"><span>POST /runs · from Bjarni</span><span>X-Signature: ed25519 b51e·3d06…</span></div>
