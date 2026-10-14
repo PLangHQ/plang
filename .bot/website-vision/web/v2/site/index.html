@@ -377,7 +377,8 @@ footer a:hover { color: var(--fg); }
 <pre class="login"><span class="g">Login</span>
 <span class="d">-</span> select * from users where identity=<span class="v">%Identity%</span>,
     write to <span class="v">%user%</span>
-<span class="d">-</span> if <span class="v">%user%</span> is empty, call CreateUser
+<span class="d">-</span> if <span class="v">%user%</span> is empty then insert into user <span class="v">%Identity%</span>,
+    write to <span class="v">%user%</span>
 <span class="d">-</span> return <span class="v">%user%</span></pre>
         <p class="fine"><code class="inline">%Identity%</code> is the caller, taken from the signature on the request. It arrives with every request, so there is nothing to log in to.</p>
       </div>
@@ -752,7 +753,7 @@ footer a:hover { color: var(--fg); }
       <p>When your app calls another plang app, the request is signed with your identity. On the receiving side, <code>%Identity%</code> is the caller: the public key from the signature. Login is a lookup:</p>
 <pre class="cb"><span class="g">Login</span>
 <span class="d">-</span> select * from users where identity=<span class="v">%Identity%</span>, write to <span class="v">%user%</span>
-<span class="d">-</span> if <span class="v">%user%</span> is empty, call CreateUser
+<span class="d">-</span> if <span class="v">%user%</span> is empty then insert into user <span class="v">%Identity%</span>, write to <span class="v">%user%</span>
 <span class="d">-</span> return <span class="v">%user%</span></pre>
       <p>Nothing to log in to, no password to store and no API key to leak. <code>%MyIdentity%</code> is you. <code>%Identity%</code> is whoever is calling. How the signature itself works is in <a class="link" href="#docs-signatures">Signatures</a>.</p>
 
