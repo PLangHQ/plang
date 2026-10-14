@@ -33,7 +33,7 @@ Read "The locked core" in `CLAUDE.md`. Its surface (app's members, the type syst
 
 ## How to run things
 
-- Where: one worktree per branch, shared by every reviewer: `/workspace/plang-app-systems/`. If it isn't there, `git fetch origin app-systems && git worktree add /workspace/plang-app-systems origin/app-systems`. Leave the shared `/workspace/plang` checkout on its branch. Your role lives in your report's path (`.bot/app-systems/<role>/`), not in the worktree's name (Ingi, 2026-10-14).
+- Where: one worktree per branch, named by the branch alone and shared by every reviewer: `/workspace/app-systems/`. If it isn't there, `git fetch origin app-systems && git worktree add /workspace/app-systems origin/app-systems`. Leave the shared `/workspace/plang` checkout on its branch. Your role lives in your report's path (`.bot/app-systems/<role>/`), not in the worktree's name (Ingi, 2026-10-14).
 
 - Build: `./dev.sh build` (incremental; builds the test projects and PlangConsole).
 - C#: `./dev.sh test` for the full sweep, `./dev.sh test <ClassName>` for one class. **Not** `dotnet run --project PLang.Tests`, which some character files still say; the aggregate project isn't runnable.
