@@ -1,0 +1,331 @@
+{
+  "name": "ModuleTypeIsNamedByItsModule",
+  "comment": "A module's type is named by its module (ruling 7, decision 752). A type's name is its\nnamespace read from a root, like a file path, with no search for a unique tail — a\nmodule's type drops `app.module.` and its `type.` folder. So app.module.window.type.window\nis named `window.window`, app.module.screen.type.screen.window is named `screen.window`,\nand bare `window` is nobody's name.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %w% = %!app.type[\"window.window\"]%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%w%",
+              "variable": [
+                {
+                  "text": "%w%",
+                  "code": [
+                    {
+                      "variable": "w"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.type[\"window.window\"]%",
+              "variable": [
+                {
+                  "text": "%!app.type[\"window.window\"]%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "index": {
+                        "text": "window.window"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %w.name% equals \"window.window\"",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%w.name%",
+              "variable": [
+                {
+                  "text": "%w.name%",
+                  "code": [
+                    {
+                      "variable": "w"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "text"
+              },
+              "value": "window.window"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %sw% = %!app.type[\"screen.window\"]%",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%sw%",
+              "variable": [
+                {
+                  "text": "%sw%",
+                  "code": [
+                    {
+                      "variable": "sw"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.type[\"screen.window\"]%",
+              "variable": [
+                {
+                  "text": "%!app.type[\"screen.window\"]%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "index": {
+                        "text": "screen.window"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %sw.name% equals \"screen.window\"",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%sw.name%",
+              "variable": [
+                {
+                  "text": "%sw.name%",
+                  "code": [
+                    {
+                      "variable": "sw"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "text"
+              },
+              "value": "screen.window"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "set %none% = %!app.type[\"window\"]%",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%none%",
+              "variable": [
+                {
+                  "text": "%none%",
+                  "code": [
+                    {
+                      "variable": "none"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.type[\"window\"]%",
+              "variable": [
+                {
+                  "text": "%!app.type[\"window\"]%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "index": {
+                        "text": "window"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %none% is null",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%none%",
+              "variable": [
+                {
+                  "text": "%none%",
+                  "code": [
+                    {
+                      "variable": "none"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/app/type/ModuleTypeIsNamedByItsModule.test.goal",
+  "prPath": "/plan/kind-is-type/app/type/.build/moduletypeisnamedbyitsmodule.test.pr",
+  "hash": "cf56687e2957fd801b1c4333bf7b739156b9ab8b6b907ad6d764ec1764413c59"
+}

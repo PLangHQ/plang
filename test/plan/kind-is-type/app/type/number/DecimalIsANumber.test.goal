@@ -1,0 +1,9 @@
+/ A type's kind is a type (ruling 1). A number carrying kind=decimal lands a value whose
+/ type is number and whose kind navigates as the "decimal" type: `%n!type.kind.name%` is
+/ "decimal". Written in formal so the builder's Type choice is out of it — the red is the
+/ runtime's: today `%n!type.kind%` reads as a text "decimal" (the stopgap of decision 707),
+/ so `.name` can't be navigated.
+DecimalIsANumber
+- variable.set(Name=%n%, Value="1.5", Type={name:"number", kind:"decimal"})
+- assert.equals(Expected="number", Actual=%n!type.name%, Message="n's type name is number")
+- assert.equals(Expected="decimal", Actual=%n!type.kind.name%, Message="n's kind navigates as the decimal type")

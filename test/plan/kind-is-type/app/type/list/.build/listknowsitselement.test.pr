@@ -1,0 +1,233 @@
+{
+  "name": "ListKnowsItsElement",
+  "comment": "A list of path knows its element (rulings 1-2). A list carrying Type={list, kind: path}\nbirths its [0] as a path. Written in formal so the builder's Type choice (today's unstable\n2-list/3-path baseline for `as list of path`) is out of it — the red is the runtime's:\ntoday the kind of a typed list is a bare string (`kind.name` fails) and the element isn't\nborn a path.",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%files%, Value=[\"a.txt\",\"b.txt\"], Type={name:\"list\", kind:\"path\"})",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%files%",
+              "variable": [
+                {
+                  "text": "%files%",
+                  "code": [
+                    {
+                      "variable": "files"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": ["a.txt","b.txt"]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {"name":"list","kind":"path"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=\"list\", Actual=%files!type.name%, Message=\"files' type name is list\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "list"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%files!type.name%",
+              "variable": [
+                {
+                  "text": "%files!type.name%",
+                  "code": [
+                    {
+                      "variable": "files"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "files' type name is list"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"path\", Actual=%files!type.kind.name%, Message=\"files' kind navigates as the path type\")",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "path"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%files!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%files!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "files"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "files' kind navigates as the path type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"path\", Actual=%files[0]!type.name%, Message=\"[0] is born a path\")",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "path"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%files[0]!type.name%",
+              "variable": [
+                {
+                  "text": "%files[0]!type.name%",
+                  "code": [
+                    {
+                      "variable": "files"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "[0] is born a path"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/app/type/list/ListKnowsItsElement.test.goal",
+  "prPath": "/plan/kind-is-type/app/type/list/.build/listknowsitselement.test.pr",
+  "hash": "612cf1ba2eb71bb5cd823ffba5685e757f6839f72a9e0310c38e433bd171a7d0"
+}

@@ -36,12 +36,13 @@ Stage2
 - call /plan/kind-is-type/app/type/text/JsonIsAText
 / a list of path knows its element: [0] is born a path
 - call /plan/kind-is-type/app/type/list/ListKnowsItsElement
-/ a kind nests: a list of lists of path
-- call /plan/kind-is-type/app/type/list/KindNests
+/ a kind nests: a list of lists of path — C# test at PLang.Tests/Types/App/Types/KindNestsTests.cs
+/ (today's formal written-type is one level deep; the nested kind is what stage 2 adds)
 / a separator is a text with five named values; any characters are allowed too
 - call /plan/kind-is-type/app/type/separator/NamedValuesBelongToTheType
-/ a strict kind is checked: an image that isn't a gif is refused as a gif
-- call /plan/kind-is-type/app/type/image/StrictKindIsChecked
+/ a strict kind is checked: an image that isn't a gif is refused as a gif — the stage adopts
+/ the four existing kind/strict tests as its proof (SetAsImageGifStrictMismatch and siblings)
+- call /app/type/kind/strict/SetAsImageGifStrictMismatch
 
 Stage3
 / a format type owns its work: its bytes stay raw until first use, then it parses itself

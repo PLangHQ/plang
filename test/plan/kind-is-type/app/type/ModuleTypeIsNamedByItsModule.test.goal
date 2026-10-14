@@ -1,0 +1,12 @@
+/ A module's type is named by its module (ruling 7, decision 752). A type's name is its
+/ namespace read from a root, like a file path, with no search for a unique tail — a
+/ module's type drops `app.module.` and its `type.` folder. So app.module.window.type.window
+/ is named `window.window`, app.module.screen.type.screen.window is named `screen.window`,
+/ and bare `window` is nobody's name.
+ModuleTypeIsNamedByItsModule
+- set %w% = %!app.type["window.window"]%
+- assert %w.name% equals "window.window"
+- set %sw% = %!app.type["screen.window"]%
+- assert %sw.name% equals "screen.window"
+- set %none% = %!app.type["window"]%
+- assert %none% is null

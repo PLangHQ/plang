@@ -1,0 +1,211 @@
+{
+  "name": "NamedValuesBelongToTheType",
+  "comment": "Named values belong to their type (ruling 3). separator becomes a text — it goes under\ntext, with its named values (\"line\", \"comma\", \"tab\", \"space\", \"semicolon\") held as its\nown list. The proof stage 2 names: `%line% is text` is true (red today — separator is\nits own top-level type today, deriving from item, not text).",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%line%, Value=\"line\", Type={name:\"separator\"})",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%line%",
+              "variable": [
+                {
+                  "text": "%line%",
+                  "code": [
+                    {
+                      "variable": "line"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "line"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {"name":"separator"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "condition.if(Left=%line%, Operator=\"is\", Right=\"text\") { variable.set(Name=%isText%, Value=true) }",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%line%",
+              "variable": [
+                {
+                  "text": "%line%",
+                  "code": [
+                    {
+                      "variable": "line"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "is"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%isText%, Value=true)",
+              "line": {
+                "number": 7
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%isText%",
+                      "variable": [
+                        {
+                          "text": "%isText%",
+                          "code": [
+                            {
+                              "variable": "isText"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=true, Actual=%isText%, Message=\"a separator is a text\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%isText%",
+              "variable": [
+                {
+                  "text": "%isText%",
+                  "code": [
+                    {
+                      "variable": "isText"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a separator is a text"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/app/type/separator/NamedValuesBelongToTheType.test.goal",
+  "prPath": "/plan/kind-is-type/app/type/separator/.build/namedvaluesbelongtothetype.test.pr",
+  "hash": "a0ca262887307f75f59e6ebeec9de520c5d711fec7d6a1c06e50b7c07df4bd09"
+}

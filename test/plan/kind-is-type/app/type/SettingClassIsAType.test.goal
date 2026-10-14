@@ -1,0 +1,8 @@
+/ A type is named by its namespace, read from the root it lives under (ruling 7, decision
+/ 752). A module's type drops `app.module.` and its `type.` folder; the llm settings class
+/ lives at app.module.llm.setting, so its name is `llm.setting` — a type of its own, not a
+/ kind under a shared `setting` family (the family of decision 48 existed only to dodge the
+/ clash). Looking the type up by its namespace name answers with that name.
+SettingClassIsAType
+- set %t% = %!app.type["llm.setting"]%
+- assert %t.name% equals "llm.setting"
