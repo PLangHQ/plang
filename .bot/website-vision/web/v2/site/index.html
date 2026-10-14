@@ -122,6 +122,32 @@ section.band { background: var(--band); }
 .spec dt { color: var(--muted); font-size: 17px; }
 .spec dd { font-size: clamp(21px, 2.6vw, 28px); font-weight: 600; letter-spacing: -0.015em; }
 
+/* Signature playground */
+.play { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; max-width: 1000px; margin: 0 auto; }
+.pstep { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.pnum { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.pstep label { font-size: 14px; color: var(--muted); }
+.pstep textarea { width: 100%; font: 14px/1.5 var(--mono); color: var(--fg); background: var(--band); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; resize: vertical; }
+.pstep textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pstep textarea:disabled { color: var(--muted); }
+.pbtn { justify-self: start; font: 500 15px var(--font); background: var(--btn-bg); color: var(--btn-fg); border: 0; border-radius: 980px; padding: 9px 20px; cursor: pointer; }
+.pbtn:disabled { opacity: 0.35; cursor: default; }
+.penv { display: grid; gap: 6px; font-size: 13px; }
+.penv div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; }
+.penv dt { color: var(--muted); }
+.penv dd { font-family: var(--mono); overflow-wrap: anywhere; }
+.phint { font-size: 13px; color: var(--muted); }
+.checks { display: grid; gap: 10px; }
+.checks li { display: grid; grid-template-columns: 22px minmax(0, 1fr); font-size: 15px; color: var(--muted); }
+.checks li::before { content: "○"; }
+.checks li.pass { color: var(--fg); } .checks li.pass::before { content: "✓"; color: var(--ok); font-weight: 700; }
+.checks li.fail { color: var(--bad); } .checks li.fail::before { content: "✕"; font-weight: 700; }
+.verdict { font-size: 17px; font-weight: 600; border-top: 1px solid var(--line); padding-top: 14px; }
+.verdict.ok { color: var(--ok); } .verdict.bad { color: var(--bad); }
+.verdict code { font: 600 15px var(--mono); }
+.pfine { text-align: center; color: var(--muted); font-size: 14px; margin-top: 18px; }
+@media (max-width: 860px) { .play { grid-template-columns: minmax(0, 1fr); } }
+
 /* Identity story */
 .story { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; max-width: 880px; margin: 0 auto; align-items: start; }
 .path.short { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 72px); }
@@ -465,24 +491,39 @@ footer a:hover { color: var(--fg); }
       </div>
     </div>
 
-    <h3 class="sub-h">What the signature catches</h3>
-    <div class="msgs">
-      <div class="msg ok">
-        <div class="meta"><span>POST /runs · from Bjarni</span><span>X-Signature: ed25519 b51e·3d06…</span></div>
-        <p class="text"><code class="inline">{ "distance": "10 km", "time": "51:40" }</code></p>
-        <p class="status">✓ Identity, hash, nonce and expiry check out.</p>
+    <h3 class="sub-h">Try it</h3>
+    <div class="play" id="play">
+      <div class="pstep">
+        <p class="pnum">1 · Bjarni signs</p>
+        <label for="p-body">Message</label>
+        <textarea id="p-body" rows="3" spellcheck="false">{ "distance": "10 km", "time": "51:40" }</textarea>
+        <button type="button" class="pbtn" id="p-sign">Sign</button>
+        <dl class="penv" id="p-env">
+          <div><dt>identity</dt><dd id="p-id">…</dd></div>
+          <div><dt>hash</dt><dd id="p-hash">not signed yet</dd></div>
+          <div><dt>nonce</dt><dd id="p-nonce">–</dd></div>
+          <div><dt>signature</dt><dd id="p-sig">–</dd></div>
+        </dl>
       </div>
-      <div class="msg bad">
-        <div class="meta"><span>Same request, body edited in transit</span><span>Signature unchanged</span></div>
-        <p class="text"><code class="inline">{ "distance": "10 km", "time": "<ins>41:40</ins>" }</code></p>
-        <p class="status">✕ DataHashMismatch</p>
+      <div class="pstep">
+        <p class="pnum">2 · On the way</p>
+        <label for="p-transit">What arrives. Change anything.</label>
+        <textarea id="p-transit" rows="3" spellcheck="false" disabled>Sign a message first.</textarea>
+        <button type="button" class="pbtn" id="p-send" disabled>Deliver</button>
+        <p class="phint">Deliver the same message twice to see a replay.</p>
       </div>
-      <div class="msg bad">
-        <div class="meta"><span>Same request, captured and sent again</span><span>Nonce already seen</span></div>
-        <p class="text"><code class="inline">{ "distance": "10 km", "time": "51:40" }</code></p>
-        <p class="status">✕ NonceReplay</p>
+      <div class="pstep">
+        <p class="pnum">3 · Club Times verifies</p>
+        <ul class="checks" id="p-checks">
+          <li data-k="sig">Signature matches identity</li>
+          <li data-k="hash">Hash matches message</li>
+          <li data-k="nonce">Nonce not seen before</li>
+          <li data-k="exp">Not expired</li>
+        </ul>
+        <p class="verdict" id="p-verdict" aria-live="polite">Waiting for a message.</p>
       </div>
     </div>
+    <p class="pfine">Runs in your browser with the same algorithms plang uses: Keccak-256 and Ed25519. The key pair is generated here and never leaves this page.</p>
     <p class="under">Keccak-256 hash, Ed25519 signature, one-time nonce, optional expiry and purpose. <a class="link" href="#docs-signatures">How signatures work ›</a></p>
   </div>
 </section>
@@ -921,6 +962,66 @@ footer a:hover { color: var(--fg); }
   </div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl-fast.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha3/0.8.0/sha3.min.js"></script>
+<script>
+// Signature playground: Keccak-256 over the message, Ed25519 over the envelope.
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var verdict = $('p-verdict');
+  if (!window.nacl || !window.keccak256) {
+    verdict.textContent = 'The crypto libraries did not load, so the demo is off.';
+    $('p-sign').disabled = true;
+    return;
+  }
+  function hex(bytes) { return Array.prototype.map.call(bytes, function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }
+  function short(h) { return h.slice(0, 8) + '…' + h.slice(-8); }
+  var enc = new TextEncoder();
+  var keys = nacl.sign.keyPair();
+  var pub = hex(keys.publicKey);
+  var seen = {};
+  var signed = null;
+  $('p-id').textContent = short(pub);
+
+  function resetChecks() {
+    document.querySelectorAll('#p-checks li').forEach(function (li) { li.className = ''; });
+  }
+  function mark(k, ok) { document.querySelector('#p-checks li[data-k="' + k + '"]').className = ok ? 'pass' : 'fail'; }
+
+  $('p-sign').addEventListener('click', function () {
+    var body = $('p-body').value;
+    var nonce = hex(nacl.randomBytes(16));
+    var created = Date.now();
+    var envelope = { identity: pub, created: created, expires: created + 5 * 60 * 1000, nonce: nonce, hash: keccak256(body), contracts: ['C0'] };
+    var envBytes = enc.encode(JSON.stringify(envelope));
+    signed = { envelope: envelope, envBytes: envBytes, sig: nacl.sign.detached(envBytes, keys.secretKey) };
+    $('p-hash').textContent = short(envelope.hash);
+    $('p-nonce').textContent = short(nonce);
+    $('p-sig').textContent = short(hex(signed.sig));
+    var t = $('p-transit'); t.disabled = false; t.value = body;
+    $('p-send').disabled = false;
+    resetChecks();
+    verdict.className = 'verdict'; verdict.textContent = 'Signed. Now deliver it.';
+  });
+
+  $('p-send').addEventListener('click', function () {
+    if (!signed) return;
+    resetChecks();
+    var e = signed.envelope, fail = null;
+    var sigOk = nacl.sign.detached.verify(signed.envBytes, signed.sig, keys.publicKey);
+    mark('sig', sigOk); if (!sigOk) fail = 'SignatureInvalid';
+    var hashOk = keccak256($('p-transit').value) === e.hash;
+    mark('hash', hashOk); if (!fail && !hashOk) fail = 'DataHashMismatch';
+    var nonceOk = !seen[e.nonce];
+    mark('nonce', nonceOk); if (!fail && !nonceOk) fail = 'NonceReplay';
+    var expOk = Date.now() < e.expires;
+    mark('exp', expOk); if (!fail && !expOk) fail = 'Expired';
+    if (sigOk) seen[e.nonce] = true;
+    verdict.className = 'verdict ' + (fail ? 'bad' : 'ok');
+    verdict.innerHTML = fail ? '✕ Rejected: <code>' + fail + '</code>' : '✓ Accepted. Saved as Bjarni’s run.';
+  });
+})();
+</script>
 <script>
 (function () {
   var ex = [
