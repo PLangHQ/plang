@@ -24,11 +24,9 @@
 | [AsIsoDurationKeepsIso](../../../test/plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso.test.goal) | 4 | per decision 749 + ruling 1, `as iso duration` lands `{duration, kind: iso}`; today's name assert passes (`duration`) and the kind.name assert is the red one: `Expected "iso", Actual (null)` | plang |
 | [NoAsNoType](../../../test/plan/kind-is-type/module/variable/set/NoAsNoType.test.goal) | 4 | **guard** — green today (bare literal is number; `as text` stays text); stage 4 must keep both green | plang |
 
-Suite deltas:
+Suite deltas (fresh binary rebuilt from tip, so results reflect stage 0's goal reader + the typed-slot fix):
 - Baseline (start.md): 245 pass / 16 fail / 12 stale / 3 skipped
-- With stage 1 tests: 246 pass / 18 fail / 12 stale / 3 skipped
-- With stage 2 tests: 246 pass / 22 fail / 12 stale / 3 skipped
-- With stage 3 tests: 246 pass / 25 fail / 12 stale / 3 skipped (+0 pass, +3 fail — PassedOnUnread fixed from wrong-reason green)
-- With stage 4 tests: 247 pass / 30 fail / 13 stale / 3 skipped (+1 pass guard, +5 fail)
+- Final with all stages 1–4 tests: **249 pass / 29 fail / 12 stale / 3 skipped**
+- Of those 17 kind-is-type tests I own: 3 pass (ShortNameFindsTheType, ReadIntoIsATable, NoAsNoType — the guards) and 14 fail (each red for its named reason, confirmed on the fresh binary)
 - C# PLang.Tests.Types: +1 failure (KindNestsTests round-trip)
 - C# PLang.Tests.Runtime: +1 failure (TypedSlotJsonReadTests)
