@@ -73,20 +73,18 @@ public sealed partial class @this
     /// there with the call's arguments, and what comes back is its result. Null for a goal of this app — its steps run.</summary>
     internal global::app.parent.@this? Elsewhere { get; init; }
 
+    /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file.</summary>
     [Store, Debug]
-    public global::app.type.item.path.@this? Path { get; set; }
+    public global::app.type.item.path.@this? Path { get => Parent?.Path ?? _path; set => _path = value; }
+    private global::app.type.item.path.@this? _path;
 
     /// <summary>The folder holding this goal's source .goal file — what a relative path in it resolves against.
     /// Null for a goal with no Path.</summary>
     public global::app.type.item.path.@this? Folder => Path?.Parent;
 
     /// <summary>The .pr this goal is built to (<see cref="Pr"/>); none without a Path.</summary>
-    [Store, Debug]
-    public global::app.type.item.path.@this? PrPath
-    {
-        get => Path is { Absolute.Length: > 0 } source ? Pr(source) : null;
-        init { } // PrPath is derived from Path; init no-op so JSON round-trip's serialized prPath is swallowed
-    }
+    [Debug]
+    public global::app.type.item.path.@this? PrPath => Path is { Absolute.Length: > 0 } source ? Pr(source) : null;
 
     /// <summary>The .pr a .goal is built to: <c>X.goal</c> → <c>.build/x.pr</c> beside it. A static on the goal type by
     /// exception — a rule about where a goal's build lands, read before there is a goal: by <see cref="PrPath"/>,
@@ -428,7 +426,7 @@ public sealed partial class @this
 
     /// <summary>
     /// Parses .goal file text into a list of Child.
-    /// All goals share the same Path. First goal is Public, rest are Private.
+    /// The first goal holds the Path; the rest are its sub-goals, in its file. First goal is Public, rest are Private.
     /// Inverse of ToText().
     ///
     /// Stays <c>static</c> by Ingi's ruling: relocating this onto <c>path</c>
@@ -598,12 +596,13 @@ public sealed partial class @this
             // Finalize the previous goal's last step before starting the new goal.
             if (currentStep != null) { stepNode?.Add(currentStep); currentStep = null; }
 
-            // what the goal is — setup, system, a test — it answers itself from where it lives
+            // what the goal is — setup, system, a test — it answers itself from where it lives; a sub-goal lives in
+            // its parent's file, so only the file's first goal holds the path
             currentGoal = new @this
             {
                 Name = goalName,
                 Comment = goalComment,
-                Path = path,
+                Path = goals.Count == 0 ? path : null,
             };
             goals.Add(currentGoal);
             stepNode = new global::app.goal.step.list.@this();

@@ -123,7 +123,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override bool IsLeaf => false;
 
     /// <summary>The goal writes ITSELF — its bare [Store] shape in declaration order, singular keys,
-    /// nulls omitted. Each rich field writes itself: path (its relative string), visibility (the choice
+    /// nulls omitted. Each rich field writes itself: the goal file's name, visibility (the choice
     /// symbol), the step/sub-goal children (each an item). The DEBUG view routes through the reflection
     /// (*) kind so diagnostic props (Errors/Warnings) ride.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
@@ -145,8 +145,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         foreach (var g in Child.Items()) await g.Output(writer, mode, context);
         writer.EndArray();
         writer.Name("visibility"); await Visibility.Output(writer, mode, context);
-        if (Path != null) { writer.Name("path"); await Path.Output(writer, mode, context); }
-        if (PrPath != null) { writer.Name("prPath"); await PrPath.Output(writer, mode, context); }
+        // only the goal file's name: where its .pr is found is where it is (a sub-goal is in its parent's file)
+        if (Parent == null && Path != null) { writer.Name("file"); writer.String(Path.Name.ToString()); }
         if (Hash != null) { writer.Name("hash"); writer.String(Hash); }
         if (BuilderVersion != null) { writer.Name("builderVersion"); writer.String(BuilderVersion); }
         if (Tag.CountRaw > 0) { writer.Name("tag"); await Tag.Output(writer, mode, context); }

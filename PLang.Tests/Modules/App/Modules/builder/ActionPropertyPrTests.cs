@@ -20,12 +20,12 @@ public class ActionPropertyPrTests
         return await _app.actor.list.User.Context.Pr(goal);
     }
 
+    // the .pr as found beside its goal, /Start.goal: the goal is where its .pr is
     private async Task<global::app.data.@this> Read(string pr)
     {
-        var channel = new global::app.channel.type.stream.@this("pr", new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(pr)),
-            global::app.channel.ChannelDirection.Input, ownsStream: true) { Mime = "application/plang-goal" };
-        _app.actor.list.User.Channel.Register(channel);
-        return await channel.Read();
+        var context = _app.actor.list.User.Context;
+        return await _app.type.list.Mime("application/plang-goal").Decode(System.Text.Encoding.UTF8.GetBytes(pr), context,
+            origin: global::app.type.item.path.@this.Resolve("/.build/start.pr", context));
     }
 
     private global::app.goal.@this Sample() => Make.Goal(_app.actor.list.User.Context, "Start",

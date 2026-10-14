@@ -16,7 +16,6 @@ public class GoalTests : System.IAsyncDisposable
             Name = "TestGoal",
             Comment = "This is a comment",
             Path = global::app.type.item.path.@this.Resolve("/setup/to/goal.goal", _app.actor.list.User.Context),
-            PrPath = global::app.type.item.path.@this.Resolve("/setup/to/goal.pr.json", _app.actor.list.User.Context),
             Hash = "abc123",
             Step = new GoalSteps
             {

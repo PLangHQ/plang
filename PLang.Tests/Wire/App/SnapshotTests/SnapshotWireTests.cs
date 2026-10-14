@@ -109,7 +109,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-wire-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
         SetStep(context, goal, 0, "s0", "first");
         var step1 = SetStep(context, goal, 1, "s1", "second");
         app.goal.list.Add(goal);
@@ -142,7 +142,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
         SetStep(context, goal, 0, "s0", "first");
         var step1 = SetStep(context, goal, 1, "s1", "second");
         app.goal.list.Add(goal);
@@ -193,13 +193,13 @@ public class SnapshotWireTests
         context.Variable.Set("i", 1L);
 
         // Start: [0] set a, [1] the call to Sub, [2] post-call marker (the unwind proof).
-        var start = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/Start.pr", app.actor.list.User.Context) };
+        var start = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", app.actor.list.User.Context) };
         SetStep(context, start, 0, "a", "A");
         SetStep(context, start, 1, "calledSub", "yes");          // stands in for `call Sub`
         SetStepRef(context, start, 2, "entryReached", "END");    // post-call: only runs on unwind
 
         // Sub: [0] set b, [1] the throw point (suspended here), [2] continuation reading %i%.
-        var sub = new Goal { Name = "Sub", Path = global::app.type.item.path.@this.Resolve("/Sub.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/Sub.pr", app.actor.list.User.Context) };
+        var sub = new Goal { Name = "Sub", Path = global::app.type.item.path.@this.Resolve("/Sub.goal", app.actor.list.User.Context) };
         SetStep(context, sub, 0, "b", "B");
         SetStep(context, sub, 1, "passedThrow", "ok");           // the `throw if i==1` step
         SetStepRef(context, sub, 2, "seenI", "%i%");             // reads the patched value
@@ -243,7 +243,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-aspath-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
         var step0 = SetStep(context, goal, 0, "x", "1");
         var step1 = SetStepRef(context, goal, 1, "seen", "%x%");
         app.goal.list.Add(goal);
@@ -316,7 +316,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
         var step0 = SetStep(context, goal, 0, "x", "1");
         var step1 = SetStepRef(context, goal, 1, "seen", "%x%");
         app.goal.list.Add(goal);
@@ -357,7 +357,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-typed-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
         var step0 = SetStep(context, goal, 0, "x", "1");
         var step1 = SetStepRef(context, goal, 1, "seen", "%x%");
         app.goal.list.Add(goal);
@@ -390,7 +390,7 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-nav-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
         var step0 = SetStep(context, goal, 0, "x", "1");
         var step1 = SetStepRef(context, goal, 1, "seen", "%x%");   // reads the edited value
         app.goal.list.Add(goal);

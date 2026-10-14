@@ -33,7 +33,6 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
         {
             Name = "G",
             Path = global::app.type.item.path.@this.Resolve("/G.goal", context),
-            PrPath = global::app.type.item.path.@this.Resolve("/G.pr", context),
         };
         goal.Step.Add(new Step { Goal = goal, Index = 0, Text = "do stuff" });
         _app.goal.list.Add(goal);

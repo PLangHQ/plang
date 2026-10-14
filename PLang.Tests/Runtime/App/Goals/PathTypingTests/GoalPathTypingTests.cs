@@ -49,7 +49,6 @@ public class GoalPathTypingTests
         {
             Name = "Test",
             Path = global::app.type.item.path.@this.Resolve("/Start.goal", context),
-            PrPath = global::app.type.item.path.@this.Resolve("/SomeOther/junk.pr", context)
         };
         var rel = goal.PrPath!.Relative(context).Raw.Replace('\\', '/');
         // Init was a no-op — derived from Path, not the explicitly-passed PrPath.

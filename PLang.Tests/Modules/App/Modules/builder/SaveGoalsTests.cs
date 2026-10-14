@@ -84,7 +84,10 @@ public class SaveGoalsTests
 
         // camelCase names
         await Assert.That(json).Contains("\"name\"");
-        await Assert.That(json).Contains("\"prPath\"");
+        // where it is: only its file's name, never a path to it
+        await Assert.That(json).Contains("\"file\": \"Test.goal\"");
+        await Assert.That(json).DoesNotContain("\"prPath\"");
+        await Assert.That(json).DoesNotContain("\"path\"");
         // a comment is written only when the goal has one
         await Assert.That(json).DoesNotContain("\"comment\"");
         // non-stored properties never appear

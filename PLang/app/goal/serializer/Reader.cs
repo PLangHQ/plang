@@ -42,6 +42,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         var step = new global::app.goal.step.serializer.Reader(goal);   // born holding this goal
 
         var named = false;
+        string? file = null;
         reader.BeginObject();
         while (reader.NextName(out var field))
         {
@@ -65,8 +66,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // visibility derives from the goal's parent (a file's first goal is public) — the key
                 // is still written, read by no one.
                 case "visibility": reader.Skip(); break;
-                case "path": goal.Path = global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context); break;
-                // prPath is DERIVED from Path — consume and discard.
+                case "file": file = reader.String(); break;
+                // an older .pr wrote where it was built: only its file name is kept, where it is found decides the rest
+                case "path": file ??= global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context).Name.ToString(); break;
                 case "prPath": reader.Skip(); break;
                 case "hash": goal.Hash = reader.String(); break;
                 case "builderVersion": goal.BuilderVersion = reader.String(); break;
@@ -88,6 +90,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         }
         reader.EndObject();
         if (!named) throw new global::app.error.PrFormatOutdatedException("it has no 'name'", ctx.Origin);
+        // A goal is where its .pr is found: <folder>/.build/x.pr holds <folder>/<file>. A sub-goal is in its parent's
+        // file; a .pr read from no file was found nowhere and has no path.
+        // Written from the app's root, as a goal's path is, whatever form the .pr was asked for by.
+        if (parent == null && file != null && ctx.Origin is { } pr) goal.Path = pr.Parent.Parent.Combine(file).Relative(ctx.Context);
         return goal;
     }
 }
