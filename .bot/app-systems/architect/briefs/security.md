@@ -30,7 +30,7 @@ Rotation of the keys that leaked into transcripts was skipped by Ingi. 312 (a go
 The same brief as steps. The comments under it show what a finding looks like.
 
 ```plang
-Security review of app-systems before the merge to runtime2 (decision 718)
+Security review of app-systems before it merges into its parent (decision 718; not runtime2, 734)
 Start
 - read .bot/app-systems/architect/briefs/common.md, then your character's threat model (PLang is user-sovereign)
 - review each area below in order; blue team first, then try to break it

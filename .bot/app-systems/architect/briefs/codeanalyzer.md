@@ -40,7 +40,7 @@ Per finding: smell name (CLAUDE.md's names), file:line, one sentence on what's w
 The same brief as steps. The comments under it show what a finding looks like.
 
 ```plang
-OBP scan of app-systems' locked core before the merge to runtime2 (decision 718)
+OBP scan of app-systems' locked core before it merges into its parent (decision 718; not runtime2, 734)
 Start
 - read .bot/app-systems/architect/briefs/common.md
 - scan each area below in order, one report section per area, so a long run can stop and resume

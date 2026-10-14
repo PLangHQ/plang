@@ -25,7 +25,7 @@ The plang suite was rebuilt in the last two days (347 tests with 281 unbuilt →
 The same brief as steps. The comments under it show what a finding looks like.
 
 ```plang
-Review the tests on app-systems before the merge to runtime2 (decision 718)
+Review the tests on app-systems before it merges into its parent (decision 718; not runtime2, 734)
 Start
 - read .bot/app-systems/architect/briefs/common.md
 - read .bot/app-systems/coder/summary.md; your version folder is v23 (the coder's latest)

@@ -35,7 +35,7 @@ When the plans are checked off, the app-systems plan's tests move from `test/pla
 The same brief as steps. The comments under it show what a finding looks like.
 
 ```plang
-Check off every plan on the line before the merge to runtime2 (decision 718)
+Check off every plan on the line before app-systems merges into its parent (decision 718; not runtime2, 734)
 Start
 - read .bot/app-systems/architect/briefs/common.md
 - read the other reviewers' reports first: .bot/app-systems/{codeanalyzer,tester,security}/, test-report.json, security-report.json

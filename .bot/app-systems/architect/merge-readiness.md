@@ -1,4 +1,6 @@
-# app-systems → runtime2: what's left (2026-10-12)
+# app-systems → its parent: what's left (2026-10-12; target corrected 2026-10-14)
+
+**Not into runtime2.** Ingi (2026-10-14): "no, we are not merging with runtime2". app-systems merges into its parent, builder-formal (`bd00000d4`), and the line's question is answered branch by branch, each into its own parent.
 
 ## Why
 
@@ -79,4 +81,4 @@ Ingi (2026-10-12): "I would like to merge all the way back to runtime2 … only 
 4. **tester:** the plang suite and the C# suites, every plan's tests run, the 17 dispositioned.
 5. **security:** the areas in Critical 2.
 6. **auditor:** every plan on the line checked off or carried, each with its decision.
-7. **docs:** merges up; each parent is a fast-forward, and runtime2 takes app-systems' tip.
+7. **The merge:** app-systems into its parent, builder-formal, when Ingi says; never into runtime2 (Ingi, 2026-10-14).
