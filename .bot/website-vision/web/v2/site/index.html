@@ -145,6 +145,8 @@ section.band { background: var(--band); }
 .verdict { font-size: 17px; font-weight: 600; border-top: 1px solid var(--line); padding-top: 14px; }
 .verdict.ok { color: var(--ok); } .verdict.bad { color: var(--bad); }
 .verdict code { font: 600 15px var(--mono); }
+.links3 { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 28px; margin-top: 10px; }
+.side a.subl { padding-left: 24px; font-size: 14px; }
 .pfine { text-align: center; color: var(--muted); font-size: 14px; margin-top: 18px; }
 @media (max-width: 860px) { .play { grid-template-columns: minmax(0, 1fr); } }
 
@@ -524,7 +526,8 @@ footer a:hover { color: var(--fg); }
       </div>
     </div>
     <p class="pfine">Runs in your browser with the same algorithms plang uses: Keccak-256 and Ed25519. The key pair is generated here and never leaves this page.</p>
-    <p class="under">Keccak-256 hash, Ed25519 signature, one-time nonce, optional expiry and purpose. <a class="link" href="#docs-signatures">How signatures work ›</a></p>
+    <p class="under">Keccak-256 hash, Ed25519 signature, one-time nonce, optional expiry and purpose.</p>
+    <p class="under links3"><a class="link" href="#docs-signatures-why">Why is it so important? ›</a><a class="link" href="#docs-signatures-proof">Does it work? ›</a><a class="link" href="#docs-signatures">How signatures work ›</a></p>
   </div>
 </section>
 
@@ -803,6 +806,8 @@ footer a:hover { color: var(--fg); }
       <li><a href="#docs-data">Data</a></li>
       <li><a href="#docs-identity">Identity</a></li>
       <li><a href="#docs-signatures">Signatures</a></li>
+      <li><a class="subl" href="#docs-signatures-why">Why it matters</a></li>
+      <li><a class="subl" href="#docs-signatures-proof">Does it work?</a></li>
       <li><a href="#docs-sandbox">The filesystem gate</a></li>
       <li><a href="#docs-callbacks">Pause and resume</a></li>
     </ul>
@@ -941,7 +946,91 @@ footer a:hover { color: var(--fg); }
       <p>Bind a signature to a purpose and give it a short life:</p>
 <pre class="cb"><span class="d">-</span> sign <span class="v">%payload%</span> with contracts ['Payment', 'v1'], expires in 60000ms, write to <span class="v">%signed%</span>
 <span class="d">-</span> verify <span class="v">%signed%</span> with contracts ['Payment', 'v1'], write to <span class="v">%isValid%</span></pre>
-      <p class="next">Previous: <a class="link" href="#docs-identity">‹ Identity</a> &nbsp; Reference: <a class="link" href="https://github.com/PLangHQ/plang/blob/runtime2/docs/modules/signing.md">signing module ›</a></p>
+      <p class="next">Previous: <a class="link" href="#docs-identity">‹ Identity</a> &nbsp; Next: <a class="link" href="#docs-signatures-why">Why it matters ›</a> &nbsp; Reference: <a class="link" href="https://github.com/PLangHQ/plang/blob/runtime2/docs/modules/signing.md">signing module ›</a></p>
+    </article>
+
+    <!-- Signatures: why -->
+    <article data-doc="docs-signatures-why">
+      <p class="crumb">Concepts · Signatures</p>
+      <h1>Why signatures matter</h1>
+      <p class="lead">On today's internet, data carries no proof of its own. You trust it because of where it came from: a server, a session, an API key. A signature puts the proof inside the data.</p>
+
+      <h2>Trust today is borrowed</h2>
+      <p>A webhook is trusted because it arrived at the right URL. An API call is trusted because a secret key was attached. A logged-in user is trusted because a cookie matched a row in a session table.</p>
+      <p>Each of these is a secret held by someone, usually by both sides. Every one of them can leak, and when it leaks, anyone holding it can act as you.</p>
+
+      <h2>What goes wrong</h2>
+      <ul class="dl">
+        <li>API keys end up in public repositories, logs and screenshots.</li>
+        <li>Webhooks get spoofed by anyone who finds the URL.</li>
+        <li>Captured requests get sent again.</li>
+        <li>Password databases get stolen and cracked.</li>
+      </ul>
+
+      <h2>What a signature changes</h2>
+      <ul class="dl">
+        <li><b>The proof travels with the data:</b> who sent it, that it hasn't changed, and that it's fresh.</li>
+        <li><b>Nothing secret is shared.</b> The private key never leaves the sender. The receiver only needs the public key.</li>
+        <li><b>Anyone can check it. Nobody can forge it.</b></li>
+        <li><b>It survives forwarding.</b> A message passed through three apps can still be checked against the person who wrote it.</li>
+      </ul>
+
+      <h2>Why this makes a new internet possible</h2>
+      <p>When data proves itself, it no longer needs a platform in the middle to vouch for it. Two people's apps can talk to each other directly. A record can move between systems and keep its author. That is what "an internet made by the people who use it" rests on.</p>
+      <p class="next">Back: <a class="link" href="#docs-signatures">‹ Signatures</a> &nbsp; Next: <a class="link" href="#docs-signatures-proof">Does it work? ›</a></p>
+    </article>
+
+    <!-- Signatures: proof -->
+    <article data-doc="docs-signatures-proof">
+      <p class="crumb">Concepts · Signatures</p>
+      <h1>Does it work?</h1>
+      <p class="lead">Yes. plang uses well-known building blocks, adds the checks that make them safe on a network, and has a dedicated test for each way verification can fail.</p>
+
+      <h2>The building blocks</h2>
+      <table>
+        <tr><th>Part</th><th>What it is</th></tr>
+        <tr><td>Ed25519</td><td>Public-key signatures, standardised in RFC 8032. Used by OpenSSH, TLS 1.3 and Tor.</td></tr>
+        <tr><td>Keccak-256</td><td>The hash function family behind SHA-3. Keccak-256 is the variant Ethereum uses.</td></tr>
+      </table>
+
+      <h2>What plang adds on top</h2>
+      <ul class="dl">
+        <li><b>Nonce:</b> every signature is single-use, so a captured message can't be replayed.</li>
+        <li><b>Timestamp and timeout:</b> signatures older than 5 minutes are rejected by default.</li>
+        <li><b>Expiry and contracts:</b> a signature can be limited in time and bound to one purpose.</li>
+        <li><b>Full coverage:</b> the signature covers name, type, value, properties and any signatures nested inside.</li>
+      </ul>
+
+      <h2>Tested, case by case</h2>
+      <p>Each error key has its own test in <code>PLang.Tests/App/Modules/signing/VerifyActionTests.cs</code>. Goal-level tests in <code>Tests/Modules/Signing/</code> cover the same cases end to end.</p>
+      <table>
+        <tr><th>Test</th><th>Expects</th></tr>
+        <tr><td><code>Verify_NoSignature_Error</code></td><td><code>NoSignature</code></td></tr>
+        <tr><td><code>Verify_Expired_Error</code></td><td><code>Expired</code></td></tr>
+        <tr><td><code>Verify_TimedOut_Error</code></td><td><code>TimedOut</code></td></tr>
+        <tr><td><code>Verify_NonceReplay_Error</code></td><td><code>NonceReplay</code></td></tr>
+        <tr><td><code>Verify_ContractMismatch_Error</code></td><td><code>ContractMismatch</code></td></tr>
+        <tr><td><code>Verify_HeaderMismatch_Error</code></td><td><code>HeaderMismatch</code></td></tr>
+        <tr><td><code>Verify_DataHashMismatch_Error</code></td><td><code>DataHashMismatch</code></td></tr>
+        <tr><td><code>Verify_SignatureInvalid_Error</code></td><td><code>SignatureInvalid</code></td></tr>
+      </table>
+      <p>And one goal-level test, as written in the suite:</p>
+<pre class="cb"><span class="g">Start</span>
+<span class="d">-</span> sign "hello world", write to <span class="v">%signed%</span>
+<span class="d">-</span> set <span class="v">%tampered%</span> = "<span class="v">%signed%</span> (tampered)"
+<span class="d">-</span> verify <span class="v">%tampered%</span>, on error call CaughtIt
+<span class="d">-</span> assert <span class="v">%caught%</span> equals true
+
+<span class="g">CaughtIt</span>
+<span class="d">-</span> set <span class="v">%caught%</span> = true</pre>
+
+      <h2>What a signature does not do</h2>
+      <ul class="dl">
+        <li>It proves who sent something. It doesn't tell you whether to trust that person.</li>
+        <li>Anyone holding your private key can sign as you. Keep exports secret.</li>
+        <li>Signing is not encryption. Signed data can still be read by anyone who sees it.</li>
+      </ul>
+      <p class="next">Back: <a class="link" href="#docs-signatures-why">‹ Why it matters</a> &nbsp; Tests: <a class="link" href="https://github.com/PLangHQ/plang/blob/runtime2/PLang.Tests/App/Modules/signing/VerifyActionTests.cs">VerifyActionTests.cs on GitHub ›</a></p>
     </article>
 
     <!-- Not yet written -->
