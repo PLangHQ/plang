@@ -107,11 +107,11 @@ Goes: item's json navigator (walking a `JsonElement`, its own count, first and l
 The Type question lists every type by its name, kinds included, and a generic asks for its element. The baseline's five wrong rows build what the step says.
 
 ```
-- set %n% = "1.5" as decimal           → Type=decimal                          (today: number 5/5)
-- set %files% = [...] as list of path  → Type=list, and "a list of what?" → path   (today: list 2/5, path 3/5)
-- set %x% = '{"a":1}' as json          → Type=json                             (today: dict 5/5)
+- set %n% = "1.5" as decimal           → Type={number, kind: decimal}          (today: number 5/5)
+- set %files% = [...] as list of path  → Type=list, and "a list of what?" → path, so {list, kind: path}   (today: list 2/5, path 3/5)
+- set %x% = '{"a":1}' as json          → Type={text, kind: json}               (today: dict 5/5)
 - read 'notes.md' as text              → Type=text                             (today: {file, kind: md} 5/5)
-- set %d% = "PT30S" as iso duration    → Type=iso                              (today: duration 5/5)
+- set %d% = "PT30S" as iso duration    → Type={duration, kind: iso}            (today: duration 5/5)
 - set %n% = 5                          → no Type, as before (guard)
 - set %s% = "hi" as text               → text, as before (guard)
 ```
