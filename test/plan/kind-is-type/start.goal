@@ -20,13 +20,13 @@ Stage0
 - call /plan/kind-is-type/goal/OldPrReadsAsBefore
 
 Stage1
-/ a type is named by its namespace, and a developer writes the shortest unique tail
-/ "as text" finds the text type as before
+/ a type is named by its namespace, read from the root it lives under, like a file path
+/ "as text" and "as list" find plang's own types, as before (a guard)
 - call /plan/kind-is-type/app/type/ShortNameFindsTheType
 / "llm.setting" finds the llm settings class, a type of its own
 - call /plan/kind-is-type/app/type/SettingClassIsAType
-/ a short name two types share is refused, naming the longer names to choose from
-- call /plan/kind-is-type/app/type/SharedShortNameIsRefused
+/ a module's type is named by its module: window.window and screen.window each find theirs, window alone finds none
+- call /plan/kind-is-type/app/type/ModuleTypeIsNamedByItsModule
 
 Stage2
 / a kind is a type: a type's kind is another type, and the written form stays {name, kind}
