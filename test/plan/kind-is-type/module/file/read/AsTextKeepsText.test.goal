@@ -1,0 +1,6 @@
+/ Stage 4 (ruling 8): `read notes.md as text` builds Type=text — the step's `as` is a
+/ force, and text is the chosen type. Red today — the baseline is `{file, kind: md}` 5/5,
+/ so the builder stamps the file+md form and ignores `as text`; %r!type.name% reads "file".
+AsTextKeepsText
+- read notes.md as text, write to %r%
+- assert.equals(Expected="text", Actual=%r!type.name%, Message="type.name is text, not file")

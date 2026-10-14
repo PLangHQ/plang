@@ -1,0 +1,119 @@
+{
+  "name": "AsIsoDurationKeepsIso",
+  "comment": "Stage 4 (ruling 8): `set %d% = \"PT30S\" as iso duration` builds Type=iso (iso is a kind\nof duration, named at its own level after decision 752). Red today — the baseline is\n`duration` 5/5, so the builder drops the iso kind; %d!type.name% reads \"duration\".",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %d% = \"PT30S\" as iso duration",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%d%",
+              "variable": [
+                {
+                  "text": "%d%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "PT30S"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "duration"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=\"iso\", Actual=%d!type.name%, Message=\"type.name is iso, not duration\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "iso"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%d!type.name%",
+              "variable": [
+                {
+                  "text": "%d!type.name%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "type.name is iso, not duration"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso.test.goal",
+  "prPath": "/plan/kind-is-type/module/variable/set/.build/asisodurationkeepsiso.test.pr",
+  "hash": "3805358778e373daf6948b7e34bac6f21d83cb8a9cac963f5065bb575521b894"
+}

@@ -1,0 +1,6 @@
+/ Stage 4 (ruling 8): the builder offers kinded types by name. `set %n% = "1.5" as decimal`
+/ builds Type=decimal and lands %n% whose type.name is "decimal". Red today — the baseline
+/ measurement is `number` 5/5, so the builder drops the kind; %n!type.name% reads "number".
+AsDecimalKeepsDecimal
+- set %n% = "1.5" as decimal
+- assert.equals(Expected="decimal", Actual=%n!type.name%, Message="type.name is decimal, not number")

@@ -1,0 +1,119 @@
+{
+  "name": "AsJsonKeepsJson",
+  "comment": "Stage 4 (ruling 8): `set %x% = '{\"a\":1}' as json` builds Type=json. Red today — the\nbaseline is `dict` 5/5, so the builder treats json as \"parse to dict\"; %x!type.name%\nreads \"dict\".",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = \"{\\\"a\\\":1}\" as json",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"a\":1}"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "dict"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=\"json\", Actual=%x!type.name%, Message=\"type.name is json, not dict\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "json"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.name%",
+              "variable": [
+                {
+                  "text": "%x!type.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "type.name is json, not dict"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/module/variable/set/AsJsonKeepsJson.test.goal",
+  "prPath": "/plan/kind-is-type/module/variable/set/.build/asjsonkeepsjson.test.pr",
+  "hash": "e9b60a5489164d3f8ba920de44b37be59ca8fda65d88796eb012223a48b97fa9"
+}

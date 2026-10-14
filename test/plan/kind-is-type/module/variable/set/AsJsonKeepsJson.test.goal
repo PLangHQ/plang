@@ -1,0 +1,6 @@
+/ Stage 4 (ruling 8): `set %x% = '{"a":1}' as json` builds Type=json. Red today — the
+/ baseline is `dict` 5/5, so the builder treats json as "parse to dict"; %x!type.name%
+/ reads "dict".
+AsJsonKeepsJson
+- set %x% = "{\"a\":1}" as json
+- assert.equals(Expected="json", Actual=%x!type.name%, Message="type.name is json, not dict")

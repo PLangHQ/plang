@@ -1,0 +1,6 @@
+/ Stage 4 (ruling 8): `set %d% = "PT30S" as iso duration` builds Type=iso (iso is a kind
+/ of duration, named at its own level after decision 752). Red today — the baseline is
+/ `duration` 5/5, so the builder drops the iso kind; %d!type.name% reads "duration".
+AsIsoDurationKeepsIso
+- set %d% = "PT30S" as iso duration
+- assert.equals(Expected="iso", Actual=%d!type.name%, Message="type.name is iso, not duration")

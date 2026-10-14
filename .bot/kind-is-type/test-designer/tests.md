@@ -11,16 +11,24 @@
 | [KindNestsTests](../../../PLang.Tests/Types/App/Types/KindNestsTests.cs) | 2 | `TheNestedWrittenForm_ReadsThroughTheTypeSerializer`: `InvalidOperationException: Cannot get the value of a token type 'StartObject' as a string` at `type/serializer/Reader.cs:33` — reads `kind` as a bare string, so a nested-kind JSON `{"name":"list","kind":{"name":"list","kind":"path"}}` trips at the inner `{`. Additional assertions (reached after stage 2) check the inner `kind` is a type whose name is `list` and whose own `kind.Name` is `path`. | C# |
 | [NamedValuesBelongToTheType](../../../test/plan/kind-is-type/app/type/separator/NamedValuesBelongToTheType.test.goal) | 2 | `Expected true, Actual (null)` for `%isText%` — `if %line% is text` never fires because today separator is a top-level type (deriving from `item`, not `text`) | plang |
 | [SetAsImageGifStrictMismatch](../../../test/app/type/kind/strict/SetAsImageGifStrictMismatch.test.goal) | 2 | stage 2 adopts this and the three siblings in `test/app/type/kind/strict/` as its proof per architect; red today per the kind/strict baseline | plang |
-| [PassedOnUnread](../../../test/plan/kind-is-type/app/type/json/PassedOnUnread.test.goal) | 3 | `Expected 65 B, Actual 40 B` — today's write reformats the file (config.json's 65 bytes become 40 bytes compact: `{"zebra":1,"alpha":"two","beta":[3,4,5]}`). Sizes read into variables before the copy is deleted; file sizes compared through the path type (byte-level fact, no json parse). | plang |
+| [PassedOnUnread](../../../test/plan/kind-is-type/app/type/json/PassedOnUnread.test.goal) | 3 | `Expected "UeSp..." Actual "sQxd..."` — sha256 of each file's bytes diverges because today's write reformats (65-byte config.json → 40-byte compact `{"zebra":1,"alpha":"two","beta":[3,4,5]}`). Each file hashed through its path (crypto.hash streams the file; the Data slot carries the path, not a prior parsed value). | plang |
 | [ReadIntoIsADict](../../../test/plan/kind-is-type/app/type/json/ReadIntoIsADict.test.goal) | 3 | `Expected true, Actual (null)` for `%isDict%` — the first-read assert passes (`%cfg.alpha% equals "two"`) but `%cfg% is dict` still returns false because parsed json is a C# JsonElement, not a plang dict | plang |
 | [ArrayIsAList](../../../test/plan/kind-is-type/app/type/json/ArrayIsAList.test.goal) | 3 | `Expected true, Actual (null)` for `%isList%` — same shape; `%l[0]% = 1` passes but `%l% is list` is false | plang |
 | [ReadIntoIsATable](../../../test/plan/kind-is-type/app/type/csv/ReadIntoIsATable.test.goal) | 3 | **guard** — green today after the first read (`%r.count% = 2` passes, `%r% is table` passes); stage 3's bytes-until-first-use change must keep it green | plang |
 | [TypedSlotJsonReadTests](../../../PLang.Tests/Runtime/App/Goals/TypedSlotJsonReadTests.cs) | 3 | `ATypedDictSlot_FirstReadOfTheDict_GoesThroughJsonAndAnswers` — the first read of the settled dict goes through the json type and answers one entry; today the made value loses json and the first read answers nothing (decision 758 — companion to the coder's lazy-pin `ATypedSlot_SettlingAReferenceToUnreadContent_DoesNotReadIt`) | C# |
 
+| [AsDecimalKeepsDecimal](../../../test/plan/kind-is-type/module/variable/set/AsDecimalKeepsDecimal.test.goal) | 4 | `Expected "decimal", Actual "number"` — baseline measurement: `as decimal` saves Type=number 5/5 today (the kind is dropped) | plang |
+| [AsListOfPathKeepsTheElement](../../../test/plan/kind-is-type/module/variable/set/AsListOfPathKeepsTheElement.test.goal) | 4 | `Expected "path", Actual "text"` for `%files[0]!type.name%` — the element isn't born a path today (baseline: list 2/5, path 3/5, element becomes text) | plang |
+| [AsJsonKeepsJson](../../../test/plan/kind-is-type/module/variable/set/AsJsonKeepsJson.test.goal) | 4 | `Expected "json", Actual "dict"` — baseline: `as json` saves Type=dict 5/5 today | plang |
+| [AsTextKeepsText](../../../test/plan/kind-is-type/module/file/read/AsTextKeepsText.test.goal) | 4 | `Expected "text", Actual "file"` — baseline: `read notes.md as text` saves `{file, kind: md}` 5/5 today | plang |
+| [AsIsoDurationKeepsIso](../../../test/plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso.test.goal) | 4 | `Expected "iso", Actual "duration"` — baseline: `as iso duration` saves Type=duration 5/5 today | plang |
+| [NoAsNoType](../../../test/plan/kind-is-type/module/variable/set/NoAsNoType.test.goal) | 4 | **guard** — green today (bare literal is number; `as text` stays text); stage 4 must keep both green | plang |
+
 Suite deltas:
 - Baseline (start.md): 245 pass / 16 fail / 12 stale / 3 skipped
 - With stage 1 tests: 246 pass / 18 fail / 12 stale / 3 skipped
 - With stage 2 tests: 246 pass / 22 fail / 12 stale / 3 skipped
-- With stage 3 tests: 247 pass / 25 fail / 12 stale / 3 skipped (+1 pass guard, +3 fail)
-- C# PLang.Tests.Types: +1 failure (KindNestsTests, replaced single-case round-trip)
+- With stage 3 tests: 246 pass / 25 fail / 12 stale / 3 skipped (+0 pass, +3 fail — PassedOnUnread fixed from wrong-reason green)
+- With stage 4 tests: 247 pass / 30 fail / 13 stale / 3 skipped (+1 pass guard, +5 fail)
+- C# PLang.Tests.Types: +1 failure (KindNestsTests round-trip)
 - C# PLang.Tests.Runtime: +1 failure (TypedSlotJsonReadTests)
