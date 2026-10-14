@@ -150,3 +150,5 @@ Each finding the reviewer bots report, checked against the code before it goes a
 | test/plan/task | carried: about 14 plang tests not written (Stage 3 foreach-in-parallel, Stage 4 builder goldens, three of Stage 2's list tests), all covered in C# (`TaskTests.cs`) | the tester's T2; on next-branch.md (729) | carried |
 | test/plan/list-query | done: stage 3's four actions gone (`module/list/` has `query.cs`, no where/sort/group/unique); its tests already live in the concept tree (`test/module/list/query/`, not under `test/plan/list-query/` as the auditor wrote); the index fixed (9e74112f3). One doc line still names `list.where`: `PLang/app/data/this.code.md` | `ls module/list/`; grep | done; the doc line to cleanup batch 2 |
 | test/plan/snapshot | carried whole (665) | the 6 C# tests tagged carried; the plan not built | carried |
+
+**F-GGS-1 closed:** the builder removed `os/system/.build/debug.pr` (ebedf7180, Ingi's yes, 734); nothing referenced it but its own path fields; the suite stays 245/16/12/3.
