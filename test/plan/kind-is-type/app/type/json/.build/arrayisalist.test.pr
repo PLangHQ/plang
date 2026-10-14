@@ -1,12 +1,12 @@
 {
   "name": "ArrayIsAList",
-  "comment": "A json array parses into a plang list (ruling 5), through the json type's own parse,\nnot as a JsonElement carrier.",
+  "comment": "A json array parses into a plang list (ruling 5), through the json type's own parse.\nThe read goes first (decision 401), then `%l% is list` is true. Today's parse yields\na C# JsonElement, so `is list` reads false even after a successful index read.",
   "step": [
     {
       "index": 0,
       "text": "read list.json, write to %l%",
       "line": {
-        "number": 4
+        "number": 5
       },
       "code": [
         {
@@ -86,9 +86,61 @@
     },
     {
       "index": 1,
+      "text": "assert.equals(Expected=1, Actual=%l[0]%, Message=\"the first read goes through the json type\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%l[0]%",
+              "variable": [
+                {
+                  "text": "%l[0]%",
+                  "code": [
+                    {
+                      "variable": "l"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the first read goes through the json type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
       "text": "condition.if(Left=%l%, Operator=\"is\", Right=\"list\") { variable.set(Name=%isList%, Value=true) }",
       "line": {
-        "number": 5
+        "number": 7
       },
       "code": [
         {
@@ -134,7 +186,7 @@
               "index": 0,
               "text": "variable.set(Name=%isList%, Value=true)",
               "line": {
-                "number": 5
+                "number": 7
               },
               "code": [
                 {
@@ -183,10 +235,10 @@
       ]
     },
     {
-      "index": 2,
-      "text": "assert.equals(Expected=true, Actual=%isList%, Message=\"parsed json array is a plang list\")",
+      "index": 3,
+      "text": "assert.equals(Expected=true, Actual=%isList%, Message=\"after the read, %l% is a plang list\")",
       "line": {
-        "number": 6
+        "number": 8
       },
       "code": [
         {
@@ -221,9 +273,20 @@
             {
               "name": "Message",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
-              "value": "parsed json array is a plang list"
+              "value": "after the read, %l% is a plang list",
+              "variable": [
+                {
+                  "text": "%l%",
+                  "code": [
+                    {
+                      "variable": "l"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -234,5 +297,5 @@
   "visibility": "Public",
   "path": "/plan/kind-is-type/app/type/json/ArrayIsAList.test.goal",
   "prPath": "/plan/kind-is-type/app/type/json/.build/arrayisalist.test.pr",
-  "hash": "dcd9abb114ed49aa0df115894631f5af1d7722b4b564e747a3e3cacd8dc7521d"
+  "hash": "3de3dd7d36993bec015bb1772d5174fbb85761b07bec400d26a51fd0c65481b1"
 }

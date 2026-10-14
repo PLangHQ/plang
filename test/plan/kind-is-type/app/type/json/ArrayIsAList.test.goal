@@ -1,6 +1,8 @@
-/ A json array parses into a plang list (ruling 5), through the json type's own parse,
-/ not as a JsonElement carrier.
+/ A json array parses into a plang list (ruling 5), through the json type's own parse.
+/ The read goes first (decision 401), then `%l% is list` is true. Today's parse yields
+/ a C# JsonElement, so `is list` reads false even after a successful index read.
 ArrayIsAList
 - read list.json, write to %l%
+- assert.equals(Expected=1, Actual=%l[0]%, Message="the first read goes through the json type")
 - condition.if(Left=%l%, Operator="is", Right="list") { variable.set(Name=%isList%, Value=true) }
-- assert.equals(Expected=true, Actual=%isList%, Message="parsed json array is a plang list")
+- assert.equals(Expected=true, Actual=%isList%, Message="after the read, %l% is a plang list")

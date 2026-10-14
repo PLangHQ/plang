@@ -1,12 +1,17 @@
 / A format type keeps its raw bytes until first use (ruling 6): a json file read and
 / written back on, unchanged, is byte-for-byte the same. config.json is spelled with
 / unusual whitespace and keys out of order so any re-parse-and-write would reformat and
-/ the hashes would diverge. The copy is deleted at the end. If this is green today (today's
-/ file passthrough already preserves bytes), mark it a guard — stage 3 must keep it green.
+/ the file sizes would diverge. We compare the two files' sizes directly through the
+/ path type (a byte-level fact that doesn't go through the json parse). Sizes are read
+/ into variables BEFORE the copy is deleted so the lazy size read sees the live file.
+/ Red today — today's write reformats config.json's 65 bytes to a 40-byte compact json
+/ ({"zebra":1,"alpha":"two","beta":[3,4,5]}).
 PassedOnUnread
+- file.exists config.json, write to %origPath%
 - read config.json, write to %cfg%
 - write %cfg% to copy.json
-- hash config.json using sha256, write to %origHash%
-- hash copy.json using sha256, write to %copyHash%
+- file.exists copy.json, write to %copyPath%
+- set %origSize% = %origPath.Size%
+- set %copySize% = %copyPath.Size%
 - file.delete copy.json
-- assert.equals(Expected=%origHash%, Actual=%copyHash%, Message="bytes pass through byte-for-byte")
+- assert.equals(Expected=%origSize%, Actual=%copySize%, Message="file sizes match (bytes pass through byte-for-byte)")

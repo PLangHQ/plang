@@ -1,12 +1,84 @@
 {
   "name": "PassedOnUnread",
-  "comment": "A format type keeps its raw bytes until first use (ruling 6): a json file read and\nwritten back on, unchanged, is byte-for-byte the same. config.json is spelled with\nunusual whitespace and keys out of order so any re-parse-and-write would reformat and\nthe hashes would diverge. The copy is deleted at the end. If this is green today (today's\nfile passthrough already preserves bytes), mark it a guard — stage 3 must keep it green.",
+  "comment": "A format type keeps its raw bytes until first use (ruling 6): a json file read and\nwritten back on, unchanged, is byte-for-byte the same. config.json is spelled with\nunusual whitespace and keys out of order so any re-parse-and-write would reformat and\nthe file sizes would diverge. We compare the two files' sizes directly through the\npath type (a byte-level fact that doesn't go through the json parse). Sizes are read\ninto variables BEFORE the copy is deleted so the lazy size read sees the live file.\nRed today — today's write reformats config.json's 65 bytes to a 40-byte compact json\n({\"zebra\":1,\"alpha\":\"two\",\"beta\":[3,4,5]}).",
   "step": [
     {
       "index": 0,
+      "text": "file.exists config.json, write to %origPath%",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "exists",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "config.json"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%origPath%",
+              "variable": [
+                {
+                  "text": "%origPath%",
+                  "code": [
+                    {
+                      "variable": "origPath"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
       "text": "read config.json, write to %cfg%",
       "line": {
-        "number": 7
+        "number": 11
       },
       "code": [
         {
@@ -85,10 +157,10 @@
       ]
     },
     {
-      "index": 1,
+      "index": 2,
       "text": "write %cfg% to copy.json",
       "line": {
-        "number": 8
+        "number": 12
       },
       "code": [
         {
@@ -125,41 +197,22 @@
       ]
     },
     {
-      "index": 2,
-      "text": "hash config.json using sha256, write to %origHash%",
+      "index": 3,
+      "text": "file.exists copy.json, write to %copyPath%",
       "line": {
-        "number": 9
+        "number": 13
       },
       "code": [
         {
-          "module": "crypto",
-          "name": "hash",
+          "module": "file",
+          "name": "exists",
           "property": [
             {
-              "name": "Data",
+              "name": "Path",
               "type": {
-                "name": "item",
-                "template": "plang"
+                "name": "path"
               },
-              "value": "%!data%",
-              "variable": [
-                {
-                  "text": "%!data%",
-                  "code": [
-                    {
-                      "variable": "!data"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Algorithm",
-              "type": {
-                "name": "choice",
-                "kind": "hash"
-              },
-              "value": "sha256"
+              "value": "copy.json"
             }
           ]
         },
@@ -172,13 +225,13 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%origHash%",
+              "value": "%copyPath%",
               "variable": [
                 {
-                  "text": "%origHash%",
+                  "text": "%copyPath%",
                   "code": [
                     {
-                      "variable": "origHash"
+                      "variable": "copyPath"
                     }
                   ]
                 }
@@ -213,104 +266,143 @@
             }
           ]
         }
-      ]
-    },
-    {
-      "index": 3,
-      "text": "hash copy.json using sha256, write to %copyHash%",
-      "line": {
-        "number": 10
-      },
-      "code": [
+      ],
+      "warning": [
         {
-          "module": "crypto",
-          "name": "hash",
-          "property": [
-            {
-              "name": "Data",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%!data%",
-              "variable": [
-                {
-                  "text": "%!data%",
-                  "code": [
-                    {
-                      "variable": "!data"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Algorithm",
-              "type": {
-                "name": "choice",
-                "kind": "hash"
-              },
-              "value": "sha256"
-            }
-          ]
-        },
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%copyHash%",
-              "variable": [
-                {
-                  "text": "%copyHash%",
-                  "code": [
-                    {
-                      "variable": "copyHash"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%!data%",
-              "variable": [
-                {
-                  "text": "%!data%",
-                  "code": [
-                    {
-                      "variable": "!data"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
+          "key": "Unsure",
+          "message": "step 3 uses variable.set, which the decider was not sure of (0.86)"
         }
       ]
     },
     {
       "index": 4,
+      "text": "set %origSize% = %origPath.Size%",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%origSize%",
+              "variable": [
+                {
+                  "text": "%origSize%",
+                  "code": [
+                    {
+                      "variable": "origSize"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%origPath.Size%",
+              "variable": [
+                {
+                  "text": "%origPath.Size%",
+                  "code": [
+                    {
+                      "variable": "origPath"
+                    },
+                    {
+                      "property": "Size"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "set %copySize% = %copyPath.Size%",
+      "line": {
+        "number": 15
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%copySize%",
+              "variable": [
+                {
+                  "text": "%copySize%",
+                  "code": [
+                    {
+                      "variable": "copySize"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%copyPath.Size%",
+              "variable": [
+                {
+                  "text": "%copyPath.Size%",
+                  "code": [
+                    {
+                      "variable": "copyPath"
+                    },
+                    {
+                      "property": "Size"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
       "text": "file.delete copy.json",
       "line": {
-        "number": 11
+        "number": 16
       },
       "code": [
         {
@@ -338,10 +430,10 @@
       ]
     },
     {
-      "index": 5,
-      "text": "assert.equals(Expected=%origHash%, Actual=%copyHash%, Message=\"bytes pass through byte-for-byte\")",
+      "index": 7,
+      "text": "assert.equals(Expected=%origSize%, Actual=%copySize%, Message=\"file sizes match (bytes pass through byte-for-byte)\")",
       "line": {
-        "number": 12
+        "number": 17
       },
       "code": [
         {
@@ -354,13 +446,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%origHash%",
+              "value": "%origSize%",
               "variable": [
                 {
-                  "text": "%origHash%",
+                  "text": "%origSize%",
                   "code": [
                     {
-                      "variable": "origHash"
+                      "variable": "origSize"
                     }
                   ]
                 }
@@ -372,13 +464,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%copyHash%",
+              "value": "%copySize%",
               "variable": [
                 {
-                  "text": "%copyHash%",
+                  "text": "%copySize%",
                   "code": [
                     {
-                      "variable": "copyHash"
+                      "variable": "copySize"
                     }
                   ]
                 }
@@ -389,7 +481,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "bytes pass through byte-for-byte"
+              "value": "file sizes match (bytes pass through byte-for-byte)"
             }
           ]
         }
@@ -400,5 +492,5 @@
   "visibility": "Public",
   "path": "/plan/kind-is-type/app/type/json/PassedOnUnread.test.goal",
   "prPath": "/plan/kind-is-type/app/type/json/.build/passedonunread.test.pr",
-  "hash": "fc4774e370f04ce29d6e91fb3719d524d9d6aac447caf0a177af970b52112acf"
+  "hash": "9426743069e342a45b4bbf222d413e68fd75a1017fcdf72301586cdb625584e4"
 }

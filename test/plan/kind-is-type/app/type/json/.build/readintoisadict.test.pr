@@ -1,6 +1,6 @@
 {
   "name": "ReadIntoIsADict",
-  "comment": "A format type owns its parse (ruling 5): the first read into a json file parses it\ninto a plang dict, not a JsonElement carrier. The developer-visible proof: `%cfg% is dict`\nis true, so the dict operator sees it as a dict (Cut2 / Narrow baseline is red today\nbecause parsed json is a C# JsonElement, not a plang value).",
+  "comment": "A format type owns its parse (ruling 5): the first read into a json file parses it\ninto a plang dict. The read goes first (decision 401 — json stays text until read into),\nthen `%cfg% is dict` is true. Today's parse yields a C# JsonElement, so `is dict` reads\nfalse even after a successful member read (Cut2 / Narrow baseline).",
   "step": [
     {
       "index": 0,
@@ -86,9 +86,59 @@
     },
     {
       "index": 1,
-      "text": "condition.if(Left=%cfg%, Operator=\"is\", Right=\"dict\") { variable.set(Name=%isDict%, Value=true) }",
+      "text": "assert.equals(Expected=\"two\", Actual=%cfg.alpha%, Message=\"the first read goes through the json type\")",
       "line": {
         "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "two"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%cfg.alpha%",
+              "variable": [
+                {
+                  "text": "%cfg.alpha%",
+                  "code": [
+                    {
+                      "variable": "cfg"
+                    },
+                    {
+                      "property": "alpha"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the first read goes through the json type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "condition.if(Left=%cfg%, Operator=\"is\", Right=\"dict\") { variable.set(Name=%isDict%, Value=true) }",
+      "line": {
+        "number": 8
       },
       "code": [
         {
@@ -134,7 +184,7 @@
               "index": 0,
               "text": "variable.set(Name=%isDict%, Value=true)",
               "line": {
-                "number": 7
+                "number": 8
               },
               "code": [
                 {
@@ -183,10 +233,10 @@
       ]
     },
     {
-      "index": 2,
-      "text": "assert.equals(Expected=true, Actual=%isDict%, Message=\"parsed json is a plang dict\")",
+      "index": 3,
+      "text": "assert.equals(Expected=true, Actual=%isDict%, Message=\"after the read, %cfg% is a plang dict\")",
       "line": {
-        "number": 8
+        "number": 9
       },
       "code": [
         {
@@ -221,9 +271,20 @@
             {
               "name": "Message",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
-              "value": "parsed json is a plang dict"
+              "value": "after the read, %cfg% is a plang dict",
+              "variable": [
+                {
+                  "text": "%cfg%",
+                  "code": [
+                    {
+                      "variable": "cfg"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -234,5 +295,5 @@
   "visibility": "Public",
   "path": "/plan/kind-is-type/app/type/json/ReadIntoIsADict.test.goal",
   "prPath": "/plan/kind-is-type/app/type/json/.build/readintoisadict.test.pr",
-  "hash": "c5a25090893408434a61e8902bee731d11cf4545a94c1a880343fa697e48f480"
+  "hash": "fca3f41cb2e506b213339ad418c8240dfe974e067c1e8671c147c30fd89fc3c4"
 }
