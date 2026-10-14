@@ -133,6 +133,8 @@ section.band { background: var(--band); }
 .path li.end::before { content: "→"; color: var(--fg); }
 .path li.end code { font: 600 15px var(--mono); overflow-wrap: anywhere; }
 .path.short li.end code { color: var(--accent); }
+.path .login { margin: 0; font: 15px/1.75 var(--mono); overflow-x: auto; }
+.path .login .g { font-weight: 600; } .path .login .d { color: var(--muted); } .path .login .v { color: var(--accent); }
 .path .fine { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
 .gone { max-width: 880px; margin: 40px auto 0; display: grid; gap: 14px; justify-items: center; }
 .gone h3 { margin: 0; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
@@ -372,12 +374,12 @@ footer a:hover { color: var(--fg); }
       </div>
       <div class="path short">
         <h3>With plang</h3>
-        <ol>
-          <li>Every person has a key pair</li>
-          <li>Every request is signed with it</li>
-          <li class="end"><code>user.id = 7f3a·91c2·e04d·5b18</code></li>
-        </ol>
-        <p class="fine">The public key is the id. It arrives with every request. There is no login step.</p>
+<pre class="login"><span class="g">Login</span>
+<span class="d">-</span> select * from users where identity=<span class="v">%Identity%</span>,
+    write to <span class="v">%user%</span>
+<span class="d">-</span> if <span class="v">%user%</span> is empty, call CreateUser
+<span class="d">-</span> return <span class="v">%user%</span></pre>
+        <p class="fine"><code class="inline">%Identity%</code> is the caller, taken from the signature on the request. It arrives with every request, so there is nothing to log in to.</p>
       </div>
     </div>
 
@@ -747,7 +749,12 @@ footer a:hover { color: var(--fg); }
 <span class="d">-</span> write out 'My public key: <span class="v">%MyIdentity%</span>'</pre>
 
       <h2>Instead of passwords</h2>
-      <p>When your app calls another plang app, the request is signed with your identity. The receiving side reads the public key from the signature and knows who is calling. Nothing to log in to, no password to store and no API key to leak. How the signature itself works is in <a class="link" href="#docs-signatures">Signatures</a>.</p>
+      <p>When your app calls another plang app, the request is signed with your identity. On the receiving side, <code>%Identity%</code> is the caller: the public key from the signature. Login is a lookup:</p>
+<pre class="cb"><span class="g">Login</span>
+<span class="d">-</span> select * from users where identity=<span class="v">%Identity%</span>, write to <span class="v">%user%</span>
+<span class="d">-</span> if <span class="v">%user%</span> is empty, call CreateUser
+<span class="d">-</span> return <span class="v">%user%</span></pre>
+      <p>Nothing to log in to, no password to store and no API key to leak. <code>%MyIdentity%</code> is you. <code>%Identity%</code> is whoever is calling. How the signature itself works is in <a class="link" href="#docs-signatures">Signatures</a>.</p>
 
       <h2>Actors</h2>
       <p>An app runs as three actors: <code>User</code>, <code>Service</code> and <code>System</code>. Each has its own identity and its own resources, so what the system does and what a user does are never the same signer.</p>
