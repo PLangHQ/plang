@@ -131,3 +131,4 @@ Each finding the reviewer bots report, checked against the code before it goes a
 | plan | auditor's check-off | checked | status |
 |---|---|---|---|
 | scalars-as-native (7 stages) | all done: item apex, the 8 wrappers, `Data<T> where T : item, ICreate<T>`, ScalarComparer gone (only doc mentions), no `Data<rawCLR>` | grep: the constraint at `data/this.cs:509, 539, 566`; no live ScalarComparer | done |
+| settings-config-unification | all done: `app/config/` gone, `module/settings` → `setting`, IConfig/IConfigure/ModuleView/http.configure/Config records gone; `context.Setting.Of<T>()` the live read door (the plan's `Resolve(keys)` shape differs; the plan let the coder own the shape) | `ls`/grep: config folder and the interfaces gone, `module/setting/` present | done |
