@@ -195,39 +195,6 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%",
-              "variable": [
-                {
-                  "text": "%!data%",
-                  "code": [
-                    {
-                      "variable": "!data"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        },
-        {
-          "module": "file",
-          "name": "exists",
-          "property": [
-            {
-              "name": "Path",
-              "type": {
-                "name": "path",
-                "template": "plang"
-              },
               "value": "%photo!path.exists%",
               "variable": [
                 {
@@ -246,13 +213,16 @@
                 }
               ]
             }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
           ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 3 uses file.exists, which the decider was not sure of (0.77)"
         }
       ]
     },
@@ -292,7 +262,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/app/type/path/PhotoPathExistsMissingFile.test.goal",
-  "prPath": "/app/type/path/.build/photopathexistsmissingfile.test.pr",
+  "file": "PhotoPathExistsMissingFile.test.goal",
   "hash": "94d73c95b7f6c42d91c4534d49024bdecf4c24da166ecfaa554fae58acba8459"
 }
