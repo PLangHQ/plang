@@ -115,6 +115,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         global::app.type.item.signature.Origin origin = global::app.type.item.signature.Origin.Signed,
         global::app.type.item.duration.@this? window = null)
     {
+        // a signature read live is good only for its window: without one it would never end, and verify could not
+        // say how long its nonce is remembered
+        if (origin == global::app.type.item.signature.Origin.Live && window == null)
+            throw new global::app.error.AppException(new global::app.error.Error(
+                "a signature read live needs the window it is good for (the signing setting's expiry)",
+                "LiveSignatureNeedsWindow", 500));
         Origin = origin;
         Value = value;
         Algorithm = algorithm ?? new text("ed25519");

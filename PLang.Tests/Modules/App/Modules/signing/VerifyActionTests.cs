@@ -177,6 +177,19 @@ public class VerifyActionTests
         await (await VerifyHelper(signed, contracts: new List<string> { "C0" })).IsSuccess();
     }
 
+    // A signature read live is born with its window: one without is refused at construction.
+    [Test]
+    public async Task ALiveSignatureWithNoWindow_IsRefused()
+    {
+        var l = Layer(await SignHelper("test"));
+
+        var refused = Assert.Throws<global::app.error.AppException>(() => new global::app.type.item.signature.@this(
+            l.Value, l.Algorithm, l.Nonce, l.Created, l.Identity, l.Hash, l.Signature, null, l.Contracts,
+            global::app.type.item.signature.Origin.Live, window: null));
+
+        await Assert.That(refused!.Error.Key).IsEqualTo("LiveSignatureNeedsWindow");
+    }
+
     // Expires is the earlier of what the signer signed and, read live, the window after Created.
     [Test]
     public async Task Expires_IsTheEarlierOfSignedAndTheLiveWindow()
