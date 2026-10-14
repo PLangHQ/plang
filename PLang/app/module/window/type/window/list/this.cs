@@ -73,9 +73,9 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
     }
 
     /// <summary>The desktop's page (<paramref name="target"/>), shown as window 0.</summary>
-    internal Task ShowDesktop(string target, string address)
+    internal Task ShowDesktop(string target, string address, global::app.actor.context.@this context)
     {
-        Desktop.Address = address;
+        Desktop.At(address, context);
         return Desktop.Show(0, new Page(target, browser.Cdp, browser.Own), browser.Own(address) ? browser.Message : null,
             browser.Video(0), browser.VideoScript);
     }
@@ -126,7 +126,7 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
                 if (pages.FirstOrDefault(p => p.target == known.Target) is { url: { } now } && now != known.Address)
                 {
                     var within = browser.Own(now) && browser.Own(known.Address);
-                    known.Address = now;
+                    known.At(now, context);
                     if (!within) browser.Display.Wayland.Url(id, Browser.AddressOf(known.Address, context));
                 }
                 return;
@@ -134,7 +134,7 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
             if (Free(title, pages) is not { } page) return;
             var window = _opening.TryDequeue(out var waited) ? waited : new Window();
             window.Named = title;
-            window.Address = page.url;
+            window.At(page.url, context);
             if (!_shown.TryAdd(id, window)) return;
             browser.Display.Wayland.Url(id, Browser.AddressOf(window.Address, context));
             await window.Show(id, new Page(page.target, browser.Cdp, browser.Own), browser.Own(window.Address) ? browser.Message : null,

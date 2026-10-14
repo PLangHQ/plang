@@ -16,7 +16,8 @@ public sealed class Chromium : IBrowser
     public async Task<data.@this<type.browser.@this>> Start(start action)
     {
         var context = action.Context;
-        var url = (await action.Url.Value())!.Clr<string>()!;
+        // the page as Chromium's address: a plang path (/system/plangos/desktop.html) is that file's
+        var url = type.browser.@this.Where((await action.Url.Value())!.Clr<string>()!, context);
         if (action.Screen != null && await action.Screen.Value() is Display display)
             return await type.browser.screen.@this.Start(display, url,
                 action.OnMessage == null ? null : await action.OnMessage.Value(), context);

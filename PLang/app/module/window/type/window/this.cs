@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using app.Attributes;
 using Data = global::app.data.@this;
 using Context = global::app.actor.context.@this;
@@ -25,8 +24,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Its id on the screen (0 is the desktop); -1 until it is shown.</summary>
     [LlmBuilder, Out] public global::app.type.item.number.@this Id => Number;
 
-    /// <summary>The page it shows.</summary>
-    [LlmBuilder, Out] public global::app.type.item.text.@this Url => new(Address);
+    /// <summary>The page it shows, as plang names it: one of plang's own by its path (<c>/app/writer/start.html</c> in the
+    /// app, <c>/system/…</c> the system's), a website as it is — never <c>file://</c>.</summary>
+    [LlmBuilder, Out] public global::app.type.item.text.@this Url => new(Place);
 
     /// <summary>Its title.</summary>
     [LlmBuilder, Out] public global::app.type.item.text.@this Title => new(Named);
@@ -34,8 +34,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal long Number { get; private set; } = -1;
     /// <summary>DevTools' id for its page, once shown.</summary>
     internal string? Target => page?.Target;
-    internal string Address { get; set; } = "";
+    /// <summary>Its page's address, as Chromium has it.</summary>
+    internal string Address { get; private set; } = "";
+    private string Place { get; set; } = "";
     internal string Named { get; set; } = "";
+
+    /// <summary>Its page is at <paramref name="address"/> (Chromium's): plang names it by its path.</summary>
+    internal void At(string address, Context context)
+    {
+        Address = address;
+        Place = global::app.module.browser.type.browser.screen.@this.Shown(address, context);
+    }
 
     /// <summary>The window is on the screen with its page: what it is asked to do goes to that page.</summary>
     internal async Task Show(long number, Page shows, Func<string, Task>? hear, Func<string, Task>? video = null, string? videoScript = null)
@@ -81,11 +90,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             ? await Navigate(typed.Clr<string>() ?? "", context)
             : context.Error(new global::app.error.ActionError($"Nowhere to go: Url is {url.Peek()}", "UrlMissing", 400));
 
-    /// <summary>Goes to what was typed: an address (<c>mbl.is</c> is <c>https://mbl.is</c>), or words to search for. A
-    /// <c>file://</c> page is read as the one who sends it there.</summary>
+    /// <summary>Goes to what was typed: a plang path (<c>/app/writer/start.html</c>), an address (<c>mbl.is</c> is
+    /// <c>https://mbl.is</c>), or words to search for. One of plang's own pages is read as the one who sends it there.</summary>
     internal async Task<Data> Navigate(string typed, Context context)
     {
-        var url = Where(typed);
+        var url = global::app.module.browser.type.browser.@this.Where(typed, context);
         if (await global::app.module.browser.type.browser.@this.Readable(url, context) is { } refused) return refused;
         await (await Page()).Navigate(url);
         return context.Ok();
@@ -178,16 +187,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The screen says it closed: its connection goes.</summary>
     internal void Gone() => page?.Close();
-
-    /// <summary>What was typed, as an address: one with a scheme stays; a name with a dot and no
-    /// spaces is https; anything else is a search.</summary>
-    private static string Where(string typed)
-    {
-        var text = typed.Trim();
-        if (Regex.IsMatch(text, @"^[a-zA-Z][a-zA-Z0-9+.-]*:")) return text;
-        if (!text.Contains(' ') && text.Contains('.')) return "https://" + text;
-        return "https://duckduckgo.com/?q=" + Uri.EscapeDataString(text);
-    }
 
     public override string ToString() => $"window {(Number < 0 ? "(opening)" : Number.ToString())} {Address}";
 }

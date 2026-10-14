@@ -79,6 +79,19 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         return allowed.Success && !allowed.Exits ? null : allowed;
     }
 
+    /// <summary>What was given as a page, as Chromium's address: a plang path (<c>/x</c> in the app, <c>/system/…</c> the
+    /// system's) is that file's; one with a scheme stays; a name with a dot and no spaces is https; anything else is a
+    /// search.</summary>
+    internal static string Where(string typed, global::app.actor.context.@this context)
+    {
+        var text = typed.Trim();
+        if (text.StartsWith('/'))
+            return new Uri(global::app.type.item.path.file.@this.Resolve(text, context).Absolute).AbsoluteUri;
+        if (System.Text.RegularExpressions.Regex.IsMatch(text, @"^[a-zA-Z][a-zA-Z0-9+.-]*:")) return text;
+        if (!text.Contains(' ') && text.Contains('.')) return "https://" + text;
+        return "https://duckduckgo.com/?q=" + Uri.EscapeDataString(text);
+    }
+
     private protected static global::app.data.@this<@this> Fail(global::app.actor.context.@this context, string message, string key, int status)
         => global::app.data.@this<@this>.From(context.Error(new global::app.error.ActionError(message, key, status)));
 
