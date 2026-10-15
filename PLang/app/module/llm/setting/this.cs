@@ -51,4 +51,9 @@ public sealed class @this : global::app.type.item.setting.module.@this
     /// the builder's own prompts, so a program raises it only to let an even larger value through. Reached as
     /// <c>%!llm.setting.length%</c>.</summary>
     [Out, Store] public global::app.type.item.number.@this Length { get; set; } = 100_000;
+
+    /// <summary>The most rows a list (or keys a dict) written into an llm message carries — over it, the first
+    /// <c>Rows</c> are kept and a marker tells the model how many more there were (<c>--- N more rows ---</c>). A
+    /// program raises it to let a longer table through. Reached as <c>%!llm.setting.rows%</c>.</summary>
+    [Out, Store] public global::app.type.item.number.@this Rows { get; set; } = 100;
 }

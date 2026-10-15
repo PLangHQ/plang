@@ -23,15 +23,27 @@ namespace app.module.llm;
 /// </summary>
 public sealed class Writer : global::app.type.format.IWriter
 {
-    // typed as the interface so Content / Raw(byte[]) reach IWriter's default members, which route
-    // through the inner text writer's own String / Raw.
-    private readonly global::app.type.format.IWriter _inner;
+    // the base text writer over the stream (restore target); _inner is normally it, but becomes a Table
+    // while a top-level list/dict is being gathered. Typed as the interface so Content / Raw(byte[]) reach
+    // IWriter's default members, which route through the inner writer's own String / Raw.
+    private readonly global::app.type.format.IWriter _base;
+    private global::app.type.format.IWriter _inner;
     private readonly int _length;
+    private readonly int _rows;
+    private readonly global::app.type.item.culture.@this _culture;
 
-    public Writer(Stream stream, Encoding encoding, global::app.type.item.culture.@this culture, int length)
+    // while a top-level list/dict is gathered into a Table: _structDepth counts the nesting so only the
+    // OUTERMOST open swaps to a Table and its matching close flushes the markdown.
+    private int _structDepth;
+    private Table? _table;
+
+    public Writer(Stream stream, Encoding encoding, global::app.type.item.culture.@this culture, int length, int rows)
     {
-        _inner = new global::app.type.item.text.Writer(stream, encoding, culture);
+        _base = new global::app.type.item.text.Writer(stream, encoding, culture);
+        _inner = _base;
         _length = length;
+        _rows = rows;
+        _culture = culture;
     }
 
     public string Format => "llm";
@@ -64,11 +76,30 @@ public sealed class Writer : global::app.type.format.IWriter
     public void Enum(System.Enum value) => _inner.Enum(value);
     public void Bytes(byte[] value) => _inner.Bytes(value);
     public void Raw(byte[] value) => _inner.Raw(value);
-    public void BeginArray(int count) => _inner.BeginArray(count);
-    public void EndArray() => _inner.EndArray();
-    public void BeginObject() => _inner.BeginObject();
+
+    // A top-level list or dict is gathered into a Table (built from this same primitive stream) and
+    // emitted as a readable markdown view at its matching close. Only the OUTERMOST structural open
+    // swaps the sink; nested opens flow into the Table, which summarizes them.
+    public void BeginArray(int count) { Open(isList: true); _inner.BeginArray(count); }
+    public void BeginObject() { Open(isList: false); _inner.BeginObject(); }
+    public void EndArray() { _inner.EndArray(); Close(); }
+    public void EndObject() { _inner.EndObject(); Close(); }
     public void Name(string name) => _inner.Name(name);
-    public void EndObject() => _inner.EndObject();
+
+    private void Open(bool isList)
+    {
+        if (_structDepth++ == 0) { _table = new Table(_rows, _culture, isList); _inner = _table; }
+    }
+
+    private void Close()
+    {
+        if (--_structDepth == 0 && _table is { } table)
+        {
+            _inner = _base;
+            _base.Raw(table.Markdown());
+            _table = null;
+        }
+    }
     public void BeginRecord(global::app.data.@this record) => _inner.BeginRecord(record);
     public void EndRecord() => _inner.EndRecord();
     public void Value(object? normalized) => _inner.Value(normalized);
@@ -82,10 +113,10 @@ public sealed class Writer : global::app.type.format.IWriter
 
     /// <summary>Drive the writer with one text and read back what the model would see — the llm module's
     /// own render of a message's content, with the cut applied. Stage 1's full-match text content.</summary>
-    public static string Cut(string content, int length, global::app.type.item.culture.@this culture)
+    public static string Cut(string content, int length, int rows, global::app.type.item.culture.@this culture)
     {
         using var ms = new MemoryStream();
-        new Writer(ms, Encoding.UTF8, culture, length).String(content);
+        new Writer(ms, Encoding.UTF8, culture, length, rows).String(content);
         return Encoding.UTF8.GetString(ms.ToArray());
     }
 }

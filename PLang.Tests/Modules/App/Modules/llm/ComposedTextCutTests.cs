@@ -19,7 +19,7 @@ public class ComposedTextCutTests
     {
         using var ms = new System.IO.MemoryStream();
         var w = new global::app.module.llm.Writer(ms, System.Text.Encoding.UTF8,
-            global::app.type.item.culture.@this.Machine, length);
+            global::app.type.item.culture.@this.Machine, length, rows: 100);
         template.Output(w, global::app.View.Out, ctx).AsTask().GetAwaiter().GetResult();
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
