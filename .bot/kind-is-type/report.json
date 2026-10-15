@@ -265,6 +265,46 @@
         "health": "Stage 0's rename closed the old door and opened a new one of the same shape — one-site fix at Reader.cs:69. 767 and 789/790 solid. No secrets in the repo or history.",
         "notes": "Next bot: coder (close F1), then auditor. Semgrep: 24 blocking, all baseline (22 serializer-hygiene + 1 gated Assembly.LoadFrom + 1 Display.Gate false positive); no new hits."
       }
+    },
+    {
+      "id": "e2b4d6c0-5a81-4f3e-9c17-8d2a1e4b6f73",
+      "bot": "security",
+      "timestamp_start": "2026-10-15T23:30:00Z",
+      "timestamp_end": "2026-10-15T23:50:00Z",
+      "intent": "Re-check F1 fix at d9bc6aae7 — the .pr 'file' bare-name predicate: edges (drive, Unicode seps, trailing dot) and whether any other reader takes a .pr location fact.",
+      "before": {
+        "assumptions": "F1 was a one-site hole at goal/serializer/Reader.cs:69; the fix should guard the string before Combine with a loud refusal, mirroring line 71's old-shape .Name reduction.",
+        "risk": "A clever predicate can miss Windows-specific forms (drive letters, UNC, device paths, NTFS alt streams) or let Unicode-separator lookalikes through; another reader elsewhere could compose a path from the .pr's Origin and silently re-open the vector."
+      },
+      "plan": ".bot/kind-is-type/security/v1/recheck.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/goal/serializer/Reader.cs", "PLang.Tests/Runtime/App/Goals/GoalPathTests.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Predicate (empty || '.' || '..' || IndexOfAny '/','\\\\',':') catches rooted/drive/UNC/device/alt-stream. Verified edges: trailing dot/space stays inside pr.Parent.Parent (no climb); Unicode separator lookalikes (U+FF0F, U+2044, U+2215) are literal chars, don't escape; null byte / reserved names fail-safe downstream. Pins land at APrFile_ThatNamesAPath_IsRefused for '../evil', '/evil', 'sub/evil', '..\\\\evil'."
+        },
+        {
+          "paths": ["PLang/app"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Grep for ctx.Origin usage confirms Reader.cs:96 is the ONE compose site; every other Origin reference is an error-reporting field on PrFormatOutdatedException. Old-shape 'path' branch (line 71) stays safe by reducing to .Name — both doors converge on a bare name before Combine."
+        },
+        {
+          "paths": [".bot/kind-is-type/security/v1/recheck.md", ".bot/kind-is-type/security/v1/verdict.json", ".bot/kind-is-type/security-report.json", ".bot/kind-is-type/security/summary.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "verdict.json flipped to pass. security-report.json F1 → fixed, next_bot → auditor."
+        }
+      ],
+      "after": {
+        "status": "PASS on re-check. F1 closed at d9bc6aae7. The remaining scope (stage-4 producers, kind-structure, llm-writer) still waits for the architect's go.",
+        "health": "clean on the architect-scoped surfaces.",
+        "notes": "Next bot: auditor."
+      }
     }
   ]
 }

@@ -1,4 +1,4 @@
 {
-  "status": "fail",
-  "summary": "stage 0 closed the .pr '\"path\"' trust-hole door (745) but left the new '\"file\"' field unvalidated — absolute or '..'-containing values smuggle goal.Path outside pr.Parent.Parent and re-open AskedByOs os-trust silently. One High finding (F1). 767's '..' block, 789/790 settings read-from-record, and the decider-key resave verified clean. Partial review per architect scope; stage 4 and kind-is-type structure wait for his go."
+  "status": "pass",
+  "summary": "F1 closed at d9bc6aae7 — the .pr's 'file' field is validated (empty / '.' / '..' / separator / colon) before Combine, loud PrFormatOutdated with 'rebuild it'. Edges checked: drive and UNC and device-path refused, NTFS alt-stream refused, trailing dot/space + Unicode lookalikes + dot-prefix + URL-escapes stay literal and don't escape pr.Parent.Parent, reserved Windows names + null bytes fail-safe downstream. One compose site for a .pr location fact — now the single gate. 767 '..' block, 789/790 settings read-from-record, decider-key resave stay clean. The remaining stage-4 / kind-structure / llm-writer scope waits for the architect's go. Next bot: auditor."
 }

@@ -50,7 +50,9 @@
       ],
       "exploit_sketch": "1. Build any trivial plang app with Start.goal. 2. Edit .build/start.pr: change \"file\": \"Start.goal\" to \"file\": \"<app.OsAbsolutePath>/system/evil.goal\" (install path is standard and knowable), or \"file\": \"../../../some/os/system/x.goal\". 3. Run the app. The goal's steps run with AskedByOs == true. Any file verb under /os/** auto-grants; terminal.start of an os-rooted program is auto-trusted.",
       "proposed_fix": "At Reader.cs:69, refuse any 'file' that contains a path separator ('/', '\\\\'), a '..' segment, or is rooted. Fail with PrFormatOutdated (the same door line 88 already uses). Mirrors the architect's own words 'the .pr stores only the goal file's name'. Alternative (defensive, silent): Combine(pr.Parent.Parent, Path.GetFileName(file)) — equivalent to how line 71 already reduces the old-shape 'path' field. Prefer the explicit refusal — the write side already stores a bare name; a non-bare name on read is an outdated or hostile .pr. Add a regression test with 'file' = '../x', '/x', 'sub/x' asserting PrFormatOutdated.",
-      "status": "open"
+      "status": "fixed",
+      "fixed_in": "d9bc6aae7",
+      "fix_summary": "goal/serializer/Reader.cs validates 'file' before Combine — refuses empty, '.' / '..', or any string containing '/','\\\\',':'. Loud PrFormatOutdatedException ('rebuild it'). Pins at GoalPathTests.APrFile_ThatNamesAPath_IsRefused for '../evil', '/evil', 'sub/evil', '..\\\\evil'. Edges verified: drive/UNC/device/alt-stream refused; trailing dot, Unicode separator-lookalikes, URL-escapes, dot-prefix all stay literal and don't escape pr.Parent.Parent (not a climb); reserved Windows names and null bytes fail-safe downstream. The one compose site for a .pr location fact is now the single gate."
     }
   ],
   "verified_clean": [
@@ -75,6 +77,6 @@
     "build": "not run (read-only; F1 reproduces by inspection)",
     "worktree": "/workspace/plang-kind-is-type-security on origin/kind-is-type (96e22e675)"
   },
-  "summary": "FAIL — one High (F1). Stage 0 renamed the smuggle vector but didn't close it: the new .pr 'file' field is accepted as any string and composed with Combine(folder, file), whose semantics let a rooted or '..'-containing value steer goal.Path anywhere — AskedByOs then trusts the smuggled goal silently. 767, 789/790 and the decider-key resave verified clean. Next bot: coder (close F1 at Reader.cs:69), then auditor.",
-  "next_bot": "coder"
+  "summary": "PASS on re-check (d9bc6aae7). F1 closed at the one compose site. 767, 789/790 and the decider-key resave clean. Stage-4 producers, kind-is-type structure, llm-writer wait for architect go. Next bot: auditor.",
+  "next_bot": "auditor"
 }

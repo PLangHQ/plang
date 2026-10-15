@@ -1,6 +1,6 @@
 # security — kind-is-type
 
-**Version:** v1 (first review).
+**Version:** v1 (first review + F1 re-check PASS at d9bc6aae7; see `v1/recheck.md`).
 
 ## What this is
 
@@ -10,7 +10,9 @@ The architect's partial-scope review of kind-is-type: four pieces that landed on
 
 Read-only review against parent `runtime2@cf66e2d01`. Semgrep clean (24 baseline hits, no new). Static trace of each piece against the parent-branch baseline and the standing patterns in memory (AuthGate canonicalisation, [Sensitive] discipline, signing pipeline, settings isolation).
 
-**Outcome: FAIL — one High.** Stage 0's rename closed the old `"path"` smuggle door, but the new `"file"` door is unvalidated: `goal/serializer/Reader.cs:96` composes `pr.Parent.Parent.Combine(file).Relative(ctx.Context)` with `file` read verbatim at line 69. `Combine` is `System.IO.Path.Combine` — a rooted `file` returns `file` whole; a `../..` climbs and gets resolved by the FilePath ctor's `Canonicalize`. The resulting `goal.Path.Folder` can be made to point under `app.OsAbsolutePath`; `path.Authorize.AskedByOs` then auto-grants that goal's steps silently — the exact threat decision 745 named. Reach is the same as 745: a plang app shipped with its `.build/*.pr` pre-built that the user runs without auditing.
+**Outcome: PASS after one-cycle fix.** Initial read: FAIL — one High (F1). Coder landed `d9bc6aae7` closing the one compose site; re-check PASS. Details below.
+
+Stage 0's rename closed the old `"path"` smuggle door, but the new `"file"` door was unvalidated: `goal/serializer/Reader.cs:96` composes `pr.Parent.Parent.Combine(file).Relative(ctx.Context)` with `file` read verbatim at line 69. `Combine` is `System.IO.Path.Combine` — a rooted `file` returns `file` whole; a `../..` climbs and gets resolved by the FilePath ctor's `Canonicalize`. The resulting `goal.Path.Folder` can be made to point under `app.OsAbsolutePath`; `path.Authorize.AskedByOs` then auto-grants that goal's steps silently — the exact threat decision 745 named. Reach is the same as 745: a plang app shipped with its `.build/*.pr` pre-built that the user runs without auditing.
 
 Fix direction (one line in Reader.cs): refuse `file` with any path separator / `..` segment / rooted form, keyed `PrFormatOutdated` — mirrors the architect's own words that `"file"` is only a goal file's name. Alternative (silent): `Combine(pr.Parent.Parent, Path.GetFileName(file))` — mirrors line 71's old-shape reduction. Prefer the explicit refusal.
 
@@ -24,7 +26,7 @@ Files touched (output):
 - `.bot/kind-is-type/security-report.json`
 - `.bot/kind-is-type/report.json` (appended my session)
 
-Next bot: **coder** (F1 is a one-site change at `goal/serializer/Reader.cs:69`). Once coder lands, auditor last.
+Next bot: **auditor** (F1 closed at `d9bc6aae7`; see `v1/recheck.md`).
 
 ## Code example — the hole and the shape of the fix
 
