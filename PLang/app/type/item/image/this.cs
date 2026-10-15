@@ -40,7 +40,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             var born = await context.App.type.list[typeof(@this)].Create(value, context, data.Name);
             if (born.Success && !born.Exits && born.Peek() is @this made) image = made;
-            else return born.Success ? context.Error(new global::app.error.Error(
+            else return born.Success ? context.Error(new global::app.error.@this(
                 $"%{data.Name}% holds a {data.Type?.Name ?? "value"}, not an image — nothing writes it as image content", "NoEncoder", 400))
                 : born;
             // an image born from a location reads its bytes before they are written
@@ -97,7 +97,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>Opened to be written out: a path-backed image loads its bytes through its own door (as the
     /// writer, past the path's auth gate, its strict kind checked).</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.error.Error?> Open(global::app.actor.context.@this context)
+    public override async System.Threading.Tasks.ValueTask<global::app.error.@this?> Open(global::app.actor.context.@this context)
     {
         var loading = new global::app.data.@this("", this, context: context);
         await Value(loading);
@@ -172,8 +172,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     // The strict kind the loaded bytes break, as the program's error; null when they match, nothing is required,
     // or nothing is loaded yet.
-    private global::app.error.Error? Mismatch() => CheckStrictKind() is { ok: false } mismatch
-        ? new global::app.error.Error(
+    private global::app.error.@this? Mismatch() => CheckStrictKind() is { ok: false } mismatch
+        ? new global::app.error.@this(
             $"Strict kind mismatch: declared kind '{_requiredKind}'"
             + (mismatch.actualKind != null ? $" but content is '{mismatch.actualKind}'." : "."),
             "StrictKindMismatch", 400)
@@ -230,7 +230,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             // exception — instead of being flattened into a bare-string IOException.
             if (!read.Success)
             {
-                data.Fail(read.Error ?? new global::app.error.Error(
+                data.Fail(read.Error ?? new global::app.error.@this(
                     $"could not read image from '{Path}'.", "ImageReadFailed", 400));
                 return Absent;
             }

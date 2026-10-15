@@ -18,7 +18,7 @@ public class CreateEventTests : System.IAsyncDisposable
 
     [Test] public async Task ABeforeThatRefuses_IsTheResult_NothingIsMade()
     {
-        On("text", global::app.@event.When.before, (_, c) => c.Error(new global::app.error.Error("not today", "Refused", 403)));
+        On("text", global::app.@event.When.before, (_, c) => c.Error(new global::app.error.@this("not today", "Refused", 403)));
 
         var born = await app.type.list["text"].Create("hello", Ctx);
 

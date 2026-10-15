@@ -16,7 +16,7 @@ public class OnTests
 
     // A handler that fails with key.
     private static System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, Task<global::app.data.@this>> Fail(string key)
-        => (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", key, 400)));
+        => (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", key, 400)));
 
     [Test] public async Task AnUnboundItem_HasTheSharedEmptyOn_WhoseEventsAreClosed()
     {

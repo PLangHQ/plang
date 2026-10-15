@@ -212,10 +212,10 @@ public sealed record @this(
         sb.AppendLine($"                var __slot{Name} = Context.App.type.list[typeof({InnerType})];");
         sb.AppendLine($"                var __row{Name} = __action?[\"{Name}\"] ?? (__action != null && !(await Context.Setting.Get(__action, \"{ParamName}\")).IsInitialized ? __action.Default[\"{Name}\"] : null);");
         sb.AppendLine($"                __declined.Add(__row{Name} != null && !__row{Name}.Type.Is(__slot{Name})");
-        sb.AppendLine($"                    ? new global::app.error.Error(");
+        sb.AppendLine($"                    ? new global::app.error.@this(");
         sb.AppendLine($"                        $\"{{__action!.Module}}.{{__action.Name}} was built when {Name} was a {{__row{Name}.Type.Name}}; it is a {{__slot{Name}.Name}} now — rebuild the goal\",");
         sb.AppendLine($"                        \"Stale\", 400)");
-        sb.AppendLine($"                    : new global::app.error.Error(");
+        sb.AppendLine($"                    : new global::app.error.@this(");
         sb.AppendLine($"                        $\"property '{Name}' cannot be a {{__slot{Name}}} — {{{Name}.Error?.Message ?? \"the value was declined.\"}}\",");
         sb.AppendLine($"                        \"PropertyValue\", 400));");
         sb.AppendLine("            }");
@@ -233,7 +233,7 @@ public sealed record @this(
         sb.AppendLine("        {");
         sb.AppendLine($"            await {Name}.Value();");
         sb.AppendLine($"            if (!{Name}.Success)");
-        sb.AppendLine($"                __declined.Add(new global::app.error.Error(");
+        sb.AppendLine($"                __declined.Add(new global::app.error.@this(");
         sb.AppendLine($"                    $\"property '{Name}' is {{__ref{Name}}} ({{__known{Name}.Type}}), which can't be a {{Context.App.type.list[typeof({InnerType})]}} — {{{Name}.Error?.Message ?? \"the value was declined.\"}}\",");
         sb.AppendLine($"                    \"PropertyType\", 400));");
         sb.AppendLine("        }");

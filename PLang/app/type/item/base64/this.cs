@@ -82,7 +82,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             try { return Parse(s); }
             catch (System.FormatException ex)
             {
-                data.Fail(new global::app.error.Error(ex.Message, "Base64Invalid", 400));
+                data.Fail(new global::app.error.@this(ex.Message, "Base64Invalid", 400));
                 return null;
             }
         }
@@ -92,7 +92,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             return new @this(System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(raw)));
         // ANY item — text, image, dict, binary — is held whole; ONE lazy path, the door encodes.
         if (value is global::app.type.item.@this it) return new @this(it);
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"Cannot create base64 from {value?.GetType().Name ?? "null"}.", "Base64ConversionFailed", 400));
         return null;
     }
@@ -117,7 +117,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             var written = await data.Context.App.type.list["item"].kind["json"]!.Encode(ms, carrier, data.Context, global::app.View.Out);
             if (!written.Success)
             {
-                data.Fail(written.Error ?? new global::app.error.Error(
+                data.Fail(written.Error ?? new global::app.error.@this(
                     "could not serialize value for base64 encode.", "Base64EncodeFailed", 400));
                 return Absent;
             }

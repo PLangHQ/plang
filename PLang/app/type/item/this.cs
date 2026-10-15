@@ -181,7 +181,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         {
             // a thing that lives on keeps a member a program adds — never in place of one of its own
             if (prop != null || global::app.type.item.kind.reflection.@this.Method(GetType(), key) != null)
-                throw new global::app.error.AppException(new global::app.error.Error(
+                throw new global::app.error.AppException(new global::app.error.@this(
                     $"{key} is {Type.Name}'s own — a program adds members beside it, never over it", "OwnMember", 400));
             kept.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
             return this;
@@ -624,7 +624,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>Reads what this value stands for, as the one writing it out asks — at the last moment, by the
     /// channel about to send it; the value never loads itself while it writes. A value that holds all it is
     /// has nothing to read. The reason it couldn't be read, else null.</summary>
-    public virtual System.Threading.Tasks.ValueTask<global::app.error.Error?> Open(global::app.actor.context.@this context)
+    public virtual System.Threading.Tasks.ValueTask<global::app.error.@this?> Open(global::app.actor.context.@this context)
         => default;
 
     /// <summary>Whether this value, asked to become a <paramref name="asked"/> for <paramref name="data"/>,

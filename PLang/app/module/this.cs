@@ -21,7 +21,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this module) return module;
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
             "a module is registered from its actions, never made from a value.", "CreateItemDeclined", 400));
         return null;
@@ -89,7 +89,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         foreach (var module in list.Items())
             if (await module.Match(name) is { } found) return global::app.data.@this<@this>.Ok(found);
-        return global::app.data.@this<@this>.FromError(new global::app.error.Error($"no module '{name}'", "NotFound", 404));
+        return global::app.data.@this<@this>.FromError(new global::app.error.@this($"no module '{name}'", "NotFound", 404));
     }
 
     /// <summary>The module a <c>.pr</c> row names — for the readers, which read a synchronous pass; null when the

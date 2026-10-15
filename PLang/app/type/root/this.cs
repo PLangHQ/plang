@@ -37,7 +37,7 @@ public sealed class @this(global::app.@this app) : global::app.type.@this<global
             return await base.Set(key, isIndex, value, context);
         var text = value is global::app.data.@this d ? (await d.Value())?.ToString() : value?.ToString();
         if (string.IsNullOrWhiteSpace(text) || Named(text) is not { } kind)
-            throw new global::app.error.AppException(new global::app.error.Error(
+            throw new global::app.error.AppException(new global::app.error.@this(
                 $"No format '{text}': name one a type reads — a MIME (application/plang), a name (json) or an extension (.md)", "FormatNotFound", 400));
         if (!context.call.SetFormat(kind))
             Format = kind;   // no goal running (the app starting): the app's own

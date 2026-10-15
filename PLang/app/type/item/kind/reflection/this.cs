@@ -67,7 +67,7 @@ public sealed class @this : global::app.type.kind.@this
 
     // The error for a name two members of one type answer to: plang reads names ignoring case, so it can't tell them apart.
     private static global::app.error.AppException Twice(System.Type @class, string key, System.Collections.Generic.IEnumerable<string> names)
-        => new(new global::app.error.Error(
+        => new(new global::app.error.@this(
             $"`{(typeof(global::app.type.item.@this).IsAssignableFrom(@class) ? global::app.type.item.@this.NameOf(@class) : @class.Name)}` "
             + $"has two members named {key}: " + string.Join(", ", names.Select(n => $"`{n}`")), "AmbiguousMember", 400));
 

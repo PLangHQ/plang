@@ -63,7 +63,7 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
         if (raw is global::app.type.item.dict.@this or global::app.type.item.list.@this
             && ((@this)raw).Clr(typeof(TSelf)) is TSelf rec) return rec;
 
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as @this)?.Type.Name ?? raw?.GetType().Name} — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
             "CreateItemDeclined", 400));
         return null;

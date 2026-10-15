@@ -1,8 +1,8 @@
 namespace app.error.serializer;
 
 /// <summary>
-/// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <see cref="app.error.Error"/> — the
-/// read-back mirror of <see cref="app.error.Error.Write"/> (<c>{id, message, key, status, createdUtc,
+/// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <see cref="app.error.@this"/> — the
+/// read-back mirror of <see cref="app.error.@this.Write"/> (<c>{id, message, key, status, createdUtc,
 /// fixSuggestion?, helpfulLinks?, list?}</c>), each causing error read back the same way.
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
@@ -26,7 +26,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.item.status.@this status = 400;
         var createdUtc = System.DateTime.UtcNow;
         string? fixSuggestion = null, helpfulLinks = null;
-        var causes = new System.Collections.Generic.List<global::app.error.Error>();
+        var causes = new System.Collections.Generic.List<global::app.error.@this>();
         while (reader.NextName(out var name))
         {
             switch (name.ToLowerInvariant())
@@ -44,13 +44,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "list":
                     reader.BeginArray();
                     while (reader.NextElement())
-                        if (Read(ref reader, kind, ctx) is global::app.error.Error cause) causes.Add(cause);
+                        if (Read(ref reader, kind, ctx) is global::app.error.@this cause) causes.Add(cause);
                     reader.EndArray();
                     break;
                 default: reader.Skip(); break;
             }
         }
         reader.EndObject();
-        return global::app.error.Error.Restore(id, message, key, status, createdUtc, fixSuggestion, helpfulLinks, causes);
+        return global::app.error.@this.Restore(id, message, key, status, createdUtc, fixSuggestion, helpfulLinks, causes);
     }
 }

@@ -112,7 +112,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             // resolves %refs% against data.Context. CleanName handles the name. A Data received holding
             // an error is that failure (a failed result written out writes its error), so the step that
             // reads it fails and its on error runs.
-            var d = value is global::app.error.Error received
+            var d = value is global::app.error.@this received
                 ? new Data(name, context: born) { Error = received }
                 : new Data(name, value, context: born);
             if (properties != null) d.Properties = properties;

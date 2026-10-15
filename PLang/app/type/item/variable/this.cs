@@ -184,7 +184,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this v) return v;
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} — a variable names a thing; it is born typed (declare 'type:variable'), never created from a value.",
             "CreateVariableDeclined", 400));
         return null;

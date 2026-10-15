@@ -44,7 +44,7 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
 
         @this? Incomplete(string why)
         {
-            data.Fail(new global::app.error.Error(why, "GoalChannelIncomplete", 400));
+            data.Fail(new global::app.error.@this(why, "GoalChannelIncomplete", 400));
             return null;
         }
     }

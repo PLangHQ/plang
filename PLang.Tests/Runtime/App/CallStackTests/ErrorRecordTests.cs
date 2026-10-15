@@ -11,7 +11,7 @@ public class ErrorRecordTests : System.IAsyncDisposable
     private readonly global::app.@this _app = new global::app.@this("/tmp/errrec-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    private async Task<global::app.error.Error> Recorded()
+    private async Task<global::app.error.@this> Recorded()
     {
         var context = _app.actor.list.User.Context;
         await context.Variable.Set("secret", "hunter2");

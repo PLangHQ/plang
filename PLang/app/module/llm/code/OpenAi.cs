@@ -127,7 +127,7 @@ public sealed class OpenAi : ILlm
             // continues nothing
             var previous = await continued.Follow(context);
             if (await previous.Properties.Value("Messages") is not global::app.type.item.@this history)
-                return context.Error(new global::app.error.Error(
+                return context.Error(new global::app.error.@this(
                     $"a conversation continues an llm answer; %{previous.Name}% isn't one", "ConversationInvalid", 400));
             messages.InsertRange(0, history.Clr<List<LlmMessage>>() ?? new List<LlmMessage>());
             schema ??= (await previous.Properties.Value("Schema"))?.ToString();

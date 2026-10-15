@@ -185,7 +185,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// The type named <c>error</c> — <c>%!app.error%</c>: <c>current</c> is the error in play (the asker's call
     /// stack's, not yet handled), <c>list</c> every error on the asker's call stack, handled or not.
     /// </summary>
-    public global::app.type.current.@this<global::app.error.Error, global::app.error.list.@this> error { get; }
+    public global::app.type.current.@this<global::app.error.@this, global::app.error.list.@this> error { get; }
 
     /// <summary>
     /// The type named <c>variable</c> — <c>%!app.variable%</c>: its <c>list</c> is the asker's memory
@@ -440,7 +440,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             return Unreadable(ex.Message);
         }
 
-        data.@this Unreadable(string? why) => context.Error(new global::app.error.Error(
+        data.@this Unreadable(string? why) => context.Error(new global::app.error.@this(
             $"{prPath} is not the app's identity: {why}", "AppIdentityUnreadable", 400));
     }
 

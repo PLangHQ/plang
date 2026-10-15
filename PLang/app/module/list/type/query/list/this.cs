@@ -25,7 +25,7 @@ public sealed class @this : query.@this
         {
             if (!Known.TryGetValue(entry.Name, out var make))
             {
-                data.Fail(new global::app.error.Error(
+                data.Fail(new global::app.error.@this(
                     $"'{entry.Name}' is no part of a query — its parts are {Names}", "QueryInvalid", 400));
                 return null;
             }
@@ -33,14 +33,14 @@ public sealed class @this : query.@this
             {
                 // the clause's why, said as the clause's: "where: …"
                 var why = data.Error!;
-                data.Fail(new global::app.error.Error($"{entry.Name}: {why.Message}", why.Key, why.Status) { list = [why] });
+                data.Fail(new global::app.error.@this($"{entry.Name}: {why.Message}", why.Key, why.Status) { list = [why] });
                 return null;
             }
             clauses.Add(made);
         }
         if (clauses.Count == 0)
         {
-            data.Fail(new global::app.error.Error($"a query names at least one part: {Names}", "QueryInvalid", 400));
+            data.Fail(new global::app.error.@this($"a query names at least one part: {Names}", "QueryInvalid", 400));
             return null;
         }
         return new @this(clauses);

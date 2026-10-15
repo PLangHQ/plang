@@ -45,7 +45,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 }
             if (of != null) return new @this(of, name);
         }
-        data.Fail(new global::app.error.Error("what an archive holds is {type, name}", "HeldInvalid", 400));
+        data.Fail(new global::app.error.@this("what an archive holds is {type, name}", "HeldInvalid", 400));
         return null;
     }
 }

@@ -17,7 +17,7 @@ public class ItemsHoldNoContextTests
         // The store is a live resource of the app, as a channel is of its actor: its rows are the system's, decoded
         // and verified with the system context it was born in. Who may read them is decided by the store's owners.
         typeof(global::app.store.@this),
-        typeof(global::app.error.Error),
+        typeof(global::app.error.@this),
         typeof(global::app.snapshot.@this),
         // The signing handler doubles as a value type; it is parked with signing.
         typeof(global::app.module.signing.sign),

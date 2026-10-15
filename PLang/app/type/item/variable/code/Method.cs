@@ -65,7 +65,7 @@ public sealed class Method : Hop
                 && m.GetParameters().Where(p => p.ParameterType != typeof(global::app.actor.context.@this)).ToList() is var takes
                 && takes.Count >= given.Count && takes.Skip(given.Count).All(p => p.IsOptional));
         if (method == null)
-            return context.Error(new global::app.error.Error(
+            return context.Error(new global::app.error.@this(
                 $"{target.Type.Name} has no method '{Name}' taking {given.Count} value{(given.Count == 1 ? "" : "s")}.",
                 "MethodNotFound", 400));
 

@@ -14,7 +14,7 @@ public class NoCtorSigningProvider : ISigning
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public (KeyPair? keys, app.error.Error? error) GenerateKeyPair()
+    public (KeyPair? keys, app.error.@this? error) GenerateKeyPair()
         => (new KeyPair("pub", "priv"), null);
 
     public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey)

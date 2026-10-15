@@ -115,7 +115,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (Create(value) is { } built) return built;
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"Cannot bind a {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to text — it has no textual form.", "TypeConversionFailed", 400));
         return null;
     }
@@ -143,7 +143,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             var resolved = await _variable[0].Start(context);
             if (!resolved.IsInitialized)
             {
-                data.Fail(new global::app.error.Error(
+                data.Fail(new global::app.error.@this(
                     $"%{_variable[0].Name}% is not set — nothing to answer for {_value}.",
                     "VariableNotFound", 404));
                 return Absent;
@@ -317,7 +317,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (Opened(parent.Context) is { } opened)
             return opened.Success ? opened.Peek().Get(parent, key, isIndex) : System.Threading.Tasks.ValueTask.FromResult(opened);
         var who = string.IsNullOrEmpty(parent.Name) ? "value" : $"%{parent.Name}%";
-        var err = parent.Context.Error(new global::app.error.Error(
+        var err = parent.Context.Error(new global::app.error.@this(
             $"cannot navigate .{key}: {who} is text", "CantNavigateText", 400));
         err.Name = key;
         return System.Threading.Tasks.ValueTask.FromResult(err);

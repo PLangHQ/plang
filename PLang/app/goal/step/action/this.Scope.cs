@@ -9,10 +9,10 @@ public partial class @this
     /// return's empty value as <c>%!data%</c> (a typed null where the type has no empty value). The
     /// steps of its branch body are walked in place, each keeping what it knows. One error per
     /// property the store says is the wrong type; a handler that doesn't bind is left to Build.</summary>
-    public async System.Threading.Tasks.Task<System.Collections.Generic.List<global::app.error.Error>> Scope(
+    public async System.Threading.Tasks.Task<System.Collections.Generic.List<global::app.error.@this>> Scope(
         global::app.actor.context.@this scratch)
     {
-        var declined = new System.Collections.Generic.List<global::app.error.Error>();
+        var declined = new System.Collections.Generic.List<global::app.error.@this>();
         var (handler, bindError) = await Bind(scratch);
         if (bindError == null && handler is global::app.module.IClass own)
             declined.AddRange(await own.Check());

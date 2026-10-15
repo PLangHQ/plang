@@ -40,7 +40,7 @@ public abstract class @this
     /// <summary>Why the condition doesn't read, on <c>data</c>; the query names the part it belongs to.</summary>
     protected static T? Refused<T>(Data data, string why) where T : class
     {
-        data.Fail(new global::app.error.Error(why, "QueryInvalid", 400));
+        data.Fail(new global::app.error.@this(why, "QueryInvalid", 400));
         return null;
     }
 

@@ -32,7 +32,7 @@ public partial class OnError : IContext, IClause, IAction
     /// A clause with none (an empty on.error, or one that only filters) does nothing. The common mis-build
     /// is the recovery hoisted to a top-level action AFTER the clause instead of inside Recovery; refusing
     /// the empty clause makes the retry nest it. Structural — reads presence, no words.</summary>
-    public async Task<global::app.error.Error?> Validate()
+    public async Task<global::app.error.@this?> Validate()
     {
         // Absent properties are the typed Uninitialized citizen, NOT C# null — read the value, as Catch does.
         var recovery = Recovery == null ? null : await Recovery.Value();
@@ -41,7 +41,7 @@ public partial class OnError : IContext, IClause, IAction
         bool hasRetry = retries != null && retries.ToInt32() > 0;
         bool carriesOn = await Ignore.ToBooleanAsync();
         if (!hasRecovery && !hasRetry && !carriesOn)
-            return new global::app.error.Error(
+            return new global::app.error.@this(
                 "on.error does nothing: its recovery goes inside Recovery=[...], not as an action after it",
                 "OnErrorDoesNothing", 400);
         return null;
@@ -125,7 +125,7 @@ public partial class OnError : IContext, IClause, IAction
 
     /// <summary>The recovery's failure joins the original error's list — unless the recovery re-raised
     /// that same error (<c>throw %!error%</c>), which is the error itself, not a cause of it.</summary>
-    private void Chain(global::app.error.Error original, global::app.error.Error recovery)
+    private void Chain(global::app.error.@this original, global::app.error.@this recovery)
     {
         if (!ReferenceEquals(original, recovery)) original.list.Add(recovery);
     }
@@ -148,7 +148,7 @@ public partial class OnError : IContext, IClause, IAction
     /// Matches the error against Status / Key / Message filters.
     /// No filters = match all errors. Each supplied filter must match.
     /// </summary>
-    private async Task<bool> MatchesError(global::app.error.Error? error)
+    private async Task<bool> MatchesError(global::app.error.@this? error)
     {
         // The filters are read through the typed ask, not a sync Peek. A .pr-loaded parameter is
         // lazy — it lifts on the ask — so a Peek here sees the wire form rather than the value.

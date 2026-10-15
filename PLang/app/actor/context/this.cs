@@ -180,7 +180,7 @@ public sealed class @this : IDisposable
 
     /// <summary>An error Data carrying <paramref name="error"/>, born with this context. An error
     /// meeting its first run here takes this context as where it happened.</summary>
-    public data.@this Error(global::app.error.Error error)
+    public data.@this Error(global::app.error.@this error)
     {
         error.Context ??= this;
         return new("", context: this) { Error = error };
@@ -188,7 +188,7 @@ public sealed class @this : IDisposable
 
     /// <summary>A typed error Data carrying <paramref name="error"/>, born with this context. An error
     /// meeting its first run here takes this context as where it happened.</summary>
-    public data.@this<T> Error<T>(global::app.error.Error error)
+    public data.@this<T> Error<T>(global::app.error.@this error)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         error.Context ??= this;

@@ -13,7 +13,7 @@ public class ComposedActionsAreObservableTests
             if (item is global::app.goal.step.action.@this started && started.Module.Name == module && started.Name == action)
             {
                 lock (seen) seen.Add($"{module}.{action}");
-                return Task.FromResult(ctx.Error(new global::app.error.Error("stopped by the watcher", "Watched", 400)));
+                return Task.FromResult(ctx.Error(new global::app.error.@this("stopped by the watcher", "Watched", 400)));
             }
             return Task.FromResult(ctx.Ok());
         }, app.actor.list.System, global::app.@event.binding.Scope.app);

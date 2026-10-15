@@ -8,16 +8,16 @@ namespace app.error.list;
 /// <para>The list owns its append lock: parallel goal.call branches under Task.WhenAll can add at once, and a
 /// walk reads a snapshot. Unbounded for its owner's lifetime.</para>
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<global::app.error.Error>, IReadOnlyList<global::app.error.Error>
+public sealed class @this : global::app.type.item.list.@this<global::app.error.@this>, IReadOnlyList<global::app.error.@this>
 {
     /// <summary>The most recent error — null when none. A frame that failed twice is in play on the second.</summary>
-    public global::app.error.Error? Newest => Items().LastOrDefault();
+    public global::app.error.@this? Newest => Items().LastOrDefault();
 
-    int IReadOnlyCollection<global::app.error.Error>.Count => CountRaw;
+    int IReadOnlyCollection<global::app.error.@this>.Count => CountRaw;
 
-    global::app.error.Error IReadOnlyList<global::app.error.Error>.this[int index] => this[index];
+    global::app.error.@this IReadOnlyList<global::app.error.@this>.this[int index] => this[index];
 
-    public IEnumerator<global::app.error.Error> GetEnumerator() => Items().ToList().GetEnumerator();
+    public IEnumerator<global::app.error.@this> GetEnumerator() => Items().ToList().GetEnumerator();
 
     /// <summary>Written as its errors, each in its own face — in any format, bare json too.</summary>
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,

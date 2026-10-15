@@ -85,7 +85,7 @@ public partial class ask : IContext
         // Ask with a Snapshot (a message channel), which the step loop's ShouldExit suspends on.
         // none there: the actor has no input, or its input is a goal channel running its own body
         if (Context.Actor?.Channel.Get(global::app.channel.list.@this.Input) is not { } input)
-            return Context.Error(new global::app.error.Error(
+            return Context.Error(new global::app.error.@this(
                 "there is no input channel to ask on — none is registered, or it is busy running its own goal",
                 "NoInputChannel", 400));
         // The wait ends when the run's cancellation says so — the program's timeout on the ask, a test's, Ctrl-C.

@@ -65,7 +65,7 @@ public sealed class Index : Hop
         var diagnosis = rootData.IsInitialized
             ? $"%{root.Name}% holds {rootData.Type?.Name ?? "?"} = '{rootData.Peek().ToString()?.Split('\n')[0]}'"
             : $"%{root.Name}% is unset";
-        return context.Error(new global::app.error.Error(
+        return context.Error(new global::app.error.@this(
             $"cannot navigate {Text}: the index {named.Text} is not set — {diagnosis}", "IndexNotSet", 400));
     }
 }

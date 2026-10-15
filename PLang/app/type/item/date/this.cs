@@ -45,8 +45,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (Create(value) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
-            ? new global::app.error.Error($"Cannot parse '{s}' as date — expected ISO yyyy-MM-dd.", "DateParseFailed", 400)
-            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to date.", "DateConversionFailed", 400));
+            ? new global::app.error.@this($"Cannot parse '{s}' as date — expected ISO yyyy-MM-dd.", "DateParseFailed", 400)
+            : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to date.", "DateConversionFailed", 400));
         return null;
     }
 

@@ -150,7 +150,7 @@ public static class @this
         if (!hasErrorProp)
         {
             sb.Append("""
-                    protected global::app.data.@this Error(global::app.error.Error error) => Context.Error(error);
+                    protected global::app.data.@this Error(global::app.error.@this error) => Context.Error(error);
 
                 """);
         }
@@ -188,7 +188,7 @@ public static class @this
     private static void EmitResolve(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                public async System.Threading.Tasks.Task<(global::app.module.ICodeGenerated?, global::app.error.Error?)> Resolve(
+                public async System.Threading.Tasks.Task<(global::app.module.ICodeGenerated?, global::app.error.@this?)> Resolve(
                     global::app.goal.step.action.@this action, global::app.actor.context.@this context)
                 {
                     var app = context.App!;
@@ -306,18 +306,18 @@ public static class @this
     // A verdict member: the collected declines of its per-property body, or none without awaiting.
     private static void EmitVerdict(StringBuilder sb, string member, StringBuilder body)
     {
-        const string returns = "System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.Error>>";
+        const string returns = "System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.@this>>";
         if (body.Length == 0)
         {
             // No slot to open, so nothing to await.
             sb.AppendLine($"    public {returns} {member}()");
-            sb.AppendLine($"        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.Error>>(System.Array.Empty<global::app.error.Error>());");
+            sb.AppendLine($"        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.@this>>(System.Array.Empty<global::app.error.@this>());");
             sb.AppendLine();
             return;
         }
         sb.AppendLine($"    public async {returns} {member}()");
         sb.AppendLine("    {");
-        sb.AppendLine("        var __declined = new System.Collections.Generic.List<global::app.error.Error>();");
+        sb.AppendLine("        var __declined = new System.Collections.Generic.List<global::app.error.@this>();");
         sb.Append(body);
         sb.AppendLine("        return __declined;");
         sb.AppendLine("    }");
@@ -327,7 +327,7 @@ public static class @this
     private static void EmitAttach(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                public async System.Threading.Tasks.Task<global::app.error.Error?> Attach(
+                public async System.Threading.Tasks.Task<global::app.error.@this?> Attach(
                     global::app.goal.step.action.@this? action, global::app.actor.context.@this context)
                 {
                     var app = context.App!;
@@ -368,7 +368,7 @@ public static class @this
     private static void EmitLive(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                private async System.Threading.Tasks.Task<global::app.error.Error?> __Live()
+                private async System.Threading.Tasks.Task<global::app.error.@this?> __Live()
                 {
                     var context = Context;
                     var action = __action;
@@ -421,7 +421,7 @@ public static class @this
                     // an exception plang didn't raise — the frame the failure is recorded on says which action
                     catch (System.Exception ex) when (ex is not (System.OperationCanceledException or System.OutOfMemoryException or System.StackOverflowException))
                     {
-                        return global::app.data.@this.FromError(global::app.error.Error.FromException(ex));
+                        return global::app.data.@this.FromError(global::app.error.@this.FromException(ex));
                     }
                 }
 
@@ -452,8 +452,8 @@ public static class @this
                 // Wraps a resolution error with the action's module.action context so the
                 // reader can locate the failing call site. The raw error from Data<T>.As<T>
                 // only carries source/target type names — useless without the action name.
-                private static global::app.error.Error __PrefixActionContext(
-                    global::app.error.Error err, global::app.goal.step.action.@this? action)
+                private static global::app.error.@this __PrefixActionContext(
+                    global::app.error.@this err, global::app.goal.step.action.@this? action)
                 {
                     if (action == null) return err;
                     var msg = $"{action.Module}.{action.Name}: {err.Message}";

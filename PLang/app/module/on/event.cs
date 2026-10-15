@@ -44,7 +44,7 @@ public partial class OnEvent : IContext
             reached = await hop.Start(reached, Context);
             if (reached.IsInitialized && reached.Success) continue;
             if (on != null) return reached;
-            await __action.Warn(new global::app.error.Error(
+            await __action.Warn(new global::app.error.@this(
                 $"on.event: '{path.Text}' reaches nothing at '{hop.Text}' at build time — it binds only if that exists when the step runs",
                 "EventUnreached", 404), Context);
             break;
@@ -62,7 +62,7 @@ public partial class OnEvent : IContext
         var reached = await Event.Follow(Context);
         if (!reached.Success) return Context.Error<global::app.@event.binding.@this>(reached.Error!);
         if (!reached.IsInitialized)
-            return Context.Error<global::app.@event.binding.@this>(new global::app.error.Error(
+            return Context.Error<global::app.@event.binding.@this>(new global::app.error.@this(
                 $"on.event: '{path}' reaches nothing — the item isn't there to bind on", "EventUnreached", 404));
         if (reached.Peek() is not global::app.@event.@this named || reached.Parent?.Parent?.Peek() is not global::app.type.item.@this item)
             return Context.Error<global::app.@event.binding.@this>(global::app.@event.on.@this.Empty.NoEvent(path));

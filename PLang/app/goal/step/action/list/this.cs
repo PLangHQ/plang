@@ -79,21 +79,21 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
         }
     }
 
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(actor.context.@this context)
+    public async System.Threading.Tasks.Task<global::app.error.@this?> Validate(actor.context.@this context)
     {
         if (Count == 0)
-            return new global::app.error.Error(
+            return new global::app.error.@this(
                 "the compiled step has no actions — every step maps to at least one action.",
                 "EmptyActions", 400);
 
         if (Chain() is { } broken) return broken;
 
-        var causes = new List<global::app.error.Error>();
+        var causes = new List<global::app.error.@this>();
         for (int i = 0; i < Count; i++)
             if (await this[i].Validate(context) is { } invalid) causes.Add(invalid);
 
         if (causes.Count == 0) return null;
-        return new global::app.error.Error(
+        return new global::app.error.@this(
             string.Join("; ", causes.Select(c => c.Message)), "BuildValidation", 400) { list = causes };
     }
 
@@ -111,10 +111,10 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
     /// </list>
     /// ElseWithoutIf is the programmer's to fix (Settle sends it to SourceError); the other two are the
     /// answer's, and go back through FixProperties. Null when the chain is whole.</summary>
-    private global::app.error.Error? Chain()
+    private global::app.error.@this? Chain()
     {
         global::app.goal.step.action.@this? condition = null;   // the last condition in this list
-        global::app.error.Error? missing = null;                 // a branch with no body — reported last
+        global::app.error.@this? missing = null;                 // a branch with no body — reported last
         for (int i = 0; i < Count; i++)
         {
             var action = this[i];
@@ -155,7 +155,7 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
            && goal.Step.Body(step.Index).CountRaw > 0;
 
     /// <summary>The chain's verdict on <paramref name="action"/>, naming its step when it holds one.</summary>
-    private global::app.error.Error Broken(global::app.goal.step.action.@this action, string rule, string key)
+    private global::app.error.@this Broken(global::app.goal.step.action.@this action, string rule, string key)
     {
         var message = action.Step is { } step ? $"step {step.Index} \"{step.Text}\" — {rule}" : $"\"{action.Name}\" — {rule}";
         return action.Step is { } owner
@@ -166,9 +166,9 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
     /// <summary>Finishes every action in this chain at build, in order — each walks what it holds.
     /// Null when nothing is wrong; otherwise one error for the chain with each action's as a cause.
     /// An empty chain has nothing to build — emptiness is <see cref="Validate"/>'s verdict.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Build(actor.context.@this context)
+    public async System.Threading.Tasks.Task<global::app.error.@this?> Build(actor.context.@this context)
     {
-        var causes = new List<global::app.error.Error>();
+        var causes = new List<global::app.error.@this>();
         Action? before = null;
         for (int i = 0; i < Count; i++)
         {
@@ -179,7 +179,7 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
         }
 
         if (causes.Count == 0) return null;
-        return new global::app.error.Error(
+        return new global::app.error.@this(
             string.Join("; ", causes.Select(c => c.Message)), "BuildFailed", 400) { list = causes };
     }
 

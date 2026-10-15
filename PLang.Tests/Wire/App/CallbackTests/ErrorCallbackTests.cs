@@ -13,7 +13,7 @@ public class ErrorCallbackTests : System.IAsyncDisposable
     [Test]
     public async Task Callback_ErrorWithNoContext_IsNoCallback()
     {
-        var error = new global::app.error.Error("boom", "Boom");
+        var error = new global::app.error.@this("boom", "Boom");
 
         var callback = error.Callback;
 
@@ -24,7 +24,7 @@ public class ErrorCallbackTests : System.IAsyncDisposable
     [Test]
     public async Task Callback_ErrorWithContext_AnswersASnapshot()
     {
-        var error = new global::app.error.Error("boom", _app.actor.list.User.Context, "Boom");
+        var error = new global::app.error.@this("boom", _app.actor.list.User.Context, "Boom");
 
         var callback = error.Callback;
 
@@ -63,7 +63,7 @@ public class ErrorCallbackTests : System.IAsyncDisposable
     [Test]
     public async Task Fail_StampsTheDatasContext()
     {
-        var error = new global::app.error.Error("declined", "Declined");
+        var error = new global::app.error.@this("declined", "Declined");
         var data = new global::app.data.@this("x", context: _app.actor.list.User.Context);
 
         data.Fail(error);

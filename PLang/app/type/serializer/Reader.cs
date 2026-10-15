@@ -47,7 +47,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             try { marked = global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>.Parse(template).Value; }
             catch (System.FormatException refused)
             {
-                throw new global::app.error.DeclinedException(new global::app.error.Error(refused.Message, "TemplateInvalid", 400));
+                throw new global::app.error.DeclinedException(new global::app.error.@this(refused.Message, "TemplateInvalid", 400));
             }
         }
         return ctx.Context.App.type.list[new global::app.type.@this(name, typeKind, strict, marked), ctx.Context];

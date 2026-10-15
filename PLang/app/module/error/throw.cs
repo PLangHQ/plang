@@ -43,7 +43,7 @@ public partial class Throw : IContext
 
         // Re-raise: `- throw %!error%` hands an existing error straight through rather
         // than wrapping it as a new error's payload. A first-class, intended pattern.
-        if (thrown is global::app.error.Error existing)
+        if (thrown is global::app.error.@this existing)
         {
             if (fix != null) existing.FixSuggestion = fix;
             return Error(existing);
@@ -52,7 +52,7 @@ public partial class Throw : IContext
         // `- throw %!error%` lands the error in the (text) Message slot, not Data. Re-raise
         // it from there too — resolve Message as the apex value (NOT text, which would choke
         // coercing the error object) and hand the existing error straight through.
-        if (Message != null && await Message.Value<global::app.type.item.@this>() is global::app.error.Error msgError)
+        if (Message != null && await Message.Value<global::app.type.item.@this>() is global::app.error.@this msgError)
         {
             if (fix != null) msgError.FixSuggestion = fix;
             return Error(msgError);

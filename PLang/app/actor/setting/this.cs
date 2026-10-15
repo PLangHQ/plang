@@ -20,7 +20,7 @@ public sealed class @this : IDisposable
     private readonly global::app.actor.@this? _actor;               // an actor's own: the actor whose rows it holds
     private readonly Lazy<Task<ConcurrentDictionary<string, data.@this>>>? _rows;
     private ConcurrentDictionary<string, data.@this>? _held;        // the rows, once read
-    private global::app.error.Error? _unread;                       // why the rows could not be read, when they couldn't
+    private global::app.error.@this? _unread;                       // why the rows could not be read, when they couldn't
     // While the rows are being read, a setting read inside that (the store reading a row back) builds
     // without them — it can't wait on the read it is part of.
     private readonly AsyncLocal<bool> _reading = new();
@@ -140,7 +140,7 @@ public sealed class @this : IDisposable
     public data.@this Set(string path, IDictionary<string, object?> values)
     {
         if (Class(path)?.Create() is not { } sample)
-            return _context.Error(new global::app.error.Error($"'{path}' names no setting class.", "UnknownSetting", 400));
+            return _context.Error(new global::app.error.@this($"'{path}' names no setting class.", "UnknownSetting", 400));
         var fits = sample.Apply(values, _context);
         if (!fits.Success) return fits;
         Flatten(path, values);
@@ -166,7 +166,7 @@ public sealed class @this : IDisposable
         // An action's settings are not storable yet; when they are, their row is a dict of the set options,
         // read by Option(), and Option()'s action-row branch goes.
         if (Class(path) == null)
-            return _context.Error(new global::app.error.Error(
+            return _context.Error(new global::app.error.@this(
                 $"'{path}' is not a setting class — save the class that holds the option.", "NotASettingClass", 400));
         var owner = Owner;
         // rows that could not be read are never written over
@@ -244,7 +244,7 @@ public sealed class @this : IDisposable
         if (!all.Success)
         {
             await (_context.App.Debug?.Write($"settings: the {_actor.Name} actor's rows could not be read — {all.Error?.Message}") ?? Task.CompletedTask);
-            _unread = all.Error ?? new global::app.error.Error($"the {_actor.Name} actor's saved settings could not be read", "SettingsUnreadable", 500);
+            _unread = all.Error ?? new global::app.error.@this($"the {_actor.Name} actor's saved settings could not be read", "SettingsUnreadable", 500);
             return rows;
         }
         foreach (var row in (await all.Value())!.Items(_context))

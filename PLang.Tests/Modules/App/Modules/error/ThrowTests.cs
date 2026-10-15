@@ -128,7 +128,7 @@ public class ThrowTests : System.IAsyncDisposable
         var result = await action.Start();
 
         await result.IsFailure();
-        var err = (global::app.error.Error)result.Error!;
+        var err = (global::app.error.@this)result.Error!;
         await Assert.That(err.Data).IsNotNull();
         var list = err.Data!.Peek() as ListType;
         await Assert.That(list).IsNotNull();
@@ -148,7 +148,7 @@ public class ThrowTests : System.IAsyncDisposable
         var result = await action.Start();
 
         await result.IsFailure();
-        var err = (global::app.error.Error)result.Error!;
+        var err = (global::app.error.@this)result.Error!;
         var list = err.Data!.Peek() as ListType;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count.ToInt32()).IsEqualTo(2);

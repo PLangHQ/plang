@@ -142,7 +142,7 @@ public abstract class @this : global::app.type.item.@this
 
     /// <summary>Opened to be written out: the content is sampled through the location's gate, so its write is
     /// the content, not the location.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.error.Error?> Open(global::app.actor.context.@this context)
+    public override async System.Threading.Tasks.ValueTask<global::app.error.@this?> Open(global::app.actor.context.@this context)
     {
         var sample = await Content(context);
         return sample.Success ? null : sample.Error;

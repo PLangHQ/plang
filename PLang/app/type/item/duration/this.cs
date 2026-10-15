@@ -78,8 +78,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             return built;
         }
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
-            ? new global::app.error.Error($"Cannot parse '{s}' as duration — expected a number and its unit (30s, 200ms, 5m), ISO-8601 (PT30S) or .NET format (00:00:30).", "DurationParseFailed", 400)
-            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to duration.", "DurationConversionFailed", 400));
+            ? new global::app.error.@this($"Cannot parse '{s}' as duration — expected a number and its unit (30s, 200ms, 5m), ISO-8601 (PT30S) or .NET format (00:00:30).", "DurationParseFailed", 400)
+            : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to duration.", "DurationConversionFailed", 400));
         return null;
     }
 

@@ -18,7 +18,7 @@ namespace app.error;
 /// failure channel on the envelope.</para>
 /// </summary>
 [global::app.Attributes.PlangType("error")]
-public class Error : global::app.type.item.@this, global::app.type.item.ICreate<Error>, global::app.type.item.IMatch<Error>,
+public class @this : global::app.type.item.@this, global::app.type.item.ICreate<Error>, global::app.type.item.IMatch<Error>,
     global::app.type.item.ICurrent<Error>, global::app.type.item.ILoad<Error>,
     global::app.type.item.IList<Error, global::app.error.list.@this>
 {
@@ -184,7 +184,7 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>
     /// Creates an error with a message. Use for errors not tied to a specific execution context.
     /// </summary>
-    public Error(string message, string key = "Error", global::app.type.item.status.@this? status = null)
+    public @this(string message, string key = "Error", global::app.type.item.status.@this? status = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         Message = message;
@@ -201,7 +201,7 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// section already carries the frame chain, and a live Exception / Goal
     /// object graph cannot round-trip.
     /// </summary>
-    private Error(string id, string message, string key, global::app.type.item.status.@this status, DateTime createdUtc)
+    private @this(string id, string message, string key, global::app.type.item.status.@this status, DateTime createdUtc)
     {
         Id = id;
         Message = message;
@@ -226,7 +226,7 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>
     /// Creates an error tied to a specific step. Goal is inferred from step.Goal.
     /// </summary>
-    public Error(string message, Step? step, string key = "Error", global::app.type.item.status.@this? status = null)
+    public @this(string message, Step? step, string key = "Error", global::app.type.item.status.@this? status = null)
         : this(message, key, status)
     {
         Step = step;
@@ -236,7 +236,7 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>
     /// Creates an error with a step and explicit Call chain snapshot.
     /// </summary>
-    public Error(string message, Step? step, IReadOnlyList<Call> callFrames, string key = "Error", global::app.type.item.status.@this? status = null)
+    public @this(string message, Step? step, IReadOnlyList<Call> callFrames, string key = "Error", global::app.type.item.status.@this? status = null)
         : this(message, step, key, status)
     {
         CallFrames = callFrames;
@@ -245,7 +245,7 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>
     /// Creates an error from an execution context. Captures step, goal, and Call chain automatically.
     /// </summary>
-    public Error(string message, actor.context.@this context, string key = "Error", global::app.type.item.status.@this? status = null)
+    public @this(string message, actor.context.@this context, string key = "Error", global::app.type.item.status.@this? status = null)
         : this(message, context.call.Step, key, status)
     {
         Goal = context.call.Goal;

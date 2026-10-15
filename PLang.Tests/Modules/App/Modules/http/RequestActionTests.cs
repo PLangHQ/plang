@@ -284,7 +284,7 @@ public class RequestActionTests
     [Test]
     public async Task AResponseCarryingAFailure_FailsTheRequest_WithThatError()
     {
-        await RemoteAnswers(ctx => ctx.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)));
+        await RemoteAnswers(ctx => ctx.Error(new global::app.error.@this("the disk is full", "DiskFull", 507)));
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/disk" };
         var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
@@ -313,7 +313,7 @@ public class RequestActionTests
     [Test]
     public async Task AStreamedFailure_ReachesTheCallback_AsThatFailure()
     {
-        await RemoteAnswers(ctx => ctx.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)));
+        await RemoteAnswers(ctx => ctx.Error(new global::app.error.@this("the disk is full", "DiskFull", 507)));
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/plang-stream",
             OnStream = Make.Call(Ctx, "HandleChunk") };

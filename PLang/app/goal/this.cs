@@ -320,7 +320,7 @@ public sealed partial class @this
         var context = app.actor.list.System.Context;
         var loaded = app.goal.list[pr] is { } held ? context.Ok(held) : await Read(pr, app);
         if (loaded.Success && await loaded.Value() is @this { IsSetup: true })
-            return context.Error(new global::app.error.Error($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
+            return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
         return loaded;
     }
 
@@ -338,9 +338,9 @@ public sealed partial class @this
             var read = await pr.Read(context);
             var content = read.Success ? await read.Value() : null;
             if (!read.Success || content is null || content.IsNull)
-                return context.Error(read.Error ?? new global::app.error.Error($"Failed to read goal file: {pr}"));
+                return context.Error(read.Error ?? new global::app.error.@this($"Failed to read goal file: {pr}"));
             if (content is not @this goal)
-                return context.Error(read.Error ?? new global::app.error.Error(
+                return context.Error(read.Error ?? new global::app.error.@this(
                     $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
 
             app.goal.list.Add(goal);
@@ -349,7 +349,7 @@ public sealed partial class @this
         // a refused .pr names itself — its reader was born knowing the file
         catch (Exception ex)
         {
-            return context.Error(global::app.error.Error.FromException(ex));
+            return context.Error(global::app.error.@this.FromException(ex));
         }
     }
 
@@ -373,7 +373,7 @@ public sealed partial class @this
     public async Task<data.@this> Start(actor.context.@this context, IEnumerable<data.@this>? parameters)
     {
         if (context.CancellationToken.IsCancellationRequested)
-            return context.Error(new global::app.error.Error("Operation was cancelled", "Cancelled", 499));
+            return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));
 
         // The goal's own frame spans its whole run — what is bound before and after it, and its steps — so the
         // goal in play is this one throughout. The frame outlives any single step, so things like `debug.tag`

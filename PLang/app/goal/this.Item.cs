@@ -26,7 +26,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         var view = asked ?? global::app.View.Store;
         if (data.Peek() is not global::app.type.item.@this item)
-            return context.Error(new global::app.error.Error($"%{data.Name}% holds no value to write as a .pr", "NothingToWrite", 400));
+            return context.Error(new global::app.error.@this($"%{data.Name}% holds no value to write as a .pr", "NothingToWrite", 400));
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(stream, new System.Text.Json.JsonWriterOptions
                      {
                          Indented = true,
@@ -66,7 +66,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         catch (System.Exception broken) when (broken is System.Text.Json.JsonException or System.FormatException
                                                   or System.InvalidOperationException or System.NotSupportedException)
         {
-            return System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.Error(
+            return System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.@this(
                 $"failed to read {origin} as goal: {broken.Message}", "MaterializeFailed", 400) { Exception = broken }));
         }
     }
@@ -110,10 +110,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // a name reaching the lift is one no goal answered to (Select already asked)
         if (raw is global::app.type.item.text.@this name)
         {
-            data.Fail(new global::app.error.Error($"Goal '{name}' not found.", "GoalNotFound", 404));
+            data.Fail(new global::app.error.@this($"Goal '{name}' not found.", "GoalNotFound", 404));
             return null;
         }
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
             "a goal is read from its .pr, never converted from a value.", "CreateItemDeclined", 400));
         return null;

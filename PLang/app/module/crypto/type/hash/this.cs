@@ -139,12 +139,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         try { digest = Digest(raw, length: null); }
         catch (System.FormatException unknown)
         {
-            data.Fail(new global::app.error.Error(unknown.Message, "HashInvalid", 400));
+            data.Fail(new global::app.error.@this(unknown.Message, "HashInvalid", 400));
             return null;
         }
         if (digest is null)
         {
-            data.Fail(new global::app.error.Error(
+            data.Fail(new global::app.error.@this(
                 $"%{data.Name}% is no digest — a hash is written as hex or base64, or <algorithm>:<digest> (sha256:<hex>)",
                 "CreateItemDeclined", 400));
             return null;
@@ -156,8 +156,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public string Written => $"{Algorithm?.Name}:{System.Convert.ToHexString(Bytes).ToLowerInvariant()}";
 
     /// <summary>Why <paramref name="actual"/> is not this digest, naming both (HashMismatch); null when it is.</summary>
-    public global::app.error.Error? Mismatch(@this actual) => DigestEquals(actual) ? null
-        : new global::app.error.Error($"the hash is {actual.Written}, expected {Written}", "HashMismatch", 400);
+    public global::app.error.@this? Mismatch(@this actual) => DigestEquals(actual) ? null
+        : new global::app.error.@this($"the hash is {actual.Written}, expected {Written}", "HashMismatch", 400);
 
     public static implicit operator string(@this h) => h.ToBase64();
     public override string ToString() => ToBase64();

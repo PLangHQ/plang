@@ -47,7 +47,7 @@ public class LoudRunTests
     }
 
     // The run's tests live in the session; the verdict reads them there.
-    private global::app.error.Error? Verdict(params global::app.test.@this[] tests)
+    private global::app.error.@this? Verdict(params global::app.test.@this[] tests)
     {
         foreach (var test in tests) _app.test.list.Add(test);
         return _app.test.list.Report.Verdict();

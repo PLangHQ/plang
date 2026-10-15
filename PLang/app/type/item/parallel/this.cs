@@ -77,12 +77,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         {
             if (dict.Entries(context).FirstOrDefault(entry => !string.Equals(entry.Name, "cpu", System.StringComparison.OrdinalIgnoreCase)) is { } other)
             {
-                data.Fail(new global::app.error.Error($"parallel's one member is cpu (how many at once) — not {other.Name}", "ParallelInvalid", 400));
+                data.Fail(new global::app.error.@this($"parallel's one member is cpu (how many at once) — not {other.Name}", "ParallelInvalid", 400));
                 return null;
             }
             return new @this(dict.Get<global::app.type.item.number.@this>("cpu", context)?.ToInt64());
         }
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             "parallel is written `in parallel`, `parallel(cpu: 2)` or {cpu: 2}", "ParallelInvalid", 400));
         return null;
     }

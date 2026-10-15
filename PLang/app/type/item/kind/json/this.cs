@@ -187,7 +187,7 @@ public sealed class @this : global::app.type.kind.@this
     // json content that doesn't have the shape its target reads (an object where a list goes) — the program's
     // data, not a fault in plang: keyed like any content that doesn't read as its declared type, naming where.
     private static global::app.error.AppException Unread(JsonException shape, string target)
-        => new(new global::app.error.Error(
+        => new(new global::app.error.@this(
             $"json content doesn't read as {target}: {shape.Message}"
             + (shape.Path != null || shape.LineNumber != null ? $" [at {shape.Path ?? "?"}, line {shape.LineNumber?.ToString() ?? "?"}]" : ""),
             "MaterializeFailed", 400) { Exception = shape }, shape);

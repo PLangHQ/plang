@@ -67,7 +67,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
         On.Bind("set", When.before, async (_, result, ctx) =>
         {
             about = (await result.Value())?.ToString();
-            return ctx.Error(new global::app.error.Error("no", "Refused", 400));
+            return ctx.Error(new global::app.error.@this("no", "Refused", 400));
         }, app.actor.list.User, Scope.app);
 
         var answer = await vars.Set("name", "new");
@@ -120,7 +120,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
         var vars = new Variables(app.actor.list.User.Context);
         await vars.Set("name", "ingi");
         On.Bind("remove", When.before,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.actor.list.User, Scope.app);
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), app.actor.list.User, Scope.app);
 
         var answer = await vars.Remove("name");
 

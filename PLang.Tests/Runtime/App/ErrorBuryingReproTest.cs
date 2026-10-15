@@ -1,9 +1,9 @@
 namespace PLang.Tests.App;
 
-// Regression: when a Data slot of type string is fed an global::app.error.Error value
+// Regression: when a Data slot of type string is fed an global::app.error.@this value
 // (e.g. error.throw Message=%!error% on a build pipeline that just
 // captured a NullReferenceException), the conversion-failure wrapper
-// must NOT become the primary displayed error. The original global::app.error.Error
+// must NOT become the primary displayed error. The original global::app.error.@this
 // stays as primary; the conversion failure rides on its causing list.
 public class ErrorBuryingReproTest
 {
@@ -25,7 +25,7 @@ public class ErrorBuryingReproTest
         var resolved = d.As<global::app.type.item.text.@this>(await d.Value<global::app.type.item.text.@this>());
 
         await resolved.IsFailure();
-        // The primary error is the original global::app.error.Error, not the conversion wrapper.
+        // The primary error is the original global::app.error.@this, not the conversion wrapper.
         await Assert.That(resolved.Error!.Key).IsEqualTo("NullReferenceException");
         // The conversion failure rides on the chain — visible but demoted. (Born-native: text
         // is a wrapper type, not a CLR primitive, so the failure surfaces as TypeMismatch.)
@@ -41,7 +41,7 @@ public class ErrorBuryingReproTest
         var d = new global::app.data.@this("!error", rootError);
 
         await Assert.That(await d.Value<global::app.type.item.@this>()).IsSameReferenceAs(rootError);
-        await Assert.That(rootError.Refuses(new global::app.type.@this(typeof(global::app.error.Error)), d)).IsFalse();
+        await Assert.That(rootError.Refuses(new global::app.type.@this(typeof(global::app.error.@this)), d)).IsFalse();
         await Assert.That(rootError.list.Count).IsEqualTo(0);
     }
 

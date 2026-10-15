@@ -18,7 +18,7 @@ public sealed class @this : query.@this
     internal static @this? Create(Data group, Data data, global::app.actor.context.@this context)
     {
         if (group.Peek()?.ToString() is { Length: > 0 } field) return new(field);
-        data.Fail(new global::app.error.Error("names the field to group by — group: \"name\"", "QueryInvalid", 400));
+        data.Fail(new global::app.error.@this("names the field to group by — group: \"name\"", "QueryInvalid", 400));
         return null;
     }
 

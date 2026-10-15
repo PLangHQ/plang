@@ -10,12 +10,12 @@ public sealed partial class @this
     /// Whether an answer holds what the step's words say is the answer's check (<see cref="Cover"/>,
     /// asked where the answer is read): a build may change the code after that (goal.call writes a
     /// callee's name as its address), and the code still holds.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(
+    public async System.Threading.Tasks.Task<global::app.error.@this?> Validate(
         global::app.actor.context.@this context)
     {
         var invalid = await Code.Validate(context);
         if (invalid == null) return null;
-        var causes = new List<global::app.error.Error> { invalid };
+        var causes = new List<global::app.error.@this> { invalid };
         var first = causes[0];
         return new global::app.error.StepError(
             $"step {Index} '{Text}': {string.Join("; ", causes.Select(c => c.Message))}", this, first.Key, first.Status) { list = causes };

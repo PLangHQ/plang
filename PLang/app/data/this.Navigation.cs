@@ -58,7 +58,7 @@ public partial class @this
                 Properties[key] = value is @this given ? await given.Value() : value;
                 return this;
             }
-            return _context?.Error(new global::app.error.Error(
+            return _context?.Error(new global::app.error.@this(
                 $"{ex.Message}: %{Path}% is a {target.Type.Name} inside another value, and has nowhere to keep a member", "CannotSetChild", 400)) ?? this;
         }
         // a value the child refuses (an option's value out of its range, a reserved key) says why

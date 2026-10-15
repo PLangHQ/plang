@@ -12,7 +12,7 @@ public class FailedWriteTests
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = mime, Framed = framed };
         app.actor.list.User.Channel.Register(channel);
 
-        var failed = user.Error(new global::app.error.Error("the disk is full", "DiskFull", 507));
+        var failed = user.Error(new global::app.error.@this("the disk is full", "DiskFull", 507));
         await channel.WriteAsync(failed);
 
         return System.Text.Encoding.UTF8.GetString(capture.ToArray());
@@ -38,8 +38,8 @@ public class FailedWriteTests
         var output = new global::app.channel.type.stream.@this("out", capture,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "application/plang" };
         app.actor.list.User.Channel.Register(output);
-        var sent = new global::app.error.Error("the disk is full", "DiskFull", 507)
-            { list = { new global::app.error.Error("quota reached", "Quota", 507) } };
+        var sent = new global::app.error.@this("the disk is full", "DiskFull", 507)
+            { list = { new global::app.error.@this("quota reached", "Quota", 507) } };
         await output.WriteAsync(user.Error(sent));
 
         await using var reader = new global::app.@this("/test2", autoWireConsoleChannels: false).Testing();
@@ -71,7 +71,7 @@ public class FailedWriteTests
 
         using var body = new MemoryStream();
         var encoded = await from.Format("application/plang").Encode(body,
-            from.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)), from);
+            from.Error(new global::app.error.@this("the disk is full", "DiskFull", 507)), from);
         await encoded.IsSuccess();
 
         var read = await receiver.type.list["wire"].kind["plang"]!.Decode(body.ToArray(), to);

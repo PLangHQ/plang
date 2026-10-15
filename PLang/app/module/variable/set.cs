@@ -34,7 +34,7 @@ public partial class Set : IContext, IScope, IKeep
 
     /// <summary>Build-time judgement of my own properties, read as authored — Peek, never the
     /// value door: a %var% is unknown at build and defers to Run.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate()
+    public async System.Threading.Tasks.Task<global::app.error.@this?> Validate()
     {
         // The strict probe reasons over the value's raw face at this proven leaf (ValidateKind is
         // CLR-facing machinery).
@@ -123,7 +123,7 @@ public partial class Set : IContext, IScope, IKeep
         // decline instead of NRE'ing on a null name below.
         if (name == null)
             return Context.Error(Name.Error
-                ?? new global::app.error.Error("variable.set: Name did not resolve to a variable.", "CreateVariableDeclined", 400));
+                ?? new global::app.error.@this("variable.set: Name did not resolve to a variable.", "CreateVariableDeclined", 400));
 
         // `set default` writes only where nothing is — a setting included (%!build.setting.cache% holds its
         // class's default, or this run's value).
@@ -270,7 +270,7 @@ public partial class Set : IContext, IScope, IKeep
                                                   or System.InvalidOperationException or System.Text.Json.JsonException)
                 {
                     if (!typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
-                        return Context.Error(new global::app.error.Error(ex.Message, "TypeConversionFailed", 400));
+                        return Context.Error(new global::app.error.@this(ex.Message, "TypeConversionFailed", 400));
                 }
             }
 

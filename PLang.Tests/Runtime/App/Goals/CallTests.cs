@@ -48,7 +48,7 @@ public class CallTests
             global::app.channel.list.@this.Error, system, global::app.channel.ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Framed = true });
 
-        await Ctx.Actor.Channel.Report(Ctx.Error(new global::app.error.Error("nobody waited", "Unwaited", 500)));
+        await Ctx.Actor.Channel.Report(Ctx.Error(new global::app.error.@this("nobody waited", "Unwaited", 500)));
 
         await Assert.That(System.Text.Encoding.UTF8.GetString(system.ToArray())).Contains("nobody waited");
     }

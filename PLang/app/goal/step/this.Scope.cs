@@ -29,7 +29,7 @@ public sealed partial class @this
     /// picks already know (<c>Pick.Known</c>) — walked action by action over <paramref name="scratch"/>,
     /// leaving <see cref="Typed"/>, <see cref="Setting"/> and <see cref="HasKey"/>. One error per property the
     /// store says is the wrong type.</summary>
-    public async Task<List<global::app.error.Error>> Scope(global::app.actor.context.@this scratch)
+    public async Task<List<global::app.error.@this>> Scope(global::app.actor.context.@this scratch)
     {
         var variables = new global::app.type.item.variable.parser.@this(Text).Variable;
         // each %!…% names the class of settings its longest path is
@@ -42,7 +42,7 @@ public sealed partial class @this
         var names = variables
             .Where(v => v.IsBare).Select(v => v.Code.Root.Name).Distinct().ToList();
         var known = new Dictionary<string, global::app.type.@this>();
-        var declined = new List<global::app.error.Error>();
+        var declined = new List<global::app.error.@this>();
         var actions = (Code.Count > 0 ? Code : Pick.Known).Items().ToList();
         // before each action — and once for a step whose code nothing knows yet
         for (int i = 0; i < Math.Max(1, actions.Count); i++)

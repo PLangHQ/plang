@@ -112,7 +112,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// null when nothing on the live chain has failed. The stack is where the error already
     /// lives, so nothing stores it a second time: the frame is the scope.
     /// </summary>
-    public global::app.error.Error? Error
+    public global::app.error.@this? Error
     {
         get
         {
@@ -236,7 +236,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// frame that never pushed would have run, and the error carries the chain it would have joined. Filed in the
     /// audit.
     /// </summary>
-    public global::app.error.Error Overflow(CallStackOverflowException ex, global::app.goal.@this? goal, global::app.goal.step.@this? step)
+    public global::app.error.@this Overflow(CallStackOverflowException ex, global::app.goal.@this? goal, global::app.goal.step.@this? step)
     {
         var error = new ServiceError(ex.Message, "CallStackOverflow", 500)
         {

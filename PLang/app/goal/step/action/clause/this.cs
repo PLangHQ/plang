@@ -34,9 +34,9 @@ public class @this : global::app.goal.step.action.@this
         => Task.FromResult(result);
 
     /// <summary>A recovery that runs the very action it is a clause of is a retry, not a recovery.</summary>
-    internal override global::app.error.Error? Refuse(global::app.goal.step.action.@this? before)
+    internal override global::app.error.@this? Refuse(global::app.goal.step.action.@this? before)
         => before != null && Held.Any(before.Same)
-            ? new global::app.error.Error(
+            ? new global::app.error.@this(
                 $"the Recovery of {Module}.{Name} runs {before.Module}.{before.Name}, the action it is " +
                 "a clause of — Recovery holds what the step runs on error", "RecoveryIsTheAction", 400)
             : null;

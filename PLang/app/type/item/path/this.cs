@@ -87,7 +87,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         if (value is @this self) return self;
         if (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is not string raw)
         {
-            data.Fail(new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to path.", "PathConversionFailed", 400));
+            data.Fail(new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to path.", "PathConversionFailed", 400));
             return null;
         }
         try { return Resolve(raw, data.Context!); }
@@ -98,7 +98,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         }
         catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
         {
-            data.Fail(new global::app.error.Error(ex.Message, "PathConstructionFailed", 400));
+            data.Fail(new global::app.error.@this(ex.Message, "PathConstructionFailed", 400));
             return null;
         }
     }

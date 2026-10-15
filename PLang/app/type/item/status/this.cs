@@ -74,13 +74,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                     case "code" when entry.Peek() is global::app.type.item.number.@this c: code = c; break;
                     case "text" when entry.Peek() is global::app.type.item.text.@this t: text = t; break;
                     default:
-                        data.Fail(new global::app.error.Error(
+                        data.Fail(new global::app.error.@this(
                             $"a status's members are code (a number) and text — not {entry.Name}", "StatusInvalid", 400));
                         return null;
                 }
             if (code != null) return new(code, text);
         }
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"a status is a code (404) or {{code, text}} — not a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name}",
             "StatusInvalid", 400));
         return null;

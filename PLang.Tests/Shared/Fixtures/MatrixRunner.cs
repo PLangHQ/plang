@@ -60,7 +60,7 @@ public static class MatrixRunner
         }
 
         var data = await action.Start(context);
-        var snapshot = (data.Error as global::app.error.Error)?.Params;        return new Result(data, snapshot);
+        var snapshot = (data.Error as global::app.error.@this)?.Params;        return new Result(data, snapshot);
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public static class MatrixRunner
         var shell = new TAction();
         var (handler, resolveErr) = await shell.Resolve(action, context);
         var data = resolveErr != null ? context.Error(resolveErr) : await handler!.Start();
-        var snapshot = (data.Error as global::app.error.Error)?.Params;
+        var snapshot = (data.Error as global::app.error.@this)?.Params;
         return new Result(data, snapshot);
     }
 

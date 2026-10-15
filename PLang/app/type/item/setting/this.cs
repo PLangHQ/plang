@@ -50,7 +50,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this setting) return setting;
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
             "a setting is read as %!path%, never made from a value.", "CreateItemDeclined", 400));
         return null;
@@ -130,7 +130,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             var prop = node.GetType().GetProperty(kvp.Key,
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
             if (prop?.SetMethod?.IsPublic != true)
-                return context.Error(new global::app.error.Error(
+                return context.Error(new global::app.error.@this(
                     $"Unknown setting '{kvp.Key}' on {node.GetType().Name} — no public-settable property.",
                     "UnknownSetting", 400));
 
@@ -145,7 +145,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             {
                 // a setting node takes a bool — whether it is on — or its members; anything else is refused
                 if (global::app.type.item.@this.Create(kvp.Value, context) is not global::app.type.item.@bool.@this on)
-                    return context.Error(new global::app.error.Error(
+                    return context.Error(new global::app.error.@this(
                         $"setting '{kvp.Key}' is a switch: write true or false, or set its members", "TypeConversionFailed", 400));
                 var child = (@this)(prop.GetValue(node) ?? Construct(prop.PropertyType, context));
                 child.Enabled = on;
@@ -179,7 +179,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
                     or System.OverflowException or System.NotSupportedException)
                 {
-                    return context.Error(new global::app.error.Error(
+                    return context.Error(new global::app.error.@this(
                         $"setting '{kvp.Key}' cannot bind to {prop.PropertyType.Name}: {ex.Message}",
                         "TypeConversionFailed", 400) { Exception = ex });
                 }

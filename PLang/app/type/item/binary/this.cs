@@ -141,7 +141,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             var born = await context.App.type.list[typeof(@this)].Create(value, context, data.Name);
             if (born.Success && !born.Exits && born.Peek() is @this made) bytes = made;
-            else return born.Success ? context.Error(new global::app.error.Error(
+            else return born.Success ? context.Error(new global::app.error.@this(
                 $"%{data.Name}% holds a {data.Type?.Name ?? "value"}, not bytes — nothing writes it as binary content", "NoEncoder", 400))
                 : born;
         }
@@ -189,8 +189,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (Create(value) is { } built) return built;
         object? clr = (value as global::app.type.item.@this)?.Clr<object>() ?? value;
         data.Fail(clr is string
-            ? new global::app.error.Error("Cannot parse string as binary — expected base64.", "BinaryParseFailed", 400)
-            : new global::app.error.Error($"Cannot convert {(value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name} to binary.", "BinaryConversionFailed", 400));
+            ? new global::app.error.@this("Cannot parse string as binary — expected base64.", "BinaryParseFailed", 400)
+            : new global::app.error.@this($"Cannot convert {(value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name} to binary.", "BinaryConversionFailed", 400));
         return null;
     }
 

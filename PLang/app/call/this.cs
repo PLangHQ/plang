@@ -129,7 +129,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// already succeeded here. <see cref="Handled"/> is what stops it: "recovered, stop being
     /// <c>%!error%</c>". Null when this frame never failed, or failed and was recovered.
     /// <see cref="global::app.call.list.@this.Error"/> walks <see cref="Caller"/> asking each frame this.</summary>
-    public global::app.error.Error? Error => _handled ? null : Errors.Newest;
+    public global::app.error.@this? Error => _handled ? null : Errors.Newest;
 
     /// <summary>
     /// Live siblings under this Call. Owns its own lock + FIFO eviction policy — see
@@ -346,7 +346,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// <para>Recording each error ONCE is the frame's own contract, kept by instance identity, so no
     /// caller guards: a retry mints a fresh error per attempt and each is kept (real history), while
     /// a layer that passes the same error through records nothing new.</para></summary>
-    public void Record(global::app.error.Error error, actor.context.@this context)
+    public void Record(global::app.error.@this error, actor.context.@this context)
     {
         if (error.CallFrames.Count == 0) error.CallFrames = Chain;
         error.Step ??= Step;

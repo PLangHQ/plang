@@ -38,7 +38,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (raw is @this redirect) return redirect;
         if (raw is not global::app.type.item.dict.@this dict)
         {
-            data.Fail(new global::app.error.Error("a redirect is {follow, max}", "RedirectInvalid", 400));
+            data.Fail(new global::app.error.@this("a redirect is {follow, max}", "RedirectInvalid", 400));
             return null;
         }
         var fresh = new @this();
@@ -50,7 +50,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 case "follow" when entry.Peek() is global::app.type.item.@bool.@this f: follow = f; break;
                 case "max" when entry.Peek() is global::app.type.item.number.@this m: max = m; break;
                 default:
-                    data.Fail(new global::app.error.Error(
+                    data.Fail(new global::app.error.@this(
                         $"a redirect's members are follow (true or false) and max (a number) — not {entry.Name}", "RedirectInvalid", 400));
                     return null;
             }

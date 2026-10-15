@@ -71,7 +71,7 @@ public class @this<T, L> : @this
     {
         await foreach (var p in every)
             if (await p.Match(key) is { } found) return data.@this<T>.Ok(found);
-        return data.@this<T>.FromError(new global::app.error.Error($"no {Name} '{key}'", "NotFound", 404));
+        return data.@this<T>.FromError(new global::app.error.@this($"no {Name} '{key}'", "NotFound", 404));
     }
 
     /// <summary>What a value of this concept can be in <paramref name="step"/>: the members its collection offers from

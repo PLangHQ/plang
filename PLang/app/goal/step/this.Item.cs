@@ -18,7 +18,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this s) return s;
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
             "a step is built by its goal, never converted from a value.", "CreateItemDeclined", 400));
         return null;

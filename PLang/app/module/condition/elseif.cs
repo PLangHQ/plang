@@ -16,7 +16,7 @@ public partial class Elseif : IContext, IStep
     public partial IEvaluator Evaluator { get; }
 
     /// <summary>The operands read as the operator asks.</summary>
-    public async Task<global::app.error.Error?> Validate() => await Evaluator.Operands(Operator, Right);
+    public async Task<global::app.error.@this?> Validate() => await Evaluator.Operands(Operator, Right);
 
     /// <summary>The evaluator's plang bool is the answer, as it is (see <see cref="If.Start"/>).</summary>
     public Task<data.@this<global::app.type.item.@bool.@this>> Start() => Evaluator.Evaluate(this);

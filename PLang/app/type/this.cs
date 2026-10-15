@@ -267,7 +267,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                 dict.Get<item.@bool.@this>("strict", context)?.Value == true), context];
         if (raw is item.@this { IsLeaf: true } leaf && leaf.RawText is { Length: > 0 } named)
             return context.App.type.list[new @this(named), context];
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as item.@this)?.Type.Name ?? raw?.GetType().Name} — a type is its name (path) or {{name, kind?, strict?}}",
             "CreateItemDeclined", 400));
         return null;
@@ -408,7 +408,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             if (carrier.Error != null) throw Failed(carrier.Error);
             // Nothing in this type builds it from that value (`set %x% as dict = "hello"`): the type refuses the
             // conversion, as its own answer.
-            throw Failed(new global::app.error.Error(
+            throw Failed(new global::app.error.@this(
                 $"cannot make a '{Name}' from a {leaf.Type.Name} value", "TypeConversionFailed", 400));
         }
 
@@ -420,7 +420,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                 ? lifted : Make(lifted, context);
         return Make(global::app.type.item.@this.Create(raw, context), context);
 
-        static System.Exception Failed(global::app.error.Error error) => new global::app.error.DeclinedException(error);
+        static System.Exception Failed(global::app.error.@this error) => new global::app.error.DeclinedException(error);
     }
 
     /// <summary>A still-encoded slice + the serializer that sliced it — the capture hands over

@@ -67,13 +67,13 @@ public sealed partial class @this
     /// <summary>Why a file of a known format isn't there at build: missing, or the stat's own error when the
     /// build may not stat it — for a warning, never a failure: the read at run asks again under its own grant.
     /// Null when it is there, or its format is unknown.</summary>
-    public override async Task<global::app.error.Error?> Absence(actor.context.@this context)
+    public override async Task<global::app.error.@this?> Absence(actor.context.@this context)
     {
         if (!Known(context)) return null;
         var exists = await Exists(context);
         if (!exists.Success) return exists.Error;
         return await exists.ToBooleanAsync() ? null
-            : new global::app.error.Error($"'{this}' does not exist on disk", "NotFound", 404);
+            : new global::app.error.@this($"'{this}' does not exist on disk", "NotFound", 404);
     }
 
     public override void Add(actor.context.@this context, global::app.type.item.path.@this? source = null)

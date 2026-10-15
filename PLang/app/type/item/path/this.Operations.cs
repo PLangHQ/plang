@@ -75,7 +75,7 @@ public abstract partial class @this
 
     /// <summary>Why this location isn't there at build, for a warning — null when the build doesn't ask (a url
     /// is not fetched at build) or it is there.</summary>
-    public virtual Task<global::app.error.Error?> Absence(actor.context.@this context) => Task.FromResult<global::app.error.Error?>(null);
+    public virtual Task<global::app.error.@this?> Absence(actor.context.@this context) => Task.FromResult<global::app.error.@this?>(null);
 
     /// <summary>Build's face of a write: this location is in its caller's files, for the steps after it. A copy or
     /// a move names its <paramref name="source"/> — into a folder, the file lands under it. Only a file location
@@ -106,7 +106,7 @@ public abstract partial class @this
     /// <summary>Writes <paramref name="content"/> here as it is read, never held whole — gated as a write. Only a file
     /// location has a place to write a stream; any other refuses.</summary>
     public virtual Task<data.@this<@this>> Write(System.IO.Stream content, actor.context.@this context)
-        => Task.FromResult(context.Error<@this>(new global::app.error.Error(
+        => Task.FromResult(context.Error<@this>(new global::app.error.@this(
             $"{Raw} has no place to write a stream: only a file does", "NotSupported", 400)));
     public abstract Task<data.@this<@this>> Append(string content, actor.context.@this context);
     public abstract Task<data.@this<@this>> Mkdir(actor.context.@this context);
@@ -156,7 +156,7 @@ public abstract partial class @this
         if (!read.Success || read.Exits) return data.@this<@this>.From(read);
         byte[]? copyBytes = (await read.Value())?.Value;
         if (copyBytes == null)
-            return context.Error<@this>(new error.Error("CopyTo: the source's bytes did not come back as bytes.", "CopyToReadShape", 500));
+            return context.Error<@this>(new error.@this("CopyTo: the source's bytes did not come back as bytes.", "CopyToReadShape", 500));
         return await destination.WriteBytes(copyBytes, context);
     }
 

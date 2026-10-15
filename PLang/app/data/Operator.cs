@@ -96,9 +96,9 @@ public sealed class Operator
 
     /// <summary>What's wrong with this operator's operands as written, or null: emptiness asks of Left
     /// alone; every other operator compares Left with a Right (<c>Right=null</c> written is a Right).</summary>
-    public global::app.error.Error? Operands(bool right) =>
-        IsUnary && right ? new global::app.error.Error($"'{Value}' asks of Left alone — leave Right out", "OperandExtra", 400)
-        : !IsUnary && !right ? new global::app.error.Error(
+    public global::app.error.@this? Operands(bool right) =>
+        IsUnary && right ? new global::app.error.@this($"'{Value}' asks of Left alone — leave Right out", "OperandExtra", 400)
+        : !IsUnary && !right ? new global::app.error.@this(
             $"'{Value}' compares Left with Right, and Right is missing — for Left's own truth (is it true, does it exist, is it set) leave Operator out", "OperandMissing", 400)
         : null;
 

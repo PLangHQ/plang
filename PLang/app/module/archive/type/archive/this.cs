@@ -89,7 +89,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 }
             if (value != null && holds != null) return new @this(value, named, holds);
         }
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% is no archive: an archive is what pack answers, or a file in a format (gzip, tar.gz, zip…)", "ArchiveInvalid", 400));
         return null;
     }

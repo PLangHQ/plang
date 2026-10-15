@@ -142,7 +142,7 @@ public partial class @this
     private async System.Threading.Tasks.ValueTask<@this> Rendered()
     {
         var asked = Copy();
-        global::app.error.Error? why;
+        global::app.error.@this? why;
         try
         {
             var rendered = await asked.Value();
@@ -359,7 +359,7 @@ public partial class @this
             return this;
         }
         return named.IsInitialized ? named
-            : Context.Error(new global::app.error.Error($"'{Name}' is {Peek()}, a variable that holds nothing", "VariableNotFound", 404));
+            : Context.Error(new global::app.error.@this($"'{Name}' is {Peek()}, a variable that holds nothing", "VariableNotFound", 404));
     }
 
     /// <summary>This carrier as the step gave it, read where it is written (<see cref="Settle"/>: a reference the Data
@@ -394,7 +394,7 @@ public partial class @this
         var carrier = await Follow(Context);
         if (!carrier.Success || carrier.Exits) return carrier;
         if (carrier.Peek() is not TAs held)
-            return Context.Error(new global::app.error.Error(
+            return Context.Error(new global::app.error.@this(
                 $"'{Name}' is a {carrier.Type.Name}, not a {(global::app.type.item.@this.NameOf(typeof(TAs)))}", "NotA", 400));
         return await then(held);
     }
@@ -765,7 +765,7 @@ public class @this<T> : @this
         }
         return From(settled);
     }
-    public new static @this<T> FromError(global::app.error.Error error) => new() { Error = error };
+    public new static @this<T> FromError(global::app.error.@this error) => new() { Error = error };
 
     /// <summary>Typed absent slot — non-null Data, <c>IsInitialized == false</c>. The
     /// optional-param null model: the reference is never null, only the value is.</summary>
@@ -798,7 +798,7 @@ public class @this<T> : @this
         var value = Success ? await Value() : default;
         if (!Success || Exits) return this;
         if (value is null)
-            return Context.Error(new global::app.error.Error($"'{Name}' has no value", "ValueRequired", 400));
+            return Context.Error(new global::app.error.@this($"'{Name}' has no value", "ValueRequired", 400));
         return await then(value);
     }
 

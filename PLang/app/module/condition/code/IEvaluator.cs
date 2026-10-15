@@ -13,5 +13,5 @@ public interface IEvaluator : ICode
     Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(Compare action);
 
     /// <summary>Build-time: what's wrong with a condition's operands as written, or null.</summary>
-    Task<global::app.error.Error?> Operands(data.@this<global::app.type.item.choice.@this<Operator>>? op, data.@this? right);
+    Task<global::app.error.@this?> Operands(data.@this<global::app.type.item.choice.@this<Operator>>? op, data.@this? right);
 }

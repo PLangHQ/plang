@@ -155,7 +155,7 @@ public class source : @this
         var asking = data.Context;
         if (asking is null)
         {
-            data.Fail(new global::app.error.Error(
+            data.Fail(new global::app.error.@this(
                 $"'{data.Name}' has no context to load with — a value is read through a Data born with its run's context.",
                 "NoContextToLoad", 500));
             return Absent;
@@ -173,7 +173,7 @@ public class source : @this
             // genuinely-absent name fails here.
             if (resolved is null || !resolved.IsInitialized)
             {
-                data.Fail(new global::app.error.Error(
+                data.Fail(new global::app.error.@this(
                     $"{_value} is not set — nothing to answer for it.", "VariableNotFound", 404));
                 return Absent;
             }
@@ -239,7 +239,7 @@ public class source : @this
             var where = ex is System.Text.Json.JsonException je && (je.Path != null || je.LineNumber != null)
                 ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
                 : "";
-            data.Fail(new global::app.error.Error(
+            data.Fail(new global::app.error.@this(
                 $"failed to read %{data.Name}% as {_type.Name}{(_type.kind.IsEmpty ? "" : $"/{_type.kind.Name}")}: {ex.Message}{where}",
                 "MaterializeFailed", 400) { Exception = ex });
             return Absent;

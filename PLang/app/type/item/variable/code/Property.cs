@@ -72,7 +72,7 @@ public sealed class Property : Hop
         if (parent is null) return context.NotFound(Name);
         if (!IsBinding) return await parent.Set(Name, isIndex: false, value, keeps: own);
         if (!parent.IsInitialized)
-            return context.Error(new global::app.error.Error($"Variable '{parent.Name}' is not set", "VariableNotFound", 400));
+            return context.Error(new global::app.error.@this($"Variable '{parent.Name}' is not set", "VariableNotFound", 400));
 
         try
         {
@@ -80,7 +80,7 @@ public sealed class Property : Hop
         }
         catch (System.ArgumentException ex)
         {
-            return context.Error(new global::app.error.Error(ex.Message, "InvalidPropertyValue", 400));
+            return context.Error(new global::app.error.@this(ex.Message, "InvalidPropertyValue", 400));
         }
         return parent;
     }

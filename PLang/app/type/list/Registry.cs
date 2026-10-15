@@ -120,11 +120,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 
     // One name, one class: the first name <paramref name="type"/> answers to — its word, its namespace, its
     // aliases — that another class already owns; null when every one is its own.
-    private error.Error? Clash(global::app.type.@this type)
+    private error.@this? Clash(global::app.type.@this type)
     {
         foreach (var claim in type.Claims)
             if (Items().FirstOrDefault(t => t.Names(claim)) is { } owner && owner.ClrType != type.ClrType)
-                return new error.Error(
+                return new error.@this(
                     $"type name '{claim}' is claimed by both {owner.ClrType?.FullName} and {type.ClrType?.FullName} — one name, one class.",
                     "TypeLoadCollision", 400);
         return null;
@@ -143,16 +143,16 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     public data.@this Add(System.Type clr, actor.context.@this context, string? name = null)
     {
         if ((name ?? NameOf(clr)) is not { } claimed)
-            return context.Error(new error.Error($"{clr.FullName} is not a plang type — only items are.", "TypeLoadNotAType", 400));
+            return context.Error(new error.@this($"{clr.FullName} is not a plang type — only items are.", "TypeLoadNotAType", 400));
         // The class that already owns the name adds nothing new: the same answer, whatever the name.
         if (Types.FirstOrDefault(t => t.Names(claimed)) is { } held && held.ClrType == clr) return context.Ok(held);
         var aliases = clr.GetProperty("Alias", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
             ?.GetValue(null) as IReadOnlyList<string> ?? [];
         if (aliases.Prepend(claimed).FirstOrDefault(Sealed.Contains) is { } sealedWord)
-            return context.Error(new error.Error(
+            return context.Error(new error.@this(
                 $"'{sealedWord}' is on the sealed built-in list and may not be claimed by a runtime-loaded type.", "TypeLoadCollision", 400));
         if (Array.Find(clr.GetProperties(BindingFlags.Public | BindingFlags.Instance), p => Reserved.Contains(p.Name)) is { } shadow)
-            return context.Error(new error.Error(
+            return context.Error(new error.@this(
                 $"Type '{clr.FullName}' declares instance property '{shadow.Name}' — `type`/`error`/`success`/`@schema` are the reserved navigation core and may not be shadowed by a value type.",
                 "TypeLoadReservedShadow", 400));
         lock (_lock)
@@ -188,7 +188,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         catch (ReflectionTypeLoadException ex)
         {
             // a type the assembly can't load is the load's error, not a partial set of its types
-            return context.Error(new error.Error(
+            return context.Error(new error.@this(
                 $"{assembly.GetName().Name}: types failed to load — {string.Join("; ", ex.LoaderExceptions.Select(e => e?.Message).Distinct())}",
                 "TypeLoadFailed", 400) { Exception = ex });
         }
@@ -202,7 +202,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             var claims = clr.GetCustomAttribute<PlangTypeAttribute>(inherit: false) != null || IsThisClass(clr)
                 ? global::app.type.item.@this.NameOf(clr) : null;
             if (claims != null && Sealed.Contains(claims) && Items().FirstOrDefault(t => t.Names(claims))?.ClrType != clr)
-                return context.Error(new error.Error(
+                return context.Error(new error.@this(
                     $"'{claims}' is on the sealed built-in list and may not be claimed by a runtime-loaded type ({clr.FullName}).", "TypeLoadCollision", 400));
             if (NameOf(clr) is null) continue;
             var result = Add(clr, context);
@@ -262,7 +262,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     // The guard every format passes once a scan has held its kinds: a MIME or an extension is one format's —
     // a second kind answering to it would make the walk's answer depend on the order the types came in.
     // One pass over the held kinds; what it sees is dropped when it returns. Answers the first clash.
-    private error.Error? Guard()
+    private error.@this? Guard()
     {
         var seen = new Dictionary<string, global::app.type.kind.@this>(StringComparer.OrdinalIgnoreCase);
         foreach (var type in Items())
@@ -274,7 +274,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         return null;
     }
 
-    private static error.Error Taken(string key, global::app.type.kind.@this taken, global::app.type.kind.@this kind)
+    private static error.@this Taken(string key, global::app.type.kind.@this taken, global::app.type.kind.@this kind)
         => new($"'{key}' is already the format '{taken.Owner}{(taken.IsEmpty ? "" : "/" + taken.Name)}' — "
                + $"'{kind.Owner}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.", "TypeLoadCollision", 400);
 
@@ -304,7 +304,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     // closed set every choice<T> in it draws on, each with its reader. A set is only identifiable
     // by its usage, so this reflects the assembly's property types. Answers what it refuses (a choice over a
     // set that isn't closed); null when every kind is held.
-    private error.Error? Enlist(Assembly assembly)
+    private error.@this? Enlist(Assembly assembly)
     {
         var seen = new HashSet<System.Type>();
         foreach (var kind in global::app.type.kind.@this.Every(assembly))
@@ -341,11 +341,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                     || !seen.Add(held)) continue;
                 var inner = held.GetGenericArguments()[0];
                 if (global::app.type.item.choice.set.@this.For(inner) is not { } set)
-                    return new error.Error($"{inner.FullName} is not a closed set — no enum members, no Choices(context?), no kinds of its own.", "TypeLoadOpenSet", 400);
+                    return new error.@this($"{inner.FullName} is not a closed set — no enum members, no Choices(context?), no kinds of its own.", "TypeLoadOpenSet", 400);
                 // one name, one set: a second class named as a set is (two enums both `level`) would take its reader
                 if (Items().FirstOrDefault(type => type.Names(set.Owner))?.kind[set.Name] is global::app.type.item.choice.set.@this taken
                     && taken.Of(null) != set.Of(null))
-                    return new error.Error(
+                    return new error.@this(
                         $"choice set name '{set.Name}' is claimed by both {taken.Of(null)?.GetGenericArguments()[0].FullName} and {inner.FullName} — one name, one set.",
                         "TypeLoadCollision", 400);
                 Hold(set);

@@ -270,7 +270,7 @@ public class @this
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
         => _encode != null ? _encode(stream, data, context, view, encoding, ct)
             : !IsEmpty ? context.App.type.list[Owner ?? "binary"].kind.Encode(stream, data, context, view, encoding, ct)
-            : global::System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.Error(
+            : global::System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.@this(
                 $"nothing writes {Owner ?? "binary"} content", "NoEncoder", 400)));
 
     /// <summary>What characters of this kind stand for, opened when they are needed — a text of kind json walked by

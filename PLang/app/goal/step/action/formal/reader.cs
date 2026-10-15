@@ -56,7 +56,7 @@ public sealed class Reader
         }
         catch (Invalid invalid)
         {
-            return context.Error(new global::app.error.Error(invalid.Message, "FormalInvalid", 400)
+            return context.Error(new global::app.error.@this(invalid.Message, "FormalInvalid", 400)
                 { FixSuggestion = invalid.Fix });
         }
     }

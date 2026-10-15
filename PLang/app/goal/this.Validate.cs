@@ -5,17 +5,17 @@ namespace app.goal;
 public sealed partial class @this
 {
     /// <summary>What is wrong with this goal, or null when nothing is.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(
+    public async System.Threading.Tasks.Task<global::app.error.@this?> Validate(
         global::app.actor.context.@this context)
     {
-        var causes = new System.Collections.Generic.List<global::app.error.Error>();
+        var causes = new System.Collections.Generic.List<global::app.error.@this>();
         for (int i = 0; i < Step.Count; i++)
             if (await Step[i].Validate(context) is { } invalid) causes.Add(invalid);
         foreach (var child in Child.Items())
             if (await child.Validate(context) is { } invalid) causes.Add(invalid);
 
         if (causes.Count == 0) return null;
-        return new global::app.error.Error(
+        return new global::app.error.@this(
             $"goal '{Name}': {string.Join("; ", causes.Select(c => c.Message))}", "GoalInvalid", 400) { list = causes };
     }
 }

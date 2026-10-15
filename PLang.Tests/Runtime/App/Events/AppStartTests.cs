@@ -79,7 +79,7 @@ public class AppStartTests
     {
         await using var app = await App();
         app.Own().Bind("start", When.before,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.actor.list.User, Scope.app);
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), app.actor.list.User, Scope.app);
 
         var result = await app.Start();
 

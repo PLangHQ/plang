@@ -79,8 +79,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             return built;
         }
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
-            ? new global::app.error.Error($"Cannot read '{s}' as a size — expected a number and its unit: IEC (500 KiB, 95.4 MiB) or SI (512 kB, 100 MB).", "SizeParseFailed", 400)
-            : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to size.", "SizeConversionFailed", 400));
+            ? new global::app.error.@this($"Cannot read '{s}' as a size — expected a number and its unit: IEC (500 KiB, 95.4 MiB) or SI (512 kB, 100 MB).", "SizeParseFailed", 400)
+            : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to size.", "SizeConversionFailed", 400));
         return null;
     }
 
