@@ -64,15 +64,17 @@ public sealed class Default : IHttp
         // Build body
         HttpContent? httpContent = null;
         // A body is content when given — presence, not truthiness: a body of 0 or false is sent. One left
-        // out (or null) is none, so a no-body request (GET, etc.) skips serialization.
-        var bodyVal = action.Body == null || !action.Body.HasValue ? null : await action.Body.Value();
-        if (bodyVal != null)
+        // out (or null) is none, so a no-body request (GET, etc.) skips serialization. Presence is read by
+        // Peek (HasValue), never by Value — a body still unread ({item, json} holding its raw bytes) stays
+        // unread until it is actually written, so it rides verbatim rather than parsed-then-re-encoded.
+        if (action.Body != null && action.Body.HasValue)
         {
             // the content type as sent: its media type and parameters; the encoding is its charset unless it names one
             var mediaType = MediaTypeHeaderValue.Parse(contentType);
             mediaType.CharSet ??= encoding;
+            // a form body IS a dict — materialize it (a form is key/value, never raw bytes to relay)
             if (string.Equals(mediaType.MediaType, "application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
-                && bodyVal.Clr<Dictionary<string, object>>() is { } formDict)
+                && (await action.Body.Value())?.Clr<Dictionary<string, object>>() is { } formDict)
             {
                 var formValues = new Dictionary<string, string>();
                 foreach (var kvp in formDict)
