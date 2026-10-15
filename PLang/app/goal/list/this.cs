@@ -60,6 +60,12 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     {
         var context = App.actor.list.System.Context;
         if (string.IsNullOrEmpty(name)) return data.@this<goal.@this>.From(context.NotFound(name));
+        // A name never climbs out of the folder it is written for: whoever writes the name (an input, an llm's
+        // answer) can't pick a goal outside it. Refused before anything is resolved, which would fold the `..` away.
+        if (name.Split('/', '\\').Contains(".."))
+            return context.Error<goal.@this>(new Error(
+                $"'{name}' climbs out of its folder ('..'): a goal is called by its name from where it is written, never above it",
+                "GoalNameClimbs", 400));
 
         if (Chain(caller).FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } near)
             return context.Ok(near);
