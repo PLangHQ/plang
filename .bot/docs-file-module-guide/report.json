@@ -1,0 +1,52 @@
+{
+  "branch": "docs/file-module-guide",
+  "sessions": [
+    {
+      "id": "3f1a9c2e-7b4d-4a1e-9c6f-2d8e5b0a1f44",
+      "bot": "docs",
+      "timestamp_start": "2026-10-14T23:13:02Z",
+      "timestamp_end": "2026-10-15T00:05:00Z",
+      "intent": "Start a fresh C#-developer doc tree mirroring PLang/app/ — fundamentals first (the app root and the module system), always mapping plang -> C# -> source.",
+      "before": {
+        "assumptions": "Existing Documentation/architecture.md is stale (old App.System/.Service/.User, .Goals, Data with Type? Type). app-tree.md is closer but predates the lowercase-nodes rename. The website docs/ is for PLang users, not C# devs. Runtime2 is now a deep OBP tree: PLang/app/**/this.cs, path mirrors namespace, @this is each folder's primary class aliased in GlobalUsings.",
+        "risk": "Docs stating stale truth is worse than no docs. Must verify every assertion against current source. Scope risk: the type/item lattice is huge; v1 must stay on the fundamentals Ingi named (app, module) plus the reading conventions, not boil the ocean."
+      },
+      "plan": ".bot/docs-file-module-guide/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/start.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Foundational 'how to read this codebase' page + the app root. Initially drafted at Documentation/app/start.md; moved into the code tree at Ingi's direction ('why not put them in plang/app/'). Grounded in PLang/app/this.cs, GlobalUsings.cs, type/item/this.cs; verified against source, not copied from the stale architecture.md."
+        },
+        {
+          "paths": ["PLang/app/module/start.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "The module system: registry, discovery (Discover + [Action], module name = namespace segment after app.module), the action handler pattern, attribute reference, dispatch via the real decide.pr, and 'type is the role'. Points to os/system/modules/<module>/ for the runtime teaching prose rather than duplicating it (Ingi's choice)."
+        },
+        {
+          "paths": ["PLang/app/module/file/start.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "The file module worked example — all seven actions mapped to source. Read read.cs, save.cs, exists.cs, copy.cs and grepped move/delete/list for accurate signatures, returns, and cacheable flags; verified [Default(false)] on Overwrite and Subfolder=include."
+        },
+        {
+          "paths": [".bot/docs-file-module-guide/docs/v1/plan.md", ".bot/docs-file-module-guide/docs/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session plan and summary. Structure decided interactively with Ingi: in-tree docs, start.md per folder + named topic files, depth approved, dev docs point-not-duplicate the teaching layer."
+        }
+      ],
+      "after": {
+        "status": "v1 complete — fundamentals (app root + module system + file worked example) authored and verified against source.",
+        "health": "green",
+        "notes": "Fresh code-mirrored developer doc tree started under PLang/app/ as start.md files. No production C# changed. Next versions extend the tree (type/item, goal, data, channel, event, actor) and retire the stale Documentation/architecture.md."
+      }
+    }
+  ]
+}

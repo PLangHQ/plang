@@ -1,0 +1,16 @@
+{
+  "reviewer": "docs",
+  "branch": "docs/file-module-guide",
+  "timestamp": "2026-10-15T00:05:00Z",
+  "reviewed_version": "v1",
+  "summary": "Direct authoring task (not a merge-gate review of a coder branch): started a fresh C#-developer doc tree that mirrors the code, living inside PLang/app/ as start.md files. v1 delivers the fundamentals — the app root (PLang/app/start.md), the module system (module/start.md), and the file module as a worked example (module/file/start.md). Every page maps plang -> C# -> source and every claim is verified against current source, replacing the stale Documentation/architecture.md.",
+  "stats": { "gaps_found": 3, "gaps_filled": 3, "docs_updated": 0, "docs_created": 3 },
+  "changes": [
+    { "id": 1, "type": "architecture-doc", "action": "created", "file": "PLang/app/start.md", "description": "App root + 'how to read this codebase' primer: path=namespace=plang-name, the /this.cs + @this pattern, GlobalUsings aliases, node/verb casing, the collection-node pattern (app.X / .list / .current), how item.list works, Data as carrier, and a plang->C#->source cheat-sheet." },
+    { "id": 2, "type": "architecture-doc", "action": "created", "file": "PLang/app/module/start.md", "description": "The module system: registry (selection+lifecycle), discovery via Discover + [Action] (module name = namespace after app.module), the action handler pattern, attribute reference, dispatch from a built .pr step to Start() (real decide.pr), and 'the type is the role'. Points to os/system/modules/<module>/ for teaching prose, does not duplicate." },
+    { "id": 3, "type": "architecture-doc", "action": "created", "file": "PLang/app/module/file/start.md", "description": "The file module end to end: seven actions mapped (plang->file->[Action]->return->cacheable), read as the canonical handler walkthrough, exists as path-truthiness (IBooleanResolvable), and the mutating actions' shared From+Use shape." }
+  ],
+  "findings": [],
+  "claude_md_proposals": [],
+  "character_proposals": []
+}
