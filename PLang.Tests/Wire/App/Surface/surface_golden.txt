@@ -1531,10 +1531,9 @@ class app.type.item.duration.kind.iso.this : app.type.item.duration.kind.this
 class app.type.item.duration.kind.short.this : app.type.item.duration.kind.this
   ctor()
 
-abstract class app.type.item.duration.kind.this : app.type.kind.this
+abstract class app.type.item.duration.kind.this : app.type.kind.this<app.type.item.duration.this>
   ctor(System.String name)
   override Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
-  protected override Owner : System.String { get; }
 
 static class app.type.item.duration.serializer.Default
   static Read(System.Object raw, System.String kind, app.type.reader.ReadContext ctx) : System.Object
@@ -1877,18 +1876,16 @@ class app.type.item.list.format.formal : app.type.format.IOutput
   Output(app.type.item.this value, app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   ctor()
 
-class app.type.item.list.kind.element.this : app.type.kind.this
+class app.type.item.list.kind.element.this : app.type.kind.this<app.type.item.list.this>
   ctor(app.type.this element)
   override Of(System.Type type) : System.Type
   override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
   protected override OwnDescription(app.actor.context.this context) : app.type.item.prose.this
   protected override OwnExample(app.actor.context.this context) : app.type.item.prose.this
-  protected override Owner : System.String { get; }
 
-class app.type.item.list.kind.this : app.type.kind.this
+class app.type.item.list.kind.this : app.type.kind.this<app.type.item.list.this>
   ctor(app.type.list.this types)
   override Coin(System.String name) : app.type.kind.this
-  protected override Owner : System.String { get; }
 
 static class app.type.item.list.serializer.Default
   static Read(System.Object raw, System.String kind, app.type.reader.ReadContext ctx) : System.Object
@@ -2099,7 +2096,6 @@ abstract class app.type.item.number.kind.this : app.type.kind.this<app.type.item
   abstract Read<TReader>(TReader& reader) : app.type.item.this
   abstract Write(app.type.item.number.this value, app.type.format.IWriter writer) : System.Void
   ctor(System.String name)
-  protected override Owner : System.String { get; }
 
 class app.type.item.number.kind.uint.this : app.type.item.number.kind.this
   ctor()
@@ -2332,10 +2328,9 @@ class app.type.item.path.scheme.SchemeNotRegistered : app.error.AppException
   Scheme : System.String { get; }
   ctor(System.String scheme)
 
-class app.type.item.path.scheme.this : app.type.kind.this
+class app.type.item.path.scheme.this : app.type.kind.this<app.type.item.path.this>
   Create(System.String raw, app.actor.context.this context) : app.type.item.path.this
   ctor(System.String scheme, System.Func<System.String, app.actor.context.this, app.type.item.path.this> factory)
-  protected override Owner : System.String { get; }
   static ParseScheme(System.String raw) : System.String
 
 static class app.type.item.path.serializer.Default
@@ -2600,10 +2595,9 @@ class app.type.item.size.kind.iec.this : app.type.item.size.kind.this
 class app.type.item.size.kind.si.this : app.type.item.size.kind.this
   ctor()
 
-abstract class app.type.item.size.kind.this : app.type.kind.this
+abstract class app.type.item.size.kind.this : app.type.kind.this<app.type.item.size.this>
   ctor(System.String name, System.Int64 step, System.String[] units)
   override Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
-  protected override Owner : System.String { get; }
 
 static class app.type.item.size.serializer.Default
   static Read(System.Object raw, System.String kind, app.type.reader.ReadContext ctx) : System.Object
@@ -3076,7 +3070,7 @@ class app.type.item.variable.this : app.type.item.this, app.type.item.ICreate<ap
   static Of(app.actor.context.this context) : app.type.item.list.this<app.type.item.variable.this>
   static Resolve(System.String raw, app.actor.context.this context, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> given = …) : app.type.item.variable.this
 
-class app.type.item.wire.kind.plang.this : app.type.kind.this
+class app.type.item.wire.kind.plang.this : app.type.kind.this<app.type.item.wire.this>
   Read(app.type.item.source source, app.type.reader.ReadContext ctx) : app.type.item.this
   ctor()
   override Compressible : System.Boolean { get; }
@@ -3085,7 +3079,6 @@ class app.type.item.wire.kind.plang.this : app.type.kind.this
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Owns(app.type.format.IWriter writer) : System.Boolean
-  protected override Owner : System.String { get; }
 
 class app.type.item.wire.template : app.type.item.wire.this
   ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable, System.Boolean built = …)
@@ -3116,13 +3109,15 @@ class app.type.kind.empty.this : app.type.kind.this
   protected override BornKind() : app.type.kind.this
   protected override Owner : System.String { get; }
 
+class app.type.kind.format.this<T> : app.type.kind.this<T>
+  ctor(app.Attributes.FormatAttribute format, app.type.kind.this+Encoder encode = …, app.type.kind.this+Decoder decode = …)
+
 class app.type.kind.list.this : app.type.item.list.this<app.type.this>
   ctor(System.Collections.Generic.IEnumerable<app.type.this> types)
 
-class app.type.kind.subclass.this : app.type.kind.this
-  ctor(System.String name, System.String family, System.Type class)
+class app.type.kind.subclass.this<T> : app.type.kind.this<T>
+  ctor(System.String name, System.Type class)
   override ClrForm : System.Type { get; }
-  protected override Owner : System.String { get; }
 
 class app.type.kind.this : app.type.this
   IsEmpty : System.Boolean { get; }
@@ -3181,6 +3176,8 @@ class app.type.kind.this+Encoder : System.MulticastDelegate
 
 abstract class app.type.kind.this<T> : app.type.kind.this
   ctor(System.String name)
+  ctor(app.Attributes.FormatAttribute format, app.type.kind.this+Encoder encode, app.type.kind.this+Decoder decode)
+  protected override Owner : System.String { get; }
 
 class app.type.list.this : app.type.item.list.this<app.type.this>
   Add(System.Reflection.Assembly assembly, app.actor.context.this context) : app.data.this
