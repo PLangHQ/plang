@@ -30,9 +30,15 @@ internal sealed class Record : global::app.type.reader.ITypeReader
             _ => global::app.type.item.@this.Create(null, ctx.Context),
         };
         var data = new global::app.data.@this("", context: ctx.Context);
+        // The type carries its kind to the item's Create, but keeps _type's OWN class — never resolving the kind
+        // to a subclass. A {setting, kind:<path>} older-shape row (the path riding as the kind) thus reaches
+        // setting.Create as the base setting WITH that kind, so it declines loudly (790) instead of reading as a
+        // bare node. Dropping the kind (as before) made the row look like a node and read as absent — silent.
+        var owner = ctx.Context.App.type.list[_type];
+        var type = string.IsNullOrEmpty(kind) ? owner : new global::app.type.@this(_type, owner.ClrType, kind);
         // Construct, not Make: a settings class is an ICreate<setting> subtype whose own Make declines — its
         // base's Create makes it by its declared.ClrType (decision 789).
-        var made = ctx.Context.App.type.list[_type].Construct(record, data);
+        var made = type.Construct(record, data);
         // A type that CAN'T be made from its record declines with the reason its own Create gave (789) — a
         // DeclinedException, which source.Value catches and answers softly on the binding (Success=false, the
         // error named), never thrown to the courier. A clean decline (null, no error — a bare setting node that
