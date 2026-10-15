@@ -181,7 +181,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 2 uses variable.set, which the decider was not sure of (0.88)"
+          "message": "step 2 uses variable.set, which the decider was not sure of (0.86)"
         }
       ]
     },
@@ -316,7 +316,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 4 uses variable.set, which the decider was not sure of (0.85)"
+          "message": "step 4 uses variable.set, which the decider was not sure of (0.87)"
         }
       ]
     },
@@ -444,7 +444,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 6 uses variable.set, which the decider was not sure of (0.86)"
+          "message": "step 6 uses variable.set, which the decider was not sure of (0.83)"
         }
       ]
     },
@@ -588,11 +588,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 8 uses condition.compare, which the decider was not sure of (0.98)"
-        },
-        {
-          "key": "Unsure",
-          "message": "step 8 uses variable.set, which the decider was not sure of (0.68)"
+          "message": "step 8 uses variable.set, which the decider was not sure of (0.71)"
         }
       ]
     },
@@ -667,7 +663,8 @@
             {
               "name": "Separator",
               "type": {
-                "name": "separator"
+                "name": "text",
+                "kind": "separator"
               },
               "value": ", "
             }
@@ -727,7 +724,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 10 uses variable.set, which the decider was not sure of (0.89)"
+          "message": "step 10 uses variable.set, which the decider was not sure of (0.86)"
         }
       ]
     },
@@ -832,7 +829,8 @@
             {
               "name": "Separator",
               "type": {
-                "name": "separator"
+                "name": "text",
+                "kind": "separator"
               },
               "value": "-"
             }
@@ -902,7 +900,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 13 uses variable.set, which the decider was not sure of (0.76)"
+          "message": "step 13 uses variable.set, which the decider was not sure of (0.84)"
         }
       ]
     },
@@ -990,7 +988,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 14 uses variable.set, which the decider was not sure of (0.85)"
+          "message": "step 14 uses variable.set, which the decider was not sure of (0.83)"
         }
       ]
     },
@@ -1126,7 +1124,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 16 uses variable.set, which the decider was not sure of (0.81)"
+          "message": "step 16 uses variable.set, which the decider was not sure of (0.80)"
         }
       ]
     },
@@ -1319,7 +1317,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 19 uses variable.set, which the decider was not sure of (0.61)"
+          "message": "step 19 uses variable.set, which the decider was not sure of (0.70)"
         }
       ]
     },
@@ -1448,7 +1446,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 21 uses variable.set, which the decider was not sure of (0.78)"
+          "message": "step 21 uses variable.set, which the decider was not sure of (0.73)"
         }
       ]
     },
@@ -1723,7 +1721,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 25 uses variable.set, which the decider was not sure of (0.81)"
+          "message": "step 25 uses variable.set, which the decider was not sure of (0.80)"
         }
       ]
     },
@@ -1884,7 +1882,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 28 uses variable.set, which the decider was not sure of (0.81)"
+          "message": "step 28 uses variable.set, which the decider was not sure of (0.83)"
         }
       ]
     },
@@ -2079,7 +2077,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 31 uses variable.set, which the decider was not sure of (0.83)"
+          "message": "step 31 uses variable.set, which the decider was not sure of (0.79)"
         }
       ]
     },
@@ -2167,7 +2165,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 32 uses variable.set, which the decider was not sure of (0.76)"
+          "message": "step 32 uses variable.set, which the decider was not sure of (0.81)"
         }
       ]
     },
@@ -2214,7 +2212,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/module/list/ListOps.test.goal",
-  "prPath": "/module/list/.build/listops.test.pr",
+  "file": "ListOps.test.goal",
   "hash": "550494b84bab14a1eb5e474b6c232dab69d34544ed1e8e67a7e5284344bfdab8"
 }
