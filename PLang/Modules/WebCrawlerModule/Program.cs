@@ -64,9 +64,62 @@ namespace PLang.Modules.WebCrawlerModule
 			this.programFactory = programFactory;			
 		}
 
+		private const string BrowserDataKeyPrefix = "BrowserModuleData_";
+		private const string CurrentProfileKey = "BrowserModuleProfile";
+		private const string DefaultProfile = "default";
+
+		// One browser per profile, and every goal and every web request gets the one that belongs
+		// to the profile they ask for. A step that names no profile uses the default one.
+		//
+		// The data used to live in PLangContext, which is new for each web request, so a goal could
+		// open a browser and sign in and the route next door would find nothing, try to start its
+		// own, and fail with "Cannot start a headed browser" because the defaults say headless
+		// false. The appContext injected into a module is no better: an engine rented from the pool
+		// brings its own container with its own one. engine.GetAppContext() is the app wide one, a
+		// rented engine adopts its parent's in Engine.Reset, and it is where KeepAlive and the file
+		// watchers already live.
+		private static string ProfileKey(string? profileName)
+		{
+			if (string.IsNullOrWhiteSpace(profileName)) return DefaultProfile;
+			return profileName.Trim();
+		}
+
+		// The root engine's app context is the one every request shares. A pooled engine gets its
+		// own from its own container in Engine.Init and only adopts its parent's when it is reset,
+		// so asking this engine is not enough: a web request would get a context of its own and
+		// with it a second browser.
+		private PLangAppContext GetAppWideContext()
+		{
+			IEngine rootEngine = engine;
+			while (rootEngine.ParentEngine != null)
+			{
+				rootEngine = rootEngine.ParentEngine;
+			}
+			return rootEngine.GetAppContext();
+		}
+
+		private BrowserModuleData GetData(string? profileName = null)
+		{
+			var appWideContext = GetAppWideContext();
+			string profile = string.IsNullOrWhiteSpace(profileName)
+				? appWideContext.GetOrDefault<string>(CurrentProfileKey) ?? DefaultProfile
+				: ProfileKey(profileName);
+
+			var browserData = appWideContext.GetOrDefault<BrowserModuleData>(BrowserDataKeyPrefix + profile);
+			if (browserData == null)
+			{
+				browserData = new BrowserModuleData();
+				appWideContext.AddOrReplace(BrowserDataKeyPrefix + profile, browserData);
+			}
+
+			appWideContext.AddOrReplace(CurrentProfileKey, profile);
+			data = browserData;
+			return browserData;
+		}
+
 		public async Task<IError?> AsyncConstructor()
 		{
-			data = context.GetModuleData<BrowserModuleData>();
+			GetData();
 			return null;
 		}
 
@@ -74,6 +127,10 @@ namespace PLang.Modules.WebCrawlerModule
 			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
 			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null, int closeAfterIdleMinutes = 10)
 		{
+			// A step that names a profile works on that profile's browser, a step that names none
+			// works on the one in use, the default profile until something says otherwise.
+			GetData(profileName);
+
 			// An instance the idle timer has closed is gone, the next use starts a fresh one the way
 			// the last one was started. A caller that says nothing, ExtractContent say, gets the old
 			// settings; a caller that asks for something, headless or a profile, is honoured.
@@ -135,6 +192,10 @@ namespace PLang.Modules.WebCrawlerModule
 			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
 			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null, int closeAfterIdleMinutes = 10)
 		{
+			// The profile the step names decides which browser this is. Starting one makes it the
+			// one in use, so the steps that follow and name no profile work on it.
+			GetData(profileName);
+
 			var browserInstance = data.BrowserInstance;
 			if (browserInstance != null && !browserInstance.IsDisposed)
 			{
