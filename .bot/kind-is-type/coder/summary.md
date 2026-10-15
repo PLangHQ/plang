@@ -10,18 +10,24 @@ Decision 774: "a kind is a type." `kind<T> : kind : type`. A kind is a type unde
 ## What was done
 - `PLang/app/type/item/setting/this.cs` — dropped `[Kinds]`; `Type` is own node; `Rows(context)` method; `Get` answers `Path` + `Rows(parent.Context)` beside options. Public `type` facts dropped `virtual`.
 - `Internal => true` on ~20 concrete settings classes + `module/llm/decider.setting.cs` (also `[PlangType("app.module.llm.decider.setting")]`).
-- `PLang/app/actor/setting/this.cs` — `Class`=index, `Make`, `Fresh`, `Own` reads `[Own]`; `Read()` still routes via `row.Value()` (**this is the open issue**).
-- `PLang/app/type/item/setting/serializer/Reader.cs` — reads by `kind`=key path via `ctx.Setting.Fresh(kind)`, ignores stored kind (old & new rows read the same way). **Ready for the fix; just not yet driven on the disk path.**
+- `PLang/app/actor/setting/this.cs` — `Class`=index (keyed by Path; type list keyed by Name — they differ, 774A), `Make`, `Fresh`, `Own` reads `[Own]`.
+- `PLang/app/type/item/setting/serializer/Reader.cs` — resolves the class from the type it reads as (new rows) or kind-as-path (old rows); per-type instances via an internal ctor. See RESOLVED below.
+- `PLang/app/this.cs` — registers each settings type's reader at boot (option C). See RESOLVED below.
 - Deleted `setting/kind/this.cs`. Surface golden re-pinned (diff only stage-2/settings/kind). New: `SettingsAreInternalTests.cs`; `KindsTests.AClassOfSettings_IsItsOwnType` → `"app.setting"`; `QueryConversationTests` → `Rows(ctx)`.
 
 **Done:** all in-memory settings, decider offerings (Internal excludes bases), surface golden, PickList 8/8, QueryConversation, KindsTests 6/6, SettingsAreInternal pin, OldSettingRowStillReads, same-app save+read.
 
-**Open issue (5 reds, ONE root cause — surfaced to architect, awaiting A/B):** persisted settings read-back across apps. `actor/setting.Read()` materializes each row via `row.Value()`, which routes by the row's STORED type. Stage 2 makes Save store `type`=concrete class name (no kind); the setting reader registers under `typeName="setting"` so the row never reaches it → defaults returned. The value is a `wire.@this` materializing through its held serializer by the stored (type,kind). The two clean fixes both touch the LOCKED core (store surface / serializer), so I surfaced the A/B choice rather than pick:
-  - **(A)** Save tags the stored value slot `type="setting"+kind=classpath` (restores old wire shape; `row.Value()` then routes to the setting reader; old rows already match). My lean.
-  - **(B)** `Read()` drives the setting reader with `kind=keyPath`, needing a raw-rows door on `app.store` or a wire re-read override.
-  Failing tests: `SettingRowTests` (Row_IsReadByTheNextApp / Row_TypedListOfChoices_IsReadBack / Row_TypedListOfText_IsReadBack), `SettingOwnerTests.Rows_AreThereAfterTheAppLoads`, `SettingsDataTests.ASavedSetting_LivesInTheSettingsOwnStore`.
+**RESOLVED — persisted settings read-back (decision 779, option C).** Architect ruled option C: a saved row is written as its own type and read back by that type; the setting reader, asked to read as a settings type, takes the class from that type (its C# class); an old `{setting, kind: path}` row still reads through the base `setting` reader by its kind. Implemented:
+  - `setting/serializer/Reader.cs` — resolves the class from the type it reads as (`types[_type].ClrType` → fresh instance) for new rows, or `Fresh(kind)` for old rows. Per-type instances carry `_type` via an **`internal` ctor** (no locked-surface change to the reader's public surface).
+  - `app/this.cs` (boot, beside the path schemes) — for each concrete settings type, `type.list.Reader.Register(type.Name, AnyKind, new setting.serializer.Reader(type.Name))`. Keeps both the reader registry and `Registry.Enlist` ignorant of settings (no settings clause in the registry).
+  - Save unchanged — the `data` ctor already stores the row as the setting's own type name, matching the registration key.
+  - **Surface golden re-pinned** (`AcceptTheSurface`, commit names 778/779): one line — `setting.@this.Rows` is `Rows(context)` method (the option rows are the setting's own member per 778; the no-Context-field rule makes it a method, not a property). This corrected a stale WIP re-pin.
 
-**Next:** architect picks A or B → implement → re-run the 5 + full C# gate (back to 8 pre-existing baseline fails) + plang suite (confirm `SettingClassIsAType` green) → commit + push → report Done/HASH/CHECK/OPEN.
+**Gate (verified):**
+  - C# full sweep → the **8 pre-existing baseline fails only** (`ATypedDictSlot_FirstReadOfTheDict`, `TheNestedWrittenForm_ReadsThroughTheTypeSerializer`, 6 snapshot tests). All settings C# green; surface golden green.
+  - Plang suite → **254 pass / 24 fail / 12 stale / 3 skip** (baseline 253/25/12/3 — one more pass, one fewer fail, zero new reds). `SettingClassIsAType.test.goal` → **Pass**. The remaining `/plan/kind-is-type/...` json/separator/file/variable fails are **stage 3/4 targets** (format bytes, every family), not stage 2.
+
+**Stage 2 is complete.** Next: architect acceptance → stage 3.
 
 ## Code example
 A settings class is now its own type, Internal:

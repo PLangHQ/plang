@@ -49,17 +49,21 @@
           "context": "New Internal pin; KindsTests.AClassOfSettings_IsItsOwnType -> app.setting; QueryConversation uses Rows(ctx); surface golden re-pinned (stage-2/settings/kind only)."
         },
         {
-          "paths": ["PLang/app/actor/setting/this.cs"],
-          "type": "decision",
+          "paths": [
+            "PLang/app/type/item/setting/serializer/Reader.cs",
+            "PLang/app/this.cs",
+            "PLang.Tests/Wire/App/Surface/surface_golden.txt"
+          ],
+          "type": "modify",
           "category": "code",
-          "confidence": "medium",
-          "context": "Persisted disk read-back (5 reds, one root cause): Read() routes via row.Value() by stored type = concrete class name; setting reader registers under typeName=setting so rows never reach it. Both clean fixes touch the locked core (store/serializer); surfaced A/B choice to architect [510469]. Lean: A (Save tags stored slot type=setting+kind=classpath)."
+          "confidence": "high",
+          "context": "Persisted read-back fixed via option C (architect decision 779). The setting reader resolves the class from the type it reads as (new rows) or kind-as-path (old rows); per-type instances registered at app boot via the public Reader.Register (internal ctor — no locked-surface change). Surface golden re-pinned (setting.@this.Rows is a context-method per 778, no-Context-field rule). Save unchanged. 5 previously-failing tests green; no new regressions."
         }
       ],
       "after": {
-        "status": "Stage 2 ~95% — all in-memory + decider + surface green; 5 persisted-read reds blocked on a locked-surface A/B decision sent to the architect.",
-        "health": "compiles clean; core test classes green; 5 settings disk-round-trip reds pending the fix.",
-        "notes": "Pushed cca42bdf3. Awaiting architect A/B, then implement + full gate + plang suite + report Done/HASH/CHECK/OPEN."
+        "status": "Stage 2 COMPLETE. Settings are their own top-level types (Internal); persisted rows read back by their own type (option C / decision 779). C# gate at the 8 pre-existing baseline fails; plang 254/24/12/3 (improved, SettingClassIsAType pass, no new reds).",
+        "health": "green — all settings C# + plang targets pass; surface golden green (re-pinned under 778/779).",
+        "notes": "Pushed b516eaaf9. Remaining plang /plan/kind-is-type json/separator/file/variable fails are stage 3/4 targets, not stage 2. Awaiting architect acceptance -> stage 3."
       }
     }
   ]
