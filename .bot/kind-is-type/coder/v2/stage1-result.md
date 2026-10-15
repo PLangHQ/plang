@@ -28,20 +28,40 @@ measure the cost of `kind : type` on one family before all of them.
 - **Locked-core surface re-pinned** with 774 named — diff is exactly the kind:type additions, no
   top-level kind leak.
 
-## The gate
+## No hides (architect review round, 0faa3ca46)
 
-- `DecimalIsANumber`: **green**.
-- plang suite: **250/28/12/3** (baseline 250/29/12/3 — DecimalIsANumber fixed, no regressions;
-  baseline-verified the 4 compare/sort suspects were already red at the tip).
-- C# gate: baseline 8 pre-existing; +10 from kind:type, 8 resolved. **2 open** (with the architect):
-  - `AJsonFilesTypeKind_IsTheTextJson` — asserts the pre-774 `.kind`-as-text stopgap; stale, needs a
-    774 update (`.kind.name`=="json" + renders "json").
-  - `ThePromptCSettingsAndKeys` — `%!build.setting%` lost its args (`(cache: choice<cache> = use,
-    files: list = [])` → `()`). The kind:type ripple into settings (settings are `setting.kind` until
-    stage 2). Scope call pending: fix in stage 2 (as planned) or patch in stage 1.
+Every CS0108/0114 hide kind:type added is an override or a rename — a hide is a fork (one member
+answering two ways by the reference held), and one of them (`setting.kind.Property` hiding
+`type.Property`) was the real cause of the prompt-C regression:
+
+- **Facts** (Property/Values/Alias/Description/Example): `type.X` is virtual, delegating
+  `OwnX ?? kind.OwnX ?? Family._<field>` — a kind answers its own via the `Own*` hook, else the
+  parent's STORED field (terminates; reading the virtual would loop type→kind→Family). choice.set →
+  `OwnValues`, list element → `OwnDescription`/`OwnExample`, int/line → `OwnAlias`.
+- **setting.kind.Property/Values**: public overrides — a template reading the kind's `.Property` by
+  name gets the options.
+- **A kind navigates its own members** (`kind.Get`), not re-resolved through the registry: that
+  re-resolution minted a bare type by the kind's name (a kind is no top-level type) and dropped the
+  kind's facts — exactly why `%!build.setting%`'s options vanished.
+- **Names**: `type.Names` virtual, `kind.Names` override adding MIME + extension.
+- **Renames** (coincidental collisions, not the type's member): `reflection.Property` → `Reflect`,
+  `setting.kind.Own` → `Private`; `IsSequence(object)` kept with `new` + a note (a host verb, stage 3).
+- **Ruling 3 wired**: `kind<T>` sets Family to the parent entry (by T's name), so a kind's teaching
+  falls back to the parent's. Pinned: `ADecimalKindsDescription_IsNumbers`.
+- **null-kind**: the empty kind is itself (honest non-null); `[JsonIgnore]` keeps STJ off `type.kind`
+  (the wire writes the kind via Write, not STJ reflection) — no cycle.
+
+## The gate (final)
+
+- `DecimalIsANumber`: **green**; prompt C **byte-equal** (PickListTests 8/8).
+- C# gate: back to the **8 pre-existing baseline fails, 0 new**. Surface re-pinned (774), diff only the
+  kind:type additions, no top-level kind leak.
+- plang suite: **253/25/12/3** — better than baseline 250/29/12/3: DecimalIsANumber + 3 strict tests
+  fixed, no regressions.
 
 ## Cost, summarized
 
-Modest and mechanical, as the probe hoped: the one real hazard was the self-referential empty kind's
-STJ cycle (now null), plus the member-name diamonds (reconciled/benign). The open settings regression
-is the one place kind:type reaches beyond the type system — and that boundary is exactly stage 2's.
+Modest: the hazards were the self-referential empty kind's STJ cycle (JsonIgnore + self), and the
+member diamonds — which turned out to matter (the Property fork broke prompt C, fixed by a kind
+navigating itself rather than re-resolving to a bare type). Stage 1 closed; the settings ripple that
+looked stage-2-shaped was really this navigation fix.
