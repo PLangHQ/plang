@@ -1,7 +1,7 @@
 # docs — summary
 
 ## Version
-v3
+v4
 
 ## What this is
 
@@ -16,8 +16,10 @@ is a folder's doc because `Start.goal` is the entry point). Every page answers:
 - **v1** shipped the fundamentals Ingi named: the app root and the module system.
 - **v2** extended the tree to the **type system** and the **value lattice**.
 - **v3** ("do everything") added the 7 core concepts: **goal, data, channel,
-  event, actor, call, error**. The tree now covers every core concept a C#
-  developer meets reading the runtime.
+  event, actor, call, error**.
+- **v4** (Wave B) added the 11 remaining concepts: **setting, store, snapshot,
+  task, test, keepalive, service, warning, parent, shortcut, variable**. The
+  in-tree tree now has a `start.md` for every top-level `app` concept.
 
 ## What was done
 
@@ -94,19 +96,23 @@ other's pages), and recorded the stale source comments the writers surfaced.
   "Data … Merge()" is stale too.
 - `GlobalUsings.cs` + `call/this.cs` comments still name the old `callstack`.
 - `type/list/this.cs` `this[System.Type]` XML says "null on miss"; returns `clr`.
+- `store/sqlite/this.cs` "on first write" — any verb runs `CREATE TABLE IF NOT
+  EXISTS`, so any verb creates the tables.
+- `actor/this.cs` still names a "Service" actor (and "User and Service"
+  cancellation); there is no Service actor (a service is not an actor).
 
-No production C# was edited this pass; all recorded in `docs-report.json`.
+No production C# was edited across any version; all recorded in
+`docs-report.json`.
 
-## What's next (Wave B / later versions)
+## What's next (later)
 
-- The smaller concepts: `setting`, `store`, `snapshot`, `task`, `test`,
-  `keepalive`, `service`, `warning`, `parent`, `shortcut`, and `variable` (under
-  `type/item/variable`). Inventoried and ready for the next version.
 - Retire / redirect the stale `Documentation/architecture.md` and
-  `type-system.md` once the in-tree tree covers their ground.
-- Optionally apply the two CLAUDE.md-adjacent fixes (drop `Merge()`).
+  `type-system.md` now that the in-tree tree covers their ground.
+- Optionally apply the CLAUDE.md fix (drop `Merge()` from the Data bullet).
+- The deep module/type leaves (per-module pages, individual value types beyond
+  the lattice overview) if a fuller reference is wanted.
 
 ## Blockers
 
-None. The core concepts (app, module, type, value lattice, goal, data, channel,
-event, actor, call, error) are complete and verified for their scope.
+None. The in-tree developer tree now has a `start.md` for every top-level `app`
+concept, all verified for their scope. The tree is complete at the concept level.

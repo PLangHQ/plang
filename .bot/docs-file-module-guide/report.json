@@ -134,6 +134,51 @@
         "health": "green",
         "notes": "The in-tree developer tree now covers app, module(+file), type(+item), goal, data, channel, event, actor, call, error. Several stale source comments surfaced during verification (recorded as findings, flagged for coder; no production C# edited this pass). Wave B (smaller concepts: setting/store/snapshot/task/test/keepalive/service/warning/parent/shortcut/variable) is scoped and inventoried for the next version."
       }
+    },
+    {
+      "id": "d9a1b3e5-2c7f-4d8a-9e1b-6f4c8a2d0e55",
+      "bot": "docs",
+      "timestamp_start": "2026-10-15T01:10:00Z",
+      "timestamp_end": null,
+      "intent": "\"do everything\" Wave B: write start.md for the remaining concepts — setting, store, snapshot, task, test, keepalive, service, warning, parent, shortcut, variable.",
+      "before": {
+        "assumptions": "The in-tree pattern + parallel-Haiku method are proven (v2/v3). These concepts are smaller, so pages are shorter; variable is the fuller exception (the value side of memory).",
+        "risk": "Lower stakes than the core wave (no locked-core surfaces except variable, which the call page already frames). Main risks: cross-links to siblings written in parallel, and a thin page over-claiming on a concept with little source. Mitigated by spine-file targeting + a verification/cross-link pass."
+      },
+      "plan": ".bot/docs-file-module-guide/docs/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/setting/start.md",
+            "PLang/app/store/start.md",
+            "PLang/app/snapshot/start.md",
+            "PLang/app/task/start.md",
+            "PLang/app/test/start.md",
+            "PLang/app/keepalive/start.md",
+            "PLang/app/service/start.md",
+            "PLang/app/warning/start.md",
+            "PLang/app/parent/start.md",
+            "PLang/app/shortcut/start.md",
+            "PLang/app/type/item/variable/start.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "11 remaining-concept pages drafted by parallel Haiku subagents, each pointed at its spine source + the style brief + an existing page as voice reference. Writers verified against source and corrected briefs (no IStore interface; no app.warning member; warning.list isn't a PlangType native list; settings not locked core; variable relative-link depths were one level too deep). The variable page (locked core, the value side of memory) got the fuller treatment and was quality-read in full."
+        },
+        {
+          "paths": ["PLang/app/keepalive/start.md", "PLang/app/snapshot/start.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Review fixes: neutralized keepalive's 'what the code does not guard' section (was editorializing/speculative — a reference page states behaviour, not a bug list) and removed its speculative deadlock claim; corrected snapshot's over-claimed 'locked core' callout (snapshot isn't on the list; it rides surfaces that are)."
+        }
+      ],
+      "after": {
+        "status": "v4 complete — 11 remaining-concept pages authored by Haiku subagents and reviewed. The in-tree developer tree now covers every top-level app concept.",
+        "health": "green",
+        "notes": "Full tree: app, module(+file), type(+item, +variable), goal, data, channel, event, actor, call, error, setting, store, snapshot, task, test, keepalive, service, warning, parent, shortcut. More stale source comments surfaced (sqlite 'on first write'; actor still names a 'Service' actor) and recorded as findings; no production C# edited. Remaining: retire/redirect stale Documentation/*.md, optional CLAUDE.md Merge() cleanup."
+      }
     }
   ]
 }
