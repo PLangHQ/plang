@@ -132,15 +132,23 @@ public sealed class @this : global::app.type.kind.@this
         if (raw is not (string or byte[])) return null;                        // decline — not a raw json payload
         var s = new global::app.type.item.text.@this(raw).ToString();
         if (string.IsNullOrEmpty(s)) return global::app.type.item.@this.Create(null, ctx);    // empty → the null value (NOT a decline)
-        using var doc = JsonDocument.Parse(s);
-        var e = doc.RootElement;
-        // Only STRUCTURED json stays a clr(json) (ruling 6 — navigated/enumerated lazily by this
-        // kind). A bare-scalar root IS its native value — the same dispatch this kind's Data/Scalar
-        // already use for leaves — so `42` is a number, not a clr(json number) that compares
-        // Incomparable to one.
-        return e.ValueKind is JsonValueKind.Object or JsonValueKind.Array
-            ? new global::app.type.clr.@this(e.Clone(), ctx, this)
-            : global::app.type.item.@this.Create(Scalar(e), ctx);
+        // json parses itself into a plang value (decision 774, ruling 9): an object into a dict, an array into
+        // a list, each read through its own type's reader over the json token stream — no JsonElement carrier,
+        // no navigator. A scalar root IS its native value (`42` a number). Verify:false — ingested content is
+        // unsigned, like every nested/ingest read.
+        var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(s));
+        utf8.Read();
+        var reader = new global::app.type.item.kind.json.Reader(utf8);
+        var read = new global::app.type.reader.ReadContext(ctx, Verify: false);
+        switch (reader.Peek())
+        {
+            case global::app.type.format.TokenKind.Object: return new global::app.type.item.dict.serializer.Reader().Read(ref reader, null, read);
+            case global::app.type.format.TokenKind.Array:  return new global::app.type.item.list.serializer.Reader().Read(ref reader, null, read);
+            case global::app.type.format.TokenKind.String: return global::app.type.item.@this.Create(reader.String(), ctx);
+            case global::app.type.format.TokenKind.Number: return global::app.type.item.@this.Create(reader.Number(), ctx);
+            case global::app.type.format.TokenKind.Bool:   return global::app.type.item.@this.Create(reader.Bool(), ctx);
+            default:                                        return global::app.type.item.@this.Create(null, ctx);
+        }
     }
 
     /// <summary>json characters opened: the json value they are, or why they don't read — MaterializeFailed, naming
