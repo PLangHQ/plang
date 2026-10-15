@@ -41,8 +41,16 @@ public abstract class @this : global::app.type.kind.@this<global::app.type.item.
 - **template:** stays on its base (a facet, not a value type); `plang` is a named value of that facet. Comment + classify; revisit stage 6.
 - **JsonIsItemsKind + kind/strict:** stage 4 (test-designer fixed JsonIsItemsKind's header). Not stage 3.
 
-## OPEN — separator (783), in progress
-Ingi ruled separator becomes a `kind<text>` (`{text, kind: separator}`) with an open named-value set (line/comma/tab/space/semicolon + any chars); its 5 kind classes become named-value entries; `%line% is text` true; it stops being a top-level type. **Shape sent to the architect for one confirm** (separator value = a plain `text.@this` with kind separator, `separator.@this` class removed; split/join take `text`). On confirm: implement + re-pin surface/decider under 783 + NamedValuesBelongToTheType green + list split/join green. The 2 `.pr` to rebuild (handed to the builder): `test/module/list/.build/{start,listops.test}.pr`.
+## Stage 3 CLOSED OUT except separator (held on Ingi)
+Every kind is classified — the stage-3 check passes:
+- **kind<T>:** number, duration, size, hash, archive, conversation, junit, wire; `[Format]` mints (text md/xml/…, image's 8, table csv); path scheme; list element; the typed `kind.subclass<T>` (input/screen/browser/query).
+- **named values:** choice sets, bool (true/false), separator (held).
+- **host kinds (673):** json, dict, list, reflection.
+- **stage-4 deferrals:** text's `*format` coiner + wrapper.
+- **facet:** template (`type.Template`; `plang` a named value of it; commented, revisit stage 6).
+Decider pins hold (PickList 8/8, PickOption 19/19); C# at the baseline 7 (KindNests now passes); plang 254/24/12/3; surface re-pinned; no type name changed.
+
+**separator — HELD on Ingi.** Ingi ruled it becomes a `kind<text>` (`{text, kind: separator}`) — a text SUBCLASS (`separator.@this : text.@this`), like `screen.window`, so the slot stays `Data<separator.@this>` and the LLM keeps the names. But `text.@this` is **sealed** — subclassing it is a locked-core change. The architect sent **option A (unseal text) to Ingi** (suggested yes); option B (separator overrides Type without subclassing) was rejected (a value whose Type says text but isn't a `text.@this` lies and fails the cast). On Ingi's yes: unseal text, `separator.@this : text.@this`, `[Kinds]` on text, the 5 kind classes → named-value entries, re-pin surface/decider under 783, NamedValuesBelongToTheType + list split/join green, rebuild `test/module/list/.build/{start,listops.test}.pr`.
 
 ## For v3 (this version)
 Stage 2 accepted (decision 780). No reviewer flags carried in. The stage-3 trace corrected my first shape (the `FamilyOf` swap doesn't apply to the subclass families — `[Kinds]` stays for them); architect agreed.
