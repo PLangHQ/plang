@@ -21,6 +21,11 @@ public abstract class @this<T> : @this where T : global::app.type.item.@this
     protected @this(string name)
         : base(name, new global::app.type.@this(global::app.type.item.@this.NameOf(typeof(T)))) { }
 
+    // A kind of T whose own kind is nested (a list of lists: {list, kind: {list, kind: path}}) — the nested
+    // kind rides as this kind's own, T still the parent. Null nested is the plain kind<T>.
+    private protected @this(string name, global::app.type.kind.@this? nested)
+        : base(name, nested, new global::app.type.@this(global::app.type.item.@this.NameOf(typeof(T)))) { }
+
     // A format of T declared on T's class with [Format] (image's png, text's md): the MIMEs, extension,
     // and T's own encode/decode. Owner is T below, so no owner string is carried.
     protected @this(global::app.Attributes.FormatAttribute format,

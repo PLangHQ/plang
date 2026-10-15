@@ -46,6 +46,10 @@ public class @this : global::app.type.@this
     /// (its parent type) — used by <c>kind&lt;T&gt;</c> to pass what the kind does not answer up to T.</summary>
     protected @this(string name, global::app.type.@this? family) : base(name, family) { }
 
+    /// <summary>A kind whose own kind is <paramref name="ownKind"/> — a nested kind (<c>{list, kind: {list, kind:
+    /// path}}</c>), where this kind is itself a kinded type. Null <paramref name="ownKind"/> leaves the born empty kind.</summary>
+    private protected @this(string name, global::app.type.kind.@this? ownKind, global::app.type.@this? family) : base(name, ownKind, family) { }
+
     /// <summary>A kind is a full type already — its facts are its own (a setting kind's options, a
     /// format's MIMEs), its parent's the fallback. It navigates its OWN members directly, never
     /// re-resolved through the registry the way a bare <c>{name}</c> identity is (a kind is no top-level

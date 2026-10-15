@@ -9,8 +9,10 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.li
 {
     private readonly global::app.type.@this _element;
 
-    /// <summary>The kind for lists of <paramref name="element"/>.</summary>
-    public @this(global::app.type.@this element) : base(element.Name) => _element = element;
+    /// <summary>The kind for lists of <paramref name="element"/> — named by the element's type. When the element is
+    /// itself kinded (a list of lists: <c>{list, kind: {list, kind: path}}</c>), that kind rides as this kind's own,
+    /// so the nesting is kept, not flattened.</summary>
+    public @this(global::app.type.@this element) : base(element.Name, element.kind.IsEmpty ? null : element.kind) => _element = element;
 
     /// <summary>The list's class closed over the element's (<c>list&lt;path&gt;</c>) when the element is an item that
     /// makes itself; else the list's class as it is.</summary>

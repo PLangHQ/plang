@@ -25,11 +25,16 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             return ctx.Context.App.type.list[new global::app.type.@this(reader.String()), ctx.Context];
         reader.BeginObject();
         string? name = null, typeKind = null, template = null; bool strict = false;
+        global::app.type.@this? nested = null;
         while (reader.NextName(out var field))
         {
             switch (field)
             {
                 case "name":     name = reader.String(); break;
+                // a kind nests (774): its value is a type itself ({list, kind: {list, kind: path}}). Read that
+                // inner type, which the outer's element kind then holds; a bare string is a simple kind name.
+                case "kind" when reader.Peek() == global::app.type.format.TokenKind.Object:
+                                 nested = Read(ref reader, null, ctx) as global::app.type.@this; break;
                 case "kind":     typeKind = reader.String(); break;
                 case "strict":   strict = reader.Bool(); break;
                 case "template": template = reader.String(); break;
@@ -49,6 +54,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             {
                 throw new global::app.error.DeclinedException(new global::app.error.@this(refused.Message, "TemplateInvalid", 400));
             }
+        }
+        // a nested kind: the outer holds the inner type as its element kind ({list, kind: {list, kind: path}})
+        if (nested != null)
+        {
+            var entry = ctx.Context.App.type.list[name];
+            var element = new global::app.type.item.list.kind.element.@this(nested);
+            return new global::app.type.@this(entry, element, strict, marked);
         }
         return ctx.Context.App.type.list[new global::app.type.@this(name, typeKind, strict, marked), ctx.Context];
     }

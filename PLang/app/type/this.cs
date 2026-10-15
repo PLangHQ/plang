@@ -43,7 +43,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
-        if (!kind.IsEmpty) { writer.Name("kind"); writer.String(kind.Name); }
+        // a kind nests (774): a kind that is itself kinded writes as the object it is ({list, kind: {list, kind:
+        // path}}), so read and write are symmetric; a plain kind writes its name.
+        if (!kind.IsEmpty) { writer.Name("kind"); if (kind.kind.IsEmpty) writer.String(kind.Name); else kind.Write(writer); }
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
         if (Template != null) { writer.Name("template"); writer.String(Template.Name); }
         writer.EndObject();
@@ -736,6 +738,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         _family = family;
         _kind = kind ?? new global::app.type.kind.empty.@this(Name);
+    }
+
+    /// <summary>A type whose own kind is a given <paramref name="ownKind"/> — the seam a nested kind rides
+    /// (<c>{list, kind: {list, kind: path}}</c>): a kind, itself a type, is another type's kind. <paramref name="family"/>
+    /// is the fallback entry. A null <paramref name="ownKind"/> leaves the born empty kind.</summary>
+    internal @this(string name, global::app.type.kind.@this? ownKind, @this? family) : this(name)
+    {
+        if (ownKind != null) _kind = ownKind;
+        _family = family;
     }
 
     /// <summary>The type of the item class <paramref name="clr"/> — the name the class goes by (its declared

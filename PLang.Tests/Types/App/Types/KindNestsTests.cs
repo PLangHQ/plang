@@ -16,8 +16,10 @@ public class KindNestsTests : System.IAsyncDisposable
     private readonly global::app.@this _app = new global::app.@this("/tmp/kindnests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
+    // A hand-written wire string is the at-rest (Store) form — read it so, as plang keeps it; Out would
+    // refuse an unsigned Data (that is the cross-actor contract, not what this reads).
     private global::app.data.@this FromJson(string json)
-        => _app.actor.list.User.Context.Format("application/plang").Deserialize(json, _app.actor.list.User.Context);
+        => _app.actor.list.User.Context.Format("application/plang").Stored(json, _app.actor.list.User.Context);
 
     // The structured JSON for a Data whose Type is `list<list<path>>` — the nested-kind form the plan names.
     private const string NestedJson = "{\"name\":\"grid\",\"type\":{\"name\":\"list\",\"kind\":{\"name\":\"list\",\"kind\":\"path\"}},\"value\":[[\"a.txt\"]]}";
