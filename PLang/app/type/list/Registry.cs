@@ -327,11 +327,9 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             // text's kinds for the text formats other types hold ({text, json}), made as a text names one
             if (t == typeof(global::app.type.item.text.@this) && Items().Any(type => type.Names(global::app.type.item.@this.NameOf(t))))
                 Hold(new global::app.type.item.text.kind.@this(this));
-            // each class of settings, a kind of setting by its path (one of it says the path)
-            if (t != typeof(global::app.type.item.setting.@this) && typeof(global::app.type.item.setting.@this).IsAssignableFrom(t)
-                && t is { IsAbstract: false } && t.GetConstructor(System.Type.EmptyTypes) != null
-                && Items().Any(type => type.Names(global::app.type.item.@this.NameOf(typeof(global::app.type.item.setting.@this)))))
-                Hold(new global::app.type.item.setting.kind.@this((global::app.type.item.setting.@this)Activator.CreateInstance(t)!, this));
+            // settings are settings, not kinds (decision 774): each settings class is its own top-level
+            // type, discovered like any other by its name (@this folder, or the owner word a nested one
+            // declares). The registry knows nothing about settings.
             foreach (var prop in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 var held = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;

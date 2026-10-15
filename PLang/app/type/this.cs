@@ -626,7 +626,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The type's properties — a record's fields, a scalar's navigable members; each a
     /// named slot carrying its type. Null when the type declares none. A record is a type with
     /// properties and no <see cref="Shape"/>.</summary>
-    public virtual property.list.@this? Property { get => OwnProperty ?? kind.OwnProperty ?? Family._property; init => _property = value; }
+    public property.list.@this? Property { get => OwnProperty ?? kind.OwnProperty ?? Family._property; init => _property = value; }
     private property.list.@this? _property;
 
     // A kind answers its own fact through these hooks, else the type falls back to its Family's STORED
@@ -641,7 +641,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>Enum values — the kind's own when it is a set of options (a choice's), else the family's.
     /// Non-null marks this as an enum-shape type.</summary>
-    public virtual IReadOnlyList<string>? Values { get => OwnValues ?? kind.OwnValues ?? Family._values; init => _values = value; }
+    public IReadOnlyList<string>? Values { get => OwnValues ?? kind.OwnValues ?? Family._values; init => _values = value; }
     private IReadOnlyList<string>? _values;
 
     /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — what its
@@ -677,14 +677,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>What a value of this type is, said once — the kind's own when it says one (a list of records names
     /// its element), else <c>type.description.md</c>; read when asked, empty when there is none.</summary>
-    [LlmBuilder] public virtual item.prose.@this Description(actor.context.@this context)
+    [LlmBuilder] public item.prose.@this Description(actor.context.@this context)
         => (OwnDescription(context) ?? kind.OwnDescription(context)) is { } its
             ? its.Or(new item.prose.@this(Taught("type.description.md", context)))
             : new item.prose.@this(Taught("type.description.md", context));
 
     /// <summary>A value of this type as a step writes one (<c>5m</c>, <c>42</c>) — the kind's own when it shows one (a
     /// list of records, one of its element), else <c>type.examples.md</c>; read when asked, empty when there is none.</summary>
-    [LlmBuilder] public virtual item.prose.@this Example(actor.context.@this context)
+    [LlmBuilder] public item.prose.@this Example(actor.context.@this context)
         => (OwnExample(context) ?? kind.OwnExample(context)) is { } its
             ? its.Or(new item.prose.@this(Taught("type.examples.md", context)))
             : new item.prose.@this(Taught("type.examples.md", context));
@@ -699,7 +699,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The other names this type answers to (<c>string</c> for text, <c>map</c> for dict),
     /// declared by its class as a static <c>Alias</c>. Never null.</summary>
     [JsonIgnore]
-    public virtual IReadOnlyList<string> Alias { get => OwnAlias ?? kind.OwnAlias ?? Family._alias; init => _alias = value; }
+    public IReadOnlyList<string> Alias { get => OwnAlias ?? kind.OwnAlias ?? Family._alias; init => _alias = value; }
     private IReadOnlyList<string> _alias = [];
 
     /// <summary>The C# shapes this type owns (<c>int</c> → number, kind int), declared by its class

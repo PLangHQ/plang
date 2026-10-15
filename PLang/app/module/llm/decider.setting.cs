@@ -6,6 +6,9 @@ public partial class decider
     /// The decider's own settings — <c>%!llm.decider.setting%</c>: where its questions go and the key they go with.
     /// <c>save %!llm.decider.setting%</c> keeps them on the actor's row.
     /// </summary>
+    // A nested settings class (declared inside the decider it configures): it says its own name —
+    // the owner rule's — so discovery's existing gate admits it and it never collides with llm's own setting.
+    [global::app.Attributes.PlangType("app.module.llm.decider.setting")]
     public sealed class setting : global::app.type.item.setting.@this
     {
         /// <summary>The key the decider is asked with — <c>%!llm.decider.setting.key%</c>; when none is saved, the

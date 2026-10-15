@@ -9,7 +9,7 @@ namespace app.type.item.setting;
 /// node — the settings of a module or an action with no class of its own (<c>%!llm.query.setting%</c>). The
 /// asker's settings build one, the saved row and this run's values on it.
 /// </summary>
-[global::app.Attributes.PlangType("setting"), global::app.Attributes.Kinds]
+[global::app.Attributes.PlangType("setting")]
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A node: the path it stands for.</summary>
@@ -56,11 +56,14 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         return null;
     }
 
-    /// <summary>A setting's type is <c>setting</c> with its path as the kind — <c>{setting, goal.list.setting}</c>:
-    /// the kind is what tells a saved row which class to read back. Its class is the setting class; its name and
-    /// namespace are setting's.</summary>
+    /// <summary>A settings CLASS is its own type, named like any type by its namespace
+    /// (<c>app.module.llm.setting</c>) — settings are settings, not kinds (decision 774); a saved row
+    /// reads back into its class by its KEY (the path), never by a kind. A bare NODE (a module/action
+    /// with no class) is a value of the base <c>setting</c> type.</summary>
     protected internal override global::app.type.@this Type
-        => new(NameOf(typeof(@this)), GetType(), Path) { Namespace = NamespaceOf(typeof(@this)) };
+        => GetType() == typeof(@this)
+            ? new(NameOf(typeof(@this)), typeof(@this))
+            : new(NameOf(GetType()), GetType());
 
     /// <summary>A structure — written through the reflection kind, its [Out] members.</summary>
     public override bool IsLeaf => false;
@@ -69,6 +72,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// (<see cref="Next"/>).</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
+        // a setting answers its own identity and teaching — its address and its option rows — beside its options
+        if (key.Equals(nameof(Path), System.StringComparison.OrdinalIgnoreCase))
+            return new global::app.data.@this(key, new global::app.type.item.text.@this(Path), parent: parent);
+        if (key.Equals(nameof(Rows), System.StringComparison.OrdinalIgnoreCase))
+            return new global::app.data.@this(key, Rows, parent: parent);
         if ((Option(key) ?? Switch(key)) is { } option)
             return new global::app.data.@this(key, option.GetValue(this), parent: parent);
         return await Next(parent, key);
@@ -237,6 +245,37 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 foreach (var option in t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
                              | System.Reflection.BindingFlags.DeclaredOnly))
                     if (option.SetMethod?.IsPublic == true) yield return option;
+        }
+    }
+
+    /// <summary>The asker's context when a scope holds this value — so its rows can name their options'
+    /// types. Stamped where the value is built/held (actor/setting, the build's step scope).</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    internal global::app.actor.context.@this? Context { get; set; }
+
+    /// <summary>This setting's options as the builder teaches them — each by the name a <c>%!path%</c>
+    /// writes (<c>cache</c>), its type, and its default (the value itself, which writes its own text); a
+    /// sensitive option shows no default. The rows the decider prompt reads from what <c>step.Setting</c>
+    /// holds — moved here from the setting kind (774: the value holds what it offers).</summary>
+    public global::app.type.property.list.@this Rows
+    {
+        get
+        {
+            var rows = new global::app.type.property.list.@this();
+            if (Context is not { } ctx) return rows;
+            foreach (var option in Options)
+            {
+                var reflected = new global::app.type.property.@this(option, ctx.App.type.list);
+                rows.Add(new global::app.type.property.@this
+                {
+                    Name = char.ToLowerInvariant(option.Name[0]) + option.Name[1..],
+                    Type = reflected.Type,
+                    Nullable = reflected.Nullable,
+                    Default = !option.IsDefined(typeof(global::app.SensitiveAttribute), inherit: true)
+                              && option.GetValue(this) is global::app.type.item.@this { IsNull: false } value ? value : null,
+                });
+            }
+            return rows;
         }
     }
 }

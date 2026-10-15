@@ -139,7 +139,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public data.@this Set(string path, IDictionary<string, object?> values)
     {
-        if (Class(path)?.Create() is not { } sample)
+        if (Make(path) is not { } sample)
             return _context.Error(new global::app.error.@this($"'{path}' names no setting class.", "UnknownSetting", 400));
         var fits = sample.Apply(values, _context);
         if (!fits.Success) return fits;
@@ -217,7 +217,7 @@ public sealed class @this : IDisposable
     }
 
     // Whether the class at path is an actor's own — its values never come from the actor it falls back to.
-    private bool Own(string path) => Class(path)?.Private == true;
+    private bool Own(string path) => Class(path) is { } clr && System.Attribute.IsDefined(clr, typeof(global::app.type.item.setting.OwnAttribute));
 
     // One option of a saved row: a setting's (its property), or an action's (its Property row).
     private data.@this? Option(data.@this row, string name) => row.Peek() switch
@@ -276,8 +276,7 @@ public sealed class @this : IDisposable
     // The setting at path as this scope sees it: the class's defaults ← the saved row ← this run's values.
     private global::app.type.item.setting.@this Build(string path)
     {
-        var kind = Class(path) ?? throw new KeyNotFoundException($"'{path}' names no setting class.");
-        var instance = kind.Create();
+        var instance = Make(path) ?? throw new KeyNotFoundException($"'{path}' names no setting class.");
         // the saved row's options, an owned setting copied — this run's values below never reach the row
         if (Saved(path)?.Peek() is global::app.type.item.setting.@this held)
             foreach (var option in held.Options)
@@ -326,9 +325,35 @@ public sealed class @this : IDisposable
         return Instance(((global::app.type.item.setting.@this)Activator.CreateInstance(@class)!).Path);
     }
 
-    // The class of settings at path, when there is one.
-    private global::app.type.item.setting.kind.@this? Class(string path)
-        => _context.App.type.list["setting"].kind[path] as global::app.type.item.setting.kind.@this;
+    // The settings class at path, from actor/setting's own path→class index over the settings types
+    // (774 A: actor/setting owns the path keys, the type list owns the names — a settings class's name is
+    // its namespace, its path its address, and they differ). Built once from the app's types.
+    private System.Collections.Generic.Dictionary<string, System.Type>? _classes;
+    private System.Type? Class(string path) => (_classes ??= Index()).GetValueOrDefault(path);
+
+    private System.Collections.Generic.Dictionary<string, System.Type> Index()
+    {
+        var map = new System.Collections.Generic.Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase);
+        foreach (var type in _context.App.type.list.Items())
+            if (type.ClrType is { } clr && typeof(global::app.type.item.setting.@this).IsAssignableFrom(clr)
+                && clr != typeof(global::app.type.item.setting.@this) && !clr.IsAbstract
+                && clr.GetConstructor(System.Type.EmptyTypes) != null)
+                map[((global::app.type.item.setting.@this)System.Activator.CreateInstance(clr)!).Path] = clr;
+        return map;
+    }
+
+    // A fresh value of the class at path, stamped with this scope's context (null when no class there).
+    private global::app.type.item.setting.@this? Make(string path)
+    {
+        if (Class(path) is not { } clr) return null;
+        var value = (global::app.type.item.setting.@this)System.Activator.CreateInstance(clr)!;
+        value.Context = _context;
+        return value;
+    }
+
+    /// <summary>A fresh value of the settings class a <paramref name="path"/> names — its defaults, stamped
+    /// so its rows name their types; null when no class names it. What the build's step scope teaches from.</summary>
+    public global::app.type.item.setting.@this? Fresh(string path) => Make(path);
 
     // The class at path as a value — a value its options can't take (this run's) is the error.
     private data.@this Instance(string path)

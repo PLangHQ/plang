@@ -524,7 +524,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         {
             var ns = string.Join('.', (ct.Namespace ?? "").Split('.').Select(s => s.TrimStart('@')));
             var name = ct.Name.Split('`')[0];
-            var space = (name == "this" ? ns : ns.Length == 0 ? name : $"{ns}.{name}").ToLowerInvariant();
+            // A nested class answers to its owner's namespace, not the bare one — `decider+setting`'s
+            // namespace is `app.module.llm.decider.setting`, never `app.module.llm.setting` (which is llm's own).
+            var owner = ct.DeclaringType is { } d ? d.Name.Split('`')[0].TrimStart('@') + "." : "";
+            var space = (name == "this" ? ns : ns.Length == 0 ? name : $"{ns}.{owner}{name}").ToLowerInvariant();
             for (var b = ct.BaseType; b != null; b = b.BaseType)
                 if (b.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false))
                 {
