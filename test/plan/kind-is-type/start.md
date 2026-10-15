@@ -130,6 +130,8 @@ The demolition list below, each checked by grep.
 | `[PlangType("…")]` words as type names | every `[PlangType]` attribute; `NameOf`'s first branch (`type/item/this.cs:539–541`) | 1 |
 | the `setting` family as a kind (each class a kind named by its path) | `type/item/setting/kind/this.cs` | 1 |
 | a kind as a separate codec class beside its type | each family's `kind/` folder (number, duration, size, template, separator, bool, path's `scheme`), as the coder's trace finds them | 2 |
+| the `kind` class itself: a type's kind is a type (decision 768) | `type/kind/this.cs` and its `empty`, `list`, `subclass` | 2 |
+| `type.format`, a filter over the kinds with a MIME or an extension, read only by its own tests (768) | `type/this.cs:117`, `type/format/this.cs`; `FormatKindTests` asks the types under a type instead | 2 |
 | item's json navigator: walking a `JsonElement`, its own `count`/`first`/`last` | `type/item/kind/json/this.cs` (`:64–84`, `:89–91`) | 3 |
 | "is this an action slot?" asked by name | `goal/step/action/this.Validate.cs:54–55`, `formal/reader.cs:221` and `:349`, `action/serializer/Reader.cs:153–154` (F8.1) | 5 |
 | `ToString` writing `name<kind>` only for list, dict and choice | `type/this.cs:547` (F4.2) | 5 |
