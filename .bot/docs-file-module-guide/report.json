@@ -179,6 +179,39 @@
         "health": "green",
         "notes": "Full tree: app, module(+file), type(+item, +variable), goal, data, channel, event, actor, call, error, setting, store, snapshot, task, test, keepalive, service, warning, parent, shortcut. More stale source comments surfaced (sqlite 'on first write'; actor still names a 'Service' actor) and recorded as findings; no production C# edited. Remaining: retire/redirect stale Documentation/*.md, optional CLAUDE.md Merge() cleanup."
       }
+    },
+    {
+      "id": "e2c6d8f0-4a9b-4e1c-8d7a-3f6b1c5e2a77",
+      "bot": "docs",
+      "timestamp_start": "2026-10-15T01:50:00Z",
+      "timestamp_end": null,
+      "intent": "Retire the stale Documentation/v0.2 architecture.md + type-system.md (redirect stubs), and apply the CLAUDE.md Merge() cleanup through the CLAUDE.md-proposal workflow.",
+      "before": {
+        "assumptions": "The in-tree start.md tree supersedes the old overview and type-system notes. 6 legacy v0.2 docs link to the retired files, so a redirect stub (not delete) keeps links alive. CLAUDE.md line 22 lists Data.Merge(), which does not exist in source.",
+        "risk": "Retiring type-system.md could drop notes not yet re-homed; mitigated by the stub pointing to good_to_know.md for cross-cutting runtime notes. CLAUDE.md is docs-owned and the orchestrator un-assume-unchanges it for docs, so the edit persists."
+      },
+      "plan": ".bot/docs-file-module-guide/docs/v5/plan.md",
+      "actions": [
+        {
+          "paths": ["Documentation/v0.2/architecture.md", "Documentation/v0.2/type-system.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Retired both stale docs by replacing their content with a redirect stub pointing to the in-tree start.md tree (and good_to_know.md for cross-cutting notes). Stub rather than delete so the 6 legacy v0.2 docs that link to them keep working. Historical content is preserved in git history. Verified the stub relative links resolve."
+        },
+        {
+          "paths": [".bot/docs-file-module-guide/claude-md-proposals.md", "CLAUDE.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "CLAUDE.md Merge() cleanup, routed through the proposal workflow per Ingi (\"as claude proposal\"): wrote the proposal entry in claude-md-proposals.md, then applied it as the proposal applier — removed Merge() from the Data bullet (line 22), since no Merge is defined under PLang/app/data/. The companion data/this.Result.cs stale summary comment is a C# change, left as a finding for the coder."
+        }
+      ],
+      "after": {
+        "status": "v5 complete — stale Documentation/v0.2 architecture.md + type-system.md retired (redirect stubs); CLAUDE.md Merge() removed via the proposal workflow.",
+        "health": "green",
+        "notes": "The in-tree developer doc tree is the single current reference; the two superseded v0.2 docs now redirect to it. CLAUDE.md no longer lists a non-existent Data.Merge(). Residual stale source comments remain as coder findings (data/this.Result.cs 'Merge', sqlite 'on first write', actor 'Service', goal 'No item base', GlobalUsings/call 'callstack', type.list this[System.Type]). No production C# edited; CLAUDE.md is docs-owned."
+      }
     }
   ]
 }

@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "v5: retired the stale Documentation/v0.2 architecture.md + type-system.md as redirect stubs to the in-tree tree, and removed the non-existent Data.Merge() from CLAUDE.md via the proposal workflow. Ready to merge." }

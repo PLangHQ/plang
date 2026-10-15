@@ -1,10 +1,10 @@
 {
   "reviewer": "docs",
   "branch": "docs/file-module-guide",
-  "timestamp": "2026-10-15T01:40:00Z",
-  "reviewed_version": "v4",
-  "summary": "Wave B of \"do everything\": the 11 remaining concept pages (setting, store, snapshot, task, test, keepalive, service, warning, parent, shortcut, variable). Drafted by parallel Haiku subagents from spine source + the shared style brief + an existing page as voice reference, then reviewed: the writers corrected briefs against source (no IStore; no app.warning member; warning.list is a C# domain collection not a PlangType; settings aren't locked core; variable link depths), and I quality-read the variable page (locked core) in full and neutralized two review-smell passages (keepalive's bug-list section, snapshot's locked-core over-claim). The in-tree developer doc tree now covers every top-level app concept.",
-  "stats": { "gaps_found": 11, "gaps_filled": 11, "docs_updated": 2, "docs_created": 11 },
+  "timestamp": "2026-10-15T01:55:00Z",
+  "reviewed_version": "v5",
+  "summary": "v5 retires the two stale Documentation/v0.2 docs (architecture.md, type-system.md) as redirect stubs to the in-tree start.md tree, and removes the non-existent Data.Merge() from CLAUDE.md via the proposal workflow (Ingi: \"retire and yes and as claude proposal\"). Earlier: v1-v4 built the full in-tree C#-developer doc tree — a start.md next to every top-level app concept's this.cs, drafted by Haiku subagents and verified. The changes/findings below span the whole effort.",
+  "stats": { "gaps_found": 11, "gaps_filled": 11, "docs_updated": 4, "docs_created": 11 },
   "changes": [
     { "id": 1, "type": "architecture-doc", "action": "created", "file": "PLang/app/setting/start.md", "description": "Settings: the app's typed setting class (Name/Environment/Culture/Create), context.Setting.Of<T>(), the defaults/saved/run layering, module settings." },
     { "id": 2, "type": "architecture-doc", "action": "created", "file": "PLang/app/store/start.md", "description": "The app store: one SQLite store per app (.data/data.sqlite), the abstract store surface (no IStore interface), the sqlite kind, who owns tables, lazy open." },
@@ -16,7 +16,10 @@
     { "id": 8, "type": "architecture-doc", "action": "created", "file": "PLang/app/warning/start.md", "description": "Warnings: a non-fatal {Key, Message} note (not an item, not on the app root — reached via goal/step/note.Warning); contrast with Error; how __action.Warn raises; written to the .pr warning array." },
     { "id": 9, "type": "architecture-doc", "action": "created", "file": "PLang/app/parent/start.md", "description": "The parent app: calling a goal in the app that started this plang (goal.Enter -> app.Run when Elsewhere is set), the call/reply wire shape, NoParent/ParentGoalFailed/Timeout." },
     { "id": 10, "type": "architecture-doc", "action": "created", "file": "PLang/app/shortcut/start.md", "description": "Shortcuts: a goal under a shortcut/ folder named by its file, read once at launch; name resolution order (own bindings -> shortcut -> app member -> module)." },
-    { "id": 11, "type": "architecture-doc", "action": "created", "file": "PLang/app/type/item/variable/start.md", "description": "The variable value (locked core): an item = Text + Code (hops); Start/Set; the parser as the one definition of a reference; the four hops (variable/property/index/method); reserved names. Points to call/start.md for the store side." }
+    { "id": 11, "type": "architecture-doc", "action": "created", "file": "PLang/app/type/item/variable/start.md", "description": "The variable value (locked core): an item = Text + Code (hops); Start/Set; the parser as the one definition of a reference; the four hops (variable/property/index/method); reserved names. Points to call/start.md for the store side." },
+    { "id": 12, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/architecture.md", "description": "Retired: replaced the stale overview with a redirect stub to the in-tree start.md tree + good_to_know.md. Stub (not delete) so the legacy v0.2 docs that link here keep working." },
+    { "id": 13, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/type-system.md", "description": "Retired: replaced the stale type-system notes with a redirect stub to PLang/app/type/start.md, type/item/start.md, type/item/variable/start.md + good_to_know.md." },
+    { "id": 14, "type": "consistency", "action": "updated", "file": "CLAUDE.md", "description": "Removed the non-existent Data.Merge() from the Data bullet (line 22), applied via the claude-md-proposals workflow. No Merge is defined under PLang/app/data/." }
   ],
   "findings": [
     { "id": 1, "severity": "minor", "category": "stale-doc", "file": "PLang/app/store/sqlite/this.cs", "issue": "The class summary says tables are created 'on first write', but Get/GetAll/Set/Remove/Exists each run CREATE TABLE IF NOT EXISTS, so any verb creates them.", "resolution": "flagged-for-coder", "detail": "The store page states the actual behaviour." },
@@ -26,6 +29,8 @@
     { "id": 5, "severity": "minor", "category": "stale-doc", "file": "PLang/app/GlobalUsings.cs", "issue": "Comments still reference old 'callstack' / 'app.module.goal.Call' names; namespace is app.call. (From v3.)", "resolution": "flagged-for-coder", "detail": "Comment-only." },
     { "id": 6, "severity": "minor", "category": "stale-doc", "file": "PLang/app/type/list/this.cs", "issue": "XML doc on this[System.Type] says 'null on miss' but it returns the clr entity. (From v2.)", "resolution": "flagged-for-coder", "detail": "The type page documents the actual behaviour." }
   ],
-  "claude_md_proposals": [],
+  "claude_md_proposals": [
+    { "from_bot": "docs", "target": "/CLAUDE.md", "decision": "applied", "reason": "Removed Data.Merge() from the Data bullet — no Merge method exists under PLang/app/data/ (verified). Entry recorded in .bot/docs-file-module-guide/claude-md-proposals.md." }
+  ],
   "character_proposals": []
 }

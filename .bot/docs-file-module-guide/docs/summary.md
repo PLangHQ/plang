@@ -1,7 +1,7 @@
 # docs — summary
 
 ## Version
-v4
+v5
 
 ## What this is
 
@@ -20,6 +20,9 @@ is a folder's doc because `Start.goal` is the entry point). Every page answers:
 - **v4** (Wave B) added the 11 remaining concepts: **setting, store, snapshot,
   task, test, keepalive, service, warning, parent, shortcut, variable**. The
   in-tree tree now has a `start.md` for every top-level `app` concept.
+- **v5** retired the two superseded docs (`Documentation/v0.2/architecture.md`,
+  `type-system.md`) as redirect stubs to the in-tree tree, and removed the
+  non-existent `Data.Merge()` from `CLAUDE.md` via the proposal workflow.
 
 ## What was done
 
@@ -106,11 +109,12 @@ No production C# was edited across any version; all recorded in
 
 ## What's next (later)
 
-- Retire / redirect the stale `Documentation/architecture.md` and
-  `type-system.md` now that the in-tree tree covers their ground.
-- Optionally apply the CLAUDE.md fix (drop `Merge()` from the Data bullet).
+- The six stale **source comments** remain open as coder findings (listed above);
+  docs doesn't edit production C#.
 - The deep module/type leaves (per-module pages, individual value types beyond
   the lattice overview) if a fuller reference is wanted.
+- A PLang-user-facing pass (writing `.goal` files) — the original "later"
+  audience, once the C#-developer fundamentals are settled.
 
 ## Blockers
 
