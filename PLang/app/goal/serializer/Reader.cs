@@ -66,7 +66,18 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // visibility derives from the goal's parent (a file's first goal is public) — the key
                 // is still written, read by no one.
                 case "visibility": reader.Skip(); break;
-                case "file": file = reader.String(); break;
+                case "file":
+                    // A .pr stores only the goal file's NAME (start.md ruling 11). A "file" that is MORE than a
+                    // bare name — a path separator, a `.`/`..` segment, a rooted or drive form — could aim the
+                    // goal's folder elsewhere (even under the os root, which AskedByOs then trusts): it is
+                    // refused BEFORE it is combined, loud, so a rebuild writes it right (decision 745). Not
+                    // silently reduced to a last segment — a .pr that says more than a name is wrong.
+                    var named0 = reader.String();
+                    if (named0.Length == 0 || named0 is "." or ".." || named0.IndexOfAny(['/', '\\', ':']) >= 0)
+                        throw new global::app.error.PrFormatOutdatedException(
+                            $"the .pr's 'file' must be a bare goal-file name, not '{named0}' — rebuild it", ctx.Origin);
+                    file = named0;
+                    break;
                 // an older .pr wrote where it was built: only its file name is kept, where it is found decides the rest
                 case "path": file ??= global::app.type.item.path.@this.Resolve(reader.String(), ctx.Context).Name.ToString(); break;
                 case "prPath": reader.Skip(); break;

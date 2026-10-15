@@ -111,6 +111,42 @@ public class GoalPathTests
         finally { System.IO.Directory.Delete(dir, true); }
     }
 
+    // A .pr's "file" is only the goal file's NAME (decision 745, security F1): one that names a PATH — a
+    // separator, a `..` segment, a rooted or drive form — is refused before it is combined, so a .pr shipped
+    // with someone else's app can never aim its goal's folder elsewhere (under the os root, which AskedByOs
+    // trusts). Refused loudly, not reduced to a last segment.
+    [Test]
+    [Arguments("../evil")]
+    [Arguments("/evil")]
+    [Arguments("sub/evil")]
+    [Arguments("..\\evil")]
+    public async Task APrFile_ThatNamesAPath_IsRefused(string file)
+    {
+        var dir = TempApp();
+        try
+        {
+            System.IO.Directory.CreateDirectory(System.IO.Path.Combine(dir, "mine", ".build"));
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "mine", "Show.goal"), "Show\n");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "mine", ".build", "show.pr"),
+                $$"""{"name":"Show","step":[],"file":{{System.Text.Json.JsonSerializer.Serialize(file)}}}""");
+            await using var app = new global::app.@this(dir).Testing();
+
+            var refused = false;
+            string? message = null;
+            try
+            {
+                var loaded = await app.goal.Load("/mine/Show.goal");
+                if (!loaded.Success) { refused = true; message = loaded.Error!.Message; }
+                else { await loaded.Value(); }
+            }
+            catch (global::app.error.AppException ex) { refused = true; message = ex.Error.Message; }
+
+            await Assert.That(refused).IsTrue().Because($"a .pr 'file' of '{file}' must be refused");
+            await Assert.That(message!).Contains("bare");
+        }
+        finally { System.IO.Directory.Delete(dir, true); }
+    }
+
     // A .pr written before a goal stored only its file name: its "path" and "prPath" read to the same goal.
     [Test]
     public async Task AnOlderPr_WithPathAndPrPath_ReadsToTheSameGoal()
