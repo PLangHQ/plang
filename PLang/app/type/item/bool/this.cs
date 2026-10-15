@@ -17,11 +17,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static IReadOnlyList<string> Alias { get; } = ["boolean"];
     public static string Shape => "bool";
 
-    /// <summary>What a bool can be in a step, as the decider is offered it: true or false — bool's own, not a
-    /// kind (decision 774). Offers only: a bool's values aren't a closed set the formal reader checks a literal
-    /// against (so the type stays open), it is the pair a step may name.</summary>
-    public static IReadOnlyList<global::app.type.item.@this> Offer => [True, False];
-
     public bool Value { get; }
     protected internal override global::app.type.@this Type => new(typeof(@this));
 
