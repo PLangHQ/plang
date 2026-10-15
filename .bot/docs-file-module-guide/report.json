@@ -59,8 +59,34 @@
         "risk": "The type/item subtree is very large (50+ value types, deep number/kind matrix). v2 must cover the fundamentals (entity, registry, apex, item.list, core scalars) and name-but-not-expand the leaves, or it never ships."
       },
       "plan": ".bot/docs-file-module-guide/docs/v2/plan.md",
-      "actions": [],
-      "after": null
+      "actions": [
+        {
+          "paths": ["PLang/app/type/start.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "The type system page. Drafted by a Haiku subagent from a verified-facts brief (I read type/this.cs + type/list/this.cs myself; an Explore agent surveyed root/kind/property/current/convert/format). I verified cited filenames (this.Owns.cs, kind class decl, choice/set/this.cs) against source before commit. Keeps entity vs registry distinct; covers PlangName CLR<->plang map, kind-is-behaviour, format-in-play, current<T,L>, birth vs make."
+        },
+        {
+          "paths": ["PLang/app/type/item/start.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "The value-lattice page. Drafted by a Haiku subagent from a verified-facts brief (Explore agent surveyed item.@this + list/dict + the scalar types). The subagent corrected my brief's rank facts against source; I then verified all 18 Rank => overrides match exactly (null 1000 .. text 100, apex/path 0) and that this.Equality.cs/this.Ladder.cs/this.Generic.cs exist. Full 'how item.list works' section, item.Create rungs, scalar types, number.kind.int, rank/coercion."
+        },
+        {
+          "paths": [".bot/docs-file-module-guide/docs/summary.md", ".bot/docs-file-module-guide/docs-report.json", ".bot/docs-file-module-guide/docs/v2/verdict.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 bookkeeping. Workflow experiment this version: the two pages were written by Haiku subagents (Ingi's suggestion) and I reviewed/verified every precise claim before committing."
+        }
+      ],
+      "after": {
+        "status": "v2 complete — type system + value lattice pages authored (by Haiku subagents), every precise claim verified against source.",
+        "health": "green",
+        "notes": "Fundamentals now cover app, module, type and the value lattice. One minor stale-source-doc finding recorded (type.list this[System.Type] XML comment says null-on-miss; code returns the clr entity). No production C# changed. Next: goal/data/channel/event/actor pages, then retire stale Documentation/architecture.md + type-system.md."
+      }
     }
   ]
 }
