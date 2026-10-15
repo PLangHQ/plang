@@ -156,6 +156,10 @@ public class Program : BaseProgram, IDisposable
 		[LlmIgnore]
 		public X509Certificate2? Certificate { get; set; }
 
+		// Without LlmIgnore the builder treats Engine as a value the step must supply and every
+		// new `start webserver` step fails to build with "is missing required value(s): Engine".
+		// It is infrastructure the runtime sets, like Listener and Routings above.
+		[LlmIgnore]
 		[System.Text.Json.Serialization.JsonIgnore]
 		[Newtonsoft.Json.JsonIgnore]
 		public IEngine Engine { get; set; }
