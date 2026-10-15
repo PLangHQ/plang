@@ -471,6 +471,11 @@ public partial class @this
         // that holds nothing enumerates the carrier itself.
         var held = await Follow(_context);
         var walked = held.IsInitialized ? held : this;
+        // Content not yet read (a {item, kind: json} holding its raw) is parsed first: the read yields the
+        // real list/dict and the value narrows to it (decision 787), so foreach walks its elements — not the
+        // one unread source. A value already walkable (the list/dict a %var% names) keeps its door shut.
+        if (walked._item is global::app.type.item.source)
+            return (await walked.Value()).EnumerateItems(_context);
         return walked._item.EnumerateItems(_context);
     }
 
