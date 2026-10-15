@@ -15,7 +15,8 @@ public class KindsTests
 
     [Test] public async Task AFilePath_IsAPath() => await Assert.That(NameOf(typeof(global::app.type.item.path.file.@this))).IsEqualTo("path");
     [Test] public async Task AnHttpPath_IsAPath() => await Assert.That(NameOf(typeof(global::app.type.item.path.http.@this))).IsEqualTo("path");
-    [Test] public async Task AClassOfSettings_IsASetting() => await Assert.That(NameOf(typeof(global::app.setting.@this))).IsEqualTo("setting");
+    // Decision 774: a settings class is no longer a kind of `setting` — it is its own type, named by its namespace.
+    [Test] public async Task AClassOfSettings_IsItsOwnType() => await Assert.That(NameOf(typeof(global::app.setting.@this))).IsEqualTo("app.setting");
     [Test] public async Task ATypedList_IsAList() => await Assert.That(NameOf(typeof(global::app.error.list.@this))).IsEqualTo("list");
     [Test] public async Task AWhere_IsAQuery() => await Assert.That(NameOf(typeof(global::app.module.list.type.query.where.@this))).IsEqualTo("query");
 

@@ -7,6 +7,9 @@ namespace app.goal.list.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {
+    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    public static bool Internal => true;
+
     /// <summary>The goals of <c>/system/</c> too, beside the app's own.</summary>
     [Out, Store] public global::app.type.item.@bool.@this Os { get; set; } = true;
 

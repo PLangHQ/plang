@@ -5,6 +5,9 @@ namespace app.module.debug.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
+    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    public static bool Internal => true;
+
     /// <summary>Filter to a specific goal name. Null = all goals.</summary>
     [Out, Store] public global::app.type.item.text.@this? Goal { get; set; }
 

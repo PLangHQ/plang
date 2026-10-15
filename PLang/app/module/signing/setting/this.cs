@@ -5,6 +5,9 @@ namespace app.module.signing.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
+    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    public static bool Internal => true;
+
     /// <summary>How long a signature read live off the wire is good after it was made — its expiry, unless what
     /// the signer signed ends it sooner. A signature read from plang's own store gets no such window.</summary>
     [Out, Store] public global::app.type.item.duration.@this Expiry { get; set; } = System.TimeSpan.FromMinutes(5);

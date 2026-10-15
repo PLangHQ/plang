@@ -226,7 +226,8 @@ public class QueryConversationTests
     [Test]
     public async Task ASensitiveOption_IsDescribedWithNoDefault()
     {
-        var options = _app.actor.list.User.Context.Setting.Fresh("llm.setting")!.Rows;
+        var ctx = _app.actor.list.User.Context;
+        var options = ctx.Setting.Fresh("llm.setting")!.Rows(ctx);
 
         await Assert.That(options["key"]!.HasDefault).IsFalse();
         await Assert.That(options["endpoint"]!.HasDefault).IsTrue();

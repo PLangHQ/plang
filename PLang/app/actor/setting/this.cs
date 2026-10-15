@@ -342,17 +342,13 @@ public sealed class @this : IDisposable
         return map;
     }
 
-    // A fresh value of the class at path, stamped with this scope's context (null when no class there).
+    // A fresh value of the class at path — its defaults; null when no class there. The value stores no
+    // context (Rows takes the asker's), so a fresh instance is all it is.
     private global::app.type.item.setting.@this? Make(string path)
-    {
-        if (Class(path) is not { } clr) return null;
-        var value = (global::app.type.item.setting.@this)System.Activator.CreateInstance(clr)!;
-        value.Context = _context;
-        return value;
-    }
+        => Class(path) is { } clr ? (global::app.type.item.setting.@this)System.Activator.CreateInstance(clr)! : null;
 
-    /// <summary>A fresh value of the settings class a <paramref name="path"/> names — its defaults, stamped
-    /// so its rows name their types; null when no class names it. What the build's step scope teaches from.</summary>
+    /// <summary>A fresh value of the settings class a <paramref name="path"/> names — its defaults; null
+    /// when no class names it. What the build's step scope teaches from (its Path and its Rows).</summary>
     public global::app.type.item.setting.@this? Fresh(string path) => Make(path);
 
     // The class at path as a value — a value its options can't take (this run's) is the error.

@@ -76,7 +76,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         if (key.Equals(nameof(Path), System.StringComparison.OrdinalIgnoreCase))
             return new global::app.data.@this(key, new global::app.type.item.text.@this(Path), parent: parent);
         if (key.Equals(nameof(Rows), System.StringComparison.OrdinalIgnoreCase))
-            return new global::app.data.@this(key, Rows, parent: parent);
+            return new global::app.data.@this(key, Rows(parent.Context), parent: parent);
         if ((Option(key) ?? Switch(key)) is { } option)
             return new global::app.data.@this(key, option.GetValue(this), parent: parent);
         return await Next(parent, key);
@@ -248,34 +248,26 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         }
     }
 
-    /// <summary>The asker's context when a scope holds this value — so its rows can name their options'
-    /// types. Stamped where the value is built/held (actor/setting, the build's step scope).</summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    internal global::app.actor.context.@this? Context { get; set; }
-
     /// <summary>This setting's options as the builder teaches them — each by the name a <c>%!path%</c>
-    /// writes (<c>cache</c>), its type, and its default (the value itself, which writes its own text); a
-    /// sensitive option shows no default. The rows the decider prompt reads from what <c>step.Setting</c>
-    /// holds — moved here from the setting kind (774: the value holds what it offers).</summary>
-    public global::app.type.property.list.@this Rows
+    /// writes (<c>cache</c>), its type (named through <paramref name="context"/>'s types), and its default
+    /// (the value itself, which writes its own text); a sensitive option shows no default. The rows the
+    /// decider prompt reads from what <c>step.Setting</c> holds — moved here from the setting kind (774:
+    /// the value holds what it offers). Takes the asker's context, so the value need store none.</summary>
+    public global::app.type.property.list.@this Rows(global::app.actor.context.@this context)
     {
-        get
+        var rows = new global::app.type.property.list.@this();
+        foreach (var option in Options)
         {
-            var rows = new global::app.type.property.list.@this();
-            if (Context is not { } ctx) return rows;
-            foreach (var option in Options)
+            var reflected = new global::app.type.property.@this(option, context.App.type.list);
+            rows.Add(new global::app.type.property.@this
             {
-                var reflected = new global::app.type.property.@this(option, ctx.App.type.list);
-                rows.Add(new global::app.type.property.@this
-                {
-                    Name = char.ToLowerInvariant(option.Name[0]) + option.Name[1..],
-                    Type = reflected.Type,
-                    Nullable = reflected.Nullable,
-                    Default = !option.IsDefined(typeof(global::app.SensitiveAttribute), inherit: true)
-                              && option.GetValue(this) is global::app.type.item.@this { IsNull: false } value ? value : null,
-                });
-            }
-            return rows;
+                Name = char.ToLowerInvariant(option.Name[0]) + option.Name[1..],
+                Type = reflected.Type,
+                Nullable = reflected.Nullable,
+                Default = !option.IsDefined(typeof(global::app.SensitiveAttribute), inherit: true)
+                          && option.GetValue(this) is global::app.type.item.@this { IsNull: false } value ? value : null,
+            });
         }
+        return rows;
     }
 }

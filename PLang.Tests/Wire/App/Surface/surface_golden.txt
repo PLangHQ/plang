@@ -113,10 +113,12 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
 class app.call.setting.diff.this : app.type.item.setting.this
   Deep : app.type.item.bool.this { get; set; } [Out, Store]
   ctor()
+  static Internal : System.Boolean { get; }
 
 class app.call.setting.frame.this : app.type.item.setting.this
   Max : app.type.item.number.this { get; set; } [Out, Store]
   ctor()
+  static Internal : System.Boolean { get; }
 
 class app.call.setting.this : app.type.item.setting.this
   Diff : app.call.setting.diff.this { get; set; } [Out, Store]
@@ -125,6 +127,7 @@ class app.call.setting.this : app.type.item.setting.this
   Tags : app.type.item.bool.this { get; set; } [Out, Store]
   Timing : app.type.item.bool.this { get; set; } [Out, Store]
   ctor()
+  static Internal : System.Boolean { get; }
 
 class app.call.this : app.type.item.this, System.IAsyncDisposable
   Action : app.goal.step.action.this { get; }
@@ -2531,28 +2534,25 @@ class app.type.item.setting.action.this : app.type.item.setting.this
   ctor(app.goal.step.action.this action)
   override Set(System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.this>
   protected override Next(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
-
-class app.type.item.setting.kind.this : app.type.kind.this
-  ctor(app.type.item.setting.this sample, app.type.list.this types)
-  override ClrForm : System.Type { get; }
-  override Property : app.type.property.list.this { get; init; }
-  protected override Owner : System.String { get; }
+  static Internal : System.Boolean { get; }
 
 class app.type.item.setting.module.this : app.type.item.setting.this
   ctor()
   ctor(System.String module)
   override Set(System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.this>
+  static Internal : System.Boolean { get; }
 
 class app.type.item.setting.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
   Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
   ctor()
 
-class app.type.item.setting.this : app.type.item.this, app.type.item.ICreate<app.type.item.setting.this> [Kinds, PlangType]
+class app.type.item.setting.this : app.type.item.this, app.type.item.ICreate<app.type.item.setting.this> [PlangType]
   Apply(System.Collections.Generic.IDictionary<System.String, System.Object> values, app.actor.context.this context) : app.data.this
   Disabled : app.type.item.bool.this { get; }
   Enabled : app.type.item.bool.this { get; set; } [Out, Store]
   Path : System.String { get; }
+  Rows : app.type.property.list.this { get; }
   ctor()
   ctor(System.String path)
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
@@ -2616,6 +2616,7 @@ class app.type.item.size.serializer.Reader : app.type.reader.ITypeReader
 class app.type.item.size.setting.this : app.type.item.setting.this
   Standard : app.type.item.choice.this<app.type.item.size.kind.this> { get; set; } [Out, Store]
   ctor()
+  static Internal : System.Boolean { get; }
 
 class app.type.item.size.this : app.type.item.this, System.IEquatable<app.type.item.size.this>, app.type.item.ICreate<app.type.item.size.this>, app.type.item.setting.ISetting<app.type.item.size.setting.this> [PlangType]
   Equals(app.type.item.size.this other) : System.Boolean
@@ -3307,10 +3308,13 @@ class app.type.table.this : app.type.item.this, app.type.item.IEncode<app.type.t
   static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
 
 class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, app.type.item.IList<app.type.this, app.type.list.this>, app.type.item.ILoad<app.type.this>, app.type.item.IMatch<app.type.this> [PlangType]
+  Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; init; }
   ConstructorSignature : System.String { get; init; }
   Create(System.Object raw, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   Create(System.Object raw, app.actor.context.this context, System.String name, app.type.item.path.this origin = …) : System.Threading.Tasks.ValueTask<app.data.this>
+  Description(app.actor.context.this context) : app.type.item.prose.this [LlmBuilder]
   Empty(app.actor.context.this context) : app.type.item.this
+  Example(app.actor.context.this context) : app.type.item.prose.this [LlmBuilder]
   Guide(app.actor.context.this context) : app.type.item.file.this [LlmBuilder]
   Internal : System.Boolean { get; init; }
   Is(System.String typeName) : System.Boolean
@@ -3321,10 +3325,12 @@ class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, 
   Namespace : System.String { get; init; }
   Notes(app.actor.context.this context) : app.type.item.file.this [LlmBuilder]
   Polymorphic : System.Boolean { get; }
+  Property : app.type.property.list.this { get; init; }
   Read(app.type.item.kind.json.Reader& reader, app.type.reader.ReadContext ctx) : app.type.item.this
   Shape : System.String { get; init; }
   Strict : System.Boolean { get; init; }
   Template : app.type.item.template.kind.this { get; init; }
+  Values : System.Collections.Generic.IReadOnlyList<System.String> { get; init; }
   ctor(System.String name, System.String kind = …, System.Boolean strict = …, app.type.item.template.kind.this template = …)
   ctor(System.String name, app.type.this family)
   format : app.type.format.this { get; }
@@ -3347,13 +3353,8 @@ class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, 
   static List(app.this app) : app.type.list.this
   static Null : app.type.this { get; }
   static const TypeDescription : System.String
-  virtual Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; init; }
-  virtual Description(app.actor.context.this context) : app.type.item.prose.this [LlmBuilder]
-  virtual Example(app.actor.context.this context) : app.type.item.prose.this [LlmBuilder]
   virtual IsClosed : System.Boolean { get; }
   virtual Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
-  virtual Property : app.type.property.list.this { get; init; }
-  virtual Values : System.Collections.Generic.IReadOnlyList<System.String> { get; init; }
 
 class app.type.this<T, L> : app.type.this
   Get(System.String key) : System.Threading.Tasks.ValueTask<app.data.this<T>>
@@ -3383,6 +3384,8 @@ type app
 
 type app.actor.context.trace
 
+type app.actor.permission.setting
+
 type app.call
 
 type app.call.binding
@@ -3390,6 +3393,12 @@ type app.call.binding
 type app.call.isolated
 
 type app.call.list
+
+type app.call.setting
+
+type app.call.setting.diff
+
+type app.call.setting.frame
 
 type app.channel.list
 
@@ -3415,29 +3424,65 @@ type app.event.binding.clause
 
 type app.event.on
 
+type app.goal.list.setting
+
+type app.module.archive.setting
+
 type app.module.browser.type.cdp
 
 type app.module.browser.type.cdp.session
+
+type app.module.build.setting
 
 type app.module.code.defaultoverride
 
 type app.module.code.registration
 
+type app.module.debug.setting
+
+type app.module.debug.setting.length
+
+type app.module.debug.setting.llm
+
+type app.module.identity.setting
+
+type app.module.llm.decider.setting
+
+type app.module.llm.setting
+
+type app.module.math.setting
+
+type app.module.math.setting.equal
+
 type app.module.screen.type.element.list
+
+type app.module.signing.setting
+
+type app.module.terminal.setting
 
 type app.module.window.type.window.list
 
 type app.parent
 
+type app.setting
+
 type app.store.sqlite
 
 type app.task.list
+
+type app.test.setting
 
 type app.type.item.note
 
 type app.type.item.note.line
 
 type app.type.item.prose
+
+type app.type.item.setting.action
+
+type app.type.item.setting.module
+
+type app.type.item.size.setting
 
 type app.type.root
   .description : app.type.item.prose

@@ -6,6 +6,9 @@ namespace app.module.llm.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
+    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    public static bool Internal => true;
+
     /// <summary>Whether an answer kept from before is used — used, unless a step or this setting skips it.</summary>
     [Out, Store] public global::app.type.item.choice.@this<global::app.module.cache.type.cache> Cache { get; set; }
         = new(global::app.module.cache.type.cache.use);

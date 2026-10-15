@@ -8,6 +8,9 @@ namespace app.module.debug.setting.llm;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {
+    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    public static bool Internal => true;
+
     /// <summary>Dump system messages from each LLM API call.</summary>
     [Out, Store] public global::app.type.item.@bool.@this System { get; set; } = false;
 

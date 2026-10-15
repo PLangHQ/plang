@@ -6,6 +6,9 @@ namespace app.call.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {
+    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    public static bool Internal => true;
+
     /// <summary>StartedAt, CompletedAt, Duration on every call.</summary>
     [Out, Store] public global::app.type.item.@bool.@this Timing { get; set; } = global::app.type.item.@bool.@this.False;
 
