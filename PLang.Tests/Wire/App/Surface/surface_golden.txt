@@ -1121,8 +1121,10 @@ interface app.type.format.IWriter
   abstract String(System.String value) : System.Void
   abstract TimeSpan(System.TimeSpan value) : System.Void
   abstract Value(System.Object normalized) : System.Void
+  virtual BeginText() : app.type.format.IWriter
   virtual Content(System.String value, app.type.kind.this kind) : System.Void
   virtual EmitsSchema : System.Boolean { get; }
+  virtual EndText() : System.Void
   virtual Given() : System.Void
   virtual Raw(System.Byte[] value) : System.Void
   virtual Raw(System.String value) : System.Void
@@ -1788,6 +1790,7 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   BeginArray(System.Int32 count) : System.Void
   BeginObject() : System.Void
   BeginRecord(app.data.this record) : System.Void
+  BeginText() : app.type.format.IWriter
   Bool(System.Boolean value) : System.Void
   Bytes(System.Byte[] value) : System.Void
   DateTime(System.DateTime value) : System.Void
@@ -1798,6 +1801,7 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   EndArray() : System.Void
   EndObject() : System.Void
   EndRecord(app.data.this record) : System.Void
+  EndText() : System.Void
   Enum(System.Enum value) : System.Void
   Float(System.Single value) : System.Void
   Format : System.String { get; }

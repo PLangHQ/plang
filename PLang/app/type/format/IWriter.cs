@@ -122,6 +122,20 @@ public interface IWriter
     void EndRecord();
 
     /// <summary>
+    /// A text with values inside it — <c>"rank these %orders%"</c>. <see cref="BeginText"/> returns the
+    /// <b>sink</b> the caller writes the parts into: each literal span via <see cref="String"/> and each
+    /// embedded value through the value's own <c>Output</c>, in order; together they are ONE string in the
+    /// output. <see cref="EndText"/> finishes it. A writer whose primitives already yield one string (text,
+    /// llm) returns <c>this</c> — the parts write straight through it (the llm writer cuts each value as it
+    /// passes). A writer that would otherwise emit the parts as separate tokens (json/plang) returns a
+    /// plain-text sink over its own buffer and, at <see cref="EndText"/>, emits that whole as ONE value —
+    /// so it keeps its own fixed shape with no mode flag. Brackets nest naturally: an embedded value that is
+    /// itself such a text calls <see cref="BeginText"/> on the sink, which returns itself, rendering flat.
+    /// </summary>
+    IWriter BeginText() => this;
+    void EndText() { }
+
+    /// <summary>
     /// Write a C# value in the current slot: a primitive, a byte[], a Data as
     /// its record, a collection as an array; a plang value writes itself.
     /// </summary>

@@ -19,12 +19,29 @@ public sealed class Writer : IWriter
     private readonly app.View _view;
     private readonly bool _emitsSchema;
 
+    // A text with values inside it ("rank these %orders%") must be ONE json string, not a run of tokens.
+    // BeginText hands back a plain-text writer over this buffer as the sink for the parts; the caller
+    // writes the literals and each embedded value into it (a container writes its json characters, as the
+    // text writer renders it today), and EndText emits the whole buffer as one quoted string. json keeps
+    // its own fixed shape — no mode flag, no per-method branch: the sink is a different, bare writer.
+    private System.IO.MemoryStream? _contentBuffer;
+
     public Writer(Utf8JsonWriter writer, app.View view = app.View.Out, bool emitsSchema = false)
     {
         _writer = writer;
         _view = view;
         _emitsSchema = emitsSchema;
     }
+
+    public global::app.type.format.IWriter BeginText()
+    {
+        _contentBuffer = new System.IO.MemoryStream();
+        return new global::app.type.item.text.Writer(_contentBuffer,
+            System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Machine);
+    }
+
+    public void EndText()
+        => _writer.WriteStringValue(System.Text.Encoding.UTF8.GetString(_contentBuffer!.ToArray()));
 
     public string Format => _emitsSchema ? "plang" : "json";
 

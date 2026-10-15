@@ -73,6 +73,13 @@ public sealed class Writer : global::app.type.format.IWriter
     public void EndRecord() => _inner.EndRecord();
     public void Value(object? normalized) => _inner.Value(normalized);
 
+    // A text with values inside it ("rank these %orders%"): the sink is THIS writer — the parts write
+    // straight through it, so each embedded value is cut as it passes String/Content (and, at stage 2, its
+    // own structural cuts) and the literals pass whole. No buffering: the cut lives in the per-value
+    // primitives, which is the whole point of the door for the llm writer.
+    public global::app.type.format.IWriter BeginText() => this;
+    public void EndText() { }
+
     /// <summary>Drive the writer with one text and read back what the model would see — the llm module's
     /// own render of a message's content, with the cut applied. Stage 1's full-match text content.</summary>
     public static string Cut(string content, int length, global::app.type.item.culture.@this culture)

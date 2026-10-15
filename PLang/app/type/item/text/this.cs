@@ -153,45 +153,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return new @this(await Rendered(context));
     }
 
-    // The template rendered: one pass in order — each literal written as it is, each variable written
-    // in place through its value's own door (its Output into a text writer: a wire materializes to
-    // bare content, a container renders its json text). An unset variable is an error at the
-    // reference; an unset %!x% (an optional engine internal) stays as written.
+    // The template's string form — its own Output driven onto a text writer (whose BeginText/EndText are
+    // no-op, so it assembles one string). For the uses that need the string in hand: Value's
+    // partial-template materialize, Clr/ToString.
     private async System.Threading.Tasks.ValueTask<string> Rendered(global::app.actor.context.@this context)
     {
         using var ms = new System.IO.MemoryStream();
         var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8,
             context.Setting.Of<global::app.setting.@this>().Culture);
-        int pos = 0;
-        for (int at = _value.IndexOf('%'); at >= 0; at = _value.IndexOf('%', at + 1))
-        {
-            var found = At(at);
-            if (found == null) continue;
-            w.String(_value[pos..at]);
-            pos = at + found.Text.Length;
-            var bound = await found.Start(context);
-            if (!bound.IsInitialized)
-            {
-                if (found.Code.Root.Name.StartsWith('!')) { w.String(found.Text); at = pos - 1; continue; }
-                throw await Unreachable(found, context);
-            }
-            // The crash net for this render's door (Start + Output, not the variable's Value door, which has its
-            // own): a value reached again while it is being written into a template would recurse until the
-            // process dies. Unreachable today — every binding a program writes is settled where it is written
-            // (data.Settle: a set, an action's exit, a call's parameters, a loop's item), so nothing holds a
-            // template that names itself — kept so a future binding that stores one fails as a plang error.
-            var rendering = context.Variable.Rendering;
-            var outer = rendering.Value ?? System.Collections.Immutable.ImmutableHashSet.Create<object>(
-                System.Collections.Generic.ReferenceEqualityComparer.Instance);
-            var value = bound.Peek();
-            if (outer.Contains(value))
-                throw new global::app.error.AppException($"variable resolve cycle: {found.Text} holds a template that renders {found.Text}", "VarResolveCycle", 400);
-            rendering.Value = outer.Add(value);
-            try { await bound.Output(w, global::app.View.Out, context); }
-            finally { rendering.Value = outer; }
-            at = pos - 1;
-        }
-        w.String(_value[pos..]);
+        await Output(w, global::app.View.Out, context);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
@@ -245,7 +215,43 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             if (resolved is { IsInitialized: true }) { await resolved.Output(writer, mode, context); return; }
             throw new global::app.error.VariableNotFoundException(resolved!.Name);   // the lookup already carries the name
         }
-        writer.Content(await Rendered(context), Format(context));
+        // A partial template is a text with values inside it. Through the door: the writer hands back the
+        // sink the parts go into — itself (text/llm), or its own bare buffer (json/plang gathers them into
+        // one string at EndText). Each literal and each embedded value writes to the sink, in order, and
+        // the writer finishes at EndText; so a cutting writer (llm) sees each value and cuts it, where
+        // Content(Rendered()) would have pre-flattened them through text's own writer.
+        var sink = writer.BeginText();
+        int pos = 0;
+        for (int at = _value.IndexOf('%'); at >= 0; at = _value.IndexOf('%', at + 1))
+        {
+            var found = At(at);
+            if (found == null) continue;
+            sink.String(_value[pos..at]);
+            pos = at + found.Text.Length;
+            var bound = await found.Start(context);
+            if (!bound.IsInitialized)
+            {
+                if (found.Code.Root.Name.StartsWith('!')) { sink.String(found.Text); at = pos - 1; continue; }
+                throw await Unreachable(found, context);
+            }
+            // The crash net for this render (Start + Output, not the variable's Value door, which has its
+            // own): a value reached again while it is being written into a template would recurse until the
+            // process dies. Unreachable today — every binding a program writes is settled where it is written
+            // (data.Settle: a set, an action's exit, a call's parameters, a loop's item), so nothing holds a
+            // template that names itself — kept so a future binding that stores one fails as a plang error.
+            var rendering = context.Variable.Rendering;
+            var outer = rendering.Value ?? System.Collections.Immutable.ImmutableHashSet.Create<object>(
+                System.Collections.Generic.ReferenceEqualityComparer.Instance);
+            var value = bound.Peek();
+            if (outer.Contains(value))
+                throw new global::app.error.AppException($"variable resolve cycle: {found.Text} holds a template that renders {found.Text}", "VarResolveCycle", 400);
+            rendering.Value = outer.Add(value);
+            try { await bound.Output(sink, mode, context); }
+            finally { rendering.Value = outer; }
+            at = pos - 1;
+        }
+        sink.String(_value[pos..]);
+        writer.EndText();
     }
 
     // The kind these characters are in, as the types hold it — one of text's own (md) or one text coins for another
