@@ -2,8 +2,8 @@
 / value (a number, a bool, a list, a dict), so its parent is item, not text: a value
 / carrying Type={item, kind: json} lands as an item whose kind navigates as the "json"
 / type, and `%x% is text` is false. Written in formal so the builder's Type choice is out
-/ of it. Red today — the kind of an item isn't a navigable type at run (`.name` null); the
-/ `is text` check is held with the other kind.name asserts (Ingi's answer still pending).
+/ of it. Red today — type.name reads "text" (and `is text` is true today, so %isText%
+/ reads true against the expected null); only the kind.name assert is held pending Ingi.
 JsonIsItemsKind
 - variable.set(Name=%x%, Value="{\"a\":1}", Type={name:"item", kind:"json"})
 - assert.equals(Expected="item", Actual=%x!type.name%, Message="x's type name is item")
