@@ -31,8 +31,8 @@ Stage2
 - call /plan/kind-is-type/app/type/ShortNameFindsTheType
 / the llm settings class is a type of its own, named by its namespace
 - call /plan/kind-is-type/app/type/SettingClassIsAType
-/ a settings row saved before the change still reads, its class taken from its key
-- call /plan/kind-is-type/app/setting/OldSettingRowStillReads
+/ a settings row saved in today's shape still reads after the change — C# test at PLang.Tests/Runtime/App/Settings/OldSettingRowStillReadsTests.cs
+/ (the test writes a row via one App and reads it through the actor's settings on a fresh App over the same dir)
 
 Stage3
 / every family's kinds are types under their parent, found only through it

@@ -292,34 +292,11 @@
               ]
             }
           ]
-        },
-        {
-          "index": 2,
-          "text": "call /plan/kind-is-type/app/setting/OldSettingRowStillReads",
-          "line": {
-            "number": 35
-          },
-          "comment": "a settings row saved before the change still reads, its class taken from its key",
-          "code": [
-            {
-              "module": "goal",
-              "name": "call",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "goal"
-                  },
-                  "value": "/plan/kind-is-type/app/setting/OldSettingRowStillReads"
-                }
-              ]
-            }
-          ]
         }
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "ec7c67113e2370a3cb6684fd8608f78575ef039f1a3fc27ea0fff510b6db4c25"
+      "hash": "0160f04807fd282406a0b45479e2c897e3192655a82e77ba761d917f5fa3a50b"
     },
     {
       "name": "Stage3",
@@ -633,25 +610,6 @@
                   "value": "/plan/kind-is-type/module/file/read/AsTextKeepsText"
                 }
               ]
-            },
-            {
-              "module": "goal",
-              "name": "call",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "goal"
-                  },
-                  "value": "/plan/kind-is-type/module/file/read/AsTextKeepsText"
-                }
-              ]
-            }
-          ],
-          "warning": [
-            {
-              "key": "Unsure",
-              "message": "step 3 uses goal.call, which the decider was not sure of (0.86)"
             }
           ]
         },
@@ -672,6 +630,63 @@
                     "name": "goal"
                   },
                   "value": "/plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso"
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Type",
+                  "type": {
+                    "name": "type"
+                  },
+                  "value": "duration"
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
                 }
               ]
             }
@@ -697,6 +712,60 @@
                   "value": "/plan/kind-is-type/module/variable/set/NoAsNoType"
                 }
               ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 5 uses variable.set, which the decider was not sure of (0.95)"
             }
           ]
         }
