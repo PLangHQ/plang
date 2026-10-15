@@ -90,6 +90,25 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return context!.App.type.list[raw.GetType()].Make(raw, context);
     }
 
+    /// <summary>The birth of an item with a DECLARED type (decisions 786/787): an item declared with a KIND
+    /// is made from its raw by that declaration, lazily — the raw's characters ride to the declared type's
+    /// own wire-raw birth (<c>declared.Make</c>, <c>type/this.cs:378</c>): a fresh source read on first use
+    /// through its kind, so <c>{item, kind: json}</c> holds its characters until used and is not text. A
+    /// kindless item is the interface default (pass-through, a container deserializes itself, else declined).
+    /// Only item's family comes here — a number or duration kind (decimal, iso) is its own family's birth.</summary>
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    {
+        if (declared is { } d && !d.kind.IsEmpty && raw is @this leaf && leaf.RawText is { } chars)
+            return d.Make(chars, data.Context);
+        if (raw is @this self) return self;
+        if (raw is global::app.type.item.dict.@this or global::app.type.item.list.@this
+            && ((@this)raw).Clr(typeof(@this)) is @this rec) return rec;
+        data.Fail(new global::app.error.@this(
+            $"%{data.Name}% holds a {(raw as @this)?.Type.Name ?? raw?.GetType().Name} — 'item' cannot be created from it.",
+            "CreateItemDeclined", 400));
+        return null;
+    }
+
     /// <summary>
     /// THE value door — "I am going to use this value, make yourself ready."
     /// Loads if needed, parses if needed, renders if stamped (ready MEANS
