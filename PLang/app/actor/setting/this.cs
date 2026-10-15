@@ -248,9 +248,22 @@ public sealed class @this : IDisposable
             return rows;
         }
         foreach (var row in (await all.Value())!.Items(_context))
-            if (row.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-                && await row.Value() is { IsNull: false } value)
-                rows[row.Name[prefix.Length..]] = new data.@this(row.Name, value, row.Type, context: _context);
+        {
+            if (!row.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+            var key = row.Name[prefix.Length..];
+            var value = await row.Value();
+            // A row that could NOT be read — an older-shape row 790 drops — is kept WITH its error, never
+            // silently skipped: its read named the key and how to fix it (delete it and set it again). It is
+            // said on the debug channel now, and held so a read of that setting answers the error (loud), not
+            // a silent default. A row that read to nothing (a null value) is simply absent.
+            if (!row.Success)
+            {
+                await (_context.App.Debug?.Write($"settings: '{key}' could not be read — {row.Error?.Message}") ?? Task.CompletedTask);
+                rows[key] = row;
+            }
+            else if (value is { IsNull: false })
+                rows[key] = new data.@this(row.Name, value, row.Type, context: _context);
+        }
         return rows;
     }
 
@@ -277,6 +290,9 @@ public sealed class @this : IDisposable
     private global::app.type.item.setting.@this Build(string path)
     {
         var instance = Make(path) ?? throw new KeyNotFoundException($"'{path}' names no setting class.");
+        // a saved row that could NOT be read (an older-shape row) answers its error here — the read of this
+        // setting is loud and names the key + how to fix it (790), never a silent fall-back to the defaults
+        if (Saved(path) is { Success: false, Error: { } unreadable }) throw new global::app.error.AppException(unreadable);
         // the saved row's options, an owned setting copied — this run's values below never reach the row
         if (Saved(path)?.Peek() is global::app.type.item.setting.@this held)
             foreach (var option in held.Options)
