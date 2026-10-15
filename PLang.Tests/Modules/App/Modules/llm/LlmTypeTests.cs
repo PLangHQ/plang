@@ -61,7 +61,8 @@ public class LlmTypeTests
         var only = read!.Items(ctx).Single();
         var message = (await only.Value<LlmMessage>())!;
         await Assert.That(message.Role).IsEqualTo("user");
-        await Assert.That(message.Content).IsEqualTo("say hi in one word");
+        // Content is a plang value now (the text, kept unrendered) — read its characters
+        await Assert.That(message.Content!.ToString()).IsEqualTo("say hi in one word");
     }
 
     // a list of message dicts still reads as the messages it lists
