@@ -4,7 +4,7 @@
   "step": [
     {
       "index": 0,
-      "text": "variable.set(Name=%line%, Value=\"line\", Type={name:\"separator\"})",
+      "text": "variable.set(Name=%line%, Value=\"line\", Type={name:\"text\", kind:\"separator\"})",
       "line": {
         "number": 6
       },
@@ -42,7 +42,7 @@
               "type": {
                 "name": "type"
               },
-              "value": {"name":"separator"}
+              "value": {"name":"text","kind":"separator"}
             }
           ],
           "default": [
@@ -205,7 +205,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/plan/kind-is-type/app/type/separator/NamedValuesBelongToTheType.test.goal",
-  "prPath": "/plan/kind-is-type/app/type/separator/.build/namedvaluesbelongtothetype.test.pr",
-  "hash": "a0ca262887307f75f59e6ebeec9de520c5d711fec7d6a1c06e50b7c07df4bd09"
+  "file": "NamedValuesBelongToTheType.test.goal",
+  "hash": "3b49c0bc2a3a16c4025ef538ae9c825d73f1c849b315f46fcc7346fcb8e3cc9e"
 }

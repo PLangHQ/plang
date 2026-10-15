@@ -3,6 +3,6 @@
 / own list. The proof stage 2 names: `%line% is text` is true (red today — separator is
 / its own top-level type today, deriving from item, not text).
 NamedValuesBelongToTheType
-- variable.set(Name=%line%, Value="line", Type={name:"separator"})
+- variable.set(Name=%line%, Value="line", Type={name:"text", kind:"separator"})
 - condition.if(Left=%line%, Operator="is", Right="text") { variable.set(Name=%isText%, Value=true) }
 - assert.equals(Expected=true, Actual=%isText%, Message="a separator is a text")

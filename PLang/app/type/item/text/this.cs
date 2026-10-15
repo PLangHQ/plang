@@ -36,7 +36,10 @@ namespace app.type.item.text;
 [global::app.Attributes.Format("llm", Text = true)]
 [global::app.Attributes.Format("template", Text = true)]
 [global::app.Attributes.Format("liquid", Text = true)]
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
+// text's subclasses are its kinds (decision 783/788): a separator is a {text, kind: separator} — a text
+// value with its own named values. Unsealed so such a value-subclass kind can derive from it.
+[global::app.Attributes.Kinds]
+public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>, global::app.type.item.IEncode<@this>
 {
     /// <summary>

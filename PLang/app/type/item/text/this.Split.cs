@@ -1,6 +1,6 @@
 namespace app.type.item.text;
 
-public sealed partial class @this
+public partial class @this
 {
     /// <summary>This text in the pieces <paramref name="separator"/> cuts it into — the empty ones kept or dropped as
     /// <paramref name="empty"/> says. A separator or a choice that didn't resolve is its own answer. A new list, born
