@@ -1,0 +1,12 @@
+/ A json value is item's, not text's (ruling 2, decision 773). A json value can hold any
+/ value (a number, a bool, a list, a dict), so its parent is item, not text: a value
+/ carrying Type={item, kind: json} lands as an item whose kind navigates as the "json"
+/ type, and `%x% is text` is false. Written in formal so the builder's Type choice is out
+/ of it. Red today — the kind of an item isn't a navigable type at run (`.name` null); the
+/ `is text` check is held with the other kind.name asserts (Ingi's answer still pending).
+JsonIsItemsKind
+- variable.set(Name=%x%, Value="{\"a\":1}", Type={name:"item", kind:"json"})
+- assert.equals(Expected="item", Actual=%x!type.name%, Message="x's type name is item")
+- condition.if(Left=%x%, Operator="is", Right="text") { variable.set(Name=%isText%, Value=true) }
+- assert.equals(Expected=null, Actual=%isText%, Message="x is not a text")
+- assert.equals(Expected="json", Actual=%x!type.kind.name%, Message="x's kind navigates as the json type")

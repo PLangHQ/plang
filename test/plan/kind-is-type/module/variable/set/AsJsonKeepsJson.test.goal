@@ -1,8 +1,8 @@
-/ Stage 4 (ruling 8): `set %x% = '{"a":1}' as json` lands %x% as `{text, kind: json}`
-/ per decision 749 + ruling 1 (name stays parent, sub-sort rides as kind). Red today —
-/ the baseline is dict 5/5; %x!type.name% reads "dict" (not "text"), so the first assert
-/ fails before the kind can be checked.
+/ Stage 4 (ruling 8, decision 773): `set %x% = '{"a":1}' as json` lands %x% as
+/ `{item, kind: json}` — json is item's, not text's, because a json value can hold any
+/ value (number, bool, list, dict). Red today — the baseline is dict 5/5; %x!type.name%
+/ reads "dict" (not "item"), so the first assert fails before the kind can be checked.
 AsJsonKeepsJson
 - set %x% = "{\"a\":1}" as json
-- assert.equals(Expected="text", Actual=%x!type.name%, Message="type.name is text")
+- assert.equals(Expected="item", Actual=%x!type.name%, Message="type.name is item")
 - assert.equals(Expected="json", Actual=%x!type.kind.name%, Message="type.kind.name is json")

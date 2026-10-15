@@ -189,8 +189,6 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/plan/kind-is-type/start.goal",
-      "prPath": "/plan/kind-is-type/.build/start.pr",
       "hash": "935582811a3278d0c66b2212e76321b62635fea6ff0b8087e67a378822df1c91"
     },
     {
@@ -268,8 +266,6 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/plan/kind-is-type/start.goal",
-      "prPath": "/plan/kind-is-type/.build/start.pr",
       "hash": "25eacc3ca0d2f33e54fd9d92088bef5a9d0a9326498e69eb8e51ec5a95fd7094"
     },
     {
@@ -300,11 +296,11 @@
         },
         {
           "index": 1,
-          "text": "call /plan/kind-is-type/app/type/text/JsonIsAText",
+          "text": "call /plan/kind-is-type/app/type/item/JsonIsItemsKind",
           "line": {
             "number": 36
           },
-          "comment": "a json value is a text: \"is %x% a text\" is true, and its kind is json",
+          "comment": "a json value is item's, not text's (decision 773): %x!type.name% is item, %x% is text is false, kind is json",
           "code": [
             {
               "module": "goal",
@@ -315,7 +311,7 @@
                   "type": {
                     "name": "goal"
                   },
-                  "value": "/plan/kind-is-type/app/type/text/JsonIsAText"
+                  "value": "/plan/kind-is-type/app/type/item/JsonIsItemsKind"
                 }
               ]
             }
@@ -346,34 +342,11 @@
         },
         {
           "index": 3,
-          "text": "call /plan/kind-is-type/app/type/list/KindNests",
-          "line": {
-            "number": 40
-          },
-          "comment": "a kind nests: a list of lists of path",
-          "code": [
-            {
-              "module": "goal",
-              "name": "call",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "goal"
-                  },
-                  "value": "/plan/kind-is-type/app/type/list/KindNests"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 4,
           "text": "call /plan/kind-is-type/app/type/separator/NamedValuesBelongToTheType",
           "line": {
             "number": 42
           },
-          "comment": "a separator is a text with five named values; any characters are allowed too",
+          "comment": "a kind nests: a list of lists of path — C# test at PLang.Tests/Types/App/Types/KindNestsTests.cs\n(today's formal written-type is one level deep; the nested kind is what stage 2 adds)\na separator is a text with five named values; any characters are allowed too",
           "code": [
             {
               "module": "goal",
@@ -391,12 +364,12 @@
           ]
         },
         {
-          "index": 5,
-          "text": "call /plan/kind-is-type/app/type/image/StrictKindIsChecked",
+          "index": 4,
+          "text": "call /app/type/kind/strict/SetAsImageGifStrictMismatch",
           "line": {
-            "number": 44
+            "number": 45
           },
-          "comment": "a strict kind is checked: an image that isn't a gif is refused as a gif",
+          "comment": "a strict kind is checked: an image that isn't a gif is refused as a gif — the stage adopts\nthe four existing kind/strict tests as its proof (SetAsImageGifStrictMismatch and siblings)",
           "code": [
             {
               "module": "goal",
@@ -407,7 +380,7 @@
                   "type": {
                     "name": "goal"
                   },
-                  "value": "/plan/kind-is-type/app/type/image/StrictKindIsChecked"
+                  "value": "/app/type/kind/strict/SetAsImageGifStrictMismatch"
                 }
               ]
             }
@@ -416,9 +389,7 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/plan/kind-is-type/start.goal",
-      "prPath": "/plan/kind-is-type/.build/start.pr",
-      "hash": "53ebbe9bec0e82ab6a12b2b6f97019906d27516929c814188380d1f40fd39d8d"
+      "hash": "4620bf471efd08d778db09be7c835bcd50970f65901e36f2fa492839492783a4"
     },
     {
       "name": "Stage3",
@@ -427,7 +398,7 @@
           "index": 0,
           "text": "call /plan/kind-is-type/app/type/json/PassedOnUnread",
           "line": {
-            "number": 49
+            "number": 50
           },
           "comment": "a format type owns its work: its bytes stay raw until first use, then it parses itself\na json file read and written on unchanged is byte-for-byte the same",
           "code": [
@@ -450,7 +421,7 @@
           "index": 1,
           "text": "call /plan/kind-is-type/app/type/json/ReadIntoIsADict",
           "line": {
-            "number": 51
+            "number": 52
           },
           "comment": "the first read into a json file parses it into a plang dict: \"%cfg% is dict\" is true",
           "code": [
@@ -473,7 +444,7 @@
           "index": 2,
           "text": "call /plan/kind-is-type/app/type/json/ArrayIsAList",
           "line": {
-            "number": 53
+            "number": 54
           },
           "comment": "a json array parses into a plang list",
           "code": [
@@ -496,7 +467,7 @@
           "index": 3,
           "text": "call /plan/kind-is-type/app/type/csv/ReadIntoIsATable",
           "line": {
-            "number": 55
+            "number": 56
           },
           "comment": "a csv file the same way, through its own type",
           "code": [
@@ -518,8 +489,6 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/plan/kind-is-type/start.goal",
-      "prPath": "/plan/kind-is-type/.build/start.pr",
       "hash": "d3eb2dbbe3e5cf088fe05bea9b02366419765b651c4357b5d4457a517fde13f1"
     },
     {
@@ -529,7 +498,7 @@
           "index": 0,
           "text": "call /plan/kind-is-type/module/variable/set/AsDecimalKeepsDecimal",
           "line": {
-            "number": 60
+            "number": 61
           },
           "comment": "the builder offers kinded types by name, and a generic asks for its element\neach of the baseline's five sentences builds what it says (the builder measures 5/5)",
           "code": [
@@ -552,7 +521,7 @@
           "index": 1,
           "text": "call /plan/kind-is-type/module/variable/set/AsListOfPathKeepsTheElement",
           "line": {
-            "number": 61
+            "number": 62
           },
           "code": [
             {
@@ -574,7 +543,7 @@
           "index": 2,
           "text": "call /plan/kind-is-type/module/variable/set/AsJsonKeepsJson",
           "line": {
-            "number": 62
+            "number": 63
           },
           "code": [
             {
@@ -589,69 +558,6 @@
                   "value": "/plan/kind-is-type/module/variable/set/AsJsonKeepsJson"
                 }
               ]
-            },
-            {
-              "module": "variable",
-              "name": "set",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "variable"
-                  },
-                  "value": "%!data%",
-                  "variable": [
-                    {
-                      "text": "%!data%",
-                      "code": [
-                        {
-                          "variable": "!data"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Value",
-                  "type": {
-                    "name": "item",
-                    "template": "plang"
-                  },
-                  "value": "%!data%",
-                  "variable": [
-                    {
-                      "text": "%!data%",
-                      "code": [
-                        {
-                          "variable": "!data"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Type",
-                  "type": {
-                    "name": "type"
-                  },
-                  "value": "text"
-                }
-              ],
-              "default": [
-                {
-                  "name": "default",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
-                }
-              ]
-            }
-          ],
-          "warning": [
-            {
-              "key": "Unsure",
-              "message": "step 2 uses variable.set, which the decider was not sure of (0.96)"
             }
           ]
         },
@@ -659,7 +565,7 @@
           "index": 3,
           "text": "call /plan/kind-is-type/module/file/read/AsTextKeepsText",
           "line": {
-            "number": 63
+            "number": 64
           },
           "code": [
             {
@@ -681,7 +587,7 @@
           "index": 4,
           "text": "call /plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso",
           "line": {
-            "number": 64
+            "number": 65
           },
           "code": [
             {
@@ -760,7 +666,7 @@
           "index": 5,
           "text": "call /plan/kind-is-type/module/variable/set/NoAsNoType",
           "line": {
-            "number": 66
+            "number": 67
           },
           "comment": "the guards don't move: no \"as\", no type; \"as text\" stays text",
           "code": [
@@ -829,20 +735,17 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 5 uses variable.set, which the decider was not sure of (0.95)"
+              "message": "step 5 uses variable.set, which the decider was not sure of (0.94)"
             }
           ]
         }
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/plan/kind-is-type/start.goal",
-      "prPath": "/plan/kind-is-type/.build/start.pr",
       "hash": "9025f1e4c4bcab6149e32a354d0047a1f0e83600664a8d4e797fe0a0541dedb4"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/kind-is-type/start.goal",
-  "prPath": "/plan/kind-is-type/.build/start.pr",
+  "file": "start.goal",
   "hash": "588b58e58926b448a2ba862b8fd0d57726416c173adf6b5e0e2a3fbfdad744a9"
 }

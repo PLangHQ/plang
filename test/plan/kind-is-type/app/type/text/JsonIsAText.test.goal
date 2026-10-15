@@ -1,8 +1,0 @@
-/ A json value is a text (rulings 1-2). A value carrying Type={text, kind: json} lands as a
-/ text whose kind navigates as the "json" type. Written in formal so the builder's Type
-/ choice (today's baseline keeps `dict` for `as json`) is out of it — the red is the
-/ runtime's: today the kind of a text is lost or carried as a bare string (`.name` fails).
-JsonIsAText
-- variable.set(Name=%x%, Value="{\"a\":1}", Type={name:"text", kind:"json"})
-- assert.equals(Expected="text", Actual=%x!type.name%, Message="x's type name is text")
-- assert.equals(Expected="json", Actual=%x!type.kind.name%, Message="x's kind navigates as the json type")

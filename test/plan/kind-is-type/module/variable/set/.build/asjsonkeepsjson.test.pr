@@ -1,6 +1,6 @@
 {
   "name": "AsJsonKeepsJson",
-  "comment": "Stage 4 (ruling 8): `set %x% = '{\"a\":1}' as json` lands %x% as `{text, kind: json}`\nper decision 749 + ruling 1 (name stays parent, sub-sort rides as kind). Red today —\nthe baseline is dict 5/5; %x!type.name% reads \"dict\" (not \"text\"), so the first assert\nfails before the kind can be checked.",
+  "comment": "Stage 4 (ruling 8, decision 773): `set %x% = '{\"a\":1}' as json` lands %x% as\n`{item, kind: json}` — json is item's, not text's, because a json value can hold any\nvalue (number, bool, list, dict). Red today — the baseline is dict 5/5; %x!type.name%\nreads \"dict\" (not \"item\"), so the first assert fails before the kind can be checked.",
   "step": [
     {
       "index": 0,
@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert.equals(Expected=\"text\", Actual=%x!type.name%, Message=\"type.name is text\")",
+      "text": "assert.equals(Expected=\"item\", Actual=%x!type.name%, Message=\"type.name is item\")",
       "line": {
         "number": 7
       },
@@ -73,7 +73,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "text"
+              "value": "item"
             },
             {
               "name": "Actual",
@@ -104,7 +104,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "type.name is text"
+              "value": "type.name is item"
             }
           ]
         }
@@ -169,7 +169,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/plan/kind-is-type/module/variable/set/AsJsonKeepsJson.test.goal",
-  "prPath": "/plan/kind-is-type/module/variable/set/.build/asjsonkeepsjson.test.pr",
-  "hash": "7fac6b0572f1d0c522efa2a0a8d2650a0f363605e55b9ab5851316f86e63bc81"
+  "file": "AsJsonKeepsJson.test.goal",
+  "hash": "7e6c5b8e7dfb608817d0820462c295374c961c422ae2ac9a78bc59cfe571bf29"
 }

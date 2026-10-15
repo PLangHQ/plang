@@ -1,0 +1,319 @@
+{
+  "name": "JsonIsItemsKind",
+  "comment": "A json value is item's, not text's (ruling 2, decision 773). A json value can hold any\nvalue (a number, a bool, a list, a dict), so its parent is item, not text: a value\ncarrying Type={item, kind: json} lands as an item whose kind navigates as the \"json\"\ntype, and `%x% is text` is false. Written in formal so the builder's Type choice is out\nof it. Red today — the kind of an item isn't a navigable type at run (`.name` null); the\n`is text` check is held with the other kind.name asserts (Ingi's answer still pending).",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%x%, Value=\"{\\\"a\\\":1}\", Type={name:\"item\", kind:\"json\"})",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"a\":1}"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {"name":"item","kind":"json"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=\"item\", Actual=%x!type.name%, Message=\"x's type name is item\")",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "item"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.name%",
+              "variable": [
+                {
+                  "text": "%x!type.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "x's type name is item"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "condition.if(Left=%x%, Operator=\"is\", Right=\"text\") { variable.set(Name=%isText%, Value=true) }",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "is"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%isText%, Value=true)",
+              "line": {
+                "number": 10
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%isText%",
+                      "variable": [
+                        {
+                          "text": "%isText%",
+                          "code": [
+                            {
+                              "variable": "isText"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=null, Actual=%isText%, Message=\"x is not a text\")",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item"
+              },
+              "value": null
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%isText%",
+              "variable": [
+                {
+                  "text": "%isText%",
+                  "code": [
+                    {
+                      "variable": "isText"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "x is not a text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert.equals(Expected=\"json\", Actual=%x!type.kind.name%, Message=\"x's kind navigates as the json type\")",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "json"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%x!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "x's kind navigates as the json type"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "JsonIsItemsKind.test.goal",
+  "hash": "0b33492a23c886c538b5c30d0312f671466dfbcff689d83a7feb6f9ac8d3eb6e"
+}
