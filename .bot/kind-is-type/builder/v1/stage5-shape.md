@@ -90,7 +90,59 @@ coder will hold the C# for stage 5 too (red-first test, routed via the architect
 downstream of that C#, and does not touch the json producers. No file crossing expected; the dependency is sequential
 (C# seam first, then my teaching re-pins).
 
+## Surface addendum (after the architect confirmed S1 and assigned me the C# seams)
+
+The architect gated on the before/after of `type.Offers` and the question's `Values`, plus the expected surface-golden
+diff. Traced against `PLang.Tests/Wire/App/Surface/surface_golden.txt`:
+
+- **The registry's `Offers` is `internal override`** (`Registry.cs:62`) — the surface golden's `app.type.list.this`
+  block (golden 3149–3171) does **not** list it (internal members aren't pinned). Changing WHAT it returns does not move
+  the golden.
+- **`question.@this.Values`** lives in `app.goal.step.pick.question` — build-time-only, "never stored in the .pr", and
+  **not in the surface golden at all** (no `pick.question` line). Changing it moves no golden.
+- **The base `type.@this.Offers` virtual** (golden 3320) and `type<T,L>.Offers` (3330) are pinned — but their
+  **signature is unchanged** (`ValueTask<IReadOnlyList<item.@this>>`), so they don't move.
+- **`list.kind.element`** already exists as a `kind<list>` (golden 1875) — the element-carrying mechanism is in place.
+
+**So: no surface-golden diff, no locked-surface addition.** Stage 5 is a behaviour change inside locked core (what the
+registry offers) plus build-time-internal changes (the question, the render, the follow-up) — within 749/774.
+
+### Before / after signatures
+
+- `type.list.@this.Offers` (internal override, `Registry.cs:60-64`):
+  - **before:** returns each non-internal type's **name** wrapped as `text.@this` — `… .Select(t => t.Name) … new text.@this(name)`.
+  - **after:** returns the **types themselves** (each a `type.@this`, which IS an `item.@this`, carrying its `.kind.list`);
+    signature `ValueTask<IReadOnlyList<item.@this>>` **unchanged**, elements changed from name-texts to types.
+- `question.@this.Values` (`pick/question/this.cs:55`, build-time, unpinned):
+  - **before:** `public IReadOnlyList<string> Values { get; init; } = [];`
+  - **after:** `public IReadOnlyList<app.type.item.@this> Values { get; init; } = [];` — the offered items whole (kinds ride
+    on the types); the render does `Shown()` and nests a type's kinds. Non-type Option offers (separator, a choice) still
+    render byte-identically.
+
+### The answer rides as the type's real face (not S2 masking)
+
+The formal reader already writes/reads `name<kind>` faces (`action/formal/reader.cs:282-283` `Face`; `list<action>` at
+`:221`) and the `.pr` stores `{name, kind}`. The decider's Type answer is that same real face — `number<decimal>`,
+`list<path>` — parsed by the existing reader; the only reader change is **nesting** (`list<list<path>>`), as the architect
+scoped ("reading the structured Type answer, nothing else there"). This is the type's own written form, not an invented
+token mapped back.
+
+### The element follow-up
+
+A `list`/`dict` Type answer triggers a conditional follow-up that re-offers the types (reusing `list.kind.element`), giving
+`{list, kind: path}` and nesting `{list, kind: {list, kind: path}}`. One-shot richer schema vs a follow-up decider round
+is a build-time-internal choice (Decide.goal + pick); **if it turns out to need a new public/virtual member on a locked
+type, I stop and bring it to the architect** — the plan is to use only existing members (`type.kind.list`,
+`list.kind.element`).
+
+### Goldens that move (teaching-edit rule — NOT the surface golden)
+
+`pick_golden.json` (decider2.template + `set.notes.md` + prompt C in `properties.template`) and the type-page markdown
+block in `Documentation/v0.2/type-reference-generation.md` (if the page shows kinds). Re-run PickListTests, PickOptionTests
+(in-code asserts), ConfirmTemplateTests, LineTwinTests + TypePageTests; re-pin the movers in the same commit; read each diff.
+
 ## DONE WHEN
 
-The shape is with the architect. No change until the architect (and, for the design fork S1/S2 and any locked-surface
-addition to the offered set, Ingi) has ruled.
+The surface answer is with the architect (no golden move, no locked addition — confirmed-or-to-Ingi is the architect's
+call). Then: tests-first (red for their own reason), build the seams + teaching, re-pin, measure the five sentences 5/5
+with the guards.
