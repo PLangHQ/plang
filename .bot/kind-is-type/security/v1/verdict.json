@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "stage 0 closed the .pr '\"path\"' trust-hole door (745) but left the new '\"file\"' field unvalidated — absolute or '..'-containing values smuggle goal.Path outside pr.Parent.Parent and re-open AskedByOs os-trust silently. One High finding (F1). 767's '..' block, 789/790 settings read-from-record, and the decider-key resave verified clean. Partial review per architect scope; stage 4 and kind-is-type structure wait for his go."
+}

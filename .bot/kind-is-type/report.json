@@ -157,6 +157,60 @@
         "health": "green — decider key re-saved and reads; list tests pass; no change made pending the ruling.",
         "notes": "Parked: build test/module/list/query/Failure_SortMixedIncomparable when the architect says stage 4 json is in. Environment had no .data at all on restart; re-saved the decider key via test/SetDeciderKey.goal (gitignored, nothing committed)."
       }
+    },
+    {
+      "id": "d7a1f8b2-6c4e-4a9b-9e23-5f7a1b2c3d4e",
+      "bot": "security",
+      "timestamp_start": "2026-10-15T22:00:00Z",
+      "timestamp_end": "2026-10-15T22:45:00Z",
+      "intent": "Architect-scoped partial review of kind-is-type: stage 0 (goal path), 767 (name-climbs), 789/790 (settings read-from-record), decider-key resave. Confirm no new attack surface and no secret in repo.",
+      "before": {
+        "assumptions": "Stage 0 was commissioned to close decision 745's trust hole (a .pr claiming /system/ gets AskedByOs trust). 767 closed goal-name climbing. 789/790 moved settings reads to a generic record reader. Threat model: user-sovereign — defend against untrusted .pr bytes shipped with third-party plang apps.",
+        "risk": "If stage 0 only renamed the smuggle field without validating the new one, the trust hole re-opens with a different field name. Also: a generic record reader could widen class instantiation and let an attacker pick a wider CLR type than the stored one; permissions ride on the same read path."
+      },
+      "plan": ".bot/kind-is-type/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/goal/serializer/Reader.cs", "PLang/app/type/item/path/file/this.cs", "PLang/app/Utils/PathHelper.cs", "PLang/app/type/item/path/this.Authorize.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced stage 0 (fcaf1055d): the .pr's 'file' field is read verbatim and passed to Combine(folder, file), whose semantics (System.IO.Path.Combine) make a rooted or '..'-containing value steer goal.Path outside the folder the .pr was found in — AskedByOs then auto-grants /os/** silently. F1 (High, open)."
+        },
+        {
+          "paths": ["PLang/app/goal/list/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Decision 767: the '..' segment refusal at list.this.cs:64 is sound and covers every goal-name-to-path door — Find is the single door for every composed name. Grepped the tree for sibling doors; the plangos shell call lives on another branch. Clean."
+        },
+        {
+          "paths": ["PLang/app/type/reader/Record.cs", "PLang/app/type/item/setting/this.cs", "PLang/app/actor/setting/this.cs", "PLang/app/actor/permission/this.cs", "PLang/app/type/item/permission/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Decisions 789/790: setting.Create guards IsAbstract:false, != base, IsAssignableFrom; Apply walks declared public settable properties only; Record.cs keeps the owner's ClrType (stored type.name cannot widen the CLR type). Permission signing posture unchanged — signed Grant list verified at the wire boundary before the record reader is reached. The 62f08e5e6 loud-fail replaces silent-default with an audible SettingsUnreadable — the right trade-off for a permission store. Clean."
+        },
+        {
+          "paths": ["test/SetDeciderKey.goal", "PLang/app/module/llm/decider.setting.cs", "PLang.Tests/Runtime/App/Settings/fixtures/oldsettingrow/data.sqlite"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "No secret in repo or branch history. Decider.setting.key is [Out, Store, Sensitive]. The one .sqlite fixture added-then-removed on this branch has 'key':'' (verified by `git show`). No tsk_*, sk-*, OPENAI_KEY or /shared/hopkaup/secrets in any committed diff."
+        },
+        {
+          "paths": [".bot/kind-is-type/security/v1/plan.md", ".bot/kind-is-type/security/v1/result.md", ".bot/kind-is-type/security/v1/verdict.json", ".bot/kind-is-type/security-report.json", ".bot/kind-is-type/security/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Review output. verdict.json: fail (one High)."
+        }
+      ],
+      "after": {
+        "status": "FAIL — one High (F1). Partial-scope review per architect scope; stage 4 producers and kind structure wait for his go.",
+        "health": "Stage 0's rename closed the old door and opened a new one of the same shape — one-site fix at Reader.cs:69. 767 and 789/790 solid. No secrets in the repo or history.",
+        "notes": "Next bot: coder (close F1), then auditor. Semgrep: 24 blocking, all baseline (22 serializer-hygiene + 1 gated Assembly.LoadFrom + 1 Display.Gate false positive); no new hits."
+      }
     }
   ]
 }
