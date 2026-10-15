@@ -2,6 +2,60 @@
   "branch": "kind-is-type",
   "sessions": [
     {
+      "id": "d4b9f1a7-2e6c-4f83-b5a1-9c0d7e2f3a4b",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-16T00:00:00Z",
+      "timestamp_end": "2026-10-16T02:30:00Z",
+      "intent": "OBP code review of landed stages 0-3 of decision 774 (a kind is a type) + decisions 767 and 789/790, diff base runtime2 cf66e2d01. Review only; no code changes.",
+      "before": {
+        "assumptions": "Stages 0-3 landed and won't move; kind<T> : kind : type is the new (locked) surface; settings are their own top-level types read back from their own record (789/790); app-wide kind search + [Kinds] base-walk + type.format removed. Stage 4+ out of scope. Don't-raise: type.Construct beside Make, bool's closed pair, Step.Set json round-trip (798), template on its base (782).",
+        "risk": "The kind model touches the locked core (type/kind, type/this.cs, type/item/this.cs base virtuals); the risk is a hide-not-override (776), a second kind lookup by name surviving the app-wide search removal, a parent asking its kind back, or a settings row storing its class twice. Breadth: ~30 mechanical family kind<T> conversions could hide one divergent file."
+      },
+      "plan": ".bot/kind-is-type/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/type/kind/this.cs", "PLang/app/type/kind/this.Generic.cs", "PLang/app/type/kind/empty/this.cs", "PLang/app/type/kind/subclass/this.cs", "PLang/app/type/kind/format/this.cs", "PLang/app/type/this.cs", "PLang/app/type/item/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "The kind<T>:kind:type model. Verified the plan's own OBP gates: one parent-fallback seam (kind<T>, Family=T; type fact hooks read OwnX ?? kind.OwnX ?? Family._field, the stored field — terminates, can't loop); no is-kind behavioural fork outside type/kind/ (the two is kind.@this hits in size/duration are non-null binds, value re-expressing itself in a requested standard). [Kinds]/FamilyOf kept by design (782) for subclass families, cached via IdentityOf."
+        },
+        {
+          "paths": ["PLang/app/type/list/this.cs", "PLang/app/type/list/Registry.cs", "PLang/app/data/Operator.cs", "PLang/app/type/item/text/kind/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "App-wide by-name kind search removal (the stage-3 crux). Parent-scoped Kind(type,kind) is the door; Held kept for MIME/extension only (ruling 2/782). Verified no NEW app-wide by-name search: surviving bare-name callers are the deferred text coiner (782, stage 4) and the pre-existing is-operator HasKind guard (Operator.cs:171, unchanged from base cf66e2d01). Registry throws are boot invariants; program-reachable Add(Type/Assembly) answer via context.Error. Settings clause gone from the registry (Registry.cs:332-334)."
+        },
+        {
+          "paths": ["PLang/app/type/reader/this.cs", "PLang/app/type/reader/Record.cs", "PLang/app/type/item/ICreate.cs", "PLang/app/goal/list/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "789/790 settings-from-record (Reader => Typed ?? new Record; Record uses type.Construct, class from the key not a stored kind; old rows decline loudly as SettingsUnreadable via DeclinedException answered softly by source.Value; start-up loop + old-shape reader gone). 767: goal/list/this.cs Find refuses a '..' segment before resolve, answers GoalNameClimbs (400)."
+        },
+        {
+          "paths": ["PLang/PLang.csproj"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Compiler-backed hide sweep: dotnet build PLang succeeds, 0 errors, PLNG001/002 clean. ~20 CS0108 hides all pre-existing (type.Template/Is/Create exist at base cf66e2d01; channel/list + table unchanged on branch) — no new hide introduced (776 ruling held). ObpScan's MSBuildWorkspace loader can't load the csproj (NuGet prune/vuln warnings) so the member sweep was full-read + grep + compiler."
+        },
+        {
+          "paths": [".bot/kind-is-type/codeanalyzer/v1/report.md", ".bot/kind-is-type/codeanalyzer/v1/verdict.json", ".bot/kind-is-type/codeanalyzer/summary.md"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "PASS. Three non-blocking cleanups (F1 dead TypeDescription const type/this.cs:150-166; F2 stale BuildTypeEntries/Promote class doc type/this.cs:21-26,144-149; F3 subclass.Offers reflection-per-call type/kind/subclass/this.cs:31-34) — none a surface change, all for the coder on a later pass. Next bot: tester."
+        }
+      ],
+      "after": {
+        "status": "PASS (CLEAN). Stages 0-3 + 767 + 789/790 are OBP-sound and merge-safe; the kind<T>:kind:type locked-core model holds against its own OBP gates; no new app-wide by-name kind search; build clean (0 errors) with no new CS0108 hides. 3 non-blocking cleanups (F1-F3), none a surface change.",
+        "health": "green — PLang builds 0 errors, PLNG001/002 clean; plang suite per architect 254/24/12/3 (not re-run by codeanalyzer).",
+        "notes": "Next bot: tester. Stage 4-6 (json-owns-bytes, navigator deletion, builder) out of scope, await architect go for a v2 round. Report: .bot/kind-is-type/codeanalyzer/v1/report.md."
+      }
+    },
+    {
       "id": "c9f2e5b3-4d8a-4b1c-af63-7a0b2d3e4f5a",
       "bot": "coder",
       "timestamp_start": "2026-10-15T15:30:00Z",
