@@ -640,7 +640,10 @@ return result;");
 		public async Task SendKey(string value, string? cssSelector = null, int? timeoutInSeconds = null, bool humanStyle = false)
 		{
 			var page = await GetPage();
-			cssSelector = await GetCssSelector();
+			// The selector the step names was thrown away here and GetCssSelector fell back to the
+			// previous one, or to html, so `input "x" into #email` typed into the document instead
+			// of the field and playwright answered "Element is not an <input>".
+			cssSelector = await GetCssSelector(cssSelector);
 
 			var element = await page.QuerySelectorAsync(cssSelector);
 			if (element == null) return;
@@ -671,7 +674,7 @@ return result;");
 		public async Task SelectByValue(string value, string? cssSelector = null, int? timeoutInSeconds = null)
 		{
 			var page = await GetPage();
-			cssSelector = await GetCssSelector();
+			cssSelector = await GetCssSelector(cssSelector);
 
 			var element = await page.QuerySelectorAsync(cssSelector);
 			if (element == null) return;
@@ -684,7 +687,7 @@ return result;");
 		public async Task SelectByText(string text, string? cssSelector = null, int? timeoutInSeconds = null)
 		{
 			var page = await GetPage();
-			cssSelector = await GetCssSelector();
+			cssSelector = await GetCssSelector(cssSelector);
 
 			var element = await page.QuerySelectorAsync(cssSelector);
 			if (element == null) return;
@@ -696,7 +699,7 @@ return result;");
 		public async Task Submit(string? cssSelector = null, int? timeoutInSeconds = null)
 		{
 			var page = await GetPage();
-			cssSelector = await GetCssSelector();
+			cssSelector = await GetCssSelector(cssSelector);
 
 			var element = await page.QuerySelectorAsync(cssSelector);
 			if (element == null) return;
@@ -735,7 +738,7 @@ return result;");
 		public async Task<List<PlangWebElement>> GetElements(string? cssSelector = null, string? shadowDomCssSelector = null)
 		{
 			var page = await GetPage();
-			cssSelector = await GetCssSelector();
+			cssSelector = await GetCssSelector(cssSelector);
 
 			var elements = await page.QuerySelectorAllAsync(cssSelector);
 			return await GetPlangWebElements(elements);
