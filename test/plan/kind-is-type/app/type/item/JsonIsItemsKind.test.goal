@@ -1,14 +1,14 @@
-/ A json value is item's, not text's (ruling 2, decisions 773 + 774). A json value can
-/ hold any value (a number, a bool, a list, a dict), so its parent is item, not text: a
-/ value carrying Type={item, kind: json} lands as an item whose kind navigates as the
-/ "json" type (ruled by 774 — a kind's name is its name under its parent), and `%x% is
-/ text` is false. Written in formal so the builder's Type choice is out of it. Red today:
-/ type.name reads "text" (stage 3 fixes it); `is text` fires so %isText% reads true
-/ against the expected null (stage 3 fixes it); %x!type.kind.name% reads null — stage 4
-/ makes a json value hold its raw text until first use, and the kind navigates then.
+/ A json value is item's, not text's (ruling 2, decisions 773 + 774 + 787). A json value
+/ can hold any value (a number, a bool, a list, a dict), so its parent is item, not text:
+/ Type={item, kind: json} lands as an item whose kind navigates as the "json" type. The
+/ asserts are ordered by state: first, while %x% is unread, type.name is "item" and the
+/ kind navigates as "json"; then `%x% is text` reads x — the parsed json is a plang dict
+/ — so after the read %x% is text is false and type.name narrows to "dict". A value's
+/ type is what it is now, and its history is where it came from (787).
 JsonIsItemsKind
 - variable.set(Name=%x%, Value="{\"a\":1}", Type={name:"item", kind:"json"})
-- assert.equals(Expected="item", Actual=%x!type.name%, Message="x's type name is item")
+- assert.equals(Expected="item", Actual=%x!type.name%, Message="before any read, x's type name is item")
+- assert.equals(Expected="json", Actual=%x!type.kind.name%, Message="before any read, x's kind is the json type")
 - condition.if(Left=%x%, Operator="is", Right="text") { variable.set(Name=%isText%, Value=true) }
 - assert.equals(Expected=null, Actual=%isText%, Message="x is not a text")
-- assert.equals(Expected="json", Actual=%x!type.kind.name%, Message="x's kind navigates as the json type")
+- assert.equals(Expected="dict", Actual=%x!type.name%, Message="after the read, x narrows to a dict")

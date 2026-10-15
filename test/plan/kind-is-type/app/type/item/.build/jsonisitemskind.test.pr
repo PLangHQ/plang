@@ -1,12 +1,12 @@
 {
   "name": "JsonIsItemsKind",
-  "comment": "A json value is item's, not text's (ruling 2, decisions 773 + 774). A json value can\nhold any value (a number, a bool, a list, a dict), so its parent is item, not text: a\nvalue carrying Type={item, kind: json} lands as an item whose kind navigates as the\n\"json\" type (ruled by 774 — a kind's name is its name under its parent), and `%x% is\ntext` is false. Written in formal so the builder's Type choice is out of it. Red today:\ntype.name reads \"text\" (stage 3 fixes it); `is text` fires so %isText% reads true\nagainst the expected null (stage 3 fixes it); %x!type.kind.name% reads null — stage 4\nmakes a json value hold its raw text until first use, and the kind navigates then.",
+  "comment": "A json value is item's, not text's (ruling 2, decisions 773 + 774 + 787). A json value\ncan hold any value (a number, a bool, a list, a dict), so its parent is item, not text:\nType={item, kind: json} lands as an item whose kind navigates as the \"json\" type. The\nasserts are ordered by state: first, while %x% is unread, type.name is \"item\" and the\nkind navigates as \"json\"; then `%x% is text` reads x — the parsed json is a plang dict\n— so after the read %x% is text is false and type.name narrows to \"dict\". A value's\ntype is what it is now, and its history is where it came from (787).",
   "step": [
     {
       "index": 0,
       "text": "variable.set(Name=%x%, Value=\"{\\\"a\\\":1}\", Type={name:\"item\", kind:\"json\"})",
       "line": {
-        "number": 10
+        "number": 9
       },
       "code": [
         {
@@ -59,9 +59,9 @@
     },
     {
       "index": 1,
-      "text": "assert.equals(Expected=\"item\", Actual=%x!type.name%, Message=\"x's type name is item\")",
+      "text": "assert.equals(Expected=\"item\", Actual=%x!type.name%, Message=\"before any read, x's type name is item\")",
       "line": {
-        "number": 11
+        "number": 10
       },
       "code": [
         {
@@ -104,7 +104,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "x's type name is item"
+              "value": "before any read, x's type name is item"
             }
           ]
         }
@@ -112,6 +112,62 @@
     },
     {
       "index": 2,
+      "text": "assert.equals(Expected=\"json\", Actual=%x!type.kind.name%, Message=\"before any read, x's kind is the json type\")",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "json"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%x!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "before any read, x's kind is the json type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
       "text": "condition.if(Left=%x%, Operator=\"is\", Right=\"text\") { variable.set(Name=%isText%, Value=true) }",
       "line": {
         "number": 12
@@ -209,7 +265,7 @@
       ]
     },
     {
-      "index": 3,
+      "index": 4,
       "text": "assert.equals(Expected=null, Actual=%isText%, Message=\"x is not a text\")",
       "line": {
         "number": 13
@@ -256,8 +312,8 @@
       ]
     },
     {
-      "index": 4,
-      "text": "assert.equals(Expected=\"json\", Actual=%x!type.kind.name%, Message=\"x's kind navigates as the json type\")",
+      "index": 5,
+      "text": "assert.equals(Expected=\"dict\", Actual=%x!type.name%, Message=\"after the read, x narrows to a dict\")",
       "line": {
         "number": 14
       },
@@ -271,7 +327,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "json"
+              "value": "dict"
             },
             {
               "name": "Actual",
@@ -279,19 +335,16 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x!type.kind.name%",
+              "value": "%x!type.name%",
               "variable": [
                 {
-                  "text": "%x!type.kind.name%",
+                  "text": "%x!type.name%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
                       "property": "!type"
-                    },
-                    {
-                      "property": "kind"
                     },
                     {
                       "property": "name"
@@ -305,7 +358,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "x's kind navigates as the json type"
+              "value": "after the read, x narrows to a dict"
             }
           ]
         }
@@ -315,5 +368,5 @@
   "child": [],
   "visibility": "Public",
   "file": "JsonIsItemsKind.test.goal",
-  "hash": "a3df110e0d555c26951dce2e268329dd878cdeada019ca864e84299a63d3264c"
+  "hash": "5222a73bb5b23c97f610db1f9402f5737efd3865d2474c092161232ef08c6d5e"
 }
