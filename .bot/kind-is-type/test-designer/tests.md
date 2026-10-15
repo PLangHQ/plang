@@ -1,5 +1,7 @@
 # kind-is-type — tests
 
+**Paused mid-task (pre-tomorrow, Ingi):** `AnOldShapeSettingRowIsNamedLoudlyTests` committed with its restored fixture (`fixtures/oldshapesettingrow/data.sqlite` from 43461f739), but the test run was killed by system memory pressure before I could confirm green on tip (7fc410084+) or red on 62f08e5e6. Resume: `./dev.sh test AnOldShapeSettingRowIsNamedLoudlyTests` on tip, then `git worktree add ... 62f08e5e6` and run there, then push with the hash + what it showed on 62f08e5e6.
+
 | test | stage | why it's red today (quoted) | plang/C# |
 |---|---|---|---|
 | [ShortNameFindsTheType](../../../test/plan/kind-is-type/app/type/ShortNameFindsTheType.test.goal) | 2 | guard — green before and after; `as text` yields `text`, `as list` yields `list` (no type is renamed in v2) | plang |
