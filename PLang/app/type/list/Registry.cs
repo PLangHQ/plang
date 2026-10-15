@@ -362,7 +362,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             if (t is { IsAbstract: false, ContainsGenericParameters: false } && global::app.type.item.@this.FamilyOf(t) is { } member
                 && global::app.type.item.@this.NameOf(member.Family) is var family && member.Kind != family
                 && Items().FirstOrDefault(type => type.Names(family)) is { } owner && owner.kind[member.Kind] == null)
-                Hold(new global::app.type.kind.subclass.@this(member.Kind, family, t));
+            {
+                // the kind object is a kind<family> typed to the family; the value class stays a family subclass
+                var subclassType = typeof(global::app.type.kind.subclass.@this<>).MakeGenericType(member.Family);
+                Hold((global::app.type.kind.@this)System.Activator.CreateInstance(subclassType, member.Kind, t)!);
+            }
         return null;
     }
 
