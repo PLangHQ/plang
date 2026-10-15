@@ -1,50 +1,45 @@
 # coder summary — kind-is-type
 
-**Version:** v2 (stage 2)
+**Version:** v3 (stage 3). v1/v2 = stages 1–2 (done, accepted).
 
 ## What this is
-Decision 774: "a kind is a type." `kind<T> : kind : type`. A kind is a type under its parent, named uniquely only under its parent. Plan: `test/plan/kind-is-type/start.md`. Stages: 0 done, 1 done+accepted, **2 in progress (this version)**, 3–6 pending.
+Decision 774: "a kind is a type." `kind<T> : kind : type`. Plan: `test/plan/kind-is-type/start.md`. Stages: 0 done; 1 done+accepted; 2 done+accepted (settings are their own types; persisted rows read by their own type, decision 779); **3 in progress (this version)**; 4–6 pending.
 
-**Stage 2 — "settings are settings, not kinds":** a settings class is no longer a *kind of* `setting`; it is its **own top-level type**, named by its namespace (`app.module.llm.setting`, `app.goal.list.setting`, …). `setting.@this` drops `[Kinds]`. The option rows a builder/face reads live on `setting.@this` as `Rows(context)` (a method, not a stored field — item Context fields are forbidden). Each concrete settings subtype declares `public static bool Internal => true` (pin: `SettingsAreInternalTests.EverySettingsSubtype_IsInternal`); the base `setting` stays offered so the decider still has the concept. `actor/setting.Class(path)` is actor/setting's own path→class index; rows are read by KEY, not by a stored kind.
+**Stage 3 — "every family's kinds are types":** each type-family's kinds move from the non-generic `kind.@this` + a string `Owner` onto the generic `kind<family>` (as stage-1 number already did). Full trace + shape: `v3/stage3-shape.md` (architect rulings absorbed). Result: `v3/stage3-result.md`.
 
-## What was done
-- `PLang/app/type/item/setting/this.cs` — dropped `[Kinds]`; `Type` is own node; `Rows(context)` method; `Get` answers `Path` + `Rows(parent.Context)` beside options. Public `type` facts dropped `virtual`.
-- `Internal => true` on ~20 concrete settings classes + `module/llm/decider.setting.cs` (also `[PlangType("app.module.llm.decider.setting")]`).
-- `PLang/app/actor/setting/this.cs` — `Class`=index (keyed by Path; type list keyed by Name — they differ, 774A), `Make`, `Fresh`, `Own` reads `[Own]`.
-- `PLang/app/type/item/setting/serializer/Reader.cs` — resolves the class from the type it reads as (new rows) or kind-as-path (old rows); per-type instances via an internal ctor. See RESOLVED below.
-- `PLang/app/this.cs` — registers each settings type's reader at boot (option C). See RESOLVED below.
-- Deleted `setting/kind/this.cs`. Surface golden re-pinned (diff only stage-2/settings/kind). New: `SettingsAreInternalTests.cs`; `KindsTests.AClassOfSettings_IsItsOwnType` → `"app.setting"`; `QueryConversationTests` → `Rows(ctx)`.
+## What was done (done + green)
+- **`kind<T>` provides `Owner` from T** (`PLang/app/type/kind/this.Generic.cs`) — families drop their `Owner` override.
+- **Codec families → `kind<family>`:** duration, size, hash, archive, conversation, junit, wire; number's redundant override dropped.
+- **`[Format]` → `kind<T>` (Q1-A):** one concrete generic `PLang/app/type/kind/format/this.cs`; `Registry.cs:316–323` mints one per `[Format]` typed to the declaring type. text/image/table formats are now `kind<T>`.
+- **path schemes → `kind<path>`** (`PLang/app/type/item/path/scheme/this.cs`).
+- **Subclass families (input/screen/browser/query):** `[Kinds]` + the `FamilyOf` base-walk STAY (value classes keep `: parent.@this`); the enlisted kind object is now the typed `PLang/app/type/kind/subclass/this.cs` `@this<T> : kind<T>` (`Registry.cs:359–365`).
+- **list element kinds → `kind<list>`** (`PLang/app/type/item/list/kind/{this,element}.cs`).
+- **Surface golden re-pinned** under 774 (diff = only `kind<T>` bases + the new generic classes; no type name changed).
 
-**Done:** all in-memory settings, decider offerings (Internal excludes bases), surface golden, PickList 8/8, QueryConversation, KindsTests 6/6, SettingsAreInternal pin, OldSettingRowStillReads, same-app save+read.
-
-**RESOLVED — persisted settings read-back (decision 779, option C).** Architect ruled option C: a saved row is written as its own type and read back by that type; the setting reader, asked to read as a settings type, takes the class from that type (its C# class); an old `{setting, kind: path}` row still reads through the base `setting` reader by its kind. Implemented:
-  - `setting/serializer/Reader.cs` — resolves the class from the type it reads as (`types[_type].ClrType` → fresh instance) for new rows, or `Fresh(kind)` for old rows. Per-type instances carry `_type` via an **`internal` ctor** (no locked-surface change to the reader's public surface).
-  - `app/this.cs` (boot, beside the path schemes) — for each concrete settings type, `type.list.Reader.Register(type.Name, AnyKind, new setting.serializer.Reader(type.Name))`. Keeps both the reader registry and `Registry.Enlist` ignorant of settings (no settings clause in the registry).
-  - Save unchanged — the `data` ctor already stores the row as the setting's own type name, matching the registration key.
-  - **Surface golden re-pinned** (`AcceptTheSurface`, commit names 778/779): one line — `setting.@this.Rows` is `Rows(context)` method (the option rows are the setting's own member per 778; the no-Context-field rule makes it a method, not a property). This corrected a stale WIP re-pin.
-
-**Gate (verified):**
-  - C# full sweep → the **8 pre-existing baseline fails only** (`ATypedDictSlot_FirstReadOfTheDict`, `TheNestedWrittenForm_ReadsThroughTheTypeSerializer`, 6 snapshot tests). All settings C# green; surface golden green.
-  - Plang suite → **254 pass / 24 fail / 12 stale / 3 skip** (baseline 253/25/12/3 — one more pass, one fewer fail, zero new reds). `SettingClassIsAType.test.goal` → **Pass**. The remaining `/plan/kind-is-type/...` json/separator/file/variable fails are **stage 3/4 targets** (format bytes, every family), not stage 2.
-
-**Stage 2 is complete.** Next: architect acceptance → stage 3.
+**Gate (verified):** C# at the 8 pre-existing baseline fails (no new reds); plang **254/24/12/3 — identical to the stage-2 baseline, zero regressions**; `SameKindNameUnderTwoTypes`, `ListKnowsItsElement` green.
 
 ## Code example
-A settings class is now its own type, Internal:
+A family's kind base, before → after:
 ```csharp
-[global::app.Attributes.PlangType("app.module.llm.setting")]   // its own namespace name
-public sealed class @this : global::app.type.item.setting.@this
-{
-    public static bool Internal => true;     // not offered to the decider; base `setting` is
-    // options as [Out, Store] properties …
+// before
+public abstract class @this : global::app.type.kind.@this {
+    protected @this(string name) : base(name) { }
+    protected internal override string Owner => "duration";   // string parent
+}
+// after — the parent is the type parameter; Owner comes from it
+public abstract class @this : global::app.type.kind.@this<global::app.type.item.duration.@this> {
+    protected @this(string name) : base(name) { }
 }
 ```
-The option rows read on the base as a context-taking method (no stored Context field):
-```csharp
-public global::app.type.item.list.@this Rows(global::app.actor.context.@this context) => /* options of this class */;
-```
 
-## For v2 (post stage-1 review)
-Stage 1 accepted; see `v2/stage1-result.md`. No reviewer flags carried into stage 2 beyond the plan's stage boundary.
+## What is still OPEN (see v3/stage3-result.md for the full detail; reported to the architect)
+1. **bool needs its kind** — `IsClosed=true` (pinned by `PickOptionTests`); the type model forces `IsClosed=false` once an `Offer` static is set. Kind-removal reverted; bool's kind stays pending a ruling (a type-level "closed" hook is a locked-core addition).
+2. **Nested-kind read (`KindNestsTests`, ruling 1)** — the type serializer must recurse on an object `kind`; the `.kind` slot is `kind.@this`, so nesting a `type.@this` is a locked-core design call. Red at the inherited baseline too (pre-existing TODO).
+3. **App-wide kind search** has live callers (reader binary-narrow, text coiner, OpenAi by-MIME, `{binary,X}` fallback) — removing as the demolition says would strand them. Needs a ruling on which to keep.
+4. **`type.format` filter removal** needs FormatKindTests surgery — do now or stage 6?
+5. **Blocked on Ingi:** `separator` (Q2, held; 2 test `.pr` counted) and `JsonIsItemsKind` (held, per its own goal comment).
+6. **template** has no parent value type — left on the non-generic base; is it a standalone kind or should a `template` type exist?
+7. **kind/strict plang tests** were red at baseline; likely stage-4 (bytes). Confirm scope.
 
-**Baseline (pre-existing C# reds, NOT mine):** `ATypedDictSlot_FirstReadOfTheDict`, `TheNestedWrittenForm_ReadsThroughTheTypeSerializer`, + 6 snapshot tests (`MidStackChain`, `NavigateAndEditCapturedVariable`, `PlangPath_AsSnapshotConvert`, `SerializedString_ConvertsToSnapshot`, `ThrowTimeSnapshot`, `TypedSnapshotString`).
+## For v3 (this version)
+Stage 2 accepted (decision 780). No reviewer flags carried in. The stage-3 trace corrected my first shape (the `FamilyOf` swap doesn't apply to the subclass families — `[Kinds]` stays for them); architect agreed.
