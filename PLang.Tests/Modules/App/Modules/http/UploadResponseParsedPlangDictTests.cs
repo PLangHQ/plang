@@ -70,8 +70,9 @@ public class UploadResponseParsedPlangDictTests
         var result = await action.Start();
 
         await result.IsSuccess();
-        var value = await result.Value();
-        await Assert.That(value).IsTypeOf<global::app.type.item.dict.@this>();
+        // After the first touch the plang type narrows to dict (decision 787).
+        await result.Value();
+        await Assert.That(result.Type.Name).IsEqualTo("dict");
         var id = await result.Get("id");
         var materialized = await id.Value();
         await Assert.That(materialized).IsTypeOf<global::app.type.item.number.@this>();

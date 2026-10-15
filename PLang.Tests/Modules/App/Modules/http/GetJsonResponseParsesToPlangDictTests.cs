@@ -67,10 +67,11 @@ public class GetJsonResponseParsesToPlangDictTests
         var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
 
         await result.IsSuccess();
-        // Touch the value — parse fires once; the result is a plang dict (not a JsonElement).
-        var value = await result.Value();
-        await Assert.That(value).IsTypeOf<global::app.type.item.dict.@this>();
-        // Navigate through plang: .name reads "Alice".
+        // Touch the value — parse fires once; after the touch the result's plang type
+        // narrows to dict (decision 787: a value's type is what it is now).
+        await result.Value();
+        await Assert.That(result.Type.Name).IsEqualTo("dict");
+        // And navigate: .name reads "Alice" through plang.
         var name = await result.Get("name");
         await Assert.That((await name.Value())?.ToString()).IsEqualTo("Alice");
     }

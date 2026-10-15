@@ -52,8 +52,9 @@ public class QueryJsonSchemaPlangDictTests
         var result = await action.Start();
 
         await result.IsSuccess();
-        var value = await result.Value();
-        await Assert.That(value).IsTypeOf<global::app.type.item.dict.@this>();
+        // After the first touch the plang type narrows to dict (decision 787).
+        await result.Value();
+        await Assert.That(result.Type.Name).IsEqualTo("dict");
         var sentiment = await result.Get("sentiment");
         await Assert.That((await sentiment.Value())?.ToString()).IsEqualTo("positive");
     }
