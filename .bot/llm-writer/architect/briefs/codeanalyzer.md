@@ -1,5 +1,7 @@
 # codeanalyzer: llm-writer (as the coder)
 
+**Reassigned (Ingi, 2026-10-15): "let get tester to do it".** The codeanalyzer wasn't reachable, so the tester (plang-f2) builds this branch; read "you" below as the tester.
+
 Traces to: decisions 791 and 793 in `.bot/kind-is-type/architect/summary.md`; the plan is `test/plan/llm-writer/start.md`, its index `start.goal`.
 
 ## Why you
