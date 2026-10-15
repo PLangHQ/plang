@@ -310,6 +310,15 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         type.list.Add(new global::app.type.item.path.scheme.@this("file", (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
         type.list.Add(new global::app.type.item.path.scheme.@this("http", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
         type.list.Add(new global::app.type.item.path.scheme.@this("https", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+        // each settings class is its own type (decision 774), and a saved row is written as that type and
+        // read back by it — so its type's reader is the setting reader, which takes the class from the type.
+        // (The base `setting`'s own reader, auto-registered under its name, reads an old {setting, kind} row.)
+        foreach (var settings in type.list.Items())
+            if (settings.ClrType is { IsAbstract: false } clr
+                && typeof(global::app.type.item.setting.@this).IsAssignableFrom(clr)
+                && clr != typeof(global::app.type.item.setting.@this))
+                type.list.Reader.Register(settings.Name, global::app.type.reader.@this.AnyKind,
+                    new global::app.type.item.setting.serializer.Reader(settings.Name));
 
         // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
         // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),

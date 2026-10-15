@@ -1,0 +1,66 @@
+{
+  "branch": "kind-is-type",
+  "sessions": [
+    {
+      "id": "a7f3c2e1-9b4d-4e6a-8c21-5d7f0a2b3c4e",
+      "bot": "coder",
+      "timestamp_start": "2026-10-15T00:00:00Z",
+      "timestamp_end": "2026-10-15T00:00:00Z",
+      "intent": "Stage 2 of decision 774 — settings classes become their own top-level types (Internal), not kinds of setting.",
+      "before": {
+        "assumptions": "Stage 1 accepted. Each settings class should be its own type named by namespace; base setting stays offered; rows read by key.",
+        "risk": "Persisted settings round-trip depends on the stored type routing to the setting reader; making each class its own type may break disk read-back."
+      },
+      "plan": ".bot/kind-is-type/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/item/setting/this.cs",
+            "PLang/app/type/item/setting/serializer/Reader.cs",
+            "PLang/app/actor/setting/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Dropped [Kinds] from setting; each class its own type; Rows(context) method (no item Context field); reader reads by key path via Fresh(kind); actor/setting.Class is a path->class index."
+        },
+        {
+          "paths": [
+            "PLang/app/setting/this.cs",
+            "PLang/app/module/llm/setting/this.cs",
+            "PLang/app/module/llm/decider.setting.cs",
+            "PLang/app/goal/list/setting/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Internal => true on ~20 concrete settings subtypes + nested decider.setting ([PlangType]). Base setting stays offered. Representative paths; full set in git diff."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Types/App/Types/SettingsAreInternalTests.cs",
+            "PLang.Tests/Types/App/Types/KindsTests.cs",
+            "PLang.Tests/Modules/App/Modules/llm/QueryConversationTests.cs",
+            "PLang.Tests/Wire/App/Surface/surface_golden.txt"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "New Internal pin; KindsTests.AClassOfSettings_IsItsOwnType -> app.setting; QueryConversation uses Rows(ctx); surface golden re-pinned (stage-2/settings/kind only)."
+        },
+        {
+          "paths": ["PLang/app/actor/setting/this.cs"],
+          "type": "decision",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Persisted disk read-back (5 reds, one root cause): Read() routes via row.Value() by stored type = concrete class name; setting reader registers under typeName=setting so rows never reach it. Both clean fixes touch the locked core (store/serializer); surfaced A/B choice to architect [510469]. Lean: A (Save tags stored slot type=setting+kind=classpath)."
+        }
+      ],
+      "after": {
+        "status": "Stage 2 ~95% — all in-memory + decider + surface green; 5 persisted-read reds blocked on a locked-surface A/B decision sent to the architect.",
+        "health": "compiles clean; core test classes green; 5 settings disk-round-trip reds pending the fix.",
+        "notes": "Pushed cca42bdf3. Awaiting architect A/B, then implement + full gate + plang suite + report Done/HASH/CHECK/OPEN."
+      }
+    }
+  ]
+}
