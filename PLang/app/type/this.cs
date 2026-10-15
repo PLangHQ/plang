@@ -495,16 +495,22 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         return _lift(raw, declared, data);
     }
 
-    // Make a value of this type from <paramref name="raw"/> THROUGH the ICreate&lt;T&gt; family its class
+    // Construct a value of this type from <paramref name="raw"/> THROUGH the ICreate&lt;T&gt; family its class
     // belongs to, even when the class is a subtype of that family (a settings class : setting is
     // ICreate&lt;setting&gt;, not ICreate&lt;itself&gt;, so its own <see cref="Make"/> declines): the family's
     // Create is handed THIS as the declaration, so the base's Create makes the subclass by its declared.ClrType.
     // Only the record reader asks this (decision 789); the general Make stays on the EXACT <see cref="Creatable"/>
-    // so its CLR-value fallback (the `Make(item.Create(raw))` rung) keeps converging and never recurses.
-    internal item.@this? Made(object? raw, global::app.data.@this data)
-        => CreatableFamily is { } clr
-            ? (item.@this?)_open.MakeGenericMethod(clr).Invoke(null, new object?[] { raw, this, data })
-            : null;
+    // so its CLR-value fallback (the `Make(item.Create(raw))` rung) keeps converging and never recurses. The
+    // closed family thunk is a fact of the class — bound once, on first use, like <see cref="_lift"/>.
+    internal item.@this? Construct(object? raw, global::app.data.@this data)
+    {
+        _construct ??= CreatableFamily is { } clr
+            ? _open.MakeGenericMethod(clr).CreateDelegate<System.Func<object?, @this, global::app.data.@this, item.@this?>>()
+            : static (_, _, _) => null;
+        return _construct(raw, this, data);
+    }
+
+    private System.Func<object?, @this, global::app.data.@this, item.@this?>? _construct;
 
     /// <summary>Is a value of <paramref name="other"/>, declared this type, made into it — this type's class's own
     /// answer, asked without making (a path declared a file is; a dict declared a list is not).</summary>

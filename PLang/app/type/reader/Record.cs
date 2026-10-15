@@ -30,9 +30,9 @@ internal sealed class Record : global::app.type.reader.ITypeReader
             _ => global::app.type.item.@this.Create(null, ctx.Context),
         };
         var data = new global::app.data.@this("", context: ctx.Context);
-        // Made, not Make: a settings class is an ICreate<setting> subtype whose own Make declines — its base's
-        // Create makes it by its declared.ClrType (decision 789).
-        var made = ctx.Context.App.type.list[_type].Made(record, data);
+        // Construct, not Make: a settings class is an ICreate<setting> subtype whose own Make declines — its
+        // base's Create makes it by its declared.ClrType (decision 789).
+        var made = ctx.Context.App.type.list[_type].Construct(record, data);
         // A type that CAN'T be made from its record fails loudly (789) — its own Create said why on the carrier.
         // A clean decline (null with no error — a bare setting node that reads as absent) is the null value.
         if (made is null)
