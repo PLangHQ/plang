@@ -318,8 +318,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             {
                 var encode = Encoder(t);
                 var decode = Decoder(t);
+                // each format is a kind<declaring-type> — one concrete class over the declaring type (774)
+                var kindType = typeof(global::app.type.kind.format.@this<>).MakeGenericType(t);
                 foreach (var format in t.GetCustomAttributes<global::app.Attributes.FormatAttribute>(inherit: false))
-                    Hold(new global::app.type.kind.@this(format, reads, encode, decode));
+                    Hold((global::app.type.kind.@this)System.Activator.CreateInstance(kindType, format, encode, decode)!);
             }
             // a list's element kinds, made as a list names its element (list<path>)
             if (t == typeof(global::app.type.item.list.@this) && Items().Any(type => type.Names(global::app.type.item.@this.NameOf(t))))

@@ -21,6 +21,12 @@ public abstract class @this<T> : @this where T : global::app.type.item.@this
     protected @this(string name)
         : base(name, new global::app.type.@this(global::app.type.item.@this.NameOf(typeof(T)))) { }
 
+    // A format of T declared on T's class with [Format] (image's png, text's md): the MIMEs, extension,
+    // and T's own encode/decode. Owner is T below, so no owner string is carried.
+    protected @this(global::app.Attributes.FormatAttribute format,
+                    global::app.type.kind.@this.Encoder? encode, global::app.type.kind.@this.Decoder? decode)
+        : base(format, global::app.type.item.@this.NameOf(typeof(T)), encode, decode) { }
+
     // The parent T names the owner, so a kind of T needs no string Owner of its own (decision 774):
     // its content is a T, and the type registry holds it under T by this.
     protected internal override string? Owner => global::app.type.item.@this.NameOf(typeof(T));
