@@ -5,11 +5,9 @@ namespace app.module.llm.type.conversation.kind;
 /// conversation continues an earlier query's answer, so it is offered the step's variables the build can't tell apart
 /// from one: a variable the build's walk knows as a type a conversation isn't made from (a list, a text) is left out.
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.module.llm.type.conversation.@this>
 {
     public @this() : base("") { }
-
-    protected internal override string Owner => "conversation";
 
     /// <summary>The step's variables, but those the walk knows (<c>step.Typed</c>) as a type a conversation doesn't take.
     /// One the walk can't type stays offered: that stands in for an llm's answer — llm.query forwards a Data of no type

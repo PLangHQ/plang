@@ -20,4 +20,8 @@ public abstract class @this<T> : @this where T : global::app.type.item.@this
     // fall back to number's. Ruling 3, wired here once for every kind of T.
     protected @this(string name)
         : base(name, new global::app.type.@this(global::app.type.item.@this.NameOf(typeof(T)))) { }
+
+    // The parent T names the owner, so a kind of T needs no string Owner of its own (decision 774):
+    // its content is a T, and the type registry holds it under T by this.
+    protected internal override string? Owner => global::app.type.item.@this.NameOf(typeof(T));
 }

@@ -5,7 +5,7 @@ namespace app.type.item.size.kind;
 /// directions of its form: the bytes a text in it is, and a count's text in it. The suffixes don't overlap, so a text
 /// names its own kind; a unit is never guessed.
 /// </summary>
-public abstract class @this : global::app.type.kind.@this
+public abstract class @this : global::app.type.kind.@this<global::app.type.item.size.@this>
 {
     // the units above a byte, smallest first, and how many bytes one of the smallest is
     private readonly string[] _units;
@@ -16,8 +16,6 @@ public abstract class @this : global::app.type.kind.@this
         _step = step;
         _units = units;
     }
-
-    protected internal override string Owner => "size";
 
     /// <summary>The bytes <paramref name="text"/> is in this standard — a number and one of its units; null when it
     /// isn't written in it.</summary>

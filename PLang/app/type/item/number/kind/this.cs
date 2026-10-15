@@ -17,9 +17,6 @@ public abstract class @this : global::app.type.kind.@this<global::app.type.item.
 {
     protected @this(string name) : base(name) { }
 
-    /// <summary>A storage size is a kind of number.</summary>
-    protected internal override string Owner => "number";
-
     /// <summary>Build a number of this storage size from a plang value — plang in, plang out. The value
     /// lowers itself through its own <c>Clr</c> door; a value that can't be this kind throws loud there
     /// (the courier converts that to <c>data.Fail</c>). No default, no catch, no null.</summary>

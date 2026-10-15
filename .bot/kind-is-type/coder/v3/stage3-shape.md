@@ -15,22 +15,25 @@ A separator slot is a built parameter typed `separator` — only `list.join` / `
 - **2 files, both under `test/module/list/.build/` (none in os):** `start.pr`, `listops.test.pr`.
 - No os goal binds a separator; no `split … by` slot elsewhere. So the `{text, kind: separator}` rename on rebuild would touch exactly those 2 test `.pr`.
 
-## 1. The one mechanism change
+## 1. The mechanism — CORRECTED after tracing the `[Kinds]` families
 
-Today a family's kind base derives from the **non-generic** `app.type.kind.@this` and names its parent with a string `Owner` override (`duration/kind/this.cs:12` `Owner => "duration"`, …). A kind's family is then found by `FamilyOf` → `IdentityOf` **walking up base classes for `[Kinds]`** (`type/item/this.cs:531–536`), and the registry enlists each `[Kinds]` subclass as a `kind.subclass.@this` (`Registry.cs:359–363`).
+**There are two different kinds of family, and they migrate differently.** My first shape proposed one FamilyOf swap for all; the trace of the `[Kinds]` families (query/input/screen/browser/list/path) shows that's wrong, and the architect's independent view agrees.
 
-Stage 1 already built the target for `number`: a family's kind base derives from the **generic** `kind.@this<T>` (`type/kind/this.Generic.cs:16`), whose ctor sets the kind's Family to T's type entry (`:21–22`). The parent is carried by the type parameter, not a string and not a base-walk.
+**(a) Codec families** — a dedicated kind CLASS beside the value type (number's decimal, duration's iso, size's si, …). The value is the parent type; the kind is a thin class. These derive the **non-generic** `kind.@this` + a string `Owner` override (`duration/kind/this.cs:12`) and register via `Every(assembly)` + `Owner` names a type (`Registry.cs:310–311`). **They never used `[Kinds]`/FamilyOf.** Stage 1 already moved `number` to `kind<number>` (`type/kind/this.Generic.cs:16`). **Their migration:** base → `kind<family>`; drop the `Owner` override (`kind<T>` provides `Owner` from T's name, so `Every`+Owner registration is unchanged). FamilyOf/`[Kinds]` is not touched by this.
 
-**The change, once, for every family:** move each family's kind base from `kind.@this` to `kind.@this<family>`; drop its string `Owner` override (T carries it); and swap the family-finder from the `[Kinds]` base-walk to reading the `kind<T>` generic base. Then `[Kinds]` and the base-walk go, and the app-wide kind search goes (below).
+**(b) Subclass families** — the parent type's own VALUE SUBCLASS is the kind: `screen.window` is a screen value, `input.mouse` a mouse value, `query.where` a clause. These subclasses derive from the **parent type** (`: screen.@this`) and carry real behaviour (abstract `Draw`/`Send`/`Applied`/`Rank`/`Apply`). **A value class cannot become `kind<T>`** (which is `kind : type`, not the parent) — it would lose the parent's behaviour. `[Kinds]` on the parent is the parent's honest declaration "my subclasses are my kinds", and **it stays for them**; the `FamilyOf`/`IdentityOf` base-walk (`type/item/this.cs:531–536`) and the enlistment (`Registry.cs:359–363`) stay. **The one change:** the enlisted kind OBJECT (`kind.subclass.@this`) becomes a **typed `kind<T>` instance** — `kind.subclass.@this<T> : kind<T>` — so every kind is a `kind<T>`, satisfying the stage-3 check, while the value class stays `: parent.@this`.
 
-`FamilyOf` after the swap (sketch — `type/item/this.cs`):
-```
-// the family is the T of the kind<T> base, not a [Kinds] walk
-for (var b = ct.BaseType; b != null; b = b.BaseType)
-    if (b.IsGenericType && b.GetGenericTypeDefinition() == typeof(app.type.kind.@this<>))
-        return (b.GetGenericArguments()[0], <kind name>);
-```
-The kind name stays what it is today (the `[PlangType]` word or the namespace leaf). `Registry.cs:359–363` keeps enlisting, now fed by the generic-based `FamilyOf`; `Registry.cs:310–311` (hold a kind whose `Owner` names a type) folds into the same path (the generic names the owner).
+Per-family trace result (input/screen/browser are the load-bearing three; query has its own `Known`+`Name`; list & path already run `[Kinds]`-free):
+| family | subclass base | `[Kinds]` role | migration |
+|---|---|---|---|
+| input | `input.@this` | enlistment + runtime `type.kind` (base `Type`→FamilyOf) | **keep `[Kinds]`**; subclass object → typed `kind<T>` |
+| screen | `screen.@this` | same | same |
+| browser | `browser.@this` | same | same |
+| query | `query.@this` | enlistment only (`Known` builds, `Name` names) | keep `[Kinds]`; subclass object → typed `kind<T>` |
+| list | `list<T>` only | **inert** (nothing walked; element kinds coined) | `[Kinds]` removable (cleanup), element kinds → `kind<list>` |
+| path | `path.@this` | **inert** (scheme pre-occupies via the `owner.kind[Kind]==null` guard) | `[Kinds]` removable (cleanup); scheme → `kind<path>` |
+
+So `FamilyOf`/`[Kinds]`/the base-walk **stay** (for input/screen/browser/query); only `kind.subclass.@this` goes generic.
 
 ## 2. The app-wide kind search goes
 

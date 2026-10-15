@@ -8,11 +8,9 @@ namespace app.test.junit;
 /// the kind owns its own rendering. Grouped by the goal's parent folder as testsuites. A run's report in
 /// junit is <c>.test/junit.xml</c>.
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.test.@this>
 {
     public @this() : base("junit") { }
-
-    protected internal override string Owner => "test";
 
     public override System.Collections.Generic.IReadOnlyList<string> Mime => ["application/junit+xml"];
 
