@@ -40,6 +40,20 @@ internal override ValueTask<IReadOnlyList<item.@this>> Offers(step step)
 
 Stage 5 needs this (and `question.Values : IReadOnlyList<string>`, and `formal/reader.cs`) to carry `{name, kind}`.
 
+## Stage 5 measurement (decision 807) — BLOCKED on a curation ruling
+
+The architect ruled kinds **inline** in the Type question (from `type.kind.list`), follow-up only for a generic's
+element, with a measure gate: ≤~1,500 chars added per question. **Measured (v1/stage5-measure.md): inline-all kinds
+breaks the decider.** One Type question went from ~480 chars / ~30 choices (names) to **9,075+ chars / >255 choices**,
+which the decider API rejects (`400 "Must have at most 255 choices"`). Cause: `type.kind.list` returns every kind —
+host kinds (`item<*>`, list, dict), every text format (goal/llm/template/liquid/yml/ini/…), number's 15 widths, and
+list/dict's element = every type again. Inline-all is infeasible.
+
+Decision pending (architect/Ingi): (a) **curate** the offered kinds (needs a clean "offered kind" notion — likely a
+locked kind marker → stop rule — or a brittle exclusion filter) vs (b) the kind as a **per-chosen-type follow-up**
+(dodges the cap and bloat; 807 kept the follow-up only for a generic's element, but the cap reopens it). My `Offered`
+probe (the inline expansion) is **uncommitted WIP**; no teaching/golden touched.
+
 ## Next / blockers
 
 - **Blocked:** architect/Ingi must rule S1 vs S2 and approve the runtime seam (possible locked-surface addition) before
