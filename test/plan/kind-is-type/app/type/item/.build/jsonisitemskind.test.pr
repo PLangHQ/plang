@@ -1,12 +1,12 @@
 {
   "name": "JsonIsItemsKind",
-  "comment": "A json value is item's, not text's (ruling 2, decision 773). A json value can hold any\nvalue (a number, a bool, a list, a dict), so its parent is item, not text: a value\ncarrying Type={item, kind: json} lands as an item whose kind navigates as the \"json\"\ntype, and `%x% is text` is false. Written in formal so the builder's Type choice is out\nof it. Red today — type.name reads \"text\" (and `is text` is true today, so %isText%\nreads true against the expected null); only the kind.name assert is held pending Ingi.",
+  "comment": "A json value is item's, not text's (ruling 2, decisions 773 + 774). A json value can\nhold any value (a number, a bool, a list, a dict), so its parent is item, not text: a\nvalue carrying Type={item, kind: json} lands as an item whose kind navigates as the\n\"json\" type (ruled by 774 — a kind's name is its name under its parent), and `%x% is\ntext` is false. Written in formal so the builder's Type choice is out of it. Red today:\ntype.name reads \"text\" (stage 3 fixes it); `is text` fires so %isText% reads true\nagainst the expected null (stage 3 fixes it); %x!type.kind.name% reads null — stage 4\nmakes a json value hold its raw text until first use, and the kind navigates then.",
   "step": [
     {
       "index": 0,
       "text": "variable.set(Name=%x%, Value=\"{\\\"a\\\":1}\", Type={name:\"item\", kind:\"json\"})",
       "line": {
-        "number": 8
+        "number": 10
       },
       "code": [
         {
@@ -61,7 +61,7 @@
       "index": 1,
       "text": "assert.equals(Expected=\"item\", Actual=%x!type.name%, Message=\"x's type name is item\")",
       "line": {
-        "number": 9
+        "number": 11
       },
       "code": [
         {
@@ -114,7 +114,7 @@
       "index": 2,
       "text": "condition.if(Left=%x%, Operator=\"is\", Right=\"text\") { variable.set(Name=%isText%, Value=true) }",
       "line": {
-        "number": 10
+        "number": 12
       },
       "code": [
         {
@@ -160,7 +160,7 @@
               "index": 0,
               "text": "variable.set(Name=%isText%, Value=true)",
               "line": {
-                "number": 10
+                "number": 12
               },
               "code": [
                 {
@@ -212,7 +212,7 @@
       "index": 3,
       "text": "assert.equals(Expected=null, Actual=%isText%, Message=\"x is not a text\")",
       "line": {
-        "number": 11
+        "number": 13
       },
       "code": [
         {
@@ -259,7 +259,7 @@
       "index": 4,
       "text": "assert.equals(Expected=\"json\", Actual=%x!type.kind.name%, Message=\"x's kind navigates as the json type\")",
       "line": {
-        "number": 12
+        "number": 14
       },
       "code": [
         {
@@ -315,5 +315,5 @@
   "child": [],
   "visibility": "Public",
   "file": "JsonIsItemsKind.test.goal",
-  "hash": "8c1591b06dbc26eaa804207767b3ec97d93971457b50d0104f1d115d392bae56"
+  "hash": "a3df110e0d555c26951dce2e268329dd878cdeada019ca864e84299a63d3264c"
 }

@@ -1,9 +1,11 @@
-/ A json value is item's, not text's (ruling 2, decision 773). A json value can hold any
-/ value (a number, a bool, a list, a dict), so its parent is item, not text: a value
-/ carrying Type={item, kind: json} lands as an item whose kind navigates as the "json"
-/ type, and `%x% is text` is false. Written in formal so the builder's Type choice is out
-/ of it. Red today — type.name reads "text" (and `is text` is true today, so %isText%
-/ reads true against the expected null); only the kind.name assert is held pending Ingi.
+/ A json value is item's, not text's (ruling 2, decisions 773 + 774). A json value can
+/ hold any value (a number, a bool, a list, a dict), so its parent is item, not text: a
+/ value carrying Type={item, kind: json} lands as an item whose kind navigates as the
+/ "json" type (ruled by 774 — a kind's name is its name under its parent), and `%x% is
+/ text` is false. Written in formal so the builder's Type choice is out of it. Red today:
+/ type.name reads "text" (stage 3 fixes it); `is text` fires so %isText% reads true
+/ against the expected null (stage 3 fixes it); %x!type.kind.name% reads null — stage 4
+/ makes a json value hold its raw text until first use, and the kind navigates then.
 JsonIsItemsKind
 - variable.set(Name=%x%, Value="{\"a\":1}", Type={name:"item", kind:"json"})
 - assert.equals(Expected="item", Actual=%x!type.name%, Message="x's type name is item")
