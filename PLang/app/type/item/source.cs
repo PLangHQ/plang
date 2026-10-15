@@ -92,16 +92,20 @@ public class source : @this
     protected internal override global::app.type.@this Type => _type;
 
     /// <summary>
-    /// In memory now = the raw source form. A byte raw declared <c>text</c> decodes
-    /// to its text face — that is the declaration speaking, not a content guess. A
-    /// <c>binary</c>/<c>bytes</c> raw STAYS bytes: peeking never sniffs "is this valid
-    /// UTF-8?" (access-driven resolution; binary's face is its bytes — decode to text
-    /// is the explicit <c>as text</c>). A structured declaration (table/xlsx,
-    /// image/png) keeps its bytes — the parse stays behind <see cref="Ready"/>.
+    /// In memory now = the raw source form. A byte raw whose kind is characters (<see
+    /// cref="global::app.type.kind.@this.IsText"/> — plain text, json, any text format) decodes to its
+    /// text face: the type's own answer about what its content is, not a content guess. A
+    /// <c>binary</c>/<c>bytes</c> raw STAYS bytes: peeking never sniffs "is this valid UTF-8?"
+    /// (access-driven resolution; binary's face is its bytes — decode to text is the explicit <c>as
+    /// text</c>). A structured declaration (table/xlsx, image/png) keeps its bytes — the parse stays
+    /// behind <see cref="Ready"/>.
     /// </summary>
     public override object? Peek()
     {
-        if (_value is byte[] b && _type.Name.ToLowerInvariant() is "text")
+        // Text content decodes to its text face: a text-kinded raw (json — its kind answers IsText), or a
+        // plain text whose own kind hasn't loaded its format yet (the empty kind reads IsText false until then,
+        // so the type name is the floor that keeps a plain text's bytes decoding).
+        if (_value is byte[] b && (_type.kind.IsText || _type.Name.ToLowerInvariant() is "text"))
         {
             try { return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(b); }
             catch (System.Text.DecoderFallbackException) { return b; }
@@ -389,6 +393,12 @@ public class source : @this
 
     internal override object? Clr(System.Type target) => ClrConvert(_value, target);
 
-    /// <summary>Display is the raw text form; bytes show as a size note, never decoded.</summary>
-    public override string ToString() => _value is byte[] b ? $"({b.Length} bytes)" : _value.ToString() ?? "";
+    /// <summary>Display is the text face (<see cref="Peek"/>): text-kinded bytes decode to their
+    /// characters, a binary blob shows as a size note, a string is itself.</summary>
+    public override string ToString() => Peek() switch
+    {
+        string s => s,
+        byte[] b => $"({b.Length} bytes)",
+        var v => v?.ToString() ?? "",
+    };
 }

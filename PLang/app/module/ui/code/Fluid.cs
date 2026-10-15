@@ -24,34 +24,35 @@ public class Fluid : ITemplate
         return parser;
     }
 
-    public async Task<data.@this<global::app.type.item.text.@this>> Render(Render action)
+    public async Task<global::app.data.@this> Render(Render action)
     {
         // Null-safe: [IsNotNull] guards the .pr path, but direct C# composition can
         // init Template to null — fail gracefully rather than throw.
         if (action.Template == null || (await action.Template.Value()) is not { } templateVal)
-            return action.Context.Error<global::app.type.item.text.@this>(new global::app.error.ValidationError(
+            return action.Context.Error(new global::app.error.ValidationError(
                 "ui.render requires a template", "MissingTemplate"));
         var templateContent = templateVal.ToString() ?? "";
         var isFile = action.IsFile == null ? null : (await action.IsFile.Value());
         string? sourceFile = null;
-        // What the render is: content of the template file's own format (a .json template renders json); an inline
-        // template, or a file of plain text, renders plain text.
-        string? kind = null;
+        // What the render is: the content-kind entity the template file's extension names (a .json template is
+        // {item, json}) — the format whose own birth the rendered characters go through. An inline template, or a
+        // file of plain text, has no format and is born a plain text.
+        global::app.type.@this? format = null;
 
         // Resolve template content: file or inline
         if (isFile?.Value == true || (isFile == null && LooksLikeFilePath(templateContent)))
         {
             var pathData = path.Resolve(templateContent, action.Context);
             if (!await pathData.AsBooleanAsync(action.Context))
-                return action.Context.Error<global::app.type.item.text.@this>(new ServiceError(
+                return action.Context.Error(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
             sourceFile = pathData.Relative(action.Context).Raw;
-            kind = pathData.Kind(action.Context).kind is { IsEmpty: false } format ? format.Name : null;
+            format = pathData.Kind(action.Context) is { kind.IsEmpty: false } formatted ? formatted : null;
             var readResult = await pathData.Read(action.Context);
             var read = readResult.Success ? await readResult.Value() : null;
             if (!readResult.Success)
-                return action.Context.Error<global::app.type.item.text.@this>(readResult.Error
+                return action.Context.Error(readResult.Error
                     ?? new ServiceError("Template read failed", "IOError", 500));
             templateContent = read?.ToString() ?? "";
         }
@@ -61,7 +62,7 @@ public class Fluid : ITemplate
         if (!parser.TryParse(templateContent, out var fluidTemplate, out var parseError))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            return action.Context.Error<global::app.type.item.text.@this>(new ServiceError(
+            return action.Context.Error(new ServiceError(
                 $"Template syntax error{location}: {parseError}", "TemplateError", 400));
         }
 
@@ -151,14 +152,21 @@ public class Fluid : ITemplate
             await includes.Load(fluidTemplate, parser);
             var writer = new StringWriter();
             await fluidTemplate.RenderAsync(writer, NullEncoder.Default, fluidContext);
-            return action.Context.Ok<global::app.type.item.text.@this>(new global::app.type.item.text.@this(writer.ToString()) { Kind = kind });
+            var rendered = writer.ToString();
+            // The rendered characters go through the declared format's OWN birth (kind.Decode — the same door a
+            // url served that format decodes through, content.@this): a .json template is born an unread
+            // {item, json} (773/804). A plain or inline template has no format and is born a text. Never a late
+            // stamp — json is the item's kind, never put onto a text (773).
+            return format != null
+                ? await format.kind.Decode(System.Text.Encoding.UTF8.GetBytes(rendered), action.Context)
+                : action.Context.Ok(new global::app.type.item.text.@this(rendered));
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             // Fluid wraps what the template's code threw (a TargetInvocationException): a program's error
             // inside the template — an unknown goal, a failed include — is the render's answer, whole.
             for (var inner = ex; inner != null; inner = inner.InnerException)
-                if (inner is AppException carried) return action.Context.Error<global::app.type.item.text.@this>(carried.Error);
+                if (inner is AppException carried) return action.Context.Error(carried.Error);
 
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
             // Its Message is the useless "Exception has been thrown by the target of an invocation" — dig to
@@ -166,7 +174,7 @@ public class Fluid : ITemplate
             var root = ex;
             while (root.InnerException != null) root = root.InnerException;
             var detail = ReferenceEquals(root, ex) ? ex.Message : $"{root.GetType().Name}: {root.Message}";
-            return action.Context.Error<global::app.type.item.text.@this>(new ServiceError(
+            return action.Context.Error(new ServiceError(
                 $"Template render error{location}: {detail}", "RenderError", 500) { Exception = ex });
         }
     }
