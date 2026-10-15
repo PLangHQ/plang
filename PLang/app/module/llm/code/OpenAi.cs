@@ -86,6 +86,16 @@ public sealed class OpenAi : ILlm
         if (rawMessages is not { Count: > 0 })
             return context.Error(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
+        // Each message's content rides through the llm module's OWN writer before anything else sees it:
+        // a text over %!llm.setting.length% is cut, with a marker saying how much more there was. A value
+        // says what it is; this writer decides how much of it the model reads. (Full-match text content
+        // this stage; a value inside a partial template follows once the IWriter door lands.)
+        var length = context.Setting.Of<global::app.module.llm.setting.@this>().Length.ToInt32();
+        var culture = context.Setting.Of<global::app.setting.@this>().Culture;
+        foreach (var m in rawMessages)
+            if (m.Content is { } content)
+                m.Content = global::app.module.llm.Writer.Cut(content, length, culture);
+
         // --- Build messages ---
         // %vars% in the message content (e.g. %goalForLlm%) are resolved when Messages materializes —
         // a template=plang container resolves its string leaves at .Value() (dict/list.Value).

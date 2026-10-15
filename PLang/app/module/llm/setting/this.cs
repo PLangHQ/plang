@@ -45,4 +45,10 @@ public sealed class @this : global::app.type.item.setting.module.@this
 
     /// <summary>The model a query asks when its step names none.</summary>
     [Out, Store] public global::app.type.item.text.@this Model { get; set; } = "gpt-5.4-nano";
+
+    /// <summary>The most characters a value written into an llm message carries — a text over it is cut, with a
+    /// marker telling the model how much more there was (<c>--- N more characters ---</c>). The default sits above
+    /// the builder's own prompts, so a program raises it only to let an even larger value through. Reached as
+    /// <c>%!llm.setting.length%</c>.</summary>
+    [Out, Store] public global::app.type.item.number.@this Length { get; set; } = 100_000;
 }
