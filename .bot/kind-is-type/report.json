@@ -22,9 +22,9 @@
         }
       ],
       "after": {
-        "status": "Trace in progress; shape doc (v4/stage4-shape.md) to follow, then sent to the architect before any implementation.",
-        "health": "n/a — no code change this version.",
-        "notes": "Deliverable is the stage-4 shape."
+        "status": "Stage 4 shape delivered to the architect (eede544e4). json value parses raw→plang dict/list (no JsonElement carrier); navigator deleted; text json wrapper+coiner go, closing Held's bare-name branch; csv/table a guard. Corrected the architect's assumption: http/settings/cache/llm already hold plang values — the real carrier-reads are the value-model files. 3 open Qs (delete serializer/json.cs?; strict magic-bytes scope?; scalar-root keep?). Awaiting approval before code.",
+        "health": "n/a — no code change this version (trace+shape).",
+        "notes": "Separator still held on Ingi (unseal text). On stage-4 approval: implement json-owns-bytes + remove navigator/text-wrapper/coiner + Held bare-name branch."
       }
     },
     {
