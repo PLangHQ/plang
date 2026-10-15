@@ -2552,7 +2552,7 @@ class app.type.item.setting.this : app.type.item.this, app.type.item.ICreate<app
   Disabled : app.type.item.bool.this { get; }
   Enabled : app.type.item.bool.this { get; set; } [Out, Store]
   Path : System.String { get; }
-  Rows : app.type.property.list.this { get; }
+  Rows(app.actor.context.this context) : app.type.property.list.this
   ctor()
   ctor(System.String path)
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
