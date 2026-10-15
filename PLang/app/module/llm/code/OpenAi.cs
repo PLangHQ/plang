@@ -738,7 +738,8 @@ public sealed class OpenAi : ILlm
     private async Task<data.@this> Answer(string rawResponse, string? format, actor.context.@this context)
     {
         var types = context.App.type.list;
-        var kind = format != null && types.Kind(format) is { Owner: not null } read ? read : types.Mime("text/plain");
+        // the response's format by its MIME or extension (never an app-wide search by bare name)
+        var kind = format != null && types.Format(format) is { Owner: not null } read ? read : types.Mime("text/plain");
         return await kind.Decode(Encoding.UTF8.GetBytes(ExtractResponse(rawResponse, format)), context);
     }
 

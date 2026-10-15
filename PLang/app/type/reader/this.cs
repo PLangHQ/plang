@@ -107,9 +107,10 @@ public sealed class @this
             && context.App.type.list["binary"].kind[kind!] == null)
         {
             // Bytes stamped with a kind binary doesn't hold (a stamp written before the format was its
-            // type's) name that kind only by name: narrow ONLY when the kind's type can actually read
+            // type's): narrow by the kind as an extension (a format's name is its extension — png, json,
+            // md, csv), never an app-wide search by bare name. Narrow ONLY when the kind's type can read
             // it; otherwise the bytes ride as binary.
-            var inner = context.App.type.list.Kind(kind!).type(context).Name;
+            var inner = context.App.type.list.Extension(kind!, context).Name;
             if (!string.Equals(inner, "binary", System.StringComparison.OrdinalIgnoreCase)
                 && Typed(inner, kind) is not null) typeName = inner;
         }
