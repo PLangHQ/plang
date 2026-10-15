@@ -14,10 +14,11 @@ Branch `llm-writer`, HEAD **cd5e2ea39** (pushed). Green:
 - "No worse than runtime2" proven for everything through part 1 (plang fail list identical to
   cf66e2d01; the 6 Wire snapshot failures are pre-existing/identical on runtime2).
 
-## WIP — stage 2 part 2 (C), in `git stash` (NOT committed; branch stays green)
+## WIP — stage 2 part 2 (C), on branch **`llm-writer-wip-part2`** (pushed; `llm-writer` stays green)
 
-`stash@{0}` on `llm-writer`: "stage2-part2-C-wip". Restore with `git stash apply stash@{0}`
-(worktree `/workspace/llm-writer`; `git stash list` to confirm). It contains:
+Preserved as its own pushed branch so a restart can't lose it (the stash was consumed into it).
+Resume with: `git checkout llm-writer-wip-part2` (it branches from cd5e2ea39 = part 1 + the (C)
+changes committed as WIP). It is NOT green yet — the 7 tests below still fail. Its contents:
 - `message.Content` changed from C# `string` to a plang value `text.@this?` (the text template, kept
   UNRENDERED at materialize) — `PLang/app/module/llm/type/message/this.cs`. Plus a 3-arg `Create`
   that builds a message from a dict itself (so the reflection binder never lowers a string into text).
