@@ -20,9 +20,29 @@ is a folder's doc because `Start.goal` is the entry point). Every page answers:
 - **v4** (Wave B) added the 11 remaining concepts: **setting, store, snapshot,
   task, test, keepalive, service, warning, parent, shortcut, variable**. The
   in-tree tree now has a `start.md` for every top-level `app` concept.
-- **v5** retired the two superseded docs (`Documentation/v0.2/architecture.md`,
-  `type-system.md`) as redirect stubs to the in-tree tree, and removed the
-  non-existent `Data.Merge()` from `CLAUDE.md` via the proposal workflow.
+- **v5** retired the three superseded runtime-shape overviews
+  (`Documentation/v0.2/architecture.md`, `type-system.md`, `app-tree.md`) as
+  redirect stubs to the in-tree tree, and removed the non-existent `Data.Merge()`
+  from `CLAUDE.md` via the proposal workflow.
+
+### Can the whole `Documentation/` folder be retired? No — only the overviews.
+
+Classified the whole folder. **Retireable** (superseded by the in-tree tree):
+the runtime-shape overviews — `architecture.md`, `type-system.md`, `app-tree.md`
+(all three done). **Must keep** (canonical, most CLAUDE.md-referenced): the OBP
+canon (`object_pattern_formal.md`, `obp-smells.md`, `obp-scan.md`, `obp-dot-case`,
+`audit/*`), `conventions.md`, `good_to_know.md`, `bans.md`, `build-checks.md`,
+`build.md`, `callbacks.md`, `Runtime2/data-spec.md`, `wire-serialization.md`,
+`data-internals.md`, `data-generic-design.md`, the generation pipeline
+(`module-reference-generation.md`, `type-reference-generation.md`,
+`defining-plang-types.md`), the test/debug process (`building_plang_tests.md`,
+`test-architecture.md`, `debug.md`, `trace.md`), and the logs (`todos.md`,
+`decisions.md`, `Runtime2/todos.md`, `Runtime2/obp-cleanup.md`). **Partial
+overlap, kept pending a per-file check** (my concept pages overview them but
+these hold deeper/process detail): `execution-flow.md`, `goals-steps.md`,
+`io-channels.md`, `variables.md`, `snapshots.md`, `snapshot-system.md`,
+`value-type-method-map.md`, `filesystem-permission.md`, `code-vs-goals.md`,
+`code-modules.md`.
 
 ## What was done
 

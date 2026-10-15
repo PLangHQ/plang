@@ -193,11 +193,11 @@
       "plan": ".bot/docs-file-module-guide/docs/v5/plan.md",
       "actions": [
         {
-          "paths": ["Documentation/v0.2/architecture.md", "Documentation/v0.2/type-system.md"],
+          "paths": ["Documentation/v0.2/architecture.md", "Documentation/v0.2/type-system.md", "Documentation/v0.2/app-tree.md"],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Retired both stale docs by replacing their content with a redirect stub pointing to the in-tree start.md tree (and good_to_know.md for cross-cutting notes). Stub rather than delete so the 6 legacy v0.2 docs that link to them keep working. Historical content is preserved in git history. Verified the stub relative links resolve."
+          "context": "Retired three stale runtime-shape overviews by replacing their content with redirect stubs pointing to the in-tree start.md tree (and good_to_know.md for cross-cutting notes). Stub rather than delete so the legacy v0.2 docs that link to them keep working. app-tree.md added after classifying the whole Documentation/ folder for Ingi: it is the app object-graph snapshot now superseded by PLang/app/start.md (and predated the lowercase rename). The rest of Documentation/ is canonical (OBP canon, data-spec, build/test process, generation pipeline, deep internals, todos) — most CLAUDE.md-referenced — and was kept. Historical content preserved in git history; stub links verified."
         },
         {
           "paths": [".bot/docs-file-module-guide/claude-md-proposals.md", "CLAUDE.md"],
