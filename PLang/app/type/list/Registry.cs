@@ -366,6 +366,15 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 // the kind object is a kind<family> typed to the family; the value class stays a family subclass
                 var subclassType = typeof(global::app.type.kind.subclass.@this<>).MakeGenericType(member.Family);
                 Hold((global::app.type.kind.@this)System.Activator.CreateInstance(subclassType, member.Kind, t)!);
+
+                // a subclass kind that ships its own reader (separator) reads under its family and kind — a
+                // {text, separator} reads via (text, separator), and the family's own reader would make the
+                // family's value, not the subclass's. Its namespace-keyed auto-registration is never consulted.
+                if (assembly.GetTypes().FirstOrDefault(r => r.Namespace == $"{t.Namespace}.serializer"
+                        && typeof(global::app.type.reader.ITypeReader).IsAssignableFrom(r)
+                        && r is { IsAbstract: false } && r.GetConstructor(System.Type.EmptyTypes) != null) is { } readerType)
+                    Reader.Register(family!, member.Kind,
+                        (global::app.type.reader.ITypeReader)System.Activator.CreateInstance(readerType)!);
             }
         return null;
     }

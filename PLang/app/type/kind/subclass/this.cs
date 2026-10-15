@@ -20,4 +20,17 @@ public sealed class @this<T> : global::app.type.kind.@this<T> where T : global::
     /// <c>separator.@this</c>, a <c>{screen, window}</c> a <c>window</c>) — so Create, Offer and the read use it,
     /// never the abstract or wider family class (decision 787: a kind's class is the class its values are).</summary>
     public override System.Type? Of(System.Type? type) => _class;
+
+    /// <summary>What a value of this kind can be in a step, as the decider is offered it: the subclass's own
+    /// <c>Offer</c> (a separator's named values — line, comma) alongside the step's own variables (<c>%x%</c>),
+    /// since the set is open. The subclass names them on its own static <c>Offer</c>, read the same way a type
+    /// reads a class's facts; a subclass that names none offers the step's variables alone (the base).</summary>
+    public override async System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
+    {
+        var variables = await base.Offers(step);
+        return _class.GetProperty("Offer", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null)
+                is System.Collections.Generic.IReadOnlyList<global::app.type.item.@this> offer
+            ? [.. offer, .. variables] : variables;
+    }
 }
