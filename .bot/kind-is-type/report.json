@@ -124,6 +124,39 @@
         "health": "green — all settings C# + plang targets pass; surface golden green (re-pinned under 778/779).",
         "notes": "Pushed b516eaaf9. Remaining plang /plan/kind-is-type json/separator/file/variable fails are stage 3/4 targets, not stage 2. Awaiting architect acceptance -> stage 3."
       }
+    },
+    {
+      "id": "f1e6c0a4-2b9d-4e71-8a53-0c4d7e9f1a2b",
+      "bot": "builder",
+      "timestamp_start": "2026-10-15T20:30:00Z",
+      "timestamp_end": "2026-10-15T21:10:00Z",
+      "intent": "Decision 803: rebuild the 2 list .pr for separator's new kind slot, and trace stage 5 (the builder offers kinds) producing the shape for the architect before any change.",
+      "before": {
+        "assumptions": "Separator's slot type moved to {text, kind: separator} (812250ab2); a fresh cache:skip rebuild updates the 2 list .pr. Stage 5 (offer each type with its kinds, ask a list 'a list of what?') is the builder's teaching.",
+        "risk": "Decider non-determinism on cache:skip rebuilds; and stage 5 may need a locked-core runtime change (the offered type set / answer parsing) rather than teaching alone."
+      },
+      "plan": ".bot/kind-is-type/builder/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["test/module/list/.build/start.pr", "test/module/list/.build/listops.test.pr"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Fresh cache:skip rebuild on the tip. jq-verified the only real-mapping change is the 2 Separator slot types {name:separator}->{name:text,kind:separator} per file (rest is stage-0 path->file format + decider-confidence jitter). list tests 23 pass 0 fail (1 pre-existing stale json-sort test). Pushed 88ffbbc03."
+        },
+        {
+          "paths": ["PLang/app/type/list/Registry.cs", "PLang/app/goal/step/pick/list/this.cs", "PLang/app/goal/step/action/formal/reader.cs", "os/system/builder/llm/templates/decider2.template", "os/system/builder/llm/templates/properties.template", "docs/templates/type.template"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced the Type question: offered set = type.Offers (Registry.cs:60-64) flat names only; rendered flat choice (decider2.template:52-62); answer one string read into {name} by formal/reader.cs. Kinds navigate (app.type[number].kind.list) but are never offered. Stage 5 needs 3 locked-core C# seams (offered set, question/render, nested answer reader) = coder's; builder teaching (prompt C, type page, ask: wording) rides on top. Shape in v1/stage5-shape.md, design fork S1 (recommended) vs S2."
+        }
+      ],
+      "after": {
+        "status": "(1) separator .pr rebuild DONE + pushed (88ffbbc03), accepted by the architect. (2) stage 5 trace DONE; shape written (v1/stage5-shape.md) and sent to the architect. Stage 5 is NOT teaching-only — gated on a runtime touch (coder, red-first) in locked-core app/type/list + app/goal/step/pick + action/formal. BLOCKED on architect/Ingi ruling (S1 vs S2; the offered-set change may be a locked-surface addition).",
+        "health": "green — decider key re-saved and reads; list tests pass; no change made pending the ruling.",
+        "notes": "Parked: build test/module/list/query/Failure_SortMixedIncomparable when the architect says stage 4 json is in. Environment had no .data at all on restart; re-saved the decider key via test/SetDeciderKey.goal (gitignored, nothing committed)."
+      }
     }
   ]
 }
