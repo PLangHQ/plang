@@ -2463,48 +2463,18 @@ class app.type.item.sensitive.this : app.type.item.this, app.type.item.ICreate<a
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.sensitive.this
   static Shape : System.String { get; }
 
-class app.type.item.separator.kind.comma.this : app.type.item.separator.kind.this
-  ctor()
-  override Characters : System.String { get; }
-
-class app.type.item.separator.kind.line.this : app.type.item.separator.kind.this
-  ctor()
-  override Characters : System.String { get; }
-  protected override OwnAlias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
-
-class app.type.item.separator.kind.semicolon.this : app.type.item.separator.kind.this
-  ctor()
-  override Characters : System.String { get; }
-
-class app.type.item.separator.kind.space.this : app.type.item.separator.kind.this
-  ctor()
-  override Characters : System.String { get; }
-
-class app.type.item.separator.kind.tab.this : app.type.item.separator.kind.this
-  ctor()
-  override Characters : System.String { get; }
-
-class app.type.item.separator.kind.this : app.type.kind.this
-  ctor()
-  ctor(System.String name)
-  override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
-  protected override Owner : System.String { get; }
-  virtual Characters : System.String { get; }
-
 class app.type.item.separator.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
   Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
   ctor()
 
-class app.type.item.separator.this : app.type.item.this, app.type.item.ICreate<app.type.item.separator.this> [PlangType]
+class app.type.item.separator.this : app.type.item.text.this, app.type.item.ICreate<app.type.item.separator.this>
   Characters : System.String { get; }
   ctor(System.String characters)
-  ctor(app.type.item.separator.kind.this named)
-  override IsLeaf : System.Boolean { get; }
-  override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
+  protected override Type : app.type.this { get; }
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.separator.this
-  static Shape : System.String { get; }
+  static Offer : System.Collections.Generic.IReadOnlyList<app.type.item.this> { get; }
 
 class app.type.item.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
@@ -2754,7 +2724,7 @@ class app.type.item.text.serializer.Reader : app.type.reader.ITypeReader
   Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
   ctor()
 
-class app.type.item.text.this : app.type.item.this, System.IEquatable<app.type.item.text.this>, app.type.item.ICreate<app.type.item.text.this>, app.type.item.IEncode<app.type.item.text.this> [Format, Format, Format, Format, Format, Format, Format, Format, Format, PlangType]
+class app.type.item.text.this : app.type.item.this, System.IEquatable<app.type.item.text.this>, app.type.item.ICreate<app.type.item.text.this>, app.type.item.IEncode<app.type.item.text.this> [Format, Format, Format, Format, Format, Format, Format, Format, Format, Kinds, PlangType]
   AreEqual(System.Object other) : System.Boolean
   Contains(System.String other) : System.Boolean
   EndsWith(System.String other) : System.Boolean
@@ -2826,6 +2796,7 @@ abstract class app.type.item.this : app.data.IBooleanResolvable, app.type.item.I
   protected virtual Type : app.type.this { get; }
   static Absent : app.type.item.this { get; }
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.this
+  static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.this
   virtual AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   virtual Cacheable : System.Boolean { get; }
   virtual Contains(app.data.this needle) : System.Threading.Tasks.ValueTask<System.Boolean>
@@ -3656,8 +3627,6 @@ type screen
 
 type sensitive
 
-type separator
-
 type setting
 
 type shortcut
@@ -4037,7 +4006,7 @@ action list.indexof
 
 action list.join
   ListName : variable required
-  Separator : separator
+  Separator : text
 
 action list.last
   ListName : variable required
@@ -4067,7 +4036,7 @@ action list.set
 
 action list.split
   Value : text required
-  Separator : separator
+  Separator : text
   Empty : choice<empty>
 
 action llm.decider
