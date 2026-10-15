@@ -2,6 +2,19 @@
 
 Branch `kind-is-type`, decision 774 rulings 1–6. Trace done; this is the shape for approval **before** any code. Nothing here changes a type's name (checked at the end).
 
+## Architect rulings (received; implementation spec)
+- **Q1: A.** `[Format]` stays the declaration; the registry mints each format as a `kind<T>` of its declaring type. `kind<T>` is abstract, so the mint needs **one concrete generic format class** (one class, many instances, like choice's set) carrying MIME, extension, and the bound encode/decode. Not per-format classes.
+- **Q2: separator HELD** until Ingi answers (as `kind<text>` the slot type in a built `.pr` changes `separator` → `{text, kind: separator}`, the rename v2 exists to avoid). **Do everything else; separator untouched.** Separator `.pr` count delivered below.
+- **Q3: `kind<wire>`.** Mechanical retype of the application/plang format kind, re-pinned under 774.
+- **Q4: module families in scope** (crypto hash, archive, llm conversation, test junit) — their base-walk/`[Kinds]`/app-search all go this stage, so leaving them strands them.
+- **bool: its kind class GOES.** Named values aren't kinds (ruling 6); true/false are bool's own, answered through the type's own values/offers hook — unless something needs it as a kind (I'll report if so).
+- **path: schemes (file/http/https) ARE kinds — `kind<path>` instances, not named values.** (Row corrected below.)
+
+## Separator `.pr` count (for Ingi's Q2 decision)
+A separator slot is a built parameter typed `separator` — only `list.join` / `list.split` carry one (`Separator : Data<separator.@this>`; also `text.Split`). Counting all built `.pr`:
+- **2 files, both under `test/module/list/.build/` (none in os):** `start.pr`, `listops.test.pr`.
+- No os goal binds a separator; no `split … by` slot elsewhere. So the `{text, kind: separator}` rename on rebuild would touch exactly those 2 test `.pr`.
+
 ## 1. The one mechanism change
 
 Today a family's kind base derives from the **non-generic** `app.type.kind.@this` and names its parent with a string `Owner` override (`duration/kind/this.cs:12` `Owner => "duration"`, …). A kind's family is then found by `FamilyOf` → `IdentityOf` **walking up base classes for `[Kinds]`** (`type/item/this.cs:531–536`), and the registry enlists each `[Kinds]` subclass as a `kind.subclass.@this` (`Registry.cs:359–363`).
@@ -43,13 +56,13 @@ Three different things share the word "format"; **only the first goes**:
 | **duration** | `duration/kind/{this,iso,dotnet,short}`, base `: kind.@this`, `Owner=>"duration"` | base `: kind<duration>`, drop `Owner`; leaves unchanged (`: duration.kind.@this`) |
 | **size** | `size/kind/{this,iec,si}` | base `: kind<size>`, drop `Owner` |
 | **template** | `template/kind/{this,plang}` | base `: kind<template>`, drop `Owner` |
-| **path** | `path/scheme/this.cs` one sealed `kind.@this` holding a factory; file/http/https registered in `app/this.cs:310–312`; `path/this.cs:12` has `[Kinds]` | `path/scheme/this.cs : kind<path>`; `[Kinds]` off path; registration in `app/this.cs` unchanged (named values, open set) |
+| **path** | `path/scheme/this.cs` one sealed `kind.@this` holding a factory; file/http/https registered in `app/this.cs:310–312`; `path/this.cs:12` has `[Kinds]` | `path/scheme/this.cs : kind<path>` — the schemes ARE `kind<path>` instances (not named values); `[Kinds]` off path; registration in `app/this.cs` unchanged |
 | **text** (md/xml own formats) | `[Format]` attrs on `text/this.cs:30–38`, minted to bare `kind.@this` at `Registry.cs:316–323` | the minted format kind is typed to its owner — `kind<text>` (see open question Q1). The `*format` coiner (`text/kind/this.cs`) + wrapper (`text/kind/format/this.cs`) are **stage 4** |
 | **image** | `[Format]` × 8 on `image/this.cs:19–26`, minted at `Registry.cs:316–323` | minted as `kind<image>` (Q1) |
 | **table** | `[Format("csv")]` on `type/table/this.cs:26` | minted as `kind<table>` (Q1) |
 | **separator** | its own **type** `separator/this.cs:9 : item.@this` with `kind/{line,comma,tab,space,semicolon}` subclasses | **collapses** to a single `kind<text>` carrying an **open named-value set** (line/comma/tab/space/semicolon, any chars allowed). Ruling 6: "separator is a kind<text> with its named values." The 5 kind subclasses become entries in separator's named-value list, not classes. (See Q2 — this is the one real restructure.) |
 | **choice** | `choice/set/this.cs:12 : kind.@this` (abstract), 3 set kinds (named/family/member), `Of(type)` closes to `choice<T>` | base set `: kind<choice>`; ruling 6 "one generic set class, a kind<choice>, holding the enum." The enum/Choices/kind-family mechanisms stay |
-| **bool** | `bool/kind/this.cs:8 : kind.@this`, `IsClosed`, true/false | bool's **closed named-value pair** (ruling 6 "bool's true and false"), a `kind<bool>` holding the two, offers-only |
+| **bool** | `bool/kind/this.cs:8 : kind.@this`, `IsClosed`, true/false | **the kind class GOES** (ruling 6). true/false are bool's own values, answered through bool's own values/offers hook — not a kind. (Report back if anything needs it as a kind.) |
 | **item json/dict/list/reflection** | `type/item/kind/{json,dict,list,reflection}` host kinds over C# objects | **host kinds, stay until 673** (ruling 9). json-as-`{item,kind:json}` is reached; item's json **navigator** goes in **stage 4**. `Kind(System.Type clr)` stays |
 
 ## 5. The categories (every kind classified — the stage-3 check)
