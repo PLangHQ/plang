@@ -1,0 +1,189 @@
+{
+  "name": "OldSettingRowStillReads",
+  "comment": "A settings row saved before this stage still reads (ruling 7, decision 774). A saved\nrow is read into its class by its key (`<actor>!<path>`), which already says which\nclass — the row's own `kind` field is no longer the class picker. A row saved in\ntoday's shape ({setting, kind: <path>}) reads back after the change. Guard — green\ntoday (today's binary saves and reads today's shape); must stay green after. Settings\nrun in-memory under `--test` (setting-<app.id>, per PLang/app/actor/setting/this.cs),\nso save+read in one run proves the round-trip; a committed sqlite fixture couldn't be\nloaded in test mode (`Mode.Test` forces in-memory). The cross-binary read is proved by\nthe suite surviving the stage 2 change, not by this test alone.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %!llm.setting.cache% = \"skip\"",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%!llm.setting.cache%",
+              "variable": [
+                {
+                  "text": "%!llm.setting.cache%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "setting"
+                    },
+                    {
+                      "property": "cache"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "skip"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "save %!llm.setting%",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "setting",
+          "name": "save",
+          "property": [
+            {
+              "name": "Setting",
+              "type": {
+                "name": "setting",
+                "template": "plang"
+              },
+              "value": "%!llm.setting%",
+              "variable": [
+                {
+                  "text": "%!llm.setting%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "setting"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"skip\", Actual=%!llm.setting.cache%, Message=\"the saved cache value reads back\")",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "skip"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!llm.setting.cache%",
+              "variable": [
+                {
+                  "text": "%!llm.setting.cache%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "setting"
+                    },
+                    {
+                      "property": "cache"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the saved cache value reads back"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "remove %!llm.setting%",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "setting",
+          "name": "remove",
+          "property": [
+            {
+              "name": "Setting",
+              "type": {
+                "name": "setting",
+                "template": "plang"
+              },
+              "value": "%!llm.setting%",
+              "variable": [
+                {
+                  "text": "%!llm.setting%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "setting"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "OldSettingRowStillReads.test.goal",
+  "hash": "341eae1d9642ae41b20920d72fb30fc7a1c9c487e1cbbae8a95197c62d3b7215"
+}

@@ -1,0 +1,14 @@
+/ Two types can each have a kind of the same name — each found through its own parent
+/ (ruling 2, decision 774). A kind's name is unique only under its parent (names on two
+/ levels, like files in folders), so number's `short` and duration's `short` are
+/ different kinds, each reached only through its own type. Red today for the kind.name
+/ halves (held under the same stopgap as DecimalIsANumber): today `%x!type.kind.name%`
+/ reads null because kind isn't a navigable type at run — stage 1 (the probe on number)
+/ fixes number's half, stage 3 extends it to every family (duration included).
+SameKindNameUnderTwoTypes
+- variable.set(Name=%n%, Value="5", Type={name:"number", kind:"short"})
+- variable.set(Name=%d%, Value="30s", Type={name:"duration", kind:"short"})
+- assert.equals(Expected="number", Actual=%n!type.name%, Message="n is a number")
+- assert.equals(Expected="duration", Actual=%d!type.name%, Message="d is a duration")
+- assert.equals(Expected="short", Actual=%n!type.kind.name%, Message="number's short is reached through number")
+- assert.equals(Expected="short", Actual=%d!type.kind.name%, Message="duration's short is reached through duration")

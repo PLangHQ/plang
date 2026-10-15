@@ -1,6 +1,6 @@
 {
   "name": "JsonIsItemsKind",
-  "comment": "A json value is item's, not text's (ruling 2, decision 773). A json value can hold any\nvalue (a number, a bool, a list, a dict), so its parent is item, not text: a value\ncarrying Type={item, kind: json} lands as an item whose kind navigates as the \"json\"\ntype, and `%x% is text` is false. Written in formal so the builder's Type choice is out\nof it. Red today — the kind of an item isn't a navigable type at run (`.name` null); the\n`is text` check is held with the other kind.name asserts (Ingi's answer still pending).",
+  "comment": "A json value is item's, not text's (ruling 2, decision 773). A json value can hold any\nvalue (a number, a bool, a list, a dict), so its parent is item, not text: a value\ncarrying Type={item, kind: json} lands as an item whose kind navigates as the \"json\"\ntype, and `%x% is text` is false. Written in formal so the builder's Type choice is out\nof it. Red today — type.name reads \"text\" (and `is text` is true today, so %isText%\nreads true against the expected null); only the kind.name assert is held pending Ingi.",
   "step": [
     {
       "index": 0,
@@ -315,5 +315,5 @@
   "child": [],
   "visibility": "Public",
   "file": "JsonIsItemsKind.test.goal",
-  "hash": "0b33492a23c886c538b5c30d0312f671466dfbcff689d83a7feb6f9ac8d3eb6e"
+  "hash": "8c1591b06dbc26eaa804207767b3ec97d93971457b50d0104f1d115d392bae56"
 }

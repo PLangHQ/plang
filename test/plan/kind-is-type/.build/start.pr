@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "comment": "kind-is-type: a kind is a type, a type is named by its namespace, and a format type owns its bytes.\nThis goal is the plan's index and its proof: each stage is a goal, each comment a behaviour we want,\nand the step under it runs the test that proves it. Tests live under this plan's folder at the path of\nwhat they test. The plang here is intent: the test-designer writes each test so it builds and goes red\nbefore its stage, the coder makes it green. The text is start.md; checks tests can't show are there too.",
+  "comment": "kind-is-type: a kind is a type under its parent (kind<T> : kind : type), names are unique at their own level, and a format type owns its bytes.\nThis goal is the plan's index and its proof: each stage is a goal, each comment a behaviour we want,\nand the step under it runs the test that proves it. Tests live under this plan's folder at the path of\nwhat they test. The plang here is intent: the test-designer writes each test so it builds and goes red\nbefore its stage, the coder makes it green. The text is start.md; checks tests can't show are there too.",
   "step": [
     {
       "index": 0,
@@ -111,6 +111,28 @@
           ]
         }
       ]
+    },
+    {
+      "index": 5,
+      "text": "call Stage5",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage5"
+            }
+          ]
+        }
+      ]
     }
   ],
   "child": [
@@ -121,9 +143,9 @@
           "index": 0,
           "text": "call /plan/kind-is-type/goal/MovedGoalRunsWhereItIs",
           "line": {
-            "number": 16
+            "number": 17
           },
-          "comment": "a goal's path is where its .pr is found (the coder builds this stage with its own pins, decision 745)\na goal moved with its .build folder runs at its new path",
+          "comment": "a goal's path is where its .pr is found (landed with the coder's own pins, decision 745)\na goal moved with its .build folder runs at its new path",
           "code": [
             {
               "module": "goal",
@@ -144,7 +166,7 @@
           "index": 1,
           "text": "call /plan/kind-is-type/goal/AppGoalNeverPassesAsSystem",
           "line": {
-            "number": 18
+            "number": 19
           },
           "comment": "an app's .pr whose old \"path\" says /system/ gets no os trust: its real folder is the app's",
           "code": [
@@ -167,7 +189,7 @@
           "index": 2,
           "text": "call /plan/kind-is-type/goal/OldPrReadsAsBefore",
           "line": {
-            "number": 20
+            "number": 21
           },
           "comment": "an old .pr with \"path\" and \"prPath\" reads as it did",
           "code": [
@@ -189,18 +211,49 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "935582811a3278d0c66b2212e76321b62635fea6ff0b8087e67a378822df1c91"
+      "hash": "cc9bf722031c60ee8726b6917b94a3dacd45dbb914e0abc0470e3b0a711edb6a"
     },
     {
       "name": "Stage1",
       "step": [
         {
           "index": 0,
+          "text": "call /plan/kind-is-type/app/type/number/DecimalIsANumber",
+          "line": {
+            "number": 26
+          },
+          "comment": "the probe: number's kinds are kind<number>; a kind answers what is its own and asks number for the rest\n\"set %n% = 1.5 as decimal\" keeps decimal: %n!type.name% is number, %n!type.kind.name% is decimal",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/kind-is-type/app/type/number/DecimalIsANumber"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "hash": "fd92fad394048373dfd88a9aefbf90db756064d529f54ec44651851b22d32589"
+    },
+    {
+      "name": "Stage2",
+      "step": [
+        {
+          "index": 0,
           "text": "call /plan/kind-is-type/app/type/ShortNameFindsTheType",
           "line": {
-            "number": 25
+            "number": 31
           },
-          "comment": "a type is named by its namespace, read from the root it lives under, like a file path\n\"as text\" and \"as list\" find plang's own types, as before (a guard)",
+          "comment": "settings are settings: each settings class is a type of its own, and a saved row is read by its key\nno type is renamed: \"as text\" and \"as list\" find the types they always did (a guard)",
           "code": [
             {
               "module": "goal",
@@ -221,9 +274,9 @@
           "index": 1,
           "text": "call /plan/kind-is-type/app/type/SettingClassIsAType",
           "line": {
-            "number": 27
+            "number": 33
           },
-          "comment": "\"llm.setting\" finds the llm settings class, a type of its own",
+          "comment": "the llm settings class is a type of its own, named by its namespace",
           "code": [
             {
               "module": "goal",
@@ -242,11 +295,11 @@
         },
         {
           "index": 2,
-          "text": "call /plan/kind-is-type/app/type/ModuleTypeIsNamedByItsModule",
+          "text": "call /plan/kind-is-type/app/setting/OldSettingRowStillReads",
           "line": {
-            "number": 29
+            "number": 35
           },
-          "comment": "a module's type is named by its module: window.window and screen.window each find theirs, window alone finds none",
+          "comment": "a settings row saved before the change still reads, its class taken from its key",
           "code": [
             {
               "module": "goal",
@@ -257,7 +310,7 @@
                   "type": {
                     "name": "goal"
                   },
-                  "value": "/plan/kind-is-type/app/type/ModuleTypeIsNamedByItsModule"
+                  "value": "/plan/kind-is-type/app/setting/OldSettingRowStillReads"
                 }
               ]
             }
@@ -266,41 +319,18 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "25eacc3ca0d2f33e54fd9d92088bef5a9d0a9326498e69eb8e51ec5a95fd7094"
+      "hash": "ec7c67113e2370a3cb6684fd8608f78575ef039f1a3fc27ea0fff510b6db4c25"
     },
     {
-      "name": "Stage2",
+      "name": "Stage3",
       "step": [
         {
           "index": 0,
-          "text": "call /plan/kind-is-type/app/type/number/DecimalIsANumber",
-          "line": {
-            "number": 34
-          },
-          "comment": "a kind is a type: a type's kind is another type, and the written form stays {name, kind}\n\"set %n% = 1.5 as decimal\" keeps decimal: %n!type.kind% is decimal, a type under number",
-          "code": [
-            {
-              "module": "goal",
-              "name": "call",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "goal"
-                  },
-                  "value": "/plan/kind-is-type/app/type/number/DecimalIsANumber"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 1,
           "text": "call /plan/kind-is-type/app/type/item/JsonIsItemsKind",
           "line": {
-            "number": 36
+            "number": 40
           },
-          "comment": "a json value is item's, not text's (decision 773): %x!type.name% is item, %x% is text is false, kind is json",
+          "comment": "every family's kinds are types under their parent, found only through it\na json value is item's, not text's (decision 773): %x!type.name% is item, %x% is text is false, kind is json",
           "code": [
             {
               "module": "goal",
@@ -318,10 +348,10 @@
           ]
         },
         {
-          "index": 2,
+          "index": 1,
           "text": "call /plan/kind-is-type/app/type/list/ListKnowsItsElement",
           "line": {
-            "number": 38
+            "number": 42
           },
           "comment": "a list of path knows its element: [0] is born a path",
           "code": [
@@ -341,12 +371,35 @@
           ]
         },
         {
+          "index": 2,
+          "text": "call /plan/kind-is-type/app/type/kind/SameKindNameUnderTwoTypes",
+          "line": {
+            "number": 45
+          },
+          "comment": "a kind nests: a list of lists of path — C# test at PLang.Tests/Types/App/Types/KindNestsTests.cs\ntwo types can each have a kind with the same name: each is found through its own parent",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/kind-is-type/app/type/kind/SameKindNameUnderTwoTypes"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "index": 3,
           "text": "call /plan/kind-is-type/app/type/separator/NamedValuesBelongToTheType",
           "line": {
-            "number": 42
+            "number": 47
           },
-          "comment": "a kind nests: a list of lists of path — C# test at PLang.Tests/Types/App/Types/KindNestsTests.cs\n(today's formal written-type is one level deep; the nested kind is what stage 2 adds)\na separator is a text with five named values; any characters are allowed too",
+          "comment": "a separator is a kind of text with five named values; any characters are allowed too",
           "code": [
             {
               "module": "goal",
@@ -367,7 +420,7 @@
           "index": 4,
           "text": "call /app/type/kind/strict/SetAsImageGifStrictMismatch",
           "line": {
-            "number": 45
+            "number": 50
           },
           "comment": "a strict kind is checked: an image that isn't a gif is refused as a gif — the stage adopts\nthe four existing kind/strict tests as its proof (SetAsImageGifStrictMismatch and siblings)",
           "code": [
@@ -389,16 +442,16 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "4620bf471efd08d778db09be7c835bcd50970f65901e36f2fa492839492783a4"
+      "hash": "2b25ee475b4e14c86e67f7e67fba0f96e763f875171664c0682b420b82ee927c"
     },
     {
-      "name": "Stage3",
+      "name": "Stage4",
       "step": [
         {
           "index": 0,
           "text": "call /plan/kind-is-type/app/type/json/PassedOnUnread",
           "line": {
-            "number": 50
+            "number": 55
           },
           "comment": "a format type owns its work: its bytes stay raw until first use, then it parses itself\na json file read and written on unchanged is byte-for-byte the same",
           "code": [
@@ -421,7 +474,7 @@
           "index": 1,
           "text": "call /plan/kind-is-type/app/type/json/ReadIntoIsADict",
           "line": {
-            "number": 52
+            "number": 57
           },
           "comment": "the first read into a json file parses it into a plang dict: \"%cfg% is dict\" is true",
           "code": [
@@ -444,7 +497,7 @@
           "index": 2,
           "text": "call /plan/kind-is-type/app/type/json/ArrayIsAList",
           "line": {
-            "number": 54
+            "number": 59
           },
           "comment": "a json array parses into a plang list",
           "code": [
@@ -467,9 +520,9 @@
           "index": 3,
           "text": "call /plan/kind-is-type/app/type/csv/ReadIntoIsATable",
           "line": {
-            "number": 56
+            "number": 61
           },
-          "comment": "a csv file the same way, through its own type",
+          "comment": "a csv file the same way, through its own type (a guard)",
           "code": [
             {
               "module": "goal",
@@ -489,18 +542,18 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "d3eb2dbbe3e5cf088fe05bea9b02366419765b651c4357b5d4457a517fde13f1"
+      "hash": "ac451a64b88ba75f194190a5b035a4aa61ee61b082c687f1e9f735ac15238d05"
     },
     {
-      "name": "Stage4",
+      "name": "Stage5",
       "step": [
         {
           "index": 0,
           "text": "call /plan/kind-is-type/module/variable/set/AsDecimalKeepsDecimal",
           "line": {
-            "number": 61
+            "number": 67
           },
-          "comment": "the builder offers kinded types by name, and a generic asks for its element\neach of the baseline's five sentences builds what it says (the builder measures 5/5)",
+          "comment": "the builder offers each type with its kinds under it, and a generic asks for its element\neach of the baseline's five sentences builds what it says (the builder measures 5/5)",
           "code": [
             {
               "module": "goal",
@@ -521,7 +574,7 @@
           "index": 1,
           "text": "call /plan/kind-is-type/module/variable/set/AsListOfPathKeepsTheElement",
           "line": {
-            "number": 62
+            "number": 68
           },
           "code": [
             {
@@ -543,7 +596,7 @@
           "index": 2,
           "text": "call /plan/kind-is-type/module/variable/set/AsJsonKeepsJson",
           "line": {
-            "number": 63
+            "number": 69
           },
           "code": [
             {
@@ -565,7 +618,7 @@
           "index": 3,
           "text": "call /plan/kind-is-type/module/file/read/AsTextKeepsText",
           "line": {
-            "number": 64
+            "number": 70
           },
           "code": [
             {
@@ -580,6 +633,25 @@
                   "value": "/plan/kind-is-type/module/file/read/AsTextKeepsText"
                 }
               ]
+            },
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/kind-is-type/module/file/read/AsTextKeepsText"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 3 uses goal.call, which the decider was not sure of (0.86)"
             }
           ]
         },
@@ -587,7 +659,7 @@
           "index": 4,
           "text": "call /plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso",
           "line": {
-            "number": 65
+            "number": 71
           },
           "code": [
             {
@@ -602,63 +674,6 @@
                   "value": "/plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso"
                 }
               ]
-            },
-            {
-              "module": "variable",
-              "name": "set",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "variable"
-                  },
-                  "value": "%!data%",
-                  "variable": [
-                    {
-                      "text": "%!data%",
-                      "code": [
-                        {
-                          "variable": "!data"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Value",
-                  "type": {
-                    "name": "item",
-                    "template": "plang"
-                  },
-                  "value": "%!data%",
-                  "variable": [
-                    {
-                      "text": "%!data%",
-                      "code": [
-                        {
-                          "variable": "!data"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Type",
-                  "type": {
-                    "name": "type"
-                  },
-                  "value": "duration"
-                }
-              ],
-              "default": [
-                {
-                  "name": "default",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
-                }
-              ]
             }
           ]
         },
@@ -666,7 +681,7 @@
           "index": 5,
           "text": "call /plan/kind-is-type/module/variable/set/NoAsNoType",
           "line": {
-            "number": 67
+            "number": 73
           },
           "comment": "the guards don't move: no \"as\", no type; \"as text\" stays text",
           "code": [
@@ -682,70 +697,16 @@
                   "value": "/plan/kind-is-type/module/variable/set/NoAsNoType"
                 }
               ]
-            },
-            {
-              "module": "variable",
-              "name": "set",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "variable"
-                  },
-                  "value": "%!data%",
-                  "variable": [
-                    {
-                      "text": "%!data%",
-                      "code": [
-                        {
-                          "variable": "!data"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Value",
-                  "type": {
-                    "name": "item",
-                    "template": "plang"
-                  },
-                  "value": "%!data%",
-                  "variable": [
-                    {
-                      "text": "%!data%",
-                      "code": [
-                        {
-                          "variable": "!data"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Default",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": true
-                }
-              ]
-            }
-          ],
-          "warning": [
-            {
-              "key": "Unsure",
-              "message": "step 5 uses variable.set, which the decider was not sure of (0.94)"
             }
           ]
         }
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "9025f1e4c4bcab6149e32a354d0047a1f0e83600664a8d4e797fe0a0541dedb4"
+      "hash": "8a6900f317d7634e86070f5e5110003dd6d1bc3aeecb8479b639cf50ebe2837f"
     }
   ],
   "visibility": "Public",
   "file": "start.goal",
-  "hash": "588b58e58926b448a2ba862b8fd0d57726416c173adf6b5e0e2a3fbfdad744a9"
+  "hash": "318273c8b6a5c71ea4becfbc60699451938b03ecf0b14fecc27a843071a7a30c"
 }

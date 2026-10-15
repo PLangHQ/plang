@@ -3,8 +3,9 @@
 | test | stage | why it's red today (quoted) | plang/C# |
 |---|---|---|---|
 | [ShortNameFindsTheType](../../../test/plan/kind-is-type/app/type/ShortNameFindsTheType.test.goal) | 1 | guard — green before and after; `as text` yields `text`, `as list` yields `list` | plang |
-| [SettingClassIsAType](../../../test/plan/kind-is-type/app/type/SettingClassIsAType.test.goal) | 1 | `no type 'llm.setting'` — today the LLM settings class is a kind under `[PlangType("setting")]` (decision 48), not a type named by its namespace | plang |
-| [ModuleTypeIsNamedByItsModule](../../../test/plan/kind-is-type/app/type/ModuleTypeIsNamedByItsModule.test.goal) | 1 | `no type 'screen.window'` — the screen module's window kind isn't a plang-named type today; also `page` must be nobody's name (post-761 the window module's page is `window.page`) | plang |
+| [SettingClassIsAType](../../../test/plan/kind-is-type/app/type/SettingClassIsAType.test.goal) | 2 | per decision 774, each settings class is a top-level type named by its namespace; `Expected "app.module.llm.setting", Actual "setting"` — today the llm settings class is a kind under a shared `setting` family (decision 48) | plang |
+| [OldSettingRowStillReads](../../../test/plan/kind-is-type/app/setting/OldSettingRowStillReads.test.goal) | 2 | **guard** — green today: today's binary saves and reads a settings row round-trip through its in-memory store; must stay green after stage 2 (an old-shape row's class is identified by its key `<actor>!<path>`, not by the row's `kind` field) | plang |
+| [SameKindNameUnderTwoTypes](../../../test/plan/kind-is-type/app/type/kind/SameKindNameUnderTwoTypes.test.goal) | 3 | per decision 774 ruling 2, names on two levels — number's `short` and duration's `short` are different kinds, each found only through its own parent; `Expected "short", Actual (null)` — today `%x!type.kind.name%` reads null (kind isn't a navigable type at run), held under the same stopgap as DecimalIsANumber | plang |
 | [DecimalIsANumber](../../../test/plan/kind-is-type/app/type/number/DecimalIsANumber.test.goal) | 2 | `Expected "decimal", Actual (null)` for `%n!type.kind.name%` — today the kind of a number is lost at run; `kind.name` reads null because kind isn't a navigable type (asserts held — Ingi's answer still pending) | plang |
 | [JsonIsItemsKind](../../../test/plan/kind-is-type/app/type/item/JsonIsItemsKind.test.goal) | 2 | per decision 773, json is item's (not text's) because it holds any value; `Expected "item", Actual "text"` — today a json value still rides as text, so the name assert is the red one; `%x% is text` is-false check is active (red today — `is text` fires); only the kind.name assert stays held pending Ingi | plang |
 | [ListKnowsItsElement](../../../test/plan/kind-is-type/app/type/list/ListKnowsItsElement.test.goal) | 2 | `Expected "path", Actual (null)` for `%files!type.kind.name%` — the typed list's element kind isn't a navigable type at run | plang |
@@ -26,7 +27,9 @@
 
 Suite deltas (fresh binary rebuilt from tip, so results reflect stage 0's goal reader + the typed-slot fix):
 - Baseline (start.md): 245 pass / 16 fail / 12 stale / 3 skipped
-- Final with all stages 1–4 tests: **249 pass / 29 fail / 12 stale / 3 skipped**
-- Of those 17 kind-is-type tests I own: 3 pass (ShortNameFindsTheType, ReadIntoIsATable, NoAsNoType — the guards) and 14 fail (each red for its named reason, confirmed on the fresh binary)
+- v2 with all stages 1–5 tests: **250 pass / 29 fail / 12 stale / 3 skipped**
+- Of the 18 kind-is-type tests I own: 4 pass (ShortNameFindsTheType, ReadIntoIsATable, NoAsNoType, OldSettingRowStillReads — the guards) and 14 fail (each red for its named reason, confirmed on the fresh binary)
 - C# PLang.Tests.Types: +1 failure (KindNestsTests round-trip)
 - C# PLang.Tests.Runtime: +1 failure (TypedSlotJsonReadTests)
+
+v2 changes (decision 774): no type renamed. Stage 1 is the probe on number; stages renumbered (settings → 2, every family → 3, format → 4, builder → 5). Removed ModuleTypeIsNamedByItsModule (names stay). Added OldSettingRowStillReads (guard) and SameKindNameUnderTwoTypes (two kinds share a name under different parents).
