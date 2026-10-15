@@ -495,6 +495,17 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         return _lift(raw, declared, data);
     }
 
+    // Make a value of this type from <paramref name="raw"/> THROUGH the ICreate&lt;T&gt; family its class
+    // belongs to, even when the class is a subtype of that family (a settings class : setting is
+    // ICreate&lt;setting&gt;, not ICreate&lt;itself&gt;, so its own <see cref="Make"/> declines): the family's
+    // Create is handed THIS as the declaration, so the base's Create makes the subclass by its declared.ClrType.
+    // Only the record reader asks this (decision 789); the general Make stays on the EXACT <see cref="Creatable"/>
+    // so its CLR-value fallback (the `Make(item.Create(raw))` rung) keeps converging and never recurses.
+    internal item.@this? Made(object? raw, global::app.data.@this data)
+        => CreatableFamily is { } clr
+            ? (item.@this?)_open.MakeGenericMethod(clr).Invoke(null, new object?[] { raw, this, data })
+            : null;
+
     /// <summary>Is a value of <paramref name="other"/>, declared this type, made into it — this type's class's own
     /// answer, asked without making (a path declared a file is; a dict declared a list is not).</summary>
     internal bool Takes(@this other) => _takes(other);
@@ -541,6 +552,26 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                   i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>)
                        && i.GenericTypeArguments[0] == clr)
            ? clr : null;
+
+    // The ICreate<T> family this type's class makes through — T is the class itself when it implements
+    // ICreate<itself> (the <see cref="Creatable"/> case), or the BASE a subtype implements ICreate of (a
+    // settings class : setting is ICreate<setting>, not ICreate<itself>). Make closes Create<T> with THIS as
+    // the declaration, so the base's Create makes the subclass by its declared.ClrType. Null for a host entity
+    // whose class implements no ICreate. (Takes/IsName stay on the exact Creatable — a subtype is not its base.)
+    private System.Type? CreatableFamily
+    {
+        get
+        {
+            if (ClrType is not { } clr || !typeof(item.@this).IsAssignableFrom(clr)) return null;
+            // A subtype implements ICreate of EVERY level up its chain (a settings class is both
+            // ICreate<item> and ICreate<setting>): take the MOST DERIVED family — the one every other is
+            // assignable from (setting over item) — so its Create, not the apex item's, makes the value.
+            var families = System.Array.FindAll(clr.GetInterfaces(),
+                    i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>))
+                .Select(i => i.GenericTypeArguments[0]).ToArray();
+            return System.Array.Find(families, t => System.Array.TrueForAll(families, o => o.IsAssignableFrom(t)));
+        }
+    }
 
     // The generic thunk: the raw rides into the type's own birth, as this type declares it — unless the value
     // refuses to become one (a raw C# value, lifted here, is no item and refuses nothing).

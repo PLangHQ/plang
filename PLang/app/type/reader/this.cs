@@ -95,11 +95,10 @@ public sealed class @this
     /// <summary>
     /// The reader for a value of <paramref name="typeName"/>/<paramref name="kind"/> —
     /// narrowing <c>binary</c> content to the type its kind names (<c>json→item</c>,
-    /// <c>jpg→image</c>, <c>csv→table</c>, <c>plang-goal→goal</c>). Throws LOUDLY when the
-    /// resolved type ships no reader: every value type owns a <c>serializer/Reader.cs</c>
-    /// (there is no "untyped" value — a structured value is a dict/list, a type descriptor
-    /// is the type entity, …), so a miss is a genuine gap (a kinded type without its reader
-    /// yet, e.g. table/xlsx). The throw is the visible signal — its test expects it.
+    /// <c>jpg→image</c>, <c>csv→table</c>, <c>plang-goal→goal</c>). A type that ships no
+    /// reader of its own reads its stored value as a record and makes itself from it
+    /// (<see cref="Record"/>, decision 789: the item owns how it's made) — the settings
+    /// classes read this way, and a record a type can't be made from declines loudly.
     /// </summary>
     public ITypeReader Reader(string typeName, string? kind, actor.context.@this context)
     {
@@ -114,9 +113,9 @@ public sealed class @this
             if (!string.Equals(inner, "binary", System.StringComparison.OrdinalIgnoreCase)
                 && Typed(inner, kind) is not null) typeName = inner;
         }
-        return Typed(typeName, kind) ?? throw new System.NotSupportedException(
-            $"no reader for type '{typeName}'{(kind != null ? $" (kind '{kind}')" : "")} — "
-            + $"a value type must own app/type/{typeName}/serializer/Reader.cs.");
+        // A type that ships no reader of its own reads its stored value as a record and makes itself from it
+        // (decision 789: the item owns how it's made) — the settings classes read this way.
+        return Typed(typeName, kind) ?? new Record(typeName);
     }
 
 

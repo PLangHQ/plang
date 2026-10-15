@@ -46,15 +46,49 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>A setting node read as a bool is whether it is on.</summary>
     public override bool IsTruthy() => Enabled.Value;
 
-    /// <summary>A setting is built by the asker's settings, never made from a value.</summary>
+    /// <summary>A setting is its own stored record read back into its class (decision 789/790): a fresh one of the
+    /// class the declaration names, each of its options taken from the record. A stored row of an older shape — not
+    /// this class's record — is <c>SettingsUnreadable</c>: pre-1.0 there is no reader for it, so it is fixed by
+    /// hand, deleted and set again.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this setting) return setting;
+        if (raw is global::app.type.item.dict.@this record
+            && declared?.ClrType is { IsAbstract: false } clr && typeof(@this).IsAssignableFrom(clr)
+            && clr != typeof(@this))
+        {
+            var fresh = (@this)System.Activator.CreateInstance(clr)!;
+            // each option the record holds, read through the option's own type in Apply (the convert walk the
+            // CLI flags take); a field that is no option of this class (the base's Enabled, a dropped option) is
+            // not applied — the class takes only its own.
+            var options = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in record.Entries(data.Context))
+                if (fresh.Option(entry.Name) is not null) options[entry.Name] = entry.Peek();
+            var applied = fresh.Apply(options, data.Context);
+            if (applied.Success) return fresh;
+            data.Fail(Unreadable(fresh.Path, applied.Error));
+            return null;
+        }
+        if (raw is global::app.type.item.dict.@this)
+        {
+            // a record declared the base setting with a kind is an older-shape row ({setting, kind: <path>}),
+            // whose key is the path its kind names — no reader for it pre-1.0, so it is fixed by hand (loud)
+            if (declared?.kind is { IsEmpty: false } k) { data.Fail(Unreadable(k.Name, null)); return null; }
+            // a bare base setting (a node — a module/action with no class of its own) is not made FROM a record;
+            // it reads as absent, as the base setting read did before 789. A clean decline (no Fail) that the
+            // record reader answers with the null value, never the loud SettingsUnreadable.
+            return null;
+        }
         data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
-            "a setting is read as %!path%, never made from a value.", "CreateItemDeclined", 400));
+            "a setting is read as %!path% from its own stored record.", "CreateItemDeclined", 400));
         return null;
     }
+
+    // A stored row that doesn't read back into its class — named by its key, with how a person fixes it by hand.
+    private static global::app.error.@this Unreadable(string key, global::app.error.@this? cause)
+        => new($"setting '{key}' was saved in an older shape and can't be read — delete it and set it again.",
+            "SettingsUnreadable", 400) { list = cause is { } c ? new() { c } : new() };
 
     /// <summary>A settings CLASS is its own type, named like any type by its namespace
     /// (<c>app.module.llm.setting</c>) — settings are settings, not kinds (decision 774); a saved row
