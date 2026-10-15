@@ -29,9 +29,9 @@
       ],
       "actions_note": "After the shape was approved (decisions 779/781), implemented the kind<T> migration.",
       "after": {
-        "status": "Stage 3 CORE done + green: every codec/format/path/subclass/list family's kinds are kind<T>; surface re-pinned (774); C# at the 8 baseline fails, plang 254/24/12/3 (zero regressions). 7 OPEN items (bool needs kind for IsClosed; nested-kind read needs a locked-core call; app-wide-search live callers; type.format test surgery; separator+JsonIsItemsKind held on Ingi; template no parent type; kind/strict likely stage-4) — all reported to the architect.",
-        "health": "green at the inherited baseline; no new C# or plang regressions.",
-        "notes": "Commits f4a849b8b..6530916be. Full detail in v3/stage3-result.md. Awaiting rulings on the 7 OPEN items."
+        "status": "Stage 3 core + items 2/3/4 DONE and accepted by the architect. 2 (a kind nests, KindNestsTests green), 3 (kind asked of its parent; app-wide fallback dropped, callers redirected, bare-name retained only for the text coiner until stage 4), 4 (type.format filter removed). bool/template/JsonIsItemsKind/kind-strict ruled (backlog 782 / stage 4 / stays). Separator (783, Ingi) in progress: BLOCKED on an A/B call — text.@this is sealed so separator can't subclass it; sent the architect (A) unseal text [Ingi/locked] vs (B) separator overrides Type to {text,kind:separator} [no locked change, my lean].",
+        "health": "green — C# at the baseline 7 (KindNests now passes), plang 254/24/12/3, surface re-pinned, no regressions.",
+        "notes": "Commits f4a849b8b..dac90dd0e. v3/stage3-result.md. Awaiting the separator A/B ruling, then implement + re-pin surface/decider + rebuild the 2 list .pr."
       }
     },
     {

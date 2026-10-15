@@ -32,14 +32,17 @@ public abstract class @this : global::app.type.kind.@this<global::app.type.item.
 }
 ```
 
-## What is still OPEN (see v3/stage3-result.md for the full detail; reported to the architect)
-1. **bool needs its kind** — `IsClosed=true` (pinned by `PickOptionTests`); the type model forces `IsClosed=false` once an `Offer` static is set. Kind-removal reverted; bool's kind stays pending a ruling (a type-level "closed" hook is a locked-core addition).
-2. **Nested-kind read (`KindNestsTests`, ruling 1)** — the type serializer must recurse on an object `kind`; the `.kind` slot is `kind.@this`, so nesting a `type.@this` is a locked-core design call. Red at the inherited baseline too (pre-existing TODO).
-3. **App-wide kind search** has live callers (reader binary-narrow, text coiner, OpenAi by-MIME, `{binary,X}` fallback) — removing as the demolition says would strand them. Needs a ruling on which to keep.
-4. **`type.format` filter removal** needs FormatKindTests surgery — do now or stage 6?
-5. **Blocked on Ingi:** `separator` (Q2, held; 2 test `.pr` counted) and `JsonIsItemsKind` (held, per its own goal comment).
-6. **template** has no parent value type — left on the non-generic base; is it a standalone kind or should a `template` type exist?
-7. **kind/strict plang tests** were red at baseline; likely stage-4 (bytes). Confirm scope.
+## Architect rulings on the 7 (resolved)
+- **Items 2, 3, 4 — DONE + green** (architect-assigned trio). See `v3/stage3-result.md`.
+  - **2 (a kind nests):** `KindNestsTests` green. Reader recurses on an object `kind`; writer emits a kinded kind as the object. Nested kind rides via hidden ctors (internal/private-protected) — no public/protected surface member. Commit 5ad1cb74a.
+  - **3 (ask the parent, not the app):** dropped the `Kind(type,kind)` fallback; redirected binary-narrow (type/reader) → extension door, OpenAi → `Format`. The bare-name `Held` path is **retained solely for `text/kind:25`** (the `*format` coiner), which stays until stage 4 — flagged to the architect. Commit dac90dd0e.
+  - **4 (type.format filter):** `type.@this.format` + `app.type.format.@this` removed; tests ask the kinds. Serializer + format-in-play stay. Commit babe32632.
+- **bool:** kind stays (needs `IsClosed`); architect filed it on the backlog for Ingi (decision 782). Not this branch.
+- **template:** stays on its base (a facet, not a value type); `plang` is a named value of that facet. Comment + classify; revisit stage 6.
+- **JsonIsItemsKind + kind/strict:** stage 4 (test-designer fixed JsonIsItemsKind's header). Not stage 3.
+
+## OPEN — separator (783), in progress
+Ingi ruled separator becomes a `kind<text>` (`{text, kind: separator}`) with an open named-value set (line/comma/tab/space/semicolon + any chars); its 5 kind classes become named-value entries; `%line% is text` true; it stops being a top-level type. **Shape sent to the architect for one confirm** (separator value = a plain `text.@this` with kind separator, `separator.@this` class removed; split/join take `text`). On confirm: implement + re-pin surface/decider under 783 + NamedValuesBelongToTheType green + list split/join green. The 2 `.pr` to rebuild (handed to the builder): `test/module/list/.build/{start,listops.test}.pr`.
 
 ## For v3 (this version)
 Stage 2 accepted (decision 780). No reviewer flags carried in. The stage-3 trace corrected my first shape (the `FamilyOf` swap doesn't apply to the subclass families — `[Kinds]` stays for them); architect agreed.
