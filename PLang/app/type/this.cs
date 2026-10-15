@@ -589,13 +589,16 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // narrow history. So no _priors / Accumulate / List here — the entity is a pure identity.
 
     /// <summary>Does this type entity answer to <paramref name="other"/> by its OWN identity? Name
-    /// match, or the <c>item</c> apex. Composition ("an image is-a path") is NOT answered here — it
+    /// match (or the <c>item</c> apex) AND, when <paramref name="other"/> names a kind, the same kind —
+    /// <c>is item</c> is every value, but <c>is {item, json}</c> asks the kind (a text is an item, not
+    /// <c>{item, json}</c>). Composition ("an image is-a path") is NOT answered here — it
     /// lives on the VALUE's type history (a value born from a path carries a "path" entry), asked via
     /// <see cref="item.@this.Is"/>. No CLR-inheritance lattice, no reflection.</summary>
     public bool Is(@this? other)
         => other != null
            && (string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)
-               || string.Equals(other.Name, "item", System.StringComparison.OrdinalIgnoreCase));
+               || string.Equals(other.Name, "item", System.StringComparison.OrdinalIgnoreCase))
+           && (other.kind.IsEmpty || string.Equals(kind.Name, other.kind.Name, System.StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Name-string IS-A query — resolves <paramref name="typeName"/> to a type and

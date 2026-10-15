@@ -254,7 +254,11 @@ public partial class Set : IContext, IScope, IKeep
             // converted to another type is born — its type's on.create fires (a before may refuse or
             // answer instead). A byte-backed family (image) keeps a literal path-string — the Type
             // entity carries the declared meaning and the value loads later.
-            if (!keepAsIs && converted != null && !targetType.IsInstanceOfType(converted))
+            // "Already the target" is asked of the PLANG type, not the C# class: a text IS an item in C#,
+            // so a literal declared {item, kind: json} would never reach type.Create and would stay text.
+            // Value.Is reads the kind (a text is an item but not {item, json}), so a format-typed literal
+            // is re-typed through the type's own kind-aware birth (the kind decides eager vs lazy).
+            if (!keepAsIs && converted != null && !Value.Is(type))
             {
                 // The build throws on a bad conversion (the throw boundary) — converted is a
                 // materialized leaf, so this re-types eagerly. A kind-validatable target defers:
