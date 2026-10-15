@@ -41,6 +41,17 @@ Which door renders `%var%` inside an llm message (the message template, `llm/typ
 - ask llm "summarize %doc%"  (%doc% over the max)   → the first part, then "--- 12,400 more characters ---"
 ```
 
+### 1b. A value inside a sentence (decision 800)
+
+A partial template ("rank these %orders%") renders through a text writer text makes for itself (`type/item/text/this.cs:163–167`), so the llm writer never sees `%orders%`. Ingi approved one `IWriter` door for a text with values inside it: text hands the writer its literal parts and its values in order; the text and json writers write them as one string, as today; the llm writer writes each value through its cuts. A locked serializer addition, re-pinned under 800.
+
+```
+- ask llm "rank these %orders%"               → the same cuts as %orders% alone
+- write %greeting% to a json channel          → one string, byte-equal to today (a guard)
+```
+
+The default for `%!llm.setting.length%` is 100,000 characters (Ingi), above the builder's longest prompt with room.
+
 ### 2. Lists and dicts
 
 ```
