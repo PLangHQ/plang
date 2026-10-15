@@ -1,56 +1,41 @@
 # coder summary — kind-is-type
 
-**Version:** v3 (stage 3). v1/v2 = stages 1–2 (done, accepted).
+**Version:** v4 (stage 4 — "a format owns its bytes"). v1–v3 = stages 1–3 (done + accepted). Decision 774 plan: `test/plan/kind-is-type/start.md`.
 
 ## What this is
-Decision 774: "a kind is a type." `kind<T> : kind : type`. Plan: `test/plan/kind-is-type/start.md`. Stages: 0 done; 1 done+accepted; 2 done+accepted (settings are their own types; persisted rows read by their own type, decision 779); **3 in progress (this version)**; 4–6 pending.
+Stage 4 of "a kind is a type" (774). Two threads landed here:
+1. **Separator** (783/788) — `separator.@this : text.@this` is `{text, kind: separator}`; text unsealed + `[Kinds]`. DONE+green (earlier this version).
+2. **Decision 789/790** — the item owns how it's made: a type with no reader reads its stored value as a *record* and makes itself from it; the start-up settings-reader loop + per-type setting reader are gone. DONE+green.
+3. **Decision 792 json migration** — json is `{item, kind: json}` holding raw bytes until first use; navigation parses once into a plang dict/list; the value then narrows (787). **IN PROGRESS** — one producer per commit, the clr(json)-navigator + text-json-wrapper deleted in the LAST commit.
 
-**Stage 3 — "every family's kinds are types":** each type-family's kinds move from the non-generic `kind.@this` + a string `Owner` onto the generic `kind<family>` (as stage-1 number already did). Full trace + shape: `v3/stage3-shape.md` (architect rulings absorbed). Result: `v3/stage3-result.md`.
+## 789/790 — DONE (HEAD has it)
+- `setting.Create(raw, declared, data)` makes the setting from its stored record by `declared.ClrType` only (790: no old-row path). A dict record → fresh instance of the class + `Apply` its options. An older-shape `{setting, kind:<path>}` row → loud `SettingsUnreadable` (soft `data.Fail`, named by key). A bare base-`setting` node (empty kind) → a clean decline (null, no Fail) → reads as `@null` (the old base reader's behaviour).
+- `app/type/reader/Record.cs` — the record-reader fallback. `Reader.Reader()` returns it instead of throwing when `Typed()` is null. It reads the value as a generic record (dict/list/scalar), then `type.Construct(record, data)`. A declined make → `DeclinedException` (which `source.Value` catches → soft failure on the binding); a clean decline (null, no error) → `@null`.
+- **`type.Construct(raw, data)`** (`PLang/app/type/this.cs`) — the SECOND make door (beside `Make`). Make stays on the EXACT `Creatable` (its CLR-value fallback `Make(item.Create(raw))` only terminates because of that — broadening it caused a **stack overflow**, Ingi flagged it). Construct uses `CreatableFamily` = the MOST-DERIVED `ICreate<T>` the class implements (a settings class is both `ICreate<item>` and `ICreate<setting>` → pick `setting`, not the apex `item`). The closed family thunk is cached once (`_construct`, like `_lift`). "One make door" is on the architect's branch-A list.
+- `item.Create(raw, declared, data)` (`PLang/app/type/item/this.cs`) DECLINES a declaration whose class is ANOTHER type (reached via the family because that type's most-derived ICreate is item — a `{table, xlsx}`): it does not pass a stray text through nor re-source it. Its lazy-kind rebirth is for item's OWN kinds (`{item, json}`).
+- Gone: start-up loop (`app/this.cs`), `setting/serializer/Reader.cs`, `OldSettingRowStillReadsTests` + fixture. Pins: `SettingRowTests` 8/8 incl. the new `AppSetting_Culture_IsReadByTheNextApp`; `TableTypeTests` 8/8 (xlsx declines softly, CreateItemDeclined).
 
-## What was done (done + green)
-- **`kind<T>` provides `Owner` from T** (`PLang/app/type/kind/this.Generic.cs`) — families drop their `Owner` override.
-- **Codec families → `kind<family>`:** duration, size, hash, archive, conversation, junit, wire; number's redundant override dropped.
-- **`[Format]` → `kind<T>` (Q1-A):** one concrete generic `PLang/app/type/kind/format/this.cs`; `Registry.cs:316–323` mints one per `[Format]` typed to the declaring type. text/image/table formats are now `kind<T>`.
-- **path schemes → `kind<path>`** (`PLang/app/type/item/path/scheme/this.cs`).
-- **Subclass families (input/screen/browser/query):** `[Kinds]` + the `FamilyOf` base-walk STAY (value classes keep `: parent.@this`); the enlisted kind object is now the typed `PLang/app/type/kind/subclass/this.cs` `@this<T> : kind<T>` (`Registry.cs:359–365`).
-- **list element kinds → `kind<list>`** (`PLang/app/type/item/list/kind/{this,element}.cs`).
-- **Surface golden re-pinned** under 774 (diff = only `kind<T>` bases + the new generic classes; no type name changed).
+## json migration (792) — IN PROGRESS
+test-designer's classification: `.bot/kind-is-type/test-designer/json-tests.md` (14 keep-and-rewrite, 10 retire). The 10 retired tests + the clr(json) navigator + text-json wrapper go in the FINAL commit. Navigator kept until then.
 
-**Gate (verified):** C# at the 8 pre-existing baseline fails (no new reds); plang **254/24/12/3 — identical to the stage-2 baseline, zero regressions**; `SameKindNameUnderTwoTypes`, `ListKnowsItsElement` green.
+**Producers (one commit each, red→green against test-designer's new files):**
+- ✅ **json-array foreach** — `data.EnumerateItems` materializes an unread `{item,json}` source before walking (parse once → list, narrow 787); a value already walkable (a `%var%`'s list) keeps its door shut. `JsonArrayForeachTests` green. (commit a0a686cbd)
+- ⏳ **action-row carrier** (NEXT) — `ActionNameWireRead_PlangListTests` (`WireKey_*_FromAPlangList`, `ActionTypedRow_...FromAPlangList`). A plang `list<dict>` set onto `Step.Code` (a `step.action.list`) must read each dict as an action. **Trace so far:** the action reader (`goal/step/action/serializer/Reader.cs`) is TOKEN-and-step-bound (reads `module`/`name`/`property`/`child` off a json token stream, born with the step). The list reader (`list/serializer/Reader.cs`) is token-based too (per-element `reader.RawValue()`). A parsed plang `list<dict>` has no tokens. `Step.Code` setter takes a `step.action.list`; `variable.Set("goal.Step[0].Code", plangList)` navigates to the Step (a domain/clr object) and sets Code → the plang list<dict> → `step.action.list` conversion is the gap (Code.Count 0). **Open design q:** read each dict as an action by (a) re-serializing the dict to json tokens and feeding the existing action reader (bridge, a round-trip), or (b) a dict→action path on the action reader (bigger). Lean (a) as a bounded bridge; confirm with architect if it gets large.
+- ⏳ **http body verbatim** — `PostItemOfKindJson_IsSentVerbatim_Unread`: an `{item,json}` body sends its raw bytes unread (raw-until-first-use); producer re-serializes today.
+- ⏳ **url by content-type** — `UrlServedApplicationJson_DecodesAsItemOfKindJson`: a url served `application/json` decodes to `{item, kind: json}` (resting form), not straight to dict.
+- ⏳ **render a .json file** — `RenderJsonFileIsItemOfKindJson`: `Type.Name` == item, kind json; producer narrows to dict today.
+- (SKIP the 4 PlangDict producers — http GET/upload, llm query ±schema — already narrow to a plang dict via the json-core parse; test-designer tightened them green.)
 
-## Code example
-A family's kind base, before → after:
-```csharp
-// before
-public abstract class @this : global::app.type.kind.@this {
-    protected @this(string name) : base(name) { }
-    protected internal override string Owner => "duration";   // string parent
-}
-// after — the parent is the type parameter; Owner comes from it
-public abstract class @this : global::app.type.kind.@this<global::app.type.item.duration.@this> {
-    protected @this(string name) : base(name) { }
-}
-```
+**Final commit:** delete json's navigator (Descend/Data/Enumerate/IsSequence/Set/Clr/Output/Write/Scalar + ClrForm=JsonElement; keep Mime/Extension/Encode/Parse/Open/Read), the text `{text,json}` wrapper + `*format` coiner + Registry mint + one-arg `Kind(string)` (⚠️ it has ~25 TEST callers validating alias/MIME/ext/ambiguity resolution — move to a test extension OR rewrite them; flagged, NOT yet resolved), `serializer/item/json.cs` STAYS (many live callers — Q1 was wrong), the dict/list `clr{JsonElement}` Convert/Create branches, http outbound form (`http/code/Default.cs:784,845`); + retire the 10 old-design tests.
 
-## Architect rulings on the 7 (resolved)
-- **Items 2, 3, 4 — DONE + green** (architect-assigned trio). See `v3/stage3-result.md`.
-  - **2 (a kind nests):** `KindNestsTests` green. Reader recurses on an object `kind`; writer emits a kinded kind as the object. Nested kind rides via hidden ctors (internal/private-protected) — no public/protected surface member. Commit 5ad1cb74a.
-  - **3 (ask the parent, not the app):** dropped the `Kind(type,kind)` fallback; redirected binary-narrow (type/reader) → extension door, OpenAi → `Format`. The bare-name `Held` path is **retained solely for `text/kind:25`** (the `*format` coiner), which stays until stage 4 — flagged to the architect. Commit dac90dd0e.
-  - **4 (type.format filter):** `type.@this.format` + `app.type.format.@this` removed; tests ask the kinds. Serializer + format-in-play stay. Commit babe32632.
-- **bool:** kind stays (needs `IsClosed`); architect filed it on the backlog for Ingi (decision 782). Not this branch.
-- **template:** stays on its base (a facet, not a value type); `plang` is a named value of that facet. Comment + classify; revisit stage 6.
-- **JsonIsItemsKind + kind/strict:** stage 4 (test-designer fixed JsonIsItemsKind's header). Not stage 3.
+## Re-pins pending (the architect's single pass, step c — AFTER the json migration)
+- `TheCoresSurface_IsThePinnedOne` (789 deleted the public setting serializer Reader → core surface moved).
+- `TheSeparatorPage_IsTheSpecsGolden` + `StageOnesAnswer_*` (2) — separator left the top-level types.
+- any json page golden the navigator deletion moves.
+Read each diff before committing a moved pin (teaching-edit rule). Then send the architect the 2 list `.pr` paths for the builder bot.
 
-## Stage 3 CLOSED OUT except separator (held on Ingi)
-Every kind is classified — the stage-3 check passes:
-- **kind<T>:** number, duration, size, hash, archive, conversation, junit, wire; `[Format]` mints (text md/xml/…, image's 8, table csv); path scheme; list element; the typed `kind.subclass<T>` (input/screen/browser/query).
-- **named values:** choice sets, bool (true/false), separator (held).
-- **host kinds (673):** json, dict, list, reflection.
-- **stage-4 deferrals:** text's `*format` coiner + wrapper.
-- **facet:** template (`type.Template`; `plang` a named value of it; commented, revisit stage 6).
-Decider pins hold (PickList 8/8, PickOption 19/19); C# at the baseline 7 (KindNests now passes); plang 254/24/12/3; surface re-pinned; no type name changed.
+## Baseline / gate
+No stack overflow (the isolated Construct/`_construct` restored Make's termination). Wire baseline = 6 snapshot + 2 StageOnes (pre-existing). The json reds remaining are migration targets + old tests retiring. Run `./dev.sh test <Class>` (TableTypeTests + the new json test files live in the **Data** and **Modules** suites; `PLang.Tests.App.LazyDeserialize.OneBoundaryTests` etc.). Full parallel `./dev.sh test` can OOM-crash suites under load — if a suite shows "Stack overflow"/"NO SUMMARY", re-run it standalone to confirm (was a parallel flake for Generator once).
 
-**separator — HELD on Ingi.** Ingi ruled it becomes a `kind<text>` (`{text, kind: separator}`) — a text SUBCLASS (`separator.@this : text.@this`), like `screen.window`, so the slot stays `Data<separator.@this>` and the LLM keeps the names. But `text.@this` is **sealed** — subclassing it is a locked-core change. The architect sent **option A (unseal text) to Ingi** (suggested yes); option B (separator overrides Type without subclassing) was rejected (a value whose Type says text but isn't a `text.@this` lies and fails the cast). On Ingi's yes: unseal text, `separator.@this : text.@this`, `[Kinds]` on text, the 5 kind classes → named-value entries, re-pin surface/decider under 783, NamedValuesBelongToTheType + list split/join green, rebuild `test/module/list/.build/{start,listops.test}.pr`.
-
-## For v3 (this version)
-Stage 2 accepted (decision 780). No reviewer flags carried in. The stage-3 trace corrected my first shape (the `FamilyOf` swap doesn't apply to the subclass families — `[Kinds]` stays for them); architect agreed.
+## Architect coordination
+Peer architect at `uds:/tmp/cc-socks/266.sock`. Sequence agreed: 789 ✅ → json producers (one commit each) ⏳ → navigator deletion + retire 10 tests (final commit) → single re-pin pass → send 2 list `.pr` paths. Reply Done/HASH/CHECK/OPEN after each.
