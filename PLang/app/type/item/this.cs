@@ -98,7 +98,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// Only item's family comes here — a number or duration kind (decimal, iso) is its own family's birth.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (declared is { } d && !d.kind.IsEmpty && raw is @this leaf && leaf.RawText is { } chars)
+        // The lazy-kind rebirth is for ITEM's OWN kinds — a declaration whose class is item ({item, kind: json}):
+        // its characters ride to a fresh source read through the kind. A declaration of another class ({table,
+        // xlsx}, a settings class) is not item's to make — it falls through and declines, so the owner's own
+        // Create (or the default's CreateItemDeclined) answers, never a silent re-source over the same text.
+        if (declared is { } d && !d.kind.IsEmpty && d.ClrType == typeof(@this) && raw is @this leaf && leaf.RawText is { } chars)
             return d.Make(chars, data.Context);
         if (raw is @this self) return self;
         if (raw is global::app.type.item.dict.@this or global::app.type.item.list.@this
