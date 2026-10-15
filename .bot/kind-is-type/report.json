@@ -2,6 +2,38 @@
   "branch": "kind-is-type",
   "sessions": [
     {
+      "id": "b8e1d4a2-3c7f-4a9b-9e52-6f0a1c2d3e4f",
+      "bot": "coder",
+      "timestamp_start": "2026-10-15T13:30:00Z",
+      "timestamp_end": "2026-10-15T13:30:00Z",
+      "intent": "Stage 3 of decision 774 — trace every type-family's kind machinery and produce the shape for making each family's kinds kind<T> (no implementation; shape goes to the architect).",
+      "before": {
+        "assumptions": "Stage 1 built kind<T> for number; the same shape applies to every family. [Kinds] + the base-class walk + the app-wide kind search + type.format all go; host kinds stay until 673.",
+        "risk": "Conflating the per-type .format filter with the serializer / format-in-play; miscounting which kinds are kind<T> vs named values vs host kinds."
+      },
+      "plan": ".bot/kind-is-type/coder/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/kind/this.Generic.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/item/this.cs",
+            "PLang/app/type/format/this.cs",
+            "PLang/app/type/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced the core kind mechanism: kind<T> ctor sets Family via T; FamilyOf/[Kinds] base-walk (item/this.cs:531-532); app-wide search (type/list/this.cs:46-69); type.format filter (type/this.cs:126 + type/format/this.cs) distinct from the serializer and from format-in-play. Per-family map fanned out to an Explore agent."
+        }
+      ],
+      "after": {
+        "status": "Trace in progress; shape doc (v3/stage3-shape.md) to follow, then sent to architect for approval before any implementation.",
+        "health": "n/a — no code change this version.",
+        "notes": "Deliverable is the stage-3 shape, not code."
+      }
+    },
+    {
       "id": "a7f3c2e1-9b4d-4e6a-8c21-5d7f0a2b3c4e",
       "bot": "coder",
       "timestamp_start": "2026-10-15T00:00:00Z",
