@@ -6,7 +6,7 @@ namespace app.type.item.path.scheme;
 /// at App construction (built-in file/http/https); an assembly loaded via <c>code.load</c> adds its
 /// own. Per-App, so multi-App test harnesses add different schemes per App without bleed.
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.type.item.path.@this>
 {
     private readonly Func<string, actor.context.@this, global::app.type.item.path.@this> _factory;
 
@@ -16,9 +16,6 @@ public sealed class @this : global::app.type.kind.@this
         ArgumentException.ThrowIfNullOrEmpty(scheme);
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
     }
-
-    /// <summary>A scheme is a kind of path.</summary>
-    protected internal override string Owner => "path";
 
     /// <summary>The path <paramref name="raw"/> names under this scheme.</summary>
     public global::app.type.item.path.@this Create(string raw, actor.context.@this context) => _factory(raw, context);
