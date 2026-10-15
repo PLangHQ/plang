@@ -1,0 +1,31 @@
+/ llm-writer: a value put into an LLM message goes whole up to the max, a long list is cut with a marker and its columns named, and %x.trim% gives the same view.
+/ This goal is the plan's index and its proof: each stage is a goal, each comment a behaviour we want,
+/ and the step under it runs the test that proves it. Tests live under this plan's folder at the path of
+/ what they test. The text is start.md; checks tests can't show are there too.
+Start
+- call Stage1
+- call Stage2
+- call Stage3
+- call Stage4
+
+Stage1
+/ a short value goes into the message whole, as today
+- call /plan/llm-writer/module/llm/ShortTextGoesWhole
+/ a text over the max is cut, and the LLM is told how much more there was
+- call /plan/llm-writer/module/llm/LongTextIsCutWithAMarker
+
+Stage2
+/ a list over 100 items: its columns and types first, then 100 rows, then "--- N more rows ---"
+- call /plan/llm-writer/module/llm/LongListIsCutWithColumns
+/ a dict gives its keys and their types
+- call /plan/llm-writer/module/llm/DictGivesItsKeysAndTypes
+
+Stage3
+/ an image is described, never inlined
+- call /plan/llm-writer/module/llm/ImageIsDescribed
+
+Stage4
+/ %x.trim% gives a list as the LLM would see it
+- call /plan/llm-writer/app/type/list/TrimIsTheLlmView
+/ a text's trim is its own, as today (a guard)
+- call /plan/llm-writer/app/type/text/TextTrimIsAsBefore
