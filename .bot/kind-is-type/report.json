@@ -22,9 +22,9 @@
         }
       ],
       "after": {
-        "status": "Stage 4 shape delivered to the architect (eede544e4). json value parses raw→plang dict/list (no JsonElement carrier); navigator deleted; text json wrapper+coiner go, closing Held's bare-name branch; csv/table a guard. Corrected the architect's assumption: http/settings/cache/llm already hold plang values — the real carrier-reads are the value-model files. 3 open Qs (delete serializer/json.cs?; strict magic-bytes scope?; scalar-root keep?). Awaiting approval before code.",
-        "health": "n/a — no code change this version (trace+shape).",
-        "notes": "Separator still held on Ingi (unseal text). On stage-4 approval: implement json-owns-bytes + remove navigator/text-wrapper/coiner + Held bare-name branch."
+        "status": "Stage 4 shape accepted (785). json PARSE half DONE + committed (305718c68): json.Parse streams raw→plang dict/list via the dict/list readers over the json token reader, no JsonElement carrier — ReadIntoIsADict + ArrayIsAList green, csv/table guard green, no C# regression (suite 256/22, +2 over baseline). The BORN-UNREAD half (JsonIsItemsKind, PassedOnUnread, AsJsonKeepsJson, 758) is blocked: the architect's Value.Is->type.Create door is stopped by 3 locked-core layers (type.Is ignores the kind; type.Create.Held same; set passes a materialized leaf not the raw string to Make) — surfaced with a proposed coherent fix (kind-aware type.Is + set.cs:257 + set hands Make the raw string). Awaiting the architect's call before touching type.Is/Make together.",
+        "health": "green at the json-core WIP (256/22); born-unread + navigator/wrapper/serializer deletions + strict pending the architect's ruling.",
+        "notes": "Separator still held on Ingi (unseal text). Stage-4 remaining: born-unread (3-layer fix), then delete navigator/text-wrapper/coiner + serializer.json (closing Held's bare-name branch), then strict in its own commit."
       }
     },
     {
