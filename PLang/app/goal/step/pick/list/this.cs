@@ -177,6 +177,7 @@ public sealed class @this
             else if (id == "@popular") await Share(a, context, _popular = new());
             else if (id.StartsWith("@also.", StringComparison.Ordinal)) _also[id["@also.".Length..]] = noul;
             else if (id.StartsWith(OptionKey, StringComparison.Ordinal)) await Choose(id[OptionKey.Length..], await Choice(a, context), context);
+            else if (id.StartsWith(KindKey, StringComparison.Ordinal)) Refine(id[KindKey.Length..], await Choice(a, context), context);
             else if (Branch(context).Any(b => $"{b.Module.Name}.{b.Name}" == id)) _branch[id] = noul;
             else if (id.Contains('.')) _named[id] = noul;
             else _choice[id] = (await Choice(a, context), a.Get<number>("confidence", context));
@@ -544,6 +545,10 @@ public sealed class @this
     // An option question's id: @option.{module}.{action}.{option} — apart from a common action's ({module}.{action}).
     private const string OptionKey = "@option.";
 
+    // A kind follow-up's id: @kindof.{module}.{action}.{option} — it refines the Option of the same key with the kind
+    // (or, for a generic, the element) the next exchange picks.
+    private const string KindKey = "@kindof.";
+
     private async Task<List<question.@this>> Questions(IEnumerable<string> popular, global::app.actor.context.@this context)
     {
         var questions = new List<question.@this>();
@@ -595,6 +600,54 @@ public sealed class @this
                 });
             }
         }
+        // a type a step coerced to may carry kinds a program names (ruling 10). Once the type is picked (an Option
+        // answered with a type whose kind is still empty), a follow-up asks which kind — the type's own kind.list
+        // (a number's int/decimal, an item's json), or, for a generic, the element type, offered the same way. A
+        // kind already picked (a non-empty kind) ends it; a type with no program-named kind is not asked.
+        foreach (var (key, (property, value)) in _option)
+        {
+            // only a slot that holds a type (a coercion: variable.set's Type, …) carries a kind
+            if (property.Type.ClrType != typeof(global::app.type.@this)) continue;
+            // the pick is the type by its name (stage 2) or the kinded type (after a refine); a kind already set ends it
+            var picked = Picked(value, context);
+            if (!picked.kind.IsEmpty) continue;
+            var kinds = await KindsOffered(picked, context);
+            if (kinds.Count == 0) continue;
+            questions.Add(new question.@this
+            {
+                Id = Key($"{KindKey}{key}"), Kind = Kind.KindOf,
+                Action = Catalog(key[..key.LastIndexOf('.')], context), Property = property, Of = picked.Name,
+                Values = [.. kinds, question.@this.None],
+            });
+        }
         return questions;
+    }
+
+    // The type a Type option picked: the kinded type once a refine set it, else the type named by the offer the
+    // stage-2 choice chose (its text).
+    private global::app.type.@this Picked(global::app.type.item.@this value, global::app.actor.context.@this context)
+        => value as global::app.type.@this
+           ?? context.App.type.list[new global::app.type.@this(Shown(value, context)), context];
+
+    // What a picked type offers as its kind: a generic (list, dict) is asked its element — any type, offered as the
+    // Type question is; any other type offers its own kind.list, less the internal (host) kinds a program never
+    // writes. The strings are the choices the follow-up shows and the pick is matched against.
+    private async Task<List<string>> KindsOffered(global::app.type.@this picked, global::app.actor.context.@this context)
+    {
+        if (picked.Name is "list" or "dict")
+            return (await context.App.type.list.Offers(_step)).Select(o => Shown(o, context)).ToList();
+        return picked.kind.list(context).Items()
+            .Where(k => !k.kind.IsEmpty && !k.Internal)
+            .Select(k => k.kind.Name).ToList();
+    }
+
+    // The kind follow-up's answer refines the Option it belongs to: the picked type gains the kind (a scalar's
+    // sub-sort) or the element (a generic's), as the full type {name, kind}. "none" leaves the type bare.
+    private void Refine(string key, string? kind, global::app.actor.context.@this context)
+    {
+        if (kind is null || kind == question.@this.None || !_option.TryGetValue(key, out var option)) return;
+        var picked = Picked(option.Value, context);
+        var kinded = context.App.type.list[new global::app.type.@this(picked.Name, kind), context];
+        _option[key] = (option.Property, kinded);
     }
 }

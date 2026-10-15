@@ -1,12 +1,12 @@
 {
   "name": "Decide",
-  "comment": "Decide which actions every step of this goal uses — the whole goal in two exchanges with the\ndecider, not one LLM call per step.\n\nThe decider is generic: it takes a state and typed questions and answers them. It knows nothing\nabout goals or steps. Everything goal-shaped is composed HERE: the state and the questions are\ntemplates (the words), and each step's Pick reads the answers (the numbers).\n\nStage 1 asks, per step, one choice — which module does the main work — and a yes/no per common\naction (decider.json). Stage 2 asks only what stage 1 left open, which each step's Pick decides:\nthe main module's action, a runner-up module, whether the step uses a module it scored under\ncertain, an if's branches, and on a step stage 1 was unsure of, which popular action it uses.",
+  "comment": "Decide which actions every step of this goal uses — the whole goal in two exchanges with the\ndecider, not one LLM call per step.\n\nThe decider is generic: it takes a state and typed questions and answers them. It knows nothing\nabout goals or steps. Everything goal-shaped is composed HERE: the state and the questions are\ntemplates (the words), and each step's Pick reads the answers (the numbers).\n\nStage 1 asks, per step, one choice — which module does the main work — and a yes/no per common\naction (decider.json). Stage 2 asks only what stage 1 left open, which each step's Pick decides:\nthe main module's action, a runner-up module, whether the step uses a module it scored under\ncertain, an if's branches, and on a step stage 1 was unsure of, which popular action it uses.\nStage 3 asks a follow-up only where stage 2 picked a coercion type that carries a kind a program\nnames (a number's decimal, an item's json, a generic's element); a build with none skips it.",
   "step": [
     {
       "index": 0,
       "text": "set %modules% = %!app.module.list%",
       "line": {
-        "number": 14
+        "number": 16
       },
       "code": [
         {
@@ -65,19 +65,13 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %modules% = %!app.module.list%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
       "index": 1,
       "text": "read \"/system/builder/llm/decider.json\", write to %decider%",
       "line": {
-        "number": 15
+        "number": 17
       },
       "code": [
         {
@@ -153,19 +147,13 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 1's saved code no longer holds — rebuilt: step 1 'read \"/system/builder/llm/decider.json\", write to %decider%': file.read: the default frozen for 'resolvevariables' is no option of this action any more.; variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
       "index": 2,
       "text": "set %stage% = 1",
       "line": {
-        "number": 17
+        "number": 19
       },
       "code": [
         {
@@ -207,19 +195,13 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 2's saved code no longer holds — rebuilt: step 2 'set %stage% = 1': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
       "index": 3,
       "text": "render template \"/system/builder/llm/templates/decider.state.template\", write to %state%",
       "line": {
-        "number": 18
+        "number": 20
       },
       "code": [
         {
@@ -285,19 +267,13 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 3's saved code no longer holds — rebuilt: step 3 'render template \"/system/builder/llm/templates/decider.state.template\", write to %state%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
       "index": 4,
       "text": "render template \"/system/builder/llm/templates/decider1.template\", write to %questions%",
       "line": {
-        "number": 19
+        "number": 21
       },
       "code": [
         {
@@ -363,19 +339,13 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 4's saved code no longer holds — rebuilt: step 4 'render template \"/system/builder/llm/templates/decider1.template\", write to %questions%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
       "index": 5,
       "text": "llm.decider State=%state%, Question=%questions%, write to %answer%",
       "line": {
-        "number": 20
+        "number": 22
       },
       "code": [
         {
@@ -479,19 +449,13 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 5's saved code no longer holds — rebuilt: step 5 'llm.decider State=%state%, Question=%questions%, write to %answer%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
       "index": 6,
       "text": "build.pick Goal=%goal%, Answer=%answer%, Popular=%decider.popular%",
       "line": {
-        "number": 21
+        "number": 23
       },
       "code": [
         {
@@ -563,7 +527,7 @@
       "index": 7,
       "text": "set %stage% = 2",
       "line": {
-        "number": 23
+        "number": 25
       },
       "code": [
         {
@@ -605,19 +569,13 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 7's saved code no longer holds — rebuilt: step 7 'set %stage% = 2': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
       "index": 8,
       "text": "render template \"/system/builder/llm/templates/decider.state.template\", write to %state%",
       "line": {
-        "number": 24
+        "number": 26
       },
       "code": [
         {
@@ -683,19 +641,13 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 8's saved code no longer holds — rebuilt: step 8 'render template \"/system/builder/llm/templates/decider.state.template\", write to %state%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
       "index": 9,
       "text": "render template \"/system/builder/llm/templates/decider2.template\", write to %questions%",
       "line": {
-        "number": 25
+        "number": 27
       },
       "code": [
         {
@@ -764,8 +716,8 @@
       ],
       "warning": [
         {
-          "key": "Reopened",
-          "message": "step 9's saved code no longer holds — rebuilt: step 9 'render template \"/system/builder/llm/templates/decider2.template\", write to %questions%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+          "key": "Unsure",
+          "message": "step 9 uses variable.set, which the decider was not sure of (0.88)"
         }
       ]
     },
@@ -773,7 +725,7 @@
       "index": 10,
       "text": "llm.decider State=%state%, Question=%questions%, write to %answer%",
       "line": {
-        "number": 26
+        "number": 28
       },
       "code": [
         {
@@ -880,8 +832,8 @@
       ],
       "warning": [
         {
-          "key": "Reopened",
-          "message": "step 10's saved code no longer holds — rebuilt: step 10 'llm.decider State=%state%, Question=%questions%, write to %answer%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+          "key": "Unsure",
+          "message": "step 10 uses variable.set, which the decider was not sure of (0.88)"
         }
       ]
     },
@@ -889,7 +841,7 @@
       "index": 11,
       "text": "build.pick Goal=%goal%, Answer=%answer%, Popular=%decider.popular%",
       "line": {
-        "number": 27
+        "number": 29
       },
       "code": [
         {
@@ -959,9 +911,369 @@
     },
     {
       "index": 12,
+      "text": "set %stage% = 3",
+      "line": {
+        "number": 31
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%stage%",
+              "variable": [
+                {
+                  "text": "%stage%",
+                  "code": [
+                    {
+                      "variable": "stage"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "text": "render template \"/system/builder/llm/templates/decider3.template\", write to %questions%",
+      "line": {
+        "number": 32
+      },
+      "code": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text"
+              },
+              "value": "/system/builder/llm/templates/decider3.template"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%questions%",
+              "variable": [
+                {
+                  "text": "%questions%",
+                  "code": [
+                    {
+                      "variable": "questions"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "text": "if %questions% contains \"@kindof\"",
+      "line": {
+        "number": 33
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%questions%",
+              "variable": [
+                {
+                  "text": "%questions%",
+                  "code": [
+                    {
+                      "variable": "questions"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "contains"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "@kindof"
+            }
+          ],
+          "child": [
+            {
+              "index": 15,
+              "text": "llm.decider State=%state%, Question=%questions%, write to %answer%",
+              "line": {
+                "number": 34,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "llm",
+                  "name": "decider",
+                  "property": [
+                    {
+                      "name": "State",
+                      "type": {
+                        "name": "text",
+                        "template": "plang"
+                      },
+                      "value": "%state%",
+                      "variable": [
+                        {
+                          "text": "%state%",
+                          "code": [
+                            {
+                              "variable": "state"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Question",
+                      "type": {
+                        "name": "dict",
+                        "template": "plang"
+                      },
+                      "value": "%questions%",
+                      "variable": [
+                        {
+                          "text": "%questions%",
+                          "code": [
+                            {
+                              "variable": "questions"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "model",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "jev-latest"
+                    }
+                  ]
+                },
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%answer%",
+                      "variable": [
+                        {
+                          "text": "%answer%",
+                          "code": [
+                            {
+                              "variable": "answer"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "item",
+                        "template": "plang"
+                      },
+                      "value": "%!data%",
+                      "variable": [
+                        {
+                          "text": "%!data%",
+                          "code": [
+                            {
+                              "variable": "!data"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "warning": [
+                {
+                  "key": "Unsure",
+                  "message": "step 15 uses variable.set, which the decider was not sure of (0.89)"
+                }
+              ]
+            },
+            {
+              "index": 16,
+              "text": "build.pick Goal=%goal%, Answer=%answer%, Popular=%decider.popular%",
+              "line": {
+                "number": 35,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "build",
+                  "name": "pick",
+                  "property": [
+                    {
+                      "name": "Goal",
+                      "type": {
+                        "name": "goal",
+                        "template": "plang"
+                      },
+                      "value": "%goal%",
+                      "variable": [
+                        {
+                          "text": "%goal%",
+                          "code": [
+                            {
+                              "variable": "goal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Answer",
+                      "type": {
+                        "name": "dict",
+                        "template": "plang"
+                      },
+                      "value": "%answer%",
+                      "variable": [
+                        {
+                          "text": "%answer%",
+                          "code": [
+                            {
+                              "variable": "answer"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Popular",
+                      "type": {
+                        "name": "list",
+                        "template": "plang"
+                      },
+                      "value": "%decider.popular%",
+                      "variable": [
+                        {
+                          "text": "%decider.popular%",
+                          "code": [
+                            {
+                              "variable": "decider"
+                            },
+                            {
+                              "property": "popular"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 17,
       "text": "call /system/builder/EmitBuildEvent kind=\"goal-decided\", goal=%goal%",
       "line": {
-        "number": 29
+        "number": 37
       },
       "code": [
         {
@@ -982,29 +1294,19 @@
               },
               "value": [{"name":"kind","type":{"name":"text"},"value":"goal-decided"},{"name":"goal","type":{"name":"item","template":"plang"},"value":"%goal%","variable":[{"text":"%goal%","code":[{"variable":"goal"}]}]}]
             }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
           ]
         }
       ],
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 12 uses goal.call, which the decider was not sure of (0.77)"
+          "message": "step 17 uses goal.call, which the decider was not sure of (0.89)"
         }
       ]
     }
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/system/builder/BuildGoal/Decide.goal",
-  "prPath": "/system/builder/BuildGoal/.build/decide.pr",
-  "hash": "09fe926fe798b2b26fdb776ec952666a3495e58b2fba00854e31c043123d56cd"
+  "file": "Decide.goal",
+  "hash": "9ac03a752b63bc185091c9d5ba2cc20cd4b69b3a55025c1d029d23b77b5d1ac8"
 }
