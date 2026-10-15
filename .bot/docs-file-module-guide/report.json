@@ -87,6 +87,53 @@
         "health": "green",
         "notes": "Fundamentals now cover app, module, type and the value lattice. One minor stale-source-doc finding recorded (type.list this[System.Type] XML comment says null-on-miss; code returns the clr entity). No production C# changed. Next: goal/data/channel/event/actor pages, then retire stale Documentation/architecture.md + type-system.md."
       }
+    },
+    {
+      "id": "c4f8a0d2-1e6b-4c9a-8f3d-5b2e7c1a9d44",
+      "bot": "docs",
+      "timestamp_start": "2026-10-15T00:40:00Z",
+      "timestamp_end": null,
+      "intent": "\"do everything\": write start.md for the remaining core concepts — goal, data, channel, event, actor, call, error (Wave A).",
+      "before": {
+        "assumptions": "The in-tree start.md pattern is established (v1/v2). Haiku subagents pointed at spine source files + a style brief + the v1/v2 examples produce accurate pages; I verify risky claims. data/channel/event/call are locked-core surfaces — document as-is, propose nothing.",
+        "risk": "Seven pages at once; locked-core accuracy matters most (event list, Data shape, error subclasses). A Haiku writer reading a deep subtree shallowly could assert a wrong signature — mitigated by spine-file targeting + my per-page verification pass before commit."
+      },
+      "plan": ".bot/docs-file-module-guide/docs/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/goal/start.md",
+            "PLang/app/data/start.md",
+            "PLang/app/channel/start.md",
+            "PLang/app/event/start.md",
+            "PLang/app/actor/start.md",
+            "PLang/app/call/start.md",
+            "PLang/app/error/start.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Seven core-concept pages drafted by parallel Haiku subagents, each pointed at its spine source files + the shared style brief + the v1/v2 pages. Writers verified against source and corrected the briefs where wrong (event: real 11-event list, own/declared are classes not events, clause handler is the module action not IClause; error: real subclass keys/statuses; data: Data.Merge does not exist). I quality-read data + call (locked core) in full, spot-verified claims, and reconciled all cross-links."
+        },
+        {
+          "paths": [
+            "PLang/app/data/start.md",
+            "PLang/app/channel/start.md",
+            "PLang/app/actor/start.md",
+            "PLang/app/call/start.md",
+            "PLang/app/event/start.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Review pass: reconciled tree-from-here cross-links (siblings written in parallel were marked 'not yet written'; now linked), and tightened the data page's view-tag passage after verifying Properties carries [Out,Store] AND [JsonIgnore]/[LlmIgnore] (not a contradiction)."
+        }
+      ],
+      "after": {
+        "status": "v3 complete — 7 core-concept pages (goal, data, channel, event, actor, call, error) authored by Haiku subagents and verified. Cross-links reconciled.",
+        "health": "green",
+        "notes": "The in-tree developer tree now covers app, module(+file), type(+item), goal, data, channel, event, actor, call, error. Several stale source comments surfaced during verification (recorded as findings, flagged for coder; no production C# edited this pass). Wave B (smaller concepts: setting/store/snapshot/task/test/keepalive/service/warning/parent/shortcut/variable) is scoped and inventoried for the next version."
+      }
     }
   ]
 }

@@ -1,7 +1,7 @@
 # docs — summary
 
 ## Version
-v2
+v3
 
 ## What this is
 
@@ -14,9 +14,10 @@ is a folder's doc because `Start.goal` is the entry point). Every page answers:
 *what is this, where is the source, how does the plang I write reach this C#?*
 
 - **v1** shipped the fundamentals Ingi named: the app root and the module system.
-- **v2** extends the tree to the **type system** and the **value lattice** — the
-  other half of the fundamentals ("how `item.list` works" was only sketched in
-  v1).
+- **v2** extended the tree to the **type system** and the **value lattice**.
+- **v3** ("do everything") added the 7 core concepts: **goal, data, channel,
+  event, actor, call, error**. The tree now covers every core concept a C#
+  developer meets reading the runtime.
 
 ## What was done
 
@@ -75,13 +76,37 @@ The XML doc on `type.list.@this`'s `this[System.Type clrType]` says it returns
 comment; the doc page describes the actual behaviour. Recorded in
 `docs-report.json`.
 
-## What's next (later versions)
+## v3 production method (Haiku, scaled)
 
-- `start.md` for `goal`, `data`, `channel`, `event`, `actor` as the tree grows.
+The 7 pages were drafted by **parallel Haiku (haiku-5.5) subagents**, each
+pointed at (a) the shared style brief, (b) its concept's **spine source files**
+to read and verify, and (c) the v1/v2 pages as voice reference. The writers
+corrected their briefs against source — the event page's real 11-event list,
+the error subclasses' real keys/statuses, and that `Data.Merge` does not exist.
+I quality-read the two locked-core pages (`data`, `call`) in full, spot-verified
+specific claims, reconciled the cross-links (parallel writers couldn't see each
+other's pages), and recorded the stale source comments the writers surfaced.
+
+## Stale source comments surfaced (findings, flagged for coder)
+
+- `goal/this.cs` "No item.@this base" — the goal IS an item (`this.Item.cs`).
+- `data/this.Result.cs` summary lists `Merge`; no `Merge` exists. CLAUDE.md's
+  "Data … Merge()" is stale too.
+- `GlobalUsings.cs` + `call/this.cs` comments still name the old `callstack`.
+- `type/list/this.cs` `this[System.Type]` XML says "null on miss"; returns `clr`.
+
+No production C# was edited this pass; all recorded in `docs-report.json`.
+
+## What's next (Wave B / later versions)
+
+- The smaller concepts: `setting`, `store`, `snapshot`, `task`, `test`,
+  `keepalive`, `service`, `warning`, `parent`, `shortcut`, and `variable` (under
+  `type/item/variable`). Inventoried and ready for the next version.
 - Retire / redirect the stale `Documentation/architecture.md` and
   `type-system.md` once the in-tree tree covers their ground.
+- Optionally apply the two CLAUDE.md-adjacent fixes (drop `Merge()`).
 
 ## Blockers
 
-None. The fundamentals (app, module, type, value lattice) are complete and
-verified for their scope.
+None. The core concepts (app, module, type, value lattice, goal, data, channel,
+event, actor, call, error) are complete and verified for their scope.
