@@ -71,31 +71,33 @@ public class FormatKindTests
         await Assert.That(app.type.list["dict"].kind.Compressible).IsFalse();
     }
 
+    // A type's formats are just its kinds that have a MIME or an extension — asked of the type's own kind
+    // (its empty kind holds them) directly; there is no separate `.format` view.
+    private static List<global::app.type.kind.@this> Formats(global::app.@this app, string type)
+        => ((global::app.type.kind.empty.@this)app.type.list[type].kind).Kinds
+            .Where(k => k.Mime.Count > 0 || k.Extension.Count > 0).ToList();
+
     [Test] public async Task ATypesFormats_AreItsKindsThatHaveAMimeOrExtension()
     {
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var text = app.type.list["text"].format.list.Select(k => k.Name).ToList();
+        var text = Formats(app, "text").Select(k => k.Name).ToList();
         await Assert.That(text).Contains("");       // its own format: plain text
         await Assert.That(text).Contains("md");
         await Assert.That(text).Contains("ini");
-        await Assert.That(app.type.list["text"].format.list.First(k => k.IsEmpty).Mime).Contains("text/plain");
+        await Assert.That(Formats(app, "text").First(k => k.IsEmpty).Mime).Contains("text/plain");
         // number has kinds (its precisions) but reads no format
-        await Assert.That(app.type.list["number"].format.list.Count).IsEqualTo(0);
+        await Assert.That(Formats(app, "number").Count).IsEqualTo(0);
         await Assert.That(ctx).IsNotNull();
     }
 
-    [Test] public async Task ATypesFormats_AreReachedFromPlang()
+    // image's formats are its kinds that carry a MIME or extension — png, jpg, … — asked of its kinds directly.
+    [Test] public async Task ImagesFormats_AreItsMimeAndExtensionKinds()
     {
         await using var app = NewApp();
-        var ctx = app.actor.list.User.Context;
-        var read = await new global::app.type.item.variable.parser.@this("%!app.type.image.format.list%").Variable.Single().Start(ctx);
-        await read.IsSuccess();
-        var formats = new List<string>();
-        foreach (var (_, entry) in await read.EnumerateItems())
-            formats.Add((await (await entry.Get("name")).Value())!.ToString()!);
-        await Assert.That(formats).Contains("png");
-        await Assert.That(formats).Contains("jpg");
+        var names = Formats(app, "image").Select(k => k.Name).ToList();
+        await Assert.That(names).Contains("png");
+        await Assert.That(names).Contains("jpg");
     }
 
     [Test] public async Task PlangsOwnFormat_IsTheWireTypesPlangKind()

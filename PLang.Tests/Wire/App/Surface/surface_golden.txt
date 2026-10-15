@@ -1140,10 +1140,6 @@ enum app.type.format.TokenKind
   static const Object : app.type.format.TokenKind
   static const String : app.type.format.TokenKind
 
-class app.type.format.this
-  ctor(app.type.kind.this kind)
-  list : System.Collections.Generic.IReadOnlyList<app.type.kind.this> { get; }
-
 struct app.type.format.value.Reader : app.type.format.IReader
   BeginArray() : System.Void
   BeginObject() : System.Void
@@ -3330,7 +3326,6 @@ class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, 
   Values : System.Collections.Generic.IReadOnlyList<System.String> { get; init; }
   ctor(System.String name, System.String kind = …, System.Boolean strict = …, app.type.item.template.kind.this template = …)
   ctor(System.String name, app.type.this family)
-  format : app.type.format.this { get; }
   kind : app.type.kind.this { get; init; }
   override Equals(System.Object obj) : System.Boolean
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
