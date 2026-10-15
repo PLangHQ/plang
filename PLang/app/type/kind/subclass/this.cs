@@ -15,4 +15,9 @@ public sealed class @this<T> : global::app.type.kind.@this<T> where T : global::
     public @this(string name, System.Type @class) : base(name) => _class = @class;
 
     public override System.Type? ClrForm => _class;
+
+    /// <summary>The class values of this kind are: the subclass itself (a <c>{text, separator}</c> value is a
+    /// <c>separator.@this</c>, a <c>{screen, window}</c> a <c>window</c>) — so Create, Offer and the read use it,
+    /// never the abstract or wider family class (decision 787: a kind's class is the class its values are).</summary>
+    public override System.Type? Of(System.Type? type) => _class;
 }
