@@ -311,6 +311,33 @@ public partial class @this
     }
 
     /// <summary>
+    /// A USE opens the value — the door a navigation, an enumeration or a typed ask reaches instead of
+    /// <see cref="Value"/>. A resting source (an unread <c>{item, json}</c>) parses once through its kind
+    /// and this Data narrows to the parsed list/dict (decision 787), the source riding as history (so it
+    /// parses once, never again). A value that is not a resting source answers exactly as <see cref="Value"/>
+    /// does — nothing narrows. A bad parse answers <c>MaterializeFailed</c> on this Data (never a throw to a
+    /// courier); the use sees <see cref="Success"/> false and surfaces it. A courier never calls this — it
+    /// keeps the resting source unread through <see cref="Value"/>.
+    /// </summary>
+    internal async ValueTask<global::app.type.item.@this> Open()
+    {
+        var value = await Value();
+        if (!Success || _context is null || value is not global::app.type.item.source rest) return value;
+        try
+        {
+            if (rest.Parse(_context) is not { } parsed) return value;
+            parsed.history.Add(rest);               // the source rides the parsed value's history
+            if (rest.Cacheable) _item = parsed;     // narrow (787) — the next use reads the parsed value
+            return parsed;
+        }
+        catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException or System.NotSupportedException)
+        {
+            Fail(rest.Unread(ex, this));
+            return value;
+        }
+    }
+
+    /// <summary>
     /// The typed instance — THE value. Internal: for type-internal seams (a
     /// file reading itself through the channel) and the wire writer. Couriers
     /// move the whole Data and never reach here.
@@ -475,7 +502,7 @@ public partial class @this
         // real list/dict and the value narrows to it (decision 787), so foreach walks its elements — not the
         // one unread source. A value already walkable (the list/dict a %var% names) keeps its door shut.
         if (walked._item is global::app.type.item.source)
-            return (await walked.Value()).EnumerateItems(_context);
+            return (await walked.Open()).EnumerateItems(_context);
         return walked._item.EnumerateItems(_context);
     }
 
@@ -519,6 +546,9 @@ public partial class @this
         // deep-renders, and the resolved value's own type then converts to T.
         if (T.IsName && Peek() is T name)
             return T.Create(name, null, this);
+        // A resting source (json) rests here too — the target's own Create opens what it needs: a dict/list
+        // parses the raw into itself, a text takes its characters as they are. Conversion never rebinds (the
+        // answer is this caller's view), so the source is not narrowed — only Value/Get/enumeration narrow.
         var value = await Value();
         // a read that failed has said why — nothing is made from it
         if (!Success) return null;

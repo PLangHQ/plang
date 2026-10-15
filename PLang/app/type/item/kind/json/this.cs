@@ -32,6 +32,16 @@ public sealed class @this : global::app.type.kind.@this
 
     public override System.Type? ClrForm => typeof(JsonElement);
 
+    // json RESTS (ruling 6, decision 792): its untyped materialize does NOT parse — an unread {item, json}
+    // answers itself, so a courier (content.Value, a variable set, passing a value on, a url's or a render's
+    // result) carries it unread. Only a USE opens it: navigation, enumeration, `is`, a typed ask each parse once
+    // (through Parse) and narrow. The source form IS the rest: the source materialize sees a source come back
+    // and answers itself.
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this?> Load(
+        object raw, global::app.actor.context.@this ctx)
+        => new(ctx.Ok(new global::app.type.item.source(raw,
+            ctx.App.type.list[new global::app.type.@this("item", "json"), ctx])));
+
     // Every character written as itself (Icelandic letters, "—"); the ones a page reads as markup (< > & ' +)
     // still escaped, as json in an HTML page needs.
     private readonly System.Text.Encodings.Web.JavaScriptEncoder _encoder

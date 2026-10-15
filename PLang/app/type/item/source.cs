@@ -200,6 +200,10 @@ public class source : @this
             if (_type.kind is { IsEmpty: false } kind
                 && await asking.App.type.list.Kind(_type, asking).Load(_value, asking) is { } loaded)
             {
+                // A kind that RESTS answers its materialize with an unread source (json, ruling 6): the courier
+                // keeps it unread — this source answers itself, parsed only at a use (navigation / enumeration /
+                // is / a typed ask). Any other kind resolves its value now.
+                if (loaded.Peek() is global::app.type.item.source) return this;
                 var decoded = await loaded.Value();
                 decoded.history.Add(this);   // the source rides the materialized value's history
                 return decoded;
@@ -230,21 +234,38 @@ public class source : @this
         }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException or System.NotSupportedException)
         {
-            // SOURCE authors its own failure story — the declared form did not parse
-            // as its declared {type, kind}. Keyed MaterializeFailed and naming the
-            // binding so navigation / set / read all surface one actionable error at
-            // first touch, never thrown to the courier. A JsonException carries the JSON
-            // path + line STJ stamped (which slot in WHICH .pr, at what line) — append it
-            // so a malformed .pr is pinpointed, not just named.
-            var where = ex is System.Text.Json.JsonException je && (je.Path != null || je.LineNumber != null)
-                ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
-                : "";
-            data.Fail(new global::app.error.@this(
-                $"failed to read %{data.Name}% as {_type.Name}{(_type.kind.IsEmpty ? "" : $"/{_type.kind.Name}")}: {ex.Message}{where}",
-                "MaterializeFailed", 400) { Exception = ex });
+            data.Fail(Unread(ex, data));
             return Absent;
         }
     }
+
+    /// <summary>
+    /// SOURCE authors its own failure story — the declared form did not parse as its declared
+    /// <c>{type, kind}</c>. Keyed <c>MaterializeFailed</c> and naming the binding so navigation /
+    /// enumeration / a typed ask all surface one actionable error at first touch, never thrown to a
+    /// courier. A JsonException carries the JSON path + line STJ stamped (which slot in WHICH .pr, at
+    /// what line) — appended so a malformed source is pinpointed, not just named. <see cref="Value"/>'s
+    /// own parse and a use opening a resting source (<c>data.Opened</c>) both answer it.
+    /// </summary>
+    internal global::app.error.@this Unread(System.Exception ex, global::app.data.@this data)
+    {
+        var where = ex is System.Text.Json.JsonException je && (je.Path != null || je.LineNumber != null)
+            ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
+            : "";
+        return new global::app.error.@this(
+            $"failed to read %{data.Name}% as {_type.Name}{(_type.kind.IsEmpty ? "" : $"/{_type.kind.Name}")}: {ex.Message}{where}",
+            "MaterializeFailed", 400) { Exception = ex };
+    }
+
+    /// <summary>
+    /// A resting kind (json) answered its own <see cref="Value"/> unread — a courier keeps it so. A USE
+    /// opens it: the raw parses through the kind, once (navigation / enumeration), and the holding Data
+    /// narrows to the parsed dict/list (decision 787). Null when there is no kind to open through (an empty
+    /// kind, or one the list doesn't carry): nothing to parse, the value is used as it is. A bad parse throws
+    /// — the caller answers it through <see cref="Unread"/>.
+    /// </summary>
+    internal global::app.type.item.@this? Parse(global::app.actor.context.@this ctx)
+        => _type.kind.IsEmpty ? null : ctx.App.type.list.Kind(_type, ctx)?.Parse(_value, ctx);
 
     /// <summary>The text a partial template is, off its text face (a byte raw declared text is its UTF-8) —
     /// the one renderer fills it. Null for a plain source and a whole <c>%ref%</c> (a reference, resolved
@@ -284,7 +305,10 @@ public class source : @this
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
     {
-        var materialized = await parent.Value();
+        // Navigation is a USE: a resting source (json) opens here — parsed once through its kind, the Data
+        // narrowing to the parsed dict/list (decision 787) — then the parsed value is navigated. A bad parse
+        // fails parent (MaterializeFailed), surfaced here, never a throw to the courier.
+        var materialized = await parent.Open();
         if (!parent.Success) return parent;
         return await materialized.Get(parent, key);
     }
