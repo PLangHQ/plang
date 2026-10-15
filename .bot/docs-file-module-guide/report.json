@@ -47,6 +47,20 @@
         "health": "green",
         "notes": "Fresh code-mirrored developer doc tree started under PLang/app/ as start.md files. No production C# changed. Next versions extend the tree (type/item, goal, data, channel, event, actor) and retire the stale Documentation/architecture.md."
       }
+    },
+    {
+      "id": "b7e2f4a1-9c3d-4e6b-8a2f-1d5c7e9b0a33",
+      "bot": "docs",
+      "timestamp_start": "2026-10-15T00:20:00Z",
+      "timestamp_end": null,
+      "intent": "Extend the in-tree developer doc tree with the type system (type/) and the value lattice (type/item/) — fundamentals part 2.",
+      "before": {
+        "assumptions": "type.@this is the type entity {Name, Kind, Strict, Template} and is itself an item; type.list.@this (AppTypes) is the registry reached at app.type via type.root, selection-only, with the CLR<->plang PlangName map. item.@this is the value apex; type.item.list.@this<T> is the native plang list. The stale Documentation/type-system.md predates these shapes.",
+        "risk": "The type/item subtree is very large (50+ value types, deep number/kind matrix). v2 must cover the fundamentals (entity, registry, apex, item.list, core scalars) and name-but-not-expand the leaves, or it never ships."
+      },
+      "plan": ".bot/docs-file-module-guide/docs/v2/plan.md",
+      "actions": [],
+      "after": null
     }
   ]
 }
