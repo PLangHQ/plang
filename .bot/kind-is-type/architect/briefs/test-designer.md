@@ -1,5 +1,25 @@
 # test-designer: kind-is-type
 
+## v2 (decision 774, 2026-10-15): read this first
+
+The plan is rewritten (`start.md`, `start.goal`): no type is renamed, a kind is a type under its parent (`kind<T> : kind : type`), and the stages are renumbered (0 done, 1 the probe on number, 2 settings, 3 every family, 4 a format's bytes, 5 the builder, 6 leftovers). Your tests keep their paths; what changes:
+
+```plang
+kind-is-type v2, the test-designer's part (decision 774)
+Start
+- SettingClassIsAType: assert %!llm.setting!type.name% equals "app.module.llm.setting" (a type of its own, named by its namespace), red today ("setting")
+- write app/setting/OldSettingRowStillReads: a settings row saved in today's shape ({setting, kind: <path>}) reads back into its class after the change (a guard, green today; commit the saved store as a fixture beside it)
+- replace ModuleTypeIsNamedByItsModule with app/type/kind/SameKindNameUnderTwoTypes: two types that each have a kind of the same name are each found through their own parent (a test DLL type, or the fixture provider, if no two plang types share a kind name today); delete the old test and its .pr
+- the held kind.name asserts: "decimal", "json", "iso" stand (a kind's name is its name under its parent)
+- start.goal is already renumbered; rebuild its .pr and the changed tests on a fresh binary, run, push
+LIMITS: tests only; never hand-edit a .pr
+DONE WHEN: each test red for its own reason (or a guard green), pushed
+REPLY: the hash and the counts
+WHY: no type is renamed now, so stage 1's naming tests go and settings get their own
+```
+
+## v1 (2026-10-14)
+
 Traces to: decisions 743–749 in `.bot/kind-is-type/architect/summary.md`; the plan is `test/plan/kind-is-type/start.md` with its index `start.goal`.
 
 ## Why you first
