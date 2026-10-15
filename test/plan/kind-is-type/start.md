@@ -27,8 +27,8 @@ Ingi: "a strong type is information for the LLM": a slot typed `separator` tells
 
 ## The rulings (Ingi, 2026-10-14)
 
-1. **A kind is a type.** A type's kind is another type: `{list, kind: path}` (the element), `{text, kind: json}` (a format), `{number, kind: decimal}` (a sort). It nests: `list<list<path>>`. The written form stays `{name, kind}` (Ingi: "why would you suggest changing the form?"); what changes is that `kind` names a type, not a codec.
-2. **Which kinds become types:** formats (text's json, md, csv; image's png; duration's short, iso, dotnet; size's iec, si; template's plang), sub-sorts (number's int, long, double, decimal; path's file, http) and generic elements. (747, 748.)
+1. **A kind is a type.** A type's kind is another type: `{list, kind: path}` (the element), `{item, kind: json}` (a format), `{number, kind: decimal}` (a sort). It nests: `list<list<path>>`. The written form stays `{name, kind}` (Ingi: "why would you suggest changing the form?"); what changes is that `kind` names a type, not a codec.
+2. **Which kinds become types:** formats, each under the type its content becomes (decision 773; Ingi: "json is not text"): item's json (it holds any value), text's md and xml, table's csv, image's png; duration's short, iso, dotnet; size's iec, si; template's plang), sub-sorts (number's int, long, double, decimal; path's file, http) and generic elements. (747, 748.)
 3. **Named values aren't kinds.** A type carries its own list of named values: closed (choice, bool's true and false) or open (separator's line, comma, tab, space, semicolon, while any characters are allowed). separator stays a type under text, because the names are information for the LLM ("do we want to strong type it so llm gets info").
 4. **The C# navigators go where they only served json.** Parsed json becomes a plang dict or list (717), so item's json kind (`type/item/kind/json/`) and its own copy of count/first/last go. The C# host kinds for reflection (`kind/reflection`, `kind/dict`, `kind/list` over a C# object) stay until "avoid reflection; one door to a type's members" (673, the backlog).
 5. **A format's work belongs to its type:** its mime, its extension, reading and writing its bytes (Ingi: "it own it self then, it will know how to (de)parse it self").
@@ -77,7 +77,7 @@ A type's kind is another type, written `{name, kind}` as today. The builder and 
 
 ```
 - set %n% = "1.5" as decimal           → %n!type% is {number, kind: decimal}; decimal is a type under number
-- if %x% is text, …                    → true for a json value: json is under text
+- set %x% = '{"a":1}' as json          → %x!type% is {item, kind: json}: json is item's, as it holds any value; %x% is text is false
 - set %files% = ["a.txt"] as list of path   → %files[0]% is born a path, at its first read
 - set %grid% = [[...]] as list of list of path   → a kind nests
 - split %x% by ","                     → Separator is "comma", one of separator's named values; "with ' | '" keeps any characters
@@ -109,7 +109,7 @@ The Type question lists every type by its name, kinds included, and a generic as
 ```
 - set %n% = "1.5" as decimal           → Type={number, kind: decimal}          (today: number 5/5)
 - set %files% = [...] as list of path  → Type=list, and "a list of what?" → path, so {list, kind: path}   (today: list 2/5, path 3/5)
-- set %x% = '{"a":1}' as json          → Type={text, kind: json}               (today: dict 5/5)
+- set %x% = '{"a":1}' as json          → Type={item, kind: json}               (today: dict 5/5)
 - read 'notes.md' as text              → Type=text                             (today: {file, kind: md} 5/5)
 - set %d% = "PT30S" as iso duration    → Type={duration, kind: iso}            (today: duration 5/5)
 - set %n% = 5                          → no Type, as before (guard)
@@ -133,11 +133,12 @@ The demolition list below, each checked by grep.
 | the `kind` class itself: a type's kind is a type (decision 768) | `type/kind/this.cs` and its `empty`, `list`, `subclass` | 2 |
 | `type.format`, a filter over the kinds with a MIME or an extension, read only by its own tests (768) | `type/this.cs:117`, `type/format/this.cs`; `FormatKindTests` asks the types under a type instead | 2 |
 | item's json navigator: walking a `JsonElement`, its own `count`/`first`/`last` | `type/item/kind/json/this.cs` (`:64–84`, `:89–91`) | 3 |
+| text's wrapper kind for characters in another format (`{text, json}`): json is item's (773) | `type/item/text/kind/format/this.cs` | 3 |
 | "is this an action slot?" asked by name | `goal/step/action/this.Validate.cs:54–55`, `formal/reader.cs:221` and `:349`, `action/serializer/Reader.cs:153–154` (F8.1) | 5 |
 | `ToString` writing `name<kind>` only for list, dict and choice | `type/this.cs:547` (F4.2) | 5 |
 | the stopgap where `%x!type.kind%` answers a clr carrier or its name | 80e4c9e4e (the type's `kind` member) | 5 |
 
-**Stays:** the written form `{name, kind}`; `text`, `number` and the other short names a developer writes; the reflection and C# host kinds (`kind/reflection`, `kind/dict`, `kind/list` over C# objects) until 673; decision 401 (json stays text until read into).
+**Stays:** the written form `{name, kind}`; `text`, `number` and the other short names a developer writes; the reflection and C# host kinds (`kind/reflection`, `kind/dict`, `kind/list` over C# objects) until 673. **Changes:** decision 401 (json stays text until read into) becomes "json stays its raw bytes until read into" (773); text's wrapper kind for json (`type/item/text/kind/format/`) goes in stage 3.
 
 ## What tests can't show (checks the coder runs and reports)
 
