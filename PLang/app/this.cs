@@ -426,7 +426,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         try
         {
             var decoded = await context.App.type.list.Mime("application/json").Decode(raw, context, "app.pr");
-            if (await decoded.Value<global::app.type.item.dict.@this>() is not { } identity || !decoded.Success)
+            // app.pr rests as an {item, json} source (805); reading the identity is a USE, so it opens through
+            // the use door — json parses the bytes into the dict the app's [Store] face reads back from.
+            if (await decoded.Open() is not global::app.type.item.dict.@this identity || !decoded.Success)
                 return Unreadable(decoded.Error?.Message ?? "not a json object");
             new global::app.type.item.kind.reflection.@this().Read(identity, this, context);
             _stored = true;

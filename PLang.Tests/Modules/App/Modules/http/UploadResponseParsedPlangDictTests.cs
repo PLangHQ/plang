@@ -70,12 +70,12 @@ public class UploadResponseParsedPlangDictTests
         var result = await action.Start();
 
         await result.IsSuccess();
-        // After the first touch the plang type narrows to dict (decision 787).
-        await result.Value();
-        await Assert.That(result.Type.Name).IsEqualTo("dict");
+        // A use opens the courier-rested json (805): navigation parses once, .id reads as a plang number,
+        // and the value narrows to a plang dict (787).
         var id = await result.Get("id");
         var materialized = await id.Value();
         await Assert.That(materialized).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(materialized!.ToString()).IsEqualTo("42");
+        await Assert.That(result.Type.Name).IsEqualTo("dict");
     }
 }
