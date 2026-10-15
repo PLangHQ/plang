@@ -138,6 +138,7 @@ The demolition list below, each checked by grep.
 | "is this an action slot?" asked by name | `goal/step/action/this.Validate.cs:54–55`, `formal/reader.cs:221` and `:349`, `action/serializer/Reader.cs:153–154` (F8.1) | 6 |
 | `ToString` writing `name<kind>` only for list, dict and choice | `type/this.cs:547` (F4.2) | 6 |
 | the stopgap where `%x!type.kind%` answers a clr carrier or its name | 80e4c9e4e | 6 |
+| a source's text face checking `_type.Name == "text"` beside `_type.kind.IsText` (a plain text's empty kind answers `IsText` false until its format loads lazily); the empty kind answers before loading, and the name check goes | `type/item/source.cs` (the text face), `type/kind/empty/this.cs` | 6 |
 | the codeanalyzer's stage 0–3 cleanups (82d8866ae): the dead `TypeDescription` constant; the stale class doc naming removed `BuildTypeEntries`/`Promote`; `subclass.Offers` reflecting `GetProperty("Offer")` per call (bound once, as `type/this.cs:810` reads a declared fact) | `type/this.cs:150–166`, `:21–26`, `:144–149`; `type/kind/subclass/this.cs:31–34` | 6 |
 
 **Stays:** every type's name and its `[PlangType]` word; the written form `{name, kind}`; the load-time refusal of two classes claiming one name; every `.pr`, prompt and saved row as it is; the C# host kinds until 673.
