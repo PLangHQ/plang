@@ -37,6 +37,24 @@ hardlinks `os/system`→bin, so a source rebuild is live in bin automatically.
    diff is that drift, not stage 3. Blocks a clean teaching-edit re-pin. Pending the architect's call: re-pin the
    accumulated drift now, or clear the pre-778 staleness as separate debt first.
 
+## Measurement (5 builds each, fresh cache:skip, jq) — after teaching
+
+| sentence | result 5/5 | vs baseline |
+|---|---|---|
+| `as decimal` | `{number, kind: decimal}` 5/5 ✓ | baseline number 5/5 — now carries the kind |
+| `as list of path` | `{list, kind: path}` 5/5 ✓ | baseline 2/3 flaky — now solid; `[0]` born path |
+| `set %n% = 5` (no as) | `number`, no kind 5/5 ✓ | guard holds |
+| `as text` | `text` 5/5 ✓ | guard holds |
+| `read 'notes.md' as text` | `{file, kind: md}` 5/5 | baseline issue 20 (extension-typed); md, never goal/llm (the architect's check passes) |
+| `as json` | `dict` 5/5 ✗ | unchanged — stage 2 picks dict, not item |
+| `as iso duration` | `duration` bare 5/5 ✗ | @kindof fires, offers {short, iso, dotnet, none}, names "as iso", but the model answers none |
+
+**Key finding:** editing type DESCRIPTIONS did not move json or iso. Descriptions feed prompt C (the WRITER), not the
+decider's stage-2 Type question (criteria names + the ask wording only). So the base-type pick (dict vs item) and the
+kind follow-up are driven by the QUESTION wording — `set.notes` `ask:` and `decider3.template` — not descriptions. The
+description edits remain correct teaching (writer + type page) but aren't the lever for these two. Reported to the
+architect; holding for the go-ahead to tune the ask + follow-up wording.
+
 ## Still to do
 
 Teaching for the base-pick; measure the extra-exchange count (how many builds take stage 3); verify `as text` /
