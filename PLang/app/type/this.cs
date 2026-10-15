@@ -107,10 +107,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     [System.Diagnostics.CodeAnalysis.AllowNull]
     public global::app.type.kind.@this kind
     {
-        get => _kind;
-        init => _kind = value ?? new global::app.type.kind.empty.@this(Name);
+        get => _kind!;
+        init => _kind = value ?? BornKind();
     }
-    private readonly global::app.type.kind.@this _kind;
+    private readonly global::app.type.kind.@this? _kind;
+
+    /// <summary>This type's empty kind — a plain type mints one for its name. A kind is itself a type
+    /// (<c>kind : type</c>), and a kind has no sub-kind of its own: the empty kind answers null here,
+    /// ending both the ctor's kind-minting chain and any serializer walking <c>.kind.kind…</c>.</summary>
+    protected virtual global::app.type.kind.@this? BornKind() => new global::app.type.kind.empty.@this(Name);
 
     /// <summary>The formats this type reads — its kinds that have a MIME or an extension
     /// (<c>%!app.type.image.format.list%</c>).</summary>
@@ -164,7 +169,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public @this(string name, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
     {
         Name = name.ToLowerInvariant();
-        _kind = string.IsNullOrEmpty(kind) ? new global::app.type.kind.empty.@this(Name) : new global::app.type.kind.@this(kind);
+        _kind = string.IsNullOrEmpty(kind) ? BornKind() : new global::app.type.kind.@this(kind);
         Strict = strict;
         Template = template;
         // The birth door starts pointing at the one-shot binder, which swaps itself for the closed thunk (or
@@ -836,11 +841,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         var full = parent.Context.App.type.list[this, parent.Context];
         var member = await new global::app.type.clr.@this(full, parent.Context).Get(parent, key);
-        // a type's own kind is, to plang, its name (`%x!type.kind%` is "json") — nothing when it has none
-        if (member.Peek() is global::app.type.clr.@this { Value: var held } && ReferenceEquals(held, full.kind))
+        // a type's own kind is, to plang, the kind itself — navigable (.name), rendering/comparing as its
+        // name; nothing when it has none. The kind is an item now (kind : type), so the walk may land it
+        // directly or still wrapped in a clr carrier — either way it is the type's kind.
+        var landed = member.Peek() is global::app.type.clr.@this { Value: var held } ? held : member.Peek();
+        if (ReferenceEquals(landed, full.kind))
             return full.kind.IsEmpty
                 ? new global::app.data.@this(key, global::app.type.item.@null.@this.Instance, context: parent.Context)
-                : new global::app.data.@this(key, new global::app.type.item.text.@this(full.kind.Name), context: parent.Context);
+                : new global::app.data.@this(key, full.kind, context: parent.Context);
         return member.IsInitialized ? member : await Setting(parent, key) ?? member;
     }
 

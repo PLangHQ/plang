@@ -17,10 +17,8 @@ namespace app.type.kind;
 /// factory. A kind holds no context: its verbs take the caller's. Equality is by
 /// <see cref="Name"/> (case-insensitive); the wire form is the name string.</para>
 /// </summary>
-public class @this
+public class @this : global::app.type.@this
 {
-    public string Name { get; }
-
     private readonly string? _owner;
     private readonly System.Collections.Generic.IReadOnlyList<string> _mime = [];
     private readonly System.Collections.Generic.IReadOnlyList<string> _extension = [];
@@ -42,10 +40,7 @@ public class @this
     public delegate global::System.Threading.Tasks.Task<global::app.data.@this> Decoder(byte[] raw,
         global::app.actor.context.@this context, string name, global::app.type.item.path.@this? origin);
 
-    public @this(string name)
-    {
-        Name = name ?? throw new System.ArgumentNullException(nameof(name));
-    }
+    public @this(string name) : base(name ?? throw new System.ArgumentNullException(nameof(name))) { }
 
     /// <summary>Every kind <paramref name="assembly"/> builds from nothing — each kind class (not abstract, a
     /// parameterless ctor), one instance each. How the type registry finds the kinds it holds, and how a choice over a
@@ -154,13 +149,13 @@ public class @this
 
     /// <summary>What a value of this kind can be in <paramref name="step"/>, as the decider is offered it: one of the
     /// step's own variables (<c>%field%</c>), each once. A closed set offers its options.</summary>
-    public virtual System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
+    public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
         => new(new global::app.type.item.variable.parser.@this(step.Text).Variable
             .DistinctBy(v => v.Text).Cast<global::app.type.item.@this>().ToList());
 
     /// <summary>Whether what this kind offers is all a value of it can be (a choice's options, a bool's true and
     /// false); false for an offer that is a convenience over an open set (the step's variables, a goal's name).</summary>
-    public virtual bool IsClosed => false;
+    public override bool IsClosed => false;
 
     /// <summary>Whether a value of C# class <paramref name="clr"/> rides as this kind — its
     /// <see cref="ClrForm"/> takes it.</summary>
@@ -294,12 +289,27 @@ public class @this
         => throw new System.NotSupportedException(
             $"cannot convert {source.Type?.Name} into kind '{Name}'");
 
+    /// <summary>A kind held AS A VALUE writes its own name — <c>%x!type.kind%</c> is "json", "decimal".
+    /// The kind is a type, but its bare face is the subtype word; navigation reaches the rest (.name).</summary>
+    public override global::System.Threading.Tasks.ValueTask Output(
+        global::app.type.format.IWriter writer, global::app.View mode, global::app.actor.context.@this? context)
+    {
+        writer.String(Name);
+        return default;
+    }
+
     /// <summary>Write a host value OF this kind to the wire — json emits raw json, <c>*</c>
     /// reflects a POCO's tagged fields. The carrier delegates its <c>Output</c> here.</summary>
     public virtual global::System.Threading.Tasks.ValueTask Output(
         object obj, global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? ctx)
         => throw new System.NotSupportedException($"kind '{Name}' cannot write itself");
+
+    /// <summary>A kind held AS A VALUE lowers to its name — its value IS the subtype word ("md",
+    /// "decimal"), so a text coercion and <c>%x!type.kind% equals "md"</c> read it as that name.
+    /// Navigation reaches the rest (.name, .list). Other targets fall to the base.</summary>
+    internal override object? Clr(System.Type target)
+        => target == typeof(string) || target == typeof(object) ? Name : base.Clr(target);
 
     /// <summary>Lower a value OF this kind INTO the CLR shape <paramref name="target"/> asks for
     /// — the clr carrier delegates its lower here. json bridges its content to a reader and drives

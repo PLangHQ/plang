@@ -22,6 +22,10 @@ public sealed class @this : global::app.type.kind.@this
 
     public @this(string owner) : base("") => _owner = owner;
 
+    /// <summary>A kind has no sub-kind — null ends the <c>kind : type</c> ctor's kind-minting chain
+    /// and stops any serializer walking <c>.kind.kind…</c>.</summary>
+    protected override global::app.type.kind.@this? BornKind() => null;
+
     protected internal override string Owner => _owner;
 
     public override System.Collections.Generic.IReadOnlyList<string> Mime => _format?.Mime ?? [];

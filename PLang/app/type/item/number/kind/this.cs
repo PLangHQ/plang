@@ -13,7 +13,7 @@ namespace app.type.item.number.kind;
 /// so each kind is one line (the four CLR can't reach own their parse arms and throw precise). The
 /// courier is the only caller that owns the error channel (it turns a thrown reason into data.Fail).</para>
 /// </summary>
-public abstract class @this : global::app.type.kind.@this
+public abstract class @this : global::app.type.kind.@this<global::app.type.item.number.@this>
 {
     protected @this(string name) : base(name) { }
 

@@ -2091,7 +2091,7 @@ class app.type.item.number.kind.short.this : app.type.item.number.kind.this
   override Read<TReader>(TReader& r) : app.type.item.this
   override Write(app.type.item.number.this v, app.type.format.IWriter w) : System.Void
 
-abstract class app.type.item.number.kind.this : app.type.kind.this
+abstract class app.type.item.number.kind.this : app.type.kind.this<app.type.item.number.this>
   abstract Create(app.type.item.this value) : app.type.item.number.this
   abstract Read<TReader>(TReader& reader) : app.type.item.this
   abstract Write(app.type.item.number.this value, app.type.format.IWriter writer) : System.Void
@@ -3112,6 +3112,7 @@ class app.type.kind.empty.this : app.type.kind.this
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
   override list(app.actor.context.this context) : app.type.kind.list.this
+  protected override BornKind() : app.type.kind.this
   protected override Owner : System.String { get; }
 
 class app.type.kind.list.this : app.type.item.list.this<app.type.this>
@@ -3122,14 +3123,16 @@ class app.type.kind.subclass.this : app.type.kind.this
   override ClrForm : System.Type { get; }
   protected override Owner : System.String { get; }
 
-class app.type.kind.this
+class app.type.kind.this : app.type.this
   IsEmpty : System.Boolean { get; }
-  Name : System.String { get; }
   Names(System.String key) : System.Boolean
   ctor(System.String name)
   ctor(app.Attributes.FormatAttribute format, System.String owner, app.type.kind.this+Encoder encode = …, app.type.kind.this+Decoder decode = …)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
+  override IsClosed : System.Boolean { get; }
+  override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
   protected WriteReflected(app.type.format.IWriter writer, System.Object value, app.View mode, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask
   protected virtual Owner : System.String { get; }
@@ -3149,7 +3152,6 @@ class app.type.kind.this
   virtual Enumerate(System.Object obj, app.actor.context.this ctx) : System.Collections.Generic.IEnumerable<app.data.this>
   virtual Example(app.actor.context.this context) : app.type.item.prose.this
   virtual Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
-  virtual IsClosed : System.Boolean { get; }
   virtual IsSequence(System.Object host) : System.Boolean
   virtual IsText : System.Boolean { get; }
   virtual Item[System.String] : app.type.kind.this { get; }
@@ -3157,7 +3159,6 @@ class app.type.kind.this
   virtual Load(System.Object raw, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.data.this>
   virtual Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   virtual Of(System.Type type) : System.Type
-  virtual Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
   virtual Open(System.String characters, app.actor.context.this context) : app.data.this
   virtual Output(System.Object obj, app.type.format.IWriter writer, app.View mode, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask
   virtual Owns(app.type.format.IWriter writer) : System.Boolean
@@ -3179,6 +3180,9 @@ class app.type.kind.this+Encoder : System.MulticastDelegate
   virtual BeginInvoke(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct, System.AsyncCallback callback, System.Object object) : System.IAsyncResult
   virtual EndInvoke(System.IAsyncResult result) : System.Threading.Tasks.Task<app.data.this>
   virtual Invoke(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
+
+abstract class app.type.kind.this<T> : app.type.kind.this
+  ctor(System.String name)
 
 class app.type.list.this : app.type.item.list.this<app.type.this>
   Add(System.Reflection.Assembly assembly, app.actor.context.this context) : app.data.this
@@ -3340,6 +3344,7 @@ class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, 
   override ToString() : System.String
   override Write(app.type.format.IWriter writer) : System.Void
   protected override Setting(app.data.this parent) : System.Threading.Tasks.ValueTask<app.data.this>
+  protected virtual BornKind() : app.type.kind.this
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.this
   static List(app.this app) : app.type.list.this
   static Null : app.type.this { get; }

@@ -371,6 +371,9 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private static string? NameOf(System.Type type)
     {
         if (!typeof(app.type.item.@this).IsAssignableFrom(type) || FamilyName(type) != null) return null;
+        // A kind is a type under its parent, found only through it (decision 774) — never a top-level type,
+        // though `kind : type : item` makes it an @this. Kinds are enlisted onto their parent by Enlist.
+        if (typeof(global::app.type.kind.@this).IsAssignableFrom(type)) return null;
         if (type.GetCustomAttribute<PlangTypeAttribute>(inherit: false) == null
             && (!IsThisClass(type) || type.ContainsGenericParameters)) return null;
         return global::app.type.item.@this.NameOf(type);
