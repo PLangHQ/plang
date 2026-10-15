@@ -22,9 +22,10 @@ public sealed class @this : global::app.type.kind.@this
 
     public @this(string owner) : base("") => _owner = owner;
 
-    /// <summary>A kind has no sub-kind — null ends the <c>kind : type</c> ctor's kind-minting chain
-    /// and stops any serializer walking <c>.kind.kind…</c>.</summary>
-    protected override global::app.type.kind.@this? BornKind() => null;
+    /// <summary>The empty kind is its own kind — ends the <c>kind : type</c> ctor's kind-minting chain
+    /// without a new allocation. (Serializers are kept off <c>type.kind</c>, so this self-reference
+    /// never loops a walk.)</summary>
+    protected override global::app.type.kind.@this BornKind() => this;
 
     protected internal override string Owner => _owner;
 

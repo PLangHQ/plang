@@ -20,7 +20,7 @@ public sealed class @this : set.@this
                 .OrderBy(k => k.Name, System.StringComparer.Ordinal).ToList()
             : [];
 
-    public override System.Collections.Generic.IReadOnlyList<string> Values => _kinds.Select(k => k.Name).ToList();
+    protected override System.Collections.Generic.IReadOnlyList<string>? OwnValues => _kinds.Select(k => k.Name).ToList();
 
     public override object Member(string symbol)
         => _kinds.FirstOrDefault(k => string.Equals(k.Name, symbol, System.StringComparison.OrdinalIgnoreCase)

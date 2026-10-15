@@ -104,18 +104,22 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// registry's entries), so a different kind is a different type object. Given no kind, the type
     /// takes its empty kind.
     /// </summary>
+    // JsonIgnore: a kind is a type now, so walking this member in raw STJ reflection recurses
+    // (kind.kind.kind…). The kind's wire form is its name, written by Write/Output, never by STJ.
+    [System.Text.Json.Serialization.JsonIgnore]
     [System.Diagnostics.CodeAnalysis.AllowNull]
     public global::app.type.kind.@this kind
     {
-        get => _kind!;
+        get => _kind;
         init => _kind = value ?? BornKind();
     }
-    private readonly global::app.type.kind.@this? _kind;
+    private readonly global::app.type.kind.@this _kind;
 
     /// <summary>This type's empty kind — a plain type mints one for its name. A kind is itself a type
-    /// (<c>kind : type</c>), and a kind has no sub-kind of its own: the empty kind answers null here,
-    /// ending both the ctor's kind-minting chain and any serializer walking <c>.kind.kind…</c>.</summary>
-    protected virtual global::app.type.kind.@this? BornKind() => new global::app.type.kind.empty.@this(Name);
+    /// (<c>kind : type</c>); the empty kind answers itself here (never a new one), ending the ctor's
+    /// kind-minting chain. Serializers are kept off <see cref="kind"/> (JsonIgnore), so the self-kind
+    /// never loops a walk.</summary>
+    protected virtual global::app.type.kind.@this BornKind() => new global::app.type.kind.empty.@this(Name);
 
     /// <summary>The formats this type reads — its kinds that have a MIME or an extension
     /// (<c>%!app.type.image.format.list%</c>).</summary>
@@ -178,6 +182,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         _lift = Bind;
         _takes = Bind;
     }
+
+    /// <summary>A type named <paramref name="name"/> whose facts fall back to <paramref name="family"/>'s
+    /// (a kind's parent — so a kind answers its own, else its parent's). The kind's own wins; what it does
+    /// not answer reads the family's stored fields, which terminate.</summary>
+    protected @this(string name, @this? family) : this(name) => _family = family;
 
     /// <summary>
     /// The item class values of this type are (<c>text.@this</c> for text, <c>number.@this</c> for
@@ -617,12 +626,22 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The type's properties — a record's fields, a scalar's navigable members; each a
     /// named slot carrying its type. Null when the type declares none. A record is a type with
     /// properties and no <see cref="Shape"/>.</summary>
-    public property.list.@this? Property { get => Family._property; init => _property = value; }
+    public virtual property.list.@this? Property { get => OwnProperty ?? kind.OwnProperty ?? Family._property; init => _property = value; }
     private property.list.@this? _property;
+
+    // A kind answers its own fact through these hooks, else the type falls back to its Family's STORED
+    // field (never the virtual — a kind's Family is its parent entry, so reading the field terminates;
+    // reading the member could loop type→kind→Family→kind). `kind.OwnX` reaches a kinded type's kind
+    // ({choice, operator} → the set's options); `OwnX` a kind-as-type's own (a setting kind's options).
+    protected virtual property.list.@this? OwnProperty => null;
+    protected virtual IReadOnlyList<string>? OwnValues => null;
+    protected virtual IReadOnlyList<string>? OwnAlias => null;
+    protected virtual item.prose.@this? OwnDescription(actor.context.@this context) => null;
+    protected virtual item.prose.@this? OwnExample(actor.context.@this context) => null;
 
     /// <summary>Enum values — the kind's own when it is a set of options (a choice's), else the family's.
     /// Non-null marks this as an enum-shape type.</summary>
-    public IReadOnlyList<string>? Values { get => kind.Values ?? Family._values; init => _values = value; }
+    public virtual IReadOnlyList<string>? Values { get => OwnValues ?? kind.OwnValues ?? Family._values; init => _values = value; }
     private IReadOnlyList<string>? _values;
 
     /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — what its
@@ -658,15 +677,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>What a value of this type is, said once — the kind's own when it says one (a list of records names
     /// its element), else <c>type.description.md</c>; read when asked, empty when there is none.</summary>
-    [LlmBuilder] public item.prose.@this Description(actor.context.@this context)
-        => kind.Description(context) is { } its
+    [LlmBuilder] public virtual item.prose.@this Description(actor.context.@this context)
+        => (OwnDescription(context) ?? kind.OwnDescription(context)) is { } its
             ? its.Or(new item.prose.@this(Taught("type.description.md", context)))
             : new item.prose.@this(Taught("type.description.md", context));
 
     /// <summary>A value of this type as a step writes one (<c>5m</c>, <c>42</c>) — the kind's own when it shows one (a
     /// list of records, one of its element), else <c>type.examples.md</c>; read when asked, empty when there is none.</summary>
-    [LlmBuilder] public item.prose.@this Example(actor.context.@this context)
-        => kind.Example(context) is { } its
+    [LlmBuilder] public virtual item.prose.@this Example(actor.context.@this context)
+        => (OwnExample(context) ?? kind.OwnExample(context)) is { } its
             ? its.Or(new item.prose.@this(Taught("type.examples.md", context)))
             : new item.prose.@this(Taught("type.examples.md", context));
 
@@ -680,7 +699,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The other names this type answers to (<c>string</c> for text, <c>map</c> for dict),
     /// declared by its class as a static <c>Alias</c>. Never null.</summary>
     [JsonIgnore]
-    public IReadOnlyList<string> Alias { get => Family._alias; init => _alias = value; }
+    public virtual IReadOnlyList<string> Alias { get => OwnAlias ?? kind.OwnAlias ?? Family._alias; init => _alias = value; }
     private IReadOnlyList<string> _alias = [];
 
     /// <summary>The C# shapes this type owns (<c>int</c> → number, kind int), declared by its class
@@ -818,7 +837,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>True when <paramref name="key"/> is this type's name, its namespace or one of its aliases —
     /// the in-memory answer <see cref="Match"/> gives, for the registry's synchronous walk.</summary>
-    internal bool Names(string key)
+    internal virtual bool Names(string key)
         => string.Equals(Name, key, System.StringComparison.OrdinalIgnoreCase)
            || string.Equals(Namespace, key, System.StringComparison.OrdinalIgnoreCase)
            || Alias.Contains(key, System.StringComparer.OrdinalIgnoreCase);

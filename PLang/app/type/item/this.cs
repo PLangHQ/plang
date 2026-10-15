@@ -176,7 +176,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
         // a name is found ignoring its case; two members it names is the error naming both (the reflection kind's one lookup)
-        var prop = global::app.type.item.kind.reflection.@this.Property(GetType(), key);
+        var prop = global::app.type.item.kind.reflection.@this.Reflect(GetType(), key);
         if ((prop == null || !prop.CanWrite) && Kept is { } kept && !isIndex)
         {
             // a thing that lives on keeps a member a program adds — never in place of one of its own
@@ -280,7 +280,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     // Which member of a class is its marked surface by a name — read into its identity the first time it is asked.
     // (The reflection kind's one lookup, among the marked members: two a name matches is the error naming both.)
     private static System.Reflection.MemberInfo? Marked(System.Type @class, string name)
-        => global::app.type.item.kind.reflection.@this.Property(@class, name,
+        => global::app.type.item.kind.reflection.@this.Reflect(@class, name,
                p => System.Attribute.IsDefined(p, typeof(global::app.LlmBuilderAttribute)))
            ?? (System.Reflection.MemberInfo?)global::app.type.item.kind.reflection.@this.Method(@class, name,
                m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))

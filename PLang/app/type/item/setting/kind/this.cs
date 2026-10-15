@@ -20,7 +20,9 @@ public sealed class @this : global::app.type.kind.@this
     /// <summary>The class's options as the builder teaches them — each by the name a <c>%!path%</c> writes
     /// (<c>cache</c>), its type, and its default — the value itself, which writes its own text (<c>true</c>,
     /// <c>30</c>, <c>[]</c>, a node's members).</summary>
-    public global::app.type.property.list.@this Property => _property.Value;
+    // A setting kind's options ARE its type's properties (a setting IS a kind of `setting`): a public
+    // override, so a template reading the kind's `.Property` by name gets the options (not a hide of type's).
+    public override global::app.type.property.list.@this? Property { get => _property.Value; init { } }
 
     // The option rows, read off a fresh one of the class (its defaults). A sensitive option (a key) shows no default:
     // its default may be a secret (the environment's key), and these rows are written where anyone reads them — the
@@ -50,7 +52,7 @@ public sealed class @this : global::app.type.kind.@this
     public override System.Type? ClrForm => _class;
 
     /// <summary>The class is an actor's own (<see cref="OwnAttribute"/>): read from the actor's row alone.</summary>
-    internal bool Own => System.Attribute.IsDefined(_class, typeof(OwnAttribute));
+    internal bool Private => System.Attribute.IsDefined(_class, typeof(OwnAttribute));
 
     /// <summary>A new one of the class — its defaults.</summary>
     internal global::app.type.item.setting.@this Create()

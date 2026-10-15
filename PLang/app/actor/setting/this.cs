@@ -217,7 +217,7 @@ public sealed class @this : IDisposable
     }
 
     // Whether the class at path is an actor's own — its values never come from the actor it falls back to.
-    private bool Own(string path) => Class(path)?.Own == true;
+    private bool Own(string path) => Class(path)?.Private == true;
 
     // One option of a saved row: a setting's (its property), or an action's (its Property row).
     private data.@this? Option(data.@this row, string name) => row.Peek() switch

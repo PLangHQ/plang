@@ -5,7 +5,7 @@ public sealed class @this : global::app.type.item.separator.kind.@this
 {
     public @this() : base("line") { }
 
-    public override System.Collections.Generic.IReadOnlyList<string> Alias => ["lines", "newline"];
+    protected override System.Collections.Generic.IReadOnlyList<string>? OwnAlias => ["lines", "newline"];
 
     public override string Characters => "\n";
 }

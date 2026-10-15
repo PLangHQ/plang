@@ -15,5 +15,9 @@ namespace app.type.kind;
 /// </summary>
 public abstract class @this<T> : @this where T : global::app.type.item.@this
 {
-    protected @this(string name) : base(name) { }
+    // Family = the parent type (by T's plang name), so a kind answers its own, else its parent's: a
+    // decimal kind's teaching (Description/Example through Taught(Family.Name)) and its stored facts
+    // fall back to number's. Ruling 3, wired here once for every kind of T.
+    protected @this(string name)
+        : base(name, new global::app.type.@this(global::app.type.item.@this.NameOf(typeof(T)))) { }
 }
