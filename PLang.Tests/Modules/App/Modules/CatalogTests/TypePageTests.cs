@@ -94,8 +94,8 @@ public class TypePageTests
     [Test]
     public Task ThePathPage_IsTheSpecsGolden() => ComparePageToGolden("path");
 
-    [Test]
-    public Task TheSeparatorPage_IsTheSpecsGolden() => ComparePageToGolden("separator");
+    // (TheSeparatorPage_IsTheSpecsGolden retired — separator is no longer a top-level type with its own page;
+    //  it is a kind of text ({text, kind: separator}, 783), so its teaching lives under text's kinds.)
 
     [Test]
     public Task TheParallelPage_IsTheSpecsGolden() => ComparePageToGolden("parallel");
