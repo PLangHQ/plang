@@ -91,6 +91,23 @@ public class FileHandlerTests : IDisposable
     }
 
     [Test]
+    public async Task Read_AsText_Build_PublishesTheAsType_SoTheCaptureTakesText()
+    {
+        // Build simulates what the read lands, so the `write to %r%` capture takes its type. With `as text`,
+        // Build must publish `text` — not the path's {file, md} reference type, which the capture would then
+        // declare and fail to make from the text the run lands ("cannot make a 'file' from a text value").
+        System.IO.File.WriteAllText(TempPath("notes.md"), "# hello");
+        var ctx = _app.actor.list.User.Context;
+        var asText = new global::app.data.@this("type", _app.type.list["text"], context: ctx).As<global::app.type.@this>();
+        var build = await new Read(ctx) { Path = MakePath("notes.md"), Type = asText }.Build();
+
+        await build.IsSuccess();
+        var captured = (await build.Value()) as global::app.type.@this;
+        await Assert.That(captured).IsNotNull();
+        await Assert.That(captured!.Name).IsEqualTo("text");
+    }
+
+    [Test]
     public async Task Read_ExtensionRegisteredAtRuntime_FileKindIsTheRegisteredKind()
     {
         // `.abcdata` is unknown until a format `abc` takes that extension; from then on the

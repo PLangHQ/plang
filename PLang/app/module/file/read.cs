@@ -39,11 +39,13 @@ public partial class Read : IContext
                 : await path.Read(Context));
     }
 
-    /// <summary>A literal path's reference type, for the step that captures it — and a warning when it isn't
-    /// there now; a path holding a variable is known only at run.</summary>
+    /// <summary>What a step capturing this read takes as its type — and a warning when the path isn't there now; a
+    /// path holding a variable is known only at run. With an <c>as &lt;type&gt;</c>, the read lands THAT type, so the
+    /// capture takes it (not the path's reference type); the path is still read, so the absence warning still means
+    /// something.</summary>
     public async Task<data.@this> Build() => Path.HasVariable ? Context.Ok() : await Path.Use(async path =>
     {
         if (await path.Absence(Context) is { } why) await __action.Warn(why, Context);
-        return await path.Expect(Context);
+        return Type is not null && await Type.ToBooleanAsync() ? Context.Ok(await Type.Value()) : await path.Expect(Context);
     });
 }
