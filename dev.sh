@@ -2,7 +2,7 @@
 # Fast inner-loop build/test for PLang development.
 #
 # Usage:
-#   ./dev.sh build              # incremental build of all test projects + PlangConsole (analyzers off); skipped when no source changed
+#   ./dev.sh build              # incremental build of all test projects + PlangConsole (analyzers off); dotnet's own incremental decides what to recompile
 #   ./dev.sh test [filter]      # build, then run C# tests; filter = test-class name (finds the right project), e.g. ./dev.sh test ReturnTests
 #   ./dev.sh test               # a sweep: only the suites the C# tree's changes since the last complete sweep touch (none
 #                               # when nothing changed — the stored results stand), at most 3 at once, niced
@@ -183,14 +183,10 @@ scream_build() {
   echo "########################################################################"
   exit 2
 }
-# Skip a build when no source changed since the last successful one. The stamp is touched only
-# after a clean build (scream_build exits on failure first), so a failed build is retried next time.
-# Directories count too (-newer on a dir = an entry added or deleted), so a deleted file is a change.
-STAMP=.devsh-stamp
-unchanged() { # $1 = the stamp of what was built
-  [ -f "$1" ] && [ -z "$(find PLang PLang.Generators PlangConsole PLang.Tests \
-    -path '*/bin' -prune -o -path '*/obj' -prune -o -newer "$1" -print -quit)" ]
-}
+# A build is never skipped on our own stamp — a mtime stamp (`find -newer`) misfired and passed a STALE
+# binary off as a fresh one (edits not taking effect, 5-12s "builds"), and every test claim rests on the
+# binary being current. `dotnet msbuild -t:Build` does its own incremental build off real inputs and is
+# quick when nothing changed, so it is the only judge of what to recompile.
 # Builds and runs yield to the shared machine (Ingi's terminals, other bots). A compiler server
 # (MSBuild node, VBCSCompiler) started by a niced build is niced too; one already running keeps its
 # priority until `dotnet build-server shutdown`.
@@ -216,12 +212,10 @@ restore() {
 # console is a dependency of every plang test; a stale plang.exe lies just like a stale dll.
 # Nothing is built when no source changed. A whole build is also every test project's own build.
 build_all() {
-  local started=$SECONDS p
+  local started=$SECONDS
   restore
-  if unchanged "$STAMP"; then echo "→ no source changed since the last build — skipping it"; return 0; fi
   scream_build "test projects + PlangConsole (+PLang library)" /tmp/devsh_build.log \
     "${NICE[@]}" dotnet msbuild PLang.Tests/All.proj -t:Build "${DEVFLAGS[@]}"
-  touch "$STAMP"; for p in "${PROJECTS[@]}"; do touch "$STAMP.$p"; done
   echo "→ build: $((SECONDS - started))s"
 }
 # One test project (and what it references: PLang, Shared) — a class filter runs one project, so it
@@ -229,10 +223,8 @@ build_all() {
 build_project() { # $1 = the suite
   local started=$SECONDS
   restore
-  if unchanged "$STAMP.$1"; then echo "→ no source changed since $1 was built — skipping it"; return 0; fi
   scream_build "PLang.Tests.$1 (+PLang library)" /tmp/devsh_build.log \
     "${NICE[@]}" dotnet msbuild "PLang.Tests/$1/PLang.Tests.$1.csproj" -t:Build "${DEVFLAGS[@]}"
-  touch "$STAMP.$1"
   echo "→ build $1: $((SECONDS - started))s"
 }
 
