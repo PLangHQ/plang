@@ -391,10 +391,11 @@ public sealed class OpenAi : ILlm
             var extracted = ExtractResponse(rawResponse, effectiveFormat);
             var result = await Answer(rawResponse, effectiveFormat, context);
 
-            // --- JSON validation --- a json answer is read now: one that isn't json is the query's error
+            // --- JSON validation --- a json answer is used now (checked against the schema): a use opens it,
+            // parsing once; one that isn't json is the query's error.
             if (effectiveFormat == "json")
             {
-                await result.Value();
+                await result.Open();
                 if (!result.Success)
                     return context.Error(new ActionError(
                         "Response is not valid JSON", "JsonParseError", 400)
