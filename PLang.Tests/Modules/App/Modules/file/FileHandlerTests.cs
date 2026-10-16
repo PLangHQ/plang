@@ -108,6 +108,26 @@ public class FileHandlerTests : IDisposable
     }
 
     [Test]
+    public async Task Read_AsText_VariablePath_Build_PublishesText()
+    {
+        // The step names its type at build whatever the path holds: `read %file% as text, write to %r%` must
+        // publish text even though the path is a variable (known only at run). Red before the reorder — Build
+        // returned Context.Ok() on a variable path before the Type was asked, so the capture took nothing.
+        var ctx = _app.actor.list.User.Context;
+        var asText = new global::app.data.@this("type", _app.type.list["text"], context: ctx).As<global::app.type.@this>();
+        var varPath = new global::app.data.@this("Path",
+            new global::app.type.item.text.@this("%somefile%", new global::app.type.item.template.kind.plang.@this()),
+            context: ctx).As<global::app.type.item.path.@this>();
+        await Assert.That(varPath.HasVariable).IsTrue();
+        var build = await new Read(ctx) { Path = varPath, Type = asText }.Build();
+
+        await build.IsSuccess();
+        var captured = (await build.Value()) as global::app.type.@this;
+        await Assert.That(captured).IsNotNull();
+        await Assert.That(captured!.Name).IsEqualTo("text");
+    }
+
+    [Test]
     public async Task Read_ExtensionRegisteredAtRuntime_FileKindIsTheRegisteredKind()
     {
         // `.abcdata` is unknown until a format `abc` takes that extension; from then on the

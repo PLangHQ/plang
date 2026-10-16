@@ -47,10 +47,18 @@ public partial class Read : IContext
     /// path holding a variable is known only at run. With an <c>as &lt;type&gt;</c>, the read lands THAT type, so the
     /// capture takes it (not the path's reference type); the path is still read, so the absence warning still means
     /// something.</summary>
-    public async Task<data.@this> Build() => Path.HasVariable ? Context.Ok() : await Path.Use(async path =>
+    public async Task<data.@this> Build()
     {
-        if (await path.Absence(Context) is { } why) await __action.Warn(why, Context);
-        // the `as <type>` is what this lands — the capture takes that type carrier whole, unopened
-        return await Typed() ? Type! : await path.Expect(Context);
-    });
+        // The `as <type>` is known at build whatever the path holds, so a capturing step takes that type carrier
+        // whole, unopened. A literal path also publishes its reference type (no as-type) and is checked for absence
+        // now; a variable path is known only at run, so no reference type and no absence check.
+        var typed = await Typed();
+        return Path.HasVariable
+            ? typed ? Type! : Context.Ok()
+            : await Path.Use(async path =>
+            {
+                if (await path.Absence(Context) is { } why) await __action.Warn(why, Context);
+                return typed ? Type! : await path.Expect(Context);
+            });
+    }
 }
