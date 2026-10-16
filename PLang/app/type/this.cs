@@ -674,6 +674,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     protected virtual property.list.@this? OwnProperty => null;
     protected virtual IReadOnlyList<string>? OwnValues => null;
     protected virtual IReadOnlyList<string>? OwnAlias => null;
+    protected virtual bool? OwnInternal => null;
     protected virtual item.prose.@this? OwnDescription(actor.context.@this context) => null;
     protected virtual item.prose.@this? OwnExample(actor.context.@this context) => null;
 
@@ -752,10 +753,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         => Owned.Any(o => o.Assignable ? o.Clr.IsAssignableFrom(clr) : o.Clr == clr);
 
     /// <summary>True for a type plang's own machinery uses but a program never names (a wire slice,
-    /// a C# host carrier), declared by its class as a static <c>Internal</c>. It stays in the types —
-    /// naming answers it — and stays out of their face.</summary>
+    /// a C# host carrier), declared by its class as a static <c>Internal</c>. A kinded type answers it
+    /// through its kind (item's <c>dict</c>/<c>list</c>/<c>*</c> host kinds are internal), like every
+    /// other fact: its own, else its kind's, else its family's. It stays in the types — naming answers
+    /// it — and stays out of their face.</summary>
     [JsonIgnore]
-    public bool Internal { get => Family._internal; init => _internal = value; }
+    public bool Internal { get => OwnInternal ?? kind.OwnInternal ?? Family._internal; init => _internal = value; }
     private bool _internal;
 
     /// <summary>A type born knowing its C# class — the registry's entries and the full types it

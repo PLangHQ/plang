@@ -48,6 +48,19 @@ public class KindListTests : System.IAsyncDisposable
         await Assert.That(ctx.App.type.list["hash"].kind["sha256"]!.type(ctx).Name).IsEqualTo("hash");
     }
 
+    [Test] public async Task HostKinds_AreInternal_JsonIsOffered()
+    {
+        // item's dict/list/* are C# host carriers, never types a program names: Internal, so the builder's
+        // kind follow-up leaves them out (814). A kinded type answers Internal through its kind. json is offered.
+        var ctx = app.actor.list.User.Context;
+        var internalByKind = ctx.App.type.list["item"].kind.list(ctx).Items()
+            .ToDictionary(k => ((global::app.type.@this)k).kind.Name, k => ((global::app.type.@this)k).Internal);
+        await Assert.That(internalByKind["dict"]).IsTrue();
+        await Assert.That(internalByKind["list"]).IsTrue();
+        await Assert.That(internalByKind["*"]).IsTrue();
+        await Assert.That(internalByKind["json"]).IsFalse();
+    }
+
     [Test] public async Task ItemKinds_AreJsonListDictAndReflection()
     {
         var ctx = app.actor.list.User.Context;

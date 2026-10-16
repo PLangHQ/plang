@@ -1745,6 +1745,7 @@ class app.type.item.kind.dict.this : app.type.kind.this
   override Descend(System.Object obj, System.String key, System.Boolean isIndex, app.actor.context.this ctx) : System.ValueTuple<System.Boolean, System.Object>
   override Enumerate(System.Object obj, app.actor.context.this ctx) : System.Collections.Generic.IEnumerable<app.data.this>
   override Output(System.Object obj, app.type.format.IWriter writer, app.View mode, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask
+  protected override OwnInternal : System.Nullable<System.Boolean> { get; }
   protected override Owner : System.String { get; }
 
 class app.type.item.kind.json.Converter : System.Text.Json.Serialization.JsonConverterFactory
@@ -1837,6 +1838,7 @@ class app.type.item.kind.list.this : app.type.kind.this
   override IsSequence(System.Object host) : System.Boolean
   override Output(System.Object obj, app.type.format.IWriter writer, app.View mode, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask
   override Set(System.Object host, System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.type.item.this>
+  protected override OwnInternal : System.Nullable<System.Boolean> { get; }
   protected override Owner : System.String { get; }
 
 static class app.type.item.kind.reflection.Tagged
@@ -1859,6 +1861,7 @@ class app.type.item.kind.reflection.this : app.type.kind.this
   override Enumerate(System.Object obj, app.actor.context.this ctx) : System.Collections.Generic.IEnumerable<app.data.this>
   override Output(System.Object obj, app.type.format.IWriter writer, app.View mode, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask
   override Set(System.Object host, System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.type.item.this>
+  protected override OwnInternal : System.Nullable<System.Boolean> { get; }
   protected override Owner : System.String { get; }
 
 class app.type.item.list.format.formal : app.type.format.IOutput
@@ -3287,6 +3290,7 @@ class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, 
   protected virtual OwnAlias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   protected virtual OwnDescription(app.actor.context.this context) : app.type.item.prose.this
   protected virtual OwnExample(app.actor.context.this context) : app.type.item.prose.this
+  protected virtual OwnInternal : System.Nullable<System.Boolean> { get; }
   protected virtual OwnProperty : app.type.property.list.this { get; }
   protected virtual OwnValues : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.this
@@ -3863,6 +3867,7 @@ action file.move
 action file.read
   Path : path required
   Template : choice<template>
+  Type : type
 
 action file.save
   Path : path required

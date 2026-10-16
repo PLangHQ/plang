@@ -74,6 +74,23 @@ public class FileHandlerTests : IDisposable
     }
 
     [Test]
+    public async Task Read_AsText_LandsTheContentAsText_NotAFileReference()
+    {
+        // `read notes.md as text` — the declared type beats the extension kind ({file, md}): the content is
+        // born as text (its characters) through the type's own birth from the bytes, so the landed value IS a
+        // text, not a file reference (%r!type.name% is text). The builder routes `as text` to this Type slot.
+        System.IO.File.WriteAllText(TempPath("notes.md"), "# hello");
+        var ctx = _app.actor.list.User.Context;
+        var asText = new global::app.data.@this("type", _app.type.list["text"], context: ctx).As<global::app.type.@this>();
+        var action = new Read(ctx) { Path = MakePath("notes.md"), Type = asText };
+        var result = await action.Start();
+
+        await result.IsSuccess();
+        await Assert.That(await result.Value()).IsTypeOf<global::app.type.item.text.@this>();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("# hello");
+    }
+
+    [Test]
     public async Task Read_ExtensionRegisteredAtRuntime_FileKindIsTheRegisteredKind()
     {
         // `.abcdata` is unknown until a format `abc` takes that extension; from then on the

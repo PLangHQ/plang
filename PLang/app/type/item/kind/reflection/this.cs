@@ -11,6 +11,9 @@ public sealed class @this : global::app.type.kind.@this
 {
     public @this() : base("*") { }
 
+    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out (814).
+    protected override bool? OwnInternal => true;
+
     protected internal override string Owner => "item";
 
     // Descend one property. A name is read ignoring its case; a derived type's property shadows a base one (bottom-up,

@@ -15,11 +15,29 @@ public partial class Read : IContext
     /// it is read as written.</summary>
     public partial data.@this<global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>>? Template { get; init; }
 
-    // none given reads as written; one given is opened once and its kind handed to the read — a name that is none of
-    // the kinds is the choice's own refusal
-    public Task<data.@this> Start() => Path.Use(path => Template is not { IsInitialized: true }
-        ? path.Read(Context)
-        : Template.Use(kind => path.Read(Context, kind.Value)));
+    /// <summary>The type the content is read as — the step's <c>as &lt;type&gt;</c> force. None given, the location's
+    /// extension decides the reference's kind (<c>notes.md</c> → <c>{file, md}</c>); given, the content is born as
+    /// that type through its own birth (<c>as text</c> → the characters, a plain <c>text</c>), beating the extension.</summary>
+    public partial data.@this<global::app.type.@this>? Type { get; init; }
+
+    // No Type given: a Template is opened once and its kind handed to the read, else the read lands a reference the
+    // extension types. A Type given reads the bytes now and the declared type makes itself from them through its own
+    // birth (as text → the characters), the file its origin — so the value landed is that type, not a file reference.
+    public async Task<data.@this> Start()
+    {
+        var typed = Type is not null && await Type.ToBooleanAsync();
+        return await Path.Use(async path => typed
+            ? await Type!.Use(async declared =>
+            {
+                var bytes = await path.Bytes(Context);
+                return bytes.Success
+                    ? await declared.Create((await bytes.Value())?.Value, Context, path.Name.ToString(), path)
+                    : bytes;
+            })
+            : Template is { IsInitialized: true }
+                ? await Template.Use(kind => path.Read(Context, kind.Value))
+                : await path.Read(Context));
+    }
 
     /// <summary>A literal path's reference type, for the step that captures it — and a warning when it isn't
     /// there now; a path holding a variable is known only at run.</summary>
