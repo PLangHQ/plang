@@ -266,7 +266,7 @@ The exact literal the generator must produce for the `dict` type. `TypePageTests
 
 ```markdown
 # dict
-Named values: each key holds a value of any type.
+Named values: each key holds a value of any type. A dict is the PARSED form of named values; `as json` does NOT make a dict — it keeps the literal json text as `item` with kind `json` (parse it with `from json` to get a dict). So `as json` → `item`, never `dict`.
 
 # Dictionaries
 
@@ -504,7 +504,7 @@ The exact literal the generator must produce for the `duration` type. `TypePageT
 
 ```markdown
 # duration
-A length of time: a number and its unit (200ms, 30s, 5m, 1h, 1d), or ISO 8601 (PT5M).
+A length of time: a number and its unit (200ms, 30s, 5m, 1h, 1d), or ISO 8601 (PT5M). Its kind is the form it is held in: `iso` (PT30S), `short` (30s), `dotnet`. `as iso` / `as iso duration` coerces to duration with kind iso — the type is `duration`, the kind `iso` asked after.
 
 # Durations
 
@@ -712,7 +712,7 @@ The exact literal the generator must produce for the `list` type. `TypePageTests
 
 ```markdown
 # list
-An ordered list of values, each of any type.
+An ordered list of values. `a list of X` is a list whose element type is X (`as list of path` → a list whose element is path): the type is `list`, and its element type is asked next, so each item is born that type at its first read. A nested element (`a list of lists of path`) asks its element the same way.
 
 # Lists
 

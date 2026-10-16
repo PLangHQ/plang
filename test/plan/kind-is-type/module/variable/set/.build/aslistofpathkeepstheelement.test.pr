@@ -42,7 +42,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "path"
+              "value": {"name":"list","kind":"path"}
             }
           ],
           "default": [
@@ -171,7 +171,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/plan/kind-is-type/module/variable/set/AsListOfPathKeepsTheElement.test.goal",
-  "prPath": "/plan/kind-is-type/module/variable/set/.build/aslistofpathkeepstheelement.test.pr",
+  "file": "AsListOfPathKeepsTheElement.test.goal",
   "hash": "a0a1b0d66b8bfb0342a273abb03a099f2497d2d55c3f9ef3dcde3e3fa2714a27"
 }

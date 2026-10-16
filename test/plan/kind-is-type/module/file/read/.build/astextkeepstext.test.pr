@@ -19,6 +19,13 @@
                 "name": "path"
               },
               "value": "notes.md"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
             }
           ]
         },
@@ -67,8 +74,7 @@
                 "name": "type"
               },
               "value": {
-                "name": "file",
-                "kind": "md"
+                "name": "text"
               }
             }
           ],
@@ -140,7 +146,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/plan/kind-is-type/module/file/read/AsTextKeepsText.test.goal",
-  "prPath": "/plan/kind-is-type/module/file/read/.build/astextkeepstext.test.pr",
+  "file": "AsTextKeepsText.test.goal",
   "hash": "3cf1e050452f5fd0d0484bef70959d3e04c678895a73593d8ef53c0a421e727f"
 }

@@ -42,7 +42,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "number"
+              "value": {"name":"number","kind":"decimal"}
             }
           ],
           "default": [
@@ -169,7 +169,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/plan/kind-is-type/module/variable/set/AsDecimalKeepsDecimal.test.goal",
-  "prPath": "/plan/kind-is-type/module/variable/set/.build/asdecimalkeepsdecimal.test.pr",
+  "file": "AsDecimalKeepsDecimal.test.goal",
   "hash": "455114c001d2003491e218a31b7ce717f29cdc056d8ba7b2f79d22915c059e64"
 }

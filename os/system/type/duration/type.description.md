@@ -1,1 +1,1 @@
-A length of time: a number and its unit (200ms, 30s, 5m, 1h, 1d), or ISO 8601 (PT5M).
+A length of time: a number and its unit (200ms, 30s, 5m, 1h, 1d), or ISO 8601 (PT5M). Its kind is the form it is held in: `iso` (PT30S), `short` (30s), `dotnet`. `as iso` / `as iso duration` coerces to duration with kind iso — the type is `duration`, the kind `iso` asked after.

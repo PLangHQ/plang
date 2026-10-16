@@ -214,7 +214,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/plan/kind-is-type/module/variable/set/NoAsNoType.test.goal",
-  "prPath": "/plan/kind-is-type/module/variable/set/.build/noasnotype.test.pr",
+  "file": "NoAsNoType.test.goal",
   "hash": "fa33677e8a47029035875ff08a99d02dddbf0cafc12adb8f4332cc198851c377"
 }

@@ -42,7 +42,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "dict"
+              "value": {"name":"item","kind":"json"}
             }
           ],
           "default": [

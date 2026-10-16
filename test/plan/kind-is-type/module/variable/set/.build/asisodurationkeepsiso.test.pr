@@ -42,7 +42,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "duration"
+              "value": {"name":"duration","kind":"iso"}
             }
           ],
           "default": [
@@ -169,7 +169,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso.test.goal",
-  "prPath": "/plan/kind-is-type/module/variable/set/.build/asisodurationkeepsiso.test.pr",
+  "file": "AsIsoDurationKeepsIso.test.goal",
   "hash": "5112cfd2b68f4923b286bd54c017c788b4df7ea86e48ab94f09897c90cf61c01"
 }

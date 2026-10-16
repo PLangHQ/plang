@@ -1,1 +1,1 @@
-Named values: each key holds a value of any type.
+Named values: each key holds a value of any type. A dict is the PARSED form of named values; `as json` does NOT make a dict — it keeps the literal json text as `item` with kind `json` (parse it with `from json` to get a dict). So `as json` → `item`, never `dict`.

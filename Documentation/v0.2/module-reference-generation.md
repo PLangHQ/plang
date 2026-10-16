@@ -257,6 +257,7 @@ Read a file's content; optionally resolve %var% patterns in the text before retu
 |----------|----------------|------|----------|---------|-----------------|
 | Path | the path, inline | path | yes | — | the file to read |
 | Template | load vars, fill in the variables, with variables | choice<template> | no | — | the kind of template the file's text is: plang fills its %variables% from memory |
+| Type |  | type | no | — | the type the step forces the file's content to, overriding what the file's extension would make it: `as <type>` or `type=<type>`. `read 'notes.md' as text` is `text`, not the `md` the `.md` extension gives; `read 'data.bin' as image` is `image`. The type itself, its kind or element asked after (as for any coercion). |
 
 **Returns:** the file's content. A JSON file is navigable; it is parsed when first navigated.
 
