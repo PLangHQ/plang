@@ -176,9 +176,10 @@ public sealed class Operator
         if (held.Is(typeName, types)) return Answer(context, true);
         if (held.Peek() is { IsFinal: false })
         {
-            // `is dict` on a reference not yet read examines its content: the door reads and narrows, then the
-            // value answers from its retained chain
-            _ = await held.Value();
+            // `is dict` on a reference not yet read examines its content: that is a use, so it opens the value,
+            // parsing a resting source once and narrowing it (a bare Value would rest it) — then the value
+            // answers from its retained chain
+            _ = await held.Open();
             if (!held.Success) return Failed(held, context);
             return Answer(context, held.Is(typeName, types));
         }
