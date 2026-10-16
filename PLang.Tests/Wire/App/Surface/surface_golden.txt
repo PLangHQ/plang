@@ -3296,7 +3296,6 @@ class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, 
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.this
   static List(app.this app) : app.type.list.this
   static Null : app.type.this { get; }
-  static const TypeDescription : System.String
   virtual IsClosed : System.Boolean { get; }
   virtual Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
 

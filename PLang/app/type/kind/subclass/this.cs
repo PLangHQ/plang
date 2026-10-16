@@ -10,9 +10,17 @@ namespace app.type.kind.subclass;
 public sealed class @this<T> : global::app.type.kind.@this<T> where T : global::app.type.item.@this
 {
     private readonly System.Type _class;
+    // The subclass's own static Offer, read once at construction (as a type reads a declared fact), never per Offers call.
+    private readonly System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>? _offer;
 
     /// <summary>The kind <paramref name="name"/> of <typeparamref name="T"/>, whose values are <paramref name="class"/>.</summary>
-    public @this(string name, System.Type @class) : base(name) => _class = @class;
+    public @this(string name, System.Type @class) : base(name)
+    {
+        _class = @class;
+        _offer = @class.GetProperty("Offer", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null)
+            as System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>;
+    }
 
     public override System.Type? ClrForm => _class;
 
@@ -28,9 +36,6 @@ public sealed class @this<T> : global::app.type.kind.@this<T> where T : global::
     public override async System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
     {
         var variables = await base.Offers(step);
-        return _class.GetProperty("Offer", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-                | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null)
-                is System.Collections.Generic.IReadOnlyList<global::app.type.item.@this> offer
-            ? [.. offer, .. variables] : variables;
+        return _offer is { } offer ? [.. offer, .. variables] : variables;
     }
 }

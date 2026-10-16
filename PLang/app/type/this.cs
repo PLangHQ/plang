@@ -20,10 +20,9 @@ namespace app.type;
 ///
 /// <para>Both doors — <c>data.Type</c> and <c>app.Type[name]</c> — return the
 /// same entity shape; <c>app.Type</c> resolves names through the registry and
-/// stamps <c>Context</c>, while <c>type.list.@this.BuildTypeEntries</c> walks
-/// the action catalog and populates the catalog properties at construction.
-/// Entities minted outside <c>BuildTypeEntries</c> lazily resolve the catalog
-/// properties on first read via <see cref="Promote"/>.</para>
+/// stamps <c>Context</c>. A type reads its facts (Description, Property, Values,
+/// …) through its <see cref="Family"/> entry and its teaching files, each on
+/// first read.</para>
 /// </summary>
 // `type` is an item (settled in the value model): the type entity is a plang
 // value — authored in the language (`as image/gif, strict`), riding in the .pr,
@@ -140,30 +139,6 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// </summary>
     public global::app.type.item.template.kind.@this? Template { get; init; }
 
-    /// <summary>
-    /// Catalog teaching for the <c>type</c> entry — the LLM-facing description
-    /// surfaced through <c>app.type.list.view.TypeSchemas</c>. The instance
-    /// property pulls from <see cref="Promote"/>'s catalog fold; for the entity
-    /// itself there's no catalog row, so the LLM teaching falls into the static
-    /// renderer via <see cref="TypeDescription"/> below.
-    /// </summary>
-    public const string TypeDescription =
-        "A PLang type value, emitted as a JSON dict {name, kind?, strict?}. "
-        + "`name` is the canonical family/primitive — text, number, bool, datetime, image, "
-        + "etc. — drawn from the per-step `Primitive types:` list. NEVER a CLR name like "
-        + "`string`, `int`, or `long` (use `text` and `number` instead — int/long/decimal/"
-        + "double are kinds of number, not top-level names). "
-        + "`kind` is the optional subtype: a file extension for text/image/audio/video "
-        + "(`md`, `csv`, `jpg`, `mp3`), the numeric precision for number (`int`, `long`, "
-        + "`decimal`, `double`), or a free string. For literals, the runtime stamps the "
-        + "kind from the value when possible (a `.md` filename → kind `md`); only include "
-        + "`kind` when the step text spells it out (`as text/markdown`). "
-        + "`strict` (default false) turns kind into a build-time requirement for "
-        + "verifiable formats (image checks magic bytes); a `%var%` value defers the "
-        + "check to runtime; unverifiable families like `text` accept the kind name "
-        + "without probing content. "
-        + "Emit as a JSON object, NEVER a slash string. Wrong: `\"text/md\"`. "
-        + "Right: `{\"name\":\"text\",\"kind\":\"md\"}`. The slash form leaks past the wire.";
 
     [JsonConstructor]
     /// <summary>A type object holds an already-canonical name — <c>app.Type[name]</c> is the one door
@@ -909,15 +884,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
         var full = parent.Context.App.type.list[this, parent.Context];
-        var member = await new global::app.type.clr.@this(full, parent.Context).Get(parent, key);
-        // a type's own kind is, to plang, the kind itself — navigable (.name), rendering/comparing as its
-        // name; nothing when it has none. The kind is an item now (kind : type), so the walk may land it
-        // directly or still wrapped in a clr carrier — either way it is the type's kind.
-        var landed = member.Peek() is global::app.type.clr.@this { Value: var held } ? held : member.Peek();
-        if (ReferenceEquals(landed, full.kind))
+        // a type's own kind is the kind itself (an item, kind : type) — navigable (.name), rendering and
+        // comparing as its name; nothing when it has none.
+        if (string.Equals(key, "kind", System.StringComparison.OrdinalIgnoreCase))
             return full.kind.IsEmpty
                 ? new global::app.data.@this(key, global::app.type.item.@null.@this.Instance, context: parent.Context)
                 : new global::app.data.@this(key, full.kind, context: parent.Context);
+        var member = await new global::app.type.clr.@this(full, parent.Context).Get(parent, key);
         return member.IsInitialized ? member : await Setting(parent, key) ?? member;
     }
 
