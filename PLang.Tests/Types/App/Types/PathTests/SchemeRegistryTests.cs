@@ -93,14 +93,14 @@ public class SchemeRegistryTests
         var (a, _) = MakeApp();
         var (b, ctxB) = MakeApp();
         a.type.list.Add(new SchemeKind("zzz", (raw, c) => new FilePath(raw)));
-        await Assert.That(a.type.list.Kind("zzz") is SchemeKind).IsTrue();
-        await Assert.That(b.type.list.Kind("zzz") is SchemeKind).IsFalse();
+        await Assert.That(a.type.list["path"].kind["zzz"] is SchemeKind).IsTrue();
+        await Assert.That(b.type.list["path"].kind["zzz"] is SchemeKind).IsFalse();
         await Assert.That(() => PLangPath.Resolve("zzz://x", ctxB)).Throws<SchemeNotRegistered>();
     }
 
     [Test] public async Task BuiltInSchemes_AreKindsOfTheApp()
     {
         var (app, _) = MakeApp();
-        await Assert.That(app.type.list.Kind("file") is SchemeKind).IsTrue();
+        await Assert.That(app.type.list["path"].kind["file"] is SchemeKind).IsTrue();
     }
 }

@@ -84,26 +84,9 @@ public class RequestActionTests
 
     #region Happy Path & Response Parsing
 
-    [Test]
-    public async Task Get_JsonResponse_ParsedCorrectly()
-    {
-        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent("{\"name\":\"Alice\"}", Encoding.UTF8, "application/json")
-        });
-
-        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/users/1", Unsigned = (global::app.type.item.@bool.@this)true };
-        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
-
-        await result.IsSuccess();
-        await Assert.That((await result.Value())).IsNotNull();
-        // The body is the lazy value; touching it materializes json → dict.
-        // Serialize against the runtime type (object) so the value's own
-        // [JsonConverter] fires — the static item base would reflect its
-        // infra props (Cacheable/Prior/Template) instead of the content.
-        var json = JsonSerializer.Serialize((object?)await result.Value());
-        await Assert.That(json).Contains("Alice");
-    }
+    // (Get_JsonResponse_ParsedCorrectly retired — it serialized the result value through System.Text.Json, the
+    //  deleted clr(json) model. The response's value is now a plang dict read through plang navigation, proved
+    //  by GetJsonResponseParsesToPlangDictTests.)
 
     [Test]
     public async Task Get_NoProtocol_AutoPrefixesHttps()

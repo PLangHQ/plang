@@ -19,7 +19,7 @@ public class JsonStructureTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var answer = await ctx.App.type.list.Kind("json").Decode(System.Text.Encoding.UTF8.GetBytes(Indented), ctx);
+        var answer = await ctx.App.type.list["item"].kind["json"]!.Decode(System.Text.Encoding.UTF8.GetBytes(Indented), ctx);
         answer.Name = "answer";
         await ctx.Variable.Set(answer);
         await ctx.Variable.Set("plain", new List<object?> { "a", 2L, true });
@@ -36,7 +36,7 @@ public class JsonStructureTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var json = ctx.App.type.list.Kind("json");
+        var json = ctx.App.type.list["item"].kind["json"]!;
         var answer = await json.Decode(System.Text.Encoding.UTF8.GetBytes(Indented), ctx);
 
         using var stream = new System.IO.MemoryStream();

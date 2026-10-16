@@ -103,18 +103,9 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         await Assert.That(((global::app.type.item.binary.@this)content!).Value).IsEquivalentTo(new byte[] { 1, 2, 3 });
     }
 
-    [Test]
-    public async Task ContentKindInference_JsonExtension_StaysClrNavigable_ConvertsToDictOnAsk()
-    {
-        var data = JsonFile();
-        await Assert.That(data.Type!.kind.Name).IsEqualTo("json");
-        // json content STAYS clr(json), navigated by the json kind — no automatic narrow.
-        var child = await data.Get("database");
-        await Assert.That((await child.Value())?.ToString()).IsEqualTo("plang");
-        // A consumer that wants a native dict asks — the dict kind owns json→dict.
-        var asDict = await data.Convert(data.Context.App.type.list.Kind("dict"));
-        await Assert.That(asDict.Type!.Name).IsEqualTo("dict");
-    }
+    // (ContentKindInference_JsonExtension_ConvertsToDictOnAsk retired — it tested the deleted clr(json)
+    //  navigator's explicit json→dict Convert door. A json value now narrows to dict by opening it on first
+    //  navigation (787); that is covered by JsonLazyNavigationTests and JsonPropertyAccessMaterializesTests.)
 
     // (BangFileBangPath_ResolvesWithoutReading_MaterializeCountZero deleted — the %x!file% value-nav
     //  it tested was retired with Facet; the metadata surface returns as the standardized !info,

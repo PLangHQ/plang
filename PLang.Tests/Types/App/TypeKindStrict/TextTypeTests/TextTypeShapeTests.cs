@@ -27,12 +27,12 @@ public class TextTypeShapeTests
     // A text holds its type, made once: a text writes itself by asking its type's kind, so every write reads it.
     [Test] public async Task Text_HoldsItsType_MadeOnce()
     {
-        var text = new TextType("{\"a\": 1}") { Kind = "json" };
+        var text = new TextType("# title") { Kind = "md" };
 
         var first = text.Type;
 
         await Assert.That(ReferenceEquals(text.Type, first)).IsTrue();
-        await Assert.That(first.kind.Name).IsEqualTo("json");
+        await Assert.That(first.kind.Name).IsEqualTo("md");
     }
 
     // A template whose dotted path misses names where the walk stopped and what it reached — by the value's

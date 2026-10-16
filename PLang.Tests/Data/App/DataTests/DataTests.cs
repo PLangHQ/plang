@@ -475,7 +475,7 @@ public class DataTests : System.IAsyncDisposable
         var ov = new Data("test", new byte[] { 1, 2 }, engine.type.list.Stamp("image/jpeg", context), context: context);
 
         await Assert.That(ov.Type!.Name).IsEqualTo("image");
-        await Assert.That(engine.type.list.Kind(ov.Type!.kind.Name).type(context).Name).IsEqualTo("image");
+        await Assert.That(engine.type.list.Kind(ov.Type!, context).type(context).Name).IsEqualTo("image");
     }
 
     [Test]

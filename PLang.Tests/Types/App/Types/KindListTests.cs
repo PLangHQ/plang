@@ -10,13 +10,13 @@ public class KindListTests : System.IAsyncDisposable
     [Test] public async Task NumberKind_IsAKindOfNumber()
     {
         var ctx = app.actor.list.User.Context;
-        await Assert.That(ctx.App.type.list.Kind("int").type(ctx).Name).IsEqualTo("number");
+        await Assert.That(ctx.App.type.list["number"].kind["int"]!.type(ctx).Name).IsEqualTo("number");
     }
 
     [Test] public async Task Integer_AnswersTheIntKind()
     {
         var ctx = app.actor.list.User.Context;
-        await Assert.That(ctx.App.type.list.Kind("integer").Name).IsEqualTo("int");
+        await Assert.That(ctx.App.type.list["number"].kind["integer"]!.Name).IsEqualTo("int");
         var type = ctx.App.type.list[new global::app.type.@this("number", "integer"), ctx];
         await Assert.That(type.kind.Name).IsEqualTo("int");
     }
@@ -24,7 +24,7 @@ public class KindListTests : System.IAsyncDisposable
     [Test] public async Task NumberKindList_IsEveryPrecision_AsFullTypes()
     {
         var ctx = app.actor.list.User.Context;
-        var kinds = ctx.App.type.list.Kind("int").list(ctx).Items().Select(t => $"{t.Name}/{t.kind.Name}").ToList();
+        var kinds = ctx.App.type.list["number"].kind["int"]!.list(ctx).Items().Select(t => $"{t.Name}/{t.kind.Name}").ToList();
         await Assert.That(kinds).Contains("number/int");
         await Assert.That(kinds).Contains("number/decimal");
         await Assert.That(kinds).Contains("number/biginteger");
@@ -39,28 +39,30 @@ public class KindListTests : System.IAsyncDisposable
         await Assert.That(kinds).IsEquivalentTo(new[] { "keccak256", "sha256" });
     }
 
-    [Test] public async Task AKindNameTwoTypesHold_IsAmbiguousByBareName()
+    [Test] public async Task AKindNameTwoTypesHold_IsAnsweredByEachParent()
     {
+        // sha256 is a kind of two types (hash's algorithm, binary's checksum file). Asked of its parent
+        // no name is ambiguous — each type answers its own.
         var ctx = app.actor.list.User.Context;
-        await Assert.That(() => ctx.App.type.list.Kind("sha256")).Throws<InvalidOperationException>();
         await Assert.That(ctx.App.type.list["binary"].kind["sha256"]!.type(ctx).Name).IsEqualTo("binary");
+        await Assert.That(ctx.App.type.list["hash"].kind["sha256"]!.type(ctx).Name).IsEqualTo("hash");
     }
 
     [Test] public async Task ItemKinds_AreJsonListDictAndReflection()
     {
         var ctx = app.actor.list.User.Context;
-        var kinds = ctx.App.type.list.Kind("json").list(ctx).Items().Select(t => t.kind.Name).ToList();
+        var kinds = ctx.App.type.list["item"].kind["json"]!.list(ctx).Items().Select(t => t.kind.Name).ToList();
         await Assert.That(kinds).IsEquivalentTo(new[] { "json", "list", "dict", "*" });
     }
 
     [Test] public async Task AFormatKind_IsAKindOfTheTypeThatReadsIt()
     {
         var ctx = app.actor.list.User.Context;
-        await Assert.That(ctx.App.type.list.Kind("md").type(ctx).Name).IsEqualTo("text");
-        var kinds = ctx.App.type.list.Kind("md").list(ctx).Items().Select(t => t.kind.Name).ToList();
+        await Assert.That(ctx.App.type.list["text"].kind["md"]!.type(ctx).Name).IsEqualTo("text");
+        var kinds = ctx.App.type.list["text"].kind["md"]!.list(ctx).Items().Select(t => t.kind.Name).ToList();
         await Assert.That(kinds).Contains("md");
         // csv is table's: table reads it
         await Assert.That(kinds).DoesNotContain("csv");
-        await Assert.That(ctx.App.type.list.Kind("csv").type(ctx).Name).IsEqualTo("table");
+        await Assert.That(ctx.App.type.list["table"].kind["csv"]!.type(ctx).Name).IsEqualTo("table");
     }
 }

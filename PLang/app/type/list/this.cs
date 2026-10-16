@@ -10,8 +10,8 @@ namespace app.type.list;
 /// identity. How a type comes in lives in the <c>Registry</c> partial.
 ///
 /// A file format is a kind of the type that reads it (png of image, md of text), declared on the type's
-/// class with <c>[Format]</c>; the kind answers to its MIMEs and extensions, so the one walk
-/// (<see cref="Kind(string)"/>) finds a format by any of them.
+/// class with <c>[Format]</c>; the kind answers to its MIMEs and extensions, so a format is found by any of
+/// them through <see cref="Mime(string)"/> and <see cref="Extension(string, actor.context.@this)"/>.
 /// </summary>
 public sealed partial class @this
 {
@@ -20,19 +20,9 @@ public sealed partial class @this
     public @this() { }
 
     /// <summary>
-    /// The kind <paramref name="name"/> names when the caller holds only the name — the one kind any type
-    /// answers to it with (by name, alias, MIME or extension); a name no type holds is a kind with no class
-    /// of its own, minted by name. A kind's name is its type's, so two types may each hold one by the same
-    /// name (<c>{hash, sha256}</c>, <c>{binary, sha256}</c>): asked by that bare name, it is ambiguous — an
-    /// error naming both, never the first that answers. A caller that holds the type asks the type.
-    /// </summary>
-    public global::app.type.kind.@this Kind(string name)
-        => Held(name) ?? new global::app.type.kind.@this(name);
-
-    /// <summary>
     /// The kind of <paramref name="type"/> — the type's own kind by its kind's name. A kind the type holds
     /// none of (a stamp written before the format was its type's: <c>{binary, json}</c>) is only a name, so
-    /// it is found as <see cref="Kind(string)"/> finds a name.
+    /// it is found as <see cref="Kind(string, string?)"/> finds a name under its type.
     /// </summary>
     public global::app.type.kind.@this Kind(app.type.@this type, actor.context.@this context)
         => Kind(type.Name, type.kind is { IsEmpty: false } spelled ? spelled.Name : null);
@@ -102,8 +92,7 @@ public sealed partial class @this
     /// beside the indexer, which selects and throws on a miss. No name names none.</summary>
     public bool Contains(string name) => name is not null && Named.ContainsKey(name);
 
-    /// <summary>True when some type holds a kind <paramref name="name"/> names (by name, alias, MIME or extension) —
-    /// the presence question beside <see cref="Kind(string)"/>, which mints a kind for any name.</summary>
+    /// <summary>True when some type holds a kind <paramref name="name"/> names (by name, alias, MIME or extension).</summary>
     public bool HasKind(string name) => !string.IsNullOrEmpty(name) && Types.Any(type => type.kind[name] != null);
 
     /// <summary>

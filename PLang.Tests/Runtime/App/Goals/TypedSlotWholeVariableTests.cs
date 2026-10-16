@@ -64,7 +64,7 @@ public class TypedSlotWholeVariableTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var unread = ctx.App.type.list[new global::app.type.@this("text", "json"), ctx].Make("{\"a\":1}", ctx);
+        var unread = ctx.App.type.list[new global::app.type.@this("item", "json"), ctx].Make("{\"a\":1}", ctx);
         await ctx.Variable.Set("j", new global::app.data.@this("j", unread, context: ctx));
         var slot = ((global::app.data.@this)global::PLang.Tests.Shared.Make.Param(ctx, "Data", "%j%", "dict").value!)
             .As<global::app.type.item.dict.@this>();

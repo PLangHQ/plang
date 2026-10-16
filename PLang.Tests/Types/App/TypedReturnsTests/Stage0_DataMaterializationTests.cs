@@ -38,7 +38,7 @@ public class Stage0_DataMaterializationTests
     [Test]
     public async Task Data_Materialization_CachesResultOnFirstAccess()
     {
-        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("text", "json"), context: _app.actor.list.User.Context);
+        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("item", "json"), context: _app.actor.list.User.Context);
 
         _ = await src.Get("a");
         var firstMaterialized = await src.Value();
