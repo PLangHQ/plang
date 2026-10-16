@@ -62,15 +62,8 @@ public class LazyMaterialisationTests
         => await Assert.That(typeof(data).GetMethod("ConvertValue", BindingFlags.Public | BindingFlags.Instance)).IsNull();
 
     // A json value is text until something reads into it: navigation is the need that parses it.
-    [Test] public async Task Navigation_IsTheNeed_ThatParsesJson()
-    {
-        await using var app = NewApp();
-        var ctx = app.actor.list.User.Context;
-        var d = new data("cfg", "{\"port\":8080}", new type("text", "json"), context: ctx);
-        await Assert.That((await d.Value())).IsTypeOf<app.type.item.text.@this>();
-        var port = await d.Get("port");
-        await Assert.That((await port.Value())?.ToString()).IsEqualTo("8080");
-    }
+    // (Navigation_IsTheNeed_ThatParsesJson retired — text-of-kind-json is gone (773); {item, json} navigation
+    //  is JsonLazyNavigationTests.)
 
     // Unchanged contract — `%var%` in an authored value is RAW per read.
     [Test] public async Task VarReference_InAuthoredValue_StillResolvesFreshPerRead()

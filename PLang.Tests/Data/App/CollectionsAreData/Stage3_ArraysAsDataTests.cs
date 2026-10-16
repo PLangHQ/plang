@@ -44,18 +44,8 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         await Assert.That((await d.Value())).IsTypeOf<ListV>();
     }
 
-    [Test]
-    public async Task ReadingIntoAJsonArray_ParsesIt_AndFindsTheElement()
-    {
-        // A json `[...]` stays text, written as it came; reading into it (`[1]`) is the need: its kind parses the json
-        // and finds the element.
-        await using var app = NewApp();
-        var ctx = app.actor.list.User.Context;
-        var d = new global::app.data.@this("nums", "[1,2,3]", new type("text", "json"), context: ctx);
-        await Assert.That((await d.Value())).IsTypeOf<global::app.type.item.text.@this>();
-        var second = await d.Get("1");
-        await Assert.That((await second.Value())?.ToString()).IsEqualTo("2");
-    }
+    // (ReadingIntoAJsonArray_ParsesIt retired — text-of-kind-json is gone (773); a json array is {item, json},
+    //  covered by JsonArrayForeachTests.)
 
     [Test]
     public async Task ListValueType_HoldsListOfData()

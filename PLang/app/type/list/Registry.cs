@@ -326,9 +326,6 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             // a list's element kinds, made as a list names its element (list<path>)
             if (t == typeof(global::app.type.item.list.@this) && Items().Any(type => type.Names(global::app.type.item.@this.NameOf(t))))
                 Hold(new global::app.type.item.list.kind.@this(this));
-            // text's kinds for the text formats other types hold ({text, json}), made as a text names one
-            if (t == typeof(global::app.type.item.text.@this) && Items().Any(type => type.Names(global::app.type.item.@this.NameOf(t))))
-                Hold(new global::app.type.item.text.kind.@this(this));
             // settings are settings, not kinds (decision 774): each settings class is its own top-level
             // type, discovered like any other by its name (@this folder, or the owner word a nested one
             // declares). The registry knows nothing about settings.

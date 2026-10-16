@@ -35,8 +35,10 @@ public sealed class @this : global::app.type.kind.@this
     // and answers itself.
     public override System.Threading.Tasks.ValueTask<global::app.data.@this?> Load(
         object raw, global::app.actor.context.@this ctx)
+        // The source carries THIS kind as the format its raw is in — the object the raw was decoded by, so a
+        // re-declaration keeps it and asks it to Parse directly (never a kind-name lookup across the app).
         => new(ctx.Ok(new global::app.type.item.source(raw,
-            ctx.App.type.list[new global::app.type.@this("item", "json"), ctx])));
+            ctx.App.type.list[new global::app.type.@this("item", "json"), ctx], format: this)));
 
     // Every character written as itself (Icelandic letters, "—"); the ones a page reads as markup (< > & ' +)
     // still escaped, as json in an HTML page needs.

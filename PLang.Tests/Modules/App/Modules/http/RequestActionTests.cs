@@ -182,21 +182,8 @@ public class RequestActionTests
             .Contains("\"value\": {\"deep\": \"%lesson.voice.model%\", \"fixed\": \"pcm\"}");
     }
 
-    // A text of kind json (a rendered .json template) is json content: a json body sends it as itself, byte for
-    // byte (the educator's report, blocker 2).
-    [Test]
-    public async Task Post_TextOfKindJson_IsSentVerbatim()
-    {
-        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/speech",
-            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
-            Body = new global::app.data.@this("", new global::app.type.item.text.@this("{\"deep\": \"m-1\", \"fixed\": \"pcm\"}") { Kind = "json" }, context: Ctx),
-            Unsigned = (global::app.type.item.@bool.@this)true
-        };
-        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
-
-        await result.IsSuccess();
-        await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).IsEqualTo("{\"deep\": \"m-1\", \"fixed\": \"pcm\"}");
-    }
+    // (Post_TextOfKindJson_IsSentVerbatim retired — text-of-kind-json is gone (773); a json body is
+    //  {item, json}, sent verbatim, covered by PostItemOfKindJsonVerbatimTests.)
 
     // A plain text (no kind) is text, not json: a json body sends it as a json string (decision 380).
     [Test]

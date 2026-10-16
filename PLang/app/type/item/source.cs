@@ -223,8 +223,7 @@ public class source : @this
             // an unread json — {item, json} re-declared {dict}, decision 818/758): the format parses the raw,
             // and the declared type makes itself from what it parses (a dict from the parsed object). Only when
             // the declaration itself named no kind — a kinded declaration parses through its own kind above.
-            if (_type.kind.IsEmpty && _format is { } encoded
-                && asking.App.type.list.Kind(encoded.Name).Parse(_value, asking) is { } parsed)
+            if (_type.kind.IsEmpty && _format is { } encoded && encoded.Parse(_value, asking) is { } parsed)
             {
                 var made = _type.Make(parsed, asking);
                 made.history.Add(this);
@@ -315,10 +314,9 @@ public class source : @this
     /// serializer across, so a re-declared wire still decodes through its capturer. Whose bytes these
     /// are rides along.</summary>
     internal virtual source Declared(global::app.type.@this type)
-        // The raw's format is the raw's own fact, so it rides the re-declaration: a format already carried, else
-        // the kind this source was declared in (a {item, json} re-declared a dict keeps json). A declaration
-        // that names its own kind parses through that kind, not a carried format.
-        => new source(_value, type, _variable, _origin, IsBuilt, _format ?? (_type.kind.IsEmpty ? null : _type.kind));
+        // The raw's format is the raw's own fact — the kind object the raw was decoded by — so it rides the
+        // re-declaration: a {item, json} re-declared a dict keeps json, and is asked to Parse directly.
+        => new source(_value, type, _variable, _origin, IsBuilt, _format);
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),
