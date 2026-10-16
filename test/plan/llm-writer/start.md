@@ -121,6 +121,8 @@ The old stage 3 (7ce25c4b1) is reverted first and kept as a reference. It render
 - **Where a template renders today.** A partial template's `Value` renders through a text writer it makes itself (`text/this.cs:156`, `:162–169`, `new text.Writer` at `:165`).
 - **What changes:** a template renders through its own kind's `Encode` instead. Plain text still gets the text writer, through text's own `Encode` (`text/this.cs:49`). The message's content is a `text<llm>`.
 - **The rendered content** is the text plus its named values: the llm module's own type (NEW), not a property bag on a Data.
+- **Nothing is base64 at this point.** The rendered content holds plang values, so the image is still an image. Its bytes become base64 when OpenAi writes its JSON, through json's own answer to the byte door (`json/writer.cs:70`), and OpenAi puts the mime with them for its API.
+- **Two moments, two serializers.** At `.Value()`, the llm kind of text writes the content as characters. At send, json writes the API body.
 - **Goes:** OpenAi's `RenderContent` and the llm writer it makes itself (`OpenAi.cs`, at `new llm.Writer`).
 
 ### 3d. Images by name (ruling 10)
