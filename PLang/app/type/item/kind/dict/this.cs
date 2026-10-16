@@ -53,7 +53,6 @@ public sealed class @this : global::app.type.kind.@this
         object? value = await source.Value();
         JsonElement element = value switch
         {
-            global::app.type.clr.@this c when c.Value is JsonElement je => je,
             JsonElement je2 => je2,
             _ => default,
         };

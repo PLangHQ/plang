@@ -783,7 +783,7 @@ public sealed class Default : IHttp
 
         // Auto-detect
         if (content is global::app.type.item.dict.@this
-            || content is Clr { Value: Dictionary<string, object> or JsonElement { ValueKind: JsonValueKind.Object } })
+            || content is Clr { Value: Dictionary<string, object> })
         {
             return await CreateFormContentAsync(app, context, content);
         }
@@ -844,12 +844,6 @@ public sealed class Default : IHttp
         if (((content as global::app.type.item.@this)?.Clr<Dictionary<string, object>>()
              ?? content as Dictionary<string, object>) is { } dict)
             fields = dict;
-        else if (content is JsonElement je)
-        {
-            fields = new Dictionary<string, object>();
-            foreach (var prop in je.EnumerateObject())
-                fields[prop.Name] = prop.Value.ToString();
-        }
         else
             fields = new Dictionary<string, object> { ["data"] = content };
 

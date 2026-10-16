@@ -13,22 +13,10 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
 
     private static JsonElement Json(string s) => JsonDocument.Parse(s).RootElement.Clone();
 
-    [Test]
-    public async Task ClrJsonElement_DerivesKindJson()
-    {
-        var ctx = _app.actor.list.User.Context;
-        var clr = new global::app.type.clr.@this(Json("{\"a\":1}"), ctx);
-        await Assert.That(clr.Kind.ToString()).IsEqualTo("json");
-    }
-
-    [Test]
-    public async Task ClrJsonElement_NavigatesObjectArrayScalar_AsJson()
-    {
-        var ctx = _app.actor.list.User.Context;
-        var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"steps\":[{\"index\":3}]}"), ctx));
-        var idx = await d.Get("steps[0].index");
-        await Assert.That((await idx.Value())?.ToString()).IsEqualTo("3");
-    }
+    // (retired with the navigator: ClrJsonElement_DerivesKindJson, _NavigatesObjectArrayScalar_AsJson,
+    //  ClrJson_ConvertsToDict_OutboundOwnsIt, ClrJson_SerializesAsRawJson_NoValueKindLeak — a json value
+    //  is no longer a clr(JsonElement); the dev-visible outcomes are on {item, json} in JsonLazyNavigation/
+    //  JsonArrayForeach/JsonStreamSerializer.)
 
     [Test]
     public async Task ClrJsonElement_MissingKey_IsNotFound()
@@ -45,27 +33,6 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
         var ctx = _app.actor.list.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(new Poco { Label = "hi" }, ctx));
         await Assert.That((await (await d.Get("Label")).Value())?.ToString()).IsEqualTo("hi");
-    }
-
-    [Test]
-    public async Task ClrJson_ConvertsToDict_OutboundOwnsIt()
-    {
-        var ctx = _app.actor.list.User.Context;
-        var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1}"), ctx));
-        var dict = await d.Convert(ctx.App.type.list.Kind("dict"));
-        await Assert.That(dict.Success).IsTrue();
-        await Assert.That((await (await dict.Get("a")).Value())?.ToString()).IsEqualTo("1");
-    }
-
-    [Test]
-    public async Task ClrJson_SerializesAsRawJson_NoValueKindLeak()
-    {
-        var ctx = _app.actor.list.User.Context;
-        var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1,\"b\":[2,3]}"), ctx));
-        var json = ctx.Format("application/plang").Serialize(d, ctx).Peek()!.ToString()!;
-        await Assert.That(json).Contains("\"a\":1");
-        await Assert.That(json).Contains("\"b\":[2,3]");
-        await Assert.That(json.ToLowerInvariant()).DoesNotContain("valuekind");
     }
 
     [Test]
