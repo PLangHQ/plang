@@ -1,1 +1,1 @@
-An ordered list of values. `a list of X` is a list whose element type is X (`as list of path` → a list whose element is path): the type is `list`, and its element type is asked next, so each item is born that type at its first read. A nested element (`a list of lists of path`) asks its element the same way.
+An ordered list of values. `a list of X` is a list whose element type is X; each item is born that type at its first read.

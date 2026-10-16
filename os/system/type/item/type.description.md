@@ -1,1 +1,1 @@
-The universal value: any value is an item. Its kinds are forms a value can take — above all `json`: a json value is a kind of item (it can hold any value), carried as json text until it is read into a plang value. `as json` / `type=json` coerces to item with kind json (the kind is asked next), keeping the literal json text, never parsed into a `dict` by the coercion itself.
+Any value is an item. Its kinds are forms a value takes, among them `json`: json text carried unread until a use reads it.
