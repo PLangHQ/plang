@@ -318,6 +318,6 @@ public class ScopeTests
             """, app.actor.list.System.Context);
 
         await result.IsSuccess();
-        await Assert.That(Shown(goal.Step[1])).IsEqualTo("%n% number");
+        await Assert.That(Shown(goal.Step[1])).IsEqualTo("%n% number<long>");
     }
 }
