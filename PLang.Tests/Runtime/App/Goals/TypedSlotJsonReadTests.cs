@@ -1,11 +1,10 @@
 namespace PLang.Tests.App.Goals;
 
-// Decision 758 — stage 3's second half: a typed dict slot given an unread json value
-// (text with kind json) settles without reading (the coder's companion test
-// TypedSlotWholeVariableTests.ATypedSlot_SettlingAReferenceToUnreadContent_DoesNotReadIt
-// pins that first half); on the first read of the dict the json type is the one that
-// parses, so the dict answers its keys and entries. Today the made value loses json
-// and the dict can't be read.
+// Decision 758 — stage 3's second half: a typed dict slot whose value is a %ref% to an unread json
+// value ({item, json}, as a json file read or a json literal makes now — 773/822; json is item's kind).
+// The slot's value is the %ref% authored as the builder stamps one (a {text, template} ref), so it
+// resolves at settle; on the first read the dict makes itself from the resolved unread json — a use, so
+// the raw's format (json) rides the re-declaration (818) and parses it once — and answers its entries.
 public class TypedSlotJsonReadTests
 {
     [Test]
@@ -13,9 +12,9 @@ public class TypedSlotJsonReadTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var unread = ctx.App.type.list[new global::app.type.@this("text", "json"), ctx].Make("{\"a\":1}", ctx);
+        var unread = ctx.App.type.list[new global::app.type.@this("item", "json"), ctx].Make("{\"a\":1}", ctx);
         await ctx.Variable.Set("j", new global::app.data.@this("j", unread, context: ctx));
-        var slot = ((global::app.data.@this)global::PLang.Tests.Shared.Make.Param(ctx, "Data", "%j%", "dict").value!)
+        var slot = global::PLang.Tests.Shared.Make.Built(ctx, "Data", "%j%")
             .As<global::app.type.item.dict.@this>();
 
         await slot.Settle();

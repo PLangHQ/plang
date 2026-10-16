@@ -21,6 +21,12 @@ public class source : @this
     // directly). Name/Kind/Strict/Template all read off this one object.
     private protected readonly global::app.type.@this _type;
 
+    // The format the raw bytes are in — the raw's own fact, not the declaration's. When a value is re-declared
+    // (a dict slot given an unread json: {item, json} → {dict}, kind dropped), the format rides here so the
+    // declared type can still make itself from what the format parses (decision 818/758). Null when the raw
+    // carries no format of its own.
+    private readonly global::app.type.kind.@this? _format;
+
     // The variables a template source holds — decided once, at birth, by whose bytes these are (see the
     // constructor). Empty for a plain source.
     private readonly IReadOnlyList<global::app.type.item.variable.@this> _variable = [];
@@ -53,10 +59,11 @@ public class source : @this
     /// <paramref name="variable"/>s its row lists, content a file or url read handed over
     /// (<paramref name="origin"/>) only the program's own, anything else none.</summary>
     public source(object value, global::app.type.@this type, IReadOnlyList<global::app.type.item.variable.@this>? variable = null,
-        global::app.type.item.path.@this? origin = null, bool built = false)
+        global::app.type.item.path.@this? origin = null, bool built = false, global::app.type.kind.@this? format = null)
     {
         _value = value ?? throw new System.ArgumentNullException(nameof(value));
         _type = type ?? throw new System.ArgumentNullException(nameof(type));
+        _format = format;
         _origin = origin;
         IsBuilt = built;
         // Only a value marked a template holds variables — the mark is the declaration's, never read off
@@ -212,6 +219,17 @@ public class source : @this
                 decoded.history.Add(this);   // the source rides the materialized value's history
                 return decoded;
             }
+            // A value re-declared away from its format keeps what format its bytes are in (a dict slot given
+            // an unread json — {item, json} re-declared {dict}, decision 818/758): the format parses the raw,
+            // and the declared type makes itself from what it parses (a dict from the parsed object). Only when
+            // the declaration itself named no kind — a kinded declaration parses through its own kind above.
+            if (_type.kind.IsEmpty && _format is { } encoded
+                && asking.App.type.list.Kind(encoded.Name).Parse(_value, asking) is { } parsed)
+            {
+                var made = _type.Make(parsed, asking);
+                made.history.Add(this);
+                return await made.Value(data);
+            }
             var item = Read(asking);
             if (ReferenceEquals(item, this)) return this;
             // Container round-trip guard: a value DECLARED a container (dict/list) that
@@ -296,7 +314,11 @@ public class source : @this
     /// type entity reaching into a source's raw/format). The wire override carries its captured
     /// serializer across, so a re-declared wire still decodes through its capturer. Whose bytes these
     /// are rides along.</summary>
-    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, _variable, _origin, IsBuilt);
+    internal virtual source Declared(global::app.type.@this type)
+        // The raw's format is the raw's own fact, so it rides the re-declaration: a format already carried, else
+        // the kind this source was declared in (a {item, json} re-declared a dict keeps json). A declaration
+        // that names its own kind parses through that kind, not a carried format.
+        => new source(_value, type, _variable, _origin, IsBuilt, _format ?? (_type.kind.IsEmpty ? null : _type.kind));
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),
