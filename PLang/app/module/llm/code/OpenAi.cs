@@ -86,17 +86,18 @@ public sealed class OpenAi : ILlm
         if (rawMessages is not { Count: > 0 })
             return context.Error(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
-        // Each message's content rides through the llm module's OWN writer before anything else sees it:
-        // a text over %!llm.setting.length% is cut, with a marker saying how much more there was. A value
-        // says what it is; this writer decides how much of it the model reads. (Full-match text content
-        // this stage; a value inside a partial template follows once the IWriter door lands.)
+        // The provider opens each message's content ONCE, here at its own boundary (not .Value(), which
+        // would flatten it through text's own writer first): the content value rides through the llm
+        // writer, so a text over %!llm.setting.length% is cut and a list/dict becomes a table cut at
+        // %!llm.setting.rows%. From here on Content holds what the model will see — hooks, the cache key,
+        // the snapshot key, the stored conversation and the body all read that same rendered text.
         var llmSetting = context.Setting.Of<global::app.module.llm.setting.@this>();
         var length = llmSetting.Length.ToInt32();
         var rows = llmSetting.Rows.ToInt32();
         var culture = context.Setting.Of<global::app.setting.@this>().Culture;
         foreach (var m in rawMessages)
             if (m.Content is { } content)
-                m.Content = global::app.module.llm.Writer.Cut(content, length, rows, culture);
+                m.Content = (global::app.type.item.text.@this)await RenderContent(content, length, rows, culture, context);
 
         // --- Build messages ---
         // %vars% in the message content (e.g. %goalForLlm%) are resolved when Messages materializes —
@@ -154,9 +155,9 @@ public sealed class OpenAi : ILlm
         {
             var systemMsg = messages.Find(m => m.Role == "system");
             if (systemMsg != null)
-                systemMsg.Content += "\n" + formatInstruction;
+                systemMsg.Content = (global::app.type.item.text.@this)((systemMsg.Content?.ToString() ?? "") + "\n" + formatInstruction);
             else
-                messages.Insert(0, new LlmMessage { Role = "system", Content = formatInstruction });
+                messages.Insert(0, new LlmMessage { Role = "system", Content = (global::app.type.item.text.@this)formatInstruction });
         }
 
         if (OnBeforeRequest is { } before)
@@ -591,7 +592,7 @@ public sealed class OpenAi : ILlm
                 result.Add(new Dictionary<string, object?>
                 {
                     ["role"] = "tool",
-                    ["content"] = msg.Content ?? "",
+                    ["content"] = msg.Content?.ToString() ?? "",
                     ["tool_call_id"] = msg.ToolCallId
                 });
                 continue;
@@ -603,7 +604,7 @@ public sealed class OpenAi : ILlm
                 var apiMsg = new Dictionary<string, object?>
                 {
                     ["role"] = "assistant",
-                    ["content"] = msg.Content,
+                    ["content"] = msg.Content?.ToString(),
                     ["tool_calls"] = msg.ToolCalls.Select(tc => new Dictionary<string, object>
                     {
                         ["id"] = tc.Id,
@@ -623,8 +624,8 @@ public sealed class OpenAi : ILlm
             if (msg.Images != null && msg.Images.Count > 0)
             {
                 var contentParts = new List<object>();
-                if (!string.IsNullOrEmpty(msg.Content))
-                    contentParts.Add(new Dictionary<string, string> { ["type"] = "text", ["text"] = msg.Content });
+                if (msg.Content?.ToString() is { Length: > 0 } text)
+                    contentParts.Add(new Dictionary<string, string> { ["type"] = "text", ["text"] = text });
 
                 foreach (var image in msg.Images)
                 {
@@ -643,7 +644,7 @@ public sealed class OpenAi : ILlm
                 result.Add(new Dictionary<string, object?>
                 {
                     ["role"] = msg.Role,
-                    ["content"] = msg.Content
+                    ["content"] = msg.Content?.ToString()
                 });
             }
         }
@@ -992,6 +993,17 @@ public sealed class OpenAi : ILlm
             tools.Add(new Tool(held, call, goal[(goal.LastIndexOf('/') + 1)..]));
         }
         return tools;
+    }
+
+    // The content as the model will see it: the content value written through the llm writer at the
+    // provider's boundary — a template resolves, a text over the limit is cut, a list/dict becomes a table.
+    private static async Task<string> RenderContent(global::app.type.item.text.@this content,
+        int length, int rows, global::app.type.item.culture.@this culture, actor.context.@this context)
+    {
+        using var ms = new System.IO.MemoryStream();
+        var w = new global::app.module.llm.Writer(ms, System.Text.Encoding.UTF8, culture, length, rows);
+        await content.Output(w, global::app.View.Out, context);
+        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
     private static List<LlmMessage> CloneMessages(List<LlmMessage> messages)

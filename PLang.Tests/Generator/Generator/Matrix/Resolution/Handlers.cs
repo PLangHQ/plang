@@ -17,7 +17,10 @@ public partial class Interpolation : global::app.module.IContext
 [global::app.module.Action("deepresolutionlist")]
 public partial class DeepResolutionList : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>> Messages { get; init; }
+    // list<dict> (not list<message>): a dict deep-resolves its string leaves at materialize, which is the
+    // general mechanism under test. A message's Content is a text value kept unrendered (opened by the llm
+    // provider when it sends), so it is no longer a string-leaf example.
+    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.dict.@this>> Messages { get; init; }
     public Task<global::app.data.@this> Start() => Task.FromResult<global::app.data.@this>(Messages);
 }
 

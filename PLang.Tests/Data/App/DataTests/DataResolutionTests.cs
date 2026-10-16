@@ -93,14 +93,19 @@ public class DataResolutionTests
             new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%comment%" }
         };
         var data = TemplateStamp.Container("messages", raw, _app.actor.list.User.Context);
+        var ctx = _app.actor.list.User.Context;
 
-        _app.actor.list.User.Context.Variable.Set("comment", "value1");
-        var first = data.As<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>(await data.Value<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>());
-        await Assert.That(first.GetValue<List<global::app.module.llm.type.message.@this>>()![0].Content).IsEqualTo("value1");
+        // list<dict> deep-resolves its string leaves (and refreshes per call) — the general mechanism,
+        // off LlmMessage (whose Content is now a text value kept unrendered until the provider sends it).
+        ctx.Variable.Set("comment", "value1");
+        var first = (await data.Value<global::app.type.item.list.@this>())!;
+        var d1 = (global::app.type.item.dict.@this)first.Items(ctx).First().Peek();
+        await Assert.That((await d1.Get("content", ctx)!.Value()).ToString()).IsEqualTo("value1");
 
-        _app.actor.list.User.Context.Variable.Set("comment", "value2");
-        var second = data.As<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>(await data.Value<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>());
-        await Assert.That(second.GetValue<List<global::app.module.llm.type.message.@this>>()![0].Content).IsEqualTo("value2");
+        ctx.Variable.Set("comment", "value2");
+        var second = (await data.Value<global::app.type.item.list.@this>())!;
+        var d2 = (global::app.type.item.dict.@this)second.Items(ctx).First().Peek();
+        await Assert.That((await d2.Get("content", ctx)!.Value()).ToString()).IsEqualTo("value2");
     }
 
     // Concurrent As<T> calls on the same parameter Data → no race, two valid (independent) results.

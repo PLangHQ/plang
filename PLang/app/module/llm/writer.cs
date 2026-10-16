@@ -110,13 +110,4 @@ public sealed class Writer : global::app.type.format.IWriter
     // primitives, which is the whole point of the door for the llm writer.
     public global::app.type.format.IWriter BeginText() => this;
     public void EndText() { }
-
-    /// <summary>Drive the writer with one text and read back what the model would see — the llm module's
-    /// own render of a message's content, with the cut applied. Stage 1's full-match text content.</summary>
-    public static string Cut(string content, int length, int rows, global::app.type.item.culture.@this culture)
-    {
-        using var ms = new MemoryStream();
-        new Writer(ms, Encoding.UTF8, culture, length, rows).String(content);
-        return Encoding.UTF8.GetString(ms.ToArray());
-    }
 }

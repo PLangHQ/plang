@@ -10,7 +10,9 @@ public partial class DataWrappedString : global::app.module.IContext
 [global::app.module.Action("datawrappedlist")]
 public partial class DataWrappedList : global::app.module.IContext
 {
-    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>> Messages { get; init; }
+    // list<dict> (not list<message>): deep-resolves its string leaves at materialize — the general
+    // mechanism. A message's Content is now a text value kept unrendered (opened by the provider on send).
+    public partial global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.dict.@this>> Messages { get; init; }
     public Task<global::app.data.@this> Start() => Task.FromResult<global::app.data.@this>(Messages);
 }
 

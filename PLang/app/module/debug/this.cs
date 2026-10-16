@@ -93,14 +93,14 @@ public sealed class @this
                     {
                         var sys = messages
                             .Where(m => string.Equals(m.Role, "system", StringComparison.OrdinalIgnoreCase))
-                            .Select(m => m.Content ?? "(null)");
+                            .Select(m => m.Content?.ToString() ?? "(null)");
                         await WriteLlmBlock("LLM SYSTEM", sys, context);
                     }
                     if (llm.User)
                     {
                         var users = messages
                             .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
-                            .Select(m => m.Content ?? "(null)");
+                            .Select(m => m.Content?.ToString() ?? "(null)");
                         await WriteLlmBlock("LLM USER", users, context);
                     }
                     if (llm.Schema == true && !string.IsNullOrEmpty(schema))

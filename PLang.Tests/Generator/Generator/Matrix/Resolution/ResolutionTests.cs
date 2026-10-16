@@ -109,11 +109,12 @@ public class DeepResolutionListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["prompt"] = "You are a compiler" });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>;
-        // Read the way a real handler does: enumerate, resolve + convert each row through its door.
-        var items = new List<global::app.module.llm.type.message.@this>();
-        foreach (var row in (await typed!.Value())!.Items(app.actor.list.User.Context)) items.Add((await row.Value()).Clr<global::app.module.llm.type.message.@this>()!);
-        await Assert.That(items[0].Content).IsEqualTo("You are a compiler");
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.dict.@this>>;
+        // Read each row's dict content, resolved — the general deep-resolution the matrix tests.
+        var items = new List<string>();
+        foreach (var row in (await typed!.Value())!.Items(app.actor.list.User.Context))
+            items.Add((await ((global::app.type.item.dict.@this)row.Peek()).Get("content", app.actor.list.User.Context)!.Value()).ToString());
+        await Assert.That(items[0]).IsEqualTo("You are a compiler");
     }
 
     // List items that are themselves nested lists/dicts → recurses correctly to all leaves.
@@ -138,11 +139,12 @@ public class DeepResolutionListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
-        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>;
-        var items = new List<global::app.module.llm.type.message.@this>();
-        foreach (var row in (await typed!.Value())!.Items(app.actor.list.User.Context)) items.Add((await row.Value()).Clr<global::app.module.llm.type.message.@this>()!);
-        await Assert.That(items[0].Content).IsEqualTo("alpha");
-        await Assert.That(items[1].Content).IsEqualTo("beta");
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.dict.@this>>;
+        var items = new List<string>();
+        foreach (var row in (await typed!.Value())!.Items(app.actor.list.User.Context))
+            items.Add((await ((global::app.type.item.dict.@this)row.Peek()).Get("content", app.actor.list.User.Context)!.Value()).ToString());
+        await Assert.That(items[0]).IsEqualTo("alpha");
+        await Assert.That(items[1]).IsEqualTo("beta");
     }
 }
 

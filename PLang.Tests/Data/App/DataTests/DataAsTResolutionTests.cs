@@ -306,7 +306,8 @@ public class DataAsTResolutionTests
         var result = paramData.As<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>(await paramData.Value<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>());
 
         await result.IsSuccess();
-        var content = result.GetValue<List<global::app.module.llm.type.message.@this>>()![0].Content!;
+        // Content is now a plang value — the text template, kept unrendered until the provider sends it.
+        var content = result.GetValue<List<global::app.module.llm.type.message.@this>>()![0].Content!.ToString();
         await Assert.That(content).IsEqualTo("literal text with %goal.Name% and %buildStart% inside");
         // Negative assertion — the bug substituted these:
         await Assert.That(content).DoesNotContain("BuildGoal");

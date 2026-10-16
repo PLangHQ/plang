@@ -51,11 +51,12 @@ public class DataWrappedListTests
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["comment"] = "you are a compiler" });
-        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>;
-        // Read the way a real handler does: enumerate, resolve + convert each row through its door.
-        var items = new List<global::app.module.llm.type.message.@this>();
-        foreach (var row in (await typed!.Value())!.Items(app.actor.list.User.Context)) items.Add((await row.Value()).Clr<global::app.module.llm.type.message.@this>()!);
-        await Assert.That(items[0].Content).IsEqualTo("you are a compiler");
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.dict.@this>>;
+        // Read each row's dict content, resolved — the general deep-resolution the matrix tests.
+        var items = new List<string>();
+        foreach (var row in (await typed!.Value())!.Items(app.actor.list.User.Context))
+            items.Add((await ((global::app.type.item.dict.@this)row.Peek()).Get("content", app.actor.list.User.Context)!.Value()).ToString());
+        await Assert.That(items[0]).IsEqualTo("you are a compiler");
     }
 
     [Test]
@@ -64,7 +65,7 @@ public class DataWrappedListTests
         await using var app = new global::app.@this("/app").Testing();
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)new List<object?>()) });
-        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.dict.@this>>;
         await Assert.That((await typed!.Value())!.Count).IsEqualTo(0);
     }
 }

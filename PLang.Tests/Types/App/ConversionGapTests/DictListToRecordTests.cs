@@ -96,7 +96,11 @@ public class DictListToRecordTests : System.IAsyncDisposable
     [Test]
     public async Task SingleDict_To_DomainRecord()
     {
-        var msg = D(("Role", "user"), ("Content", "hi")).Clr(typeof(LlmMessage)) as LlmMessage;
+        // the live path (as the sibling ListOfDicts test uses): a dict → record through the type's own
+        // Create, not the reflection lower door. (A record with a plang-typed field — message's Content is
+        // a text value — cannot be built by the reflection binder, which lowers raw members to CLR; its
+        // own Create owns that cross-shape, per the lower door's own message.)
+        var msg = await new Data("", D(("Role", "user"), ("Content", "hi")), context: Ctx).Value<LlmMessage>();
         await Assert.That(msg).IsNotNull();
         await Assert.That(msg!.Role).IsEqualTo("user");
     }
