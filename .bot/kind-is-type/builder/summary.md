@@ -40,7 +40,21 @@ internal override ValueTask<IReadOnlyList<item.@this>> Offers(step step)
 
 Stage 5 needs this (and `question.Values : IReadOnlyList<string>`, and `formal/reader.cs`) to carry `{name, kind}`.
 
-## Stage 5 measurement (decision 807) — BLOCKED on a curation ruling
+## Stage 5 — DONE (decisions 812/816/835/837), pushed d3138cf16
+
+The builder offers kinds. A per-chosen-type follow-up (stage 3): stage 2 picks the base type, then a KindOf question
+offers that type's `kind.list` (or, for a generic, the registry's types as its element), answer folded into `{name, kind}`.
+Mechanism in `pick/question` + `pick/list` + `Decide.goal` stage 3 + `decider3.template` (committed 0fda873ec). The base
+pick is taught by the QUESTION wording, not descriptions: `variable/set.notes.md` ask (json→item), `file/read.notes.md`
+Type note (routes `as <type>` to file.read's slot — needs the coder's f249fe1cb Build fix to land `text` at run), a
+GENERIC `decider3.template`. item/list/duration/dict descriptions explain their kinds (writer + type-page teaching).
+
+**5/5** on a forced build: `as decimal`→{number,kind:decimal}, `as list of path`→{list,kind:path}, `as json`→{item,kind:json},
+`as iso duration`→{duration,kind:iso}, `read … as text`→text; guards hold. Plan folder 17/17. All six decider/page
+fixtures green + re-pinned (pick_golden, type/module-reference goldens), diffs read — only the stage-5 teaching delta.
+Extra exchange fires only for a goal with a kind-capable coercion; no-coercion goals skip stage 3 (the `if` guard).
+
+### Earlier (superseded) — the inline-kinds dead end (decision 807)
 
 The architect ruled kinds **inline** in the Type question (from `type.kind.list`), follow-up only for a generic's
 element, with a measure gate: ≤~1,500 chars added per question. **Measured (v1/stage5-measure.md): inline-all kinds
