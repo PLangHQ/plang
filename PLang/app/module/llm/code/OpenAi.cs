@@ -86,22 +86,16 @@ public sealed class OpenAi : ILlm
         if (rawMessages is not { Count: > 0 })
             return context.Error(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
-        // The provider opens each message's content ONCE, here at its own boundary (not .Value(), which
-        // would flatten it through text's own writer first): the content value rides through the llm
-        // writer, so a text over %!llm.setting.length% is cut and a list/dict becomes a table cut at
-        // %!llm.setting.rows%. From here on Content holds what the model will see — hooks, the cache key,
-        // the snapshot key, the stored conversation and the body all read that same rendered text.
+        // Each message's Content stays the plang value it is (unrendered). The provider opens it at its own
+        // boundary — ToApiMessages serializes it THROUGH the llm writer (a text cut at %!llm.setting.length%,
+        // a list/dict tabled at %!llm.setting.rows%, an image as an image_url part), and the cache key is
+        // taken from that same serialized form. Nothing is read off a value via ToString().
         var llmSetting = context.Setting.Of<global::app.module.llm.setting.@this>();
         var length = llmSetting.Length.ToInt32();
         var rows = llmSetting.Rows.ToInt32();
         var culture = context.Setting.Of<global::app.setting.@this>().Culture;
-        foreach (var m in rawMessages)
-            if (m.Content is { } content)
-                m.Content = (global::app.type.item.text.@this)await RenderContent(content, length, rows, culture, context);
 
         // --- Build messages ---
-        // %vars% in the message content (e.g. %goalForLlm%) are resolved when Messages materializes —
-        // a template=plang container resolves its string leaves at .Value() (dict/list.Value).
         var messages = CloneMessages(rawMessages);
         string? schema;
 
@@ -146,19 +140,13 @@ public sealed class OpenAi : ILlm
             schema ??= (await previous.Properties.Value("Schema"))?.ToString();
         }
 
-        // Snapshot originals BEFORE format mutation
+        // The stored conversation is the messages as the step wrote them (content values, no format
+        // instruction) — what a later query continues.
         var originalMessages = CloneMessages(messages);
 
-        // Append format/schema instruction
+        // The format/schema instruction is NOT mutated onto a content value — it is appended to the system
+        // message's SERIALIZED text at the send boundary (ToApiMessages), so a content value stays itself.
         var formatInstruction = BuildFormatInstruction(await FormatOf(action), schema);
-        if (formatInstruction != null)
-        {
-            var systemMsg = messages.Find(m => m.Role == "system");
-            if (systemMsg != null)
-                systemMsg.Content = (global::app.type.item.text.@this)((systemMsg.Content?.ToString() ?? "") + "\n" + formatInstruction);
-            else
-                messages.Insert(0, new LlmMessage { Role = "system", Content = (global::app.type.item.text.@this)formatInstruction });
-        }
 
         if (OnBeforeRequest is { } before)
             foreach (Func<List<LlmMessage>, string?, Task> hook in before.GetInvocationList())
@@ -172,7 +160,10 @@ public sealed class OpenAi : ILlm
         string? cacheKey = null;
         if ((await action.Cache.Value())?.Value == global::app.module.cache.type.cache.use && goalTools == null)
         {
-            cacheKey = ComputeCacheKey(messages, model, (await action.Temperature.Value())!.ToDouble(), schema, await FormatOf(action));
+            // key over the messages AS SENT (serialized through the llm writer) — two inputs that differ only
+            // past the cut sent the model the same thing, so they key the same.
+            var sent = await ToApiMessages(messages, formatInstruction, length, rows, culture, app, context);
+            cacheKey = ComputeCacheKey(sent, model, (await action.Temperature.Value())!.ToDouble(), schema, await FormatOf(action));
             var cached = await app.store.Get<global::app.type.item.@this>(CacheTable, cacheKey);
             // A missing key returns the null citizen (Ok(null) → Peek is null.this),
             // which is a real instance — test .IsNull, not a C# != null reference check.
@@ -214,7 +205,7 @@ public sealed class OpenAi : ILlm
             var body = new Dictionary<string, object?>
             {
                 ["model"] = model,
-                ["messages"] = await ToApiMessages(messages, app, context),
+                ["messages"] = await ToApiMessages(messages, formatInstruction, length, rows, culture, app, context),
                 ["temperature"] = (await action.Temperature.Value())!.ToDouble(),
                 ["max_completion_tokens"] = limit.Token.ToInt64()
             };
@@ -352,7 +343,7 @@ public sealed class OpenAi : ILlm
                 messages.Add(new LlmMessage
                 {
                     Role = "assistant",
-                    Content = content,
+                    Content = content is null ? null : (global::app.type.item.text.@this)content,
                     ToolCalls = toolCalls
                 });
 
@@ -388,7 +379,7 @@ public sealed class OpenAi : ILlm
                     {
                         Role = "tool",
                         ToolCallId = toolCalls[i].Id,
-                        Content = results[i]
+                        Content = (global::app.type.item.text.@this)results[i]
                     });
                     toolCallCount++;
                 }
@@ -449,16 +440,16 @@ public sealed class OpenAi : ILlm
                     messages.Add(new LlmMessage
                     {
                         Role = "user",
-                        Content = "Your response failed validation: "
+                        Content = (global::app.type.item.text.@this)("Your response failed validation: "
                                + validationError
-                               + "\nPlease fix and try again."
+                               + "\nPlease fix and try again.")
                     });
                     continue; // re-query
                 }
             }
 
             // --- The conversation as sent (pre-mutation originals) and the answer: what a later query continues ---
-            originalMessages.Add(new LlmMessage { Role = "assistant", Content = rawResponse });
+            originalMessages.Add(new LlmMessage { Role = "assistant", Content = (global::app.type.item.text.@this)rawResponse });
             var conversed = global::app.type.item.@this.Create(originalMessages, context);
 
             if (OnAfterResponse is { } after)
@@ -582,9 +573,19 @@ public sealed class OpenAi : ILlm
 
     // --- Message formatting ---
 
-    private static async Task<List<object>> ToApiMessages(List<LlmMessage> messages, global::app.@this app, actor.context.@this context)
+    // The messages as they go on the wire: each content value is SERIALIZED here, at the boundary, through
+    // the llm writer (a text cut, a list/dict tabled) — never read off the value with ToString(). An image
+    // content rides as an image_url part (its own mime + bytes, viewable). The format/schema instruction is
+    // appended to the system message's serialized text (or added as a system message when there is none).
+    private static async Task<List<object>> ToApiMessages(List<LlmMessage> messages, string? formatInstruction,
+        int length, int rows, global::app.type.item.culture.@this culture, global::app.@this app, actor.context.@this context)
     {
+        // the content written through the llm writer — the serializer, not the value's own string form
+        async Task<string> Text(global::app.type.item.@this? content)
+            => content is null ? "" : await RenderContent(content, length, rows, culture, context);
+
         var result = new List<object>();
+        var systemSeen = false;
         foreach (var msg in messages)
         {
             if (msg.Role == "tool")
@@ -592,7 +593,7 @@ public sealed class OpenAi : ILlm
                 result.Add(new Dictionary<string, object?>
                 {
                     ["role"] = "tool",
-                    ["content"] = msg.Content?.ToString() ?? "",
+                    ["content"] = await Text(msg.Content),
                     ["tool_call_id"] = msg.ToolCallId
                 });
                 continue;
@@ -600,55 +601,72 @@ public sealed class OpenAi : ILlm
 
             if (msg.ToolCalls != null && msg.ToolCalls.Count > 0)
             {
-                // Assistant message with tool calls
-                var apiMsg = new Dictionary<string, object?>
+                result.Add(new Dictionary<string, object?>
                 {
                     ["role"] = "assistant",
-                    ["content"] = msg.Content?.ToString(),
+                    ["content"] = await Text(msg.Content),
                     ["tool_calls"] = msg.ToolCalls.Select(tc => new Dictionary<string, object>
                     {
                         ["id"] = tc.Id,
                         ["type"] = "function",
-                        ["function"] = new Dictionary<string, string>
-                        {
-                            ["name"] = tc.Name,
-                            ["arguments"] = tc.Arguments
-                        }
+                        ["function"] = new Dictionary<string, string> { ["name"] = tc.Name, ["arguments"] = tc.Arguments }
                     }).ToList()
-                };
-                result.Add(apiMsg);
+                });
                 continue;
             }
 
-            // Regular message — may have images
-            if (msg.Images != null && msg.Images.Count > 0)
+            // The format/schema instruction rides on the FIRST system message's text.
+            var isSystem = msg.Role == "system";
+            string Format(string s)
+            {
+                if (!isSystem || formatInstruction == null || systemSeen) return s;
+                systemSeen = true;
+                return s + "\n" + formatInstruction;
+            }
+
+            // A content that RESOLVES to an image rides as an image_url part (viewable). The content is a text
+            // template (`%photo%`), so the image is its resolved value, not its static type — asked only of a
+            // FULL-MATCH template (`content.IsVariable`), so a sentence with an embedded value still goes through
+            // the llm writer (text cut / list table) untouched. A message may also carry Images.
+            var resolved = msg.Content is { IsVariable: true } ? await msg.Content.Get(context) : null;
+            var contentImage = resolved is not null
+                && await resolved.Value() is global::app.type.item.image.@this img ? img : null;
+            if (contentImage != null || (msg.Images != null && msg.Images.Count > 0))
             {
                 var contentParts = new List<object>();
-                if (msg.Content?.ToString() is { Length: > 0 } text)
+                if (contentImage == null && Format(await Text(msg.Content)) is { Length: > 0 } text)
                     contentParts.Add(new Dictionary<string, string> { ["type"] = "text", ["text"] = text });
-
-                foreach (var image in msg.Images)
-                {
-                    var imageContent = await ResolveImage(image, app, context);
-                    contentParts.Add(imageContent);
-                }
-
-                result.Add(new Dictionary<string, object>
-                {
-                    ["role"] = msg.Role,
-                    ["content"] = contentParts
-                });
+                if (contentImage != null)
+                    contentParts.Add(await ImagePart(contentImage, context));
+                foreach (var image in msg.Images ?? new List<string>())
+                    contentParts.Add(await ResolveImage(image, app, context));
+                result.Add(new Dictionary<string, object> { ["role"] = msg.Role, ["content"] = contentParts });
             }
             else
             {
-                result.Add(new Dictionary<string, object?>
-                {
-                    ["role"] = msg.Role,
-                    ["content"] = msg.Content?.ToString()
-                });
+                result.Add(new Dictionary<string, object?> { ["role"] = msg.Role, ["content"] = Format(await Text(msg.Content)) });
             }
         }
+
+        // No system message to carry the instruction → add one.
+        if (formatInstruction != null && !systemSeen)
+            result.Insert(0, new Dictionary<string, object?> { ["role"] = "system", ["content"] = formatInstruction });
         return result;
+    }
+
+    // An image CONTENT as the model sees it — a viewable image_url part from the image's own bytes + mime.
+    // The sender reads them here at the boundary (by the time we're here, .Value() has escalated path→image);
+    // an unread, path-backed image loads its bytes through its own door (auth-gated), as ResolveImage does.
+    private static async Task<object> ImagePart(global::app.type.item.image.@this image, actor.context.@this context)
+    {
+        if (await image.Open(context) is { } unread)
+            throw new global::app.error.AppException(unread);
+        var dataUri = $"data:{image.Mime};base64,{System.Convert.ToBase64String(image.Bytes)}";
+        return new Dictionary<string, object>
+        {
+            ["type"] = "image_url",
+            ["image_url"] = new Dictionary<string, string> { ["url"] = dataUri }
+        };
     }
 
     // internal so OpenAiImageDenialTests can invoke the handler directly
@@ -817,17 +835,13 @@ public sealed class OpenAi : ILlm
 
     // --- Caching ---
 
-    private static string ComputeCacheKey(List<LlmMessage> messages, string model,
+    // Keyed over the messages AS SENT — the already-serialized api-message list (content through the llm
+    // writer, images as parts), so the key is exactly what the model saw, cut and all.
+    private static string ComputeCacheKey(List<object> sent, string model,
         double temperature, string? schema, string? format)
     {
         var sb = new StringBuilder();
-        foreach (var msg in messages)
-        {
-            sb.Append(msg.Role).Append(':').Append(msg.Content ?? "").Append('|');
-            if (msg.Images != null)
-                foreach (var img in msg.Images)
-                    sb.Append("img:").Append(img).Append('|');
-        }
+        sb.Append(System.Text.Json.JsonSerializer.Serialize(sent));
         sb.Append("model:").Append(model);
         sb.Append("temp:").Append(temperature);
         if (schema != null) sb.Append("schema:").Append(schema);
@@ -997,7 +1011,7 @@ public sealed class OpenAi : ILlm
 
     // The content as the model will see it: the content value written through the llm writer at the
     // provider's boundary — a template resolves, a text over the limit is cut, a list/dict becomes a table.
-    private static async Task<string> RenderContent(global::app.type.item.text.@this content,
+    private static async Task<string> RenderContent(global::app.type.item.@this content,
         int length, int rows, global::app.type.item.culture.@this culture, actor.context.@this context)
     {
         using var ms = new System.IO.MemoryStream();
