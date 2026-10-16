@@ -1814,24 +1814,17 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
 
 class app.type.item.kind.json.this : app.type.kind.this
   ctor()
-  override Clr(System.Object host, System.Type target, app.actor.context.this ctx) : System.Object
-  override ClrForm : System.Type { get; }
   override Compressible : System.Boolean { get; }
-  override Data(System.String name, System.Object node, app.data.this parent, app.actor.context.this ctx) : app.data.this
-  override Descend(System.Object obj, System.String key, System.Boolean isIndex, app.actor.context.this ctx) : System.ValueTuple<System.Boolean, System.Object>
   override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
-  override Enumerate(System.Object obj, app.actor.context.this ctx) : System.Collections.Generic.IEnumerable<app.data.this>
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
-  override IsSequence(System.Object host) : System.Boolean
   override IsText : System.Boolean { get; }
+  override Load(System.Object raw, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.data.this>
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Open(System.String characters, app.actor.context.this context) : app.data.this
-  override Output(System.Object obj, app.type.format.IWriter writer, app.View mode, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask
   override Owns(app.type.format.IWriter writer) : System.Boolean
   override Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
   override Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.actor.context.this context) : System.Object
   override Report : System.String { get; }
-  override Set(System.Object host, System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.type.item.this>
   protected override Owner : System.String { get; }
 
 class app.type.item.kind.list.this : app.type.kind.this
@@ -2503,11 +2496,6 @@ class app.type.item.setting.module.this : app.type.item.setting.this
   override Set(System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.this>
   static Internal : System.Boolean { get; }
 
-class app.type.item.setting.serializer.Reader : app.type.reader.ITypeReader
-  Kind : System.String { get; }
-  Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
-  ctor()
-
 class app.type.item.setting.this : app.type.item.this, app.type.item.ICreate<app.type.item.setting.this> [PlangType]
   Apply(System.Collections.Generic.IDictionary<System.String, System.Object> values, app.actor.context.this context) : app.data.this
   Disabled : app.type.item.bool.this { get; }
@@ -2600,7 +2588,7 @@ class app.type.item.size.this : app.type.item.this, System.IEquatable<app.type.i
 
 class app.type.item.source : app.type.item.this
   Raw : System.Object { get; }
-  ctor(System.Object value, app.type.this type, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, app.type.item.path.this origin = …, System.Boolean built = …)
+  ctor(System.Object value, app.type.this type, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, app.type.item.path.this origin = …, System.Boolean built = …, app.type.kind.this format = …)
   override Cacheable : System.Boolean { get; }
   override Get(app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.data.this>
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
@@ -2703,18 +2691,6 @@ class app.type.item.text.Writer : app.type.format.IWriter
 enum app.type.item.text.empty [PlangType]
   static const drop : app.type.item.text.empty
   static const keep : app.type.item.text.empty
-
-class app.type.item.text.kind.format.this : app.type.kind.this
-  ctor(app.type.kind.this format, System.String owner)
-  override IsText : System.Boolean { get; }
-  override Open(System.String characters, app.actor.context.this context) : app.data.this
-  override Owns(app.type.format.IWriter writer) : System.Boolean
-  protected override Owner : System.String { get; }
-
-class app.type.item.text.kind.this : app.type.kind.this
-  ctor(app.type.list.this types)
-  override Coin(System.String name) : app.type.kind.this
-  protected override Owner : System.String { get; }
 
 static class app.type.item.text.serializer.Default
   static Read(System.Object raw, System.String kind, app.type.reader.ReadContext ctx) : System.Object
@@ -3085,6 +3061,8 @@ class app.type.kind.list.this : app.type.item.list.this<app.type.this>
 class app.type.kind.subclass.this<T> : app.type.kind.this<T>
   ctor(System.String name, System.Type class)
   override ClrForm : System.Type { get; }
+  override Of(System.Type type) : System.Type
+  override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
 
 class app.type.kind.this : app.type.this
   IsEmpty : System.Boolean { get; }
@@ -3158,7 +3136,6 @@ class app.type.list.this : app.type.item.list.this<app.type.this>
   Item[System.String] : app.type.this { get; }
   Item[System.Type] : app.type.this { get; }
   Item[app.type.this, app.actor.context.this] : app.type.this { get; }
-  Kind(System.String name) : app.type.kind.this
   Kind(System.String type, System.String kind) : app.type.kind.this
   Kind(System.Type clr) : app.type.kind.this
   Kind(app.type.this type, app.actor.context.this context) : app.type.kind.this
