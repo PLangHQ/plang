@@ -20,12 +20,16 @@ public partial class Read : IContext
     /// that type through its own birth (<c>as text</c> → the characters, a plain <c>text</c>), beating the extension.</summary>
     public partial data.@this<global::app.type.@this>? Type { get; init; }
 
+    // The step forced an `as <type>` — a truthy Type slot. Read by Start (what it lands) and Build (what a
+    // capturing step takes).
+    private async Task<bool> Typed() => Type is not null && await Type.ToBooleanAsync();
+
     // No Type given: a Template is opened once and its kind handed to the read, else the read lands a reference the
     // extension types. A Type given reads the bytes now and the declared type makes itself from them through its own
     // birth (as text → the characters), the file its origin — so the value landed is that type, not a file reference.
     public async Task<data.@this> Start()
     {
-        var typed = Type is not null && await Type.ToBooleanAsync();
+        var typed = await Typed();
         return await Path.Use(async path => typed
             ? await Type!.Use(async declared =>
             {
@@ -46,6 +50,7 @@ public partial class Read : IContext
     public async Task<data.@this> Build() => Path.HasVariable ? Context.Ok() : await Path.Use(async path =>
     {
         if (await path.Absence(Context) is { } why) await __action.Warn(why, Context);
-        return Type is not null && await Type.ToBooleanAsync() ? Context.Ok(await Type.Value()) : await path.Expect(Context);
+        // the `as <type>` is what this lands — the capture takes that type carrier whole, unopened
+        return await Typed() ? Type! : await path.Expect(Context);
     });
 }
