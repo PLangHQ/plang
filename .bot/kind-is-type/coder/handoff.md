@@ -58,12 +58,23 @@ Branch A reshapes how a value is read/made through its type — "one make door" 
   own value (action reads action rows; list<action> through its element), so no site asks by name. The
   three name checks stay for now.
 - **#3 the floor** (`type/item/source.cs:115`: `_type.kind.IsText || _type.Name is "text"`).
-  **Finding:** born the Make wire-raw source holding the full type (`type.list[this, context]`) — no
-  loop, but regressed ~13 template/file/url content tests (Read_TemplateTrue, AFile*/AUrl*
-  content-as-template): a **bare** declared type (from a `.pr`) carries its Template and its origin that
-  the **registered** one doesn't, so resolving the full type at birth drops/re-types what the bare one
-  carried. A value's born type, its kind and its format need one shape — branch A's "one make door".
-  The name floor stays here, recorded.
+  **Findings (each isolated and verified; an earlier guess that "the registered type drops Template/
+  origin" was WRONG — `type/list/this.cs:167` `Full` preserves `Template`, and `origin` is passed
+  explicitly):**
+  - Born the Make wire-raw source holding the full type (`type.list[this, context]`) **alone** regresses
+    **nothing** (Types 852/0, FileHandlerTests 34/0). It is a safe change, not the regressor.
+  - The ~13 regressions (Read_TemplateTrue, AFile*/AUrl* content-as-template) come from **removing the
+    floor**. The floor compensates for text's own format being declared `[Format("", "text/plain",
+    ".txt")]` with **no `Text = true`** (unlike xml/ini/goal/…), so text's empty kind answers
+    `IsText = false`.
+  - But `Text = true` on text's own format, even together with #3, still regresses the template/file
+    tests — so the floor's role is deeper than plain-text `IsText`: the content/template decode path
+    reads `Peek()` expecting the decoded **string**, and a false `IsText` there makes `Peek()` return raw
+    bytes, breaking template rendering.
+  - So the floor's removal needs the "born type + kind + format are one shape" work — branch A's "one
+    make door". Two concrete leads for branch A: text's own-format likely should be `Text = true`, and
+    the decode/`Peek` path should get the decoded string without leaning on a type-name check. The name
+    floor stays here, recorded.
 
 ## The review line's starting point
 
