@@ -546,12 +546,17 @@ public partial class @this
         // deep-renders, and the resolved value's own type then converts to T.
         if (T.IsName && Peek() is T name)
             return T.Create(name, null, this);
-        // A resting source (json) rests here too — the target's own Create opens what it needs: a dict/list
-        // parses the raw into itself, a text takes its characters as they are. Conversion never rebinds (the
-        // answer is this caller's view), so the source is not narrowed — only Value/Get/enumeration narrow.
         var value = await Value();
         // a read that failed has said why — nothing is made from it
         if (!Success) return null;
+        // A value already a T is held as it is. A value MADE into T from an unread source opens that source
+        // first — a typed ask is a USE, so json parses it once and the Data narrows (805/787) — then T builds
+        // from what it opened. "Already T, or made into T", not which T it is.
+        if (value is not T && value is global::app.type.item.source)
+        {
+            value = await Open();
+            if (!Success) return null;
+        }
         // a type selected by key answers the one the value names (a goal by its name), as this Data's asker sees it;
         // one it names but can't hand (a goal not built) says why; a key naming none goes on to the type's birth
         if (T.IsSelected && value is not T && Context != null && await T.Select(value, Context) is { IsInitialized: true } chosen)
@@ -625,8 +630,10 @@ public partial class @this
     /// <c>Less</c> means <c>this &lt; other</c>. Null policy is <c>@null</c>'s own
     /// behavior (it outranks every value, so its <c>Order</c> answers <c>%x% == null</c>).
     /// </summary>
+    // Comparing is a USE: both operands open (a resting json source parses once and narrows, 805), so the
+    // compare ranks the real values, not an unread source. A value that doesn't rest opens exactly as Value.
     public async ValueTask<Comparison> Compare(@this other)
-        => await (await Value()).Compare(await other.Value(), _context);
+        => await (await Open()).Compare(await other.Open(), _context);
 
     /// <summary>
     /// What is in memory now, asked its truthiness — sync, no read. The value answers (empty text, zero,

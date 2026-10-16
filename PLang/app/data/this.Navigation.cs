@@ -30,15 +30,15 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, bool keeps = false)
     {
-        // Materialise a source-backed value (a `%cfg%` still raw json, a template container still a
-        // wire) so the write lands on the PARSED value, not the raw form. The write target is the
-        // materialized value itself — a cacheable source rebinds through the door, but a
-        // re-resolving template container (Cacheable=false) never rebinds, so relying on Peek() would
-        // land the write on the stale wire. Use the materialized value directly and rebind to the
-        // written result, which snapshots a template container into its plain resolved form on
-        // first write (correct for a dict built up across several sets).
+        // Setting a member is a USE: open a source-backed value (a `%cfg%` still raw json, a template
+        // container still a wire) so the write lands on the PARSED value, not the raw form — a resting json
+        // source parses once and the Data narrows here (805). The write target is the opened value itself —
+        // a cacheable source rebinds through the door, but a re-resolving template container (Cacheable=false)
+        // never rebinds, so relying on Peek() would land the write on the stale wire. Use the opened value
+        // directly and rebind to the written result, which snapshots a template container into its plain
+        // resolved form on first write (correct for a dict built up across several sets).
         var before = Error;
-        var target = await Value();
+        var target = await Open();
         // the read failed (the value didn't parse, or its type declined it): that is the write's answer
         if (Error != null && !ReferenceEquals(Error, before)) return _context?.Error(Error) ?? this;
 

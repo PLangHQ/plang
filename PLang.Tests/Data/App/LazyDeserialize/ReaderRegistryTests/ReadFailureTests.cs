@@ -24,11 +24,9 @@ public class ReadFailureTests
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{not valid json", ctx.App.type.list[new type("item", "json"), ctx], ctx, "bad");
-        // Touch must NOT throw — the failure is cached as Data.Error.
-        var v = await d.Value();
-        // A failed materialize answers the typed absence (Value is never C# null),
-        // and the failure is cached on Error.
-        await Assert.That(v.IsNull).IsTrue();
+        // A USE opens it (805): navigation parses the json and the parse fails there — a cached Data.Error,
+        // never a throw. (.Value() rests now — the courier door.)
+        _ = await d.Get("host"); // must NOT throw
         await Assert.That(d.Error).IsNotNull();
         await Assert.That(d.Error!.Message).Contains("bad"); // names the source
     }
@@ -58,10 +56,10 @@ public class ReadFailureTests
         // its value — no parse, so no throw escapes the courier.
         ctx.Variable.Set("bad", d);
         var relayed = (await ctx.Variable.Get("bad"))!;
-        await Assert.That(relayed.MaterializeCount()).IsEqualTo(0); // courier never materialized
+        await Assert.That(relayed.MaterializeCount()).IsEqualTo(0); // courier never materialized (Value rests, 805)
 
-        // Only the leaf touch materializes — and it surfaces an error, never throws.
-        await Assert.That((await relayed.Value())!.IsTruthy()).IsFalse();
+        // Only a USE materializes — and it surfaces an error, never throws.
+        _ = await relayed.Get("host");
         await Assert.That(relayed.Error).IsNotNull();
     }
 }

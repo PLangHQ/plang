@@ -21,11 +21,12 @@ public class MaterialiseErrorPathTests
     [Test] public async Task MalformedJson_ErrorsAtFirstTouch_NotAtRead()
     {
         await using var app = NewApp();
-        // Constructing the raw-backed Data does NOT throw (read-time is clean)…
+        // Constructing the raw-backed Data does NOT throw (read-time is clean), and .Value() rests (the
+        // courier door, 805)…
         var d = MalformedJson(app.actor.list.User.Context, "cfg");
         await Assert.That(d.Error).IsNull();
-        // …the error fires at first touch of .Value.
-        _ = (await d.Value());
+        // …the error fires at first USE — navigation opens the json and the parse fails there.
+        _ = await d.Get("host");
         await Assert.That(d.Error).IsNotNull();
     }
 
@@ -34,20 +35,18 @@ public class MaterialiseErrorPathTests
     {
         await using var app = NewApp();
         var d = MalformedJson(app.actor.list.User.Context, "cfg");
-        _ = (await d.Value());
+        _ = await d.Get("host");
         await Assert.That(d.Error!.Message.Contains("cfg")).IsTrue();
     }
 
     // OBP rule #9 — the failure is a Data.Error, not a thrown exception out of
-    // the courier (reading .Value does not throw).
+    // the courier (a USE opening the json does not throw).
     [Test] public async Task Materialise_Failure_SurfacedAs_DataError_NotThrown_ToCourier()
     {
         await using var app = NewApp();
         var d = MalformedJson(app.actor.list.User.Context, "cfg");
-        object? v = (await d.Value()); // must not throw
-        // A failed materialize answers the typed absence (Value is never C# null),
-        // and the failure is cached on Error.
-        await Assert.That(v is global::app.type.item.@null.@this).IsTrue();
+        _ = await d.Get("host"); // a use opens it — must not throw
+        // The failure is a cached Data.Error, never a thrown exception to the courier.
         await Assert.That(d.Error).IsNotNull();
     }
 
