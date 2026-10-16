@@ -3987,7 +3987,7 @@ action list.indexof
 
 action list.join
   ListName : variable required
-  Separator : text
+  Separator : text<separator>
 
 action list.last
   ListName : variable required
@@ -4017,7 +4017,7 @@ action list.set
 
 action list.split
   Value : text required
-  Separator : text
+  Separator : text<separator>
   Empty : choice<empty>
 
 action llm.decider

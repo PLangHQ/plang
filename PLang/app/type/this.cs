@@ -564,11 +564,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),
         m => m.Name == nameof(Create) && m.IsGenericMethodDefinition)!;
 
-    // The entity's face — the kind rides IN the name for a family whose kind is its content (a
-    // list<path>, a dict<number>, a choice<operator>), and stands alone for a scalar sub-kind (a
-    // "text" with kind "md" is still "text" to the vocabulary). Templates and catalog text print this.
+    // The entity's face — a kinded type writes its kind in its name (number<decimal>, list<path>, text<md>),
+    // a kindless one its name alone. The face is the type's own; which faces a prompt shows is the builder's
+    // business, not ToString's. Templates and catalog text print this.
     public override string ToString()
-        => !kind.IsEmpty && (Name == "list" || Name == "dict" || Name == "choice") ? $"{Name}<{kind.Name}>" : Name;
+        => kind.IsEmpty ? Name : $"{Name}<{kind.Name}>";
 
     /// <summary>
     /// Value equality — the entity is minted on ask now, so two asks yield two
