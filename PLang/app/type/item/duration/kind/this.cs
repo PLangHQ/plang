@@ -5,11 +5,9 @@ namespace app.type.item.duration.kind;
 /// <c>dotnet</c> 00:00:30). Each owns both directions of its form: the span a text in it is, and a span's text in
 /// it. The forms don't overlap, so a text names its own kind; a new standard is one new folder.
 /// </summary>
-public abstract class @this : global::app.type.kind.@this
+public abstract class @this : global::app.type.kind.@this<global::app.type.item.duration.@this>
 {
     protected @this(string name) : base(name) { }
-
-    protected internal override string Owner => "duration";
 
     /// <summary>The span <paramref name="text"/> is in this standard; null when it isn't written in it.</summary>
     internal abstract System.TimeSpan? Span(string text);

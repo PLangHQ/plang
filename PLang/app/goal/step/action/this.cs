@@ -263,7 +263,7 @@ public partial class @this
         => Start(context);
 
     /// <summary>What the build refuses in this action as it follows <paramref name="before"/>: nothing.</summary>
-    internal virtual global::app.error.Error? Refuse(@this? before) => null;
+    internal virtual global::app.error.@this? Refuse(@this? before) => null;
 
     /// <summary>This catalog action's place among a step's certain actions, in its pre-filled formal: a condition at
     /// its place in the chain (<see cref="Link"/>: if, elseif, else); a question (<see cref="IsQuestion"/>), on a step
@@ -329,7 +329,7 @@ public partial class @this
         catch (global::app.error.AppException ex) { result = context.Error(ex.Error); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            result = context.Error(global::app.error.Error.FromException(ex));
+            result = context.Error(global::app.error.@this.FromException(ex));
         }
         // A failure — returned or thrown — carries the handler's parameters and is recorded on the frame.
         if (!result.Success && result.Error is { } err)
@@ -345,7 +345,7 @@ public partial class @this
     /// strings. A name the module doesn't carry, a property its element doesn't have (a .pr built
     /// before the property went — run without it, the action would do something else), or an
     /// entry that isn't code-generated, comes back as a keyed error.</summary>
-    public (module.ICodeGenerated? Code, global::app.error.Error? Error) Instance(
+    public (module.ICodeGenerated? Code, global::app.error.@this? Error) Instance(
         actor.context.@this context)
     {
         if (Module[Name] is not { } element)
@@ -365,20 +365,20 @@ public partial class @this
     /// <c>Template</c> written <c>true</c>, a choice now) or a default it froze (list.split's <c>Empty</c>): rebuild the
     /// goal. The handler's own literal read judges it (its <c>Parse</c>, the run's typed door: a selected name, a
     /// variable, a template are never judged). A fact of this loaded action against the catalog, judged once.</summary>
-    private Task<global::app.error.Error?> Stale(module.ICodeGenerated handler)
+    private Task<global::app.error.@this?> Stale(module.ICodeGenerated handler)
     {
         return _stale ??= Judged();
 
-        async Task<global::app.error.Error?> Judged()
+        async Task<global::app.error.@this?> Judged()
             => handler is global::app.module.IClass own ? (await own.Parse()).FirstOrDefault(declined => declined.Key == "Stale") : null;
     }
 
-    private Task<global::app.error.Error?>? _stale;
+    private Task<global::app.error.@this?>? _stale;
 
     /// <summary>This action bound: its handler minted and its parameters bound as typed views —
     /// nothing resolved. What the build pass needs to ask the handler, and what a runner needs to read
     /// a held action's own properties.</summary>
-    public async Task<(module.ICodeGenerated? Handler, global::app.error.Error? Error)> Bind(
+    public async Task<(module.ICodeGenerated? Handler, global::app.error.@this? Error)> Bind(
         actor.context.@this context)
     {
         var (code, error) = Instance(context);

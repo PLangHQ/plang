@@ -1,0 +1,372 @@
+{
+  "name": "JsonIsItemsKind",
+  "comment": "A json value is item's, not text's (ruling 2, decisions 773 + 774 + 787). A json value\ncan hold any value (a number, a bool, a list, a dict), so its parent is item, not text:\nType={item, kind: json} lands as an item whose kind navigates as the \"json\" type. The\nasserts are ordered by state: first, while %x% is unread, type.name is \"item\" and the\nkind navigates as \"json\"; then `%x% is text` reads x — the parsed json is a plang dict\n— so after the read %x% is text is false and type.name narrows to \"dict\". A value's\ntype is what it is now, and its history is where it came from (787).",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%x%, Value=\"{\\\"a\\\":1}\", Type={name:\"item\", kind:\"json\"})",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"a\":1}"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {"name":"item","kind":"json"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=\"item\", Actual=%x!type.name%, Message=\"before any read, x's type name is item\")",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "item"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.name%",
+              "variable": [
+                {
+                  "text": "%x!type.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "before any read, x's type name is item"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"json\", Actual=%x!type.kind.name%, Message=\"before any read, x's kind is the json type\")",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "json"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%x!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "before any read, x's kind is the json type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "condition.if(Left=%x%, Operator=\"is\", Right=\"text\") { variable.set(Name=%isText%, Value=true) }",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "is"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%isText%, Value=true)",
+              "line": {
+                "number": 12
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%isText%",
+                      "variable": [
+                        {
+                          "text": "%isText%",
+                          "code": [
+                            {
+                              "variable": "isText"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert.equals(Expected=null, Actual=%isText%, Message=\"x is not a text\")",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item"
+              },
+              "value": null
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%isText%",
+              "variable": [
+                {
+                  "text": "%isText%",
+                  "code": [
+                    {
+                      "variable": "isText"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "x is not a text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert.equals(Expected=\"dict\", Actual=%x!type.name%, Message=\"after the read, x narrows to a dict\")",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "dict"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.name%",
+              "variable": [
+                {
+                  "text": "%x!type.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "after the read, x narrows to a dict"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "JsonIsItemsKind.test.goal",
+  "hash": "5222a73bb5b23c97f610db1f9402f5737efd3865d2474c092161232ef08c6d5e"
+}

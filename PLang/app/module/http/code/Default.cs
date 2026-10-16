@@ -64,15 +64,17 @@ public sealed class Default : IHttp
         // Build body
         HttpContent? httpContent = null;
         // A body is content when given — presence, not truthiness: a body of 0 or false is sent. One left
-        // out (or null) is none, so a no-body request (GET, etc.) skips serialization.
-        var bodyVal = action.Body == null || !action.Body.HasValue ? null : await action.Body.Value();
-        if (bodyVal != null)
+        // out (or null) is none, so a no-body request (GET, etc.) skips serialization. Presence is read by
+        // Peek (HasValue), never by Value — a body still unread ({item, json} holding its raw bytes) stays
+        // unread until it is actually written, so it rides verbatim rather than parsed-then-re-encoded.
+        if (action.Body != null && action.Body.HasValue)
         {
             // the content type as sent: its media type and parameters; the encoding is its charset unless it names one
             var mediaType = MediaTypeHeaderValue.Parse(contentType);
             mediaType.CharSet ??= encoding;
+            // a form body IS a dict — materialize it (a form is key/value, never raw bytes to relay)
             if (string.Equals(mediaType.MediaType, "application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
-                && bodyVal.Clr<Dictionary<string, object>>() is { } formDict)
+                && (await action.Body.Value())?.Clr<Dictionary<string, object>>() is { } formDict)
             {
                 var formValues = new Dictionary<string, string>();
                 foreach (var kvp in formDict)
@@ -161,7 +163,7 @@ public sealed class Default : IHttp
         var expected = action.Hash == null || !action.Hash.IsInitialized ? null : await action.Hash.Value();
         if (action.Hash != null && action.Hash.IsInitialized && !action.Hash.Success) return action.Hash;
         if (expected != null && expected.Algorithm == null)
-            return action.Context.Error(new global::app.error.Error(
+            return action.Context.Error(new global::app.error.@this(
                 "a download's Hash names its algorithm: sha256:<hex>", "HashInvalid", 400));
         using var digest = expected?.Algorithm!.Digest();
 
@@ -491,7 +493,7 @@ public sealed class Default : IHttp
         HttpResponseMessage response, HttpRequestMessage request, actor.context.@this context, CancellationToken ct = default)
     {
         var errorBody = "";
-        global::app.error.Error? unread = null;
+        global::app.error.@this? unread = null;
         // An error body that can't be read (size cap, slow sender, network) is said on the error — the status
         // still answers, and why its body is missing isn't lost.
         try
@@ -750,7 +752,7 @@ public sealed class Default : IHttp
 
     // HttpContent is a transport artifact, never a PLang value — it rides as a plain
     // (HttpContent?, error) tuple, not Data<HttpContent>.
-    private static async Task<(HttpContent? Content, global::app.error.Error? Error)> ResolveUploadContentAsync(
+    private static async Task<(HttpContent? Content, global::app.error.@this? Error)> ResolveUploadContentAsync(
         upload action, global::app.@this app, string encoding)
     {
         var content = await action.Content.Value();
@@ -781,7 +783,7 @@ public sealed class Default : IHttp
 
         // Auto-detect
         if (content is global::app.type.item.dict.@this
-            || content is Clr { Value: Dictionary<string, object> or JsonElement { ValueKind: JsonValueKind.Object } })
+            || content is Clr { Value: Dictionary<string, object> })
         {
             return await CreateFormContentAsync(app, context, content);
         }
@@ -811,7 +813,7 @@ public sealed class Default : IHttp
     // internal so HttpStaticFileDenialTests can invoke the handler's read
     // path directly (driving the full upload action requires a real HTTP
     // endpoint).
-    internal static async Task<(HttpContent? Content, global::app.error.Error? Error)> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
+    internal static async Task<(HttpContent? Content, global::app.error.@this? Error)> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
     {
         // The file's raw bytes, through the gate — out-of-root paths the actor hasn't granted bubble up as Fail.
         var resolved = global::app.type.item.path.@this.Resolve(path, context);
@@ -832,7 +834,7 @@ public sealed class Default : IHttp
         return content;
     }
 
-    private static async Task<(HttpContent? Content, global::app.error.Error? Error)> CreateFormContentAsync(global::app.@this app, actor.context.@this context, object content)
+    private static async Task<(HttpContent? Content, global::app.error.@this? Error)> CreateFormContentAsync(global::app.@this app, actor.context.@this context, object content)
     {
         var form = new MultipartFormDataContent();
         Dictionary<string, object> fields;
@@ -842,12 +844,6 @@ public sealed class Default : IHttp
         if (((content as global::app.type.item.@this)?.Clr<Dictionary<string, object>>()
              ?? content as Dictionary<string, object>) is { } dict)
             fields = dict;
-        else if (content is JsonElement je)
-        {
-            fields = new Dictionary<string, object>();
-            foreach (var prop in je.EnumerateObject())
-                fields[prop.Name] = prop.Value.ToString();
-        }
         else
             fields = new Dictionary<string, object> { ["data"] = content };
 

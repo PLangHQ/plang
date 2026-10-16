@@ -31,7 +31,7 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
     /// steps before it reached (the root has none). A step that can't be written answers the error.</summary>
     public virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
         global::app.data.@this? parent, object? value, global::app.actor.context.@this context)
-        => System.Threading.Tasks.ValueTask.FromResult(context.Error(new global::app.error.Error(
+        => System.Threading.Tasks.ValueTask.FromResult(context.Error(new global::app.error.@this(
             $"'{Text}' can't be written to — a {Kind} answers a value, it holds none.", "VariableNotWritable", 400)));
 
     /// <summary>Its step on <paramref name="previous"/>, knowing whether that is the variable's own binding

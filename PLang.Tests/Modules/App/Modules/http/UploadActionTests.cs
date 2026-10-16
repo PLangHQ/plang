@@ -194,31 +194,9 @@ public class UploadActionTests
         await Assert.That(_handler.LastRequest!.Method).IsEqualTo(System.Net.Http.HttpMethod.Put);
     }
 
-    [Test]
-    public async Task Upload_ResponseParsed_AsJson()
-    {
-        _handler.Handler = _ => Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new System.Net.Http.StringContent("{\"id\":42}", Encoding.UTF8, "application/json")
-        });
-
-        var action = new upload(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/upload",
-            Content = new global::app.data.@this("", "data", context: Ctx),
-            As = (global::app.type.item.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
-            Unsigned = (global::app.type.item.@bool.@this)true
-        };
-
-        await action.Attach(null, Ctx);
-        var result = await action.Start();
-
-        await result.IsSuccess();
-        await Assert.That((await result.Value())).IsNotNull();
-        // Serialize against the runtime type (object) so the value's own
-        // [JsonConverter] fires, not the item base's infra props.
-        var json = System.Text.Json.JsonSerializer.Serialize((object?)await result.Value());
-        await Assert.That(json).Contains("42");
-        await Assert.That(((global::app.type.item.status.@this)(await result.Properties.Value("Status"))!).Code.ToInt32()).IsEqualTo(200);
-    }
+    // (Upload_ResponseParsed_AsJson retired — it serialized the result value through System.Text.Json, the
+    //  deleted clr(json) model. The response's value is now a plang dict read through plang navigation, proved
+    //  by UploadResponseParsedPlangDictTests.)
 
     #region Form Upload & @file
 

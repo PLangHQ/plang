@@ -1,0 +1,10 @@
+/ A list of path knows its element (rulings 1-2). A list carrying Type={list, kind: path}
+/ births its [0] as a path. Written in formal so the builder's Type choice (today's unstable
+/ 2-list/3-path baseline for `as list of path`) is out of it — the red is the runtime's:
+/ today the kind of a typed list is a bare string (`kind.name` fails) and the element isn't
+/ born a path.
+ListKnowsItsElement
+- variable.set(Name=%files%, Value=["a.txt","b.txt"], Type={name:"list", kind:"path"})
+- assert.equals(Expected="list", Actual=%files!type.name%, Message="files' type name is list")
+- assert.equals(Expected="path", Actual=%files!type.kind.name%, Message="files' kind navigates as the path type")
+- assert.equals(Expected="path", Actual=%files[0]!type.name%, Message="[0] is born a path")

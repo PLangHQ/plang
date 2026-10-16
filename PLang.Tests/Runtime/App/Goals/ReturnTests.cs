@@ -120,7 +120,7 @@ public class ReturnTests
     [Test]
     public async Task SetToAVariableHoldingAFailure_KeepsTheFailure()
     {
-        await Ctx.Variable.Set("r", Ctx.Error(new global::app.error.Error("the call failed", "CallFailed", 500)));
+        await Ctx.Variable.Set("r", Ctx.Error(new global::app.error.@this("the call failed", "CallFailed", 500)));
         await Ctx.Variable.Set("y", Template("%r%"));
         var y = await Ctx.Variable.Get("y");
         await Assert.That(y.IsInitialized).IsTrue();
@@ -244,7 +244,7 @@ public class ReturnTests
     [Test]
     public async Task AParameterNamingAVariableHoldingAFailure_FailsTheCallWithIt()
     {
-        await Ctx.Variable.Set("r", Ctx.Error(new global::app.error.Error("the call failed", "CallFailed", 500)));
+        await Ctx.Variable.Set("r", Ctx.Error(new global::app.error.@this("the call failed", "CallFailed", 500)));
         await Load("Callee", Make.Step("return %x%", Return("%x%")));
         var caller = await Load("Caller", Make.Step("call Callee x=%r%", Make.Call(Ctx, "Callee", ("x", "%r%"))));
 

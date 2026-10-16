@@ -1,0 +1,338 @@
+{
+  "name": "SameKindNameUnderTwoTypes",
+  "comment": "Two types can each have a kind of the same name — each found through its own parent\n(ruling 2, decision 774). A kind's name is unique only under its parent (names on two\nlevels, like files in folders), so number's `short` and duration's `short` are\ndifferent kinds, each reached only through its own type. Red today for the kind.name\nhalves (held under the same stopgap as DecimalIsANumber): today `%x!type.kind.name%`\nreads null because kind isn't a navigable type at run — stage 1 (the probe on number)\nfixes number's half, stage 3 extends it to every family (duration included).",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%n%, Value=\"5\", Type={name:\"number\", kind:\"short\"})",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "5"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {"name":"number","kind":"short"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "variable.set(Name=%d%, Value=\"30s\", Type={name:\"duration\", kind:\"short\"})",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%d%",
+              "variable": [
+                {
+                  "text": "%d%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "30s"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {"name":"duration","kind":"short"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"number\", Actual=%n!type.name%, Message=\"n is a number\")",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "number"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n!type.name%",
+              "variable": [
+                {
+                  "text": "%n!type.name%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "n is a number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"duration\", Actual=%d!type.name%, Message=\"d is a duration\")",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "duration"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%d!type.name%",
+              "variable": [
+                {
+                  "text": "%d!type.name%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "d is a duration"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert.equals(Expected=\"short\", Actual=%n!type.kind.name%, Message=\"number's short is reached through number\")",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "short"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%n!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "number's short is reached through number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert.equals(Expected=\"short\", Actual=%d!type.kind.name%, Message=\"duration's short is reached through duration\")",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "short"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%d!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%d!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "duration's short is reached through duration"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "SameKindNameUnderTwoTypes.test.goal",
+  "hash": "7f565f32053d174bea6823054113b2a7e364e5f544d1128b82a4a6da04d9dfeb"
+}

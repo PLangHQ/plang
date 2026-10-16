@@ -3,12 +3,10 @@ using System.Text.Json;
 namespace app.type.item.kind.json;
 
 /// <summary>
-/// The json kind — navigates a <see cref="JsonElement"/> by the plang path. A container hop
-/// stays a <see cref="JsonElement"/>; the landed node builds its child: an object / array
-/// becomes a <c>clr</c> (its kind derives to json again), a scalar becomes its plang scalar
-/// (string→text, long/double→number, true/false→bool, null→the null citizen). Its CLR form is
-/// <see cref="JsonElement"/> — the one place that fact lives, so a <c>clr(JsonElement)</c>
-/// resolves to this kind and navigates here, not by reflection.
+/// The json kind — a value of kind json rests as its raw bytes until a use opens it (decision 792): its
+/// untyped materialize answers an unread <c>{item, json}</c> source (<see cref="Load"/>), and a use parses it
+/// once into a plang value through <see cref="Parse"/> (an object into a dict, an array into a list, a scalar
+/// into its native) — no <c>JsonElement</c> carrier, no navigator.
 /// </summary>
 public sealed class @this : global::app.type.kind.@this
 {
@@ -30,7 +28,17 @@ public sealed class @this : global::app.type.kind.@this
     /// <summary>A test run's report in json: the run's tests, written as json.</summary>
     public override string? Report => "results.json";
 
-    public override System.Type? ClrForm => typeof(JsonElement);
+    // json RESTS (ruling 6, decision 792): its untyped materialize does NOT parse — an unread {item, json}
+    // answers itself, so a courier (content.Value, a variable set, passing a value on, a url's or a render's
+    // result) carries it unread. Only a USE opens it: navigation, enumeration, `is`, a typed ask each parse once
+    // (through Parse) and narrow. The source form IS the rest: the source materialize sees a source come back
+    // and answers itself.
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this?> Load(
+        object raw, global::app.actor.context.@this ctx)
+        // The source carries THIS kind as the format its raw is in — the object the raw was decoded by, so a
+        // re-declaration keeps it and asks it to Parse directly (never a kind-name lookup across the app).
+        => new(ctx.Ok(new global::app.type.item.source(raw,
+            ctx.App.type.list[new global::app.type.@this("item", "json"), ctx], format: this)));
 
     // Every character written as itself (Icelandic letters, "—"); the ones a page reads as markup (< > & ' +)
     // still escaped, as json in an HTML page needs.
@@ -60,87 +68,30 @@ public sealed class @this : global::app.type.kind.@this
         }
     }
 
-    // json self-dispatches on the element's ValueKind (object → property, array → index), so the
-    // grammar's isIndex adds nothing here.
-    public override (bool, object?) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
-    {
-        var e = (JsonElement)obj;
-        if (e.ValueKind == JsonValueKind.Object && e.TryGetProperty(key, out var byName))
-            return (true, byName);
-        if (e.ValueKind == JsonValueKind.Array)
-        {
-            if (int.TryParse(key, out var n) && n >= 0 && n < e.GetArrayLength())
-                return (true, e[n]);
-            // Synthetic collection navigations — mirror the plang list kind so a clr(json) array
-            // reads like a list: .count/.length/.size (size for Fluid), .first/.last. A count rides
-            // out as a bare int (kind re-derives to number); first/last stay JsonElements.
-            switch (key.ToLowerInvariant())
-            {
-                case "count": case "length": case "size": return (true, e.GetArrayLength());
-                case "first": return e.GetArrayLength() > 0 ? (true, e[0]) : (false, null);
-                case "last": return e.GetArrayLength() > 0 ? (true, e[e.GetArrayLength() - 1]) : (false, null);
-            }
-        }
-        return (false, null);
-    }
-
-    public override global::app.data.@this Data(string name, object? node,
-        global::app.data.@this? parent, global::app.actor.context.@this ctx)
-    {
-        var e = (JsonElement)node!;
-        return e.ValueKind is JsonValueKind.Object or JsonValueKind.Array
-            ? new global::app.data.@this(name, new global::app.type.clr.@this(e, ctx, this), parent: parent, context: ctx)
-            : new global::app.data.@this(name, Scalar(e), parent: parent, context: ctx);
-    }
-
-    public override System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(
-        object obj, global::app.actor.context.@this ctx)
-    {
-        var e = (JsonElement)obj;
-        if (e.ValueKind == JsonValueKind.Array)
-            foreach (var element in e.EnumerateArray()) yield return Data("", element, null, ctx);
-        else if (e.ValueKind == JsonValueKind.Object)
-            foreach (var p in e.EnumerateObject()) yield return Data(p.Name, p.Value, null, ctx);
-    }
-
-    /// <summary>A json array holds its children by position; an object by name.</summary>
-    public override bool IsSequence(object host) => ((JsonElement)host).ValueKind == JsonValueKind.Array;
-
-    // Writing a child onto an immutable json object: materialize it into a mutable dict whose
-    // members STAY lazy (each a Data over its own child node), then set the new key. The json
-    // content becomes the dict's keys, never the JsonElement's BCL surface.
-    public override global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
-        object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
-    {
-        var e = (JsonElement)host;
-        var dict = new global::app.type.item.dict.@this();
-        if (e.ValueKind == JsonValueKind.Object)
-            foreach (var p in e.EnumerateObject())
-                dict.Set(Data(p.Name, p.Value, null, ctx));
-        dict.Set(key, value);
-        return new(dict);
-    }
-
-    // Raw json text/bytes → clr(json). json owns its OWN parse — object is not a plang type, so
-    // this is the one home (was object/serializer/json.cs, deleted). The SYNC decode: both the
-    // async materialization (base Load wraps this) and the sync wire graduation (Clr / Write) share
-    // this one body. A non-raw carrier declines (null → the family reader handles it); structured
-    // json stays a clr, navigated/enumerated lazily by this kind — a consumer that needs a native
-    // structure asks explicitly (`as dict`).
+    // Raw json text/bytes → a plang value. json owns its OWN parse — object is not a plang type, so this is
+    // the one home. A non-raw carrier declines (null → the family reader handles it).
     public override global::app.type.item.@this? Parse(object raw, global::app.actor.context.@this ctx)
     {
         if (raw is not (string or byte[])) return null;                        // decline — not a raw json payload
         var s = new global::app.type.item.text.@this(raw).ToString();
         if (string.IsNullOrEmpty(s)) return global::app.type.item.@this.Create(null, ctx);    // empty → the null value (NOT a decline)
-        using var doc = JsonDocument.Parse(s);
-        var e = doc.RootElement;
-        // Only STRUCTURED json stays a clr(json) (ruling 6 — navigated/enumerated lazily by this
-        // kind). A bare-scalar root IS its native value — the same dispatch this kind's Data/Scalar
-        // already use for leaves — so `42` is a number, not a clr(json number) that compares
-        // Incomparable to one.
-        return e.ValueKind is JsonValueKind.Object or JsonValueKind.Array
-            ? new global::app.type.clr.@this(e.Clone(), ctx, this)
-            : global::app.type.item.@this.Create(Scalar(e), ctx);
+        // json parses itself into a plang value (decision 774, ruling 9): an object into a dict, an array into
+        // a list, each read through its own type's reader over the json token stream — no JsonElement carrier,
+        // no navigator. A scalar root IS its native value (`42` a number). Verify:false — ingested content is
+        // unsigned, like every nested/ingest read.
+        var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(s));
+        utf8.Read();
+        var reader = new global::app.type.item.kind.json.Reader(utf8);
+        var read = new global::app.type.reader.ReadContext(ctx, Verify: false);
+        switch (reader.Peek())
+        {
+            case global::app.type.format.TokenKind.Object: return new global::app.type.item.dict.serializer.Reader().Read(ref reader, null, read);
+            case global::app.type.format.TokenKind.Array:  return new global::app.type.item.list.serializer.Reader().Read(ref reader, null, read);
+            case global::app.type.format.TokenKind.String: return global::app.type.item.@this.Create(reader.String(), ctx);
+            case global::app.type.format.TokenKind.Number: return global::app.type.item.@this.Create(reader.Number(), ctx);
+            case global::app.type.format.TokenKind.Bool:   return global::app.type.item.@this.Create(reader.Bool(), ctx);
+            default:                                        return global::app.type.item.@this.Create(null, ctx);
+        }
     }
 
     /// <summary>json characters opened: the json value they are, or why they don't read — MaterializeFailed, naming
@@ -149,21 +100,6 @@ public sealed class @this : global::app.type.kind.@this
     {
         try { return context.Ok(Parse(characters, context)); }
         catch (JsonException shape) { return context.Error(Unread(shape, "a json value").Error); }
-    }
-
-    // Materialize this json content INTO the CLR host target asks for. json owns the format
-    // bridge — its element becomes a reader — and the `*` kind owns the shape (the [Store] host
-    // walk driven off that reader). The door a clr(json) delegates to instead of terminal-lowering.
-    public override object? Clr(object host, System.Type target, global::app.actor.context.@this ctx)
-    {
-        try
-        {
-            var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(((JsonElement)host).GetRawText()));
-            utf8.Read();
-            var reader = new global::app.type.item.kind.json.Reader(utf8);
-            return new global::app.type.item.kind.reflection.@this().Read(ref reader, target, new global::app.type.reader.ReadContext(ctx));
-        }
-        catch (JsonException shape) { throw Unread(shape, target.Name); }
     }
 
     // The format→type read: json bridges its content into a json stream and drives the declared
@@ -187,56 +123,8 @@ public sealed class @this : global::app.type.kind.@this
     // json content that doesn't have the shape its target reads (an object where a list goes) — the program's
     // data, not a fault in plang: keyed like any content that doesn't read as its declared type, naming where.
     private static global::app.error.AppException Unread(JsonException shape, string target)
-        => new(new global::app.error.Error(
+        => new(new global::app.error.@this(
             $"json content doesn't read as {target}: {shape.Message}"
             + (shape.Path != null || shape.LineNumber != null ? $" [at {shape.Path ?? "?"}, line {shape.LineNumber?.ToString() ?? "?"}]" : ""),
             "MaterializeFailed", 400) { Exception = shape }, shape);
-
-    // A json value writes what it is — its objects, lists and scalars — through the writer's own primitives, and the
-    // writer says how it looks: a text template prints it as it prints an equal plang list, a json writer as json. The
-    // source's own spacing never passes the writer. NEVER reflecting the JsonElement's BCL props.
-    public override global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? ctx)
-    {
-        Write((JsonElement)obj, writer);
-        return default;
-    }
-
-    private static void Write(JsonElement element, global::app.type.format.IWriter writer)
-    {
-        switch (element.ValueKind)
-        {
-            case JsonValueKind.Object:
-                writer.BeginObject();
-                foreach (var member in element.EnumerateObject())
-                {
-                    writer.Name(member.Name);
-                    Write(member.Value, writer);
-                }
-                writer.EndObject();
-                break;
-            case JsonValueKind.Array:
-                writer.BeginArray(element.GetArrayLength());
-                foreach (var row in element.EnumerateArray()) Write(row, writer);
-                writer.EndArray();
-                break;
-            case JsonValueKind.String: writer.String(element.GetString()!); break;
-            case JsonValueKind.Number: global::app.type.item.number.@this.Parse(element.GetRawText())!.Write(writer); break;
-            case JsonValueKind.True: writer.Bool(true); break;
-            case JsonValueKind.False: writer.Bool(false); break;
-            default: writer.Null(); break;
-        }
-    }
-
-    // A json scalar → its raw CLR face (a number: its raw text read by number's one rule); the Data ctor lifts it
-    // to the plang scalar.
-    private static object? Scalar(JsonElement e) => e.ValueKind switch
-    {
-        JsonValueKind.String => e.GetString(),
-        JsonValueKind.Number => global::app.type.item.number.@this.Parse(e.GetRawText()),
-        JsonValueKind.True => true,
-        JsonValueKind.False => false,
-        _ => null,
-    };
 }

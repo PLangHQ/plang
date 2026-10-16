@@ -30,7 +30,7 @@ public class AppNodesTests
         var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
         await using var frame = user.call.Push(goal);
         frame.Tag(new global::app.type.item.dict.@this(new System.Collections.Generic.Dictionary<string, object?> { ["owner"] = "ingi" }), user);
-        frame.Record(new global::app.error.Error("seen", "Seen", 400), user);
+        frame.Record(new global::app.error.@this("seen", "Seen", 400), user);
 
         await Assert.That((await (await Read("%!call.Current.Depth%", user)).Value())?.ToString()).IsEqualTo("1");
         await Assert.That((await Read("%!call.Scope%", user)).Peek()).IsSameReferenceAs(frame);
@@ -53,7 +53,7 @@ public class AppNodesTests
         var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
         await user.Variable.Set("secret", user.Ok("s3cr3t-value"));
         await using var frame = user.call.Push(goal);
-        var error = new global::app.error.Error("it failed here", "Boom", 400) { Variables = user.Variable.Snapshot() };
+        var error = new global::app.error.@this("it failed here", "Boom", 400) { Variables = user.Variable.Snapshot() };
         frame.Record(error, user);
 
         using var ms = new System.IO.MemoryStream();
@@ -78,7 +78,7 @@ public class AppNodesTests
         var user = app.actor.list.User.Context;
         var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
         await using var frame = user.call.Push(goal);
-        frame.Record(new global::app.error.Error("seen", "Seen", 400), user);
+        frame.Record(new global::app.error.@this("seen", "Seen", 400), user);
 
         async Task<string> In(global::app.View view)
         {

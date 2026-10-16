@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "kind-is-type stages 0-3 + 767 + 789/790: OBP-sound and merge-safe. The kind<T>:kind:type model keeps behaviour on the element, one parent-fallback seam, no is-kind fork outside type/kind/, and no new app-wide by-name kind search; settings read back from their own record (789/790); 767 refuses a climbing name before resolve. Build clean (0 errors, PLNG001/002 at 0), no new CS0108 hides. Three non-blocking cleanups (dead TypeDescription const, stale BuildTypeEntries/Promote doc, subclass Offer reflection-per-call); none a surface change. Next bot: tester."
+}

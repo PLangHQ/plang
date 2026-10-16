@@ -34,7 +34,7 @@ public partial class Set : IContext, IScope, IKeep
 
     /// <summary>Build-time judgement of my own properties, read as authored — Peek, never the
     /// value door: a %var% is unknown at build and defers to Run.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate()
+    public async System.Threading.Tasks.Task<global::app.error.@this?> Validate()
     {
         // The strict probe reasons over the value's raw face at this proven leaf (ValidateKind is
         // CLR-facing machinery).
@@ -123,7 +123,7 @@ public partial class Set : IContext, IScope, IKeep
         // decline instead of NRE'ing on a null name below.
         if (name == null)
             return Context.Error(Name.Error
-                ?? new global::app.error.Error("variable.set: Name did not resolve to a variable.", "CreateVariableDeclined", 400));
+                ?? new global::app.error.@this("variable.set: Name did not resolve to a variable.", "CreateVariableDeclined", 400));
 
         // `set default` writes only where nothing is — a setting included (%!build.setting.cache% holds its
         // class's default, or this run's value).
@@ -254,7 +254,11 @@ public partial class Set : IContext, IScope, IKeep
             // converted to another type is born — its type's on.create fires (a before may refuse or
             // answer instead). A byte-backed family (image) keeps a literal path-string — the Type
             // entity carries the declared meaning and the value loads later.
-            if (!keepAsIs && converted != null && !targetType.IsInstanceOfType(converted))
+            // "Already the target" is asked of the PLANG type, not the C# class: a text IS an item in C#,
+            // so a literal declared {item, kind: json} would never reach type.Create and would stay text.
+            // Value.Is reads the kind (a text is an item but not {item, json}), so a format-typed literal
+            // is re-typed through the type's own kind-aware birth (the kind decides eager vs lazy).
+            if (!keepAsIs && converted != null && !Value.Is(type))
             {
                 // The build throws on a bad conversion (the throw boundary) — converted is a
                 // materialized leaf, so this re-types eagerly. A kind-validatable target defers:
@@ -270,7 +274,7 @@ public partial class Set : IContext, IScope, IKeep
                                                   or System.InvalidOperationException or System.Text.Json.JsonException)
                 {
                     if (!typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
-                        return Context.Error(new global::app.error.Error(ex.Message, "TypeConversionFailed", 400));
+                        return Context.Error(new global::app.error.@this(ex.Message, "TypeConversionFailed", 400));
                 }
             }
 

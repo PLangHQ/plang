@@ -102,11 +102,11 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
         try { if (Create(raw) is { } made) return made; }
         catch (System.FormatException ex)
         {
-            data.Fail(new global::app.error.Error(ex.Message, "ChoiceInvalid", 400)
+            data.Fail(new global::app.error.@this(ex.Message, "ChoiceInvalid", 400)
                 { FixSuggestion = $"Valid options: {string.Join(", ", _set.Values)}" });
             return null;
         }
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} — choice<{typeof(T).Name}> cannot be created from it.",
             "CreateItemDeclined", 400));
         return null;

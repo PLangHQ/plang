@@ -172,7 +172,7 @@ public class StartTests
         var (_, step, set) = Program();
         var context = _app.actor.list.User.Context;
         _bound.Add(set.Own().Bind("start", When.after,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Broke", 400))), _app.actor.list.User, Scope.actor));
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Broke", 400))), _app.actor.list.User, Scope.actor));
         var coverage = new global::app.test.Coverage();
         coverage.Watch(context);
         global::app.data.@this? seen = null;

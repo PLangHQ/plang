@@ -9,7 +9,7 @@ namespace app.type.item.setting;
 /// node — the settings of a module or an action with no class of its own (<c>%!llm.query.setting%</c>). The
 /// asker's settings build one, the saved row and this run's values on it.
 /// </summary>
-[global::app.Attributes.PlangType("setting"), global::app.Attributes.Kinds]
+[global::app.Attributes.PlangType("setting")]
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A node: the path it stands for.</summary>
@@ -46,21 +46,58 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>A setting node read as a bool is whether it is on.</summary>
     public override bool IsTruthy() => Enabled.Value;
 
-    /// <summary>A setting is built by the asker's settings, never made from a value.</summary>
+    /// <summary>A setting is its own stored record read back into its class (decision 789/790): a fresh one of the
+    /// class the declaration names, each of its options taken from the record. A stored row of an older shape — not
+    /// this class's record — is <c>SettingsUnreadable</c>: pre-1.0 there is no reader for it, so it is fixed by
+    /// hand, deleted and set again.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this setting) return setting;
-        data.Fail(new global::app.error.Error(
+        if (raw is global::app.type.item.dict.@this record
+            && declared?.ClrType is { IsAbstract: false } clr && typeof(@this).IsAssignableFrom(clr)
+            && clr != typeof(@this))
+        {
+            var fresh = (@this)System.Activator.CreateInstance(clr)!;
+            // each option the record holds, read through the option's own type in Apply (the convert walk the
+            // CLI flags take); a field that is no option of this class (the base's Enabled, a dropped option) is
+            // not applied — the class takes only its own.
+            var options = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in record.Entries(data.Context))
+                if (fresh.Option(entry.Name) is not null) options[entry.Name] = entry.Peek();
+            var applied = fresh.Apply(options, data.Context);
+            if (applied.Success) return fresh;
+            data.Fail(Unreadable(fresh.Path, applied.Error));
+            return null;
+        }
+        if (raw is global::app.type.item.dict.@this)
+        {
+            // a record declared the base setting with a kind is an older-shape row ({setting, kind: <path>}),
+            // whose key is the path its kind names — no reader for it pre-1.0, so it is fixed by hand (loud)
+            if (declared?.kind is { IsEmpty: false } k) { data.Fail(Unreadable(k.Name, null)); return null; }
+            // a bare base setting (a node — a module/action with no class of its own) is not made FROM a record;
+            // it reads as absent, as the base setting read did before 789. A clean decline (no Fail) that the
+            // record reader answers with the null value, never the loud SettingsUnreadable.
+            return null;
+        }
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
-            "a setting is read as %!path%, never made from a value.", "CreateItemDeclined", 400));
+            "a setting is read as %!path% from its own stored record.", "CreateItemDeclined", 400));
         return null;
     }
 
-    /// <summary>A setting's type is <c>setting</c> with its path as the kind — <c>{setting, goal.list.setting}</c>:
-    /// the kind is what tells a saved row which class to read back. Its class is the setting class; its name and
-    /// namespace are setting's.</summary>
+    // A stored row that doesn't read back into its class — named by its key, with how a person fixes it by hand.
+    private static global::app.error.@this Unreadable(string key, global::app.error.@this? cause)
+        => new($"setting '{key}' was saved in an older shape and can't be read — delete it and set it again.",
+            "SettingsUnreadable", 400) { list = cause is { } c ? new() { c } : new() };
+
+    /// <summary>A settings CLASS is its own type, named like any type by its namespace
+    /// (<c>app.module.llm.setting</c>) — settings are settings, not kinds (decision 774); a saved row
+    /// reads back into its class by its KEY (the path), never by a kind. A bare NODE (a module/action
+    /// with no class) is a value of the base <c>setting</c> type.</summary>
     protected internal override global::app.type.@this Type
-        => new(NameOf(typeof(@this)), GetType(), Path) { Namespace = NamespaceOf(typeof(@this)) };
+        => GetType() == typeof(@this)
+            ? new(NameOf(typeof(@this)), typeof(@this))
+            : new(NameOf(GetType()), GetType());
 
     /// <summary>A structure — written through the reflection kind, its [Out] members.</summary>
     public override bool IsLeaf => false;
@@ -69,6 +106,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// (<see cref="Next"/>).</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
+        // a setting answers its own identity and teaching — its address and its option rows — beside its options
+        if (key.Equals(nameof(Path), System.StringComparison.OrdinalIgnoreCase))
+            return new global::app.data.@this(key, new global::app.type.item.text.@this(Path), parent: parent);
+        if (key.Equals(nameof(Rows), System.StringComparison.OrdinalIgnoreCase))
+            return new global::app.data.@this(key, Rows(parent.Context), parent: parent);
         if ((Option(key) ?? Switch(key)) is { } option)
             return new global::app.data.@this(key, option.GetValue(this), parent: parent);
         return await Next(parent, key);
@@ -130,7 +172,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             var prop = node.GetType().GetProperty(kvp.Key,
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
             if (prop?.SetMethod?.IsPublic != true)
-                return context.Error(new global::app.error.Error(
+                return context.Error(new global::app.error.@this(
                     $"Unknown setting '{kvp.Key}' on {node.GetType().Name} — no public-settable property.",
                     "UnknownSetting", 400));
 
@@ -145,7 +187,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             {
                 // a setting node takes a bool — whether it is on — or its members; anything else is refused
                 if (global::app.type.item.@this.Create(kvp.Value, context) is not global::app.type.item.@bool.@this on)
-                    return context.Error(new global::app.error.Error(
+                    return context.Error(new global::app.error.@this(
                         $"setting '{kvp.Key}' is a switch: write true or false, or set its members", "TypeConversionFailed", 400));
                 var child = (@this)(prop.GetValue(node) ?? Construct(prop.PropertyType, context));
                 child.Enabled = on;
@@ -179,7 +221,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
                     or System.OverflowException or System.NotSupportedException)
                 {
-                    return context.Error(new global::app.error.Error(
+                    return context.Error(new global::app.error.@this(
                         $"setting '{kvp.Key}' cannot bind to {prop.PropertyType.Name}: {ex.Message}",
                         "TypeConversionFailed", 400) { Exception = ex });
                 }
@@ -238,5 +280,28 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                              | System.Reflection.BindingFlags.DeclaredOnly))
                     if (option.SetMethod?.IsPublic == true) yield return option;
         }
+    }
+
+    /// <summary>This setting's options as the builder teaches them — each by the name a <c>%!path%</c>
+    /// writes (<c>cache</c>), its type (named through <paramref name="context"/>'s types), and its default
+    /// (the value itself, which writes its own text); a sensitive option shows no default. The rows the
+    /// decider prompt reads from what <c>step.Setting</c> holds — moved here from the setting kind (774:
+    /// the value holds what it offers). Takes the asker's context, so the value need store none.</summary>
+    public global::app.type.property.list.@this Rows(global::app.actor.context.@this context)
+    {
+        var rows = new global::app.type.property.list.@this();
+        foreach (var option in Options)
+        {
+            var reflected = new global::app.type.property.@this(option, context.App.type.list);
+            rows.Add(new global::app.type.property.@this
+            {
+                Name = char.ToLowerInvariant(option.Name[0]) + option.Name[1..],
+                Type = reflected.Type,
+                Nullable = reflected.Nullable,
+                Default = !option.IsDefined(typeof(global::app.SensitiveAttribute), inherit: true)
+                          && option.GetValue(this) is global::app.type.item.@this { IsNull: false } value ? value : null,
+            });
+        }
+        return rows;
     }
 }

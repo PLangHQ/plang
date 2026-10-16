@@ -1,0 +1,213 @@
+{
+  "name": "ShortNameFindsTheType",
+  "comment": "A guard, not a red test: `as text` and `as list` must find plang's own types both before\nand after ruling 7 / decision 752 (a type's name is its namespace read from a root, like a\nfile path). text is app.type.item.text, list is app.type.item.list; plang's own types\ndrop `app.type.item.`, so `text` names the core text and `list` names the core list.\nThe guard: `as text` yields a value whose type.name is \"text\"; `as list` yields a value\nwhose type.name is \"list\". Must hold whatever happens around collection types ending in\n`list` across modules.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %t% = \"hello\" as text",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%t%",
+              "variable": [
+                {
+                  "text": "%t%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %t!type.name% equals \"text\"",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%t!type.name%",
+              "variable": [
+                {
+                  "text": "%t!type.name%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %xs% = [1, 2, 3] as list",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%xs%",
+              "variable": [
+                {
+                  "text": "%xs%",
+                  "code": [
+                    {
+                      "variable": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [1,2,3]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "list"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %xs!type.name% equals \"list\"",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "list"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%xs!type.name%",
+              "variable": [
+                {
+                  "text": "%xs!type.name%",
+                  "code": [
+                    {
+                      "variable": "xs"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/app/type/ShortNameFindsTheType.test.goal",
+  "prPath": "/plan/kind-is-type/app/type/.build/shortnamefindsthetype.test.pr",
+  "hash": "d27c077cf71e62fce80ea3293a015e44693fd9ba254bee38ac368b875527254a"
+}

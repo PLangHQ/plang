@@ -41,7 +41,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (Create(value) is { } culture) return culture;
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"'{(value as global::app.type.item.@this)?.Clr<object>() ?? value}' is no culture — a culture is named as is-IS or en-US.",
             "UnknownCulture", 400));
         return null;

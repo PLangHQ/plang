@@ -47,16 +47,19 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
     [Test]
     public async Task Value_PendingSource_LoadsAsync_ReadFiresExactlyOnce()
     {
-        // pending file source: first Value() awaits read; second Value() returns cached
-        // — MaterializeCount transitions 0 → 1 → 1
+        // pending file source: .Value() rests (the courier door, 805); a USE opens it — the first use awaits
+        // the read and parses, the second reads the parsed value — MaterializeCount transitions 0 → 1 → 1.
+        // (JsonParsesOnceTests proves parse-once for an in-memory literal; this keeps the pending-file path.)
         await using var app = NewApp(out var root);
         var d = await RawBackedJson(app, root);
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
-        var first = await d.Value();
+        _ = await d.Get("port");
         await Assert.That(d.MaterializeCount()).IsEqualTo(1);
-        var second = await d.Value();
+        _ = await d.Get("port");
         await Assert.That(d.MaterializeCount()).IsEqualTo(1);   // parse fired exactly once, cached
-        await Assert.That(ReferenceEquals(first, second)).IsTrue();
+        var first = await d.Value();
+        var second = await d.Value();
+        await Assert.That(ReferenceEquals(first, second)).IsTrue();   // the narrowed value is cached
     }
 
 

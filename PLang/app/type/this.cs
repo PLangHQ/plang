@@ -20,10 +20,9 @@ namespace app.type;
 ///
 /// <para>Both doors — <c>data.Type</c> and <c>app.Type[name]</c> — return the
 /// same entity shape; <c>app.Type</c> resolves names through the registry and
-/// stamps <c>Context</c>, while <c>type.list.@this.BuildTypeEntries</c> walks
-/// the action catalog and populates the catalog properties at construction.
-/// Entities minted outside <c>BuildTypeEntries</c> lazily resolve the catalog
-/// properties on first read via <see cref="Promote"/>.</para>
+/// stamps <c>Context</c>. A type reads its facts (Description, Property, Values,
+/// …) through its <see cref="Family"/> entry and its teaching files, each on
+/// first read.</para>
 /// </summary>
 // `type` is an item (settled in the value model): the type entity is a plang
 // value — authored in the language (`as image/gif, strict`), riding in the .pr,
@@ -43,7 +42,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
-        if (!kind.IsEmpty) { writer.Name("kind"); writer.String(kind.Name); }
+        // a kind nests (774): a kind that is itself kinded writes as the object it is ({list, kind: {list, kind:
+        // path}}), so read and write are symmetric; a plain kind writes its name.
+        if (!kind.IsEmpty) { writer.Name("kind"); if (kind.kind.IsEmpty) writer.String(kind.Name); else kind.Write(writer); }
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
         if (Template != null) { writer.Name("template"); writer.String(Template.Name); }
         writer.EndObject();
@@ -104,17 +105,22 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// registry's entries), so a different kind is a different type object. Given no kind, the type
     /// takes its empty kind.
     /// </summary>
+    // JsonIgnore: a kind is a type now, so walking this member in raw STJ reflection recurses
+    // (kind.kind.kind…). The kind's wire form is its name, written by Write/Output, never by STJ.
+    [System.Text.Json.Serialization.JsonIgnore]
     [System.Diagnostics.CodeAnalysis.AllowNull]
     public global::app.type.kind.@this kind
     {
         get => _kind;
-        init => _kind = value ?? new global::app.type.kind.empty.@this(Name);
+        init => _kind = value ?? BornKind();
     }
     private readonly global::app.type.kind.@this _kind;
 
-    /// <summary>The formats this type reads — its kinds that have a MIME or an extension
-    /// (<c>%!app.type.image.format.list%</c>).</summary>
-    public global::app.type.format.@this format => new(_kind);
+    /// <summary>This type's empty kind — a plain type mints one for its name. A kind is itself a type
+    /// (<c>kind : type</c>); the empty kind answers itself here (never a new one), ending the ctor's
+    /// kind-minting chain. Serializers are kept off <see cref="kind"/> (JsonIgnore), so the self-kind
+    /// never loops a walk.</summary>
+    protected virtual global::app.type.kind.@this BornKind() => new global::app.type.kind.empty.@this(Name);
 
     /// <summary>
     /// When true, <see cref="kind"/> is a requirement (enforced at build for
@@ -133,30 +139,6 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// </summary>
     public global::app.type.item.template.kind.@this? Template { get; init; }
 
-    /// <summary>
-    /// Catalog teaching for the <c>type</c> entry — the LLM-facing description
-    /// surfaced through <c>app.type.list.view.TypeSchemas</c>. The instance
-    /// property pulls from <see cref="Promote"/>'s catalog fold; for the entity
-    /// itself there's no catalog row, so the LLM teaching falls into the static
-    /// renderer via <see cref="TypeDescription"/> below.
-    /// </summary>
-    public const string TypeDescription =
-        "A PLang type value, emitted as a JSON dict {name, kind?, strict?}. "
-        + "`name` is the canonical family/primitive — text, number, bool, datetime, image, "
-        + "etc. — drawn from the per-step `Primitive types:` list. NEVER a CLR name like "
-        + "`string`, `int`, or `long` (use `text` and `number` instead — int/long/decimal/"
-        + "double are kinds of number, not top-level names). "
-        + "`kind` is the optional subtype: a file extension for text/image/audio/video "
-        + "(`md`, `csv`, `jpg`, `mp3`), the numeric precision for number (`int`, `long`, "
-        + "`decimal`, `double`), or a free string. For literals, the runtime stamps the "
-        + "kind from the value when possible (a `.md` filename → kind `md`); only include "
-        + "`kind` when the step text spells it out (`as text/markdown`). "
-        + "`strict` (default false) turns kind into a build-time requirement for "
-        + "verifiable formats (image checks magic bytes); a `%var%` value defers the "
-        + "check to runtime; unverifiable families like `text` accept the kind name "
-        + "without probing content. "
-        + "Emit as a JSON object, NEVER a slash string. Wrong: `\"text/md\"`. "
-        + "Right: `{\"name\":\"text\",\"kind\":\"md\"}`. The slash form leaks past the wire.";
 
     [JsonConstructor]
     /// <summary>A type object holds an already-canonical name — <c>app.Type[name]</c> is the one door
@@ -164,7 +146,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public @this(string name, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
     {
         Name = name.ToLowerInvariant();
-        _kind = string.IsNullOrEmpty(kind) ? new global::app.type.kind.empty.@this(Name) : new global::app.type.kind.@this(kind);
+        _kind = string.IsNullOrEmpty(kind) ? BornKind() : new global::app.type.kind.@this(kind);
         Strict = strict;
         Template = template;
         // The birth door starts pointing at the one-shot binder, which swaps itself for the closed thunk (or
@@ -173,6 +155,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         _lift = Bind;
         _takes = Bind;
     }
+
+    /// <summary>A type named <paramref name="name"/> whose facts fall back to <paramref name="family"/>'s
+    /// (a kind's parent — so a kind answers its own, else its parent's). The kind's own wins; what it does
+    /// not answer reads the family's stored fields, which terminate.</summary>
+    protected @this(string name, @this? family) : this(name) => _family = family;
 
     /// <summary>
     /// The item class values of this type are (<c>text.@this</c> for text, <c>number.@this</c> for
@@ -267,7 +254,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                 dict.Get<item.@bool.@this>("strict", context)?.Value == true), context];
         if (raw is item.@this { IsLeaf: true } leaf && leaf.RawText is { Length: > 0 } named)
             return context.App.type.list[new @this(named), context];
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as item.@this)?.Type.Name ?? raw?.GetType().Name} — a type is its name (path) or {{name, kind?, strict?}}",
             "CreateItemDeclined", 400));
         return null;
@@ -408,7 +395,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             if (carrier.Error != null) throw Failed(carrier.Error);
             // Nothing in this type builds it from that value (`set %x% as dict = "hello"`): the type refuses the
             // conversion, as its own answer.
-            throw Failed(new global::app.error.Error(
+            throw Failed(new global::app.error.@this(
                 $"cannot make a '{Name}' from a {leaf.Type.Name} value", "TypeConversionFailed", 400));
         }
 
@@ -420,7 +407,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                 ? lifted : Make(lifted, context);
         return Make(global::app.type.item.@this.Create(raw, context), context);
 
-        static System.Exception Failed(global::app.error.Error error) => new global::app.error.DeclinedException(error);
+        static System.Exception Failed(global::app.error.@this error) => new global::app.error.DeclinedException(error);
     }
 
     /// <summary>A still-encoded slice + the serializer that sliced it — the capture hands over
@@ -483,6 +470,23 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         return _lift(raw, declared, data);
     }
 
+    // Construct a value of this type from <paramref name="raw"/> THROUGH the ICreate&lt;T&gt; family its class
+    // belongs to, even when the class is a subtype of that family (a settings class : setting is
+    // ICreate&lt;setting&gt;, not ICreate&lt;itself&gt;, so its own <see cref="Make"/> declines): the family's
+    // Create is handed THIS as the declaration, so the base's Create makes the subclass by its declared.ClrType.
+    // Only the record reader asks this (decision 789); the general Make stays on the EXACT <see cref="Creatable"/>
+    // so its CLR-value fallback (the `Make(item.Create(raw))` rung) keeps converging and never recurses. The
+    // closed family thunk is a fact of the class — bound once, on first use, like <see cref="_lift"/>.
+    internal item.@this? Construct(object? raw, global::app.data.@this data)
+    {
+        _construct ??= CreatableFamily is { } clr
+            ? _open.MakeGenericMethod(clr).CreateDelegate<System.Func<object?, @this, global::app.data.@this, item.@this?>>()
+            : static (_, _, _) => null;
+        return _construct(raw, this, data);
+    }
+
+    private System.Func<object?, @this, global::app.data.@this, item.@this?>? _construct;
+
     /// <summary>Is a value of <paramref name="other"/>, declared this type, made into it — this type's class's own
     /// answer, asked without making (a path declared a file is; a dict declared a list is not).</summary>
     internal bool Takes(@this other) => _takes(other);
@@ -530,6 +534,26 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                        && i.GenericTypeArguments[0] == clr)
            ? clr : null;
 
+    // The ICreate<T> family this type's class makes through — T is the class itself when it implements
+    // ICreate<itself> (the <see cref="Creatable"/> case), or the BASE a subtype implements ICreate of (a
+    // settings class : setting is ICreate<setting>, not ICreate<itself>). Make closes Create<T> with THIS as
+    // the declaration, so the base's Create makes the subclass by its declared.ClrType. Null for a host entity
+    // whose class implements no ICreate. (Takes/IsName stay on the exact Creatable — a subtype is not its base.)
+    private System.Type? CreatableFamily
+    {
+        get
+        {
+            if (ClrType is not { } clr || !typeof(item.@this).IsAssignableFrom(clr)) return null;
+            // A subtype implements ICreate of EVERY level up its chain (a settings class is both
+            // ICreate<item> and ICreate<setting>): take the MOST DERIVED family — the one every other is
+            // assignable from (setting over item) — so its Create, not the apex item's, makes the value.
+            var families = System.Array.FindAll(clr.GetInterfaces(),
+                    i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.ICreate<>))
+                .Select(i => i.GenericTypeArguments[0]).ToArray();
+            return System.Array.Find(families, t => System.Array.TrueForAll(families, o => o.IsAssignableFrom(t)));
+        }
+    }
+
     // The generic thunk: the raw rides into the type's own birth, as this type declares it — unless the value
     // refuses to become one (a raw C# value, lifted here, is no item and refuses nothing).
     private static item.@this? Create<T>(object? raw, @this declared, global::app.data.@this data)
@@ -540,11 +564,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),
         m => m.Name == nameof(Create) && m.IsGenericMethodDefinition)!;
 
-    // The entity's face — the kind rides IN the name for a family whose kind is its content (a
-    // list<path>, a dict<number>, a choice<operator>), and stands alone for a scalar sub-kind (a
-    // "text" with kind "md" is still "text" to the vocabulary). Templates and catalog text print this.
+    // The entity's face — a kinded type writes its kind in its name (number<decimal>, list<path>, text<md>),
+    // a kindless one its name alone. The face is the type's own; which faces a prompt shows is the builder's
+    // business, not ToString's. Templates and catalog text print this.
     public override string ToString()
-        => !kind.IsEmpty && (Name == "list" || Name == "dict" || Name == "choice") ? $"{Name}<{kind.Name}>" : Name;
+        => kind.IsEmpty ? Name : $"{Name}<{kind.Name}>";
 
     /// <summary>
     /// Value equality — the entity is minted on ask now, so two asks yield two
@@ -577,13 +601,16 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // narrow history. So no _priors / Accumulate / List here — the entity is a pure identity.
 
     /// <summary>Does this type entity answer to <paramref name="other"/> by its OWN identity? Name
-    /// match, or the <c>item</c> apex. Composition ("an image is-a path") is NOT answered here — it
+    /// match (or the <c>item</c> apex) AND, when <paramref name="other"/> names a kind, the same kind —
+    /// <c>is item</c> is every value, but <c>is {item, json}</c> asks the kind (a text is an item, not
+    /// <c>{item, json}</c>). Composition ("an image is-a path") is NOT answered here — it
     /// lives on the VALUE's type history (a value born from a path carries a "path" entry), asked via
     /// <see cref="item.@this.Is"/>. No CLR-inheritance lattice, no reflection.</summary>
     public bool Is(@this? other)
         => other != null
            && (string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)
-               || string.Equals(other.Name, "item", System.StringComparison.OrdinalIgnoreCase));
+               || string.Equals(other.Name, "item", System.StringComparison.OrdinalIgnoreCase))
+           && (other.kind.IsEmpty || string.Equals(kind.Name, other.kind.Name, System.StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Name-string IS-A query — resolves <paramref name="typeName"/> to a type and
@@ -612,12 +639,23 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The type's properties — a record's fields, a scalar's navigable members; each a
     /// named slot carrying its type. Null when the type declares none. A record is a type with
     /// properties and no <see cref="Shape"/>.</summary>
-    public property.list.@this? Property { get => Family._property; init => _property = value; }
+    public property.list.@this? Property { get => OwnProperty ?? kind.OwnProperty ?? Family._property; init => _property = value; }
     private property.list.@this? _property;
+
+    // A kind answers its own fact through these hooks, else the type falls back to its Family's STORED
+    // field (never the virtual — a kind's Family is its parent entry, so reading the field terminates;
+    // reading the member could loop type→kind→Family→kind). `kind.OwnX` reaches a kinded type's kind
+    // ({choice, operator} → the set's options); `OwnX` a kind-as-type's own (a setting kind's options).
+    protected virtual property.list.@this? OwnProperty => null;
+    protected virtual IReadOnlyList<string>? OwnValues => null;
+    protected virtual IReadOnlyList<string>? OwnAlias => null;
+    protected virtual bool? OwnInternal => null;
+    protected virtual item.prose.@this? OwnDescription(actor.context.@this context) => null;
+    protected virtual item.prose.@this? OwnExample(actor.context.@this context) => null;
 
     /// <summary>Enum values — the kind's own when it is a set of options (a choice's), else the family's.
     /// Non-null marks this as an enum-shape type.</summary>
-    public IReadOnlyList<string>? Values { get => kind.Values ?? Family._values; init => _values = value; }
+    public IReadOnlyList<string>? Values { get => OwnValues ?? kind.OwnValues ?? Family._values; init => _values = value; }
     private IReadOnlyList<string>? _values;
 
     /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — what its
@@ -654,14 +692,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>What a value of this type is, said once — the kind's own when it says one (a list of records names
     /// its element), else <c>type.description.md</c>; read when asked, empty when there is none.</summary>
     [LlmBuilder] public item.prose.@this Description(actor.context.@this context)
-        => kind.Description(context) is { } its
+        => (OwnDescription(context) ?? kind.OwnDescription(context)) is { } its
             ? its.Or(new item.prose.@this(Taught("type.description.md", context)))
             : new item.prose.@this(Taught("type.description.md", context));
 
     /// <summary>A value of this type as a step writes one (<c>5m</c>, <c>42</c>) — the kind's own when it shows one (a
     /// list of records, one of its element), else <c>type.examples.md</c>; read when asked, empty when there is none.</summary>
     [LlmBuilder] public item.prose.@this Example(actor.context.@this context)
-        => kind.Example(context) is { } its
+        => (OwnExample(context) ?? kind.OwnExample(context)) is { } its
             ? its.Or(new item.prose.@this(Taught("type.examples.md", context)))
             : new item.prose.@this(Taught("type.examples.md", context));
 
@@ -675,7 +713,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The other names this type answers to (<c>string</c> for text, <c>map</c> for dict),
     /// declared by its class as a static <c>Alias</c>. Never null.</summary>
     [JsonIgnore]
-    public IReadOnlyList<string> Alias { get => Family._alias; init => _alias = value; }
+    public IReadOnlyList<string> Alias { get => OwnAlias ?? kind.OwnAlias ?? Family._alias; init => _alias = value; }
     private IReadOnlyList<string> _alias = [];
 
     /// <summary>The C# shapes this type owns (<c>int</c> → number, kind int), declared by its class
@@ -690,10 +728,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         => Owned.Any(o => o.Assignable ? o.Clr.IsAssignableFrom(clr) : o.Clr == clr);
 
     /// <summary>True for a type plang's own machinery uses but a program never names (a wire slice,
-    /// a C# host carrier), declared by its class as a static <c>Internal</c>. It stays in the types —
-    /// naming answers it — and stays out of their face.</summary>
+    /// a C# host carrier), declared by its class as a static <c>Internal</c>. A kinded type answers it
+    /// through its kind (item's <c>dict</c>/<c>list</c>/<c>*</c> host kinds are internal), like every
+    /// other fact: its own, else its kind's, else its family's. It stays in the types — naming answers
+    /// it — and stays out of their face.</summary>
     [JsonIgnore]
-    public bool Internal { get => Family._internal; init => _internal = value; }
+    public bool Internal { get => OwnInternal ?? kind.OwnInternal ?? Family._internal; init => _internal = value; }
     private bool _internal;
 
     /// <summary>A type born knowing its C# class — the registry's entries and the full types it
@@ -712,6 +752,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         _family = family;
         _kind = kind ?? new global::app.type.kind.empty.@this(Name);
+    }
+
+    /// <summary>A type whose own kind is a given <paramref name="ownKind"/> — the seam a nested kind rides
+    /// (<c>{list, kind: {list, kind: path}}</c>): a kind, itself a type, is another type's kind. <paramref name="family"/>
+    /// is the fallback entry. A null <paramref name="ownKind"/> leaves the born empty kind.</summary>
+    internal @this(string name, global::app.type.kind.@this? ownKind, @this? family) : this(name)
+    {
+        if (ownKind != null) _kind = ownKind;
+        _family = family;
     }
 
     /// <summary>The type of the item class <paramref name="clr"/> — the name the class goes by (its declared
@@ -813,7 +862,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>True when <paramref name="key"/> is this type's name, its namespace or one of its aliases —
     /// the in-memory answer <see cref="Match"/> gives, for the registry's synchronous walk.</summary>
-    internal bool Names(string key)
+    internal virtual bool Names(string key)
         => string.Equals(Name, key, System.StringComparison.OrdinalIgnoreCase)
            || string.Equals(Namespace, key, System.StringComparison.OrdinalIgnoreCase)
            || Alias.Contains(key, System.StringComparer.OrdinalIgnoreCase);
@@ -835,12 +884,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
         var full = parent.Context.App.type.list[this, parent.Context];
-        var member = await new global::app.type.clr.@this(full, parent.Context).Get(parent, key);
-        // a type's own kind is, to plang, its name (`%x!type.kind%` is "json") — nothing when it has none
-        if (member.Peek() is global::app.type.clr.@this { Value: var held } && ReferenceEquals(held, full.kind))
+        // a type's own kind is the kind itself (an item, kind : type) — navigable (.name), rendering and
+        // comparing as its name; nothing when it has none.
+        if (string.Equals(key, "kind", System.StringComparison.OrdinalIgnoreCase))
             return full.kind.IsEmpty
                 ? new global::app.data.@this(key, global::app.type.item.@null.@this.Instance, context: parent.Context)
-                : new global::app.data.@this(key, new global::app.type.item.text.@this(full.kind.Name), context: parent.Context);
+                : new global::app.data.@this(key, full.kind, context: parent.Context);
+        var member = await new global::app.type.clr.@this(full, parent.Context).Get(parent, key);
         return member.IsInitialized ? member : await Setting(parent, key) ?? member;
     }
 

@@ -18,7 +18,7 @@ public partial class Wait : IContext
     {
         // an omitted slot is empty, not null: the slot given is the one that holds something
         if (Task is { IsInitialized: true }) return await Task.Use(task => task.Wait(Context.CancellationToken));
-        if (List is not { IsInitialized: true }) return Context.Error(new global::app.error.Error("wait for what? — a task (Task) or tasks (List)", "ValueRequired", 400));
+        if (List is not { IsInitialized: true }) return Context.Error(new global::app.error.@this("wait for what? — a task (Task) or tasks (List)", "ValueRequired", 400));
         return await List.Use(async tasks =>
         {
             var results = new List<data.@this>();

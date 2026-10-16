@@ -1,6 +1,6 @@
 namespace app.type.item.text;
 
-public sealed partial class @this
+public partial class @this
 {
     /// <summary><c>text</c> owns the CLR <c>string</c>. (Distributed <c>OwnerOf</c>.)</summary>
     public static System.Collections.Generic.IReadOnlyList<global::app.type.convert.OwnedClr> OwnedClrTypes { get; }

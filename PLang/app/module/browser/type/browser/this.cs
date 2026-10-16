@@ -86,7 +86,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
 
     /// <summary>Says what went wrong away from any step: written to its app's error channel. (An item holds no
     /// context; this is where the one it was started in reports.)</summary>
-    internal Func<global::app.error.Error, Task>? Report { get; private protected init; }
+    internal Func<global::app.error.@this, Task>? Report { get; private protected init; }
 
     /// <summary>What its stopping takes with it, said when it stops by itself.</summary>
     private protected virtual string Lost => "";

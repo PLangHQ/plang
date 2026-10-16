@@ -51,6 +51,6 @@ public class StatusTests
         var error = new global::app.error.ServiceError("gone", "Gone", 410);
         await Assert.That(error.Status.Code.ToInt32()).IsEqualTo(410);
         await Assert.That(error.Status.Text.ToString()).IsEqualTo("Gone");
-        await Assert.That(new global::app.error.Error("x").Status.Code.ToInt32()).IsEqualTo(400);
+        await Assert.That(new global::app.error.@this("x").Status.Code.ToInt32()).IsEqualTo(400);
     }
 }

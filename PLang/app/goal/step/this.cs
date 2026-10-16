@@ -132,7 +132,7 @@ public sealed partial class @this
             catch (global::app.error.AppException ex) { result = context.Error(ex.Error); }
             catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
             {
-                result = context.Error(global::app.error.Error.FromException(ex));
+                result = context.Error(global::app.error.@this.FromException(ex));
             }
         }
         result = await on.start.After(this, result, context);

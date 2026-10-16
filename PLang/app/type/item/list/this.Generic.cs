@@ -101,7 +101,7 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
         }
         catch (global::app.error.DeclinedException declined) { return context.Error(declined.Error); }
         return born.Success
-            ? context.Error(new global::app.error.Error(
+            ? context.Error(new global::app.error.@this(
                 $"{value} is no {(global::app.type.item.@this.NameOf(typeof(T)))}: the list holds only those.", "CreateItemDeclined", 400))
             : born;
     }

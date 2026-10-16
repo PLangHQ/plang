@@ -11,19 +11,19 @@ public class KindCanonicalisationTests
     [Test] public async Task Markdown_IsMd()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await Assert.That(app.type.list.Kind("markdown").Name).IsEqualTo("md");
+        await Assert.That(app.type.list["text"].kind["markdown"]!.Name).IsEqualTo("md");
     }
 
     [Test] public async Task Jpeg_IsJpg()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await Assert.That(app.type.list.Kind("jpeg").Name).IsEqualTo("jpg");
+        await Assert.That(app.type.list["image"].kind["jpeg"]!.Name).IsEqualTo("jpg");
     }
 
     [Test] public async Task UnknownFrobnicate_IsItsOwnName()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await Assert.That(app.type.list.Kind("frobnicate").Name).IsEqualTo("frobnicate");
+        await Assert.That(app.type.list.Kind("text", "frobnicate").Name).IsEqualTo("frobnicate");
     }
 
     [Test] public async Task SpelledTypeKind_FindsTheFormat()
@@ -39,7 +39,7 @@ public class KindCanonicalisationTests
         await using var app = new global::app.@this("/test").Testing();
         app.type.list.Add(new global::app.type.kind.@this(
             new global::app.Attributes.FormatAttribute("frobx", "application/x-frobnicate", ".frobx", ".frob"), "binary"));
-        await Assert.That(app.type.list.Kind("application/x-frobnicate").Name).IsEqualTo("frobx");
-        await Assert.That(app.type.list.Kind(".frob").Name).IsEqualTo("frobx");
+        await Assert.That(app.type.list.Mime("application/x-frobnicate").Name).IsEqualTo("frobx");
+        await Assert.That(app.type.list.Extension(".frob", app.actor.list.User.Context).kind.Name).IsEqualTo("frobx");
     }
 }

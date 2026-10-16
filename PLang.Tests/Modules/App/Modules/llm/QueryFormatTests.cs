@@ -94,29 +94,9 @@ public class QueryFormatTests
 
     #region JSON Format
 
-    [Test]
-    public async Task Query_SchemaSet_JsonResponseParsed()
-    {
-        _handler.Handler = _ => Task.FromResult(
-            LlmTestHelper.JsonResponse(
-                LlmTestHelper.MakeCompletionResponse("{\"sentiment\": \"positive\", \"score\": 0.9}")));
-
-        var action = new query(Ctx) { Message = new List<LlmMessage>
-            {
-                new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(Ctx),
-            Schema = Ctx.Ok("{sentiment: string, score: number}")
-        };
-        await action.Attach(null, Ctx);
-        var result = await action.Start();
-
-        await result.IsSuccess();
-        // Value should be parsed JSON
-        await Assert.That((await result.Value())).IsNotNull();
-        var __low = Lower<object>(await result.Value());
-        var json = __low is JsonElement je ? je : JsonSerializer.SerializeToElement<object?>(__low is global::app.type.item.dict.@this _nd ? _nd.Clr<object>() : (await result.Value()));
-        await Assert.That(json.GetProperty("sentiment").GetString()).IsEqualTo("positive");
-    }
+    // (Query_SchemaSet_JsonResponseParsed retired — it read the result through a JsonElement fallback, the
+    //  deleted clr(json) model. The result's value is now a plang dict read through plang navigation, proved by
+    //  QuerySchemaSetPlangDictTests.)
 
     [Test]
     public async Task Query_InvalidJsonResponse_ReturnsDataFromError()

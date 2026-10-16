@@ -14,6 +14,11 @@ public enum Kind
     /// <summary>Which value an action's option takes, as the step's words say — a choice over
     /// <see cref="@this.Values"/>, about <see cref="@this.Property"/> of <see cref="@this.Action"/>.</summary>
     Option,
+    /// <summary>Which kind of the type a step coerced to, once the type is picked (ruling 10): a choice over the
+    /// type's own <c>kind.list</c> (a number's int/decimal, an item's json), or, for a generic, the element type —
+    /// a follow-up to a <see cref="Option"/> whose value is a kind-capable type. A choice over
+    /// <see cref="@this.Values"/>, refining <see cref="@this.Property"/> of <see cref="@this.Action"/>.</summary>
+    KindOf,
 }
 
 /// <summary>
@@ -49,10 +54,14 @@ public sealed class @this
     /// <summary>What "none" answers: the option left out.</summary>
     public const string None = "none";
 
-    /// <summary>What an <see cref="Kind.Option"/> question offers: what the option's type offers for the step (a
-    /// closed set its options, any other the step's variables as the decider reads them), then <see cref="None"/> —
-    /// always a choice. Empty for any other question.</summary>
+    /// <summary>What an <see cref="Kind.Option"/> or <see cref="Kind.KindOf"/> question offers: an Option, what the
+    /// option's type offers (a closed set its options, any other the step's variables); a KindOf, the picked type's
+    /// kinds (or a generic's element types). Then <see cref="None"/> — always a choice. Empty for any other question.</summary>
     public IReadOnlyList<string> Values { get; init; } = [];
+
+    /// <summary>The name of the type a <see cref="Kind.KindOf"/> question refines (the Option's pick: <c>number</c>,
+    /// <c>item</c>, <c>list</c>) — what the follow-up names in its words. Empty for any other question.</summary>
+    public string Of { get; init; } = "";
 
     /// <summary>The words the option's notes line asks it in (<c>ask:</c>); null for any other question.</summary>
     public global::app.type.item.text.@this? Ask

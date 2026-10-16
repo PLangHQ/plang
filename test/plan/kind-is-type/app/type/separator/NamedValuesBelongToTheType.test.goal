@@ -1,0 +1,8 @@
+/ Named values belong to their type (ruling 3). separator becomes a text — it goes under
+/ text, with its named values ("line", "comma", "tab", "space", "semicolon") held as its
+/ own list. The proof stage 2 names: `%line% is text` is true (red today — separator is
+/ its own top-level type today, deriving from item, not text).
+NamedValuesBelongToTheType
+- variable.set(Name=%line%, Value="line", Type={name:"text", kind:"separator"})
+- condition.if(Left=%line%, Operator="is", Right="text") { variable.set(Name=%isText%, Value=true) }
+- assert.equals(Expected=true, Actual=%isText%, Message="a separator is a text")

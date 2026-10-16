@@ -18,7 +18,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this s) return s;
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
             "a step is built by its goal, never converted from a value.", "CreateItemDeclined", 400));
         return null;
@@ -47,11 +47,33 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         var node = new global::app.goal.step.action.list.@this();
         foreach (var row in Rows(incoming, context))
             if (row is global::app.goal.step.action.@this built) node.Add(built);
+            // a value that bridges its own format (a clr(json) element) reads through the action reader directly
             else if (row.Read(reader, null, context) is global::app.goal.step.action.@this made) node.Add(made);
+            // a parsed plang container (a {item, json} the builder navigated to a dict/list) writes itself as
+            // json and the one action reader reads those tokens — the action's wire shape stays in one reader
+            else if ((row is global::app.type.item.dict.@this or global::app.type.item.list.@this)
+                     && await FromJson(row, reader, context) is global::app.goal.step.action.@this fromPlang) node.Add(fromPlang);
             else throw new global::app.error.AppException(
                 $"cannot build an action from a {row.Type.Name} — an action reads from its own wire shape.", "NotAnAction", 400);
         _code = node;
         return this;
+    }
+
+    // A parsed plang container writes itself as json, and the action reader (born with this step) reads those
+    // tokens — the same wire shape a .pr holds. (Branch A will give the reader a structural reader over a plang
+    // value, so this round-trip goes; today the value's only container serializer is its async json Output.)
+    private async System.Threading.Tasks.ValueTask<global::app.goal.step.action.@this?> FromJson(
+        global::app.type.item.@this row, global::app.goal.step.action.serializer.Reader reader,
+        global::app.actor.context.@this context)
+    {
+        using var stream = new System.IO.MemoryStream();
+        await using (var utf8 = new System.Text.Json.Utf8JsonWriter(stream))
+            await row.Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out), global::app.View.Out, context);
+        var bytes = stream.ToArray();
+        var utf8Reader = new System.Text.Json.Utf8JsonReader(bytes);
+        utf8Reader.Read();
+        var tokens = new global::app.type.item.kind.json.Reader(utf8Reader, bytes);
+        return reader.Read(ref tokens, null, new global::app.type.reader.ReadContext(context)) as global::app.goal.step.action.@this;
     }
 
     /// <summary>The rows of an incoming action write. A several-valued write enumerates ITSELF — a

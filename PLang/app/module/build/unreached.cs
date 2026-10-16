@@ -19,7 +19,7 @@ public partial class unreached : IContext
                 var message = from == null
                     ? $"'{goal.Name}' in {goal.Path} is not reached by any goal"
                     : $"'{goal.Name}' in {goal.Path} is reached only from '{from.Name}', which nothing reaches";
-                await __action!.Warn(new global::app.error.Error(message, "GoalUnreached", 404), Context);
+                await __action!.Warn(new global::app.error.@this(message, "GoalUnreached", 404), Context);
             }
         }
         return Context.Ok();

@@ -17,10 +17,8 @@ namespace app.type.kind;
 /// factory. A kind holds no context: its verbs take the caller's. Equality is by
 /// <see cref="Name"/> (case-insensitive); the wire form is the name string.</para>
 /// </summary>
-public class @this
+public class @this : global::app.type.@this
 {
-    public string Name { get; }
-
     private readonly string? _owner;
     private readonly System.Collections.Generic.IReadOnlyList<string> _mime = [];
     private readonly System.Collections.Generic.IReadOnlyList<string> _extension = [];
@@ -42,9 +40,25 @@ public class @this
     public delegate global::System.Threading.Tasks.Task<global::app.data.@this> Decoder(byte[] raw,
         global::app.actor.context.@this context, string name, global::app.type.item.path.@this? origin);
 
-    public @this(string name)
+    public @this(string name) : base(name ?? throw new System.ArgumentNullException(nameof(name))) { }
+
+    /// <summary>A kind named <paramref name="name"/> whose facts fall back to <paramref name="family"/>'s
+    /// (its parent type) — used by <c>kind&lt;T&gt;</c> to pass what the kind does not answer up to T.</summary>
+    protected @this(string name, global::app.type.@this? family) : base(name, family) { }
+
+    /// <summary>A kind whose own kind is <paramref name="ownKind"/> — a nested kind (<c>{list, kind: {list, kind:
+    /// path}}</c>), where this kind is itself a kinded type. Null <paramref name="ownKind"/> leaves the born empty kind.</summary>
+    private protected @this(string name, global::app.type.kind.@this? ownKind, global::app.type.@this? family) : base(name, ownKind, family) { }
+
+    /// <summary>A kind is a full type already — its facts are its own (a setting kind's options, a
+    /// format's MIMEs), its parent's the fallback. It navigates its OWN members directly, never
+    /// re-resolved through the registry the way a bare <c>{name}</c> identity is (a kind is no top-level
+    /// type, so that would mint a bare type by the kind's name and lose its facts). A key the kind has
+    /// no member for falls to the type's own navigation.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
-        Name = name ?? throw new System.ArgumentNullException(nameof(name));
+        var member = await new global::app.type.clr.@this(this, parent.Context).Get(parent, key);
+        return member.IsInitialized ? member : await base.Get(parent, key);
     }
 
     /// <summary>Every kind <paramref name="assembly"/> builds from nothing — each kind class (not abstract, a
@@ -84,12 +98,12 @@ public class @this
     /// type — <c>; charset=…</c> and any other parameter dropped, here and nowhere else) or one of its
     /// extensions (with or without the dot). Case aside.
     /// </summary>
-    public bool Names(string key)
+    internal override bool Names(string key)
     {
+        // A kind answers to its type's names (its own name and aliases, through the base) AND to its MIMEs
+        // and extensions — a format kind answers to `application/json` and `.json` too.
+        if (base.Names(key)) return true;
         if (string.IsNullOrEmpty(key)) return false;
-        if (string.Equals(Name, key, System.StringComparison.OrdinalIgnoreCase)) return true;
-        foreach (var alias in Alias)
-            if (string.Equals(alias, key, System.StringComparison.OrdinalIgnoreCase)) return true;
         if (Mime.Count > 0)
         {
             var semicolon = key.IndexOf(';');
@@ -140,27 +154,19 @@ public class @this
     /// unless the kind closes it (a choice set: <c>choice&lt;T&gt;</c> → <c>choice&lt;Format&gt;</c>).</summary>
     public virtual System.Type? Of(System.Type? type) => type;
 
-    /// <summary>The options a value of this kind is one of — a set of options answers them (a choice's
-    /// closed set); any other kind answers none, and its type's own apply.</summary>
-    public virtual System.Collections.Generic.IReadOnlyList<string>? Values => null;
-
-    /// <summary>An example of a value of this kind, when the kind shows one of its own (a list of records shows one of
-    /// its element); null: the type's own.</summary>
-    public virtual global::app.type.item.prose.@this? Example(global::app.actor.context.@this context) => null;
-
-    /// <summary>What a value of this kind is, when the kind says it itself (a list of records names its element); null:
-    /// the type's own.</summary>
-    public virtual global::app.type.item.prose.@this? Description(global::app.actor.context.@this context) => null;
+    // A kind's own options / example / description are its answers to the type's Own* hooks (a kind IS a
+    // type): a choice set overrides OwnValues, a list's element kind OwnDescription/OwnExample. The base
+    // answers the hook's default (null), so there is nothing to declare here — and no member to hide type's.
 
     /// <summary>What a value of this kind can be in <paramref name="step"/>, as the decider is offered it: one of the
     /// step's own variables (<c>%field%</c>), each once. A closed set offers its options.</summary>
-    public virtual System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
+    public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
         => new(new global::app.type.item.variable.parser.@this(step.Text).Variable
             .DistinctBy(v => v.Text).Cast<global::app.type.item.@this>().ToList());
 
     /// <summary>Whether what this kind offers is all a value of it can be (a choice's options, a bool's true and
     /// false); false for an offer that is a convenience over an open set (the step's variables, a goal's name).</summary>
-    public virtual bool IsClosed => false;
+    public override bool IsClosed => false;
 
     /// <summary>Whether a value of C# class <paramref name="clr"/> rides as this kind — its
     /// <see cref="ClrForm"/> takes it.</summary>
@@ -170,8 +176,7 @@ public class @this
     /// already a token of it, relayed verbatim. By default no writer is.</summary>
     public virtual bool Owns(global::app.type.format.IWriter writer) => false;
 
-    /// <summary>The other names this kind answers to (<c>integer</c> for int).</summary>
-    public virtual System.Collections.Generic.IReadOnlyList<string> Alias => [];
+    // A kind's own aliases are its answer to the type's OwnAlias hook (int → "integer").
 
     /// <summary>The name of the type this kind is a kind of: the type whose class declares it as a format
     /// (png is image's, md text's), or whose kind class it is (number's precisions are number's,
@@ -222,7 +227,10 @@ public class @this
 
     /// <summary>Whether a host of this kind holds its children by position (an array) rather than by name (an
     /// object's members).</summary>
-    public virtual bool IsSequence(object host) => false;
+    // `new`: this host verb — "is a HOST of this kind positional" — shares a name with item's own
+    // IsSequence (a property: "is this value a sequence"), a coincidental collision once kind : item.
+    // It is a host kind's concern (json/dict/list/*) and moves off the base in stage 3 with the rest.
+    public new virtual bool IsSequence(object host) => false;
 
     /// <summary>Write a child <paramref name="key"/> onto a host of this kind — the kind owns HOW
     /// its content takes a new child (<paramref name="isIndex"/> tells positional from named).
@@ -270,7 +278,7 @@ public class @this
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
         => _encode != null ? _encode(stream, data, context, view, encoding, ct)
             : !IsEmpty ? context.App.type.list[Owner ?? "binary"].kind.Encode(stream, data, context, view, encoding, ct)
-            : global::System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.Error(
+            : global::System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.@this(
                 $"nothing writes {Owner ?? "binary"} content", "NoEncoder", 400)));
 
     /// <summary>What characters of this kind stand for, opened when they are needed — a text of kind json walked by
@@ -294,12 +302,27 @@ public class @this
         => throw new System.NotSupportedException(
             $"cannot convert {source.Type?.Name} into kind '{Name}'");
 
+    /// <summary>A kind held AS A VALUE writes its own name — <c>%x!type.kind%</c> is "json", "decimal".
+    /// The kind is a type, but its bare face is the subtype word; navigation reaches the rest (.name).</summary>
+    public override global::System.Threading.Tasks.ValueTask Output(
+        global::app.type.format.IWriter writer, global::app.View mode, global::app.actor.context.@this? context)
+    {
+        writer.String(Name);
+        return default;
+    }
+
     /// <summary>Write a host value OF this kind to the wire — json emits raw json, <c>*</c>
     /// reflects a POCO's tagged fields. The carrier delegates its <c>Output</c> here.</summary>
     public virtual global::System.Threading.Tasks.ValueTask Output(
         object obj, global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? ctx)
         => throw new System.NotSupportedException($"kind '{Name}' cannot write itself");
+
+    /// <summary>A kind held AS A VALUE lowers to its name — its value IS the subtype word ("md",
+    /// "decimal"), so a text coercion and <c>%x!type.kind% equals "md"</c> read it as that name.
+    /// Navigation reaches the rest (.name, .list). Other targets fall to the base.</summary>
+    internal override object? Clr(System.Type target)
+        => target == typeof(string) || target == typeof(object) ? Name : base.Clr(target);
 
     /// <summary>Lower a value OF this kind INTO the CLR shape <paramref name="target"/> asks for
     /// — the clr carrier delegates its lower here. json bridges its content to a reader and drives

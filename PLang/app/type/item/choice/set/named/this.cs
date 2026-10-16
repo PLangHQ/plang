@@ -19,7 +19,7 @@ public sealed class @this : set.@this
     internal static MethodInfo? Choices(System.Type clr)
         => clr.GetMethod("Choices", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
 
-    public override System.Collections.Generic.IReadOnlyList<string> Values
+    protected override System.Collections.Generic.IReadOnlyList<string>? OwnValues
     {
         get
         {

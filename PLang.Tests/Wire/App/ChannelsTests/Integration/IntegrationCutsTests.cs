@@ -54,7 +54,7 @@ public class IntegrationCutsTests
         // Before a write to audit: refuse a value containing "REJECT" — the refusal is the write's answer.
         audit.Own().Bind("write", global::app.@event.When.before, (_, payload, ctx) =>
             Task.FromResult(payload.Peek()?.ToString() is { } s && s.Contains("REJECT")
-                ? ctx.Error(new global::app.error.Error("rejected by approval", "Rejected", 400))
+                ? ctx.Error(new global::app.error.@this("rejected by approval", "Rejected", 400))
                 : ctx.Ok()),
             app.actor.list.User, global::app.@event.binding.Scope.actor);
 

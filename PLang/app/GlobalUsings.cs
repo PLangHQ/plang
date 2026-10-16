@@ -1,4 +1,7 @@
 
+// The error — app/error's own class
+global using Error = app.error.@this;
+
 // Goals subsystem
 global using Step = app.goal.step.@this;
 global using ErrorOrder = app.goal.step.ErrorOrder;

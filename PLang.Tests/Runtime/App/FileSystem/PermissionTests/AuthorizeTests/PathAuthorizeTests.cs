@@ -119,7 +119,7 @@ public class PathAuthorizeTests
 
     /// Stub channel whose Ask fails with the given error — nobody able to answer (NoAnswer, the stream's end) or
     /// any other failure.
-    private sealed class FailingAskChannel(global::app.error.Error failure) : global::app.channel.@this
+    private sealed class FailingAskChannel(global::app.error.@this failure) : global::app.channel.@this
     {
         public FailingAskChannel(string key) : this(new global::app.error.ServiceError($"Channel 'input' failed ({key})", key, 400)) { }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)

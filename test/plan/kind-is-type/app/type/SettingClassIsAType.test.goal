@@ -1,0 +1,8 @@
+/ Settings are settings, not kinds (ruling 7, decision 774). Each settings class is a
+/ top-level type of its own, named by its namespace: the llm settings class lives at
+/ app.module.llm.setting, so its type.name is `app.module.llm.setting`. No type is
+/ renamed — looking it up by that namespace name answers with that same name. Red today:
+/ today the llm settings class is a kind under a shared `setting` family (decision 48),
+/ so `%!llm.setting!type.name%` reads `"setting"`, not `"app.module.llm.setting"`.
+SettingClassIsAType
+- assert.equals(Expected="app.module.llm.setting", Actual=%!llm.setting!type.name%, Message="llm settings class is a type named by its namespace")

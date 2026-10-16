@@ -17,7 +17,7 @@ public partial class If : IContext, IStep
 
     /// <summary>The operands read as the operator asks: a Right for a comparison, none for emptiness,
     /// and none without an Operator.</summary>
-    public async Task<global::app.error.Error?> Validate() => await Evaluator.Operands(Operator, Right);
+    public async Task<global::app.error.@this?> Validate() => await Evaluator.Operands(Operator, Right);
 
     /// <summary>Evaluate-only: the evaluator's plang bool is the answer, as it is — the operator decided
     /// it, or Left's own truth (the value answers for itself); a negative question is its operator's. The

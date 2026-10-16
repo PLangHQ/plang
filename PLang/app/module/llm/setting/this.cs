@@ -6,6 +6,9 @@ namespace app.module.llm.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
+    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    public static bool Internal => true;
+
     /// <summary>Whether an answer kept from before is used — used, unless a step or this setting skips it.</summary>
     [Out, Store] public global::app.type.item.choice.@this<global::app.module.cache.type.cache> Cache { get; set; }
         = new(global::app.module.cache.type.cache.use);
@@ -28,7 +31,7 @@ public sealed class @this : global::app.type.item.setting.module.@this
         }, context).Start(context);
         // no one answered — no input, or an input with nothing in it — or nothing was given
         if (!asked.Success || await asked.Value() is not global::app.type.item.sensitive.@this { Characters.Length: > 0 } secret)
-            return context.Error<global::app.type.item.text.@this>(new global::app.error.Error(
+            return context.Error<global::app.type.item.text.@this>(new global::app.error.@this(
                 "This program uses an LLM and has no key, and no one gave one: set %!llm.setting.key% or the OPENAI_API_KEY environment variable."
                 + (asked.Error is { } why ? $" ({why.Message})" : ""),
                 "MissingLlmKey", 401));

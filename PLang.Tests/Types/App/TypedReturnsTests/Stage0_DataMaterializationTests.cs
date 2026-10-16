@@ -30,25 +30,15 @@ public class Stage0_DataMaterializationTests
             .Because("Data.Value<T> must stay internal — no public generic materializer.");
     }
 
-    // Reading a property off a typed string-Value triggers ConvertValue() on the
-    // navigation path — the raw JSON is parsed once and %x.a% lands on the value.
-    [Test]
-    public async Task Data_PropertyAccess_UsesDeclaredTypeForMaterialization()
-    {
-        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("text", "json"), context: _app.actor.list.User.Context);
-
-        var aValue = await src.Get("a");
-
-        await Assert.That(aValue.IsInitialized).IsTrue();
-        await Assert.That((await aValue.Value())?.ToString()).IsEqualTo("1");
-    }
+    // (Data_PropertyAccess_UsesDeclaredTypeForMaterialization retired — text-of-kind-json is gone (773);
+    //  property access on {item, json} is JsonPropertyAccessMaterializesTests.)
 
     // ConvertValue rewrites _value once; second navigation reuses the already-
     // materialized object. Identity check on Value proves the cache.
     [Test]
     public async Task Data_Materialization_CachesResultOnFirstAccess()
     {
-        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("text", "json"), context: _app.actor.list.User.Context);
+        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("item", "json"), context: _app.actor.list.User.Context);
 
         _ = await src.Get("a");
         var firstMaterialized = await src.Value();

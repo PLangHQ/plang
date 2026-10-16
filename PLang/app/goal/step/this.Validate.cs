@@ -10,12 +10,12 @@ public sealed partial class @this
     /// Whether an answer holds what the step's words say is the answer's check (<see cref="Cover"/>,
     /// asked where the answer is read): a build may change the code after that (goal.call writes a
     /// callee's name as its address), and the code still holds.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(
+    public async System.Threading.Tasks.Task<global::app.error.@this?> Validate(
         global::app.actor.context.@this context)
     {
         var invalid = await Code.Validate(context);
         if (invalid == null) return null;
-        var causes = new List<global::app.error.Error> { invalid };
+        var causes = new List<global::app.error.@this> { invalid };
         var first = causes[0];
         return new global::app.error.StepError(
             $"step {Index} '{Text}': {string.Join("; ", causes.Select(c => c.Message))}", this, first.Key, first.Status) { list = causes };
@@ -184,7 +184,9 @@ public sealed partial class @this
     {
         if (!quoted.StartsWith('"')) return null;
         var read = await context.App.type.list.Kind("item", "json").Decode(System.Text.Encoding.UTF8.GetBytes(quoted), context);
-        // the decode reads when touched: a literal that isn't one answers a failure there
-        return await read.Value() is global::app.type.item.text.@this text && read.Success ? text.ToString() : null;
+        // Reading the literal as the text it means is a USE (805): the typed ask opens the json source and
+        // parses it to its text ("BuilderChannel"). The untyped .Value() rests (the courier door), so it would
+        // hand back the source, not the text. A literal that isn't one answers a failure there.
+        return await read.Value<global::app.type.item.text.@this>() is { } text && read.Success ? text.ToString() : null;
     }
 }

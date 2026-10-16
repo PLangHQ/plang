@@ -21,6 +21,12 @@ public class source : @this
     // directly). Name/Kind/Strict/Template all read off this one object.
     private protected readonly global::app.type.@this _type;
 
+    // The format the raw bytes are in — the raw's own fact, not the declaration's. When a value is re-declared
+    // (a dict slot given an unread json: {item, json} → {dict}, kind dropped), the format rides here so the
+    // declared type can still make itself from what the format parses (decision 818/758). Null when the raw
+    // carries no format of its own.
+    private readonly global::app.type.kind.@this? _format;
+
     // The variables a template source holds — decided once, at birth, by whose bytes these are (see the
     // constructor). Empty for a plain source.
     private readonly IReadOnlyList<global::app.type.item.variable.@this> _variable = [];
@@ -53,10 +59,11 @@ public class source : @this
     /// <paramref name="variable"/>s its row lists, content a file or url read handed over
     /// (<paramref name="origin"/>) only the program's own, anything else none.</summary>
     public source(object value, global::app.type.@this type, IReadOnlyList<global::app.type.item.variable.@this>? variable = null,
-        global::app.type.item.path.@this? origin = null, bool built = false)
+        global::app.type.item.path.@this? origin = null, bool built = false, global::app.type.kind.@this? format = null)
     {
         _value = value ?? throw new System.ArgumentNullException(nameof(value));
         _type = type ?? throw new System.ArgumentNullException(nameof(type));
+        _format = format;
         _origin = origin;
         IsBuilt = built;
         // Only a value marked a template holds variables — the mark is the declaration's, never read off
@@ -92,16 +99,20 @@ public class source : @this
     protected internal override global::app.type.@this Type => _type;
 
     /// <summary>
-    /// In memory now = the raw source form. A byte raw declared <c>text</c> decodes
-    /// to its text face — that is the declaration speaking, not a content guess. A
-    /// <c>binary</c>/<c>bytes</c> raw STAYS bytes: peeking never sniffs "is this valid
-    /// UTF-8?" (access-driven resolution; binary's face is its bytes — decode to text
-    /// is the explicit <c>as text</c>). A structured declaration (table/xlsx,
-    /// image/png) keeps its bytes — the parse stays behind <see cref="Ready"/>.
+    /// In memory now = the raw source form. A byte raw whose kind is characters (<see
+    /// cref="global::app.type.kind.@this.IsText"/> — plain text, json, any text format) decodes to its
+    /// text face: the type's own answer about what its content is, not a content guess. A
+    /// <c>binary</c>/<c>bytes</c> raw STAYS bytes: peeking never sniffs "is this valid UTF-8?"
+    /// (access-driven resolution; binary's face is its bytes — decode to text is the explicit <c>as
+    /// text</c>). A structured declaration (table/xlsx, image/png) keeps its bytes — the parse stays
+    /// behind <see cref="Ready"/>.
     /// </summary>
     public override object? Peek()
     {
-        if (_value is byte[] b && _type.Name.ToLowerInvariant() is "text")
+        // Text content decodes to its text face: a text-kinded raw (json — its kind answers IsText), or a
+        // plain text whose own kind hasn't loaded its format yet (the empty kind reads IsText false until then,
+        // so the type name is the floor that keeps a plain text's bytes decoding).
+        if (_value is byte[] b && (_type.kind.IsText || _type.Name.ToLowerInvariant() is "text"))
         {
             try { return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(b); }
             catch (System.Text.DecoderFallbackException) { return b; }
@@ -155,7 +166,7 @@ public class source : @this
         var asking = data.Context;
         if (asking is null)
         {
-            data.Fail(new global::app.error.Error(
+            data.Fail(new global::app.error.@this(
                 $"'{data.Name}' has no context to load with — a value is read through a Data born with its run's context.",
                 "NoContextToLoad", 500));
             return Absent;
@@ -173,7 +184,7 @@ public class source : @this
             // genuinely-absent name fails here.
             if (resolved is null || !resolved.IsInitialized)
             {
-                data.Fail(new global::app.error.Error(
+                data.Fail(new global::app.error.@this(
                     $"{_value} is not set — nothing to answer for it.", "VariableNotFound", 404));
                 return Absent;
             }
@@ -200,9 +211,23 @@ public class source : @this
             if (_type.kind is { IsEmpty: false } kind
                 && await asking.App.type.list.Kind(_type, asking).Load(_value, asking) is { } loaded)
             {
+                // A kind that RESTS answers its materialize with an unread source (json, ruling 6): the courier
+                // keeps it unread — this source answers itself, parsed only at a use (navigation / enumeration /
+                // is / a typed ask). Any other kind resolves its value now.
+                if (loaded.Peek() is global::app.type.item.source) return this;
                 var decoded = await loaded.Value();
                 decoded.history.Add(this);   // the source rides the materialized value's history
                 return decoded;
+            }
+            // A value re-declared away from its format keeps what format its bytes are in (a dict slot given
+            // an unread json — {item, json} re-declared {dict}, decision 818/758): the format parses the raw,
+            // and the declared type makes itself from what it parses (a dict from the parsed object). Only when
+            // the declaration itself named no kind — a kinded declaration parses through its own kind above.
+            if (_type.kind.IsEmpty && _format is { } encoded && encoded.Parse(_value, asking) is { } parsed)
+            {
+                var made = _type.Make(parsed, asking);
+                made.history.Add(this);
+                return await made.Value(data);
             }
             var item = Read(asking);
             if (ReferenceEquals(item, this)) return this;
@@ -230,21 +255,38 @@ public class source : @this
         }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException or System.NotSupportedException)
         {
-            // SOURCE authors its own failure story — the declared form did not parse
-            // as its declared {type, kind}. Keyed MaterializeFailed and naming the
-            // binding so navigation / set / read all surface one actionable error at
-            // first touch, never thrown to the courier. A JsonException carries the JSON
-            // path + line STJ stamped (which slot in WHICH .pr, at what line) — append it
-            // so a malformed .pr is pinpointed, not just named.
-            var where = ex is System.Text.Json.JsonException je && (je.Path != null || je.LineNumber != null)
-                ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
-                : "";
-            data.Fail(new global::app.error.Error(
-                $"failed to read %{data.Name}% as {_type.Name}{(_type.kind.IsEmpty ? "" : $"/{_type.kind.Name}")}: {ex.Message}{where}",
-                "MaterializeFailed", 400) { Exception = ex });
+            data.Fail(Unread(ex, data));
             return Absent;
         }
     }
+
+    /// <summary>
+    /// SOURCE authors its own failure story — the declared form did not parse as its declared
+    /// <c>{type, kind}</c>. Keyed <c>MaterializeFailed</c> and naming the binding so navigation /
+    /// enumeration / a typed ask all surface one actionable error at first touch, never thrown to a
+    /// courier. A JsonException carries the JSON path + line STJ stamped (which slot in WHICH .pr, at
+    /// what line) — appended so a malformed source is pinpointed, not just named. <see cref="Value"/>'s
+    /// own parse and a use opening a resting source (<c>data.Opened</c>) both answer it.
+    /// </summary>
+    internal global::app.error.@this Unread(System.Exception ex, global::app.data.@this data)
+    {
+        var where = ex is System.Text.Json.JsonException je && (je.Path != null || je.LineNumber != null)
+            ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
+            : "";
+        return new global::app.error.@this(
+            $"failed to read %{data.Name}% as {_type.Name}{(_type.kind.IsEmpty ? "" : $"/{_type.kind.Name}")}: {ex.Message}{where}",
+            "MaterializeFailed", 400) { Exception = ex };
+    }
+
+    /// <summary>
+    /// A resting kind (json) answered its own <see cref="Value"/> unread — a courier keeps it so. A USE
+    /// opens it: the raw parses through the kind, once (navigation / enumeration), and the holding Data
+    /// narrows to the parsed dict/list (decision 787). Null when there is no kind to open through (an empty
+    /// kind, or one the list doesn't carry): nothing to parse, the value is used as it is. A bad parse throws
+    /// — the caller answers it through <see cref="Unread"/>.
+    /// </summary>
+    internal global::app.type.item.@this? Parse(global::app.actor.context.@this ctx)
+        => _type.kind.IsEmpty ? null : ctx.App.type.list.Kind(_type, ctx)?.Parse(_value, ctx);
 
     /// <summary>The text a partial template is, off its text face (a byte raw declared text is its UTF-8) —
     /// the one renderer fills it. Null for a plain source and a whole <c>%ref%</c> (a reference, resolved
@@ -271,7 +313,10 @@ public class source : @this
     /// type entity reaching into a source's raw/format). The wire override carries its captured
     /// serializer across, so a re-declared wire still decodes through its capturer. Whose bytes these
     /// are rides along.</summary>
-    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, _variable, _origin, IsBuilt);
+    internal virtual source Declared(global::app.type.@this type)
+        // The raw's format is the raw's own fact — the kind object the raw was decoded by — so it rides the
+        // re-declaration: a {item, json} re-declared a dict keeps json, and is asked to Parse directly.
+        => new source(_value, type, _variable, _origin, IsBuilt, _format);
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),
@@ -284,7 +329,10 @@ public class source : @this
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
     {
-        var materialized = await parent.Value();
+        // Navigation is a USE: a resting source (json) opens here — parsed once through its kind, the Data
+        // narrowing to the parsed dict/list (decision 787) — then the parsed value is navigated. A bad parse
+        // fails parent (MaterializeFailed), surfaced here, never a throw to the courier.
+        var materialized = await parent.Open();
         if (!parent.Success) return parent;
         return await materialized.Get(parent, key);
     }
@@ -365,6 +413,12 @@ public class source : @this
 
     internal override object? Clr(System.Type target) => ClrConvert(_value, target);
 
-    /// <summary>Display is the raw text form; bytes show as a size note, never decoded.</summary>
-    public override string ToString() => _value is byte[] b ? $"({b.Length} bytes)" : _value.ToString() ?? "";
+    /// <summary>Display is the text face (<see cref="Peek"/>): text-kinded bytes decode to their
+    /// characters, a binary blob shows as a size note, a string is itself.</summary>
+    public override string ToString() => Peek() switch
+    {
+        string s => s,
+        byte[] b => $"({b.Length} bytes)",
+        var v => v?.ToString() ?? "",
+    };
 }

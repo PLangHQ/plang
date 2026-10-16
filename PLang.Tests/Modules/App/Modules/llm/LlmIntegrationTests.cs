@@ -70,31 +70,9 @@ public class LlmIntegrationTests
 
     // --- Test 2: JSON schema response ---
 
-    [Test]
-    public async Task Query_JsonSchema_ParsedCorrectly()
-    {
-        var messages = new List<LlmMessage>
-        {
-            new LlmMessage { Role = "system", Content = "Analyze the sentiment of the text." },
-            new LlmMessage { Role = "user", Content = "I absolutely love sunny days at the beach!" }
-        };
-
-        var result = await RunWithSnapshot("JsonSchema", messages, new query(Ctx) { Message = messages.ToListData<LlmMessage>(Ctx),
-            Schema = Ctx.Ok("{\"sentiment\": \"string\", \"score\": \"number\"}"),
-            Temperature = (global::app.type.item.number.@this)0.0,
-            Limit = new global::app.module.llm.type.limit.@this(100, 10, 0),
-            Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(global::app.module.cache.type.cache.skip)
-        });
-        if (result == null) return;
-
-        await result.IsSuccess();
-        // Value should be parsed JSON (JsonElement)
-        await Assert.That((await result.Value())).IsNotNull();
-        var __low = Lower<object>(await result.Value());
-        var json = __low is JsonElement je ? je : JsonSerializer.SerializeToElement<object?>(__low is global::app.type.item.dict.@this _nd ? _nd.Clr<object>() : (await result.Value()));
-        await Assert.That(json.TryGetProperty("sentiment", out _)).IsTrue();
-        await Assert.That((await result.Properties.Value("Format"))?.ToString()).IsEqualTo("json");
-    }
+    // (Query_JsonSchema_ParsedCorrectly retired — it read the result through a JsonElement fallback, the deleted
+    //  clr(json) model. The result's value is now a plang dict read through plang navigation, proved by
+    //  QueryJsonSchemaPlangDictTests.)
 
     // --- Test 3: Code format extraction ---
 

@@ -7,7 +7,7 @@ public class FormalStepTests
     private static global::app.goal.@this Parse(string text, global::app.actor.context.@this context)
         => global::app.goal.@this.Parse(text, global::app.type.item.path.@this.Resolve("/Start.goal", context), context)!;
 
-    private static Task<global::app.error.Error?> Read(global::app.goal.@this goal, string answer, global::app.actor.context.@this context)
+    private static Task<global::app.error.@this?> Read(global::app.goal.@this goal, string answer, global::app.actor.context.@this context)
         => goal.Step.Read(answer, context);
 
     [Test]

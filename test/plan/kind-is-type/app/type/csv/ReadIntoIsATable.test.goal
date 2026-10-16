@@ -1,0 +1,10 @@
+/ A csv file reads into a plang table through its own type (ruling 5). The read goes
+/ first — the format type keeps its raw bytes until first use (ruling 6), so `is table`
+/ must only be checked after a member read. report.csv has `name,count` + two rows;
+/ `%r.count%` reads 2 as the row count. Guard: green today (csv already parses to a
+/ plang table); stage 3 must keep it green.
+ReadIntoIsATable
+- read report.csv, write to %r%
+- assert.equals(Expected=2, Actual=%r.count%, Message="the first read gives two rows through the csv type")
+- condition.if(Left=%r%, Operator="is", Right="table") { variable.set(Name=%isTable%, Value=true) }
+- assert.equals(Expected=true, Actual=%isTable%, Message="after the read, %r% is a plang table")

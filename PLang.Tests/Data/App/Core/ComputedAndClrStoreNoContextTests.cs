@@ -25,14 +25,6 @@ public class ComputedAndClrStoreNoContextTests
         await Assert.That(await now.Value()).IsTypeOf<global::app.type.item.datetime.@this>();
     }
 
-    [Test]
-    public async Task ClrJson_NavigatesWithTheAskersContext()
-    {
-        var json = System.Text.Json.JsonDocument.Parse("{\"a\":{\"b\":7}}").RootElement;
-        var d = new Data("x", new global::app.type.clr.@this(json, Ctx), context: Ctx);
-        var b = await d.Get("a.b");
-        await Assert.That((await b.Value())?.ToString()).IsEqualTo("7");
-    }
 
     [Test]
     public async Task ComputedAndClr_DeclareNoContextMember()

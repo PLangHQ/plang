@@ -85,7 +85,7 @@ public class Default : IBuilder
             }
             files = ordered;
             if (files.Count == 0)
-                return context.Error(new global::app.error.Error(
+                return context.Error(new global::app.error.@this(
                     $"no goal matched {string.Join(", ", filters.Select(f => $"'{f.Raw}'"))} under {rootRelative}",
                     "NoGoalMatched", 404));
         }
@@ -93,14 +93,14 @@ public class Default : IBuilder
         var allGoals = new List<Goal>();
         // A source the build cannot read is a verdict it cannot proceed with — every unreadable file
         // is collected (one run shows them all), then the build fails once, each read error whole.
-        var unreadable = new List<(path File, global::app.error.Error Error)>();
+        var unreadable = new List<(path File, global::app.error.@this Error)>();
 
         foreach (var file in files)
         {
             var readResult = await file.Read(context);
             if (!readResult.Success)
             {
-                unreadable.Add((file, readResult.Error ?? new global::app.error.Error($"Failed to read {file.Raw}", "FileReadError", 400)));
+                unreadable.Add((file, readResult.Error ?? new global::app.error.@this($"Failed to read {file.Raw}", "FileReadError", 400)));
                 continue;
             }
 
@@ -119,7 +119,7 @@ public class Default : IBuilder
         }
 
         if (unreadable.Count > 0)
-            return context.Error(new global::app.error.Error(
+            return context.Error(new global::app.error.@this(
                 $"Could not read {unreadable.Count} goal file(s): {string.Join(", ", unreadable.Select(u => u.File.Raw))}",
                 "FileReadError", 400)
             {
@@ -137,7 +137,7 @@ public class Default : IBuilder
     {
         var context = action.Context;
         var goal = (await action.Goal.Value())!;
-        var errors = new List<global::app.error.Error>();
+        var errors = new List<global::app.error.@this>();
         Fold(goal, errors);
         if (errors.Count == 0) return context.Ok(true);
 
@@ -150,7 +150,7 @@ public class Default : IBuilder
 
     // Folds a goal's own steps, then recurses its sub-goals. Sets each goal's Step to the
     // nested projection — the goal owns its (now-tree) step collection.
-    private void Fold(Goal goal, List<global::app.error.Error> errors)
+    private void Fold(Goal goal, List<global::app.error.@this> errors)
     {
         goal.Step = Fold(goal.Step, errors);
         foreach (var subGoal in goal.Child.Items()) Fold(subGoal, errors);
@@ -163,7 +163,7 @@ public class Default : IBuilder
     // The fold holds the step/action nodes it is assembling (its own typed positional face), never
     // a harvested element list.
     private global::app.goal.step.list.@this Fold(
-        global::app.goal.step.list.@this flat, List<global::app.error.Error> errors)
+        global::app.goal.step.list.@this flat, List<global::app.error.@this> errors)
     {
         var top = new global::app.goal.step.list.@this();   // Add each real step into the node
         int i = 0;
@@ -245,7 +245,7 @@ public class Default : IBuilder
     // Give the deterministic write-back to a destination-less result-only action. The write-back target is
     // the action's [Input] property's variable (its List, %people%), read from the catalog element — a built
     // action's own properties don't carry IsInput (the formal reader builds Name/Type/Value only).
-    private async Task<global::app.error.Error?> WriteBack(
+    private async Task<global::app.error.@this?> WriteBack(
         global::app.goal.@this goal, global::app.actor.context.@this context)
     {
         var modules = context.App.module.list;

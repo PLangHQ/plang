@@ -94,14 +94,14 @@ Types
 {%- assign named = "|" -%}
 {%- for s in goal.Step -%}
 {%- for c in s.Setting -%}
-{%- assign mark = "|" | append: c.Name | append: "|" -%}
+{%- assign mark = "|" | append: c.Path | append: "|" -%}
 {%- unless named contains mark -%}
 {%- if named == "|" %}
 
 Settings
 {%- endif %}
-- %!{{ c.Name }}%({% for p in c.Property %}{{ p.Name }}: {{ p.Type }}{% if p.HasDefault %} = {{ p.Default | text }}{% endif %}{% unless forloop.last %}, {% endunless %}{% endfor %})
-{%- assign named = named | append: c.Name | append: "|" -%}
+- %!{{ c.Path }}%({% for p in c.Rows %}{{ p.Name }}: {{ p.Type }}{% if p.HasDefault %} = {{ p.Default | text }}{% endif %}{% unless forloop.last %}, {% endunless %}{% endfor %})
+{%- assign named = named | append: c.Path | append: "|" -%}
 {%- endunless -%}
 {%- endfor -%}
 {%- endfor -%}

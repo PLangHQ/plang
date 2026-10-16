@@ -13,12 +13,9 @@ namespace app.type.item.number.kind;
 /// so each kind is one line (the four CLR can't reach own their parse arms and throw precise). The
 /// courier is the only caller that owns the error channel (it turns a thrown reason into data.Fail).</para>
 /// </summary>
-public abstract class @this : global::app.type.kind.@this
+public abstract class @this : global::app.type.kind.@this<global::app.type.item.number.@this>
 {
     protected @this(string name) : base(name) { }
-
-    /// <summary>A storage size is a kind of number.</summary>
-    protected internal override string Owner => "number";
 
     /// <summary>Build a number of this storage size from a plang value — plang in, plang out. The value
     /// lowers itself through its own <c>Clr</c> door; a value that can't be this kind throws loud there

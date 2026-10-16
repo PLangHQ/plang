@@ -54,7 +54,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         Data? after = null;
-        Bind(ch, "write", When.before, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))));
+        Bind(ch, "write", When.before, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))));
         Bind(ch, "write", When.after, (_, result, ctx) => { after = result; return Task.FromResult(ctx.Ok()); });
 
         var result = await ch.WriteAsync(app.Ok("hi"));
@@ -105,7 +105,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     public async Task AFailingAfterWrite_IsTheResult()
     {
         var ch = Registered("c");
-        Bind(ch, "write", When.after, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("after", "Broke", 400))));
+        Bind(ch, "write", When.after, (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("after", "Broke", 400))));
 
         var result = await ch.WriteAsync(app.Ok("hi"));
 

@@ -24,23 +24,23 @@ public interface IClass
     /// only the handler knows are legal. Runs on the bound handler (typed views, unresolved);
     /// a %var% is unknown at build, so read with Peek and open .Value() only when the check truly
     /// needs it. Null when nothing is wrong — the default.</summary>
-    System.Threading.Tasks.Task<global::app.error.Error?> Validate()
-        => System.Threading.Tasks.Task.FromResult<global::app.error.Error?>(null);
+    System.Threading.Tasks.Task<global::app.error.@this?> Validate()
+        => System.Threading.Tasks.Task.FromResult<global::app.error.@this?>(null);
 
     /// <summary>Build-time verdict on the handler's LITERAL parameters — each opened through its own
     /// typed view, the door the run opens. A template, a variable, an absent slot and a slot holding
     /// a domain object are skipped; nothing resolves, nothing reads a resource. One error per literal
     /// its slot declines, carrying the type's own reason. Generated per handler; empty by default.</summary>
-    System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.Error>> Parse()
-        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.Error>>(
-            System.Array.Empty<global::app.error.Error>());
+    System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.@this>> Parse()
+        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.@this>>(
+            System.Array.Empty<global::app.error.@this>());
 
     /// <summary>Build-time verdict on the handler's VARIABLE parameters against what its context's store
     /// knows — the scratch store the build walks the goal into. A slot holding a whole plain %name% the
     /// store holds a value for is opened through its own typed view, the door the run opens; one error per
     /// slot its type declines. A variable the store doesn't know, a navigation, a text with variables
     /// inside — unknown — pass. Generated per handler; empty by default.</summary>
-    System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.Error>> Check()
-        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.Error>>(
-            System.Array.Empty<global::app.error.Error>());
+    System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.@this>> Check()
+        => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.@this>>(
+            System.Array.Empty<global::app.error.@this>());
 }

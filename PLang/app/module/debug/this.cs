@@ -54,14 +54,14 @@ public sealed class @this
     /// (callstack config is its own flag, <c>--callstack</c>). A grep that isn't a regex is the caller's
     /// error, answered (<c>InvalidPattern</c>) before anything is bound — never a quiet literal match.
     /// </summary>
-    public global::app.error.Error? Activate()
+    public global::app.error.@this? Activate()
     {
         if (Setting.Grep?.ToString() is { Length: > 0 } grep)
         {
             try { _grepRegex = new Regex(grep, RegexOptions.IgnoreCase); }
             catch (ArgumentException ex)
             {
-                return new global::app.error.Error($"--debug grep '{grep}' is not a valid regex: {ex.Message}", "InvalidPattern", 400)
+                return new global::app.error.@this($"--debug grep '{grep}' is not a valid regex: {ex.Message}", "InvalidPattern", 400)
                     { Exception = ex };
             }
         }

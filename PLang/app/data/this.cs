@@ -142,7 +142,7 @@ public partial class @this
     private async System.Threading.Tasks.ValueTask<@this> Rendered()
     {
         var asked = Copy();
-        global::app.error.Error? why;
+        global::app.error.@this? why;
         try
         {
             var rendered = await asked.Value();
@@ -311,6 +311,33 @@ public partial class @this
     }
 
     /// <summary>
+    /// A USE opens the value — the door a navigation, an enumeration or a typed ask reaches instead of
+    /// <see cref="Value"/>. A resting source (an unread <c>{item, json}</c>) parses once through its kind
+    /// and this Data narrows to the parsed list/dict (decision 787), the source riding as history (so it
+    /// parses once, never again). A value that is not a resting source answers exactly as <see cref="Value"/>
+    /// does — nothing narrows. A bad parse answers <c>MaterializeFailed</c> on this Data (never a throw to a
+    /// courier); the use sees <see cref="Success"/> false and surfaces it. A courier never calls this — it
+    /// keeps the resting source unread through <see cref="Value"/>.
+    /// </summary>
+    internal async ValueTask<global::app.type.item.@this> Open()
+    {
+        var value = await Value();
+        if (!Success || _context is null || value is not global::app.type.item.source rest) return value;
+        try
+        {
+            if (rest.Parse(_context) is not { } parsed) return value;
+            parsed.history.Add(rest);               // the source rides the parsed value's history
+            if (rest.Cacheable) _item = parsed;     // narrow (787) — the next use reads the parsed value
+            return parsed;
+        }
+        catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException or System.NotSupportedException)
+        {
+            Fail(rest.Unread(ex, this));
+            return value;
+        }
+    }
+
+    /// <summary>
     /// The typed instance — THE value. Internal: for type-internal seams (a
     /// file reading itself through the channel) and the wire writer. Couriers
     /// move the whole Data and never reach here.
@@ -359,7 +386,7 @@ public partial class @this
             return this;
         }
         return named.IsInitialized ? named
-            : Context.Error(new global::app.error.Error($"'{Name}' is {Peek()}, a variable that holds nothing", "VariableNotFound", 404));
+            : Context.Error(new global::app.error.@this($"'{Name}' is {Peek()}, a variable that holds nothing", "VariableNotFound", 404));
     }
 
     /// <summary>This carrier as the step gave it, read where it is written (<see cref="Settle"/>: a reference the Data
@@ -394,7 +421,7 @@ public partial class @this
         var carrier = await Follow(Context);
         if (!carrier.Success || carrier.Exits) return carrier;
         if (carrier.Peek() is not TAs held)
-            return Context.Error(new global::app.error.Error(
+            return Context.Error(new global::app.error.@this(
                 $"'{Name}' is a {carrier.Type.Name}, not a {(global::app.type.item.@this.NameOf(typeof(TAs)))}", "NotA", 400));
         return await then(held);
     }
@@ -471,6 +498,11 @@ public partial class @this
         // that holds nothing enumerates the carrier itself.
         var held = await Follow(_context);
         var walked = held.IsInitialized ? held : this;
+        // Content not yet read (a {item, kind: json} holding its raw) is parsed first: the read yields the
+        // real list/dict and the value narrows to it (decision 787), so foreach walks its elements — not the
+        // one unread source. A value already walkable (the list/dict a %var% names) keeps its door shut.
+        if (walked._item is global::app.type.item.source)
+            return (await walked.Open()).EnumerateItems(_context);
         return walked._item.EnumerateItems(_context);
     }
 
@@ -517,6 +549,14 @@ public partial class @this
         var value = await Value();
         // a read that failed has said why — nothing is made from it
         if (!Success) return null;
+        // A value already a T is held as it is. A value MADE into T from an unread source opens that source
+        // first — a typed ask is a USE, so json parses it once and the Data narrows (805/787) — then T builds
+        // from what it opened. "Already T, or made into T", not which T it is.
+        if (value is not T && value is global::app.type.item.source)
+        {
+            value = await Open();
+            if (!Success) return null;
+        }
         // a type selected by key answers the one the value names (a goal by its name), as this Data's asker sees it;
         // one it names but can't hand (a goal not built) says why; a key naming none goes on to the type's birth
         if (T.IsSelected && value is not T && Context != null && await T.Select(value, Context) is { IsInitialized: true } chosen)
@@ -590,8 +630,10 @@ public partial class @this
     /// <c>Less</c> means <c>this &lt; other</c>. Null policy is <c>@null</c>'s own
     /// behavior (it outranks every value, so its <c>Order</c> answers <c>%x% == null</c>).
     /// </summary>
+    // Comparing is a USE: both operands open (a resting json source parses once and narrows, 805), so the
+    // compare ranks the real values, not an unread source. A value that doesn't rest opens exactly as Value.
     public async ValueTask<Comparison> Compare(@this other)
-        => await (await Value()).Compare(await other.Value(), _context);
+        => await (await Open()).Compare(await other.Open(), _context);
 
     /// <summary>
     /// What is in memory now, asked its truthiness — sync, no read. The value answers (empty text, zero,
@@ -747,12 +789,25 @@ public class @this<T> : @this
 
     public static @this<T> Ok(T value, type? type = null) => new("", value, type);
 
-    /// <summary>Settles as a <typeparamref name="T"/> slot: what the reference names, held whole and still typed
-    /// — it converts at its door, when read. A miss stays the miss (no value): a typed hold would make it a
+    /// <summary>Settles as a <typeparamref name="T"/> slot: what the reference names, made into a
+    /// <typeparamref name="T"/> — a typed slot is the action's promise, and an action answering its slot answers
+    /// one. A value already a <typeparamref name="T"/> is handed over as it is; one that isn't is made by
+    /// <typeparamref name="T"/>'s own build, content not yet read still unread (it reads at its first use); one
+    /// <typeparamref name="T"/> declines answers why. A miss stays the miss (no value): a typed hold would make it a
     /// present null.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Settle()
-        => await base.Settle() is var settled && !ReferenceEquals(settled, this) && settled.IsInitialized ? From(settled) : settled;
-    public new static @this<T> FromError(global::app.error.Error error) => new() { Error = error };
+    {
+        var settled = await base.Settle();
+        if (ReferenceEquals(settled, this) || !settled.IsInitialized) return settled;
+        if (settled.Success && settled.Peek() is not (T or global::app.type.item.@null.@this))
+        {
+            // the settle's own copy, made into the slot's type
+            try { settled.Declare(settled.Context.App.type.list[typeof(T)], settled.Context); }
+            catch (global::app.error.DeclinedException declined) { return settled.Context.Error(declined.Error); }
+        }
+        return From(settled);
+    }
+    public new static @this<T> FromError(global::app.error.@this error) => new() { Error = error };
 
     /// <summary>Typed absent slot — non-null Data, <c>IsInitialized == false</c>. The
     /// optional-param null model: the reference is never null, only the value is.</summary>
@@ -785,7 +840,7 @@ public class @this<T> : @this
         var value = Success ? await Value() : default;
         if (!Success || Exits) return this;
         if (value is null)
-            return Context.Error(new global::app.error.Error($"'{Name}' has no value", "ValueRequired", 400));
+            return Context.Error(new global::app.error.@this($"'{Name}' has no value", "ValueRequired", 400));
         return await then(value);
     }
 

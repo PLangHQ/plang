@@ -9,6 +9,21 @@ public class TypeKindFaceTests
     private static async Task<global::app.data.@this> Read(global::app.actor.context.@this ctx, string path)
         => await new global::app.type.item.variable.@this(path).Start(ctx);
 
+    // Ruling 3: a kind answers its own, else its parent's. The decimal kind has no description of its
+    // own, so it falls back to number's (its Family) — the same teaching the number type reads.
+    [Test]
+    public async Task ADecimalKindsDescription_IsNumbers()
+    {
+        await using var app = new global::app.@this("/tmp/plang_kindface_" + Guid.NewGuid().ToString("N")[..8]).Testing();
+        var ctx = app.actor.list.User.Context;
+        var number = ctx.App.type.list[new global::app.type.@this("number"), ctx];
+        var @decimal = number.kind["decimal"];
+
+        await Assert.That(@decimal).IsNotNull();
+        await Assert.That(await @decimal!.Description(ctx).Text(ctx))
+            .IsEqualTo(await number.Description(ctx).Text(ctx));
+    }
+
     [Test]
     public async Task AJsonFilesTypeKind_IsTheTextJson()
     {
@@ -20,10 +35,14 @@ public class TypeKindFaceTests
         var read = await Make.Action(ctx, "file", "read", ("Path", "config.json")).Start(ctx);
         await ctx.Variable.Set(new global::app.data.@this("cfg", read.Peek(), context: ctx));
 
+        // Decision 774: a type's kind is the kind itself, a navigable type — `.kind.name` is "json" and
+        // the kind renders as its name. (That json is item's kind, not text's — the text→item move — is
+        // decision 773 / stage 3; this stage only makes the kind a navigable type.)
         var kind = await Read(ctx, "cfg!type.kind");
-
-        await Assert.That(await kind.Value()).IsTypeOf<global::app.type.item.text.@this>();
         await Assert.That((await kind.Value())?.ToString()).IsEqualTo("json");
+
+        var name = await Read(ctx, "cfg!type.kind.name");
+        await Assert.That((await name.Value())?.ToString()).IsEqualTo("json");
     }
 
     [Test]

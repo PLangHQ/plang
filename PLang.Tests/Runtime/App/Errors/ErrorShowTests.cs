@@ -47,7 +47,7 @@ public class ErrorShowTests : System.IAsyncDisposable
     }
 
     // Show, as the app runs it after a failed run: the error handed in by name.
-    private async Task<string> Show(global::app.error.Error error)
+    private async Task<string> Show(global::app.error.@this error)
     {
         var context = _app.actor.list.User.Context;
         var loaded = await _app.goal.Load("/system/error/Show.goal");
@@ -89,13 +89,13 @@ public class ErrorShowTests : System.IAsyncDisposable
         var goal = await Goal("call api");
         System.Exception thrown;
         try { throw new System.InvalidOperationException("Boom"); } catch (System.Exception ex) { thrown = ex; }
-        var error = new global::app.error.Error("API call failed", goal.Step[0], "ApiError", 500)
+        var error = new global::app.error.@this("API call failed", goal.Step[0], "ApiError", 500)
         {
             Exception = thrown,
             FixSuggestion = "Check the key",
             HelpfulLinks = "https://docs.example.com/api",
         };
-        error.list.Add(new global::app.error.Error("retry failed too", goal.Step[0], "RetryFailed", 500));
+        error.list.Add(new global::app.error.@this("retry failed too", goal.Step[0], "RetryFailed", 500));
 
         var text = await Show(error);
 
@@ -115,7 +115,7 @@ public class ErrorShowTests : System.IAsyncDisposable
     public async Task Show_ACodeWithNoTemplate_Below500_Uses400()
     {
         var goal = await Goal("read file %f%");
-        var error = new global::app.error.Error("no such file", goal.Step[0], "NotFound", 404);
+        var error = new global::app.error.@this("no such file", goal.Step[0], "NotFound", 404);
 
         var text = await Show(error);
 
@@ -128,7 +128,7 @@ public class ErrorShowTests : System.IAsyncDisposable
     public async Task Show_ACodeWithNoTemplate_From500_Uses500()
     {
         var goal = await Goal("call service");
-        var error = new global::app.error.Error("service down", goal.Step[0], "Unavailable", 503);
+        var error = new global::app.error.@this("service down", goal.Step[0], "Unavailable", 503);
 
         var text = await Show(error);
 
@@ -143,13 +143,13 @@ public class ErrorShowTests : System.IAsyncDisposable
         var goal = await Goal("recurse");
         var action = goal.Step[0].Code[0];
         var context = _app.actor.list.User.Context;
-        global::app.error.Error error;
+        global::app.error.@this error;
         await using (context.call.Push(action, context.Variable))
         await using (context.call.Push(action, context.Variable))
         await using (context.call.Push(action, context.Variable))
         await using (var failing = context.call.Push(action, context.Variable))
         {
-            error = new global::app.error.Error("too deep", goal.Step[0], "Deep", 500);
+            error = new global::app.error.@this("too deep", goal.Step[0], "Deep", 500);
             failing.Record(error, context);
         }
 

@@ -90,6 +90,23 @@ public class SettingRowTests
             .IsEquivalentTo(new[] { "smoke", "fast" });
     }
 
+    // The app setting's culture round-trips through the row: a setting reads back by making itself from its
+    // record (789/790), and culture reads from its name. Pins culture — a [Store] app-setting option with no
+    // reader of its own, read through its Create; reading it threw before the base reader's removal.
+    [Test] public async Task AppSetting_Culture_IsReadByTheNextApp()
+    {
+        await using (var app = new global::app.@this(_dir))
+        {
+            var setting = app.actor.list.User.Setting.Of<global::app.setting.@this>();
+            setting.Culture = global::app.type.item.culture.@this.Create("is-IS")!;
+            await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
+        }
+
+        await using var again = new global::app.@this(_dir);
+        await again.actor.list.User.Setting.Load();
+        await Assert.That(again.actor.list.User.Setting.Of<global::app.setting.@this>().Culture.Name).IsEqualTo("is-IS");
+    }
+
     // The user falls back to the system's row; the user's own row wins over it.
     [Test] public async Task UserFallsBackToSystem_OwnRowWins()
     {

@@ -20,7 +20,7 @@ public sealed class Default : IEvaluator
     public Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(Elseif action) =>
         action.Operator is { IsInitialized: true } op ? EvaluateOperator(op, action.Left, action.Right) : Operator.Truth(action.Left, action.Context);
 
-    public async Task<global::app.error.Error?> Operands(data.@this<global::app.type.item.choice.@this<Operator>>? op, data.@this? right)
+    public async Task<global::app.error.@this?> Operands(data.@this<global::app.type.item.choice.@this<Operator>>? op, data.@this? right)
     {
         var hasRight = right is { IsInitialized: true };
         if (op is not { IsInitialized: true })

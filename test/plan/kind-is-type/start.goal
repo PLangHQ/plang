@@ -1,0 +1,71 @@
+/ kind-is-type: a kind is a type under its parent (kind<T> : kind : type), names are unique at their own level, and a format type owns its bytes.
+/ This goal is the plan's index and its proof: each stage is a goal, each comment a behaviour we want,
+/ and the step under it runs the test that proves it. Tests live under this plan's folder at the path of
+/ what they test. The plang here is intent: the test-designer writes each test so it builds and goes red
+/ before its stage, the coder makes it green. The text is start.md; checks tests can't show are there too.
+Start
+- call Stage0
+- call Stage1
+- call Stage2
+- call Stage3
+- call Stage4
+- call Stage5
+
+Stage0
+/ a goal's path is where its .pr is found (landed with the coder's own pins, decision 745)
+/ a goal moved with its .build folder runs at its new path
+- call /plan/kind-is-type/goal/MovedGoalRunsWhereItIs
+/ an app's .pr whose old "path" says /system/ gets no os trust: its real folder is the app's
+- call /plan/kind-is-type/goal/AppGoalNeverPassesAsSystem
+/ an old .pr with "path" and "prPath" reads as it did
+- call /plan/kind-is-type/goal/OldPrReadsAsBefore
+
+Stage1
+/ the probe: number's kinds are kind<number>; a kind answers what is its own and asks number for the rest
+/ "set %n% = 1.5 as decimal" keeps decimal: %n!type.name% is number, %n!type.kind.name% is decimal
+- call /plan/kind-is-type/app/type/number/DecimalIsANumber
+
+Stage2
+/ settings are settings: each settings class is a type of its own (no backward compat for old rows — decision 790)
+/ no type is renamed: "as text" and "as list" find the types they always did (a guard)
+- call /plan/kind-is-type/app/type/ShortNameFindsTheType
+/ the llm settings class is a type of its own, named by its namespace
+- call /plan/kind-is-type/app/type/SettingClassIsAType
+
+Stage3
+/ every family's kinds are types under their parent, found only through it
+/ a json value is item's, not text's (decision 773): %x!type.name% is item, %x% is text is false, kind is json
+- call /plan/kind-is-type/app/type/item/JsonIsItemsKind
+/ a list of path knows its element: [0] is born a path
+- call /plan/kind-is-type/app/type/list/ListKnowsItsElement
+/ a kind nests: a list of lists of path — C# test at PLang.Tests/Types/App/Types/KindNestsTests.cs
+/ two types can each have a kind with the same name: each is found through its own parent
+- call /plan/kind-is-type/app/type/kind/SameKindNameUnderTwoTypes
+/ a separator is a kind of text with five named values; any characters are allowed too
+- call /plan/kind-is-type/app/type/separator/NamedValuesBelongToTheType
+/ a strict kind is checked: an image that isn't a gif is refused as a gif — the stage adopts
+/ the four existing kind/strict tests as its proof (SetAsImageGifStrictMismatch and siblings)
+- call /app/type/kind/strict/SetAsImageGifStrictMismatch
+
+Stage4
+/ a format type owns its work: its bytes stay raw until first use, then it parses itself
+/ a json file read and written on unchanged is byte-for-byte the same
+- call /plan/kind-is-type/app/type/json/PassedOnUnread
+/ the first read into a json file parses it into a plang dict: "%cfg% is dict" is true
+- call /plan/kind-is-type/app/type/json/ReadIntoIsADict
+/ a json array parses into a plang list
+- call /plan/kind-is-type/app/type/json/ArrayIsAList
+/ a csv file the same way, through its own type (a guard)
+- call /plan/kind-is-type/app/type/csv/ReadIntoIsATable
+/ a dict slot given an unread json value reads through json — C# test at PLang.Tests/Runtime/App/Goals/TypedSlotJsonReadTests.cs
+
+Stage5
+/ the builder offers each type with its kinds under it, and a generic asks for its element
+/ each of the baseline's five sentences builds what it says (the builder measures 5/5)
+- call /plan/kind-is-type/module/variable/set/AsDecimalKeepsDecimal
+- call /plan/kind-is-type/module/variable/set/AsListOfPathKeepsTheElement
+- call /plan/kind-is-type/module/variable/set/AsJsonKeepsJson
+- call /plan/kind-is-type/module/file/read/AsTextKeepsText
+- call /plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso
+/ the guards don't move: no "as", no type; "as text" stays text
+- call /plan/kind-is-type/module/variable/set/NoAsNoType

@@ -20,7 +20,7 @@ public sealed class @this : IDisposable
     private readonly global::app.actor.@this? _actor;               // an actor's own: the actor whose rows it holds
     private readonly Lazy<Task<ConcurrentDictionary<string, data.@this>>>? _rows;
     private ConcurrentDictionary<string, data.@this>? _held;        // the rows, once read
-    private global::app.error.Error? _unread;                       // why the rows could not be read, when they couldn't
+    private global::app.error.@this? _unread;                       // why the rows could not be read, when they couldn't
     // While the rows are being read, a setting read inside that (the store reading a row back) builds
     // without them — it can't wait on the read it is part of.
     private readonly AsyncLocal<bool> _reading = new();
@@ -139,8 +139,8 @@ public sealed class @this : IDisposable
     /// </summary>
     public data.@this Set(string path, IDictionary<string, object?> values)
     {
-        if (Class(path)?.Create() is not { } sample)
-            return _context.Error(new global::app.error.Error($"'{path}' names no setting class.", "UnknownSetting", 400));
+        if (Make(path) is not { } sample)
+            return _context.Error(new global::app.error.@this($"'{path}' names no setting class.", "UnknownSetting", 400));
         var fits = sample.Apply(values, _context);
         if (!fits.Success) return fits;
         Flatten(path, values);
@@ -166,7 +166,7 @@ public sealed class @this : IDisposable
         // An action's settings are not storable yet; when they are, their row is a dict of the set options,
         // read by Option(), and Option()'s action-row branch goes.
         if (Class(path) == null)
-            return _context.Error(new global::app.error.Error(
+            return _context.Error(new global::app.error.@this(
                 $"'{path}' is not a setting class — save the class that holds the option.", "NotASettingClass", 400));
         var owner = Owner;
         // rows that could not be read are never written over
@@ -217,7 +217,7 @@ public sealed class @this : IDisposable
     }
 
     // Whether the class at path is an actor's own — its values never come from the actor it falls back to.
-    private bool Own(string path) => Class(path)?.Own == true;
+    private bool Own(string path) => Class(path) is { } clr && System.Attribute.IsDefined(clr, typeof(global::app.type.item.setting.OwnAttribute));
 
     // One option of a saved row: a setting's (its property), or an action's (its Property row).
     private data.@this? Option(data.@this row, string name) => row.Peek() switch
@@ -244,13 +244,26 @@ public sealed class @this : IDisposable
         if (!all.Success)
         {
             await (_context.App.Debug?.Write($"settings: the {_actor.Name} actor's rows could not be read — {all.Error?.Message}") ?? Task.CompletedTask);
-            _unread = all.Error ?? new global::app.error.Error($"the {_actor.Name} actor's saved settings could not be read", "SettingsUnreadable", 500);
+            _unread = all.Error ?? new global::app.error.@this($"the {_actor.Name} actor's saved settings could not be read", "SettingsUnreadable", 500);
             return rows;
         }
         foreach (var row in (await all.Value())!.Items(_context))
-            if (row.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-                && await row.Value() is { IsNull: false } value)
-                rows[row.Name[prefix.Length..]] = new data.@this(row.Name, value, row.Type, context: _context);
+        {
+            if (!row.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+            var key = row.Name[prefix.Length..];
+            var value = await row.Value();
+            // A row that could NOT be read — an older-shape row 790 drops — is kept WITH its error, never
+            // silently skipped: its read named the key and how to fix it (delete it and set it again). It is
+            // said on the debug channel now, and held so a read of that setting answers the error (loud), not
+            // a silent default. A row that read to nothing (a null value) is simply absent.
+            if (!row.Success)
+            {
+                await (_context.App.Debug?.Write($"settings: '{key}' could not be read — {row.Error?.Message}") ?? Task.CompletedTask);
+                rows[key] = row;
+            }
+            else if (value is { IsNull: false })
+                rows[key] = new data.@this(row.Name, value, row.Type, context: _context);
+        }
         return rows;
     }
 
@@ -276,8 +289,10 @@ public sealed class @this : IDisposable
     // The setting at path as this scope sees it: the class's defaults ← the saved row ← this run's values.
     private global::app.type.item.setting.@this Build(string path)
     {
-        var kind = Class(path) ?? throw new KeyNotFoundException($"'{path}' names no setting class.");
-        var instance = kind.Create();
+        var instance = Make(path) ?? throw new KeyNotFoundException($"'{path}' names no setting class.");
+        // a saved row that could NOT be read (an older-shape row) answers its error here — the read of this
+        // setting is loud and names the key + how to fix it (790), never a silent fall-back to the defaults
+        if (Saved(path) is { Success: false, Error: { } unreadable }) throw new global::app.error.AppException(unreadable);
         // the saved row's options, an owned setting copied — this run's values below never reach the row
         if (Saved(path)?.Peek() is global::app.type.item.setting.@this held)
             foreach (var option in held.Options)
@@ -326,9 +341,31 @@ public sealed class @this : IDisposable
         return Instance(((global::app.type.item.setting.@this)Activator.CreateInstance(@class)!).Path);
     }
 
-    // The class of settings at path, when there is one.
-    private global::app.type.item.setting.kind.@this? Class(string path)
-        => _context.App.type.list["setting"].kind[path] as global::app.type.item.setting.kind.@this;
+    // The settings class at path, from actor/setting's own path→class index over the settings types
+    // (774 A: actor/setting owns the path keys, the type list owns the names — a settings class's name is
+    // its namespace, its path its address, and they differ). Built once from the app's types.
+    private System.Collections.Generic.Dictionary<string, System.Type>? _classes;
+    private System.Type? Class(string path) => (_classes ??= Index()).GetValueOrDefault(path);
+
+    private System.Collections.Generic.Dictionary<string, System.Type> Index()
+    {
+        var map = new System.Collections.Generic.Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase);
+        foreach (var type in _context.App.type.list.Items())
+            if (type.ClrType is { } clr && typeof(global::app.type.item.setting.@this).IsAssignableFrom(clr)
+                && clr != typeof(global::app.type.item.setting.@this) && !clr.IsAbstract
+                && clr.GetConstructor(System.Type.EmptyTypes) != null)
+                map[((global::app.type.item.setting.@this)System.Activator.CreateInstance(clr)!).Path] = clr;
+        return map;
+    }
+
+    // A fresh value of the class at path — its defaults; null when no class there. The value stores no
+    // context (Rows takes the asker's), so a fresh instance is all it is.
+    private global::app.type.item.setting.@this? Make(string path)
+        => Class(path) is { } clr ? (global::app.type.item.setting.@this)System.Activator.CreateInstance(clr)! : null;
+
+    /// <summary>A fresh value of the settings class a <paramref name="path"/> names — its defaults; null
+    /// when no class names it. What the build's step scope teaches from (its Path and its Rows).</summary>
+    public global::app.type.item.setting.@this? Fresh(string path) => Make(path);
 
     // The class at path as a value — a value its options can't take (this run's) is the error.
     private data.@this Instance(string path)

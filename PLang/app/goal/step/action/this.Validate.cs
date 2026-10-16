@@ -12,10 +12,10 @@ public partial class @this
     /// <para>A verdict the build cannot proceed with is RETURNED. <see cref="Warning"/> is for what
     /// the build proceeds WITH — a repair that happened, a default that was filled — never for
     /// something fatal.</para></summary>
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate(
+    public async System.Threading.Tasks.Task<global::app.error.@this?> Validate(
         global::app.actor.context.@this context)
     {
-        var causes = new System.Collections.Generic.List<global::app.error.Error>();
+        var causes = new System.Collections.Generic.List<global::app.error.@this>();
 
         // The module is resolved at read — an action that exists carries a real module element, so
         // only the action name can be wrong here. A bad module name never reaches this: it throws
@@ -24,7 +24,7 @@ public partial class @this
         if (element == null)
         {
             var sorted = Utils.StringDistance.OrderBySimilarity(Name, Module.ActionNames);
-            causes.Add(new global::app.error.Error(
+            causes.Add(new global::app.error.@this(
                 $"{Module}.{Name}: module '{Module}' exists but action '{Name}' not found. " +
                 $"Did you mean: {string.Join(", ", sorted.Take(5))}?",
                 "ActionNotFound", 400));
@@ -38,7 +38,7 @@ public partial class @this
             {
                 if (!declared.Required) continue;
                 if (Property[declared.Name] == null)
-                    causes.Add(new global::app.error.Error(
+                    causes.Add(new global::app.error.@this(
                         $"{Module}.{Name}: required property '{declared.Name}' is missing. " +
                         $"Every action must emit all non-nullable, non-default properties.",
                         "MissingProperty", 400));
@@ -46,28 +46,28 @@ public partial class @this
             foreach (var property in Property)
             {
                 if (element.Property[property.Name] is not { } slot)
-                    causes.Add(new global::app.error.Error(
+                    causes.Add(new global::app.error.@this(
                         $"{Module}.{Name}: '{property.Name}' is not a property of this action. " +
                         $"Its properties are: {string.Join(", ", element.Property.Select(p => p.Name))}.",
                         "UnknownProperty", 400));
                 // an action held as a value belongs only in a slot that takes actions (action, list<action>)
                 else if (property.Value is @this held && !(slot.Type.Name == "action"
                          || (slot.Type.Name == "list" && slot.Type.kind.Name == "action")))
-                    causes.Add(new global::app.error.Error(
+                    causes.Add(new global::app.error.@this(
                         $"{Module}.{Name}'s {property.Name} holds an action ({held.Module.Name}.{held.Name}), but " +
                         $"{property.Name} takes a value. Write the action first, then {Module}.{Name}({property.Name}=%!data%).",
                         "ActionAsValue", 400));
                 // a slot whose kind changed since the build (list<llmmessage> → list<message>)
                 else if (!slot.Type.kind.IsEmpty && property.Type.Name == slot.Type.Name
                          && !string.Equals(property.Type.kind.Name, slot.Type.kind.Name, System.StringComparison.OrdinalIgnoreCase))
-                    causes.Add(new global::app.error.Error(
+                    causes.Add(new global::app.error.@this(
                         $"{Module}.{Name}'s {property.Name} was built as {property.Type}, but it takes {slot.Type}.",
                         "KindChanged", 400));
             }
             // a default the build froze for an option the action no longer has
             foreach (var frozen in Default)
                 if (element.Property[frozen.Name] == null)
-                    causes.Add(new global::app.error.Error(
+                    causes.Add(new global::app.error.@this(
                         $"{Module}.{Name}: the default frozen for '{frozen.Name}' is no option of this action any more.",
                         "UnknownDefault", 400));
         }
@@ -80,7 +80,7 @@ public partial class @this
             var declined = await own.Parse();
             causes.AddRange(declined.Where(d => d.Key == "Stale"));
             if (declined.Count == 0 && await own.Validate() is { } complaint)
-                causes.Add(new global::app.error.Error($"{Module}.{Name}: {complaint.Message}", complaint.Key, complaint.Status));
+                causes.Add(new global::app.error.@this($"{Module}.{Name}: {complaint.Message}", complaint.Key, complaint.Status));
         }
 
         // what it holds judges itself too — the actions its properties hold (a callback, a recovery), the steps
@@ -91,7 +91,7 @@ public partial class @this
             if (await Child[i].Code.Validate(context) is { } branch) causes.Add(branch);
 
         if (causes.Count == 0) return null;
-        return new global::app.error.Error(
+        return new global::app.error.@this(
             string.Join("; ", causes.Select(c => c.Message)), "ActionInvalid", 400)
         {
             Action = this,

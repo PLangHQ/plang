@@ -1,0 +1,146 @@
+{
+  "name": "AsTextKeepsText",
+  "comment": "Stage 4 (ruling 8): `read notes.md as text` builds Type=text — the step's `as` is a\nforce, and text is the chosen type. Red today — the baseline is `{file, kind: md}` 5/5,\nso the builder stamps the file+md form and ignores `as text`; %r!type.name% reads \"file\".",
+  "step": [
+    {
+      "index": 0,
+      "text": "read notes.md as text, write to %r%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "notes.md"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%r%",
+              "variable": [
+                {
+                  "text": "%r%",
+                  "code": [
+                    {
+                      "variable": "r"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "md"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=\"text\", Actual=%r!type.name%, Message=\"type.name is text, not file\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%r!type.name%",
+              "variable": [
+                {
+                  "text": "%r!type.name%",
+                  "code": [
+                    {
+                      "variable": "r"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "type.name is text, not file"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/module/file/read/AsTextKeepsText.test.goal",
+  "prPath": "/plan/kind-is-type/module/file/read/.build/astextkeepstext.test.pr",
+  "hash": "3cf1e050452f5fd0d0484bef70959d3e04c678895a73593d8ef53c0a421e727f"
+}

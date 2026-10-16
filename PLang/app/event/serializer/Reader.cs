@@ -15,7 +15,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.type.format.IReader, allows ref struct
     {
         var written = reader.Peek() == global::app.type.format.TokenKind.String ? $"'{reader.String()}'" : "a value";
-        throw new global::app.error.DeclinedException(new global::app.error.Error(
+        throw new global::app.error.DeclinedException(new global::app.error.@this(
             $"an event is reached by its item's path, with before or after as its When — Event=%!app.type.step.on.start%, " +
             $"When=before (each step, before it runs); Event=%!app.type.goal.on.start%, When=after (each goal, after it " +
             $"runs) — not written as {written}", "NotAnEvent", 400));

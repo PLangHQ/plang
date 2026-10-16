@@ -90,6 +90,39 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return context!.App.type.list[raw.GetType()].Make(raw, context);
     }
 
+    /// <summary>The birth of an item with a DECLARED type (decisions 786/787): an item declared with a KIND
+    /// is made from its raw by that declaration, lazily — the raw's characters ride to the declared type's
+    /// own wire-raw birth (<c>declared.Make</c>, <c>type/this.cs:378</c>): a fresh source read on first use
+    /// through its kind, so <c>{item, kind: json}</c> holds its characters until used and is not text. A
+    /// kindless item is the interface default (pass-through, a container deserializes itself, else declined).
+    /// Only item's family comes here — a number or duration kind (decimal, iso) is its own family's birth.</summary>
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    {
+        // item makes its OWN — a value already an item, its own kinds ({item, kind: json}), a container that
+        // deserializes itself. A declaration whose class is ANOTHER type is not item's to make: it reaches item
+        // only because that type's most-derived ICreate is item (a {table, xlsx}, whose table ships no reader),
+        // and item declines so the owner's own Create or the default's CreateItemDeclined answers — never item
+        // passing a stray text or re-sourcing the same bytes through as that other type.
+        if (declared is { } other && other.ClrType is { } clr && clr != typeof(@this))
+        {
+            data.Fail(new global::app.error.@this(
+                $"%{data.Name}% is declared {other.Name} — item cannot make a {other.Name} from a {(raw as @this)?.Type.Name ?? raw?.GetType().Name}.",
+                "CreateItemDeclined", 400));
+            return null;
+        }
+        // The lazy-kind rebirth is for item's own kinds ({item, kind: json}): its characters ride to a fresh
+        // source read through the kind.
+        if (declared is { } d && !d.kind.IsEmpty && raw is @this leaf && leaf.RawText is { } chars)
+            return d.Make(chars, data.Context);
+        if (raw is @this self) return self;
+        if (raw is global::app.type.item.dict.@this or global::app.type.item.list.@this
+            && ((@this)raw).Clr(typeof(@this)) is @this rec) return rec;
+        data.Fail(new global::app.error.@this(
+            $"%{data.Name}% holds a {(raw as @this)?.Type.Name ?? raw?.GetType().Name} — 'item' cannot be created from it.",
+            "CreateItemDeclined", 400));
+        return null;
+    }
+
     /// <summary>
     /// THE value door — "I am going to use this value, make yourself ready."
     /// Loads if needed, parses if needed, renders if stamped (ready MEANS
@@ -176,12 +209,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
         // a name is found ignoring its case; two members it names is the error naming both (the reflection kind's one lookup)
-        var prop = global::app.type.item.kind.reflection.@this.Property(GetType(), key);
+        var prop = global::app.type.item.kind.reflection.@this.Reflect(GetType(), key);
         if ((prop == null || !prop.CanWrite) && Kept is { } kept && !isIndex)
         {
             // a thing that lives on keeps a member a program adds — never in place of one of its own
             if (prop != null || global::app.type.item.kind.reflection.@this.Method(GetType(), key) != null)
-                throw new global::app.error.AppException(new global::app.error.Error(
+                throw new global::app.error.AppException(new global::app.error.@this(
                     $"{key} is {Type.Name}'s own — a program adds members beside it, never over it", "OwnMember", 400));
             kept.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
             return this;
@@ -280,7 +313,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     // Which member of a class is its marked surface by a name — read into its identity the first time it is asked.
     // (The reflection kind's one lookup, among the marked members: two a name matches is the error naming both.)
     private static System.Reflection.MemberInfo? Marked(System.Type @class, string name)
-        => global::app.type.item.kind.reflection.@this.Property(@class, name,
+        => global::app.type.item.kind.reflection.@this.Reflect(@class, name,
                p => System.Attribute.IsDefined(p, typeof(global::app.LlmBuilderAttribute)))
            ?? (System.Reflection.MemberInfo?)global::app.type.item.kind.reflection.@this.Method(@class, name,
                m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
@@ -524,7 +557,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         {
             var ns = string.Join('.', (ct.Namespace ?? "").Split('.').Select(s => s.TrimStart('@')));
             var name = ct.Name.Split('`')[0];
-            var space = (name == "this" ? ns : ns.Length == 0 ? name : $"{ns}.{name}").ToLowerInvariant();
+            // A nested class answers to its owner's namespace, not the bare one — `decider+setting`'s
+            // namespace is `app.module.llm.decider.setting`, never `app.module.llm.setting` (which is llm's own).
+            var owner = ct.DeclaringType is { } d ? d.Name.Split('`')[0].TrimStart('@') + "." : "";
+            var space = (name == "this" ? ns : ns.Length == 0 ? name : $"{ns}.{owner}{name}").ToLowerInvariant();
             for (var b = ct.BaseType; b != null; b = b.BaseType)
                 if (b.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false))
                 {
@@ -624,7 +660,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>Reads what this value stands for, as the one writing it out asks — at the last moment, by the
     /// channel about to send it; the value never loads itself while it writes. A value that holds all it is
     /// has nothing to read. The reason it couldn't be read, else null.</summary>
-    public virtual System.Threading.Tasks.ValueTask<global::app.error.Error?> Open(global::app.actor.context.@this context)
+    public virtual System.Threading.Tasks.ValueTask<global::app.error.@this?> Open(global::app.actor.context.@this context)
         => default;
 
     /// <summary>Whether this value, asked to become a <paramref name="asked"/> for <paramref name="data"/>,

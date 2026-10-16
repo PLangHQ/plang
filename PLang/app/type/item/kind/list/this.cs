@@ -11,6 +11,9 @@ public sealed class @this : global::app.type.kind.@this
 {
     public @this() : base("list") { }
 
+    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out (814).
+    protected override bool? OwnInternal => true;
+
     protected internal override string Owner => "item";
 
     // Claims IEnumerable (not just IList) so ANY sequence — HashSet, a LINQ enumerable — resolves
@@ -91,7 +94,6 @@ public sealed class @this : global::app.type.kind.@this
         object? value = await source.Value();
         System.Text.Json.JsonElement element = value switch
         {
-            global::app.type.clr.@this c when c.Value is System.Text.Json.JsonElement je => je,
             System.Text.Json.JsonElement je2 => je2,
             _ => default,
         };

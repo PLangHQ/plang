@@ -113,7 +113,7 @@ public class @this : global::app.type.item.@this
 
     /// <summary>The refusal of <paramref name="name"/>, which is no event: it says the events this item has (the core's
     /// and its type's), and that before or after one is a binding's When — so the name never binds.</summary>
-    public global::app.error.Error NoEvent(string name)
+    public global::app.error.@this NoEvent(string name)
         => new global::app.error.ActionError(
             $"'{name}' names no event — this item's events are {string.Join(", ", Names)}; before or after one is When " +
             "(Event=%!app.type.step.on.start%, When=before)", "EventNotFound", 404);

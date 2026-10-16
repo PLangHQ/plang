@@ -8,11 +8,9 @@ namespace app.test.junit;
 /// the kind owns its own rendering. Grouped by the goal's parent folder as testsuites. A run's report in
 /// junit is <c>.test/junit.xml</c>.
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.test.@this>
 {
     public @this() : base("junit") { }
-
-    protected internal override string Owner => "test";
 
     public override System.Collections.Generic.IReadOnlyList<string> Mime => ["application/junit+xml"];
 
@@ -28,7 +26,7 @@ public sealed class @this : global::app.type.kind.@this
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
     {
         if (data.Peek() is not global::app.type.item.list.@this<global::app.test.@this> run)
-            return context.Error(new global::app.error.Error(
+            return context.Error(new global::app.error.@this(
                 $"%{data.Name}% holds no test run to write as junit", "NothingToWrite", 400));
         var bytes = (encoding ?? System.Text.Encoding.UTF8).GetBytes(Document(run.Items().ToList()));
         await stream.WriteAsync(bytes, ct);

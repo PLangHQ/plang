@@ -17,7 +17,7 @@ public sealed partial class @this : global::app.type.item.ICreate<@this>
         if (written == null) return null;
         if (written.StartsWith('/'))
         {
-            data.Fail(new global::app.error.Error(
+            data.Fail(new global::app.error.@this(
                 $"'{written}' is a relative url — it needs a base url to join. Use 'configure http, base url https://...'",
                 "NoBaseUrl", 400));
             return null;
@@ -25,7 +25,7 @@ public sealed partial class @this : global::app.type.item.ICreate<@this>
         var url = written.Contains("://") ? written : "https://" + written;
         if (!System.Uri.TryCreate(url, System.UriKind.Absolute, out var uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
         {
-            data.Fail(new global::app.error.Error($"Only http:// and https:// URLs are allowed, got '{written}'", "InvalidUrlScheme", 400));
+            data.Fail(new global::app.error.@this($"Only http:// and https:// URLs are allowed, got '{written}'", "InvalidUrlScheme", 400));
             return null;
         }
         return new @this(url);

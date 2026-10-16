@@ -80,13 +80,13 @@ public sealed class signature : ISchemaReader
         // the signed hash's kind, as the layer names it: none named, or a name that is no kind of hash, is no signature
         // that can be checked
         if (string.IsNullOrEmpty(hashAlgo))
-            throw new global::app.error.DeclinedException(new global::app.error.Error(
+            throw new global::app.error.DeclinedException(new global::app.error.@this(
                 "a signature's hash names no kind (its hash.type) — it can't be checked", "SignatureInvalid", 400));
         global::app.module.crypto.type.hash.kind.@this hashKind;
         try { hashKind = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse(hashAlgo).Value; }
         catch (System.FormatException unknown)
         {
-            throw new global::app.error.DeclinedException(new global::app.error.Error(
+            throw new global::app.error.DeclinedException(new global::app.error.@this(
                 $"a signature's hash is of a kind there is none of: {unknown.Message}", "SignatureInvalid", 400));
         }
 

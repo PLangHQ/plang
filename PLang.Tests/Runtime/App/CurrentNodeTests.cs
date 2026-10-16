@@ -46,8 +46,8 @@ public class CurrentNodeTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        ctx.call.Audit.Add(new global::app.error.Error("the disk is full", "DiskFull", 507));
-        ctx.call.Audit.Add(new global::app.error.Error("quota reached", "Quota", 507));
+        ctx.call.Audit.Add(new global::app.error.@this("the disk is full", "DiskFull", 507));
+        ctx.call.Audit.Add(new global::app.error.@this("quota reached", "Quota", 507));
 
         var list = await Read("%!app.error.list%", ctx);
         await Assert.That(list.Peek()).IsSameReferenceAs(ctx.call.Audit);

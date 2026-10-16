@@ -41,7 +41,7 @@ public sealed partial class @this
         return await wire.Value<global::app.snapshot.@this>() is { } snapshot
             ? context.Ok<global::app.snapshot.@this>(snapshot)
             : context.Error<global::app.snapshot.@this>(wire.Error
-                ?? new global::app.error.Error("the snapshot's wire read as nothing", "SnapshotUnreadable", 400));
+                ?? new global::app.error.@this("the snapshot's wire read as nothing", "SnapshotUnreadable", 400));
     }
 
     /// <summary>

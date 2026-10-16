@@ -14,7 +14,7 @@ public partial class query : IContext
 {
     /// <summary>Build-time judgement of my own Message, read as authored (Peek). A missing Message
     /// is the action's own required-parameter verdict, not mine.</summary>
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate()
+    public async System.Threading.Tasks.Task<global::app.error.@this?> Validate()
     {
         var value = Message.Peek();
 

@@ -73,20 +73,18 @@ public sealed partial class @this
     /// there with the call's arguments, and what comes back is its result. Null for a goal of this app — its steps run.</summary>
     internal global::app.parent.@this? Elsewhere { get; init; }
 
+    /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file.</summary>
     [Store, Debug]
-    public global::app.type.item.path.@this? Path { get; set; }
+    public global::app.type.item.path.@this? Path { get => Parent?.Path ?? _path; set => _path = value; }
+    private global::app.type.item.path.@this? _path;
 
     /// <summary>The folder holding this goal's source .goal file — what a relative path in it resolves against.
     /// Null for a goal with no Path.</summary>
     public global::app.type.item.path.@this? Folder => Path?.Parent;
 
     /// <summary>The .pr this goal is built to (<see cref="Pr"/>); none without a Path.</summary>
-    [Store, Debug]
-    public global::app.type.item.path.@this? PrPath
-    {
-        get => Path is { Absolute.Length: > 0 } source ? Pr(source) : null;
-        init { } // PrPath is derived from Path; init no-op so JSON round-trip's serialized prPath is swallowed
-    }
+    [Debug]
+    public global::app.type.item.path.@this? PrPath => Path is { Absolute.Length: > 0 } source ? Pr(source) : null;
 
     /// <summary>The .pr a .goal is built to: <c>X.goal</c> → <c>.build/x.pr</c> beside it. A static on the goal type by
     /// exception — a rule about where a goal's build lands, read before there is a goal: by <see cref="PrPath"/>,
@@ -322,7 +320,7 @@ public sealed partial class @this
         var context = app.actor.list.System.Context;
         var loaded = app.goal.list[pr] is { } held ? context.Ok(held) : await Read(pr, app);
         if (loaded.Success && await loaded.Value() is @this { IsSetup: true })
-            return context.Error(new global::app.error.Error($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
+            return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
         return loaded;
     }
 
@@ -340,9 +338,9 @@ public sealed partial class @this
             var read = await pr.Read(context);
             var content = read.Success ? await read.Value() : null;
             if (!read.Success || content is null || content.IsNull)
-                return context.Error(read.Error ?? new global::app.error.Error($"Failed to read goal file: {pr}"));
+                return context.Error(read.Error ?? new global::app.error.@this($"Failed to read goal file: {pr}"));
             if (content is not @this goal)
-                return context.Error(read.Error ?? new global::app.error.Error(
+                return context.Error(read.Error ?? new global::app.error.@this(
                     $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
 
             app.goal.list.Add(goal);
@@ -351,7 +349,7 @@ public sealed partial class @this
         // a refused .pr names itself — its reader was born knowing the file
         catch (Exception ex)
         {
-            return context.Error(global::app.error.Error.FromException(ex));
+            return context.Error(global::app.error.@this.FromException(ex));
         }
     }
 
@@ -375,7 +373,7 @@ public sealed partial class @this
     public async Task<data.@this> Start(actor.context.@this context, IEnumerable<data.@this>? parameters)
     {
         if (context.CancellationToken.IsCancellationRequested)
-            return context.Error(new global::app.error.Error("Operation was cancelled", "Cancelled", 499));
+            return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));
 
         // The goal's own frame spans its whole run — what is bound before and after it, and its steps — so the
         // goal in play is this one throughout. The frame outlives any single step, so things like `debug.tag`
@@ -428,7 +426,7 @@ public sealed partial class @this
 
     /// <summary>
     /// Parses .goal file text into a list of Child.
-    /// All goals share the same Path. First goal is Public, rest are Private.
+    /// The first goal holds the Path; the rest are its sub-goals, in its file. First goal is Public, rest are Private.
     /// Inverse of ToText().
     ///
     /// Stays <c>static</c> by Ingi's ruling: relocating this onto <c>path</c>
@@ -598,12 +596,13 @@ public sealed partial class @this
             // Finalize the previous goal's last step before starting the new goal.
             if (currentStep != null) { stepNode?.Add(currentStep); currentStep = null; }
 
-            // what the goal is — setup, system, a test — it answers itself from where it lives
+            // what the goal is — setup, system, a test — it answers itself from where it lives; a sub-goal lives in
+            // its parent's file, so only the file's first goal holds the path
             currentGoal = new @this
             {
                 Name = goalName,
                 Comment = goalComment,
-                Path = path,
+                Path = goals.Count == 0 ? path : null,
             };
             goals.Add(currentGoal);
             stepNode = new global::app.goal.step.list.@this();

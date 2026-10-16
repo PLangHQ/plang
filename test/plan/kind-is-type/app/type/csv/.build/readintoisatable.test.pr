@@ -1,0 +1,299 @@
+{
+  "name": "ReadIntoIsATable",
+  "comment": "A csv file reads into a plang table through its own type (ruling 5). The read goes\nfirst — the format type keeps its raw bytes until first use (ruling 6), so `is table`\nmust only be checked after a member read. report.csv has `name,count` + two rows;\n`%r.count%` reads 2 as the row count. Guard: green today (csv already parses to a\nplang table); stage 3 must keep it green.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read report.csv, write to %r%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "report.csv"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%r%",
+              "variable": [
+                {
+                  "text": "%r%",
+                  "code": [
+                    {
+                      "variable": "r"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "csv"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=2, Actual=%r.count%, Message=\"the first read gives two rows through the csv type\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%r.count%",
+              "variable": [
+                {
+                  "text": "%r.count%",
+                  "code": [
+                    {
+                      "variable": "r"
+                    },
+                    {
+                      "property": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the first read gives two rows through the csv type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "condition.if(Left=%r%, Operator=\"is\", Right=\"table\") { variable.set(Name=%isTable%, Value=true) }",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%r%",
+              "variable": [
+                {
+                  "text": "%r%",
+                  "code": [
+                    {
+                      "variable": "r"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "is"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "table"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%isTable%, Value=true)",
+              "line": {
+                "number": 9
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%isTable%",
+                      "variable": [
+                        {
+                          "text": "%isTable%",
+                          "code": [
+                            {
+                              "variable": "isTable"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=true, Actual=%isTable%, Message=\"after the read, %r% is a plang table\")",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%isTable%",
+              "variable": [
+                {
+                  "text": "%isTable%",
+                  "code": [
+                    {
+                      "variable": "isTable"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "after the read, %r% is a plang table",
+              "variable": [
+                {
+                  "text": "%r%",
+                  "code": [
+                    {
+                      "variable": "r"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/app/type/csv/ReadIntoIsATable.test.goal",
+  "prPath": "/plan/kind-is-type/app/type/csv/.build/readintoisatable.test.pr",
+  "hash": "4fb02532fb410acfb53d810c086ee8766cdd31c604068882026577fbdb59b4ca"
+}

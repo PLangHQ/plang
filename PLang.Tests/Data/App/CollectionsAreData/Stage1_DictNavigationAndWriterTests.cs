@@ -15,18 +15,8 @@ public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
         => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-dictnav-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
-    [Test]
-    public async Task ReadingIntoAJsonObject_ParsesIt_AndFindsTheMember()
-    {
-        // A json `{...}` stays text, written as it came; reading into it (`.port`) is the need: its kind parses the
-        // json and finds the member.
-        await using var app = NewApp();
-        var ctx = app.actor.list.User.Context;
-        var d = new global::app.data.@this("cfg", "{\"port\":8080}", new type("text", "json"), context: ctx);
-        await Assert.That((await d.Value())).IsTypeOf<app.type.item.text.@this>();
-        var port = await d.Get("port");
-        await Assert.That(((app.type.item.@this)(await port.Value())!).Clr<object>()).IsEqualTo(8080L);
-    }
+    // (ReadingIntoAJsonObject_ParsesIt retired — text-of-kind-json is gone (773); a json object is {item, json},
+    //  covered by JsonLazyNavigationTests.)
 
     [Test]
     public async Task DictionaryNavigator_CollapsesToValueType()

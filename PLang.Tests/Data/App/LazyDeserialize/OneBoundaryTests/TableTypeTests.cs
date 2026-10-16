@@ -34,15 +34,13 @@ public class TableTypeTests
         await Assert.That(r.Of("table", "csv")).IsNotNull();
     }
 
-    // The follow-on contract — a .xlsx file still gets a stamp, and the
-    // raw bytes survive. Stamping does not require a reader to exist; it
-    // is a promise about shape. With no (table, xlsx) reader, Materialize
-    // hands back the raw byte[] unchanged.
-    // A type/kind with no reader yet (table/xlsx) throws LOUDLY on read — the visible
-    // signal that the reader is missing. The day a table/xlsx reader is added, this test
-    // breaks and we update it to assert the parsed grid instead. (Silent ride-as-bytes
-    // would hide the gap.)
-    [Test] public async Task TableXlsx_HasNoReaderYet_FailsUntilOneIsAdded()
+    // A `table` of a kind that has no reader of its own (xlsx) is read as a record (decision
+    // 789): the Record fallback reads the stored bytes through value.Reader (a `TokenKind.String`
+    // for byte[]), hands the resulting text item to `table.Made(record)`, and `table`'s own
+    // `ICreate.Create` declines — a text isn't a table. The decline rides the carrier as
+    // `CreateItemDeclined`, which is the read's answer. (The day a table/xlsx reader is added,
+    // this test moves to asserting the parsed grid instead.)
+    [Test] public async Task TableXlsx_HasNoReader_ReadsAsRecord_AndTheItemDeclines()
     {
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
@@ -50,11 +48,9 @@ public class TableTypeTests
 
         byte[] bytes = { 0x50, 0x4B, 0x03, 0x04 }; // PK.. zip header (xlsx is a zip)
         var d = global::PLang.Tests.Shared.Make.FromRaw(bytes, ctx.App.type.list[new type("table", "xlsx"), ctx], ctx, "sheet");
-        // no reader for the kind: the read fails on the Data, under its own key
         await d.Value();
         await d.IsFailure();
-        await Assert.That(d.Error!.Key).IsEqualTo("MaterializeFailed");
-        await Assert.That(d.Error.Message).Contains("no reader for type 'table' (kind 'xlsx')");
+        await Assert.That(d.Error!.Key).IsEqualTo("CreateItemDeclined");
     }
 
     // The shape claim — `table` advertises itself as a grid (rows,

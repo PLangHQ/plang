@@ -27,7 +27,7 @@ public partial class @this
             var s = Step[i];
 
             if (context.CancellationToken.IsCancellationRequested)
-                return context.Error(new error.Error("Operation was cancelled", "Cancelled", 499));
+                return context.Error(new error.@this("Operation was cancelled", "Cancelled", 499));
 
             result = await s.Start(context);
             if (result.ShouldExit()) return result;

@@ -7,7 +7,7 @@ public sealed class @this : set.@this
 
     internal @this(System.Type clr) : base(clr, Declared(clr)) => _clr = clr;
 
-    public override System.Collections.Generic.IReadOnlyList<string> Values => System.Enum.GetNames(_clr);
+    protected override System.Collections.Generic.IReadOnlyList<string>? OwnValues => System.Enum.GetNames(_clr);
 
     public override object Member(string symbol) => System.Enum.Parse(_clr, symbol, ignoreCase: true);
 }

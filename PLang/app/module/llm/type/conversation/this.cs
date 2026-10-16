@@ -43,14 +43,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             switch (entry.Name.ToLowerInvariant())
             {
                 case "continue" when entry.Peek() is global::app.type.item.@bool.@this:
-                    data.Fail(new global::app.error.Error(
+                    data.Fail(new global::app.error.@this(
                         "continue which conversation? Name the llm response it continues: {continue: %answer%}", "ConversationInvalid", 400));
                     return null;
                 case "continue":
                     @continue = entry.Peek() is global::app.type.item.@null.@this ? null : entry;
                     break;
                 default:
-                    data.Fail(new global::app.error.Error(
+                    data.Fail(new global::app.error.@this(
                         $"a conversation's member is continue (the llm response it continues) — not {entry.Name}", "ConversationInvalid", 400));
                     return null;
             }

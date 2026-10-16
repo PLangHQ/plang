@@ -8,5 +8,5 @@ namespace app.data;
 public sealed class OutputException : global::app.error.AppException
 {
     public OutputException(string message, string key, System.Exception? inner = null)
-        : base(new global::app.error.Error(message, key, 400), inner) { }
+        : base(new global::app.error.@this(message, key, 400), inner) { }
 }

@@ -30,7 +30,7 @@ public class PlangSignFailureTests : System.IAsyncDisposable
         public string Name => "failing";
         public bool IsBuiltIn { get; set; }
         public string? Source { get; set; }
-        public (KeyPair? keys, global::app.error.Error? error) GenerateKeyPair() => (null, new global::app.error.ActionError("no keys", "KeyGenerationError", 500));
+        public (KeyPair? keys, global::app.error.@this? error) GenerateKeyPair() => (null, new global::app.error.ActionError("no keys", "KeyGenerationError", 500));
         public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey) => throw new global::app.error.AppException("Sign failed", "SigningError", 500);
         public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature) => throw new global::app.error.AppException("Verify failed", "SignatureInvalid", 400);
         public Task<global::app.data.@this> SignAsync(sign action) => Task.FromResult(global::app.data.@this.FromError(new global::app.error.ActionError("Sign failed", "SigningError", 500)));

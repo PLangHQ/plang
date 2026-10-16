@@ -1,0 +1,36 @@
+{% comment %}
+Stage 3 of the decider — the kind follow-up (ruling 10). Stage 2 picked each step's coercion type by name; now, for a
+step whose picked type carries kinds a program names, ask which kind: a number's int/long/double/decimal, an item's
+json, a text's md/xml, a duration's iso/short/dotnet — or, for a generic (list, dict), its element type, the types
+offered again. The answer combines with the picked type into {name, kind}. "none" keeps the type bare (`as text` with
+no format names none). Only KindOf questions render here; a build with none renders {} and the stage is skipped.
+The question keys and wording are pinned by PickListTests (PLang.Tests/Wire/App/Decider/pick_golden.json).
+{% endcomment %}
+{
+{%- assign sep = "" -%}
+{%- for s in goal.Step -%}
+{%- assign text = s.Text -%}
+{%- for q in s.Pick.Question -%}
+{%- if q.Kind == "KindOf" -%}
+{%- if q.Of == "list" or q.Of == "dict" -%}
+{%- capture ask %}Step {{ s.Index }} is `{{ text }}`. It coerces to a {{ q.Of }}. A {{ q.Of }} of what type — which type are its elements? Answer none if the step names no element type.{% endcapture -%}
+{%- else -%}
+{%- capture ask %}Step {{ s.Index }} is `{{ text }}`. It coerces to `{{ q.Of }}`. Which kind of `{{ q.Of }}` does the step name — none unless the step names one (e.g. `as decimal`, `as json`, `as iso`); `as {{ q.Of }}` alone names none.{% endcapture -%}
+{%- endif -%}
+{{ sep }}
+  {{ q.Id | json }}: {
+    "type": "choice",
+    "instructions": {{ ask | json }},
+    "criteria": {
+{%- assign osep = "" -%}
+{%- for v in q.Values -%}
+{{ osep }}{{ v | json }}: null
+{%- assign osep = ", " -%}
+{%- endfor -%}
+}
+  }
+{%- assign sep = "," -%}
+{%- endif -%}
+{%- endfor -%}
+{%- endfor %}
+}

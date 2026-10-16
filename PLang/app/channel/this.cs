@@ -190,7 +190,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
             // a question nobody answered before its asker stopped waiting: cancelled, not a failed transport
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
-                result = action.Context.Error(new global::app.error.Error(
+                result = action.Context.Error(new global::app.error.@this(
                     $"the ask on channel '{Name}' was cancelled", "Cancelled", 499));
             }
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))

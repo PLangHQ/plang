@@ -47,7 +47,7 @@ internal sealed class @this
         try { return await _run.WaitAsync(token); }
         catch (System.OperationCanceledException) when (token.IsCancellationRequested)
         {
-            return _actor.Context.Error(new global::app.error.Error($"the wait for the task running {Goal.Name} was cancelled", "Cancelled", 499));
+            return _actor.Context.Error(new global::app.error.@this($"the wait for the task running {Goal.Name} was cancelled", "Cancelled", 499));
         }
     }
 
@@ -73,11 +73,11 @@ internal sealed class @this
         try { ran = await run(_cancel.Token); }
         catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
         {
-            ran = _actor.Context.Error(global::app.error.Error.FromException(ex));
+            ran = _actor.Context.Error(global::app.error.@this.FromException(ex));
         }
         if (_cancel.IsCancellationRequested)
         {
-            ran = _actor.Context.Error(new global::app.error.Error($"the task running {Goal.Name} was cancelled", "Cancelled", 499));
+            ran = _actor.Context.Error(new global::app.error.@this($"the task running {Goal.Name} was cancelled", "Cancelled", 499));
             _asked.TrySetResult();
         }
         ended(this);

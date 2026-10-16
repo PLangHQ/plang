@@ -211,7 +211,7 @@ public sealed class Default : IIdentity
     }
 
     /// <summary>Loads all identities (including archived).</summary>
-    internal async Task<(List<Identity>? Identities, global::app.error.Error? Error)> LoadAll(IContext action)
+    internal async Task<(List<Identity>? Identities, global::app.error.@this? Error)> LoadAll(IContext action)
     {
         var (setting, err) = await Setting(action);
         return err != null ? (null, err) : (await Identities(setting!, action), null);
@@ -220,7 +220,7 @@ public sealed class Default : IIdentity
     // The app's own identities are the system actor's: its identity setting, whichever actor asks. Its rows
     // are read first — a read before them would see none and a save would overwrite them; rows that could
     // not be read are the error, never an empty list (a default made then would replace them).
-    private async Task<(setting.@this? Setting, global::app.error.Error? Error)> Setting(IContext action)
+    private async Task<(setting.@this? Setting, global::app.error.@this? Error)> Setting(IContext action)
     {
         var system = action.Context.App.actor.list.System.Setting;
         var loaded = await system.Load();

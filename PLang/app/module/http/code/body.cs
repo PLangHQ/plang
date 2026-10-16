@@ -48,7 +48,7 @@ internal sealed class body : System.IO.Stream
         if (count == 0) return 0;
         _read += count;
         if (_max != null && _read > _max.Value)
-            await Refuse(new global::app.error.Error($"Download exceeds maximum size of {_max}", "ResponseTooLarge", 413));
+            await Refuse(new global::app.error.@this($"Download exceeds maximum size of {_max}", "ResponseTooLarge", 413));
         if (_tee != null) await _tee.WriteAsync(buffer[..count], ct);
 
         _throughputBytes += count;
@@ -57,7 +57,7 @@ internal sealed class body : System.IO.Stream
         {
             var bytesPerSec = _throughputBytes / elapsed;
             if (bytesPerSec < 1024)
-                await Refuse(new global::app.error.Error(
+                await Refuse(new global::app.error.@this(
                     $"Transfer too slow ({bytesPerSec:F0} bytes/sec) — possible slow-loris attack", "SlowResponse", 408));
             _throughputStart = DateTimeOffset.UtcNow;
             _throughputBytes = 0;
@@ -73,7 +73,7 @@ internal sealed class body : System.IO.Stream
 
     /// <summary>The last report: how far the body came, carrying <paramref name="error"/> when it didn't go well (a
     /// hash that doesn't match, a cap passed). Sent once; a later call is nothing.</summary>
-    internal async Task Done(global::app.error.Error? error = null)
+    internal async Task Done(global::app.error.@this? error = null)
     {
         if (_done || _report == null) return;
         _done = true;
@@ -86,7 +86,7 @@ internal sealed class body : System.IO.Stream
     private global::app.module.http.type.progress.@this Progress => new(_read, _total, _sent, _context);
 
     // The body stops here: the last report carries why, then the read fails with it.
-    private async Task Refuse(global::app.error.Error error)
+    private async Task Refuse(global::app.error.@this error)
     {
         await Done(error);
         throw new global::app.error.AppException(error);

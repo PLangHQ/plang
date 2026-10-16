@@ -1,0 +1,7 @@
+/ Stage 4 (ruling 8): `set %d% = "PT30S" as iso duration` lands %d% as `{duration, kind: iso}`
+/ per decision 749 + ruling 1 (name stays parent, sub-sort rides as kind). Today's name
+/ assert is green already (baseline: duration 5/5), so the kind.name assert is the red one.
+AsIsoDurationKeepsIso
+- set %d% = "PT30S" as iso duration
+- assert.equals(Expected="duration", Actual=%d!type.name%, Message="type.name is duration")
+- assert.equals(Expected="iso", Actual=%d!type.kind.name%, Message="type.kind.name is iso")

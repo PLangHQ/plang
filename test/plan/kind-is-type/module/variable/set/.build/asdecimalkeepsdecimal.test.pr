@@ -1,0 +1,175 @@
+{
+  "name": "AsDecimalKeepsDecimal",
+  "comment": "Stage 4 (ruling 8): the builder offers kinded types by name. Per decision 749 + ruling 1\nthe type's name stays its parent and the sub-sort rides as its kind: `set %n% = \"1.5\" as\ndecimal` lands %n% as `{number, kind: decimal}`. Today's name assert is green already\n(baseline: number 5/5), so the kind.name assert is the red one.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %n% = \"1.5\" as decimal",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "1.5"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=\"number\", Actual=%n!type.name%, Message=\"type.name is number\")",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "number"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n!type.name%",
+              "variable": [
+                {
+                  "text": "%n!type.name%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "type.name is number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"decimal\", Actual=%n!type.kind.name%, Message=\"type.kind.name is decimal\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "decimal"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%n!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "type.kind.name is decimal"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/module/variable/set/AsDecimalKeepsDecimal.test.goal",
+  "prPath": "/plan/kind-is-type/module/variable/set/.build/asdecimalkeepsdecimal.test.pr",
+  "hash": "455114c001d2003491e218a31b7ce717f29cdc056d8ba7b2f79d22915c059e64"
+}

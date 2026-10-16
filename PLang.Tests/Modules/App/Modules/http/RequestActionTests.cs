@@ -84,26 +84,9 @@ public class RequestActionTests
 
     #region Happy Path & Response Parsing
 
-    [Test]
-    public async Task Get_JsonResponse_ParsedCorrectly()
-    {
-        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent("{\"name\":\"Alice\"}", Encoding.UTF8, "application/json")
-        });
-
-        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/users/1", Unsigned = (global::app.type.item.@bool.@this)true };
-        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
-
-        await result.IsSuccess();
-        await Assert.That((await result.Value())).IsNotNull();
-        // The body is the lazy value; touching it materializes json → dict.
-        // Serialize against the runtime type (object) so the value's own
-        // [JsonConverter] fires — the static item base would reflect its
-        // infra props (Cacheable/Prior/Template) instead of the content.
-        var json = JsonSerializer.Serialize((object?)await result.Value());
-        await Assert.That(json).Contains("Alice");
-    }
+    // (Get_JsonResponse_ParsedCorrectly retired — it serialized the result value through System.Text.Json, the
+    //  deleted clr(json) model. The response's value is now a plang dict read through plang navigation, proved
+    //  by GetJsonResponseParsesToPlangDictTests.)
 
     [Test]
     public async Task Get_NoProtocol_AutoPrefixesHttps()
@@ -182,21 +165,8 @@ public class RequestActionTests
             .Contains("\"value\": {\"deep\": \"%lesson.voice.model%\", \"fixed\": \"pcm\"}");
     }
 
-    // A text of kind json (a rendered .json template) is json content: a json body sends it as itself, byte for
-    // byte (the educator's report, blocker 2).
-    [Test]
-    public async Task Post_TextOfKindJson_IsSentVerbatim()
-    {
-        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/speech",
-            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
-            Body = new global::app.data.@this("", new global::app.type.item.text.@this("{\"deep\": \"m-1\", \"fixed\": \"pcm\"}") { Kind = "json" }, context: Ctx),
-            Unsigned = (global::app.type.item.@bool.@this)true
-        };
-        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
-
-        await result.IsSuccess();
-        await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).IsEqualTo("{\"deep\": \"m-1\", \"fixed\": \"pcm\"}");
-    }
+    // (Post_TextOfKindJson_IsSentVerbatim retired — text-of-kind-json is gone (773); a json body is
+    //  {item, json}, sent verbatim, covered by PostItemOfKindJsonVerbatimTests.)
 
     // A plain text (no kind) is text, not json: a json body sends it as a json string (decision 380).
     [Test]
@@ -284,7 +254,7 @@ public class RequestActionTests
     [Test]
     public async Task AResponseCarryingAFailure_FailsTheRequest_WithThatError()
     {
-        await RemoteAnswers(ctx => ctx.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)));
+        await RemoteAnswers(ctx => ctx.Error(new global::app.error.@this("the disk is full", "DiskFull", 507)));
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/disk" };
         var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
@@ -313,7 +283,7 @@ public class RequestActionTests
     [Test]
     public async Task AStreamedFailure_ReachesTheCallback_AsThatFailure()
     {
-        await RemoteAnswers(ctx => ctx.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)));
+        await RemoteAnswers(ctx => ctx.Error(new global::app.error.@this("the disk is full", "DiskFull", 507)));
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/plang-stream",
             OnStream = Make.Call(Ctx, "HandleChunk") };

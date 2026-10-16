@@ -19,6 +19,7 @@ public class WrapperImmutabilityTests
     private static readonly System.Type[] Wrappers =
     {
         typeof(global::app.type.item.text.@this),
+        typeof(global::app.type.item.separator.@this),   // a value-subclass kind of text (783/788) — its own fields must stay readonly too
         typeof(global::app.type.item.@bool.@this),
         typeof(global::app.type.item.number.@this),
         typeof(global::app.type.item.binary.@this),
@@ -76,8 +77,12 @@ public class WrapperImmutabilityTests
     [Test]
     public async Task EveryWrapper_IsSealed()
     {
-        // A subclass could add mutable state and flow through the same shared slots.
-        var offenders = Wrappers.Where(w => !w.IsSealed).Select(w => w.FullName).ToList();
+        // A subclass could add mutable state and flow through the same shared slots — so a wrapper is sealed,
+        // EXCEPT text: decision 788 unsealed it to be the base for value-subclass kinds (separator). Those
+        // kinds carry the same immutability contract (the field/property tests above cover separator), and
+        // they are themselves sealed, so the "no mutable state via a subclass" guarantee still holds.
+        var offenders = Wrappers.Where(w => !w.IsSealed && w != typeof(global::app.type.item.text.@this))
+            .Select(w => w.FullName).ToList();
         await Assert.That(offenders).IsEmpty();
     }
 }

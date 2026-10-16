@@ -1,0 +1,8 @@
+/ Stage 4 (ruling 8) — the two guards don't move. `set %n% = 5` has no `as`, so the step
+/ names no Type (the number is read from the literal form); `set %s% = "hi" as text` is a
+/ force, and text stays text. Both green today — stage 4 must keep them green.
+NoAsNoType
+- set %n% = 5
+- assert.equals(Expected="number", Actual=%n!type.name%, Message="bare literal: form gives number")
+- set %s% = "hi" as text
+- assert.equals(Expected="text", Actual=%s!type.name%, Message="as text stays text")

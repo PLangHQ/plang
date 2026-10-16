@@ -139,7 +139,7 @@ public sealed class OpenAi : ILlm
             // continues nothing
             var previous = await continued.Follow(context);
             if (await previous.Properties.Value("Messages") is not global::app.type.item.@this history)
-                return context.Error(new global::app.error.Error(
+                return context.Error(new global::app.error.@this(
                     $"a conversation continues an llm answer; %{previous.Name}% isn't one", "ConversationInvalid", 400));
             messages.InsertRange(0, history.Clr<List<LlmMessage>>() ?? new List<LlmMessage>());
             schema ??= (await previous.Properties.Value("Schema"))?.ToString();
@@ -403,10 +403,11 @@ public sealed class OpenAi : ILlm
             var extracted = ExtractResponse(rawResponse, effectiveFormat);
             var result = await Answer(rawResponse, effectiveFormat, context);
 
-            // --- JSON validation --- a json answer is read now: one that isn't json is the query's error
+            // --- JSON validation --- a json answer is used now (checked against the schema): a use opens it,
+            // parsing once; one that isn't json is the query's error.
             if (effectiveFormat == "json")
             {
-                await result.Value();
+                await result.Open();
                 if (!result.Success)
                     return context.Error(new ActionError(
                         "Response is not valid JSON", "JsonParseError", 400)
@@ -750,7 +751,8 @@ public sealed class OpenAi : ILlm
     private async Task<data.@this> Answer(string rawResponse, string? format, actor.context.@this context)
     {
         var types = context.App.type.list;
-        var kind = format != null && types.Kind(format) is { Owner: not null } read ? read : types.Mime("text/plain");
+        // the response's format by its MIME or extension (never an app-wide search by bare name)
+        var kind = format != null && types.Format(format) is { Owner: not null } read ? read : types.Mime("text/plain");
         return await kind.Decode(Encoding.UTF8.GetBytes(ExtractResponse(rawResponse, format)), context);
     }
 

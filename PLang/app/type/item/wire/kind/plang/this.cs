@@ -16,11 +16,9 @@ namespace app.type.item.wire.kind.plang;
 /// <para>The format also reads a value slot a <c>.pr</c> captured still encoded (<see cref="Read"/>) and says
 /// whether a writer writes this format (<see cref="Owns"/>), so a captured slice relays byte-identical.</para>
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.type.item.wire.@this>
 {
     public @this() : base("plang") { }
-
-    protected internal override string Owner => "wire";
 
     public override System.Collections.Generic.IReadOnlyList<string> Mime => ["application/plang", "application/plang+json"];
     public override System.Collections.Generic.IReadOnlyList<string> Extension => [".plang"];

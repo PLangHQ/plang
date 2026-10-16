@@ -11,6 +11,9 @@ public sealed class @this : global::app.type.kind.@this
 {
     public @this() : base("*") { }
 
+    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out (814).
+    protected override bool? OwnInternal => true;
+
     protected internal override string Owner => "item";
 
     // Descend one property. A name is read ignoring its case; a derived type's property shadows a base one (bottom-up,
@@ -19,7 +22,7 @@ public sealed class @this : global::app.type.kind.@this
     // to them per hop.
     public override (bool, object?) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
     {
-        if (Property(obj.GetType(), key) is { } prop) return (true, prop.GetValue(obj));
+        if (Reflect(obj.GetType(), key) is { } prop) return (true, prop.GetValue(obj));
         // A member that answers as its asker (the app's name, as the asker's settings have it) is a one-context
         // method the catalog lists as a property — read the same, with the asker's context.
         var member = Method(obj.GetType(), key, m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
@@ -33,7 +36,7 @@ public sealed class @this : global::app.type.kind.@this
     /// below it has one. Two of one type that it names is the error naming both. The one lookup a member is found by —
     /// read and written here, written on an item (<see cref="global::app.type.item.@this.Set"/>), and an item's marked
     /// surface (<see cref="global::app.type.item.@this.Member"/>).</summary>
-    internal static System.Reflection.PropertyInfo? Property(System.Type @class, string key,
+    internal static System.Reflection.PropertyInfo? Reflect(System.Type @class, string key,
         System.Func<System.Reflection.PropertyInfo, bool>? only = null)
     {
         const System.Reflection.BindingFlags Own = System.Reflection.BindingFlags.Public
@@ -67,7 +70,7 @@ public sealed class @this : global::app.type.kind.@this
 
     // The error for a name two members of one type answer to: plang reads names ignoring case, so it can't tell them apart.
     private static global::app.error.AppException Twice(System.Type @class, string key, System.Collections.Generic.IEnumerable<string> names)
-        => new(new global::app.error.Error(
+        => new(new global::app.error.@this(
             $"`{(typeof(global::app.type.item.@this).IsAssignableFrom(@class) ? global::app.type.item.@this.NameOf(@class) : @class.Name)}` "
             + $"has two members named {key}: " + string.Join(", ", names.Select(n => $"`{n}`")), "AmbiguousMember", 400));
 
@@ -85,7 +88,7 @@ public sealed class @this : global::app.type.kind.@this
     public override global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
         object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
     {
-        var prop = Property(host.GetType(), key);
+        var prop = Reflect(host.GetType(), key);
         if (prop == null || !prop.CanWrite)
             throw new System.NotSupportedException(
                 $"'{host.GetType().Name}' has no writable property '{key}'");

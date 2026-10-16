@@ -1,0 +1,82 @@
+{
+  "analyst": "security",
+  "branch": "kind-is-type",
+  "timestamp": "2026-10-15T00:00:00Z",
+  "phase": "both",
+  "scope": "architect-handed partial — stage 0 (fcaf1055d), 767 (073cf8080), 789/790 (0812b7bbf, 62f08e5e6, 7fc410084), decider-key resave. Stage 4 producers / kind-structure / llm-writer wait for architect go.",
+  "attack_surface": [
+    {
+      "area": "pr-deserialization",
+      "exposure": "The .pr's 'file' field becomes the goal's Path on read. Reader.cs:96 does pr.Parent.Parent.Combine(file).Relative(ctx.Context); Combine is System.IO.Path.Combine (rooted b wins; '..' resolves inside the FilePath ctor's Canonicalize).",
+      "trust_boundary": "A .pr shipped with a third-party plang app that the user never audits. The user's install step is the moment the attacker-controlled bytes cross the trust boundary.",
+      "mitigations": ["FilePath ctor canonicalises so AuthGate's prefix-match stays sound", "unknown-key refusal (PrFormatOutdated) at Reader.cs:88", "old-shape 'path' field explicitly reduced to .Name on read (Reader.cs:71)"],
+      "gaps": ["'file' is not validated as a bare name on read — F1"]
+    },
+    {
+      "area": "goal-name-resolution",
+      "exposure": "goal.list.Find turns a caller-written name into a goal lookup (held → beside caller → from app root).",
+      "trust_boundary": "The name may come from an input, an llm answer, or a step; 767 refused '..' as a defense-in-depth even when the name's source is normally trusted.",
+      "mitigations": ["list.this.cs:64 '..' segment refusal (GoalNameClimbs, 400) before any resolve", "subsequent path.Resolve folds canonicalisation, kept as the second line of defense"],
+      "gaps": ["none observed on this branch — the plangos shell call lives on another branch"]
+    },
+    {
+      "area": "settings-store",
+      "exposure": "A stored sqlite row read back as a plang value. 789/790 moves the read to the record reader: object → dict, then the item makes itself from that record via its own Create.",
+      "trust_boundary": "The actor's own settings DB on the local filesystem. Permission grants ride in permission.setting as a signed Grant list; the application/plang wire's auto-verify runs before the record reader sees the row.",
+      "mitigations": ["setting.Create: non-abstract class, != base, assignable-to base; Apply refuses unknown options", "record reader keeps the OWNER's class (owner.ClrType) — stored type.name cannot widen the CLR type", "Ed25519 signature verified at the wire boundary before the record is read into the class", "unreadable-row loud-fail (62f08e5e6) replaces silent-default fallback"],
+      "gaps": ["none observed on this branch"]
+    },
+    {
+      "area": "decider-key-resave",
+      "exposure": "decision 799's resave used a C# one-off harness + test/SetDeciderKey.goal. Reads a TypeSafe key, sets %!llm.decider.setting.key%, saves the setting.",
+      "trust_boundary": "The key sits in the user's local sqlite settings store; it is [Out, Store, Sensitive] on decider.setting.cs:19, so Out-wire + Debug mask, Store unmasked.",
+      "mitigations": ["[Sensitive] discipline unchanged by this branch", "harness was never committed (architect's own trace, verified)"],
+      "gaps": ["none observed"]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "high",
+      "category": "code-execution",
+      "vector": "A hand-crafted (or shipped) .pr's 'file' field is read verbatim at goal/serializer/Reader.cs:69 and passed to Combine(folder, file) at line 96. Combine returns `file` whole when `file` is rooted (System.IO.Path.Combine semantics), or lets '..' climb and get resolved by the FilePath ctor's Canonicalize. The resulting goal.Path.Folder can be made to point anywhere, including under app.OsAbsolutePath. Every step the goal runs is then trusted by path.Authorize.AskedByOs (path/this.Authorize.cs:95-101) — file read/write/delete/execute under /os/** auto-grants without a prompt.",
+      "preconditions": "A .pr the user runs whose bytes the attacker controls. Threat model match: a plang app shipped with its .build/*.pr pre-built that the user installs and runs without auditing. Decision 745 named this exact threat; stage 0 was commissioned to close it.",
+      "impact": "Silent elevation from 'user runs plang app' to 'user runs os-trusted plang app'. Attacker-controlled steps run under the standing /os/** read+execute grant and under AskedByOs's auto-write/delete/execute (via step.Authorize's named+AskedByOs auto-grant), with no AuthGate prompt. Equivalent to the trust hole decision 745 was commissioned to close.",
+      "affected_files": [
+        "PLang/app/goal/serializer/Reader.cs:69",
+        "PLang/app/goal/serializer/Reader.cs:96",
+        "PLang/app/type/item/path/file/this.cs:31-48",
+        "PLang/app/type/item/path/this.Authorize.cs:95-101"
+      ],
+      "exploit_sketch": "1. Build any trivial plang app with Start.goal. 2. Edit .build/start.pr: change \"file\": \"Start.goal\" to \"file\": \"<app.OsAbsolutePath>/system/evil.goal\" (install path is standard and knowable), or \"file\": \"../../../some/os/system/x.goal\". 3. Run the app. The goal's steps run with AskedByOs == true. Any file verb under /os/** auto-grants; terminal.start of an os-rooted program is auto-trusted.",
+      "proposed_fix": "At Reader.cs:69, refuse any 'file' that contains a path separator ('/', '\\\\'), a '..' segment, or is rooted. Fail with PrFormatOutdated (the same door line 88 already uses). Mirrors the architect's own words 'the .pr stores only the goal file's name'. Alternative (defensive, silent): Combine(pr.Parent.Parent, Path.GetFileName(file)) — equivalent to how line 71 already reduces the old-shape 'path' field. Prefer the explicit refusal — the write side already stores a bare name; a non-bare name on read is an outdated or hostile .pr. Add a regression test with 'file' = '../x', '/x', 'sub/x' asserting PrFormatOutdated.",
+      "status": "fixed",
+      "fixed_in": "d9bc6aae7",
+      "fix_summary": "goal/serializer/Reader.cs validates 'file' before Combine — refuses empty, '.' / '..', or any string containing '/','\\\\',':'. Loud PrFormatOutdatedException ('rebuild it'). Pins at GoalPathTests.APrFile_ThatNamesAPath_IsRefused for '../evil', '/evil', 'sub/evil', '..\\\\evil'. Edges verified: drive/UNC/device/alt-stream refused; trailing dot, Unicode separator-lookalikes, URL-escapes, dot-prefix all stay literal and don't escape pr.Parent.Parent (not a climb); reserved Windows names and null bytes fail-safe downstream. The one compose site for a .pr location fact is now the single gate."
+    }
+  ],
+  "verified_clean": [
+    "Decision 767: goal.list.Find rejects any name whose '/' or '\\\\' segmentation contains '..' before any resolve; covers every entry that composes a name into a path (Find is the single door through the goal name resolution path).",
+    "Decision 789: setting.Create constructs only non-abstract setting subclasses off declared.ClrType; Apply walks declared public settable properties only, refuses unknown keys with UnknownSetting.",
+    "Decision 790: no-reader-for-old-shape raises SettingsUnreadable from both setting.Create (older {setting, kind:<path>} rows) and the actor settings loader (62f08e5e6 keeps the error on the row, Build throws when a saved row's error is live).",
+    "Record.cs keeps the owner's ClrType — a stored row's claimed type.name cannot widen the CLR type Create instantiates.",
+    "Permission signing posture unchanged: permission.setting is a signed Grant list; verification runs at the application/plang wire read before Record.cs is reached; Grant.Create reconstructs from the exact wire shape so any tampered field fails verify.",
+    "No secret in repo or branch history: fixture .sqlite at PLang.Tests/Runtime/App/Settings/fixtures/oldsettingrow/data.sqlite (added 43461f739, deleted 0812b7bbf) stores 'user!llm.setting' with 'key':''; no tsk_*, sk-*, or secrets paths in any committed diff on this branch.",
+    "Pre-auth deserializer depth cap MaxReadDepth=64 (data/Wire.cs:78) still in place."
+  ],
+  "known_not_findings": [
+    "A loud-fail on an unreadable permission row is a local DoS (every subsequent file op throws SettingsUnreadable instead of silently defaulting). This is the right trade-off: silent is wrong for a permission store, and loud lets the user fix the row by hand (as the error says)."
+  ],
+  "tooling": {
+    "semgrep": {
+      "command": "scripts/semgrep-scan.sh",
+      "findings": 24,
+      "baseline_known": "22 serializer-hygiene audit list + 1 gated Assembly.LoadFrom + 1 Display.Gate false positive",
+      "new": 0
+    },
+    "build": "not run (read-only; F1 reproduces by inspection)",
+    "worktree": "/workspace/plang-kind-is-type-security on origin/kind-is-type (96e22e675)"
+  },
+  "summary": "PASS on re-check (d9bc6aae7). F1 closed at the one compose site. 767, 789/790 and the decider-key resave clean. Stage-4 producers, kind-is-type structure, llm-writer wait for architect go. Next bot: auditor.",
+  "next_bot": "auditor"
+}

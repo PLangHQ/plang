@@ -8,6 +8,9 @@ namespace app.type.item.setting.action;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {
+    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    public static bool Internal => true;
+
     private readonly global::app.goal.step.action.@this _action;
 
     /// <summary>The settings of the action's module — where an option the action's own don't set is read next.</summary>

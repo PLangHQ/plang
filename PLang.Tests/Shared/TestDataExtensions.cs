@@ -32,7 +32,7 @@ public static class TestDataExtensions
         => app.actor.list.User.Context.Null(name);
 
     /// <summary>Error Data, born from the app's user context.</summary>
-    public static global::app.data.@this Error(this global::app.@this app, global::app.error.Error error)
+    public static global::app.data.@this Error(this global::app.@this app, global::app.error.@this error)
         => app.actor.list.User.Context.Error(error);
 
     /// <summary>Not-found Data, born from the app's user context.</summary>

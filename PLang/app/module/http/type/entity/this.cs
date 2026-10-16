@@ -39,7 +39,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (raw is @this content) return content;
         if (raw is not global::app.type.item.dict.@this dict)
         {
-            data.Fail(new global::app.error.Error("a request's content is {mime, encoding}", "ContentInvalid", 400));
+            data.Fail(new global::app.error.@this("a request's content is {mime, encoding}", "ContentInvalid", 400));
             return null;
         }
         var fresh = new @this();
@@ -51,7 +51,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 case "mime" when entry.Peek()?.ToString() is { Length: > 0 } m: mime = m; break;
                 case "encoding" when entry.Peek()?.ToString() is { Length: > 0 } e: encoding = e; break;
                 default:
-                    data.Fail(new global::app.error.Error(
+                    data.Fail(new global::app.error.@this(
                         $"a request's content has mime and encoding — not {entry.Name}", "ContentInvalid", 400));
                     return null;
             }

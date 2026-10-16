@@ -61,7 +61,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     {
         if (query is @this already) return already;
         if (query is global::app.type.item.dict.@this dict) return list.@this.Create(dict, data);
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"a query is a dict of its parts — {{{Names}}} — not {(query as global::app.type.item.@this)?.Type.Name ?? query?.GetType().Name ?? "nothing"}",
             "QueryInvalid", 400));
         return null;
@@ -94,6 +94,6 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     protected Data Named(Data failed, global::app.actor.context.@this context)
     {
         if (failed.Success || failed.Error is not { } error) return failed;
-        return context.Error(new global::app.error.Error($"{Name}: {error.Message}", error.Key, error.Status) { list = [error] });
+        return context.Error(new global::app.error.@this($"{Name}: {error.Message}", error.Key, error.Status) { list = [error] });
     }
 }

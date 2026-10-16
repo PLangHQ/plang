@@ -185,7 +185,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// The type named <c>error</c> — <c>%!app.error%</c>: <c>current</c> is the error in play (the asker's call
     /// stack's, not yet handled), <c>list</c> every error on the asker's call stack, handled or not.
     /// </summary>
-    public global::app.type.current.@this<global::app.error.Error, global::app.error.list.@this> error { get; }
+    public global::app.type.current.@this<global::app.error.@this, global::app.error.list.@this> error { get; }
 
     /// <summary>
     /// The type named <c>variable</c> — <c>%!app.variable%</c>: its <c>list</c> is the asker's memory
@@ -310,7 +310,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         type.list.Add(new global::app.type.item.path.scheme.@this("file", (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
         type.list.Add(new global::app.type.item.path.scheme.@this("http", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
         type.list.Add(new global::app.type.item.path.scheme.@this("https", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-
         // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
         // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),
         // else its file.
@@ -427,7 +426,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         try
         {
             var decoded = await context.App.type.list.Mime("application/json").Decode(raw, context, "app.pr");
-            if (await decoded.Value<global::app.type.item.dict.@this>() is not { } identity || !decoded.Success)
+            // app.pr rests as an {item, json} source (805); reading the identity is a USE, so it opens through
+            // the use door — json parses the bytes into the dict the app's [Store] face reads back from.
+            if (await decoded.Open() is not global::app.type.item.dict.@this identity || !decoded.Success)
                 return Unreadable(decoded.Error?.Message ?? "not a json object");
             new global::app.type.item.kind.reflection.@this().Read(identity, this, context);
             _stored = true;
@@ -440,7 +441,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             return Unreadable(ex.Message);
         }
 
-        data.@this Unreadable(string? why) => context.Error(new global::app.error.Error(
+        data.@this Unreadable(string? why) => context.Error(new global::app.error.@this(
             $"{prPath} is not the app's identity: {why}", "AppIdentityUnreadable", 400));
     }
 

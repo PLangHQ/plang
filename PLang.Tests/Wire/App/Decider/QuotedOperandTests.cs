@@ -16,7 +16,7 @@ public class QuotedOperandTests
         await read.IsSuccess();
         goal.Step[0].Code = (global::app.goal.step.action.list.@this)read.Peek()!;
 
-        var loaded = await RealGoalLoad.Read(app, await ctx.Pr(goal));
+        var loaded = await RealGoalLoad.Read(app, await ctx.Pr(goal), goal.PrPath);
         var condition = loaded.Step[0].Code[0];
         await Assert.That(condition.Property["Left"]!.Value?.ToString()).IsEqualTo("= %oldHash%");
         await Assert.That(condition.Property["Right"]!.Value?.ToString()).IsEqualTo("= %hash%");

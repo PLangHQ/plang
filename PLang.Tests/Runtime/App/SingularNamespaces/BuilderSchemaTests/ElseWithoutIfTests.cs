@@ -20,7 +20,7 @@ public class ElseWithoutIfTests : System.IAsyncDisposable
     private global::app.goal.step.action.@this Write(string text) =>
         Make.Action(app.actor.list.User.Context, "output", "write", ("Data", text));
 
-    private async Task<global::app.error.Error?> Validate(params global::app.goal.step.action.@this[] actions)
+    private async Task<global::app.error.@this?> Validate(params global::app.goal.step.action.@this[] actions)
     {
         var list = new global::app.goal.step.action.list.@this();
         foreach (var a in actions) list.Add(a);

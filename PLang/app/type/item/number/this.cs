@@ -133,7 +133,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             if (!Kinds.TryGetValue(named, out var kind))
             {
-                data.Fail(new global::app.error.Error($"Unknown number kind '{named}'.", "UnknownKind", 400));
+                data.Fail(new global::app.error.@this($"Unknown number kind '{named}'.", "UnknownKind", 400));
                 return null;
             }
             // The declared kind builds from the value as it is — an item itself, a raw string as the text
@@ -147,7 +147,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             };
             if (value is null)
             {
-                data.Fail(new global::app.error.Error(
+                data.Fail(new global::app.error.@this(
                     $"Cannot convert {raw?.GetType().Name} to number.", "NumberConversionFailed", 400));
                 return null;
             }
@@ -160,12 +160,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             }
             catch (System.Exception e) when (e is System.InvalidCastException or System.FormatException or System.OverflowException)
             {
-                data.Fail(new global::app.error.Error(e.Message, "NumberConversionFailed", 400) { Exception = e });
+                data.Fail(new global::app.error.@this(e.Message, "NumberConversionFailed", 400) { Exception = e });
                 return null;
             }
         }
         if (Create(raw) is { } n) return n;
-        data.Fail(new global::app.error.Error(
+        data.Fail(new global::app.error.@this(
             $"Cannot convert {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} to number.",
             "NumberConversionFailed", 400));
         return null;

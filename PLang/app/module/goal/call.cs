@@ -52,7 +52,7 @@ public partial class Call : IContext
 
     /// <summary>Build-time: the parameters are named rows, read as <see cref="Run"/> reads them. A %variable% known
     /// only at run is the run's to read.</summary>
-    public async Task<global::app.error.Error?> Validate()
+    public async Task<global::app.error.@this?> Validate()
     {
         if (Parameter == null) return null;
         var given = await Parameter.Follow(Context);
@@ -62,11 +62,11 @@ public partial class Call : IContext
 
     // Why the parameters bind nothing, or null when each is a named row: a value that is no rows at all (a module by
     // its %!…% path) or a row with no name binds nothing, so the call is refused saying the form.
-    private global::app.error.Error? Unnamed(global::app.type.item.@this value)
+    private global::app.error.@this? Unnamed(global::app.type.item.@this value)
     {
         if (value.Rows(Context) is { } rows && rows.All(row => row.Name.Length > 0)) return null;
         var written = __action?["Parameter"]?.Value?.RawText ?? value.ToString();
-        return new global::app.error.Error(
+        return new global::app.error.@this(
             $"Parameter takes named rows — write each argument as the step names it, {{<the name before =>: {written}}}: {written} alone is one value with no name, which binds nothing",
             "ParameterUnnamed", 400);
     }

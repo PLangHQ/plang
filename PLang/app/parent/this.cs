@@ -31,7 +31,7 @@ public sealed class @this : global::app.type.item.@this
     internal async Task<global::app.data.@this> Run(string goal, global::app.actor.context.@this context)
     {
         if (Link is not { } link)
-            return context.Error(new global::app.error.Error(
+            return context.Error(new global::app.error.@this(
                 $"There is no app to call {goal} in: nothing links this plang to it", "NoParent", 404));
         var parameters = new JsonObject();
         // the goal's own frame: born with what its call passed
@@ -53,14 +53,14 @@ public sealed class @this : global::app.type.item.@this
             await link(new JsonObject { ["call"] = new JsonObject { ["id"] = id, ["goal"] = goal, ["parameters"] = parameters } }.ToJsonString());
             var reply = await answer.Task.WaitAsync(TimeSpan.FromMinutes(10), context.CancellationToken);
             if (reply.TryGetProperty("error", out var error) && error.ValueKind != JsonValueKind.Null)
-                return context.Error(new global::app.error.Error($"{goal} in the parent app: {Text(error)}", "ParentGoalFailed", 500));
+                return context.Error(new global::app.error.@this($"{goal} in the parent app: {Text(error)}", "ParentGoalFailed", 500));
             return reply.TryGetProperty("result", out var result) && result.ValueKind != JsonValueKind.Null
                 ? context.Ok(new global::app.type.item.serializer.json(context).Parse(result.Clone()))
                 : context.Ok();
         }
         catch (TimeoutException)
         {
-            return context.Error(new global::app.error.Error($"{goal} in the parent app didn't answer in ten minutes", "ParentGoalTimeout", 504));
+            return context.Error(new global::app.error.@this($"{goal} in the parent app didn't answer in ten minutes", "ParentGoalTimeout", 504));
         }
         finally { waiting.TryRemove(id, out _); }
     }

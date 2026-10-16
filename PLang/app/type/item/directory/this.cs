@@ -107,7 +107,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Opened to be written out: the directory lists its children (as the writer, past the path's auth
     /// gate).</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.error.Error?> Open(global::app.actor.context.@this context)
+    public override async System.Threading.Tasks.ValueTask<global::app.error.@this?> Open(global::app.actor.context.@this context)
     {
         var listed = await List(context);
         return listed.Success ? null : listed.Error;

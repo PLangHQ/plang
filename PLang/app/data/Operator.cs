@@ -96,9 +96,9 @@ public sealed class Operator
 
     /// <summary>What's wrong with this operator's operands as written, or null: emptiness asks of Left
     /// alone; every other operator compares Left with a Right (<c>Right=null</c> written is a Right).</summary>
-    public global::app.error.Error? Operands(bool right) =>
-        IsUnary && right ? new global::app.error.Error($"'{Value}' asks of Left alone — leave Right out", "OperandExtra", 400)
-        : !IsUnary && !right ? new global::app.error.Error(
+    public global::app.error.@this? Operands(bool right) =>
+        IsUnary && right ? new global::app.error.@this($"'{Value}' asks of Left alone — leave Right out", "OperandExtra", 400)
+        : !IsUnary && !right ? new global::app.error.@this(
             $"'{Value}' compares Left with Right, and Right is missing — for Left's own truth (is it true, does it exist, is it set) leave Operator out", "OperandMissing", 400)
         : null;
 
@@ -176,9 +176,10 @@ public sealed class Operator
         if (held.Is(typeName, types)) return Answer(context, true);
         if (held.Peek() is { IsFinal: false })
         {
-            // `is dict` on a reference not yet read examines its content: the door reads and narrows, then the
-            // value answers from its retained chain
-            _ = await held.Value();
+            // `is dict` on a reference not yet read examines its content: that is a use, so it opens the value,
+            // parsing a resting source once and narrowing it (a bare Value would rest it) — then the value
+            // answers from its retained chain
+            _ = await held.Open();
             if (!held.Success) return Failed(held, context);
             return Answer(context, held.Is(typeName, types));
         }

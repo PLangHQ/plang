@@ -1,0 +1,175 @@
+{
+  "name": "DecimalIsANumber",
+  "comment": "A type's kind is a type (ruling 1). A number carrying kind=decimal lands a value whose\ntype is number and whose kind navigates as the \"decimal\" type: `%n!type.kind.name%` is\n\"decimal\". Written in formal so the builder's Type choice is out of it — the red is the\nruntime's: today `%n!type.kind%` reads as a text \"decimal\" (the stopgap of decision 707),\nso `.name` can't be navigated.",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%n%, Value=\"1.5\", Type={name:\"number\", kind:\"decimal\"})",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "1.5"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {"name":"number","kind":"decimal"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=\"number\", Actual=%n!type.name%, Message=\"n's type name is number\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "number"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n!type.name%",
+              "variable": [
+                {
+                  "text": "%n!type.name%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "n's type name is number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"decimal\", Actual=%n!type.kind.name%, Message=\"n's kind navigates as the decimal type\")",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "decimal"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%n!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "n's kind navigates as the decimal type"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/app/type/number/DecimalIsANumber.test.goal",
+  "prPath": "/plan/kind-is-type/app/type/number/.build/decimalisanumber.test.pr",
+  "hash": "57b088fb8a49f72b91069a586b5f8cbcec00ddc4a1c878053d129cdfee8fcccb"
+}

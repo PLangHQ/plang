@@ -348,7 +348,7 @@ public class NamedProviderRegistryTests
 
         public MockSigningProvider(string name) { Name = name; }
 
-        public (KeyPair? keys, global::app.error.Error? error) GenerateKeyPair() => (new KeyPair("mockPub", "mockPriv"), null);
+        public (KeyPair? keys, global::app.error.@this? error) GenerateKeyPair() => (new KeyPair("mockPub", "mockPriv"), null);
         public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey) => new global::app.type.item.binary.@this(new byte[64]);
         public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature) => new global::app.type.item.@bool.@this(true);
         public Task<global::app.data.@this> SignAsync(sign action) => Task.FromResult(global::app.data.@this.Ok());
@@ -360,6 +360,6 @@ public class NamedProviderRegistryTests
         public string Name { get; } = name;
         public bool IsBuiltIn { get; set; }
         public string? Source { get; set; }
-        public (KeyPair? keys, global::app.error.Error? error) GenerateKeyPair() => (new KeyPair("mockPub", "mockPriv"), null);
+        public (KeyPair? keys, global::app.error.@this? error) GenerateKeyPair() => (new KeyPair("mockPub", "mockPriv"), null);
     }
 }

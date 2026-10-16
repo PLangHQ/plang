@@ -23,7 +23,7 @@ public class TextHoldsTests
     public async Task AJsonText_HoldsTheQuotedLiteral_ByItsCharacters()
     {
         const string literal = """{"size": 10, "name": "box"}""";
-        var json = new text(literal) { Kind = "json" };
+        var json = new text(literal);
 
         await Assert.That(await json.Holds(literal, Ctx)).IsTrue();
     }

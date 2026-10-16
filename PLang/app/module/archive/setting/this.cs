@@ -4,6 +4,9 @@ namespace app.module.archive.setting;
 /// step says nothing.</summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
+    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    public static bool Internal => true;
+
     /// <summary>The most an unpack writes — <c>%!archive.setting.max%</c>; an archive that unpacks to more is refused as
     /// it passes it (a zip bomb). 100 MiB.</summary>
     [Out, Store] public global::app.type.item.size.@this Max { get; set; }

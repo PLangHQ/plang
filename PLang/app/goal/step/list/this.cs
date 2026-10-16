@@ -31,7 +31,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         for (int i = 0; i < Count; i++)
         {
             if (context.CancellationToken.IsCancellationRequested)
-                return context.Error(new global::app.error.Error("Operation was cancelled", "Cancelled", 499));
+                return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));
             result = await this[i].Start(context);
             if (result.ShouldExit()) break;
         }
@@ -88,7 +88,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     /// decider's <paramref name="confirmed"/> answers, a number it denies is refused as invented. Among other
     /// problems, an unconfirmed number is refused with them.</para>
     /// </summary>
-    public async System.Threading.Tasks.Task<global::app.error.Error?> Read(string answer, actor.context.@this context,
+    public async System.Threading.Tasks.Task<global::app.error.@this?> Read(string answer, actor.context.@this context,
         global::app.type.item.dict.@this? confirmed = null)
     {
         var whole = new List<string>();
@@ -222,7 +222,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         if (whole.Count == 0 && refused.Count == 0 && unconfirmed.Count == 0) return null;
         // the only problems are numbers to confirm: the decider is asked (the builder's ConfirmNumbers)
         if (whole.Count == 0 && refused.Count == 0)
-            return new global::app.error.Error(
+            return new global::app.error.@this(
                 $"{unconfirmed.Count} number(s) the steps don't write as digits: {string.Join("; ", unconfirmed.Select(n => $"step {n.Step} {n.Action}.{n.Property}={n.Value}"))}",
                 "UnwrittenNumber", 400)
             {
@@ -235,7 +235,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         // among other problems, an unconfirmed number is refused with them
         foreach (var number in unconfirmed) Refuse(number.Step, $"step {number.Step} (\"{number.Text}\") — {number.Message}");
         var problems = whole.Concat(refused.Values.SelectMany(p => p)).ToList();
-        return new global::app.error.Error(string.Join("; ", problems), key ?? "StepsRefused", 400)
+        return new global::app.error.@this(string.Join("; ", problems), key ?? "StepsRefused", 400)
         {
             Details = new() { ["steps"] = string.Join(", ", refused.Keys) },
         };

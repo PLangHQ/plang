@@ -7,6 +7,9 @@ namespace app.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {
+    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    public static bool Internal => true;
+
     /// <summary>Allow creating a new app where none exists. <c>--app={"create":true}</c>.</summary>
     [Out, Store] public global::app.type.item.@bool.@this Create { get; set; } = global::app.type.item.@bool.@this.False;
 

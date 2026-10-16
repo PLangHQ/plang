@@ -9,6 +9,8 @@
 / action (decider.json). Stage 2 asks only what stage 1 left open, which each step's Pick decides:
 / the main module's action, a runner-up module, whether the step uses a module it scored under
 / certain, an if's branches, and on a step stage 1 was unsure of, which popular action it uses.
+/ Stage 3 asks a follow-up only where stage 2 picked a coercion type that carries a kind a program
+/ names (a number's decimal, an item's json, a generic's element); a build with none skips it.
 Decide
 
 - set %modules% = %!app.module.list%
@@ -25,5 +27,11 @@ Decide
 - render template "/system/builder/llm/templates/decider2.template", write to %questions%
 - llm.decider State=%state%, Question=%questions%, write to %answer%
 - build.pick Goal=%goal%, Answer=%answer%, Popular=%decider.popular%
+
+- set %stage% = 3
+- render template "/system/builder/llm/templates/decider3.template", write to %questions%
+- if %questions% contains "@kindof"
+    - llm.decider State=%state%, Question=%questions%, write to %answer%
+    - build.pick Goal=%goal%, Answer=%answer%, Popular=%decider.popular%
 
 - call /system/builder/EmitBuildEvent kind="goal-decided", goal=%goal%

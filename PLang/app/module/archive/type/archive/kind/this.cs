@@ -5,11 +5,9 @@ namespace app.module.archive.type.archive.kind;
 /// holds one value or file, or a bundle (<c>tar</c>, <c>tar.gz</c>, <c>zip</c>, <c>oci.layer</c>) that holds a folder.
 /// Each packs and unpacks itself; a new format is one new folder.
 /// </summary>
-public abstract class @this : global::app.type.kind.@this
+public abstract class @this : global::app.type.kind.@this<global::app.module.archive.type.archive.@this>
 {
     protected @this(string name) : base(name) { }
-
-    protected internal override string Owner => "archive";
 
     /// <summary>What a file in this format is named with at its end (<c>.tar.gz</c>) — how a file says its format; null
     /// when none says it.</summary>

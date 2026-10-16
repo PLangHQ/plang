@@ -25,7 +25,7 @@ public sealed class @this : browser.@this
     private int _desktopWindow;
 
     private @this(string url, Display display, Program program, cdp.@this cdp, FilePath app, FilePath os,
-        Func<global::app.error.Error, Task> report)
+        Func<global::app.error.@this, Task> report)
         : base(url, display.Width.ToInt32(), display.Height.ToInt32(), program, cdp)
     {
         _display = display;

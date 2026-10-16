@@ -1,0 +1,12 @@
+/ A guard, not a red test: `as text` and `as list` must find plang's own types both before
+/ and after ruling 7 / decision 752 (a type's name is its namespace read from a root, like a
+/ file path). text is app.type.item.text, list is app.type.item.list; plang's own types
+/ drop `app.type.item.`, so `text` names the core text and `list` names the core list.
+/ The guard: `as text` yields a value whose type.name is "text"; `as list` yields a value
+/ whose type.name is "list". Must hold whatever happens around collection types ending in
+/ `list` across modules.
+ShortNameFindsTheType
+- set %t% = "hello" as text
+- assert %t!type.name% equals "text"
+- set %xs% = [1, 2, 3] as list
+- assert %xs!type.name% equals "list"

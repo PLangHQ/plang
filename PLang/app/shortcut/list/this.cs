@@ -42,7 +42,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
             if (await Goal("/shortcut/" + name) is not { } goal) continue;
             var shortcut = new global::app.shortcut.@this(goal);
             if (Items().FirstOrDefault(s => s.IsSystem && global::app.type.item.variable.list.@this.Comparer.Equals(s.Name, shortcut.Name)) is { } taken)
-                return context.Error(new global::app.error.Error(
+                return context.Error(new global::app.error.@this(
                     $"{goal.Path} names %!{shortcut.Name}%, a system shortcut ({taken.Goal.Path}) — to change it, write " +
                     $"/system/shortcut/{shortcut.Name}.goal; to add one, name it otherwise",
                     "ShortcutCollision", 400));

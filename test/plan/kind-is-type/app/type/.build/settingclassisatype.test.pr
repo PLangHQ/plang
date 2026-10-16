@@ -1,0 +1,66 @@
+{
+  "name": "SettingClassIsAType",
+  "comment": "Settings are settings, not kinds (ruling 7, decision 774). Each settings class is a\ntop-level type of its own, named by its namespace: the llm settings class lives at\napp.module.llm.setting, so its type.name is `app.module.llm.setting`. No type is\nrenamed — looking it up by that namespace name answers with that same name. Red today:\ntoday the llm settings class is a kind under a shared `setting` family (decision 48),\nso `%!llm.setting!type.name%` reads `\"setting\"`, not `\"app.module.llm.setting\"`.",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert.equals(Expected=\"app.module.llm.setting\", Actual=%!llm.setting!type.name%, Message=\"llm settings class is a type named by its namespace\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "app.module.llm.setting"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!llm.setting!type.name%",
+              "variable": [
+                {
+                  "text": "%!llm.setting!type.name%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "setting"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "llm settings class is a type named by its namespace"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "SettingClassIsAType.test.goal",
+  "hash": "74d966bbb5aed402489983b8e82bbcc3e4e1aa65b93485acb801be86bfc6176e"
+}

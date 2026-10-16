@@ -59,18 +59,6 @@ public class TypeOwnedReadParityTests : System.IAsyncDisposable
         await Assert.That(((global::app.type.item.@this)via!).Clr<System.TimeSpan>()).IsEqualTo(System.Xml.XmlConvert.ToTimeSpan("PT30S"));
     }
 
-    [Test] public async Task ObjectJsonRead_ProducesNavigableClrJson()
-    {
-        // json content materializes as clr(json) via its KIND's Load — object is not a plang
-        // type, so the (object,json) reader is gone; the json kind owns the decode, navigated
-        // lazily. The same values are reachable; nothing builds a parallel tree.
-        const string json = "{\"a\":1,\"b\":[1,2],\"c\":{\"d\":true}}";
-        var actor = app.actor.list.User.Context;
-        var d = (await actor.App.type.list.Kind("json").Load(json, actor))!;
-        await Assert.That(await d.Value()).IsTypeOf<global::app.type.clr.@this>();
-
-        await Assert.That((await (await d.Get("a")).Value())?.ToString()).IsEqualTo("1");
-        await Assert.That((await (await d.Get("b[1]")).Value())?.ToString()).IsEqualTo("2");
-        await Assert.That((await (await d.Get("c.d")).Value())?.ToString()).IsEqualTo("true");
-    }
+    // (retired with the navigator: ObjectJsonRead_ProducesNavigableClrJson — json no longer materializes
+    //  as a clr(JsonElement); lazy navigation of {item, json} is covered by JsonLazyNavigationTests.)
 }

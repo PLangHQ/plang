@@ -27,7 +27,7 @@ public sealed class @this
             return new(key, false);
         if (key.Peek() is not global::app.type.item.dict.@this dict)
         {
-            data.Fail(new global::app.error.Error("a key is a field (\"age\") or {field, desc}", "QueryInvalid", 400));
+            data.Fail(new global::app.error.@this("a key is a field (\"age\") or {field, desc}", "QueryInvalid", 400));
             return null;
         }
         var field = dict.Get("field", context) is { } named && named.Peek()?.ToString() is { Length: > 0 } ? named : null;

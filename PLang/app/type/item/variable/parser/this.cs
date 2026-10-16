@@ -12,7 +12,7 @@ namespace app.type.item.variable.parser;
 public sealed class @this
 {
     private readonly string _text;
-    private readonly List<global::app.error.Error> _error = [];
+    private readonly List<global::app.error.@this> _error = [];
     private List<variable.@this>? _variable;
     private readonly System.Lazy<variable.@this?> _whole;
 
@@ -30,7 +30,7 @@ public sealed class @this
     public IReadOnlyList<variable.@this> Variable => _variable ??= Scan();
 
     /// <summary>Why a reference in the text doesn't parse — empty when every one does.</summary>
-    public IReadOnlyList<global::app.error.Error> Error
+    public IReadOnlyList<global::app.error.@this> Error
     {
         get { _ = Variable; return _error; }
     }
@@ -80,7 +80,7 @@ public sealed class @this
             return whole;
         }
         if (Read(0) is { } one && one.Text.Length == _text.Length) return one;
-        if (_error.Count == 0) _error.Add(new global::app.error.Error($"'{_text}' is not one variable.", "InvalidVariable", 400));
+        if (_error.Count == 0) _error.Add(new global::app.error.@this($"'{_text}' is not one variable.", "InvalidVariable", 400));
         return null;
     }
 
@@ -166,7 +166,7 @@ public sealed class @this
 
     private variable.@this? Fail(string text, string why)
     {
-        _error.Add(new global::app.error.Error($"{text} is not a variable: {why}.", "InvalidVariable", 400));
+        _error.Add(new global::app.error.@this($"{text} is not a variable: {why}.", "InvalidVariable", 400));
         return null;
     }
 

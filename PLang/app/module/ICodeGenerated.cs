@@ -26,13 +26,13 @@ public interface ICodeGenerated
     // Generated handlers override Resolve/Attach with the full param-resolution + marker
     // wiring. The defaults here serve hand-written handlers (test doubles) that carry no
     // .pr parameters: Resolve just Attaches and hands back this instance.
-    async Task<(ICodeGenerated? Handler, global::app.error.Error? Error)> Resolve(ActionType action, actor.context.@this context)
+    async Task<(ICodeGenerated? Handler, global::app.error.@this? Error)> Resolve(ActionType action, actor.context.@this context)
     {
         var err = await Attach(action, context);
         return err != null ? (null, err) : (this, null);
     }
 
-    Task<global::app.error.Error?> Attach(ActionType? action, actor.context.@this context) => Task.FromResult<global::app.error.Error?>(null);
+    Task<global::app.error.@this?> Attach(ActionType? action, actor.context.@this context) => Task.FromResult<global::app.error.@this?>(null);
 
     Task<data.@this> Start();
 

@@ -83,7 +83,7 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
             parent = await hops[i].Start(parent, context);
             if (!parent.Success) return parent;
             if (!parent.IsInitialized)
-                return context.Error(new global::app.error.Error(
+                return context.Error(new global::app.error.@this(
                     $"%{string.Concat(hops.Take(i + 1).Select(h => h.Text))}% holds nothing, so %{string.Concat(hops.Select(h => h.Text))}% has nowhere to be written",
                     "VariableNotFound", 404));
         }

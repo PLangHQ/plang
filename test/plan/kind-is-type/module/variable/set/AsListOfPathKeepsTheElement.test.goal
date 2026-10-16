@@ -1,0 +1,8 @@
+/ Stage 4 (ruling 8): a generic asks for its element. `set %files% = [...] as list of path`
+/ builds Type=list with element path, and lands [0] born as a path. Red today — the
+/ baseline is `list` 2/5 and `path` 3/5 (unstable); on the list days the element isn't
+/ path, on the path days the top-level isn't list.
+AsListOfPathKeepsTheElement
+- set %files% = ["a.txt", "b.txt"] as list of path
+- assert.equals(Expected="list", Actual=%files!type.name%, Message="type.name is list")
+- assert.equals(Expected="path", Actual=%files[0]!type.name%, Message="[0] is born a path")

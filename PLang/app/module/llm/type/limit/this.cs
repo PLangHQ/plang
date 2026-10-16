@@ -41,7 +41,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (raw is @this limit) return limit;
         if (raw is not global::app.type.item.dict.@this dict)
         {
-            data.Fail(new global::app.error.Error("a limit is {token, tool, retry}", "LimitInvalid", 400));
+            data.Fail(new global::app.error.@this("a limit is {token, tool, retry}", "LimitInvalid", 400));
             return null;
         }
         var fresh = new @this();
@@ -55,7 +55,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 case "tool" when entry.Peek() is global::app.type.item.number.@this t: tool = t; break;
                 case "retry" when entry.Peek() is global::app.type.item.number.@this r: retry = r; break;
                 default:
-                    data.Fail(new global::app.error.Error(
+                    data.Fail(new global::app.error.@this(
                         $"a limit's members are token, tool and retry (each a number) — not {entry.Name}", "LimitInvalid", 400));
                     return null;
             }

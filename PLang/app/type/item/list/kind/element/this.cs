@@ -5,14 +5,14 @@ namespace app.type.item.list.kind.element;
 /// element's type, and a list of it is <c>list&lt;T&gt;</c> closed over that type's class (a choice set closes
 /// <c>choice&lt;T&gt;</c> the same way).
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.type.item.list.@this>
 {
     private readonly global::app.type.@this _element;
 
-    /// <summary>The kind for lists of <paramref name="element"/>.</summary>
-    public @this(global::app.type.@this element) : base(element.Name) => _element = element;
-
-    protected internal override string Owner => global::app.type.item.@this.NameOf(typeof(global::app.type.item.list.@this));
+    /// <summary>The kind for lists of <paramref name="element"/> — named by the element's type. When the element is
+    /// itself kinded (a list of lists: <c>{list, kind: {list, kind: path}}</c>), that kind rides as this kind's own,
+    /// so the nesting is kept, not flattened.</summary>
+    public @this(global::app.type.@this element) : base(element.Name, element.kind.IsEmpty ? null : element.kind) => _element = element;
 
     /// <summary>The list's class closed over the element's (<c>list&lt;path&gt;</c>) when the element is an item that
     /// makes itself; else the list's class as it is.</summary>
@@ -25,7 +25,7 @@ public sealed class @this : global::app.type.kind.@this
 
     /// <summary>A list of records is shown by one of its element (<c>[{"path": …, "verbs": […]}]</c>); a list of any
     /// other element shows the list's own — a scalar's example is no formal value to wrap.</summary>
-    public override global::app.type.item.prose.@this? Example(global::app.actor.context.@this context)
+    protected override global::app.type.item.prose.@this? OwnExample(global::app.actor.context.@this context)
         => _element.IsRecord ? new("[", _element.Example(context), "]") : null;
 
     /// <summary>A list is offered what its element is (a list of permissions: that the step gives them).</summary>
@@ -33,6 +33,6 @@ public sealed class @this : global::app.type.kind.@this
         => _element.Offers(step);
 
     /// <summary>A list of records says what each element is; a list of any other element says the list's own.</summary>
-    public override global::app.type.item.prose.@this? Description(global::app.actor.context.@this context)
+    protected override global::app.type.item.prose.@this? OwnDescription(global::app.actor.context.@this context)
         => _element.IsRecord ? new($"A list of {Name}: ", _element.Description(context)) : null;
 }

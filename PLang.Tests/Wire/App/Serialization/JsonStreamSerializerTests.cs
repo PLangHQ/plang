@@ -193,9 +193,10 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
             await Json.Encode(stream, app.Ok(new { Name = "test" }), Ctx, ct: cts.Token));
     }
 
-    // Error-path coverage: the json format decodes lazily, so malformed content reads back
-    // unparsed; the parse failure surfaces when the value is touched — an Error with a
-    // non-empty Key, so callers distinguish it from a successful null.
+    // Error-path coverage: the json format decodes lazily, so malformed content reads back unparsed as a
+    // resting {item, json} source; Value() keeps it unread (the courier door). The parse fires on a USE —
+    // navigation here — and the failure surfaces there, an Error with a non-empty Key, so callers
+    // distinguish it from a successful null (decision 792).
 
     [Test]
     public async Task DeserializeAsync_MalformedJson_FailsOnTouch()
@@ -205,7 +206,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
         var result = await Json.Decode(stream, Ctx);
         await result.IsSuccess();
 
-        await result.Value();
+        await result.Get("any");   // a use opens it — the parse fires and fails here, not at the courier's Value()
 
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("MaterializeFailed");
@@ -217,7 +218,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
         var result = Json.Deserialize("{not valid", Ctx);
         await result.IsSuccess();
 
-        await result.Value();
+        await result.Get("any");   // a use opens it — the parse fires and fails here
 
         await Assert.That(result.Error!.Key).IsEqualTo("MaterializeFailed");
     }

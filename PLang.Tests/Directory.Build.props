@@ -52,6 +52,7 @@
        Mirror of PLang/App/GlobalUsings.cs where applicable. -->
   <ItemGroup>
     <Using Include="app.@this" Alias="App" />
+    <Using Include="app.error.@this" Alias="Error" />
     <Using Include="app.goal.step.@this" Alias="Step" />
     <Using Include="app.goal.step.ErrorOrder" Alias="ErrorOrder" />
     <Using Include="app.goal.step.CacheSettings" Alias="CacheSettings" />

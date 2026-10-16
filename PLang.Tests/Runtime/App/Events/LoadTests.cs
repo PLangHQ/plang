@@ -50,7 +50,7 @@ public class LoadTests
     {
         await using var app = new global::app.@this(Fixtures()).Testing();
         app.goal.Own().Bind("load", When.before,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.actor.list.System, Scope.app);
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), app.actor.list.System, Scope.app);
 
         var loaded = await app.goal.Load(Pr);
 
@@ -79,7 +79,7 @@ public class LoadTests
     {
         await using var app = new global::app.@this(Fixtures()).Testing();
         app.goal.Own().Bind("load", When.after,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Broke", 400))), app.actor.list.System, Scope.app);
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Broke", 400))), app.actor.list.System, Scope.app);
 
         var loaded = await app.goal.Load(Pr);
 

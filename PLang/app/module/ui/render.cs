@@ -23,5 +23,6 @@ public partial class Render : IContext
     [Code]
     public partial ITemplate Provider { get; }
 
-    public async Task<data.@this<global::app.type.item.text.@this>> Start() => await Provider.Render(this);
+    // A forwarder — the provider makes the value (an item of the template's format, or a text); bare Data.
+    public async Task<data.@this> Start() => await Provider.Render(this);
 }

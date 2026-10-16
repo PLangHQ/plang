@@ -1,0 +1,220 @@
+{
+  "name": "NoAsNoType",
+  "comment": "Stage 4 (ruling 8) — the two guards don't move. `set %n% = 5` has no `as`, so the step\nnames no Type (the number is read from the literal form); `set %s% = \"hi\" as text` is a\nforce, and text stays text. Both green today — stage 4 must keep them green.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %n% = 5",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=\"number\", Actual=%n!type.name%, Message=\"bare literal: form gives number\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "number"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n!type.name%",
+              "variable": [
+                {
+                  "text": "%n!type.name%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "bare literal: form gives number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %s% = \"hi\" as text",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%s%",
+              "variable": [
+                {
+                  "text": "%s%",
+                  "code": [
+                    {
+                      "variable": "s"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hi"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"text\", Actual=%s!type.name%, Message=\"as text stays text\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%s!type.name%",
+              "variable": [
+                {
+                  "text": "%s!type.name%",
+                  "code": [
+                    {
+                      "variable": "s"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "as text stays text"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/kind-is-type/module/variable/set/NoAsNoType.test.goal",
+  "prPath": "/plan/kind-is-type/module/variable/set/.build/noasnotype.test.pr",
+  "hash": "fa33677e8a47029035875ff08a99d02dddbf0cafc12adb8f4332cc198851c377"
+}
