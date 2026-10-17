@@ -42,8 +42,8 @@ What the developer does notice:
 ## The rulings so far (Ingi, 2026-10-17)
 
 1. **Data flows as far as it can** (851): a carrier is passed on whole and opened only where its value is needed. Ingi: "it's not the responsbility of the Query class to materialize the value, you are only doing that because you know the subclass need that". This replaces decision 231 ("handlers open carriers"); a CLAUDE.md proposal is filed.
-2. **One loop, no provider in it:** `llm/code/Default.cs`. Each provider is only its wire, in its own folder (Ingi: "it should be called llm/code/default.cs, and we then have the openai format … then others can plugin").
-3. **A value formats itself** (Ingi: "who is responsible for formatting a value. Answer: the value is responsible. so why are seeing a variable called format there?"). `Default` holds no format.
+2. **One loop, no provider in it.** Each provider is only its wire, in its own folder (Ingi: "it should be called llm/code/default.cs, and we then have the openai format … then others can plugin"). Revised in 859: the loop is the conversation's own `Run`, and the provider is the `[Code]` slot's `ILlm`, chosen by `code.setDefault`, with only `Ask` (Ingi: "ok, looks good"). There's no `Default.cs`.
+3. **A value formats itself** (Ingi: "who is responsible for formatting a value. Answer: the value is responsible. so why are seeing a variable called format there?"). The loop holds no format.
 4. **The conversation puts itself together** (Ingi: "why doen't conversation handle the sticting to gether the conversation"). It holds only its messages, never the query that made it (Ingi: "why is borned with query?").
 5. **`Conversation` holds the earlier answer it continues:** `continue the conversation in %first%` builds `Conversation = %first%`. There's no `{continue}` record, no `Follow`, and no `"Messages"` property read by name. How the answer holds its conversation comes later (Ingi: "lets get back to this later").
 6. **`Ask` takes the action and the conversation, and answers data:** an answer, or why there is none. There's no `request` type (Ingi: "why does Ask not just take in actoin and conversation?"; "what if there is an error, we dont handle errors?").
@@ -55,43 +55,51 @@ What the developer does notice:
 ## The design so far
 
 ```
-llm/query.cs                  the action: its slots; Start => Llm.Query(this), one line (stays)
-llm/code/ILlm.cs              the [Code] slot (stays)
-llm/code/Default.cs           NEW: the loop
-llm/type/conversation/        the conversation: the earlier answer's messages, the step's, what the rounds add
-llm/type/answer/              NEW: one reply: content, why it stopped, tool calls, usage
-llm/openai/this.cs            NEW: OpenAI's wire, its Ask
-llm/openai/setting/this.cs    NEW: OpenAI's key, endpoint, model
-llm/setting/this.cs           shared: length, rows, inline, cache, which provider
+llm/query.cs                  the action: its slots; Start, one line: the conversation runs (stays one line)
+llm/code/ILlm.cs              the [Code] slot: the provider, its Ask; chosen by code.setDefault (859)
+llm/type/conversation/        the conversation: its messages, and its Run, the loop
+llm/type/answer/              NEW: one reply: content, tool calls, usage, its conversation
+llm/type/usage/               NEW: tokens and cost
+llm/type/tool/                NEW: a tool (action.cs, goal.cs) and the step's tool list
+llm/openai/this.cs            NEW: OpenAI's provider, ILlm: Ask, Read, Stream
+llm/openai/setting/this.cs    NEW: OpenAI's key, endpoint, model, timeout
+llm/setting/this.cs           shared: length, rows, inline, cache
 ```
 
+The provider plugs in through the `[Code]` slot (859). plang already picks an implementation there with `code.setDefault` (`code-modules.md:116`), so `ILlm` is the provider and its only job is the wire. The loop is the conversation going on until it's done; it isn't a provider's, so it would be copied by every provider if it lived there. `Default.cs`, sketched earlier, goes away.
+
 ```csharp
-// llm/code/Default.cs: NEW (it replaces OpenAi.Query)
-public sealed class Default : ILlm
+// llm/code/ILlm.cs: the provider (openai by default)
+public interface ILlm : ICode
 {
-    public async Task<data.@this> Query(query action)
+    Task<data.@this<answer.@this>> Ask(query action, conversation.@this conversation);
+}
+
+// llm/query.cs: still one line
+public async Task<data.@this> Start() => await new conversation.@this(Message, Conversation).Run(this);
+
+// llm/type/conversation/this.cs: the loop, with no provider in it
+public async Task<data.@this> Run(query action)
+{
+    while (true)
     {
-        var conversation = new conversation.@this(action.Message, action.Conversation);
-        while (true)
+        var asked = await action.Llm.Ask(action, this);         // whichever provider the [Code] slot holds
+        if (!asked.Success) return asked;                       // the call failed, or the model stopped early
+        var answer = await asked.Value();                       // opened here: the loop decides on it
+        Add(answer.Message);
+
+        if (answer.Tool.Count > 0)                              // the model calls tools (857)
         {
-            var asked = await Ask(action, conversation);        // the provider's wire (open: where Ask lives)
-            if (!asked.Success) return asked;                   // the call failed, or the model stopped early
-            var answer = await asked.Value();                   // opened here: the loop decides on it
-            conversation.Add(answer.Message);
-
-            if (answer.Tool.Count > 0)                          // open: tools
-            {
-                var called = await answer.Call(action.Tool, action.Limit, conversation);
-                if (!called.Success) return called;
-                continue;
-            }
-
-            var checked = await answer.Check(action.OnValidateResponse, action.Limit, conversation);   // open: the check
-            if (!checked.Success) return checked;
-            if (checked.Retry) continue;
-
-            return asked;                                       // the answer, holding its conversation
+            var called = await action.Tool.Use(tools => tools.Call(answer, action.Limit, this));
+            if (!called.Success) return called;
+            continue;
         }
+
+        var checked = await answer.Check(action.OnValidateResponse, action.Limit, this);   // the step's check (858)
+        if (!checked.Success) return checked;
+        if (checked.Retry) continue;
+
+        return asked;                                           // the answer, holding its conversation
     }
 }
 ```
@@ -236,7 +244,7 @@ if (action.OnStream is { } onStream)
 
 ## Open: still to design with Ingi
 
-- **Where `Ask` lives and how a provider plugs in.** The body has OpenAI's field names, so `Ask` is the provider's; `Default` must not hold it. One provider per folder, picked by a setting. How `Default` reaches the provider's `Ask` is open.
+- **Where `Ask` lives and how a provider plugs in, decided (859).** The provider is `ILlm`, the `[Code]` slot, picked by `code.setDefault`; `llm/openai/this.cs` implements its `Ask`. The loop is `conversation.Run`.
 - **gpt-4 versus gpt-5+.** Their JSON differs (Ingi: "watch out for gpt4 and gp5+ json difference"). One format file each, picked by a setting, never by an `if` on the model name.
 - **Reading the reply, decided (856).** It's the provider's `Read(reply, conversation)`, beside `Ask`:
   - it reads through data's own navigation door (`reply.Get("choices[0].message.content")`, `data/this.Navigation.cs:14`), so `Nav<T>` goes;
@@ -278,13 +286,13 @@ if (action.OnStream is { } onStream)
 0. **Trace.** Every job in `OpenAi.Query` and the 16 helpers: whose job it is, and where it goes.
 1. **Settings read on use, through one door.** `await context.Setting.Get<T>()` answers `data<T>`; no read at app start; `[Ask]`; `Of<T>()` gone. Then the provider folder, `llm/openai/`, with its own setting; `llm.setting.Asked` gone.
 2. **The conversation stays plang to the end.** No `.Clr<List<LlmMessage>>()`; carriers read when written.
-3. **`Default` and `Ask`.** The loop and the wire split; the answer read.
+3. **`conversation.Run` and the provider's `Ask`.** The loop and the wire split; the answer read.
 4. **Tools and the check** move to their owners.
 5. **The rest of the demolition list.**
 
 ## Demolition (from what's traced so far)
 
-- [ ] `OpenAi.Query`'s 475 lines, replaced by `Default.Query` and the provider's `Ask`
+- [ ] `OpenAi.Query`'s 475 lines, replaced by `conversation.Run` and the provider's `Ask`; `ILlm.Query` becomes `ILlm.Ask`
 - [ ] `.Clr<List<LlmMessage>>()` (`OpenAi.cs:85`), and the `history.Clr<List<LlmMessage>>()` of the continue (`:139`)
 - [ ] `CloneMessages` (`:1009`) and the `originalMessages` copy (`:145`)
 - [ ] `ToApiMessages` (`:585`) and the C# dictionaries for the body (`:205–220`)
@@ -316,7 +324,8 @@ if (action.OnStream is { } onStream)
 
 | new surface | check | result |
 |---|---|---|
-| `Default` | holds the loop's order only; no provider, no format, no opened slot it doesn't decide on | sketched |
+| `conversation.Run` | holds the loop's order only; no provider, no format, no opened slot it doesn't decide on | agreed (859) |
+| `ILlm` | the provider: `Ask` only, picked by plang's existing `[Code]` door | agreed (859) |
 | `conversation` | its own messages; carriers read when written; never the query | agreed |
 | `Ask` | the provider's; takes the action and the conversation; answers data | agreed; where it lives is open |
 | the provider setting | the provider owns its key, endpoint and model | agreed |
