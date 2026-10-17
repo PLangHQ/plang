@@ -282,7 +282,9 @@ if (action.OnStream is { } onStream)
   - the same loop runs (tools, check).
 
   The provider reads its own events: http hands back the reply's body as a stream to read (the http module's change), and `answer.Stream(reply, onStream, conversation)` (NEW) builds the answer from the events. The body gets `stream: true` and `stream_options: {include_usage: true}`. `%chunk%` changing from OpenAI's JSON to text is plang-visible, and Ingi said yes.
-- **The llm's own cache: removed (861).** It saved a request to the llm when the same hash came again; it's not the step cache (`on.cache`, a step's result, in memory). Ingi: "maybe we should just remove it". The build asks once per goal, a changed goal is a new hash, and an unchanged goal never asks, so it saves the builder nothing. It was also the envelope specimen Ingi kept (2026-09-28), which ends with it.
+- **The llm's own cache: in discussion, not decided.** It saves a request to the llm when the same hash comes again; it's not the step cache (`on.cache`, a step's result, in memory). Ingi raised removing it ("maybe we should just remove it"). For the builder it saves nothing: the build asks once per goal, a changed goal is a new hash, and an unchanged goal never asks. The other two choices:
+  - keep it, storing the answer whole, which ends the envelope;
+  - keep the specimen as it is.
 - **The model's fallback** (an empty `Model` → the setting's, `:70`), lean: the slot's own default is the setting, `[Default("%!llm.openai.setting.model%")]`, a variable read when the body is written. The timeout (2 minutes, hard-coded at `:234`) becomes OpenAI's setting `Timeout`. Ingi liked both (855). The request isn't marked `Unsigned` (Ingi: "dont have the request unsigned"); it changes nothing for OpenAI, since a request is never signed and `Unsigned` only refuses a signed plang reply (`http/request.cs:11`, `:41–42`).
 
 ## Stages (a sketch, fixed when the design is)
@@ -308,7 +310,7 @@ if (action.OnStream is { } onStream)
 - [ ] reading every saved setting at app start (`app/this.cs:405–406`, `Setting.Load()` at `actor/setting/this.cs:79–94`): a setting is read when it's first used
 - [ ] the two throws for a bad row or a failed apply (`actor/setting/this.cs:295`, `:304`): `Get<T>` answers them
 - [ ] the decider's own copy of a key (`llm/decider.setting.cs:19`), if the decider uses the provider's
-- [ ] the llm's own cache (861):
+- [ ] **only if Ingi decides to remove it (in discussion, 861):** the llm's own cache:
   - the `Cache` slot on `llm.query` (`query.cs:92–95`) and the `Cache` setting (`llm/setting/this.cs:13`);
   - the `LlmCache` table with its key, check, store and restore (`OpenAi.cs:37`, `:155–174`, `:459–486`, `ComputeCacheKey`, `RestoreFromCache`);
   - `QueryCacheTests` (8);
