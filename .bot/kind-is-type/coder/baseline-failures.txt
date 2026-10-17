@@ -1,0 +1,39 @@
+# kind-is-type baseline failures — for the review line's tester.
+# A test here is a known red that is NOT a regression of this branch: it fails on runtime2
+# (cf66e2d01) too, or is a timing flake. The tester's rule: no NEW red test name against this file.
+# Established on HEAD 766abd424 (C#, forced build) and the forced-build plang suite, each failing
+# name diffed against runtime2 cf66e2d01's own suites.
+#
+# NOT in this file, because they are NEW on this branch (pass on runtime2) — reported to the architect,
+# not baseline:
+#   RenderFile.test.goal, RenderInclude.test.goal  (plang; regress from the render change, decision 818)
+#   TheFilePage_IsTheSpecsGolden                    (C#, Modules; the builder's stage-5 teaching, ruled red)
+
+## C# (./dev.sh test) — 7
+MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal   # Wire snapshot/resume; fails on runtime2 too
+NavigateAndEditCapturedVariable_ThenResumeToSuccess            # Wire snapshot/resume; fails on runtime2 too
+PlangPath_AsSnapshotConvert_EditSurvivesResume                 # Wire snapshot/resume; fails on runtime2 too
+SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess # Wire snapshot/resume; fails on runtime2 too
+ThrowTimeSnapshot_EditSurvivesResume                           # Wire snapshot/resume; fails on runtime2 too
+TypedSnapshotString_NavigateEditResume_PersistsEdit            # Wire snapshot/resume; fails on runtime2 too
+After_EachRetry_IsAFreshAttempt_WithAFreshDeadline             # Modules; timing under load, passes 3/3 in isolation
+
+## plang (cd test && plang --test) — 15
+/app/data/DataTypeReadsEntity.test.goal                        # on runtime2 too (kind-is-type motivation: a kind isn't a type)
+/app/data/Narrow_ChainWideBangBothBranches.test.goal           # on runtime2 too (parsed json as a C# carrier)
+/app/data/Plane_DataKeyVsProperty.test.goal                    # on runtime2 too (kind isn't a type)
+/app/data/Cut2.test.goal                                       # on runtime2 too (parsed json as a C# carrier; %cfg% is dict)
+/module/math/DoublePlusDecimal_Errors.test.goal                # on runtime2 too (kind isn't a type)
+/app/type/list/ListIsItemSortsAsBefore.test.goal              # on runtime2 too
+/app/type/item/BareLiteralJudgedByForm.test.goal               # on runtime2 too (kind isn't a type)
+/module/condition/compare/Failure_DictEqNumber.test.goal       # on runtime2 too (dict/json compare)
+/module/condition/compare/Failure_DictOrderDict.test.goal      # on runtime2 too (dict/json compare)
+/module/condition/compare/Cut5.test.goal                       # on runtime2 too (dict/json compare)
+/module/channel/goalchannelrecursion/Start.test.goal           # on runtime2 too
+/app/type/kind/strict/SetAsImageStrictNoKind.test.goal         # on runtime2 too (kind can't be checked)
+/app/type/kind/strict/SetAsTextSlashMarkdownNormalises.test.goal # on runtime2 too (kind can't be checked)
+/app/type/kind/strict/SetAsTextSlashMarkdownStrictUnverifiable.test.goal # on runtime2 too (kind can't be checked)
+/app/type/kind/strict/SetAsImageGifStrictMismatch.test.goal    # on runtime2 too (kind can't be checked)
+
+# Note: both suites also report 12 stale + 3 skipped plang tests — identical count on runtime2
+# (cf66e2d01), so no new stale on this branch.
