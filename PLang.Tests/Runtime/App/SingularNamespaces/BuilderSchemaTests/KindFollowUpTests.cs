@@ -63,4 +63,29 @@ public class KindFollowUpTests : System.IAsyncDisposable
         // would leave Type={"name": "number"} with no kind.
         await Assert.That(step.Pick.Formal).Contains("Type={\"name\": \"number\", \"kind\": \"decimal\"}");
     }
+
+    // decision 814: a kind follow-up offers only the program-named kinds — item's json — never the C# host
+    // kinds (dict, list, *), which are Internal. The `!k.Internal` filter in KindsOffered (pick/list) drops them.
+    [Test]
+    public async Task AKindFollowUp_ForItem_OffersJson_NotTheInternalHostKinds()
+    {
+        var goal = global::PLang.Tests.Shared.Make.Goal(_app.actor.list.User.Context, "G",
+            global::PLang.Tests.Shared.Make.Step("set %x% = '{}'"));
+        var step = goal.Step[0];
+
+        await step.Pick.Take(global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?>
+        {
+            ["s0_variable.set"] = new Dictionary<string, object?> { ["type"] = "noul", ["noul"] = 0.99 },
+        }, Ctx), [], Ctx);
+        await step.Pick.Take(global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?>
+        {
+            ["s0_@option.variable.set.Type"] = new Dictionary<string, object?> { ["choice"] = "item", ["confidence"] = 0.9 },
+        }, Ctx), [], Ctx);
+
+        var kindOf = step.Pick.Question.Single(q => q.Id == "s0_@kindof.variable.set.Type");
+        await Assert.That(kindOf.Values).Contains("json");
+        await Assert.That(kindOf.Values).DoesNotContain("dict");
+        await Assert.That(kindOf.Values).DoesNotContain("list");
+        await Assert.That(kindOf.Values).DoesNotContain("*");
+    }
 }

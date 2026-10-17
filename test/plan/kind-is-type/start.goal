@@ -66,6 +66,8 @@ Stage5
 - call /plan/kind-is-type/module/variable/set/AsListOfPathKeepsTheElement
 - call /plan/kind-is-type/module/variable/set/AsJsonKeepsJson
 - call /plan/kind-is-type/module/file/read/AsTextKeepsText
+/ the read itself lands that type, uncaptured — no write-to variable.set to convert a file reference (831)
+- call /plan/kind-is-type/module/file/read/AsTextLandsTextUncaptured
 - call /plan/kind-is-type/module/variable/set/AsIsoDurationKeepsIso
 / the guards don't move: no "as", no type; "as text" stays text
 - call /plan/kind-is-type/module/variable/set/NoAsNoType
