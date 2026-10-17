@@ -303,6 +303,18 @@ if (action.OnStream is { } onStream)
 
   The timeout (2 minutes, hard-coded at `:234`) becomes OpenAI's setting `Timeout`. Ingi liked both (855). The request isn't marked `Unsigned` (Ingi: "dont have the request unsigned"); it changes nothing for OpenAI, since a request is never signed and `Unsigned` only refuses a signed plang reply (`http/request.cs:11`, `:41–42`).
 
+## Still open: a model picks its provider (866, Ingi: "lets leave this for now")
+
+Ingi: "when I do `- system: do stuff, model: "claude-5.5"`, how will it figure out it's the claude provider?" With the design above it wouldn't: the provider comes from `code.setDefault`, so the request would go to OpenAI and be refused. A sketch, not agreed:
+
+- the `Model` slot holds a `model` (born by its name from the providers' models), not a text;
+- each model knows its `Provider` and writes its own part of the body (860);
+- each provider registers its models (OpenAI from its setting's model list, the one with the prices);
+- `conversation.Run` asks `(await action.Model?.Value())?.Provider ?? action.Llm`;
+- a name no provider serves fails at birth ("no provider serves the model claude-5.5"), and the build can warn early.
+
+This would revise 864: the provider is the named model's, else `code.setDefault`'s.
+
 ## Stages (a sketch, fixed when the design is)
 
 0. **Trace.** Every job in `OpenAi.Query` and the 16 helpers: whose job it is, and where it goes.
