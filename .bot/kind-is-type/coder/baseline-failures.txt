@@ -4,10 +4,12 @@
 # Established on HEAD 766abd424 (C#, forced build) and the forced-build plang suite, each failing
 # name diffed against runtime2 cf66e2d01's own suites.
 #
-# NOT in this file, because they are NEW on this branch (pass on runtime2) — reported to the architect,
-# not baseline:
-#   RenderFile.test.goal, RenderInclude.test.goal  (plang; regress from the render change, decision 818)
-#   TheFilePage_IsTheSpecsGolden                    (C#, Modules; the builder's stage-5 teaching, ruled red)
+# Two new-on-branch reds the baseline diff found have since been FIXED, so they are not here and not red:
+#   RenderFile.test.goal, RenderInclude.test.goal  (plang; the 818 render regression — a rendered .html was
+#       born a `code` value, not text; fixed: only an item-kind format like json rests as a structure,
+#       any other format renders to a plain text)
+#   TheFilePage_IsTheSpecsGolden                    (C#, Modules; the builder fixed it in d3138cf16 —
+#       ModulePageTests 8/0 on a forced build; the earlier red was a stale os/system test bin)
 
 ## C# (./dev.sh test) — 7
 MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal   # Wire snapshot/resume; fails on runtime2 too

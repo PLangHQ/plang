@@ -139,6 +139,26 @@ public class RenderTests : IDisposable
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello PLang!");
     }
 
+    // A rendered file of a non-structured format (html, md) is a plain text — the rendered characters
+    // themselves — so a text comparison (`%result% equals '…'`) holds. Only json (item's kind) rests as a
+    // structure; a code/text format never becomes a non-text value a comparison would refuse. (818 regression.)
+    [Test]
+    public async Task Render_HtmlFile_LandsAPlainText()
+    {
+        WriteTemplateFile("greeting.html", "Hello {{ name }}!");
+        var context = _app.actor.list.User.Context;
+        context.Variable.Set(new Data("name", "PLang", context: context));
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"greeting.html", IsFile = (global::app.type.item.@bool.@this)true };
+
+        var result = await _provider.Render(action);
+
+        await result.IsSuccess();
+        var value = await result.Value();
+        await Assert.That(value).IsTypeOf<global::app.type.item.text.@this>();
+        await Assert.That(result.Type!.Name).IsEqualTo("text");
+        await Assert.That(value!.ToString()).IsEqualTo("Hello PLang!");
+    }
+
     // A rendered .json file is an item of kind json ({item, json}, decision 773/804), covered by
     // RenderJsonFileIsItemOfKindJsonTests — json is item's kind, never text's. The superseded
     // {text, json} assertion that lived here is retired.
