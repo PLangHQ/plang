@@ -275,7 +275,13 @@ if (action.OnStream is { } onStream)
   - **The "Validation failed (retry n/m)" line** stays on the actor's output, as today (Ingi: "if validation failed it is an error, somebody needs to catch it … agent will be running as service actor, so the error is his not the user, so not sold on" moving it to debug). Revisit with the Service actor.
   - **The `Schema` slot** stays a hint in the instruction, as today. A type answering with its own schema is branch A's (813).
 - **The answer holds its conversation and usage** as real members, not 15 `SetProp` lines (`:489–503`); decided in 856.
-- **How a message looks in the provider's JSON** (llm-writer's #3): an image by name, with a `%image%:` text part before each image part, since OpenAI's image part has no name field.
+- **How a message looks in the provider's JSON, decided (862, Ingi: "yes, each should provider should know how to format it self").** The provider maps each message into its own shape, in `Ask`:
+  - `await foreach (var message in conversation)`: the conversation (NEW: async enumerable) reads its carriers as it's walked;
+  - `Message(message)` writes `{role, content, tool_call_id, tool_calls}` in OpenAI's words;
+  - a fact the message doesn't have isn't written, so there's no branch on its role (today's four branches in `ToApiMessages`, `:585–654`, go);
+  - the message's own names are plang's: `Role`, `Content`, `Answers` (today `ToolCallId`), `Call` (today `ToolCalls`);
+  - images by name build on this in llm-writer's #3: `content` becomes the text, then a `%image%:` label and the image part for each image;
+  - `ResolveImage`'s guessing (`:656`) moves to the image there.
 - **Streaming, decided (855).** Today the step's `OnStream` gets OpenAI's raw event JSON as `%chunk%`, and the query then leaves the loop answering `Truncated` (`OpenAi.cs:216`, `:235–245`, `:508–518`). It becomes:
   - `%chunk%` is the next piece of text;
   - the step gets the same whole answer at the end;
