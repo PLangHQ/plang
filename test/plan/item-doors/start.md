@@ -12,9 +12,9 @@ Three things in the core make every new feature build around them:
 2. **A value writes through two doors and picks the writer's door itself.** It asks `Owns(writer)` and reads the writer's string `Format`, and the writer checks what the value is.
 3. **A writer can't learn what a value is,** and schemas come from switches on type names.
 
-## Scope: groups 1–3 (Ingi, 2026-10-17)
+## Scope: the five groups, gone through one at a time
 
-Groups 4 (a type's members through its own list) and 5 (a structural reader over plang values) are left for a later branch.
+The scope isn't settled. I suggested groups 1–3, with 4–5 left for later; Ingi didn't rule on that, and said "you have 5 items in that original table, lets stick to the format". An earlier draft of this line said Ingi had chosen 1–3; he hadn't.
 
 ### 1. A type is born whole (agreed)
 
