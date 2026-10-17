@@ -2,7 +2,7 @@
 
 **Status: design complete, parked (2026-10-17, decision 864).** Ingi: "lets finish the design on this branch so we have it when we come back, then move to branch A". Nothing is built. It's built after branch A, and uses two things branch A makes:
 - a type born from the list, so it knows its kind;
-- a type answering its own JSON schema (813).
+- a type answering its own JSON schema (item-doors #3, decision 869).
 
 Before building, re-read the plan against branch A's result, and get Ingi's go.
 
@@ -270,14 +270,14 @@ if (action.OnStream is { } onStream)
 
   The plang name stays `file.read`, held as two members, `Module` and `Action` (Ingi: "separate it into two properties"). OpenAI forbids a dot in a function name, so on its wire the provider writes `file_read` (Ingi: "lets use _, keep the names file.read") and finds a call by looking up the name it wrote, never by splitting it.
 
-  `tool.list` is the `Tool` slot's own type: it runs the model's calls in order within the limit, a Parallel one running on (`:350–373`), each result a tool message in the conversation. The tool's `Description` is the goal's or the action's (today always "", `:186`). **The parameter schema, decided (863):** each type answers its own JSON schema (Ingi: "each type answer by it self, but if branch A is solving that, then great"). That's branch A's schema writer (813), and since llm-provider is built after branch A, `tool` uses it directly. `MapPlangTypeToJsonSchema` (`:795–816`, a switch on type names) goes with no stopgap. The answer's `Schema` gets the same: a type's own schema, from branch A. Safety: only what the step lists; running as the Service actor comes with the service-actor plan.
+  `tool.list` is the `Tool` slot's own type: it runs the model's calls in order within the limit, a Parallel one running on (`:350–373`), each result a tool message in the conversation. The tool's `Description` is the goal's or the action's (today always "", `:186`). **The parameter schema, decided (863):** each type answers its own JSON schema (Ingi: "each type answer by it self, but if branch A is solving that, then great"). That's item-doors #3 (decision 869: each type's `serializer/schema.cs`, plang's word in `format`), and since llm-provider is built after branch A, `tool` uses it directly. `MapPlangTypeToJsonSchema` (`:795–816`, a switch on type names) goes with no stopgap. The answer's `Schema` gets the same: a type's own schema, from branch A. Safety: only what the step lists; running as the Service actor comes with the service-actor plan.
 - **The answer's type and the check, decided (858).**
   - **`Format` becomes `Type`** (Ingi: "yes, seem right"), as `file.read`'s slot (814): "answer as json" and "as a list of names" are one slot, and the content is born as that type (`answer.Value(type)`). This is plang-visible: the builder's teaching for `llm.query` moves, under the teaching-edit rule.
   - **The instruction to the model** follows the asked type, as today (`BuildFormatInstruction`, `:709–722`): "You MUST respond in JSON" for json, "in ```md``` code block" for md, and so on (Ingi confirmed it). The conversation writes it into the system message when it's written out, never stored, so it doesn't pile up across rounds.
   - **A fenced block is taken out** when a type was asked for (`ExtractResponse`, `:726–743`).
   - **`answer.Check(validate, limit, conversation)`** runs `OnValidateResponse` with `%response%` in its own frame. A failure within `limit.retry` adds "Your response failed validation: …" and asks again; over the limit it answers `ValidationFailed`.
   - **The "Validation failed (retry n/m)" line** stays on the actor's output, as today (Ingi: "if validation failed it is an error, somebody needs to catch it … agent will be running as service actor, so the error is his not the user, so not sold on" moving it to debug). Revisit with the Service actor.
-  - **The `Schema` slot** stays a hint in the instruction, as today. A type answering with its own schema is branch A's (813).
+  - **The `Schema` slot** stays a hint in the instruction, as today. A type answering with its own schema comes from item-doors #3 (869).
 - **The answer holds its conversation and usage** as real members, not 15 `SetProp` lines (`:489–503`); decided in 856.
 - **How a message looks in the provider's JSON, decided (862, Ingi: "yes, each should provider should know how to format it self").** The provider maps each message into its own shape, in `Ask`:
   - `await foreach (var message in conversation)`: the conversation (NEW: async enumerable) reads its carriers as it's walked;
