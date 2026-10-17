@@ -50,6 +50,8 @@ What the developer does notice:
 7. **The key, endpoint and model are the provider's own setting** (`llm/openai/setting/this.cs`, `%!llm.openai.setting.key%`). The shared llm setting keeps only what every provider shares (Ingi: "it should not be llm/settings/this.cs for openai, what happens for the next llm?").
 8. **A setting asks for itself** (Ingi: "a setting should ask by it self if key is missing, it should not be done by the higher level class that uses it" → "yes better"). An option marked `[Ask("…")]` that is empty when read through the setting's door is asked for once and saved. This is a locked addition (the setting type and a new attribute) with Ingi's yes. `llm.setting.Asked` goes.
 
+9. **A setting is read through one async door, and only when used** (Ingi, 854: "setting should always be await/async, but why is it .Of, why not .Get?"; "value should only be retrieve/load/materialized, on usage" → "yes"). `await context.Setting.Get<T>()` answers `data<T>`. On first use it reads that setting's row by its path, asks for an empty `[Ask]` option, and answers a bad row or a key nobody gave as an error, not a throw. App start reads no settings; the line at `app/this.cs:406` goes. `Of<T>()` (`actor/setting/this.cs:310`) goes, and its 29 callers move to `await …Get<T>()`. This is a locked addition (the settings' surface), with Ingi's yes.
+
 ## The design so far
 
 ```
@@ -126,9 +128,9 @@ public sealed class @this : item.@this
 // llm/openai: Ask, the only I/O. OpenAI's field names, its endpoint, its key.
 private async Task<data.@this<answer.@this>> Ask(query action, conversation.@this conversation)
 {
-    var openai = action.Context.Setting.Of<llm.openai.setting.@this>();
-    var key = /* %!llm.openai.setting.key%, read through the setting's door: asked once if empty */;
-    if (!key.Success) return key;
+    var setting = await action.Context.Setting.Get<llm.openai.setting.@this>();   // read on use; an empty key asked for once
+    if (!setting.Success) return setting;                                         // no key given: MissingLlmKey
+    var openai = await setting.Value();
 
     var body = new dict.@this()                                      // carriers in, read when the body is written
         .Set("model", action.Model)
@@ -143,7 +145,7 @@ private async Task<data.@this<answer.@this>> Ask(query action, conversation.@thi
         Url = openai.Endpoint,
         Method = POST,
         Body = body,                                                 // written through its content type, json
-        Header = new dict.@this().Set("Authorization", $"Bearer {await key.Value()}"),
+        Header = new dict.@this().Set("Authorization", $"Bearer {openai.Key}"),
     };
     var reply = await new action.@this(send, action.Context).Start(action.Context);
     return reply.Success ? await answer.@this.Read(reply, conversation) : reply;   // open: Read
@@ -160,20 +162,17 @@ public sealed class @this : setting.module.@this
     [Out, Store] public text.@this Model { get; set; } = "gpt-5.4-nano";
 }
 
-// type/item/setting/this.cs Get (:114–115): a missing option asks for itself, once, and is saved
-if ((Option(key) ?? Switch(key)) is { } option)
+// actor/setting/this.cs: NEW, replaces Of<T>() (:310). The one door to a setting: read on use, asks, answers.
+public async ValueTask<data.@this<T>> Get<T>() where T : type.item.setting.@this, new()
 {
-    if (option.Ask is { } question && Empty(option.GetValue(this)))
-    {
-        var answer = await parent.Context.Ask(question, option.Sensitive);
-        if (!answer.Success) return answer;
-        option.SetValue(this, await answer.Value());
-        var saved = await parent.Context.Setting.Save(this);
-        if (!saved.Success) return saved;
-    }
-    return new data.@this(key, option.GetValue(this), parent: parent);
+    // reads this setting's row by its path the first time it is asked for (no read at app start)
+    // builds the class from its defaults ← the saved row ← this run's values, as Build does today (:290–306)
+    // an empty option marked [Ask] is asked for once, through the actor's ask (secret when [Sensitive]), and saved
+    // a row that can't be read, or an [Ask] nobody answered: the answer's error, never a throw
 }
 ```
+
+The body is the coder's. Its parts already exist: `Build` (`:290–306`), the lazy rows (`:76`), the ask and save in today's `Asked` (`llm/setting/this.cs:24–41`).
 
 ## Open: still to design with Ingi
 
@@ -192,7 +191,7 @@ if ((Option(key) ?? Switch(key)) is { } option)
 ## Stages (a sketch, fixed when the design is)
 
 0. **Trace.** Every job in `OpenAi.Query` and the 16 helpers: whose job it is, and where it goes.
-1. **The provider folder and its setting.** `llm/openai/`, the `[Ask]` setting option; `llm.setting.Asked` gone.
+1. **Settings read on use, through one door.** `await context.Setting.Get<T>()` answers `data<T>`; no read at app start; `[Ask]`; `Of<T>()` gone. Then the provider folder, `llm/openai/`, with its own setting; `llm.setting.Asked` gone.
 2. **The conversation stays plang to the end.** No `.Clr<List<LlmMessage>>()`; carriers read when written.
 3. **`Default` and `Ask`.** The loop and the wire split; the answer read.
 4. **Tools and the check** move to their owners.
@@ -208,6 +207,9 @@ if ((Option(key) ?? Switch(key)) is { } option)
 - [ ] the 15 `SetProp` lines (`:489–503`, `:509–517`)
 - [ ] `conversation.Continue` and its `Follow` (`:131–141`)
 - [ ] `llm.setting.Asked` (`llm/setting/this.cs:21–41`); the key, endpoint and model leave the shared llm setting
+- [ ] `Setting.Of<T>()` (`actor/setting/this.cs:310`): its 29 callers move to `await …Get<T>()`
+- [ ] reading every saved setting at app start (`app/this.cs:405–406`, `Setting.Load()` at `actor/setting/this.cs:79–94`): a setting is read when it's first used
+- [ ] the two throws for a bad row or a failed apply (`actor/setting/this.cs:295`, `:304`): `Get<T>` answers them
 - [ ] the decider's own copy of a key (`llm/decider.setting.cs:19`), if the decider uses the provider's
 
 **Stays:**
