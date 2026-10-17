@@ -246,7 +246,15 @@ if (action.OnStream is { } onStream)
   - `usage` (NEW: `Prompt`, `Completion`, `Cached`, `Cost`) replaces the 8 loose counters (`:193–200`);
   - the conversation adds up each answer's usage across tool rounds;
   - prices become a setting per model, not the static table (`:41`).
-- **Tools:** the model's calls run against the step's tools, within the limit; each tool writes its own schema (today `BuildParamSchema` and `MapPlangTypeToJsonSchema`, `OpenAi.cs:762`, `:795`; todos.md 2026-09-23).
+- **Tools, decided (857).** A tool is a goal or a module action (Ingi: "we want to allow goals and also module.action to be called"): `tools: ReadReport, file.read` → `Tool = [ReadReport, file.read]`. Two variants in the llm module, so nothing is added to the core action (Ingi: "not sold on Offer"):
+  - `tool/action.cs` holds the action (Ingi: "name it action") and answers from its catalog: its `.description.md` (`action/this.Schema.cs:106`) and its `Property` list. It's called with the model's arguments as the action's properties, checked by its own Parse and Validate (`action/this.Build.cs:42–50`), then Start.
+  - `tool/goal.cs` holds the goal and answers from it: its `Comment` (`goal/this.cs:37`) and its declared parameters. It's called through goal.call, as today.
+
+  What a value is (a goal or an action) names its variant, so nothing asks.
+
+  The plang name stays `file.read`, held as two members, `Module` and `Action` (Ingi: "separate it into two properties"). OpenAI forbids a dot in a function name, so on its wire the provider writes `file_read` (Ingi: "lets use _, keep the names file.read") and finds a call by looking up the name it wrote, never by splitting it.
+
+  `tool.list` is the `Tool` slot's own type: it runs the model's calls in order within the limit, a Parallel one running on (`:350–373`), each result a tool message in the conversation. The tool's `Description` is the goal's or the action's (today always "", `:186`). Lean, not yet answered: the parameter schema mapping (`MapPlangTypeToJsonSchema`, `:795`, a type switch) moves into `tool` unchanged, and a type writing its own JSON schema stays branch A's (813). Safety: only what the step lists; running as the Service actor comes with the service-actor plan.
 - **The check:** `OnValidateResponse` and the retry message (today `:417–449`).
 - **The answer holds its conversation and usage** as real members, not 15 `SetProp` lines (`:489–503`).
 - **How a message looks in the provider's JSON** (llm-writer's #3): an image by name, with a `%image%:` text part before each image part, since OpenAI's image part has no name field.
