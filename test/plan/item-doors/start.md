@@ -189,6 +189,7 @@ The verdicts are the contract; the order inside a stage is the coder's. If a ver
 - [ ] the `Type` overrides, each value holding the type that made it (grep `override global::app.type.@this Type`: 48 files)
 - [ ] text's name floor (`type/item/source.cs:115`, `_type.kind.IsText || _type.Name is "text"`)
 - [ ] the render fix's name check (`module/ui/code/Fluid.cs:165`, `format is { Name: "item" }`; codeanalyzer F3.v3)
+- [ ] `type.Get` re-resolving through `app.type.list` on every navigation (`type/this.cs:884–886`), another patch around the bare type: it's why plang never sees the bare kind (found by the test-designer)
 - [ ] the "is this an action slot?" name checks (`goal/step/action/this.Validate.cs:54–55`, `goal/step/action/formal/reader.cs:221`, `:349`, `goal/step/action/serializer/Reader.cs:153–154`; F8.1)
 
 **Stage 2:**
