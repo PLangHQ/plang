@@ -737,9 +737,19 @@ namespace PLang.Modules.WebserverModule
 
 				if (!string.IsNullOrEmpty(bodyString))
 				{
-					// Parse into JToken (can be JObject or JArray)
-					JToken json = JToken.Parse(bodyString);
-					parameters.Add("body", json);
+					// A client that sends an application/json content type but a body that is not json is
+					// a bad request, not a server fault. Scanners do it all day long, and an unhandled
+					// parse exception here turned each one into a 500 that woke the error mail.
+					try
+					{
+						// Parse into JToken (can be JObject or JArray)
+						JToken json = JToken.Parse(bodyString);
+						parameters.Add("body", json);
+					}
+					catch (Newtonsoft.Json.JsonReaderException ex)
+					{
+						return (null, new Error($"Body is not valid json - {httpContext.Request.Path} | {httpContext.Request.Method} - {ex.Message}", StatusCode: 400));
+					}
 				}
 
 				logger.LogDebug($" - JsonHandler done - {stopwatch.ElapsedMilliseconds}");
