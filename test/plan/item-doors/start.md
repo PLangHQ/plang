@@ -1,6 +1,6 @@
 # item-doors
 
-**Status: design in progress.** Nothing is built.
+**Status: designed (decisions 867–872); waiting for Ingi's go before the line starts.** Nothing is built.
 
 Traces to: the conversation with Ingi on 2026-10-17, logged in `.bot/item-doors/architect/summary.md`. The branch is cut from runtime2 (c47265322), with kind-is-type merged in. It was called "branch A" until now. llm-provider and llm-writer are parked waiting for it, because their clean answers kept landing here.
 
@@ -16,7 +16,7 @@ Three things in the core make every new feature build around them:
 
 ### 1. A type is born whole (agreed)
 
-The type that makes a value hands itself, the registered one, to the value, which keeps it. `type`'s constructor no longer makes a kind from a name (`type/this.cs:146–149`); a type named in a step is looked up in the list. The 29 `Type` overrides go, and so do the image's `_mime` (asked of its kind), text's name floor (`source.cs:115`), the render fix's `Name: "item"` check, and the "is this an action slot?" name checks.
+The type that makes a value hands itself, the registered one, to the value, which keeps it. `type`'s constructor no longer makes a kind from a name (`type/this.cs:146–149`); a type named in a step is looked up in the list. The `Type` overrides go (48 files, 29 of them in `type/item`), and so do the image's `_mime` (asked of its kind), text's name floor (`source.cs:115`), the render fix's `Name: "item"` check, and the "is this an action slot?" name checks.
 
 ```csharp
 // item/this.cs: the value holds the type that made it
@@ -32,7 +32,7 @@ Also from kind-is-type: the four strict-kind tests (F-SC-1), which wait on this.
 
 ### 2. One door for writing (agreed)
 
-`Output` is the only door. Each type's own `Output` writes what it is: its one token, or its members. The sync `Write` (61 overrides) goes, and so does the `IsLeaf` branch in `Output` (`item/this.cs:906–913`; Ingi: "I like that IsLeaf check goes away").
+`Output` is the only door. Each type's own `Output` writes what it is: its one token, or its members. The sync `Write` (overridden in 46 files, 36 of them in `type/item`) goes, and so does the `IsLeaf` branch in `Output` (`item/this.cs:906–913`; Ingi: "I like that IsLeaf check goes away").
 
 - **The writer carries its output kind**, an object, not `string Format`.
 - **`Owns` and its 5 checks go.**
@@ -159,6 +159,95 @@ foreach (var row in Rows(incoming, context))
 
 What goes: `FromJson`, the `is dict or list` branch in `Step.Set`, and `item.Set`'s C# lowering fallback. It's locked: a new implementation of the serializer's `IReader`.
 
-## Demolition, stays, checks, OBP validation
+## What the developer gets
 
-Written when the three groups are designed.
+The same plang, the same output: every `.pr`, wire and json write stays byte-equal. Three things change for a developer:
+- **`set %user.blabla% = 12` adds the member** to a plain value, where today it throws (#4).
+- **A strict kind can be checked,** so `as image/gif strict` works (F-SC-1's four tests go green, #1).
+- **The llm table labels a column by its real type** (path, duration), not "text" (#3). That shows once llm-writer resumes.
+
+## Stages
+
+Each stage ends with its tests built and run, and each test must go red without its change. Each stage's shape comes to the architect before it's built.
+
+0. **Trace.** Every member the demolition list names, with its callers, on the current tree. Lines drift; the names below are the truth.
+1. **A type is born whole** (#1). Everything else stands on it.
+2. **One door for writing** (#2): `Output` only, the byte door, the writer's output kind, the pair registry.
+3. **A type speaks for itself to a writer** (#3): the record door always, plang's own writer, the JSON Schema entries. It needs #2's registry.
+4. **Reading a plang value as tokens** (#5). It comes before #4 because #4's `Write` reads a dict into a record through this reader.
+5. **A type's members through its own list** (#4).
+
+## Demolition
+
+The verdicts are the contract; the order inside a stage is the coder's. If a verdict looks wrong against real callers, flag it back; never keep a member quietly.
+
+**Stage 1:**
+- [ ] `type`'s constructor making a kind from a name (`type/this.cs:146–149`, `new type.kind.@this(kind)`); a type named in a step is looked up in `app.type.list`
+- [ ] the image making its kind from a name (`image/this.cs:189`)
+- [ ] the image's `_mime` (`:59`, `:87`); its mime is asked of its kind
+- [ ] the hard-coded mimes in the image's sniffing (`image/this.Parse.cs:17–27`); sniffing answers a kind name, looked up in the image's own kinds
+- [ ] the `Type` overrides, each value holding the type that made it (grep `override global::app.type.@this Type`: 48 files)
+- [ ] text's name floor (`type/item/source.cs:115`, `_type.kind.IsText || _type.Name is "text"`)
+- [ ] the render fix's name check (`module/ui/code/Fluid.cs:165`, `format is { Name: "item" }`; codeanalyzer F3.v3)
+- [ ] the "is this an action slot?" name checks (`goal/step/action/this.Validate.cs:54–55`, `goal/step/action/formal/reader.cs:221`, `:349`, `goal/step/action/serializer/Reader.cs:153–154`; F8.1)
+
+**Stage 2:**
+- [ ] the sync `Write(IWriter)` and its overrides (46 files)
+- [ ] the `IsLeaf` branch in `Output` (`type/item/this.cs:906–913`)
+- [ ] `kind.Owns(IWriter)` (`type/kind/this.cs:177`), its overrides (`type/item/kind/json/this.cs:26`, `type/item/wire/kind/plang/this.cs:126`), and its calls (`type/format/IWriter.cs:76`, `type/item/content/this.cs:138`, `type/item/source.cs:363`, `type/item/wire/this.cs:61`, `:74`)
+- [ ] `IWriter.Format` and `IReader.Format` as strings (`type/format/IWriter.cs:26`, `IReader.cs:49`); the writer carries its output kind
+- [ ] list's `_formats` (`type/item/list/this.cs:293–300`); its formal form (`list/format/formal.cs`) becomes formal's pair-registry entry for list
+- [ ] `IWriter.Bytes(byte[])` and `IWriter.Raw(byte[])` (`IWriter.cs:51`, `:64`), replaced by `Bytes(byte[] value, kind kind)` (844)
+- [ ] the dict, list and item arms of the json writer's `Value(object)`
+
+**Stage 3:**
+- [ ] `IWriter.EmitsSchema` (`IWriter.cs:36`), the json writer's bool and its "plang" format, Data's two `if`s on it (`data/this.Output.cs:83`, `:126`)
+
+`MapPlangTypeToJsonSchema` (`llm/code/OpenAi.cs:795–816`) goes with llm-provider, which uses this stage's schema entries.
+
+**Stage 4:**
+- [ ] `Step.Set`'s three branches and `FromJson` (`goal/step/this.Item.cs:48–77`)
+
+**Stage 5:**
+- [ ] `item.Get`'s reflection through the clr carrier, and `Member`'s (`type/item/this.cs:277–320`)
+- [ ] `item.Set`'s reflection, `Activator.CreateInstance`, `SetValue`, its C# lowering fallback and its throw (`:209–245`)
+- [ ] `property.IsDefault`'s decision by type names and text (`type/property/this.cs:118–138`)
+
+**Stays:**
+- the reader registry and its folder discovery (`type/reader/this.cs`);
+- `kind.Every`'s discovery of kind classes;
+- `ICreate` births;
+- `BeginRecord`/`EndRecord`;
+- `IOutput`, as the pair-registry entry;
+- `Kept` for things that live on;
+- an unknown kind name answered by its name (`type/list/this.cs:172`), on purpose;
+- `property` built from a C# class by reflection (`type/property/this.cs:21`), the one place reflection stays.
+
+## What tests can't show (checks the coder runs and reports)
+
+- **Byte-equal outputs:** every `.pr` read and written again; the plang wire (`application/plang`); json writes; the decider pins and the builder's prompts.
+- **A real build after stage 4,** because the builder's answer path changes.
+- **The surface golden re-pinned for each locked change**, with its decision:
+  - `item`'s `Type` (867);
+  - `IWriter`/`IReader`, kind, the pair registry (868, 844, 846);
+  - the record door's writers (869);
+  - `IReader`'s new implementation (871);
+  - `item`'s `Get`/`Set` and `property`'s members (870, 872).
+- **Every stage:** PLNG001/002 at 0; no new red against runtime2's baseline.
+
+## OBP validation
+
+| new surface | check | result |
+|---|---|---|
+| `item.Type`, given at birth | one place holds a value's type; no per-class rebuild; never a kind from a name | to verify at stage 1 |
+| `Output`, the one door | each type writes what it is; no `IsLeaf` fork, no second door | to verify at stage 2 |
+| the writer's output kind | an object, not a string; no value reads it | to verify at stage 2 |
+| `Bytes(byte[], kind)` | one byte door; the value says what it has | to verify at stage 2 |
+| the pair registry | looked up in one place (`data.Output`); entries live in their type's folder; no `is`/`switch` on a value | to verify at stages 2–3 |
+| the record door, always | each writer decides what to show; no bool, no `if` in Data | to verify at stage 3 |
+| the token reader over a plang value | one reader for a value in hand; no json round trip | to verify at stage 4 |
+| `property.Read`/`Write` | what a program reads is what the builder offers; one list | to verify at stage 5 |
+| `Set` adding an unknown key | added beside the value's own members; no throw | to verify at stage 5 |
+| the three paths | plang `%x.member%` = C# `property.Read` = the member's place on its type | to verify at stage 5 |
+
+> **For the coder: you own this code.** These are sketches of intent, agreed with Ingi group by group. Where the real code says another shape is better, bring it to the architect.
