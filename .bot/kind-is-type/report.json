@@ -6,29 +6,40 @@
       "bot": "codeanalyzer",
       "timestamp_start": "2026-10-17T12:00:00Z",
       "timestamp_end": "2026-10-17T13:00:00Z",
-      "intent": "OBP review v3 of kind-is-type — only what landed after v2 (560fc0a80): the render fix (2e83d21ff, decision 849) and d03051109's test pins for tester v1 F1/F2. Review only; no code changes.",
+      "intent": "OBP review v3 of kind-is-type \u2014 only what landed after v2 (560fc0a80): the render fix (2e83d21ff, decision 849) and d03051109's test pins for tester v1 F1/F2. Review only; no code changes.",
       "before": {
-        "assumptions": "The render fix (Fluid.cs:165) makes a non-item format render as plain text, only json/item rests as a structure — tester flagged its `format is {Name:\"item\"}` name-check for the codeanalyzer. d03051109 pins tester F1 (file.read Type at run) and F2 (builder kind follow-up). Deferred (not re-raised): F8.1, the source.cs:115 floor, 6 Wire tests, retry-timing.",
+        "assumptions": "The render fix (Fluid.cs:165) makes a non-item format render as plain text, only json/item rests as a structure \u2014 tester flagged its `format is {Name:\"item\"}` name-check for the codeanalyzer. d03051109 pins tester F1 (file.read Type at run) and F2 (builder kind follow-up). Deferred (not re-raised): F8.1, the source.cs:115 floor, 6 Wire tests, retry-timing.",
         "risk": "The render fix's name-check is the weighted-highest smell ('is X? by name') and a possible symptom-patch; the test pins could assert the workaround instead of the real behaviour (not go red under the mutation)."
       },
       "plan": ".bot/kind-is-type/codeanalyzer/v3/report.md",
       "actions": [
         {
-          "paths": ["PLang/app/module/ui/code/Fluid.cs", "PLang/app/type/kind/this.cs", "PLang/app/type/item/kind/json/this.cs"],
+          "paths": [
+            "PLang/app/module/ui/code/Fluid.cs",
+            "PLang/app/type/kind/this.cs",
+            "PLang/app/type/item/kind/json/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "FINDING F3.v3: Fluid.cs:165 `format is {Name:\"item\"}` decides structure-vs-plain-text by the format's parent name - an 'is X? by name' + symptom-patch (Pass 4.5 tell #4). Replaced `format != null` (regressed, 818) by special-casing the one parent that works instead of fixing why a text format's kind.Decode misbehaves. Confirmed no clean existing predicate: IsText is true for json too, so it can't distinguish json (rests as structure) from html/md (plain text). Same root as the deferred #3 floor (text-format birth path). Fix = a kind virtual 'born as a structure' = a locked-surface proposal, converging with branch A's one-make-door. Non-blocking (behaviour correct, tests green); carried to branch A."
         },
         {
-          "paths": ["PLang.Tests/Modules/App/Modules/file/FileHandlerTests.cs", "PLang.Tests/Runtime/App/SingularNamespaces/BuilderSchemaTests/KindFollowUpTests.cs"],
+          "paths": [
+            "PLang.Tests/Modules/App/Modules/file/FileHandlerTests.cs",
+            "PLang.Tests/Runtime/App/SingularNamespaces/BuilderSchemaTests/KindFollowUpTests.cs"
+          ],
           "type": "review",
           "category": "test",
           "confidence": "high",
           "context": "Both test pins correct. F1: FileHandlerTests.Read_AsText now asserts result.Type.Name==text + Peek() BEFORE materializing (distinguishes a landed text from a {file,md} reference whose Value() also decodes) - red under M5a, no workaround-assertion. F2: KindFollowUpTests (new) drives pick.list with canned answers, asserts the @kindof follow-up is offered and Pick.Formal holds number<decimal> (bare under no-op Refine M8); deterministic, red under M8. Its System.IO is test-fixture setup (exempt)."
         },
         {
-          "paths": [".bot/kind-is-type/codeanalyzer/v3/report.md", ".bot/kind-is-type/codeanalyzer/v3/verdict.json", ".bot/kind-is-type/codeanalyzer/summary.md"],
+          "paths": [
+            ".bot/kind-is-type/codeanalyzer/v3/report.md",
+            ".bot/kind-is-type/codeanalyzer/v3/verdict.json",
+            ".bot/kind-is-type/codeanalyzer/summary.md"
+          ],
           "type": "decision",
           "category": "doc",
           "confidence": "high",
@@ -46,43 +57,65 @@
       "bot": "codeanalyzer",
       "timestamp_start": "2026-10-17T00:00:00Z",
       "timestamp_end": "2026-10-17T03:00:00Z",
-      "intent": "OBP review v2 of kind-is-type stages 4-6 + 814 + stage-5 C# + security F1 — everything landed after v1 (82d8866ae) up to HEAD aa353656b. Review only; no code changes.",
+      "intent": "OBP review v2 of kind-is-type stages 4-6 + 814 + stage-5 C# + security F1 \u2014 everything landed after v1 (82d8866ae) up to HEAD aa353656b. Review only; no code changes.",
       "before": {
-        "assumptions": "The central shape is 'json rests, a use opens' — must be one data.Open() door, not parse logic copied across use-sites. OwnInternal (814/831) is a new decision-approved hook on the locked type surface. file.read gains a Type slot. F4.2 (name<kind> face) and my v1 F1-F3 landed. Deferred (not findings): F8.1, the source.cs:115 floor, 6 Wire tests, the retry-timing test.",
+        "assumptions": "The central shape is 'json rests, a use opens' \u2014 must be one data.Open() door, not parse logic copied across use-sites. OwnInternal (814/831) is a new decision-approved hook on the locked type surface. file.read gains a Type slot. F4.2 (name<kind> face) and my v1 F1-F3 landed. Deferred (not findings): F8.1, the source.cs:115 floor, 6 Wire tests, the retry-timing test.",
         "risk": "A stage-4 broken-seal (open/parse duplicated across the 6+ use-sites), a JsonElement/clr residue surviving the navigator deletion in a value-nav path, OwnInternal looping type->kind->Family->kind, file.read cracking a carrier into primitives, or a NEW CS0108 hide in the locked core."
       },
       "plan": ".bot/kind-is-type/codeanalyzer/v2/plan.md",
       "actions": [
         {
-          "paths": ["PLang/app/data/this.cs", "PLang/app/type/item/source.cs", "PLang/app/type/item/kind/json/this.cs", "PLang/app/data/Operator.cs"],
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/type/item/source.cs",
+            "PLang/app/type/item/kind/json/this.cs",
+            "PLang/app/data/Operator.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "The 'json rests, a use opens' crux. data.Open() (data/this.cs:322) is the single parse-once door (Value -> if resting source, Parse once -> history.Add(rest) -> narrow _item; bad parse Fail(Unread) with a narrow catch, never thrown to a courier). All use-sites call it (EnumerateItems:505, Compare:636, Navigation:41, Value<T>:557, Operator.IsType:182, source.Get:335) - no re-implemented parsing. source.cs: courier door keeps a resting kind unread (:217); Declared lets the source own its re-typing; Parse uses the parent-scoped Kind(type,ctx). json kind slim: Load rests, Parse to plang values, navigator gone; json.Read bridge kept-by-design (reached via clr.cs:131), its JsonElement is carried 673 machinery."
         },
         {
-          "paths": ["PLang/app/type/this.cs", "PLang/app/type/item/kind/list/this.cs", "PLang/app/type/item/kind/dict/this.cs", "PLang/app/type/item/kind/reflection/this.cs", "PLang/app/module/file/read.cs"],
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/item/kind/list/this.cs",
+            "PLang/app/type/item/kind/dict/this.cs",
+            "PLang/app/type/item/kind/reflection/this.cs",
+            "PLang/app/module/file/read.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "OwnInternal hook (814/831): type/this.cs:736 Internal => OwnInternal ?? kind.OwnInternal ?? Family._internal - the 777 Own* pattern terminating on the stored field (no loop); host kinds override true; decision-approved locked-surface addition, shape verified. file.read Type slot: Build returns the Type! carrier whole/unopened (one shared Typed() check); Start passes raw byte[] to declared.Create - the birth-door contract, not an opened box. F4.2: ToString:570 name<kind> for all kinded types."
         },
         {
-          "paths": ["PLang/app/type/item/text/this.cs", "PLang/app/type/kind/subclass/this.cs", "PLang/app/goal/step/pick/list/this.cs", "PLang/app/goal/serializer/Reader.cs"],
+          "paths": [
+            "PLang/app/type/item/text/this.cs",
+            "PLang/app/type/kind/subclass/this.cs",
+            "PLang/app/goal/step/pick/list/this.cs",
+            "PLang/app/goal/serializer/Reader.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "render (7574cd6d3): text asks its own kind via the parent-scoped Format(ctx)=Kind(Type,ctx)??Type.kind, opens+caches (_opened), no writer.Format switch in the value. v1 F1-F3 all fixed (TypeDescription const gone, BuildTypeEntries/Promote doc gone, subclass.Offers binds Offer once at construction). Stage-5 C# (pick/list KindsOffered) asks each kind !Internal (814 hook). Security F1 (d9bc6aae7, shape only): goal serializer refuses a non-bare .pr file via PrFormatOutdatedException - reader-throws-refusal, reinforces 745/767."
         },
         {
-          "paths": ["PLang/PLang.csproj"],
+          "paths": [
+            "PLang/PLang.csproj"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Compiler hide sweep: dotnet build PLang -t:Rebuild = 0 errors, PLNG001/002 clean. 90 CS0108 total (pre-existing node/verb + static-ICreate pattern); NONE in the stage-4-6-touched core files (type/kind/*, kind/json, source.cs, data/this.cs, Operator.cs, file/read.cs). The core hides at type/this.cs:140/248/609 are the same Template/Create/Is members present at base cf66e2d01 (verified v1). No new hide introduced - 776 discipline holds."
         },
         {
-          "paths": [".bot/kind-is-type/codeanalyzer/v2/report.md", ".bot/kind-is-type/codeanalyzer/v2/verdict.json", ".bot/kind-is-type/codeanalyzer/summary.md"],
+          "paths": [
+            ".bot/kind-is-type/codeanalyzer/v2/report.md",
+            ".bot/kind-is-type/codeanalyzer/v2/verdict.json",
+            ".bot/kind-is-type/codeanalyzer/summary.md"
+          ],
           "type": "decision",
           "category": "doc",
           "confidence": "high",
@@ -108,44 +141,68 @@
       "plan": ".bot/kind-is-type/codeanalyzer/v1/plan.md",
       "actions": [
         {
-          "paths": ["PLang/app/type/kind/this.cs", "PLang/app/type/kind/this.Generic.cs", "PLang/app/type/kind/empty/this.cs", "PLang/app/type/kind/subclass/this.cs", "PLang/app/type/kind/format/this.cs", "PLang/app/type/this.cs", "PLang/app/type/item/this.cs"],
+          "paths": [
+            "PLang/app/type/kind/this.cs",
+            "PLang/app/type/kind/this.Generic.cs",
+            "PLang/app/type/kind/empty/this.cs",
+            "PLang/app/type/kind/subclass/this.cs",
+            "PLang/app/type/kind/format/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/item/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "The kind<T>:kind:type model. Verified the plan's own OBP gates: one parent-fallback seam (kind<T>, Family=T; type fact hooks read OwnX ?? kind.OwnX ?? Family._field, the stored field — terminates, can't loop); no is-kind behavioural fork outside type/kind/ (the two is kind.@this hits in size/duration are non-null binds, value re-expressing itself in a requested standard). [Kinds]/FamilyOf kept by design (782) for subclass families, cached via IdentityOf."
+          "context": "The kind<T>:kind:type model. Verified the plan's own OBP gates: one parent-fallback seam (kind<T>, Family=T; type fact hooks read OwnX ?? kind.OwnX ?? Family._field, the stored field \u2014 terminates, can't loop); no is-kind behavioural fork outside type/kind/ (the two is kind.@this hits in size/duration are non-null binds, value re-expressing itself in a requested standard). [Kinds]/FamilyOf kept by design (782) for subclass families, cached via IdentityOf."
         },
         {
-          "paths": ["PLang/app/type/list/this.cs", "PLang/app/type/list/Registry.cs", "PLang/app/data/Operator.cs", "PLang/app/type/item/text/kind/this.cs"],
+          "paths": [
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/list/Registry.cs",
+            "PLang/app/data/Operator.cs",
+            "PLang/app/type/item/text/kind/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "App-wide by-name kind search removal (the stage-3 crux). Parent-scoped Kind(type,kind) is the door; Held kept for MIME/extension only (ruling 2/782). Verified no NEW app-wide by-name search: surviving bare-name callers are the deferred text coiner (782, stage 4) and the pre-existing is-operator HasKind guard (Operator.cs:171, unchanged from base cf66e2d01). Registry throws are boot invariants; program-reachable Add(Type/Assembly) answer via context.Error. Settings clause gone from the registry (Registry.cs:332-334)."
         },
         {
-          "paths": ["PLang/app/type/reader/this.cs", "PLang/app/type/reader/Record.cs", "PLang/app/type/item/ICreate.cs", "PLang/app/goal/list/this.cs"],
+          "paths": [
+            "PLang/app/type/reader/this.cs",
+            "PLang/app/type/reader/Record.cs",
+            "PLang/app/type/item/ICreate.cs",
+            "PLang/app/goal/list/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "789/790 settings-from-record (Reader => Typed ?? new Record; Record uses type.Construct, class from the key not a stored kind; old rows decline loudly as SettingsUnreadable via DeclinedException answered softly by source.Value; start-up loop + old-shape reader gone). 767: goal/list/this.cs Find refuses a '..' segment before resolve, answers GoalNameClimbs (400)."
         },
         {
-          "paths": ["PLang/PLang.csproj"],
+          "paths": [
+            "PLang/PLang.csproj"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Compiler-backed hide sweep: dotnet build PLang succeeds, 0 errors, PLNG001/002 clean. ~20 CS0108 hides all pre-existing (type.Template/Is/Create exist at base cf66e2d01; channel/list + table unchanged on branch) — no new hide introduced (776 ruling held). ObpScan's MSBuildWorkspace loader can't load the csproj (NuGet prune/vuln warnings) so the member sweep was full-read + grep + compiler."
+          "context": "Compiler-backed hide sweep: dotnet build PLang succeeds, 0 errors, PLNG001/002 clean. ~20 CS0108 hides all pre-existing (type.Template/Is/Create exist at base cf66e2d01; channel/list + table unchanged on branch) \u2014 no new hide introduced (776 ruling held). ObpScan's MSBuildWorkspace loader can't load the csproj (NuGet prune/vuln warnings) so the member sweep was full-read + grep + compiler."
         },
         {
-          "paths": [".bot/kind-is-type/codeanalyzer/v1/report.md", ".bot/kind-is-type/codeanalyzer/v1/verdict.json", ".bot/kind-is-type/codeanalyzer/summary.md"],
+          "paths": [
+            ".bot/kind-is-type/codeanalyzer/v1/report.md",
+            ".bot/kind-is-type/codeanalyzer/v1/verdict.json",
+            ".bot/kind-is-type/codeanalyzer/summary.md"
+          ],
           "type": "decision",
           "category": "doc",
           "confidence": "high",
-          "context": "PASS. Three non-blocking cleanups (F1 dead TypeDescription const type/this.cs:150-166; F2 stale BuildTypeEntries/Promote class doc type/this.cs:21-26,144-149; F3 subclass.Offers reflection-per-call type/kind/subclass/this.cs:31-34) — none a surface change, all for the coder on a later pass. Next bot: tester."
+          "context": "PASS. Three non-blocking cleanups (F1 dead TypeDescription const type/this.cs:150-166; F2 stale BuildTypeEntries/Promote class doc type/this.cs:21-26,144-149; F3 subclass.Offers reflection-per-call type/kind/subclass/this.cs:31-34) \u2014 none a surface change, all for the coder on a later pass. Next bot: tester."
         }
       ],
       "after": {
         "status": "PASS (CLEAN). Stages 0-3 + 767 + 789/790 are OBP-sound and merge-safe; the kind<T>:kind:type locked-core model holds against its own OBP gates; no new app-wide by-name kind search; build clean (0 errors) with no new CS0108 hides. 3 non-blocking cleanups (F1-F3), none a surface change.",
-        "health": "green — PLang builds 0 errors, PLNG001/002 clean; plang suite per architect 254/24/12/3 (not re-run by codeanalyzer).",
+        "health": "green \u2014 PLang builds 0 errors, PLNG001/002 clean; plang suite per architect 254/24/12/3 (not re-run by codeanalyzer).",
         "notes": "Next bot: tester. Stage 4-6 (json-owns-bytes, navigator deletion, builder) out of scope, await architect go for a v2 round. Report: .bot/kind-is-type/codeanalyzer/v1/report.md."
       }
     },
@@ -154,15 +211,19 @@
       "bot": "coder",
       "timestamp_start": "2026-10-15T15:30:00Z",
       "timestamp_end": "2026-10-15T15:30:00Z",
-      "intent": "Stage 4 of decision 774 — trace 'a format owns its bytes' (json/csv hold raw until first use, parse into plang dict/list, navigator goes) and produce the shape for the architect. No implementation.",
+      "intent": "Stage 4 of decision 774 \u2014 trace 'a format owns its bytes' (json/csv hold raw until first use, parse into plang dict/list, navigator goes) and produce the shape for the architect. No implementation.",
       "before": {
         "assumptions": "A json value holds raw bytes until first use then parses into a plang dict/list (not a JsonElement carrier); the json navigator + text's json wrapper/coiner go, and with them Held's last bare-name branch.",
-        "risk": "Missing a C# JsonElement-carrier reader (http/settings/cache/llm) that would break when json becomes a plang value; the Read (format->type) bridge vs the navigator — which stays."
+        "risk": "Missing a C# JsonElement-carrier reader (http/settings/cache/llm) that would break when json becomes a plang value; the Read (format->type) bridge vs the navigator \u2014 which stays."
       },
       "plan": ".bot/kind-is-type/coder/v4/plan.md",
       "actions": [
         {
-          "paths": ["PLang/app/type/item/kind/json/this.cs", "PLang/app/type/item/dict/serializer/Reader.cs", "PLang/app/type/item/list/serializer/Reader.cs"],
+          "paths": [
+            "PLang/app/type/item/kind/json/this.cs",
+            "PLang/app/type/item/dict/serializer/Reader.cs",
+            "PLang/app/type/item/list/serializer/Reader.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
@@ -170,7 +231,7 @@
         }
       ],
       "after": {
-        "status": "Stage 4 shape accepted (785). json PARSE half DONE + committed (305718c68): json.Parse streams raw→plang dict/list via the dict/list readers over the json token reader, no JsonElement carrier — ReadIntoIsADict + ArrayIsAList green, csv/table guard green, no C# regression (suite 256/22, +2 over baseline). The BORN-UNREAD half (JsonIsItemsKind, PassedOnUnread, AsJsonKeepsJson, 758) is blocked: the architect's Value.Is->type.Create door is stopped by 3 locked-core layers (type.Is ignores the kind; type.Create.Held same; set passes a materialized leaf not the raw string to Make) — surfaced with a proposed coherent fix (kind-aware type.Is + set.cs:257 + set hands Make the raw string). Awaiting the architect's call before touching type.Is/Make together.",
+        "status": "Stage 4 shape accepted (785). json PARSE half DONE + committed (305718c68): json.Parse streams raw\u2192plang dict/list via the dict/list readers over the json token reader, no JsonElement carrier \u2014 ReadIntoIsADict + ArrayIsAList green, csv/table guard green, no C# regression (suite 256/22, +2 over baseline). The BORN-UNREAD half (JsonIsItemsKind, PassedOnUnread, AsJsonKeepsJson, 758) is blocked: the architect's Value.Is->type.Create door is stopped by 3 locked-core layers (type.Is ignores the kind; type.Create.Held same; set passes a materialized leaf not the raw string to Make) \u2014 surfaced with a proposed coherent fix (kind-aware type.Is + set.cs:257 + set hands Make the raw string). Awaiting the architect's call before touching type.Is/Make together.",
         "health": "green at the json-core WIP (256/22); born-unread + navigator/wrapper/serializer deletions + strict pending the architect's ruling.",
         "notes": "Separator still held on Ingi (unseal text). Stage-4 remaining: born-unread (3-layer fix), then delete navigator/text-wrapper/coiner + serializer.json (closing Held's bare-name branch), then strict in its own commit."
       }
@@ -180,7 +241,7 @@
       "bot": "coder",
       "timestamp_start": "2026-10-15T13:30:00Z",
       "timestamp_end": "2026-10-15T13:30:00Z",
-      "intent": "Stage 3 of decision 774 — trace every type-family's kind machinery and produce the shape for making each family's kinds kind<T> (no implementation; shape goes to the architect).",
+      "intent": "Stage 3 of decision 774 \u2014 trace every type-family's kind machinery and produce the shape for making each family's kinds kind<T> (no implementation; shape goes to the architect).",
       "before": {
         "assumptions": "Stage 1 built kind<T> for number; the same shape applies to every family. [Kinds] + the base-class walk + the app-wide kind search + type.format all go; host kinds stay until 673.",
         "risk": "Conflating the per-type .format filter with the serializer / format-in-play; miscounting which kinds are kind<T> vs named values vs host kinds."
@@ -203,8 +264,8 @@
       ],
       "actions_note": "After the shape was approved (decisions 779/781), implemented the kind<T> migration.",
       "after": {
-        "status": "Stage 3 core + items 2/3/4 DONE and accepted by the architect. 2 (a kind nests, KindNestsTests green), 3 (kind asked of its parent; app-wide fallback dropped, callers redirected, bare-name retained only for the text coiner until stage 4), 4 (type.format filter removed). bool/template/JsonIsItemsKind/kind-strict ruled (backlog 782 / stage 4 / stays). Separator (783, Ingi) in progress: BLOCKED on an A/B call — text.@this is sealed so separator can't subclass it; sent the architect (A) unseal text [Ingi/locked] vs (B) separator overrides Type to {text,kind:separator} [no locked change, my lean].",
-        "health": "green — C# at the baseline 7 (KindNests now passes), plang 254/24/12/3, surface re-pinned, no regressions.",
+        "status": "Stage 3 core + items 2/3/4 DONE and accepted by the architect. 2 (a kind nests, KindNestsTests green), 3 (kind asked of its parent; app-wide fallback dropped, callers redirected, bare-name retained only for the text coiner until stage 4), 4 (type.format filter removed). bool/template/JsonIsItemsKind/kind-strict ruled (backlog 782 / stage 4 / stays). Separator (783, Ingi) in progress: BLOCKED on an A/B call \u2014 text.@this is sealed so separator can't subclass it; sent the architect (A) unseal text [Ingi/locked] vs (B) separator overrides Type to {text,kind:separator} [no locked change, my lean].",
+        "health": "green \u2014 C# at the baseline 7 (KindNests now passes), plang 254/24/12/3, surface re-pinned, no regressions.",
         "notes": "Commits f4a849b8b..dac90dd0e. v3/stage3-result.md. Awaiting the separator A/B ruling, then implement + re-pin surface/decider + rebuild the 2 list .pr."
       }
     },
@@ -213,7 +274,7 @@
       "bot": "coder",
       "timestamp_start": "2026-10-15T00:00:00Z",
       "timestamp_end": "2026-10-15T00:00:00Z",
-      "intent": "Stage 2 of decision 774 — settings classes become their own top-level types (Internal), not kinds of setting.",
+      "intent": "Stage 2 of decision 774 \u2014 settings classes become their own top-level types (Internal), not kinds of setting.",
       "before": {
         "assumptions": "Stage 1 accepted. Each settings class should be its own type named by namespace; base setting stays offered; rows read by key.",
         "risk": "Persisted settings round-trip depends on the stored type routing to the setting reader; making each class its own type may break disk read-back."
@@ -264,12 +325,12 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Persisted read-back fixed via option C (architect decision 779). The setting reader resolves the class from the type it reads as (new rows) or kind-as-path (old rows); per-type instances registered at app boot via the public Reader.Register (internal ctor — no locked-surface change). Surface golden re-pinned (setting.@this.Rows is a context-method per 778, no-Context-field rule). Save unchanged. 5 previously-failing tests green; no new regressions."
+          "context": "Persisted read-back fixed via option C (architect decision 779). The setting reader resolves the class from the type it reads as (new rows) or kind-as-path (old rows); per-type instances registered at app boot via the public Reader.Register (internal ctor \u2014 no locked-surface change). Surface golden re-pinned (setting.@this.Rows is a context-method per 778, no-Context-field rule). Save unchanged. 5 previously-failing tests green; no new regressions."
         }
       ],
       "after": {
         "status": "Stage 2 COMPLETE. Settings are their own top-level types (Internal); persisted rows read back by their own type (option C / decision 779). C# gate at the 8 pre-existing baseline fails; plang 254/24/12/3 (improved, SettingClassIsAType pass, no new reds).",
-        "health": "green — all settings C# + plang targets pass; surface golden green (re-pinned under 778/779).",
+        "health": "green \u2014 all settings C# + plang targets pass; surface golden green (re-pinned under 778/779).",
         "notes": "Pushed b516eaaf9. Remaining plang /plan/kind-is-type json/separator/file/variable fails are stage 3/4 targets, not stage 2. Awaiting architect acceptance -> stage 3."
       }
     },
@@ -286,14 +347,24 @@
       "plan": ".bot/kind-is-type/builder/v1/plan.md",
       "actions": [
         {
-          "paths": ["test/module/list/.build/start.pr", "test/module/list/.build/listops.test.pr"],
+          "paths": [
+            "test/module/list/.build/start.pr",
+            "test/module/list/.build/listops.test.pr"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
           "context": "Fresh cache:skip rebuild on the tip. jq-verified the only real-mapping change is the 2 Separator slot types {name:separator}->{name:text,kind:separator} per file (rest is stage-0 path->file format + decider-confidence jitter). list tests 23 pass 0 fail (1 pre-existing stale json-sort test). Pushed 88ffbbc03."
         },
         {
-          "paths": ["PLang/app/type/list/Registry.cs", "PLang/app/goal/step/pick/list/this.cs", "PLang/app/goal/step/action/formal/reader.cs", "os/system/builder/llm/templates/decider2.template", "os/system/builder/llm/templates/properties.template", "docs/templates/type.template"],
+          "paths": [
+            "PLang/app/type/list/Registry.cs",
+            "PLang/app/goal/step/pick/list/this.cs",
+            "PLang/app/goal/step/action/formal/reader.cs",
+            "os/system/builder/llm/templates/decider2.template",
+            "os/system/builder/llm/templates/properties.template",
+            "docs/templates/type.template"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
@@ -301,8 +372,8 @@
         }
       ],
       "after": {
-        "status": "(1) separator .pr rebuild DONE + pushed (88ffbbc03), accepted by the architect. (2) stage 5 trace DONE; shape written (v1/stage5-shape.md) and sent to the architect. Stage 5 is NOT teaching-only — gated on a runtime touch (coder, red-first) in locked-core app/type/list + app/goal/step/pick + action/formal. BLOCKED on architect/Ingi ruling (S1 vs S2; the offered-set change may be a locked-surface addition).",
-        "health": "green — decider key re-saved and reads; list tests pass; no change made pending the ruling.",
+        "status": "(1) separator .pr rebuild DONE + pushed (88ffbbc03), accepted by the architect. (2) stage 5 trace DONE; shape written (v1/stage5-shape.md) and sent to the architect. Stage 5 is NOT teaching-only \u2014 gated on a runtime touch (coder, red-first) in locked-core app/type/list + app/goal/step/pick + action/formal. BLOCKED on architect/Ingi ruling (S1 vs S2; the offered-set change may be a locked-surface addition).",
+        "health": "green \u2014 decider key re-saved and reads; list tests pass; no change made pending the ruling.",
         "notes": "Parked: build test/module/list/query/Failure_SortMixedIncomparable when the architect says stage 4 json is in. Environment had no .data at all on restart; re-saved the decider key via test/SetDeciderKey.goal (gitignored, nothing committed)."
       }
     },
@@ -313,41 +384,64 @@
       "timestamp_end": "2026-10-15T22:45:00Z",
       "intent": "Architect-scoped partial review of kind-is-type: stage 0 (goal path), 767 (name-climbs), 789/790 (settings read-from-record), decider-key resave. Confirm no new attack surface and no secret in repo.",
       "before": {
-        "assumptions": "Stage 0 was commissioned to close decision 745's trust hole (a .pr claiming /system/ gets AskedByOs trust). 767 closed goal-name climbing. 789/790 moved settings reads to a generic record reader. Threat model: user-sovereign — defend against untrusted .pr bytes shipped with third-party plang apps.",
+        "assumptions": "Stage 0 was commissioned to close decision 745's trust hole (a .pr claiming /system/ gets AskedByOs trust). 767 closed goal-name climbing. 789/790 moved settings reads to a generic record reader. Threat model: user-sovereign \u2014 defend against untrusted .pr bytes shipped with third-party plang apps.",
         "risk": "If stage 0 only renamed the smuggle field without validating the new one, the trust hole re-opens with a different field name. Also: a generic record reader could widen class instantiation and let an attacker pick a wider CLR type than the stored one; permissions ride on the same read path."
       },
       "plan": ".bot/kind-is-type/security/v1/plan.md",
       "actions": [
         {
-          "paths": ["PLang/app/goal/serializer/Reader.cs", "PLang/app/type/item/path/file/this.cs", "PLang/app/Utils/PathHelper.cs", "PLang/app/type/item/path/this.Authorize.cs"],
+          "paths": [
+            "PLang/app/goal/serializer/Reader.cs",
+            "PLang/app/type/item/path/file/this.cs",
+            "PLang/app/Utils/PathHelper.cs",
+            "PLang/app/type/item/path/this.Authorize.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Traced stage 0 (fcaf1055d): the .pr's 'file' field is read verbatim and passed to Combine(folder, file), whose semantics (System.IO.Path.Combine) make a rooted or '..'-containing value steer goal.Path outside the folder the .pr was found in — AskedByOs then auto-grants /os/** silently. F1 (High, open)."
+          "context": "Traced stage 0 (fcaf1055d): the .pr's 'file' field is read verbatim and passed to Combine(folder, file), whose semantics (System.IO.Path.Combine) make a rooted or '..'-containing value steer goal.Path outside the folder the .pr was found in \u2014 AskedByOs then auto-grants /os/** silently. F1 (High, open)."
         },
         {
-          "paths": ["PLang/app/goal/list/this.cs"],
+          "paths": [
+            "PLang/app/goal/list/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Decision 767: the '..' segment refusal at list.this.cs:64 is sound and covers every goal-name-to-path door — Find is the single door for every composed name. Grepped the tree for sibling doors; the plangos shell call lives on another branch. Clean."
+          "context": "Decision 767: the '..' segment refusal at list.this.cs:64 is sound and covers every goal-name-to-path door \u2014 Find is the single door for every composed name. Grepped the tree for sibling doors; the plangos shell call lives on another branch. Clean."
         },
         {
-          "paths": ["PLang/app/type/reader/Record.cs", "PLang/app/type/item/setting/this.cs", "PLang/app/actor/setting/this.cs", "PLang/app/actor/permission/this.cs", "PLang/app/type/item/permission/this.cs"],
+          "paths": [
+            "PLang/app/type/reader/Record.cs",
+            "PLang/app/type/item/setting/this.cs",
+            "PLang/app/actor/setting/this.cs",
+            "PLang/app/actor/permission/this.cs",
+            "PLang/app/type/item/permission/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Decisions 789/790: setting.Create guards IsAbstract:false, != base, IsAssignableFrom; Apply walks declared public settable properties only; Record.cs keeps the owner's ClrType (stored type.name cannot widen the CLR type). Permission signing posture unchanged — signed Grant list verified at the wire boundary before the record reader is reached. The 62f08e5e6 loud-fail replaces silent-default with an audible SettingsUnreadable — the right trade-off for a permission store. Clean."
+          "context": "Decisions 789/790: setting.Create guards IsAbstract:false, != base, IsAssignableFrom; Apply walks declared public settable properties only; Record.cs keeps the owner's ClrType (stored type.name cannot widen the CLR type). Permission signing posture unchanged \u2014 signed Grant list verified at the wire boundary before the record reader is reached. The 62f08e5e6 loud-fail replaces silent-default with an audible SettingsUnreadable \u2014 the right trade-off for a permission store. Clean."
         },
         {
-          "paths": ["test/SetDeciderKey.goal", "PLang/app/module/llm/decider.setting.cs", "PLang.Tests/Runtime/App/Settings/fixtures/oldsettingrow/data.sqlite"],
+          "paths": [
+            "test/SetDeciderKey.goal",
+            "PLang/app/module/llm/decider.setting.cs",
+            "PLang.Tests/Runtime/App/Settings/fixtures/oldsettingrow/data.sqlite"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "No secret in repo or branch history. Decider.setting.key is [Out, Store, Sensitive]. The one .sqlite fixture added-then-removed on this branch has 'key':'' (verified by `git show`). No tsk_*, sk-*, OPENAI_KEY or /shared/hopkaup/secrets in any committed diff."
         },
         {
-          "paths": [".bot/kind-is-type/security/v1/plan.md", ".bot/kind-is-type/security/v1/result.md", ".bot/kind-is-type/security/v1/verdict.json", ".bot/kind-is-type/security-report.json", ".bot/kind-is-type/security/summary.md"],
+          "paths": [
+            ".bot/kind-is-type/security/v1/plan.md",
+            ".bot/kind-is-type/security/v1/result.md",
+            ".bot/kind-is-type/security/v1/verdict.json",
+            ".bot/kind-is-type/security-report.json",
+            ".bot/kind-is-type/security/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -355,8 +449,8 @@
         }
       ],
       "after": {
-        "status": "FAIL — one High (F1). Partial-scope review per architect scope; stage 4 producers and kind structure wait for his go.",
-        "health": "Stage 0's rename closed the old door and opened a new one of the same shape — one-site fix at Reader.cs:69. 767 and 789/790 solid. No secrets in the repo or history.",
+        "status": "FAIL \u2014 one High (F1). Partial-scope review per architect scope; stage 4 producers and kind structure wait for his go.",
+        "health": "Stage 0's rename closed the old door and opened a new one of the same shape \u2014 one-site fix at Reader.cs:69. 767 and 789/790 solid. No secrets in the repo or history.",
         "notes": "Next bot: coder (close F1), then auditor. Semgrep: 24 blocking, all baseline (22 serializer-hygiene + 1 gated Assembly.LoadFrom + 1 Display.Gate false positive); no new hits."
       }
     },
@@ -365,7 +459,7 @@
       "bot": "security",
       "timestamp_start": "2026-10-15T23:30:00Z",
       "timestamp_end": "2026-10-15T23:50:00Z",
-      "intent": "Re-check F1 fix at d9bc6aae7 — the .pr 'file' bare-name predicate: edges (drive, Unicode seps, trailing dot) and whether any other reader takes a .pr location fact.",
+      "intent": "Re-check F1 fix at d9bc6aae7 \u2014 the .pr 'file' bare-name predicate: edges (drive, Unicode seps, trailing dot) and whether any other reader takes a .pr location fact.",
       "before": {
         "assumptions": "F1 was a one-site hole at goal/serializer/Reader.cs:69; the fix should guard the string before Combine with a loud refusal, mirroring line 71's old-shape .Name reduction.",
         "risk": "A clever predicate can miss Windows-specific forms (drive letters, UNC, device paths, NTFS alt streams) or let Unicode-separator lookalikes through; another reader elsewhere could compose a path from the .pr's Origin and silently re-open the vector."
@@ -373,25 +467,35 @@
       "plan": ".bot/kind-is-type/security/v1/recheck.md",
       "actions": [
         {
-          "paths": ["PLang/app/goal/serializer/Reader.cs", "PLang.Tests/Runtime/App/Goals/GoalPathTests.cs"],
+          "paths": [
+            "PLang/app/goal/serializer/Reader.cs",
+            "PLang.Tests/Runtime/App/Goals/GoalPathTests.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Predicate (empty || '.' || '..' || IndexOfAny '/','\\\\',':') catches rooted/drive/UNC/device/alt-stream. Verified edges: trailing dot/space stays inside pr.Parent.Parent (no climb); Unicode separator lookalikes (U+FF0F, U+2044, U+2215) are literal chars, don't escape; null byte / reserved names fail-safe downstream. Pins land at APrFile_ThatNamesAPath_IsRefused for '../evil', '/evil', 'sub/evil', '..\\\\evil'."
         },
         {
-          "paths": ["PLang/app"],
+          "paths": [
+            "PLang/app"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Grep for ctx.Origin usage confirms Reader.cs:96 is the ONE compose site; every other Origin reference is an error-reporting field on PrFormatOutdatedException. Old-shape 'path' branch (line 71) stays safe by reducing to .Name — both doors converge on a bare name before Combine."
+          "context": "Grep for ctx.Origin usage confirms Reader.cs:96 is the ONE compose site; every other Origin reference is an error-reporting field on PrFormatOutdatedException. Old-shape 'path' branch (line 71) stays safe by reducing to .Name \u2014 both doors converge on a bare name before Combine."
         },
         {
-          "paths": [".bot/kind-is-type/security/v1/recheck.md", ".bot/kind-is-type/security/v1/verdict.json", ".bot/kind-is-type/security-report.json", ".bot/kind-is-type/security/summary.md"],
+          "paths": [
+            ".bot/kind-is-type/security/v1/recheck.md",
+            ".bot/kind-is-type/security/v1/verdict.json",
+            ".bot/kind-is-type/security-report.json",
+            ".bot/kind-is-type/security/summary.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "verdict.json flipped to pass. security-report.json F1 → fixed, next_bot → auditor."
+          "context": "verdict.json flipped to pass. security-report.json F1 \u2192 fixed, next_bot \u2192 auditor."
         }
       ],
       "after": {
@@ -413,42 +517,61 @@
       "plan": ".bot/kind-is-type/security/v2/plan.md",
       "actions": [
         {
-          "paths": ["PLang/app/goal/serializer/Reader.cs"],
+          "paths": [
+            "PLang/app/goal/serializer/Reader.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "F1 predicate unchanged (empty || '.' || '..' || contains '/','\\\\',':'); pins at GoalPathTests.APrFile_ThatNamesAPath_IsRefused intact; the one .pr location-fact compose site remains the single gate."
         },
         {
-          "paths": ["PLang/app/type/item/kind/json/this.cs", "PLang/app/data/Wire.cs"],
+          "paths": [
+            "PLang/app/type/item/kind/json/this.cs",
+            "PLang/app/data/Wire.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Stage 4 json-unread-courier: Load returns an {item, json} source without parsing; Parse opens on use via Utf8JsonReader with default options — MaxDepth=64 matches Wire.MaxReadDepth=64. No new unbounded parse site. Unread bytes do not reach a trust decision (the wire-layer signature covers them whole before kind-decode)."
+          "context": "Stage 4 json-unread-courier: Load returns an {item, json} source without parsing; Parse opens on use via Utf8JsonReader with default options \u2014 MaxDepth=64 matches Wire.MaxReadDepth=64. No new unbounded parse site. Unread bytes do not reach a trust decision (the wire-layer signature covers them whole before kind-decode)."
         },
         {
-          "paths": ["PLang/app/module/file/read.cs"],
+          "paths": [
+            "PLang/app/module/file/read.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "file.read Type slot (data<type>?): Start() does path.Bytes(Context) through AuthGate(read) BEFORE the declared type's birth; Build() returns the Type carrier whole with no I/O, or path.Expect() for a literal path. The 'as <type>' force does not weaken the gate — bytes still pass read before birth."
+          "context": "file.read Type slot (data<type>?): Start() does path.Bytes(Context) through AuthGate(read) BEFORE the declared type's birth; Build() returns the Type carrier whole with no I/O, or path.Expect() for a literal path. The 'as <type>' force does not weaken the gate \u2014 bytes still pass read before birth."
         },
         {
-          "paths": ["PLang/app/module/ui/code/Fluid.cs"],
+          "paths": [
+            "PLang/app/module/ui/code/Fluid.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Fluid.cs:165 render fix: `format is { Name: \"item\" }` branches structure-vs-plain-text. The Fluid rendering itself (HTML encoder, PlangFileProvider include-sandbox, callGoal tag's ValidatePath) is unchanged by the diff. Change is landed-value type only; SSTI surface untouched. Codeanalyzer F3.v3 is a design-smell carry to branch A, not security."
         },
         {
-          "paths": ["os/system/builder/", "PLang/app/type/this.cs", "PLang/app/type/kind/this.cs"],
+          "paths": [
+            "os/system/builder/",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/kind/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Stage 5 is builder teaching + re-pins (no runtime C# per decision 835). Stage 6 is .kind-direct / F4.2 face (`name<kind>` display) / F8.1 Takes-door cleanup — type-system plumbing, no AuthGate/signing/channel/sandbox touch. 834's #3 'source born with full type' regressed ~13 tests and was reverted, not on the tip."
+          "context": "Stage 5 is builder teaching + re-pins (no runtime C# per decision 835). Stage 6 is .kind-direct / F4.2 face (`name<kind>` display) / F8.1 Takes-door cleanup \u2014 type-system plumbing, no AuthGate/signing/channel/sandbox touch. 834's #3 'source born with full type' regressed ~13 tests and was reverted, not on the tip."
         },
         {
-          "paths": [".bot/kind-is-type/security/v2/plan.md", ".bot/kind-is-type/security/v2/result.md", ".bot/kind-is-type/security/v2/verdict.json", ".bot/kind-is-type/security-report.json", ".bot/kind-is-type/security/summary.md"],
+          "paths": [
+            ".bot/kind-is-type/security/v2/plan.md",
+            ".bot/kind-is-type/security/v2/result.md",
+            ".bot/kind-is-type/security/v2/verdict.json",
+            ".bot/kind-is-type/security-report.json",
+            ".bot/kind-is-type/security/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -459,6 +582,36 @@
         "status": "v2 PASS. No new findings. All v1 standing items still hold (F1 closed, 767's '..' block live, 789/790 settings read-from-record discipline unchanged, no secret in repo or branch history).",
         "health": "The branch's security posture is unchanged from v1 after fix: AuthGate / signing / sandbox / settings all untouched by the stage-4-through-stage-6 deltas and the render fix.",
         "notes": "Semgrep 24/24 baseline. Decisions 843-846 live on llm-writer. 848 is process. 850 is a locked-core proposal routed to branch A. Next bot: auditor."
+      }
+    },
+    {
+      "id": "1e1d5d37-d604-4e60-8d8e-8b811b739b89",
+      "bot": "auditor",
+      "timestamp_start": "2026-10-17T20:00:00Z",
+      "timestamp_end": "2026-10-17T18:59:40Z",
+      "intent": "auditor v1 \u2014 review the reviewer line on kind-is-type",
+      "before": {
+        "assumptions": "codeanalyzer v2/v3 PASS, tester v1 FAIL->v2 PASS, security v2 PASS; branch tip 49c09aaf6, parent runtime2@cf66e2d01",
+        "risk": "a cross-file seam between the four reviewers that none caught; the plan Why's named proofs not delivered"
+      },
+      "plan": ".bot/kind-is-type/auditor/v1/report.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/kind-is-type/auditor/v1/report.md",
+            ".bot/kind-is-type/auditor/v1/verdict.json",
+            ".bot/kind-is-type/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "PASS with two non-blocking findings (F-SC-1 plan Why names kind/strict x4 still red; F-FL-1 confirms F3.v3 is the only new name-check on branch). Reviewer verdicts hold on direct seam checks."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "merge-ready",
+        "notes": "next bot docs; F-SC-1 awaits architect scoping; F-FL-1 carried to branch A alongside F3.v3"
       }
     }
   ]

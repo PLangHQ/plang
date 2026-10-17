@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "summary": "kind-is-type auditor PASS. Reviewer line holds: codeanalyzer v2/v3, tester v1→v2, security v2 all stand on direct seam checks (data.Open() is one door; OwnInternal loop-free; the F3.v3 Fluid.cs:165 name-check is the only new one on the branch and the branch removed the F4.2 hardcoded list; KindFollowUpTests pins both Refine and the !k.Internal filter). Two non-blocking findings: F-SC-1 the plan's Why names kind/strict ×4 as fixed but all four stay red at merge (same on runtime2 — not a regression; architect to rescope or carry explicitly); F-FL-1 confirms F3.v3 is self-contained, not a cluster. Suite stands at the baseline — no new reds vs runtime2.",
+  "next_bot": "docs",
+  "next_scope": "write up stages 0-6 and the three locked-core adds (OwnInternal, file.read.Type, F4.2 face); carry F-SC-1 if the architect doesn't rescope start.goal/Why; carry F3.v3 to branch A alongside the #3 floor and F8.1",
+  "findings": [
+    {
+      "id": "F-SC-1",
+      "severity": "minor",
+      "category": "architectural",
+      "where": "test/plan/kind-is-type/start.md:7-17 Why; start.goal:47-48 stage-3 proof; test/app/type/kind/strict/SetAsImageGifStrictMismatch and three siblings",
+      "issue": "Plan Why claims kind/strict ×4 are among the 16 reds this branch fixes; all four still red at HEAD. Baseline on runtime2 too — not a regression — but the plan's own named proof is not delivered.",
+      "missed_by": "none (tester v1 and codeanalyzer v3 both flagged; architect open)",
+      "disposition": "deferred — architect to rescope start.goal/Why or carry explicitly"
+    },
+    {
+      "id": "F-FL-1",
+      "severity": "nit",
+      "category": "cross-file (confirmation)",
+      "where": "PLang/app/module/ui/code/Fluid.cs:165",
+      "issue": "format is { Name: \"item\" } is the only new name-check on the branch (diff origin/runtime2..HEAD across type/, module/ui/, module/ shows one add, one delete — F4.2 removed the hardcoded list|dict|choice). F3.v3 is self-contained; carry to branch A alongside the #3 floor and F8.1 as the codeanalyzer named.",
+      "missed_by": "none",
+      "disposition": "deferred — branch A, already carried by codeanalyzer v3"
+    }
+  ]
+}
