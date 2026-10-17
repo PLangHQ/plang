@@ -30,6 +30,17 @@ public string Mime => Type.kind.Mime.FirstOrDefault() ?? "application/octet-stre
 
 Also from kind-is-type: the four strict-kind tests (F-SC-1), which wait on this.
 
+**No value is made without its app (880).** Ingi: "why would the be a type created without app, app always exists"; "maybe we need to remove Implicit conversions to plang type, fine to clr type. can't we give Create(raw) the app" → "yes". There were 57 context-free births: 34 implicit operators and 23 `Create(raw)` pure cores.
+- The implicit conversions *into* plang types go (28 that make a plang value from a C# one). The ones out to C# stay.
+- `Create(raw)` takes the type that makes the value, called by the type's `Make`, the one door (796):
+
+```csharp
+public static @this? Create(object? raw, type.@this type)           // today: Create(object? raw), no context
+var value = await context.App.type.list["text"].Make("x", context);  // the type is looked up once, in the type
+```
+
+The coder's option of a cached stand-in stamped later by `Create` was ruled out: it's the late-stamp smell and it keeps the bare type.
+
 ### 2. One door for writing (agreed)
 
 `Output` is the only door. Each type's own `Output` writes what it is: its one token, or its members. The sync `Write` (overridden in 46 files, 36 of them in `type/item`) goes, and so does the `IsLeaf` branch in `Output` (`item/this.cs:906–913`; Ingi: "I like that IsLeaf check goes away").
