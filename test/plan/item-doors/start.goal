@@ -22,6 +22,10 @@ Stage1
 - call /plan/item-doors/app/type/text/TextKindIsText
 / "is this an action slot?" by type, not by name — C# test at PLang.Tests/Runtime/App/Goals/ActionSlotIsByTypeTests.cs
 / (a fresh type.@this("action") has no ClrType; the registered one does — today the Name compare can't tell them apart)
+/ an image made from bytes holds its registered kind — C# test at PLang.Tests/Types/App/Types/ImageKindKnowsItsMimeTests.cs
+/ (today image/this.cs:189 makes its kind from a name, so Type.kind.Mime is empty — the registered image.kind.png's image/png never reaches it)
+/ a plain text's own kind answers it's characters — C# test at PLang.Tests/Types/App/Types/TextKindIsTextByItselfTests.cs
+/ (today text's own format has no Text=true, so Type.kind.IsText is false and source.cs:115 patches it with _type.Name is "text")
 / the four kind/strict tests are this stage's proof: adopted from test/app/type/kind/strict/
 - call /app/type/kind/strict/SetAsImageGifStrictMatching
 - call /app/type/kind/strict/SetAsImageGifStrictMismatch
