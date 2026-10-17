@@ -86,8 +86,12 @@ public class FileHandlerTests : IDisposable
         var result = await action.Start();
 
         await result.IsSuccess();
-        await Assert.That(await result.Value()).IsTypeOf<global::app.type.item.text.@this>();
-        await Assert.That((await result.Value())?.ToString()).IsEqualTo("# hello");
+        // Assert BEFORE materializing. Without the Type branch the read lands a {file, md} reference whose
+        // Value() would still decode to "# hello" — hiding the missing branch. The declared type and the
+        // unread value's text face distinguish them: the as-type declares text and reads the characters now;
+        // a reference declares file and its Peek is the location, not the content.
+        await Assert.That(result.Type!.Name).IsEqualTo("text");
+        await Assert.That(result.Peek()?.ToString()).IsEqualTo("# hello");
     }
 
     [Test]
