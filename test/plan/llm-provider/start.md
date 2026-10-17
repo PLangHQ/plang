@@ -184,9 +184,14 @@ The body is the coder's. Its parts already exist: `Build` (`:290–306`), the la
 - **The check:** `OnValidateResponse` and the retry message (today `:417–449`).
 - **The answer holds its conversation and usage** as real members, not 15 `SetProp` lines (`:489–503`).
 - **How a message looks in the provider's JSON** (llm-writer's #3): an image by name, with a `%image%:` text part before each image part, since OpenAI's image part has no name field.
-- **Streaming** (`OnStream`): today it leaves the loop at `:240–245`.
+- **Streaming, decided (855).** Today the step's `OnStream` gets OpenAI's raw event JSON as `%chunk%`, and the query then leaves the loop answering `Truncated` (`OpenAi.cs:216`, `:235–245`, `:508–518`). It becomes:
+  - `%chunk%` is the next piece of text;
+  - the step gets the same whole answer at the end;
+  - the same loop runs (tools, check).
+
+  The provider reads its own events: http hands back the reply's body as a stream to read (the http module's change), and `answer.Stream(reply, onStream, conversation)` (NEW) builds the answer from the events. The body gets `stream: true` and `stream_options: {include_usage: true}`. `%chunk%` changing from OpenAI's JSON to text is plang-visible, and Ingi said yes.
 - **The llm's own cache:** the envelope specimen Ingi kept on purpose (2026-09-28, "this is obpv. I dont want to fix it now"; direction: `on.cache`). Keep it unchanged, or fix it now: Ingi's call.
-- **The model's fallback** (an empty `Model` → the setting's, `:70`): the slot's own default, not an `if`.
+- **The model's fallback** (an empty `Model` → the setting's, `:70`), lean: the slot's own default is the setting, `[Default("%!llm.openai.setting.model%")]`, a variable read when the body is written. The timeout (2 minutes, hard-coded at `:234`) becomes OpenAI's setting `Timeout`. Ingi liked both (855). The request isn't marked `Unsigned` (Ingi: "dont have the request unsigned"); it changes nothing for OpenAI, since a request is never signed and `Unsigned` only refuses a signed plang reply (`http/request.cs:11`, `:41–42`).
 
 ## Stages (a sketch, fixed when the design is)
 
