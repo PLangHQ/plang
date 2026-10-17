@@ -143,3 +143,111 @@ caller reaches a registered type — they just stop carrying a bare kind through
 `IsText = false` and `source.cs:115`'s Name floor compensates. Stage 1's "the registered kind carries the
 fact" needs text's own-format to declare `Text = true` (or the registered kind to answer it) before the
 floor can go. (This exact gap was found and left for branch A during kind-is-type.)
+
+---
+
+# Stage 0 — second pass (architect's verdicts, 2026-10-17)
+
+## Verdicts accepted (recorded as the contract)
+- The three re-resolves (`type.Get:886`, `Out:63`, `Setting:900`) all go in stage 1.
+- Name checks: stage 1's sweep, but each fixed at **what it asks**, moved onto its owner — a string→class
+  check is the same switch, so a "better comparison" is not the fix.
+  - the bare-type makers (`separator/this.cs:28`, `prose/this.cs:31` `new("text", …)`,
+    `serializer/Reader.cs:29` `@null("action", kind)`) ask the list for the registered type (its null, its
+    kinded type).
+  - the name comparisons (`formal/reader.cs:317`, `:415`, `source.cs:240`, `:372`): their questions below.
+- number's `Kind.Write(number, IWriter)` (15) **stays** — the kind writing a value of its own kind, the
+  kind being the behaviour, not a second item door. `variable/serializer/Entry.Write` is out of #2's scope
+  — left, listed as a later look.
+- module-side overrides move with the rest. `IReader.Format` removed with stage 2's `IWriter.Format`.
+- Counts: **47 sync `Write` overrides in 44 files** (the plan's "46"); **48 `Type` overrides**.
+
+## The four name comparisons — the question each really asks, and whose answer
+
+| site | the question | whose answer | verdict (proposed) |
+|---|---|---|---|
+| `formal/reader.cs:317` `declared.Type.Name == "text"` | "does this declared property lex a bare unquoted word as its value?" — one arm of the formal reader's lexing chain (text here; `duration` `:323`; number etc. follow) | the declared property's type (what shape its bare literal takes) | a **parse-time lexing rule** keyed on the type. It is the same switch as the chain around it; moving one means a type-level "read a bare token" hook for all of them (text, duration, number, …). NOT a runtime value question. Bring the chain's reshape to the architect; may stay parser-local. |
+| `formal/reader.cs:415` `LiteralType(v)` (`v.Action != null → "action"`, Items→list, Entries→dict, variable→item, else Kind) | "what type-name does a PARSED literal's shape denote?" | the parsed literal's own shape — **before** it is a typed value | pre-typing: there is no type object yet to move the behaviour onto; it is the parser naming a raw token's shape. Likely **stays** (lexer concern). Its "action"/"list"/"dict" strings feed the stage-1 action-slot readers downstream. |
+| `source.cs:240` `_type.Name is "dict" or "list"` | "was this value declared a genuine container, so a parse to a non-container is round-trip loss — fail loud?" | the declared type (is it a container) | a plang-level **`is`** question — `_type.Is("dict") || _type.Is("list")` says it already (a type-level `IsContainer` would be cleaner). Proposed: rewrite as `_type.Is(...)`; fine as a plang `is`. |
+| `source.cs:372` `_type.Template != null && IsVariable && !_type.Is("text")` | "is this a whole %ref% in a non-text slot, so write the variable itself, not the text?" | the value (`IsVariable`) + the slot's type (is-text) | already a plang `is` (`_type.Is("text")`), AND it lives inside the source's **sync `Write`** which is removed in **stage 2**. Dies there; the behaviour moves to the source's `Output`. No separate stage-1 fix. |
+
+## Every `new type.@this(` — which become lookups
+
+The leak is a caller MAKING a type object from a name (even as a lookup key). Stage 1 makes the by-name
+ctor (`type/this.cs:146`) the **list's own** (internal); every caller that today builds a `new
+type.@this(name[, kind])` as a key for `app.type.list[…]` calls a list door instead (taking the name and
+kind; the `.pr` reader's `ReadContext` already carries the context).
+
+**Become lookups** (a list door takes the name/kind; no bare type made by the caller):
+| site | today | note |
+|---|---|---|
+| `formal/reader.cs:354` | `type.list[new @this(TypeName(face), TypeKind(face)), ctx]` | the step-named-type read |
+| `formal/reader.cs:376` | `type.list[new @this(type.Name, kind.Name, strict, template), ctx]` | re-resolve a declared type |
+| `type/serializer/Reader.cs:25` | `type.list[new @this(reader.String()), ctx]` | `.pr` type read (bare name) |
+| `type/serializer/Reader.cs:65` | `type.list[new @this(name, typeKind, strict, marked), ctx]` | `.pr` kinded type read |
+| `type/this.cs:253` | `type.list[new @this(described, kind), ctx]` | DescribeTo (dict shape) |
+| `type/this.cs:256` | `type.list[new @this(named), ctx]` | DescribeTo (named) |
+| `kind/empty/this.cs:117` | `type.list[new @this(_owner, k.Name), ctx]` | kind.list building its full types |
+| `pick/list/this.cs:630` | `type.list[new @this(Shown(value)), ctx]` | pick resolve (bare name) |
+| `pick/list/this.cs:650` | `type.list[new @this(picked.Name, kind), ctx]` | pick refine (kinded) |
+| `type/list/this.cs:128` | `this[new @this("binary", ext), ctx]` | Extension (list-internal key) |
+| `type/list/this.cs:133` | `this[new @this(kind.Owner, kind.Name), ctx]` | Of (list-internal key) |
+| `serializer/Reader.cs:29` (null path) | `new @null.@this("action", kind)` | ask the list for the registered action null |
+| `separator/this.cs:28`, `prose/this.cs:31` | `new("text", …)` | ask the list for the registered text |
+
+**Stay — the by-name/entry ctor's only homes** (where a type is legitimately born, carrying `ClrType`, or the list building its own entries; these become the ctor's internal callers):
+| site | why it stays |
+|---|---|
+| `Registry.cs:98,99,163,168` | startup CLR registration — carries `ClrType`, the registry is where types are born |
+| `type/list/this.cs:160,174,277` | `Full()` / reface — the list building its full/kinded entries |
+| `type/serializer/Reader.cs:63` | `new @this(entry, element, strict, marked)` — kinded-from-registered-entry (a generic's element), not bare |
+| `type/clr/this.cs:68` | the clr carrier's `{item}` type — carries `typeof(item.@this)` |
+| `type/this.cs:568` | `new @this(typeof(T))` — the CLR-type ctor (data.Refuses) |
+| `kind/this.Generic.cs:22,27` | the kind's parent type `new @this(NameOf(typeof(T)))` — internal to kind construction |
+
+So the `type.list` gains a door (name + optional kind/strict/template, taking a context) that is the only
+way a program/reader names a type; the by-name ctor (`:146`) and the kinded-from-name are internal to the
+list + registry. Nothing outside makes a bare type.
+
+## The decode path and `Text = true` — how it changes (and the remaining gap)
+
+On kind-is-type, `Text = true` alone (even with a narrow born-whole) still broke ~13 template/file/url
+tests. Traced here, the cause is exact and it is a born-whole gap, not a reason to keep the floor.
+
+The text face that templates read is `Peek()`:
+- `content/this.cs:95` `read.Peek().HasVariable` — detects a template's `%vars%` on the decoded text.
+- `source.cs:73` (in the source ctor, reached only when `_type.Template != null`) `var raw = Peek() as string;` — if `Peek()` returns `byte[]` not a string, `raw == null`, `_variable` is empty, and the template is never recognised. **This is the break.**
+- `source.cs:295` (the `Template` property) `… && Peek() is string template`.
+
+`Peek()` decodes bytes to the text face only when `_type.kind.IsText` (or, today, the `Name is "text"`
+floor). `IsText` resolves: `FormatAttribute.Text` → `kind.this:82 _text` → `kind.this:128 IsText`; and an
+empty kind delegates `empty.this:35 IsText => _format?.IsText ?? false`, where `_format` is the type's own
+`[Format("")]`, loaded onto the registered entry's empty kind at registration (`empty.this:125`). Text's
+own format `text/this.cs:30 [Format("", "text/plain", ".txt")]` has no `Text = true`, so today it is false.
+
+Two sub-cases decide whether holding the registered type is enough:
+
+- **A plain (non-template) file/url text** — `content`'s decode (`kind.this:265`) builds
+  `new type.@this("text", null, null)`; `type.list[…]`→`Full` hits `list/this.cs:175`
+  (`kind == null && !Strict && Template == null`) and returns the **registered** text entry, whose empty
+  kind has `_format` loaded. So with `Text = true`, `_type.kind.IsText` is **true** — the floor closes for
+  this path.
+- **A template read** (exactly the `Read_TemplateTrue` / `AFile*`/`AUrl*` content-as-template tests that
+  broke) — `content`'s decode passes `template`, so `Full` skips the registered entry (`Template != null`)
+  and takes `list/this.cs:176` `new type.@this(entry, kind: null, strict, template)`. That
+  kinded-from-family ctor (`type/this.cs:750-755`) at **`:754`** does
+  `_kind = kind ?? new kind.empty.@this(Name)` — with `kind == null` it mints a **fresh** empty kind whose
+  `_format == null`, **discarding** `family(entry).kind` which had the loaded format. So the
+  template-declared value's `_type.kind.IsText` stays **false even with `Text = true`**, and only the Name
+  floor keeps `Peek()` a string. This is why `Text = true` alone regressed on kind-is-type.
+
+**How the path changes in stage 1 (the shape):** text's own format declares `Text = true`, AND the
+born-whole closure reaches `type/this.cs:754` — the `kind == null` branch reuses `family.kind` (the
+registered empty kind carrying `_format`) instead of minting a bare `new empty.@this(Name)`. Then a
+template-declared text holds the registered kind, `_type.kind.IsText` is true on both paths, and the
+`source.cs:115` Name floor goes with nothing left leaning on it. `:754` is part of "no bare kind" — it is
+the kinded-from-family ctor making a bare kind, the same leak as the by-name ctor, so it is listed with
+the `new type.@this(` closure above.
+
+(Pins: `TextKindIsTextByItselfTests` for the plain path; the `Read_TemplateTrue` / `AFile*`/`AUrl*`
+template tests — green today via the floor, must STAY green when the floor goes, proving `:754`'s fix.)
