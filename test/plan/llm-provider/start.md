@@ -174,6 +174,66 @@ public async ValueTask<data.@this<T>> Get<T>() where T : type.item.setting.@this
 
 The body is the coder's. Its parts already exist: `Build` (`:290–306`), the lazy rows (`:76`), the ask and save in today's `Asked` (`llm/setting/this.cs:24–41`).
 
+```csharp
+// llm/openai/this.cs: OpenAI's reply read into an answer, or why there is none (856)
+private async Task<data.@this<answer.@this>> Read(data.@this reply, conversation.@this conversation)
+{
+    var context = reply.Context;
+    if (!(await reply.Get("choices[0]")).IsInitialized)
+        return context.Error(new ActionError("No choices in LLM response", "EmptyResponse", 500));
+
+    // OpenAI's words for why it stopped; the ones that mean "not a whole answer" are the answer's error
+    if (Stopped[(await reply.Get("choices[0].finish_reason")).ToString()] is { } why)
+        return context.Error(new ActionError(why.Message, why.Key, 400));
+
+    return context.Ok(new answer.@this(
+        await reply.Get("choices[0].message.content"),
+        await reply.Get("choices[0].message.tool_calls"),
+        new usage.@this(await reply.Get("usage")),
+        conversation));
+}
+
+// OpenAI's stop words that aren't a whole answer (today's switch, OpenAi.cs:303–313)
+//   length         → ResponseTruncated: the answer hit the token limit; raise limit.token or shorten the prompt
+//   content_filter → ResponseFiltered:  the model refused, by its content filter
+```
+
+```csharp
+// llm/type/answer/this.cs: NEW. One reply.
+public sealed class @this : item.@this
+{
+    [Out, Store] public data.@this Content { get; }              // a carrier, read when used
+    [Out, Store] public list.@this<ToolCall> Tool { get; }
+    [Out, Store] public usage.@this Usage { get; }
+    public conversation.@this Conversation { get; }              // what it answers
+}
+
+// llm/type/usage/this.cs: NEW. Tokens and cost, today 8 loose counters in Query (OpenAi.cs:193–200)
+public sealed class @this : item.@this
+{
+    [Out, Store] public number.@this Prompt { get; }
+    [Out, Store] public number.@this Completion { get; }
+    [Out, Store] public number.@this Cached { get; }
+    [Out, Store] public number.@this? Cost { get; }              // from the model's price, a setting per model
+}
+```
+
+```csharp
+// llm/openai/this.cs: in Ask, when the step streams (855)
+if (action.OnStream is { } onStream)
+{
+    body.Set("stream", true)
+        .Set("stream_options", new dict.@this().Set("include_usage", true));   // usage comes in the last event
+    var reply = await /* the http request, its reply handed back as a stream to read (the http module's change) */;
+    if (!reply.Success) return reply;
+    return await answer.@this.Stream(reply, onStream, conversation);
+    // NEW: reads OpenAI's events one by one; calls OnStream with each piece of text as %chunk%;
+    // builds the whole answer (content, tool calls, usage) from them, the same answer as without streaming
+}
+```
+
+> **For the coder: you own this code.** These are sketches of intent, agreed with Ingi line by line. Where the real code says another shape is better, bring it to the architect; don't build around it.
+
 ## Open: still to design with Ingi
 
 - **Where `Ask` lives and how a provider plugs in.** The body has OpenAI's field names, so `Ask` is the provider's; `Default` must not hold it. One provider per folder, picked by a setting. How `Default` reaches the provider's `Ask` is open.
