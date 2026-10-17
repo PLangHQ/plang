@@ -98,6 +98,33 @@ public sealed class schema : IOutput
 
 > **For the coder: you own this code.** These are sketches of intent, agreed with Ingi piece by piece. Where the real code says another shape is better, bring it to the architect.
 
+### 4. A type's members through its own list (agreed)
+
+Today reading and writing a member uses C# reflection (`item/this.cs:277–311`: the clr carrier, `[LlmBuilder]` members invoked and their tasks awaited by reflection; `:209–245`: `Reflect`, `Activator.CreateInstance`, `SetValue`), not the type's own member list, `type.Property` (`type/this.cs:642`), which is what the builder offers. So the two lists can disagree. A member a value lacks throws (`:224`). `IsDefault` decides by type names and text (`type/property/this.cs:118–138`).
+
+```csharp
+// item: read and write a member through the type's own list
+public virtual async ValueTask<data.@this> Get(data.@this parent, string key)
+    => Type.Property?[key] is { } member ? await member.Read(this, parent) : await Setting(parent, key) ?? Kept?[key] ?? parent.Context.NotFound(key);
+
+public virtual async ValueTask<data.@this> Set(string key, object? value, actor.context.@this context)
+    => Type.Property?[key] is { } member
+        ? await member.Write(this, value, context)                        // answers: Ok, or why it couldn't
+        : context.Error(new error.@this($"{Type.Name} has no member '{key}'", "NoMember", 400));   // an answer, not a throw
+
+// property: NEW. A member reads and writes itself on its owner
+public async ValueTask<data.@this> Read(item.@this owner, data.@this parent) => …;
+public async ValueTask<data.@this> Write(item.@this owner, object? value, actor.context.@this context) => …;
+
+// property.IsDefault: the value asks itself, against the default made as this property's type
+public async ValueTask<bool> IsDefault(item.@this? value, actor.context.@this context)
+    => Default != null && value != null && await value.Compare(Type.Make(Default, context), context) == 0;
+```
+
+Reflection stays only where `property` is built from a C# class (`property/this.cs:21`). It's locked: `item`'s `Get`/`Set`, and `property`'s `Read`, `Write` and `IsDefault`.
+
+### 5. Reading a plang value as tokens (next)
+
 ## Demolition, stays, checks, OBP validation
 
 Written when the three groups are designed.
