@@ -214,7 +214,10 @@ The verdicts are the contract; the order inside a stage is the coder's. If a ver
 - [ ] `item.Set`'s reflection, `Activator.CreateInstance`, `SetValue`, its C# lowering fallback and its throw (`:209–245`)
 - [ ] `property.IsDefault`'s decision by type names and text (`type/property/this.cs:118–138`)
 
+**Not this branch:** the formal reader's lexing chain switching on type names (`goal/step/action/formal/reader.cs:317`: text, duration, number arms). It's the builder's parser and needs its own trace; the direction is that each type answers how a bare word reads as it (877).
+
 **Stays:**
+- the formal reader naming a literal's shape before it's typed (`formal/reader.cs:415`, `LiteralType`);
 - the reader registry and its folder discovery (`type/reader/this.cs`);
 - `kind.Every`'s discovery of kind classes;
 - `ICreate` births;
