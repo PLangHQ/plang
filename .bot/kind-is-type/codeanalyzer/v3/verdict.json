@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "kind-is-type v3 (render fix 2e83d21ff + tester F1/F2 pins d03051109): PASS with one carried finding. Both changes behaviour-correct; the F1 (assert-before-materializing) and F2 (deterministic kind-follow-up) test pins are solid and go red under the tester's mutations. One finding (F3.v3): the render fix decides structure-vs-plain-text by `format is { Name: \"item\" }` (Fluid.cs:165) — an 'is X? by name' symptom-patch for the text-format birth path, the same root as the deferred #3 floor; non-blocking, carried to branch A (the clean fix is a kind virtual = a locked-surface proposal). Build clean (0 errors, PLNG001/002 at 0). Next bot: tester."
+}

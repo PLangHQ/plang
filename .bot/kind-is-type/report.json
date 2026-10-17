@@ -2,6 +2,46 @@
   "branch": "kind-is-type",
   "sessions": [
     {
+      "id": "f2a8d5c1-6e39-4b07-9c84-3a7e1d0f5b2e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-17T12:00:00Z",
+      "timestamp_end": "2026-10-17T13:00:00Z",
+      "intent": "OBP review v3 of kind-is-type — only what landed after v2 (560fc0a80): the render fix (2e83d21ff, decision 849) and d03051109's test pins for tester v1 F1/F2. Review only; no code changes.",
+      "before": {
+        "assumptions": "The render fix (Fluid.cs:165) makes a non-item format render as plain text, only json/item rests as a structure — tester flagged its `format is {Name:\"item\"}` name-check for the codeanalyzer. d03051109 pins tester F1 (file.read Type at run) and F2 (builder kind follow-up). Deferred (not re-raised): F8.1, the source.cs:115 floor, 6 Wire tests, retry-timing.",
+        "risk": "The render fix's name-check is the weighted-highest smell ('is X? by name') and a possible symptom-patch; the test pins could assert the workaround instead of the real behaviour (not go red under the mutation)."
+      },
+      "plan": ".bot/kind-is-type/codeanalyzer/v3/report.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/module/ui/code/Fluid.cs", "PLang/app/type/kind/this.cs", "PLang/app/type/item/kind/json/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "FINDING F3.v3: Fluid.cs:165 `format is {Name:\"item\"}` decides structure-vs-plain-text by the format's parent name - an 'is X? by name' + symptom-patch (Pass 4.5 tell #4). Replaced `format != null` (regressed, 818) by special-casing the one parent that works instead of fixing why a text format's kind.Decode misbehaves. Confirmed no clean existing predicate: IsText is true for json too, so it can't distinguish json (rests as structure) from html/md (plain text). Same root as the deferred #3 floor (text-format birth path). Fix = a kind virtual 'born as a structure' = a locked-surface proposal, converging with branch A's one-make-door. Non-blocking (behaviour correct, tests green); carried to branch A."
+        },
+        {
+          "paths": ["PLang.Tests/Modules/App/Modules/file/FileHandlerTests.cs", "PLang.Tests/Runtime/App/SingularNamespaces/BuilderSchemaTests/KindFollowUpTests.cs"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Both test pins correct. F1: FileHandlerTests.Read_AsText now asserts result.Type.Name==text + Peek() BEFORE materializing (distinguishes a landed text from a {file,md} reference whose Value() also decodes) - red under M5a, no workaround-assertion. F2: KindFollowUpTests (new) drives pick.list with canned answers, asserts the @kindof follow-up is offered and Pick.Formal holds number<decimal> (bare under no-op Refine M8); deterministic, red under M8. Its System.IO is test-fixture setup (exempt)."
+        },
+        {
+          "paths": [".bot/kind-is-type/codeanalyzer/v3/report.md", ".bot/kind-is-type/codeanalyzer/v3/verdict.json", ".bot/kind-is-type/codeanalyzer/summary.md"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "PASS with one carried finding (F3.v3, to branch A with #3-floor/F8.1). The F1/F2 pins close the tester's false-greens. Next bot: tester (confirm the pins on a fresh build)."
+        }
+      ],
+      "after": {
+        "status": "PASS with one carried finding. The render fix and the F1/F2 test pins are behaviour-correct; the pins go red under the tester's mutations and don't assert the workaround. F3.v3 (the render name-check) is a symptom-patch for the text-format birth path - same root as the deferred #3 floor, carried to branch A; the clean fix is a kind virtual (locked-surface proposal).",
+        "health": "green - build 0 errors, PLNG001/002 clean; no locked-core shape touched beyond the render call site, v1/v2 verdicts stand.",
+        "notes": "Next bot: tester. F3.v3 carried to branch A alongside the #3 floor and F8.1 (the name-check cluster, same root). Report: .bot/kind-is-type/codeanalyzer/v3/report.md. Replied to host session claude-9f (architect busy)."
+      }
+    },
+    {
       "id": "e7c3a2f9-8b14-4d6e-a2c5-1f3b9d0e4a7c",
       "bot": "codeanalyzer",
       "timestamp_start": "2026-10-17T00:00:00Z",

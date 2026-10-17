@@ -1,6 +1,20 @@
 # codeanalyzer — kind-is-type
 
-**Version:** v2 (latest). v1 covered stages 0–3 + 767 + 789/790 (PASS, `82d8866ae`).
+**Version:** v3 (latest). v1 = stages 0–3 + 767 + 789/790 (PASS, `82d8866ae`); v2 = stages 4–6 + 814 + stage-5 C# + security F1 (PASS, `560fc0a80`); **v3 = the render fix + the tester's F1/F2 test pins (PASS with one carried finding).**
+
+## v3 (latest round)
+
+Scope: only what landed after v2 — the coder's render fix (`2e83d21ff`, decision 849; `ui/code/Fluid.cs:165`) and `d03051109`'s test pins for tester v1's F1/F2.
+
+**Verdict: PASS with one carried finding. Next bot: tester.**
+
+- **F3.v3 (carried, not blocking):** the render fix decides "rests as a structure vs plain text" by `format is { Name: "item" }` — an *"is X? by name"* / symptom-patch (Pass 4.5). The question should be a virtual the format/kind answers; there's no clean existing predicate (`IsText` is `true` for json, so it can't distinguish). Same root as the deferred #3 floor (the text-format birth path); the clean fix is a kind virtual = a locked-surface proposal, converging with branch A's one-make-door. Behaviour is correct and verified; recorded, not downgraded.
+- **The F1/F2 test pins are both correct:** F1 (`FileHandlerTests.Read_AsText`) now asserts the declared type + `Peek()` **before** materializing (distinguishes a landed text from a file reference; red under M5a); F2 (`KindFollowUpTests`, new) drives `pick.list` with canned answers and asserts `Pick.Formal` holds the kinded `number<decimal>` (red under a no-op `Refine`, M8). Neither asserts a workaround.
+
+Build clean (0 errors, PLNG001/002 at 0); no locked-core shape touched beyond the render call site, so the v1/v2 verdicts stand.
+
+---
+
 
 ## What this is
 
