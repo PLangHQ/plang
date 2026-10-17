@@ -12,9 +12,7 @@ Three things in the core make every new feature build around them:
 2. **A value writes through two doors and picks the writer's door itself.** It asks `Owns(writer)` and reads the writer's string `Format`, and the writer checks what the value is.
 3. **A writer can't learn what a value is,** and schemas come from switches on type names.
 
-## Scope: the five groups, gone through one at a time
-
-The scope isn't settled. I suggested groups 1–3, with 4–5 left for later; Ingi didn't rule on that, and said "you have 5 items in that original table, lets stick to the format". An earlier draft of this line said Ingi had chosen 1–3; he hadn't.
+## Scope: all five groups (Ingi, 2026-10-17: "yes all 5")
 
 ### 1. A type is born whole (agreed)
 
@@ -109,8 +107,8 @@ public virtual async ValueTask<data.@this> Get(data.@this parent, string key)
 
 public virtual async ValueTask<data.@this> Set(string key, object? value, actor.context.@this context)
     => Type.Property?[key] is { } member
-        ? await member.Write(this, value, context)                        // answers: Ok, or why it couldn't
-        : context.Error(new error.@this($"{Type.Name} has no member '{key}'", "NoMember", 400));   // an answer, not a throw
+        ? await member.Write(this, value, context)          // one of its own members: Ok, or why it couldn't
+        : await Add(key, value, context);                   // a member a program adds, kept beside its own (where: open)
 
 // property: NEW. A member reads and writes itself on its owner
 public async ValueTask<data.@this> Read(item.@this owner, data.@this parent) => …;
@@ -120,6 +118,13 @@ public async ValueTask<data.@this> Write(item.@this owner, object? value, actor.
 public async ValueTask<bool> IsDefault(item.@this? value, actor.context.@this context)
     => Default != null && value != null && await value.Compare(Type.Make(Default, context), context) == 0;
 ```
+
+**A key the type doesn't have is added, not refused** (Ingi: "`- set %user.blabla% = 12`, will this throw error? because it should add the blabla property to the user object (however we will do that and where is a different question"). Today:
+- a dict adds the key;
+- a thing that lives on (app, call, actor, module, goal, step) keeps it in `Kept` (`item/this.cs:213–221`, `:286`);
+- any other value throws (`:224`). That throw goes.
+
+The only refusal left is writing over a member of its own that can't be written (today's `OwnMember`). Where an added member lives for a plain value, and how, is open.
 
 Reflection stays only where `property` is built from a C# class (`property/this.cs:21`). It's locked: `item`'s `Get`/`Set`, and `property`'s `Read`, `Write` and `IsDefault`.
 
