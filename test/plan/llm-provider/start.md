@@ -255,8 +255,14 @@ if (action.OnStream is { } onStream)
   The plang name stays `file.read`, held as two members, `Module` and `Action` (Ingi: "separate it into two properties"). OpenAI forbids a dot in a function name, so on its wire the provider writes `file_read` (Ingi: "lets use _, keep the names file.read") and finds a call by looking up the name it wrote, never by splitting it.
 
   `tool.list` is the `Tool` slot's own type: it runs the model's calls in order within the limit, a Parallel one running on (`:350–373`), each result a tool message in the conversation. The tool's `Description` is the goal's or the action's (today always "", `:186`). Lean, not yet answered: the parameter schema mapping (`MapPlangTypeToJsonSchema`, `:795`, a type switch) moves into `tool` unchanged, and a type writing its own JSON schema stays branch A's (813). Safety: only what the step lists; running as the Service actor comes with the service-actor plan.
-- **The check:** `OnValidateResponse` and the retry message (today `:417–449`).
-- **The answer holds its conversation and usage** as real members, not 15 `SetProp` lines (`:489–503`).
+- **The answer's type and the check, decided (858).**
+  - **`Format` becomes `Type`** (Ingi: "yes, seem right"), as `file.read`'s slot (814): "answer as json" and "as a list of names" are one slot, and the content is born as that type (`answer.Value(type)`). This is plang-visible: the builder's teaching for `llm.query` moves, under the teaching-edit rule.
+  - **The instruction to the model** follows the asked type, as today (`BuildFormatInstruction`, `:709–722`): "You MUST respond in JSON" for json, "in ```md``` code block" for md, and so on (Ingi confirmed it). The conversation writes it into the system message when it's written out, never stored, so it doesn't pile up across rounds.
+  - **A fenced block is taken out** when a type was asked for (`ExtractResponse`, `:726–743`).
+  - **`answer.Check(validate, limit, conversation)`** runs `OnValidateResponse` with `%response%` in its own frame. A failure within `limit.retry` adds "Your response failed validation: …" and asks again; over the limit it answers `ValidationFailed`.
+  - **The "Validation failed (retry n/m)" line** stays on the actor's output, as today (Ingi: "if validation failed it is an error, somebody needs to catch it … agent will be running as service actor, so the error is his not the user, so not sold on" moving it to debug). Revisit with the Service actor.
+  - **The `Schema` slot** stays a hint in the instruction, as today. A type answering with its own schema is branch A's (813).
+- **The answer holds its conversation and usage** as real members, not 15 `SetProp` lines (`:489–503`); decided in 856.
 - **How a message looks in the provider's JSON** (llm-writer's #3): an image by name, with a `%image%:` text part before each image part, since OpenAI's image part has no name field.
 - **Streaming, decided (855).** Today the step's `OnStream` gets OpenAI's raw event JSON as `%chunk%`, and the query then leaves the loop answering `Truncated` (`OpenAi.cs:216`, `:235–245`, `:508–518`). It becomes:
   - `%chunk%` is the next piece of text;
