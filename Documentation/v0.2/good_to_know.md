@@ -73,6 +73,7 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - Multi-segment serializer extension matching → `wire-serialization.md`
 - `IExitsGoal.ShouldExit()` — Value-side opt-out for resolved sentinels → `type-system.md`
 - Recursion guards belong on the value, not on a parallel context layer → `data-internals.md`
+- A kind is a type (kind-is-type, 2026-10) — `kind<T> : kind : type`, names per level, `{name, kind}` nests, a format owns its bytes, settings as their own types, OwnInternal / file.read.Type / the `name<kind>` face → `type-system.md`
 - Typed values — `app/type/<name>/`, per-(type, format) renderers, `type` + `kind` as separate fields → `type-system.md`
 - Reader registry — `app.type.reader.@this`, the read-side mirror → `type-system.md`
 - Lazy materialization — `_raw`, `Materialize`, `ForceMaterialize` → `data-internals.md`

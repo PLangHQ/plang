@@ -2,6 +2,31 @@
 
 > Part of the App architecture notes — index in [`good_to_know.md`](good_to_know.md).
 
+## A kind is a type (kind-is-type, 2026-10)
+
+The `kind-is-type` branch (plan `test/plan/kind-is-type/start.md`; decisions 743–850 in `.bot/kind-is-type/architect/summary.md`) settled what a kind is. It supersedes the older framing in the sections below, where a kind reads as a loose `.pr` refinement or a codec beside the type. The model now:
+
+**A kind IS a type, under its parent.** `kind.@this : app.type.@this` (`PLang/app/type/kind/this.cs:20`), and `kind<T> : kind : type` (`PLang/app/type/kind/this.Generic.cs:16`, `where T : app.type.item.@this`) names the parent the kind sits under — `decimal` is a `kind<number>`, `json` a `kind<item>`, `md`/`xml` kinds of `text`, `csv` a `kind<table>`, `png`/`jpg` kinds of `image`, `iso`/`short`/`dotnet` kinds of `duration`, `file`/`http` kinds of `path`. A kind registers under its parent, never at the top, so "what is a kind?" has an answer: `%!app.type["number"].kind.list%`.
+
+**A kind is its parent except where it says otherwise.** `kind<T>` is the one seam where a type question a kind does not answer itself passes up to `T` — a concrete kind overrides only what is its own (how its value parses, the token it reads and writes, its MIME); every other fact resolves to the parent, written once in `kind<T>`, and the parent never asks its kind back. The kind's `Family` is the parent's registry entry (`this.Generic.cs:18–22`), so a decimal's description/examples fall back to number's. A value's own operations (`add`, `round`, `split`) stay on the value class: a decimal is a number value, an md file a text value.
+
+**Names on two levels, like files in folders.** A top-level type's name is unique app-wide (its `[PlangType]` word, else its namespace); two classes claiming one name are refused at load. A kind's name is unique only *under its parent*, and a kind is found only through its parent (`%!app.type["number"].kind["decimal"]%`) — there is no app-wide search for a kind by name (that lookup, `Kind(string)` and `type/list`'s name branch, is gone; decisions 828/774). MIME and extension lookups (`.md`, `application/json`) stay app-wide, each owned by one kind.
+
+**The written form stays `{name, kind}`, and it nests.** `{number, kind: decimal}`, `{item, kind: json}`, `{list, kind: path}`, `{list, kind: {list, kind: path}}`. `%n!type.name%` is `number`, `%n!type.kind.name%` is `decimal`. A kinded type's face is `name<kind>` — `kind.IsEmpty ? Name : $"{Name}<{kind.Name}>"` (`PLang/app/type/this.cs:571`; F4.2, decision 834; replaces the hardcoded list/dict/choice switch).
+
+**`[Kinds]` is not gone.** It stays on parents whose kinds are *value subclasses* — `input`, `screen`, `browser`, `query`, and `text` (for `separator`) — each kind object a typed `kind.subclass<T>` (`PLang/app/type/kind/subclass/this.cs`). What went is `[Kinds]` as the way a *codec* family found its parent; codec and format kinds name their parent through `kind<T>` (decisions 782/788).
+
+**Named values aren't kinds.** A type carries its own list of named values — closed (`choice`'s sets, `bool`'s true/false) or open. `separator` is text's kind (`PLang/app/type/item/separator/this.cs`, `{text, kind: separator}`, decisions 783/788): a `text` subclass holding its own OPEN set (`line`, `comma`, `tab`, `space`, `semicolon`; any characters allowed), so `%line% is text` is true.
+
+**A format owns its bytes until first use.** A format holds its raw bytes and answers its own parse; it stays bytes until read into, and passing it on writes the bytes unread. `{item, kind: json}` carries its bytes unread and parses once, on first use, through `data.Open()` (`PLang/app/data/this.cs:322`) into a plang value — an object into a `dict`, an array into a `list`, a scalar into its native (`PLang/app/type/item/kind/json/this.cs:73–80`). There is no `JsonElement` carrier and no navigator; the parsed value narrows with the json source riding as history, so after the read `%cfg% is dict` is true and `%cfg.db%` reads a plang value (decisions 805/826/828).
+
+**Settings are their own top-level types, not kinds.** Each settings class is its own type named by namespace (`app.module.llm.setting`), a nested one through its owner (`app.module.llm.decider.setting`); the address a program writes stays `%!llm.decider.setting%`. A saved row is written as its own type and read back by it — the item makes itself from its stored record (decisions 789/796). **No reader is kept for an old stored shape** (decision 790, pre-1.0, no backward compat): an old `{setting, kind: <path>}` row is not read; a store holding one is fixed by hand once, and the unreadable row is loud — it names its key and says to delete it and set it again (decision 799).
+
+**The three locked-core additions this branch made** (each with Ingi's approving decision, re-pinned under the surface golden):
+- **`OwnInternal`** (831) — one more `Own*` hook so a kind answers its own `Internal` through its class, else its parent's: `Internal { get => OwnInternal ?? kind.OwnInternal ?? Family._internal; }` (`PLang/app/type/this.cs:736`, hook at `:652`). Host kinds `{item, dict/list/*}` are Internal; `{item, json}` is offered to the builder.
+- **`file.read`'s `Type` slot** (832) — `data.@this<app.type.@this>? Type` (`PLang/app/module/file/read.cs:21`), mirroring `variable.set`'s. None given: the extension decides the reference type. Given: the bytes are read now and the declared type births itself from them, landing as that type (so `read 'notes.md' as text` lands a `text`, not a `{file, md}` reference).
+- **The `name<kind>` face** (834) — above, `type/this.cs:571`.
+
 ## `IExitsGoal.ShouldExit()` — Value-side opt-out for resolved sentinels
 
 `IExitsGoal` is the marker the engine queries via `result.ShouldExit()` to decide "stop here, capture a Snapshot, return through the channel". `ShouldExit()` is **virtual with default `true`** — the marker alone is enough for a type that always means "suspend".
@@ -24,6 +49,8 @@ Pattern to copy when adding another resolved-sentinel type: implement `IExitsGoa
 
 ## Typed values — `app/type/<name>/`, per-(type, format) renderers, `type` + `kind` as separate fields
 
+> **Superseded in part by kind-is-type (2026-10)** — see [A kind is a type](#a-kind-is-a-type-kind-is-type-2026-10) above. A kind is now a type under its parent (`kind<T> : kind : type`), found only through its parent; the per-format renderer *table/registry* framing still describes the serializer layer, but a kind is no longer a loose `.pr` refinement. The written form `{name, kind}` and "int/decimal are kinds of number" still hold.
+
 Higher-level PLang values (`number`, `image`, `code`, `path`, `datetime`, `duration`, …) live as folders under `PLang/app/type/<name>/`. Each owns a small contract: `this.cs` (the value + `[PlangType]` + `IBooleanResolvable` truthiness), `this.Parse.cs` (`static Resolve(value, context)` — runtime construction), `this.Build.cs` (`static Build(value) → kind` — build-time kind derivation), and a `serializer/` subfolder.
 
 **`type` + `kind` are separate `.pr` fields.** Every value carries a high-level `type` (the routing key) and an optional `kind` refinement, stored separately — never as a `type:kind` string. The `kind` is stamped at build by the type's own `Build(value)` method, the build-time sibling of `Resolve`. So **`int`/`decimal`/`double` are kinds of `number`**, `jpg`/`png` are kinds of `image`, `csharp`/`python` are kinds of `code`, `http`/`file` are kinds of `path`. Number isn't special; the LLM is shown a type's kinds only when developer-meaningful (number's precision) — otherwise `Build()` derives the kind silently.
@@ -41,6 +68,8 @@ Higher-level PLang values (`number`, `image`, `code`, `path`, `datetime`, `durat
 Full design (movie, build-vs-runtime trace, dispatch mechanism): the architect plan on the `plang-types` branch — `.bot/plang-types/architect/plan.md` and the seven stage files alongside.
 
 ## Strict kind — `as image/gif strict` validates wherever the bytes appear
+
+> **In transition under kind-is-type (2026-10).** Strict's probe moves onto the format kind (a format owns its own bytes and their check; decision 786). The `kind/strict ×4` suite named in the plan's *Why* is **carried, still red at merge** — the same reds exist on `runtime2`, so it is not a regression, but the fix did not land on this branch (auditor finding F-SC-1). Treat the interface shapes below as the prior model; re-verify against source before relying on them.
 
 `as <type>/<kind> strict` says "the value must really be a `<kind>`, not just declared as one". A PNG written to disk as `photo.gif` and bound with `as image/gif strict` must fail — but the failure can happen at three genuinely different moments depending on when the bytes are available. Two interfaces on `app.data` carry the discipline, and `image.@this` is the sole implementor today (audio/video planned).
 
@@ -76,6 +105,8 @@ public sealed class StrictKindMismatchException : Exception { ... }
 **Forward-looking discipline for future implementors.** Any new `IKindValidatable` ctor is auto-invoked on user data by `TryInstantiateValidator` — **public ctors of `IKindValidatable` types must be side-effect-free**. Anything that opens a connection, writes a file, or otherwise touches the world from a constructor breaks the strict-probe contract.
 
 ## Reader registry — `app.type.reader.@this`, the read-side mirror
+
+> **Updated by kind-is-type (2026-10).** The registry keyed by `(type, kind)` with a runtime `Register` still stands (`PLang/app/type/reader/this.cs`). What changed: `type` is a plang type, not a "shape" word — a json payload is `{item, kind: json}`, not `(object, json)`, and on first read it parses into a plang `dict` or `list` through `data.Open()` (see [A kind is a type](#a-kind-is-a-type-kind-is-type-2026-10)); a type with no reader of its own reads its stored record and asks its item to make itself (`ICreate.Create`), which is how settings read back (decisions 789/796). No reader is kept for an old stored shape (790). The `object`/table examples below predate this.
 
 The renderer writes; the reader reads. `app/type/reader/this.cs` (`app.type.reader.@this`) mirrors `app.type.renderer.@this` exactly — same dispatch shape, same precedence order, same wildcard token. It exists so the read half is one symmetric registry instead of the fragmented set it replaced (`type.Convert`, the per-family `Convert` hook, `FromWire`/`WireReader`, `path.JsonConverter`, per-type `JsonConverter<T>`, and three separate parse moments across `file.read` / `http.get` / `channel.read`).
 

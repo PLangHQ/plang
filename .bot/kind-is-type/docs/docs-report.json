@@ -1,0 +1,36 @@
+{
+  "reviewer": "docs",
+  "branch": "kind-is-type",
+  "parent": "runtime2",
+  "reviewed_tip": "e96c7d4cb",
+  "version": "v1",
+  "timestamp": "2026-10-17T20:00:00Z",
+  "summary": "Documented the kind-is-type model (stages 0-6) and the three locked-core additions the auditor named, in Documentation/v0.2/type-system.md, with the stale sections it supersedes annotated. Retired the orphaned separator golden block in type-reference-generation.md (decision 830). Edits are Documentation/v0.2/ only — no os/system teaching touched, so the teaching-edit rule does not trigger and no re-pins are needed. No production C# edited. DO NOT MERGE: held for Ingi's go, relayed by the host.",
+  "stats": { "docs_updated": 3, "sections_added": 1, "sections_annotated": 3, "blocks_retired": 1 },
+  "changes": [
+    { "id": 1, "action": "added", "file": "Documentation/v0.2/type-system.md", "description": "New authoritative section 'A kind is a type (kind-is-type, 2026-10)': kind<T> : kind : type under its parent (type/kind/this.cs:20, this.Generic.cs:16); a kind is its parent except where it says otherwise (the one seam in kind<T>); names unique per level, no app-wide kind-by-name search, MIME/extension stay app-wide; written form {name, kind} nests; the name<kind> face (type/this.cs:571); [Kinds] stays on value-subclass parents; named values aren't kinds; separator is text's kind; a format owns its bytes until first use, json parses once into a plang dict/list via data.Open() (data/this.cs:322, json/this.cs:73-80); settings as their own top-level types read back by their type (789/796), no reader for an old stored shape (790, loud SettingsUnreadable 799); and the three locked-core adds OwnInternal (831, type/this.cs:736), file.read's Type slot (832, read.cs:21), the name<kind> face (834)." },
+    { "id": 2, "action": "annotated", "file": "Documentation/v0.2/type-system.md", "description": "Callout at the top of 'Typed values' (superseded in part — a kind is a type now, not a loose .pr refinement; the per-format renderer table still describes the serializer layer; {name, kind} and int/decimal-are-kinds-of-number still hold)." },
+    { "id": 3, "action": "annotated", "file": "Documentation/v0.2/type-system.md", "description": "Callout at the top of 'Strict kind': strict's probe moves onto the format kind (786); the kind/strict x4 suite is CARRIED, still red at merge (auditor F-SC-1), same reds on runtime2 so not a regression; the interface shapes shown are the prior model, re-verify before relying." },
+    { "id": 4, "action": "annotated", "file": "Documentation/v0.2/type-system.md", "description": "Callout at the top of 'Reader registry': the (type, kind)-keyed registry with runtime Register still stands; type is a plang type not a shape word ({item, kind: json}, not (object, json)); json parses into a plang dict/list on first read; a type with no reader reads its record and asks its item to make itself (ICreate.Create), which is how settings read back (789/796); no reader for an old stored shape (790)." },
+    { "id": 5, "action": "retired", "file": "Documentation/v0.2/type-reference-generation.md", "description": "Replaced the orphaned 'Golden output - separator' block with a retirement note (decision 830): separator is now a kind of text ({text, kind: separator}); TheSeparatorPage golden was retired; the former literal is in git history." },
+    { "id": 6, "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Added the index pointer for the new 'A kind is a type (kind-is-type, 2026-10)' section -> type-system.md." }
+  ],
+  "verified_in_source": [
+    "kind.@this : app.type.@this (PLang/app/type/kind/this.cs:20)",
+    "kind<T> : kind : type, where T : app.type.item.@this; the parent-forward seam, Family = parent (PLang/app/type/kind/this.Generic.cs:16-22,37)",
+    "OwnInternal hook (type/this.cs:652) and getter OwnInternal ?? kind.OwnInternal ?? Family._internal (type/this.cs:736)",
+    "the face kind.IsEmpty ? Name : $\"{Name}<{kind.Name}>\" (type/this.cs:571)",
+    "file.read Type slot: data.@this<app.type.@this>? Type (module/file/read.cs:21); none=extension decides, given=declared type births from bytes (read.cs:23-61)",
+    "json parses once into a plang value, no JsonElement/navigator (type/item/kind/json/this.cs:8-9,73-80); data.Open() the parse-once door (data/this.cs:322)",
+    "separator is text's kind, a text subclass with its own open named-value set (type/item/separator/this.cs:10,12-15,28)"
+  ],
+  "findings": [
+    { "id": 1, "severity": "minor", "category": "orphaned-generated-page", "owner": "builder/coder", "file": "os/system/type/separator/", "issue": "separator is now a kind of text (783/788), not a top-level type, but its committed generated page dir (start.md + type.*.md) is still present. docs/Types.goal only emits the text page today (the %!app.type.list% loop is deferred), so it does not auto-regenerate or get cleaned. Not test-enforced (TheSeparatorPage retired, 830). Harmless leftover; flagged for the builder/coder since generated pages are their lane, not docs'." },
+    { "id": 2, "severity": "info", "category": "no-changelog-convention", "owner": "Ingi/host", "file": "(repo root / Documentation)", "issue": "The host named CHANGELOG as a deliverable, but the repo has no CHANGELOG convention. Documentation/v0.2/decisions.md is a guarded pre-commit-check file (each entry needs a check: and Ingi's sign-off), NOT a free-form log. The changelog-equivalent today is .bot/kind-is-type/architect/summary.md. OPEN: does Ingi want a dev/user-facing changelog created, and where? Not fabricated to avoid inventing an unwanted convention right before merge." },
+    { "id": 3, "severity": "info", "category": "xml-docs-current", "owner": "docs", "file": "PLang/app/type/**, module/file/read.cs, data/this.cs", "issue": "XML docs / inline comments on the changed surfaces (kind, kind<T>, json, separator, file.read, type.cs face + OwnInternal) are already accurate and kind-is-type-aware (the coder wrote them). Verified a sample. Nothing stale to fix; no production C# edited." },
+    { "id": 4, "severity": "info", "category": "carried-finding", "owner": "branch-A / architect", "file": "test/plan/kind-is-type/start.md Why; start.goal:48", "issue": "F-SC-1 (auditor): the plan's Why names kind/strict x4 among the reds this branch fixes; all four stay red at merge (same on runtime2, not a regression). Documented as carried in the type-system.md Strict callout. Architect to rescope the Why/start.goal:48 or carry explicitly, per the auditor." }
+  ],
+  "teaching_edit_rule": "not triggered — edits are Documentation/v0.2/ only; no os/system/modules/** or os/system/type/** markdown touched, so decider fixtures and page goldens do not re-run.",
+  "generated_pages_and_teaching": "the builder closed stage 5 (decisions 835-840): TypePage 10/10, PickList 8/8, ModulePage 8/8 (TheFilePage) green, with file.read's Type teaching (read.notes.md), set.notes and decider teaching re-pinned in its single pass. Not re-run here (not docs' lane; stale-binary trap).",
+  "merge": "DO NOT MERGE. Committed and pushed to kind-is-type; merge into runtime2 waits for Ingi's go, relayed by the host."
+}

@@ -624,40 +624,9 @@ Whether something is there at the path (a filesystem check, or an HTTP HEAD for 
 **Returns:** true or false (a bool).
 ```
 
-## Golden output — separator
+## Golden output — separator (retired)
 
-The exact literal the generator must produce for the `separator` type. `TypePageTests` diffs against this.
-
-```markdown
-# separator
-What cuts a text into pieces (`split %x% into lines`) or goes between them (`join %list% with comma`): a named separator — `line`, `comma`, `tab`, `space`, `semicolon` — standing for its characters, or any characters as written (`" | "`).
-
-# Separators
-
-A `separator` is what cuts a text into pieces or goes between them — what `split` and `join` use.
-
-## Named separators
-
-Five are named, each standing for its characters:
-
-- `line` — a line break (also `lines`, `newline`).
-- `comma` — `,`
-- `tab` — a tab.
-- `space` — a single space.
-- `semicolon` — `;`
-
-```plang
-Start
-- split %text% into lines, write to %lines%
-- join %names% with comma, write to %csv%
-```
-
-## Any characters
-
-Anything else is taken as the literal characters to use — `join %parts% with " | "`.
-
-A text that is *exactly* a separator's name means that separator, whether written in the step or held in a variable (`%sep%` holding `comma` splits on `,`). To split or join on the word "comma" itself, write it some other way.
-```
+`separator` is no longer a top-level type — under kind-is-type (decisions 783/788) it is a **kind of `text`** (`{text, kind: separator}`, `PLang/app/type/item/separator/this.cs`), with its named values (`line`, `comma`, `tab`, `space`, `semicolon`; any characters allowed) as text's own open set. The standalone `TheSeparatorPage` golden was retired (decision 830), so this block has nothing to diff against. The former literal is in git history; separator's teaching now rides with `text`.
 
 ## Golden output — parallel
 
