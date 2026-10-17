@@ -368,7 +368,7 @@ Motivation surfaced: during the build-trace-viewer branch, chasing a null-valued
 
 **Date:** 2026-04-23
 
-**Idea.** The builder today runs two LLM passes per step: (1) natural language → formal action-summary language, (2) formal language → JSON `.pr`. Pass 2 is mostly syntactic shuffling, not thinking. If the formal language has bounded grammar, C# can parse it deterministically *and* validate against the module registry in the same pass. One whole LLM call skipped per step. At build scale, that's massive.
+**Idea.** (Outdated, 2026-10-17: the build now asks the LLM once per goal, not per step.) The builder then ran two LLM passes per step: (1) natural language → formal action-summary language, (2) formal language → JSON `.pr`. Pass 2 is mostly syntactic shuffling, not thinking. If the formal language has bounded grammar, C# can parse it deterministically *and* validate against the module registry in the same pass. One whole LLM call skipped per step. At build scale, that's massive.
 
 **Why this isn't "parsing natural language".** CLAUDE.md's hard rule is *never parse user step text* — because natural language is unbounded. But the formal action summary is an IR we designed ourselves, with known grammar. Parsing your own IR is fine; parsing user English is the sin. The rule stays intact.
 
