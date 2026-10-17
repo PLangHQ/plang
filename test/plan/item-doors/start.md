@@ -42,7 +42,61 @@ Also from kind-is-type: the four strict-kind tests (F-SC-1), which wait on this.
 - **The pair registry** (846, Ingi's yes): what an input kind looks like in an output kind, when it isn't the default. json in json is copied as is; a list in formal is a list of arguments, which replaces list's `_formats`. It's looked up in one place, `data.Output`.
 - **The json writer's `Value(object)`** keeps only C# primitives.
 
-### 3. A type speaks for itself to a writer (next)
+### 3. A type speaks for itself to a writer (agreed)
+
+- **Data always tells the writer what it is, and each writer decides how much to show.** The record door already exists (`BeginRecord(data)`, `kind/json/writer.cs:69`, `text/writer.cs:84`), so the `EmitsSchema` bool (`IWriter.cs:36`) and Data's two `if`s on it (`data/this.Output.cs:83`, `:126`) go. That's 813.
+  - Bare json shows only the value.
+  - plang is its own output kind with its own writer: `{"type", "value", "signature"}` on the wire, plus `name` only in the Store view. The wire already leaves the name out (`data/this.Output.cs:94–99`; Ingi: "name should now be serialized on the data class" → "good").
+  - The llm table learns a column's type from the cell's record (815).
+- **When a type looks different in another output kind, that lives in the type's own folder** (`type/<name>/serializer/<kind>.cs`, discovered as readers are, `type/reader/this.cs:14–18`), as #2's pair-registry entry, through `IOutput` (`type/format/IOutput.cs`).
+  - The first entries are each type's JSON Schema (todos.md 2026-09-23), used by llm-provider's tools: number → `"number"`, its int kind → `"integer"`, path → `"string"`.
+  - plang's own word rides in JSON Schema's free `format` field (`{"type": "string", "format": "path"}`). OpenAI checks `type`, so plang's word can't go there (Ingi: "can we not use the plang types … if not that is ok").
+  - `MapPlangTypeToJsonSchema` (`llm/code/OpenAi.cs:795–816`) goes.
+
+```csharp
+// data/this.Output.cs: will become
+var value = Error ?? _item;                   // what this Data holds: its value, or its error (today `held`; Ingi: "name it what it is")
+writer.BeginRecord(this);                     // the writer sees the Data: its type, its signature (its name in Store)
+await value.Output(writer, mode, context);    // the value writes itself (#2)
+writer.EndRecord(this);
+
+// kind/json/writer.cs: bare json shows only the value
+public void BeginRecord(data.@this record) { }
+public void EndRecord(data.@this record) { }
+
+// wire/kind/plang/writer.cs: NEW, plang's own writer, its own output kind
+public void BeginRecord(data.@this record)
+{
+    _json.WriteStartObject();
+    if (_view == View.Store) { _json.WritePropertyName("name"); _json.WriteStringValue(record.Name); }
+    _json.WritePropertyName("type");  record.Type.Output(this, _view, record.Context);
+    _json.WritePropertyName("value");
+}
+public void EndRecord(data.@this record)
+{
+    if (record.Signature is { } s) { _json.WritePropertyName("signature"); s.Output(this, _view, record.Context); }
+    _json.WriteEndObject();
+}
+
+// module/llm/table.cs: a column's type from the cell itself (815)
+public void BeginRecord(data.@this record) => _column ??= record.Type;
+
+// type/item/number/serializer/schema.cs: NEW, a number's type as a JSON Schema
+public sealed class schema : IOutput
+{
+    public ValueTask Output(item.@this type, IWriter w, View mode, actor.context.@this? context)
+    {
+        w.BeginObject();
+        w.Name("type");   w.String("number");
+        w.Name("format"); w.String(type.ToString());      // plang's own word: number<double>
+        w.EndObject();
+        return ValueTask.CompletedTask;
+    }
+}
+// type/item/number/kind/int/serializer/schema.cs: "integer" · type/item/path/serializer/schema.cs: {"type": "string", "format": "path"}
+```
+
+> **For the coder: you own this code.** These are sketches of intent, agreed with Ingi piece by piece. Where the real code says another shape is better, bring it to the architect.
 
 ## Demolition, stays, checks, OBP validation
 
