@@ -1,0 +1,9 @@
+{
+  "status": "fail",
+  "summary": "No new red against the baseline (C# only the 6 Wire; plang 15, all baseline, RenderFile/RenderInclude green after 2e83d21ff). 10 mutations on stages 4-6 + the render fix: 8 caught. Two confirmed false greens: F1 file.read's Type at run (Read_AsText_LandsTheContentAsText_NotAFileReference asserts after Value() materializes, so a file reference passes; now pinned by the added plang AsTextLandsTextUncaptured, the C# assert still to fix); F2 the builder's kind follow-up (KindOf/KindsOffered/Refine) has no deterministic test, Refine as a no-op passes everything and a fresh build then writes Type=number for 'as decimal'. OPEN: the plan's stage-3 proof SetAsImageGifStrictMismatch is red (baseline); the render fix's format name check.",
+  "findings": [
+    {"id": "F1", "severity": "minor", "kind": "false-green", "where": "PLang.Tests/Modules/App/Modules/file/FileHandlerTests.cs:89", "pinned_by": "test/plan/kind-is-type/module/file/read/AsTextLandsTextUncaptured.test.goal"},
+    {"id": "F2", "severity": "major", "kind": "false-green", "where": "PLang/app/goal/step/pick/list/this.cs:603-652", "pinned_by": null}
+  ],
+  "new_reds": []
+}

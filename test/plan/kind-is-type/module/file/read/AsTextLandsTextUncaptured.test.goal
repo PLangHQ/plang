@@ -1,0 +1,7 @@
+/ file.read with a Type lands that type itself (decision 831): `read notes.md as text` births the
+/ content as a text, not a {file, md} reference. No `write to` here, so no capturing variable.set
+/ can convert what the read landed — the read's own answer (%!data%) is what is checked.
+/ AsTextKeepsText can't see this: its capture carries Type=text and converts a file reference too.
+AsTextLandsTextUncaptured
+- read notes.md as text
+- assert.equals(Expected="text", Actual=%!data!type.name%, Message="the read itself lands a text, not a file reference")
