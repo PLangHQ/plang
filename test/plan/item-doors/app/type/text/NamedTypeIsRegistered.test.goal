@@ -1,0 +1,13 @@
+/ Stage 1 (decision 867): a type named in a step is the registered one — its kind knows
+/ its mime AND its extension. For `as text/md`, the registered md kind is text's
+/ `[Format("md", "text/markdown", ".md", ".markdown")]`: mime "text/markdown", extensions
+/ [".md", ".markdown"]. Red on runtime2: today `type.@this(...)` at `type/this.cs:149`
+/ makes a fresh `kind.@this("md")` from the name — a bare kind whose `_mime` and
+/ `_extension` default to `[]`, so both `%x!type.kind.mime[0]%` and
+/ `%x!type.kind.extension[0]%` read null.
+NamedTypeIsRegistered
+- set %x% = "a" as text/md
+- assert %x!type.name% equals "text"
+- assert %x!type.kind.name% equals "md"
+- assert %x!type.kind.mime[0]% equals "text/markdown"
+- assert %x!type.kind.extension[0]% equals ".md"

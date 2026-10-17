@@ -1,0 +1,268 @@
+{
+  "name": "NamedTypeIsRegistered",
+  "comment": "Stage 1 (decision 867): a type named in a step is the registered one — its kind knows\nits mime AND its extension. For `as text/md`, the registered md kind is text's\n`[Format(\"md\", \"text/markdown\", \".md\", \".markdown\")]`: mime \"text/markdown\", extensions\n[\".md\", \".markdown\"]. Red on runtime2: today `type.@this(...)` at `type/this.cs:149`\nmakes a fresh `kind.@this(\"md\")` from the name — a bare kind whose `_mime` and\n`_extension` default to `[]`, so both `%x!type.kind.mime[0]%` and\n`%x!type.kind.extension[0]%` read null.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = \"a\" as text/md",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "a"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {"name":"text","kind":"md"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %x!type.name% equals \"text\"",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.name%",
+              "variable": [
+                {
+                  "text": "%x!type.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %x!type.kind.name% equals \"md\"",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "md"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%x!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %x!type.kind.mime[0]% equals \"text/markdown\"",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text/markdown"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.kind.mime[0]%",
+              "variable": [
+                {
+                  "text": "%x!type.kind.mime[0]%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "mime"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %x!type.kind.extension[0]% equals \".md\"",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": ".md"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.kind.extension[0]%",
+              "variable": [
+                {
+                  "text": "%x!type.kind.extension[0]%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "extension"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "NamedTypeIsRegistered.test.goal",
+  "hash": "88a6f21bef2f16f1c722803f8c5749ff38b9ec73b87e51c05fae30ae699baaf6"
+}

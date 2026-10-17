@@ -1,0 +1,311 @@
+{
+  "name": "Start",
+  "comment": "item-doors: a type is born whole (the type that makes a value hands itself to it), one door for\nwriting, a type speaks for itself to a writer, a type's members through its own list, and a plang\nvalue read as tokens. This goal is the plan's index and its proof: each stage is a goal, each\ncomment a behaviour we want, and the step under it runs the test that proves it. Tests live under\nthis plan's folder at the path of what they test. The plang here is intent: the test-designer\nwrites each test so it builds and goes red before its stage, the coder makes it green. The text\nis start.md; checks tests can't show are there too.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call Stage1",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call Stage2",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "call Stage3",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "call Stage4",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "call Stage5",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage5"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Stage1",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /plan/item-doors/app/type/image/BytesKnowItsMime",
+          "line": {
+            "number": 18
+          },
+          "comment": "a type is born whole (decision 867): the registered type hands itself to the value\nan image value's kind knows its mime: a {image, kind: png} carries image/png from the registered kind, not an inline copy",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/item-doors/app/type/image/BytesKnowItsMime"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call /plan/item-doors/app/type/text/NamedTypeIsRegistered",
+          "line": {
+            "number": 20
+          },
+          "comment": "a type named in a step is the registered one: its kind knows its mime and its extension",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/item-doors/app/type/text/NamedTypeIsRegistered"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "call /plan/item-doors/app/type/text/TextKindIsText",
+          "line": {
+            "number": 22
+          },
+          "comment": "text's face without the name floor: the kind carries IsText; a {text, kind: md} answers true itself, not through the Name fallback",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/item-doors/app/type/text/TextKindIsText"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "call /app/type/kind/strict/SetAsImageGifStrictMatching",
+          "line": {
+            "number": 26
+          },
+          "comment": "\"is this an action slot?\" by type, not by name — C# test at PLang.Tests/Runtime/App/Goals/ActionSlotIsByTypeTests.cs\n(a fresh type.@this(\"action\") has no ClrType; the registered one does — today the Name compare can't tell them apart)\nthe four kind/strict tests are this stage's proof: adopted from test/app/type/kind/strict/",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/app/type/kind/strict/SetAsImageGifStrictMatching"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "text": "call /app/type/kind/strict/SetAsImageGifStrictMismatch",
+          "line": {
+            "number": 27
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/app/type/kind/strict/SetAsImageGifStrictMismatch"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "text": "call /app/type/kind/strict/SetAsImageStrictNoKind",
+          "line": {
+            "number": 28
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/app/type/kind/strict/SetAsImageStrictNoKind"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "text": "call /app/type/kind/strict/SetAsTextSlashMarkdownStrictUnverifiable",
+          "line": {
+            "number": 29
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/app/type/kind/strict/SetAsTextSlashMarkdownStrictUnverifiable"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "hash": "57eb68ace837af7c5afc120980814faf61b3b4c4b10f05f1bd3c854d11dc7563"
+    },
+    {
+      "name": "Stage2",
+      "step": [],
+      "child": [],
+      "visibility": "Private"
+    },
+    {
+      "name": "Stage3",
+      "step": [],
+      "child": [],
+      "visibility": "Private"
+    },
+    {
+      "name": "Stage4",
+      "step": [],
+      "child": [],
+      "visibility": "Private"
+    },
+    {
+      "name": "Stage5",
+      "step": [],
+      "child": [],
+      "visibility": "Private"
+    }
+  ],
+  "visibility": "Public",
+  "file": "start.goal",
+  "hash": "43b6ef2283a10fc88be71c2f63510526efed8efd931d6ae29188767394f63606"
+}

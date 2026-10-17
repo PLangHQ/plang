@@ -1,0 +1,12 @@
+/ Stage 1 (decision 867): a type is born whole — the registered type hands itself to the
+/ value. An image read from bytes carries the REGISTERED image.kind.png (from its
+/ `[Format("png", "image/png", Compressible = false)]` attribute); its mime is the kind's
+/ mime, not the image's own `_mime` copy. Red on runtime2: today `type.@this(...)` at
+/ `type/this.cs:149` makes a fresh `kind.@this("png")` from the name alone — a bare kind
+/ whose `_mime` field defaults to `[]`, so `%img!type.kind.mime[0]%` reads null. Fixture
+/ photo.png committed alongside (copied from test/app/type/kind/strict/).
+BytesKnowItsMime
+- set %img% = "photo.png" as image/png
+- assert %img!type.name% equals "image"
+- assert %img!type.kind.name% equals "png"
+- assert %img!type.kind.mime[0]% equals "image/png"
