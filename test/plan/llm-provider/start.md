@@ -1,6 +1,10 @@
 # llm-provider
 
-**Status: design in progress.** This holds what Ingi and I have agreed so far; the open pieces are listed at the end. Nothing is built before the design is done and Ingi says go.
+**Status: design complete, parked (2026-10-17, decision 864).** Ingi: "lets finish the design on this branch so we have it when we come back, then move to branch A". Nothing is built. It's built after branch A, and uses two things branch A makes:
+- a type born from the list, so it knows its kind;
+- a type answering its own JSON schema (813).
+
+Before building, re-read the plan against branch A's result, and get Ingi's go.
 
 Traces to: the conversation with Ingi on 2026-10-17, logged in `.bot/kind-is-type/architect/summary.md` as decisions 851 and 852. From here on, decisions go in `.bot/llm-provider/architect/summary.md`. The branch is cut from llm-writer (feaa3a7cd), with llm-writer's old stage 3 reverted (b368e6901), so it starts from OpenAi as decision 819 left it. llm-writer itself doesn't move; it continues its stage 3 on this branch's shape once this merges back.
 
@@ -292,7 +296,12 @@ if (action.OnStream is { } onStream)
   - For the builder it saves nothing: the build asks once per goal, a changed goal is a new hash, and an unchanged goal never asks.
   - It's barely used: three builder steps and six test goals call `llm.query`, no app on this machine does, and no store holds an `LlmCache` table.
   - It was the envelope specimen Ingi kept (2026-09-28), which ends with it.
-- **The model's fallback** (an empty `Model` → the setting's, `:70`), lean: the slot's own default is the setting, `[Default("%!llm.openai.setting.model%")]`, a variable read when the body is written. The timeout (2 minutes, hard-coded at `:234`) becomes OpenAI's setting `Timeout`. Ingi liked both (855). The request isn't marked `Unsigned` (Ingi: "dont have the request unsigned"); it changes nothing for OpenAI, since a request is never signed and `Unsigned` only refuses a signed plang reply (`http/request.cs:11`, `:41–42`).
+- **The model's fallback, decided (864, Ingi: "ok").**
+  - **Which provider runs is set by the code generator:** a `[Code]` slot's `Attach` asks `app.Code.Get<ILlm>()` (`PLang.Generators/Emission/Property/Code/this.cs:33–40`), the registry `code.setDefault` changes. OpenAI is the default for now; plang's own provider later (Ingi).
+  - **The default model belongs to the provider:** `Ask` writes `.Set("model", action.Model ?? openai.Model)`, the step's model when it names one, else the provider's own setting's (`%!llm.openai.setting.model%`).
+  - `llm.query`'s `Model` slot has no default. The `??` asks only whether the step gave one.
+
+  The timeout (2 minutes, hard-coded at `:234`) becomes OpenAI's setting `Timeout`. Ingi liked both (855). The request isn't marked `Unsigned` (Ingi: "dont have the request unsigned"); it changes nothing for OpenAI, since a request is never signed and `Unsigned` only refuses a signed plang reply (`http/request.cs:11`, `:41–42`).
 
 ## Stages (a sketch, fixed when the design is)
 
