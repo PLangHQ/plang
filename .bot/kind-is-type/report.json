@@ -2,6 +2,60 @@
   "branch": "kind-is-type",
   "sessions": [
     {
+      "id": "e7c3a2f9-8b14-4d6e-a2c5-1f3b9d0e4a7c",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-17T00:00:00Z",
+      "timestamp_end": "2026-10-17T03:00:00Z",
+      "intent": "OBP review v2 of kind-is-type stages 4-6 + 814 + stage-5 C# + security F1 — everything landed after v1 (82d8866ae) up to HEAD aa353656b. Review only; no code changes.",
+      "before": {
+        "assumptions": "The central shape is 'json rests, a use opens' — must be one data.Open() door, not parse logic copied across use-sites. OwnInternal (814/831) is a new decision-approved hook on the locked type surface. file.read gains a Type slot. F4.2 (name<kind> face) and my v1 F1-F3 landed. Deferred (not findings): F8.1, the source.cs:115 floor, 6 Wire tests, the retry-timing test.",
+        "risk": "A stage-4 broken-seal (open/parse duplicated across the 6+ use-sites), a JsonElement/clr residue surviving the navigator deletion in a value-nav path, OwnInternal looping type->kind->Family->kind, file.read cracking a carrier into primitives, or a NEW CS0108 hide in the locked core."
+      },
+      "plan": ".bot/kind-is-type/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/data/this.cs", "PLang/app/type/item/source.cs", "PLang/app/type/item/kind/json/this.cs", "PLang/app/data/Operator.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "The 'json rests, a use opens' crux. data.Open() (data/this.cs:322) is the single parse-once door (Value -> if resting source, Parse once -> history.Add(rest) -> narrow _item; bad parse Fail(Unread) with a narrow catch, never thrown to a courier). All use-sites call it (EnumerateItems:505, Compare:636, Navigation:41, Value<T>:557, Operator.IsType:182, source.Get:335) - no re-implemented parsing. source.cs: courier door keeps a resting kind unread (:217); Declared lets the source own its re-typing; Parse uses the parent-scoped Kind(type,ctx). json kind slim: Load rests, Parse to plang values, navigator gone; json.Read bridge kept-by-design (reached via clr.cs:131), its JsonElement is carried 673 machinery."
+        },
+        {
+          "paths": ["PLang/app/type/this.cs", "PLang/app/type/item/kind/list/this.cs", "PLang/app/type/item/kind/dict/this.cs", "PLang/app/type/item/kind/reflection/this.cs", "PLang/app/module/file/read.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "OwnInternal hook (814/831): type/this.cs:736 Internal => OwnInternal ?? kind.OwnInternal ?? Family._internal - the 777 Own* pattern terminating on the stored field (no loop); host kinds override true; decision-approved locked-surface addition, shape verified. file.read Type slot: Build returns the Type! carrier whole/unopened (one shared Typed() check); Start passes raw byte[] to declared.Create - the birth-door contract, not an opened box. F4.2: ToString:570 name<kind> for all kinded types."
+        },
+        {
+          "paths": ["PLang/app/type/item/text/this.cs", "PLang/app/type/kind/subclass/this.cs", "PLang/app/goal/step/pick/list/this.cs", "PLang/app/goal/serializer/Reader.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "render (7574cd6d3): text asks its own kind via the parent-scoped Format(ctx)=Kind(Type,ctx)??Type.kind, opens+caches (_opened), no writer.Format switch in the value. v1 F1-F3 all fixed (TypeDescription const gone, BuildTypeEntries/Promote doc gone, subclass.Offers binds Offer once at construction). Stage-5 C# (pick/list KindsOffered) asks each kind !Internal (814 hook). Security F1 (d9bc6aae7, shape only): goal serializer refuses a non-bare .pr file via PrFormatOutdatedException - reader-throws-refusal, reinforces 745/767."
+        },
+        {
+          "paths": ["PLang/PLang.csproj"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Compiler hide sweep: dotnet build PLang -t:Rebuild = 0 errors, PLNG001/002 clean. 90 CS0108 total (pre-existing node/verb + static-ICreate pattern); NONE in the stage-4-6-touched core files (type/kind/*, kind/json, source.cs, data/this.cs, Operator.cs, file/read.cs). The core hides at type/this.cs:140/248/609 are the same Template/Create/Is members present at base cf66e2d01 (verified v1). No new hide introduced - 776 discipline holds."
+        },
+        {
+          "paths": [".bot/kind-is-type/codeanalyzer/v2/report.md", ".bot/kind-is-type/codeanalyzer/v2/verdict.json", ".bot/kind-is-type/codeanalyzer/summary.md"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "PASS (CLEAN), zero new findings. Stage-4-6 shape work OBP-exemplary. Deferred (F8.1, the source.cs:115 floor) confirmed on branch A's list, not re-raised. Next bot: tester."
+        }
+      ],
+      "after": {
+        "status": "PASS (CLEAN). Stages 4-6 + 814 + stage-5 C# + security F1 are OBP-exemplary and merge-safe. No new findings; my v1 F1-F3 all fixed. One data.Open() door with parse-once; navigator gone with no value-nav residue; OwnInternal loop-free on the decision-approved locked surface; file.read keeps the carrier whole; F4.2 done.",
+        "health": "green - PLang builds 0 errors, PLNG001/002 clean; no new CS0108 hide in the core. Branch green for review per decision 841 (suite not re-run by codeanalyzer).",
+        "notes": "Next bot: tester. Deferred to branch A: F8.1, the source.cs:115 text-face floor. Carried baseline (not this branch): 6 Wire snapshot tests, After_EachRetry timing. Report: .bot/kind-is-type/codeanalyzer/v2/report.md."
+      }
+    },
+    {
       "id": "d4b9f1a7-2e6c-4f83-b5a1-9c0d7e2f3a4b",
       "bot": "codeanalyzer",
       "timestamp_start": "2026-10-16T00:00:00Z",

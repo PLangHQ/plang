@@ -1,51 +1,56 @@
 # codeanalyzer — kind-is-type
 
-**Version:** v1
+**Version:** v2 (latest). v1 covered stages 0–3 + 767 + 789/790 (PASS, `82d8866ae`).
 
 ## What this is
 
-The OBP code review of branch `kind-is-type` (decision 774, *a kind is a type*) before it carries into runtime2. The branch reshapes the locked core so a kind is a type under its parent (`kind<T> : kind : type`), settings become their own top-level types that read themselves back from their stored record, and a goal call's name can't climb out of its folder. The architect routed the **landed** work — **stages 0–3**, plus **decisions 767 and 789/790** — for review now; stage 4+ (json-owns-its-bytes, the navigator deletion, the builder) is still mid-flight and reviewed on the architect's go.
+The OBP review of branch `kind-is-type` (decision 774, *a kind is a type*) before it carries into runtime2. The branch reshapes the locked core so a kind is a type under its parent (`kind<T> : kind : type`), a format type owns its bytes (json rests until a use opens it), settings read themselves back from their stored record, and a goal call's name can't climb out of its folder. Reviewed in two rounds: **v1** stages 0–3 (+767, 789/790); **v2** stages 4–6, decision 814, the stage-5 builder C#, and security's F1.
 
-## What was done
+## What was done (v2)
 
-Reviewed in the codeanalyzer's passes: every core type read in full (not only the diff), callers walked upstream, a compiler-backed hide sweep, and targeted greps for the model's own OBP gates. `v1/report.md` is the artifact of record; `v1/verdict.json` the one-liner.
+Reviewed in the codeanalyzer's passes against HEAD `aa353656b`: every touched core type read in full, callers walked, a forced build, and a compiler-backed CS0108 hide sweep. `v2/report.md` is the artifact of record; `v2/verdict.json` the one-liner.
 
-**Verdict: CLEAN — PASS. No finding blocks the merge. Next bot: tester.**
+**Verdict: CLEAN — PASS. No new findings. Next bot: tester.**
 
-The kind model holds up against its own OBP gates (`start.md` "OBP validation"):
-- **one fallback seam** — `kind<T>` (`Family = T`); a kind overrides only its own, the parent never asks its kind back (type's fact hooks read `OwnX ?? kind.OwnX ?? Family._field`, the stored field, which terminates).
-- **no `is kind` behavioural fork** outside `type/kind/` — the two `is kind.@this` hits (`size`/`duration`) are non-null binds where the value re-expresses itself in a requested standard read from its own kind registry.
-- **no new app-wide by-name kind search** — the parent-scoped `Kind(type, kind)` is the door; `Held` was kept for MIME/extension only (ruling 2 / 782); the surviving bare-name callers are the deferred text coiner (782, stage 4) and the pre-existing `is`-operator `HasKind` guard (unchanged from base).
-- **settings (789/790)** read back from their own record via `Record` + `type.Construct` (class from the key, not a stored kind); old rows decline loudly (`SettingsUnreadable`); the start-up loop and the old-shape reader are gone.
-- **767** — `goal/list/this.cs Find` refuses a `..` segment with `GoalNameClimbs` (400) before anything resolves.
+The stage-4–6 shape work is OBP-exemplary:
+- **json rests, a use opens — one door.** `data.@this.Open()` (`data/this.cs:322`) is the single parse-once door (parse → `history.Add(source)` → narrow; a bad parse answers `Fail(Unread)` with a narrow catch, never thrown to a courier). All 7 use-sites call it; none re-parses. `source.cs` keeps a resting kind unread and owns its own re-typing (`Declared`); its `Parse` uses the parent-scoped `Kind(type,ctx)`.
+- **The navigator is gone** with no value-nav residue; the json kind's surviving `Read` bridge is kept-by-design (reached via `clr.cs:131`), its `JsonElement` the carried host-kind machinery (673).
+- **`OwnInternal` (814/831)** follows the `Own*` pattern, terminating on the family's stored field (loop-free), on a decision-approved locked surface; host kinds override it `true`.
+- **file.read's Type slot** returns the `Type!` carrier whole and passes raw to `declared.Create` (the birth-door contract) — no opened box.
+- **F4.2** done (`ToString` is `name<kind>` for all kinded types); **render** asks the value's own kind, no format switch; **security F1** refuses a non-bare `.pr` `file` loudly.
+- **My v1 F1–F3 are all fixed** (dead `TypeDescription` const gone; stale `BuildTypeEntries`/`Promote` doc gone; `subclass.Offers` binds `Offer` once at construction).
 
-Deterministic backing: `dotnet build PLang` **succeeds, 0 errors**, PLNG001/002 clean; the ~20 `CS0108` hides are all **pre-existing** (verified against the runtime2 base and against unchanged files) — the branch introduced **no new hide**, which is what the 776 ruling promised.
+Deterministic backing: `dotnet build PLang -t:Rebuild` → **0 errors**, PLNG001/002 clean; of 90 pre-existing `CS0108` hides, **none** is in the stage-4–6-touched core files — **no new hide** (the 776 discipline holds).
 
-### Findings (none blocking; all later-pass cleanup; none a surface change)
+### Findings (v2)
+**None.** Deferred and confirmed on branch A's list (not re-raised): F8.1 (the action-slot name checks), the `source.cs:115` text-face floor. Carried baseline (not this branch): the 6 Wire snapshot tests, `After_EachRetry…` timing.
 
-| ID | what | file:line | fix |
-|----|------|-----------|-----|
-| F1 | dead `TypeDescription` const (no reader; teaching lives in `type.description.md`) | `type/this.cs:150–166` | delete; likely pre-existing |
-| F2 | class doc narrates removed `BuildTypeEntries`/`Promote` construction path | `type/this.cs:21–26,144–149` | rewrite to the current ctor-fold |
-| F3 | `subclass.Offers` reflects `GetProperty("Offer")` per call — a second door to a fact `type.cs:810` reads once via `Declared<T>`, against the branch's bind-once discipline | `type/kind/subclass/this.cs:31–34` | bind `Offer` once at kind creation |
-
-Cited, not re-raised: `WriteReflected` OBPV (todos carry), `IsSequence` `new` on the kind base (acknowledged), `ToString name<kind>` (tracked F4.2, stage 6), the `Clr<object>() ?? value is string` failure idiom (app-systems F3.1 carry), `HasKind` app-wide guard (pre-existing; obp-cleanup candidate). Carry-discipline don't-raise items confirmed present: `type.Construct` beside `Make`, bool's closed pair (782), `Step.Set` json round-trip (798), `template` on its base (782).
-
-## Code example — the model's shape done right (the type's fact hooks)
+## Code example — the one door done right (the v2 crux)
 
 ```csharp
-// type/this.cs — a kind answers its own, else the family's STORED field (never the virtual:
-// a kind's Family is its parent entry, so the field terminates; the member could loop).
-public property.list.@this? Property { get => OwnProperty ?? kind.OwnProperty ?? Family._property; init => _property = value; }
-public virtual ValueTask<IReadOnlyList<item.@this>> Offers(step step)
-    => Family._offer is { } declared ? new(declared) : kind.Offers(step);
+// data/this.cs — a USE opens a resting source once; the courier never calls this.
+internal async ValueTask<item.@this> Open()
+{
+    var value = await Value();
+    if (!Success || _context is null || value is not item.source rest) return value;
+    try {
+        if (rest.Parse(_context) is not { } parsed) return value;
+        parsed.history.Add(rest);            // the source rides as history
+        if (rest.Cacheable) _item = parsed;  // parse-once (787)
+        return parsed;
+    }
+    catch (Exception ex) when (ex is JsonException or FormatException or ...) {
+        Fail(rest.Unread(ex, this));         // failure is an answer, never a throw to a courier
+        return value;
+    }
+}
 ```
-One fallback written once; the element owns its behaviour. This is why there is no `is kind` fork and no app-wide kind search — a kind is just the type one level down.
+Every use-site (navigation, enumeration, compare, typed ask, `is`) reaches this one door — the "if removing one line of choreography takes three files, those files are one missing type" smell is absent: the open logic lives once.
 
 ## Environment
 
-Ran in an isolated worktree `/workspace/plang-kind-is-type` on `kind-is-type` — the shared `/workspace/plang` checkout (on `compare-redesign`) must not have its branch switched. `Tools/ObpScan`'s Roslyn `MSBuildWorkspace` loader can't load `PLang.csproj` here (NuGet prune/vuln warnings abort the project model — a known tooling limitation; `dotnet build` is clean), so the member sweep was full-read + grep + the real compiler.
+Isolated worktree `/workspace/plang-kind-is-type` on `kind-is-type`; the shared `/workspace/plang` checkout must not have its branch switched. `Tools/ObpScan`'s MSBuildWorkspace can't load `PLang.csproj` here (NuGet prune/vuln warnings) — the member sweep was full-read + grep + the real compiler.
 
 ## Next
 
-PASS → **tester**. Nothing routes to the coder as a merge blocker; F1–F3 are later-pass cleanups. Stages 4–6 await the architect's go for a v2 review round.
+PASS → **tester**. Nothing routes to the coder. Both review rounds (v1 stages 0–3, v2 stages 4–6) are clean; the branch is merge-safe on behaviour. The two deferred items (F8.1, the floor) are branch A's "one make door" work, recorded there.

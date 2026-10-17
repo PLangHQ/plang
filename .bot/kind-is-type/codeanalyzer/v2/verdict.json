@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "kind-is-type stages 4-6 + 814 + stage-5 C# + security F1: OBP-exemplary, merge-safe, no new findings. json rests/a use opens through ONE data.Open() door (parse-once, failure-as-answer); the navigator is gone with no value-nav residue; OwnInternal (814/831) follows the Own* pattern loop-free on the decision-approved locked surface; file.read's Type slot keeps the carrier whole; F4.2 done; my v1 F1-F3 all fixed. Build clean (0 errors, PLNG001/002 at 0), no new CS0108 hide in the core. Deferred (F8.1, the source.cs:115 floor) confirmed on branch A's list, not re-raised. Next bot: tester."
+}
