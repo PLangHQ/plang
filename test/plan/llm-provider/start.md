@@ -178,8 +178,14 @@ The body is the coder's. Its parts already exist: `Build` (`:290–306`), the la
 
 - **Where `Ask` lives and how a provider plugs in.** The body has OpenAI's field names, so `Ask` is the provider's; `Default` must not hold it. One provider per folder, picked by a setting. How `Default` reaches the provider's `Ask` is open.
 - **gpt-4 versus gpt-5+.** Their JSON differs (Ingi: "watch out for gpt4 and gp5+ json difference"). One format file each, picked by a setting, never by an `if` on the model name.
-- **Reading the reply,** `answer.Read(reply, conversation)`. Today that's `OpenAi.cs:250–326`: the content, the stop reasons (`length`, `content_filter`) as the answer's failure, the tool calls, the usage.
-- **Usage and cost.** The price table is static in OpenAi (`:41`); lean: a setting per model.
+- **Reading the reply, decided (856).** It's the provider's `Read(reply, conversation)`, beside `Ask`:
+  - it reads through data's own navigation door (`reply.Get("choices[0].message.content")`, `data/this.Navigation.cs:14`), so `Nav<T>` goes;
+  - no choices is `EmptyResponse`;
+  - OpenAI's stop words that aren't a whole answer are one lookup in the provider (`length` → `ResponseTruncated`, `content_filter` → `ResponseFiltered`), not today's switch (`:303–313`);
+  - it answers `answer` (NEW: `Content` a carrier, `Tool`, `Usage`, `Conversation`);
+  - `usage` (NEW: `Prompt`, `Completion`, `Cached`, `Cost`) replaces the 8 loose counters (`:193–200`);
+  - the conversation adds up each answer's usage across tool rounds;
+  - prices become a setting per model, not the static table (`:41`).
 - **Tools:** the model's calls run against the step's tools, within the limit; each tool writes its own schema (today `BuildParamSchema` and `MapPlangTypeToJsonSchema`, `OpenAi.cs:762`, `:795`; todos.md 2026-09-23).
 - **The check:** `OnValidateResponse` and the retry message (today `:417–449`).
 - **The answer holds its conversation and usage** as real members, not 15 `SetProp` lines (`:489–503`).
