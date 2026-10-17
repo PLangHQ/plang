@@ -123,7 +123,36 @@ public async ValueTask<bool> IsDefault(item.@this? value, actor.context.@this co
 
 Reflection stays only where `property` is built from a C# class (`property/this.cs:21`). It's locked: `item`'s `Get`/`Set`, and `property`'s `Read`, `Write` and `IsDefault`.
 
-### 5. Reading a plang value as tokens (next)
+### 5. Reading a plang value as tokens (agreed)
+
+A reader reads tokens, but the only reader over a value already in hand is scalar-only (`type/format/value/reader.cs:14–17`, `:60–67`). So a parsed dict is written out as json just to be read back. There are two cases:
+
+- **The builder's answer.** It arrives as a dict, and `Step.Set` builds each action through three branches on what the row is, the last one being `FromJson`'s write-then-read (`goal/step/this.Item.cs:48–77`).
+- **A dict going into a module's record slot,** for example llm.query's `limit: { token: 1000, tool: 5 }` (`llm/type/limit/this.cs`). It falls back to C# lowering (`item/this.cs:241`). (Ingi caught my made-up `as order`: plang has no such type, a dict is a dict.)
+
+```csharp
+// type/format/item/reader.cs: NEW. A plang value read as tokens: a dict as an object (its keys, then each value),
+// a list as an array, any other value as its own token.
+public struct Reader : IReader
+{
+    public Reader(item.@this value, actor.context.@this context) { … }
+    public void BeginObject() => …;
+    public bool NextName(out string name) => …;
+    public void BeginArray() => …;
+    public string String() => …;
+    …
+}
+
+// goal/step/this.Item.cs: one way for every row, no branches on what it is, no json round trip
+foreach (var row in Rows(incoming, context))
+{
+    var tokens = new type.format.item.Reader(row, context);
+    node.Add(reader.Read(ref tokens, null, new ReadContext(context)) as action.@this
+             ?? throw new AppException("cannot build an action from a …", "NotAnAction", 400));
+}
+```
+
+What goes: `FromJson`, the `is dict or list` branch in `Step.Set`, and `item.Set`'s C# lowering fallback. It's locked: a new implementation of the serializer's `IReader`.
 
 ## Demolition, stays, checks, OBP validation
 
