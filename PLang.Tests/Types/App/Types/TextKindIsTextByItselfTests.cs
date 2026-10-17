@@ -3,12 +3,16 @@ using text = global::app.type.item.text.@this;
 namespace PLang.Tests.App.Types;
 
 /// <summary>
-/// Stage 1 (item-doors): a plain text's OWN kind answers that it's characters — no Name
-/// floor. Today <c>source.cs:115</c> reads <c>_type.kind.IsText || _type.Name is "text"</c>,
-/// because text's own format carries no <c>Text = true</c> (<c>type/item/text/this.cs:30</c>:
-/// <c>[Format("", "text/plain", ".txt")]</c>) and the kind built inline from the name has
-/// <c>IsText = false</c>. The floor patches it. Red today because <c>text.Type.kind.IsText</c>
-/// is false without asking the type's name.
+/// Stage 1 (item-doors, decisions 867 + 880): a plain text's OWN kind answers that it's
+/// characters — no Name floor. The value is born through the app's type door
+/// (<c>app.type.list["text"].Create("hello", ctx)</c>), not via <c>new</c>, since no
+/// value is made without its app (880).
+///
+/// <para>Red today: text's own format (<c>type/item/text/this.cs:30</c>:
+/// <c>[Format("", "text/plain", ".txt")]</c>) carries no <c>Text = true</c>, so the
+/// value's <c>Type.kind.IsText</c> is false. Today <c>source.cs:115</c> patches it with
+/// <c>_type.Name is "text"</c>. The stage makes the kind carry IsText from the registered
+/// facts (type born whole), without the Name fallback.</para>
 /// </summary>
 public class TextKindIsTextByItselfTests : System.IAsyncDisposable
 {
@@ -17,7 +21,10 @@ public class TextKindIsTextByItselfTests : System.IAsyncDisposable
 
     [Test] public async Task PlainText_Kind_IsText_WithoutNameFloor()
     {
-        var t = new text("hello");
+        var ctx = app.actor.list.System.Context;
+        var data = await app.type.list["text"].Create("hello", ctx);
+        var t = (text)await data.Value();
+
         await Assert.That(t.Type.kind).IsNotNull();
         await Assert.That(t.Type.kind.IsText).IsTrue();
     }
