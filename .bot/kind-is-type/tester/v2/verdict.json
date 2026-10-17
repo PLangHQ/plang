@@ -1,0 +1,8 @@
+{
+  "status": "pass",
+  "summary": "v1's F1 and F2 closed: each fix goes red under its mutation (M5a: Read_AsText_LandsTheContentAsText_NotAFileReference + plang AsTextLandsTextUncaptured; M8: KindFollowUpTests). No new reds: C# only the 6 baseline Wire tests; plang 294/264/15, all baseline. N1 (minor): KindsOffered's !k.Internal filter (814) is unpinned; removing it leaves every test green. Not blocking.",
+  "findings": [
+    {"id": "N1", "severity": "minor", "kind": "coverage-gap", "where": "PLang/app/goal/step/pick/list/this.cs:640", "pinned_by": null}
+  ],
+  "new_reds": []
+}
