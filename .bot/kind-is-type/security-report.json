@@ -77,6 +77,14 @@
     "build": "not run (read-only; F1 reproduces by inspection)",
     "worktree": "/workspace/plang-kind-is-type-security on origin/kind-is-type (96e22e675)"
   },
-  "summary": "PASS on re-check (d9bc6aae7). F1 closed at the one compose site. 767, 789/790 and the decider-key resave clean. Stage-4 producers, kind-is-type structure, llm-writer wait for architect go. Next bot: auditor.",
-  "next_bot": "auditor"
+  "summary": "v2 PASS (tip 356d9ca44). F1 remains closed at Reader.cs:69-80 (unchanged since d9bc6aae7). Stage 4 json-unread-courier: parse-on-use keeps Utf8JsonReader default MaxDepth=64 ≥ Wire.MaxReadDepth=64; unread bytes do not reach a trust decision (wire-layer verify runs before kind-decode). file.read's Type slot still gates reads through path.Bytes→AuthGate(read); Build publishes the Type carrier whole, no I/O. Stage 5 is builder teaching + re-pins, no runtime C#. Stage 6 .kind-direct / F4.2 face / F8.1 Takes cleanup is type-system plumbing — no AuthGate/signing/channel/sandbox touch; 834's #3 reverted. Fluid.cs:160 render-fix lands plain text (not code-kinded) — SSTI/encoding/callGoal/includes untouched. No new findings. Next bot: auditor.",
+  "next_bot": "auditor",
+  "v2": {
+    "tip": "356d9ca44",
+    "status": "pass",
+    "scope": "stage 4 (decisions 814, 822, 824-830), file.read Type slot (831, 836, 837, 838), stage 5 (816, 817, 835, 839, 840), stage 6 (833, 834), render fix (Fluid.cs:160, 2e83d21ff), F1 re-check (predicate unchanged)",
+    "findings": [],
+    "report": ".bot/kind-is-type/security/v2/result.md",
+    "verdict": ".bot/kind-is-type/security/v2/verdict.json"
+  }
 }

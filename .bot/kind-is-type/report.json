@@ -399,6 +399,67 @@
         "health": "clean on the architect-scoped surfaces.",
         "notes": "Next bot: auditor."
       }
+    },
+    {
+      "id": "a3f0b7d8-9c25-4e68-b4a1-6d9e3c0f8215",
+      "bot": "security",
+      "timestamp_start": "2026-10-17T00:00:00Z",
+      "timestamp_end": "2026-10-17T00:40:00Z",
+      "intent": "Second pass on kind-is-type at the review line's go (host while architect is busy). Cover everything since v1: stage 4, decision 814, file.read's Type slot + Build, stage 5, stage 6, Fluid.cs:160 render fix, F1 re-check.",
+      "before": {
+        "assumptions": "Deltas since v1 are mostly type-system plumbing and build-time teaching, with one trust-adjacent change (file.read's Type slot). V1's F1 is closed per codeanalyzer v2/v3; verify the predicate is still live.",
+        "risk": "A late parse that bypasses the pre-auth depth cap; the file.read Type slot letting a step read bytes it wasn't authorized to read; the render-fix changing the SSTI surface or sandbox; a reverted-and-left stage-6 change still sitting on the tip."
+      },
+      "plan": ".bot/kind-is-type/security/v2/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/goal/serializer/Reader.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 predicate unchanged (empty || '.' || '..' || contains '/','\\\\',':'); pins at GoalPathTests.APrFile_ThatNamesAPath_IsRefused intact; the one .pr location-fact compose site remains the single gate."
+        },
+        {
+          "paths": ["PLang/app/type/item/kind/json/this.cs", "PLang/app/data/Wire.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 4 json-unread-courier: Load returns an {item, json} source without parsing; Parse opens on use via Utf8JsonReader with default options — MaxDepth=64 matches Wire.MaxReadDepth=64. No new unbounded parse site. Unread bytes do not reach a trust decision (the wire-layer signature covers them whole before kind-decode)."
+        },
+        {
+          "paths": ["PLang/app/module/file/read.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "file.read Type slot (data<type>?): Start() does path.Bytes(Context) through AuthGate(read) BEFORE the declared type's birth; Build() returns the Type carrier whole with no I/O, or path.Expect() for a literal path. The 'as <type>' force does not weaken the gate — bytes still pass read before birth."
+        },
+        {
+          "paths": ["PLang/app/module/ui/code/Fluid.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Fluid.cs:165 render fix: `format is { Name: \"item\" }` branches structure-vs-plain-text. The Fluid rendering itself (HTML encoder, PlangFileProvider include-sandbox, callGoal tag's ValidatePath) is unchanged by the diff. Change is landed-value type only; SSTI surface untouched. Codeanalyzer F3.v3 is a design-smell carry to branch A, not security."
+        },
+        {
+          "paths": ["os/system/builder/", "PLang/app/type/this.cs", "PLang/app/type/kind/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 5 is builder teaching + re-pins (no runtime C# per decision 835). Stage 6 is .kind-direct / F4.2 face (`name<kind>` display) / F8.1 Takes-door cleanup — type-system plumbing, no AuthGate/signing/channel/sandbox touch. 834's #3 'source born with full type' regressed ~13 tests and was reverted, not on the tip."
+        },
+        {
+          "paths": [".bot/kind-is-type/security/v2/plan.md", ".bot/kind-is-type/security/v2/result.md", ".bot/kind-is-type/security/v2/verdict.json", ".bot/kind-is-type/security-report.json", ".bot/kind-is-type/security/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 output. verdict.json pass; security-report.json carries a v2 block with findings=[]."
+        }
+      ],
+      "after": {
+        "status": "v2 PASS. No new findings. All v1 standing items still hold (F1 closed, 767's '..' block live, 789/790 settings read-from-record discipline unchanged, no secret in repo or branch history).",
+        "health": "The branch's security posture is unchanged from v1 after fix: AuthGate / signing / sandbox / settings all untouched by the stage-4-through-stage-6 deltas and the render fix.",
+        "notes": "Semgrep 24/24 baseline. Decisions 843-846 live on llm-writer. 848 is process. 850 is a locked-core proposal routed to branch A. Next bot: auditor."
+      }
     }
   ]
 }

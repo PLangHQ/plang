@@ -1,52 +1,49 @@
 # security — kind-is-type
 
-**Version:** v1 (first review + F1 re-check PASS at d9bc6aae7; see `v1/recheck.md`).
+**Version:** v2 PASS (second pass, review-line go). v1 PASS after one-cycle fix (F1 closed at `d9bc6aae7`; see `v1/recheck.md`).
 
 ## What this is
 
-The architect's partial-scope review of kind-is-type: four pieces that landed on the branch and touch security — stage 0 (the .pr's goal path), 767 (goal name `..` block), 789/790 (settings read-from-record), and the decider-key resave. The rest of the branch is still being coded; the architect said to leave it for his go.
+Full-branch security review of `kind-is-type` against parent `runtime2@cf66e2d01`. V1 (partial, architect's scope) covered stage 0 / 767 / 789-790 / decider-key resave and surfaced F1. V2 (review-line go, host-driven while the architect is busy) covers everything that landed since v1: stage 4 (json's uses-parse model), decision 814 (`Internal` on host kinds), file.read's `Type` slot, stage 5 (builder's pick/list kind follow-up), stage 6 (`.kind` direct, F4.2 face, F8.1 Takes door), the render fix at `Fluid.cs:160`, and the F1 re-check.
 
 ## What was done
 
-Read-only review against parent `runtime2@cf66e2d01`. Semgrep clean (24 baseline hits, no new). Static trace of each piece against the parent-branch baseline and the standing patterns in memory (AuthGate canonicalisation, [Sensitive] discipline, signing pipeline, settings isolation).
+Read-only review of each delta against the trust model (user-sovereign — defend against untrusted .pr bytes, untrusted channel receives, untrusted LLM output as structured data). Semgrep 24/24 baseline — nothing new.
 
-**Outcome: PASS after one-cycle fix.** Initial read: FAIL — one High (F1). Coder landed `d9bc6aae7` closing the one compose site; re-check PASS. Details below.
+**Outcome: v2 PASS, no new findings.**
 
-Stage 0's rename closed the old `"path"` smuggle door, but the new `"file"` door was unvalidated: `goal/serializer/Reader.cs:96` composes `pr.Parent.Parent.Combine(file).Relative(ctx.Context)` with `file` read verbatim at line 69. `Combine` is `System.IO.Path.Combine` — a rooted `file` returns `file` whole; a `../..` climbs and gets resolved by the FilePath ctor's `Canonicalize`. The resulting `goal.Path.Folder` can be made to point under `app.OsAbsolutePath`; `path.Authorize.AskedByOs` then auto-grants that goal's steps silently — the exact threat decision 745 named. Reach is the same as 745: a plang app shipped with its `.build/*.pr` pre-built that the user runs without auditing.
+The deltas since v1 are mostly type-system plumbing (locked-core-adjacent) and build-time teaching. The one trust-adjacent change (`file.read`'s `Type` slot) still gates reads through `path.Bytes → AuthGate(read)` before the declared type's birth, so an `as <type>` force cannot read bytes the step's actor isn't allowed to read. The stage-4 "json rests, uses parse" model preserves the pre-auth depth cap (`Utf8JsonReader` default `MaxDepth=64 ≥ Wire.MaxReadDepth=64`), and unread bytes do not reach a trust decision — the wire-layer signature covers them whole before any kind-level decode. The `Fluid.cs:160` render-fix lands rendered output as a plain text (instead of a code-kinded text); the SSTI surface, HTML encoding, `callGoal` sandbox and gated include-provider are untouched. Stage 5 is `os/system/builder/**/*.notes.md` and `.template` teaching plus a `KindOf` goal — no runtime C# per decision 835. Stage 6's `.kind`-direct, F4.2 face (`name<kind>` display) and F8.1 Takes-door cleanup are structural improvements; 834's #3 "source born with full type" regressed ~13 tests and was reverted (not on the tip).
 
-Fix direction (one line in Reader.cs): refuse `file` with any path separator / `..` segment / rooted form, keyed `PrFormatOutdated` — mirrors the architect's own words that `"file"` is only a goal file's name. Alternative (silent): `Combine(pr.Parent.Parent, Path.GetFileName(file))` — mirrors line 71's old-shape reduction. Prefer the explicit refusal.
+Decisions 843-846 live on `llm-writer`, not here. 848 is a process complaint about ObpScan friction. 850 is a locked-core proposal routed to branch A; llm-writer applies a local workaround for image/binary. None landed in `kind-is-type`.
 
-**Verified clean:** 767's `..` block is sound and covers every goal-name-to-path door (`Find` is the single door). 789/790 settings read-from-record keeps class discipline (Record.cs:37 uses the owner's own ClrType; setting.Create guards `IsAbstract:false`, `!= base`, `IsAssignableFrom` and refuses unknown options); permissions still ride the signed wire so no row can be misread as granting more. No secret landed on the branch: the one `.sqlite` fixture that was added and later removed holds an empty `key` field.
+F1 re-check: predicate unchanged since the v1 recheck; pins at `GoalPathTests.APrFile_ThatNamesAPath_IsRefused` are intact.
 
 Files touched (output):
 
-- `.bot/kind-is-type/security/v1/plan.md`
-- `.bot/kind-is-type/security/v1/result.md`
-- `.bot/kind-is-type/security/v1/verdict.json`
-- `.bot/kind-is-type/security-report.json`
-- `.bot/kind-is-type/report.json` (appended my session)
+- `.bot/kind-is-type/security/v2/plan.md`
+- `.bot/kind-is-type/security/v2/result.md`
+- `.bot/kind-is-type/security/v2/verdict.json`
+- `.bot/kind-is-type/security-report.json` (updated)
+- `.bot/kind-is-type/report.json` (my v2 session appended)
 
-Next bot: **auditor** (F1 closed at `d9bc6aae7`; see `v1/recheck.md`).
+Next bot: **auditor**.
 
-## Code example — the hole and the shape of the fix
+## Code example — the one trust-adjacent delta read in context
 
-Today (`PLang/app/goal/serializer/Reader.cs`):
-
-```csharp
-case "file": file = reader.String(); break;           // :69 — accepted verbatim
-...
-if (parent == null && file != null && ctx.Origin is { } pr)
-    goal.Path = pr.Parent.Parent.Combine(file).Relative(ctx.Context);  // :96
-```
-
-Shape of the fix (refuse, mirror :88's PrFormatOutdated door):
+`file.read`'s `Start()` with a Type slot:
 
 ```csharp
-case "file":
-    file = reader.String();
-    if (file.Contains('/') || file.Contains('\\') || file.Split('/','\\').Contains("..")
-        || PathHelper.IsPathRooted(file))
-        throw new global::app.error.PrFormatOutdatedException(
-            $"'file' must be a goal's file name, not a path: '{file}'", ctx.Origin);
-    break;
+return await Path.Use(async path => typed
+    ? await Type!.Use(async declared =>
+    {
+        var bytes = await path.Bytes(Context);           // AuthGate(read) runs here
+        return bytes.Success
+            ? await declared.Create((await bytes.Value())?.Value, Context, path.Name.ToString(), path)
+            : bytes;
+    })
+    : Template is { IsInitialized: true }
+        ? await Template.Use(kind => path.Read(Context, kind.Value))
+        : await path.Read(Context));
 ```
+
+The `as <type>` force (Type slot) does not weaken the gate — bytes still have to pass `read` before the declared type gets to birth itself from them. The declared type's `Create` lifts the bytes into a plang value (text, dict, list, …) through its own birth; no extra FS reach.
