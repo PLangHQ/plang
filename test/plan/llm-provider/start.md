@@ -245,7 +245,11 @@ if (action.OnStream is { } onStream)
 ## Open: still to design with Ingi
 
 - **Where `Ask` lives and how a provider plugs in, decided (859).** The provider is `ILlm`, the `[Code]` slot, picked by `code.setDefault`; `llm/openai/this.cs` implements its `Ask`. The loop is `conversation.Run`.
-- **gpt-4 versus gpt-5+.** Their JSON differs (Ingi: "watch out for gpt4 and gp5+ json difference"). One format file each, picked by a setting, never by an `if` on the model name.
+- **gpt-4 versus gpt-5+, decided (860).** Both are supported (Ingi: "we need to support both strcutures, your suggestion is good"). The difference is the model's, not OpenAI's wire: the gpt-5 and reasoning models refuse a non-default `temperature`/`top_p` and take reasoning settings. So the model is its own small type in the provider, one file per variant (`llm/openai/model/this.cs`, `gpt4.cs`, `gpt5.cs`):
+  - each model has its name and its price (856), and writes its own part of the body: `model.Write(body, action)`;
+  - gpt4 writes temperature and top_p, gpt5 its reasoning settings;
+  - the provider writes the common part;
+  - the model is found by its name in OpenAI's setting, the list that holds the prices, never by an `if` on the name.
 - **Reading the reply, decided (856).** It's the provider's `Read(reply, conversation)`, beside `Ask`:
   - it reads through data's own navigation door (`reply.Get("choices[0].message.content")`, `data/this.Navigation.cs:14`), so `Nav<T>` goes;
   - no choices is `EmptyResponse`;
