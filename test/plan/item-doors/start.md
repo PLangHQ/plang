@@ -41,6 +41,41 @@ var value = await context.App.type.list["text"].Make("x", context);  // the type
 
 The coder's option of a cached stand-in stamped later by `Create` was ruled out: it's the late-stamp smell and it keeps the bare type.
 
+### 1b. A list's rows are made when read (agreed, 890; built after stage 1's step 3)
+
+Ingi spotted `_hasWrapped` in `list/this.cs:64` ("everytime I see some bool or name like wrapped, it feels wrong design"). Today a list can hold a C# list's rows raw. A row read is made into a value and written back into its slot (`Element`/`Keep`, `:178–192`), and the flag records that a slot has changed, so a never-touched list can go back to C# as the same object (`:653`). The list's own comment says rows are never cached back (`:31–35`), so the comment and the code disagree. Making every row up front is wrong for a billion rows (Ingi). Neither is two fields for the rows (Ingi: "_source and _own is double storage").
+
+The shape:
+- **One storage.** `_items` holds the rows: raw as given, plang values once written.
+- **A read** makes the row through the list's element type and keeps nothing: `this[row, context] => Type.kind.Make(_items[row], context)`. In plang a row is always a plang value (`%rows[0]%`, `foreach`).
+- **A write** puts the value in its slot.
+- **Saved or sent,** a plang row writes itself and a raw row is written as it is, never made into a value. A list that's read and saved, never touched, is never changed. The one `is` in `Output` is the edge between a raw C# row and a plang one.
+- **Back to C#,** a view lowers each row as C# reads it. No copy, no walk, no flag. It gives up today's "the same C# object back".
+
+```csharp
+private readonly List<object?> _items;
+public Data this[int row, actor.context.@this context] => Type.kind.Make(_items[row], context);
+public IEnumerable<Data> Items(actor.context.@this context) { for (var i = 0; i < _items.Count; i++) yield return this[i, context]; }
+public void Set(int row, item.@this value) => _items[row] = value;
+public override async ValueTask Output(IWriter writer, View mode, actor.context.@this context)
+{
+    writer.BeginArray(_items.Count);
+    foreach (var slot in _items)
+        if (slot is item.@this value) await value.Output(writer, mode, context);
+        else writer.Value(slot);
+    writer.EndArray();
+}
+internal override object? Clr(System.Type target) => new lowered(_items, target);
+```
+
+**Goes:**
+- `_hasWrapped` and its 10 uses;
+- `Keep`'s write-back on read;
+- `Born` and `Row`, two doors for one question, become the element type's `Make`;
+- the same-object exit (`:653`).
+
+**To check:** a write through a row that was read (`set %rows[0].name% = "x"`) reaches the list through `Set`.
+
 ### 2. One door for writing (agreed)
 
 `Output` is the only door. Each type's own `Output` writes what it is: its one token, or its members. The sync `Write` (overridden in 46 files, 36 of them in `type/item`) goes, and so does the `IsLeaf` branch in `Output` (`item/this.cs:906–913`; Ingi: "I like that IsLeaf check goes away").
