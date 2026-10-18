@@ -21,7 +21,7 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
 
     /// <summary>A file reference at <paramref name="path"/>, born with <paramref name="template"/>.</summary>
     public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context, global::app.type.item.template.kind.@this? template = null)
-        : base(path, context, template) { }
+        : base(typeof(@this), path, context, template) { }
 
     /// <summary>A file is made from its path, as <paramref name="declared"/> says: the reference to what is there,
     /// nothing read, born with the declaration's template. Anything else declines.</summary>

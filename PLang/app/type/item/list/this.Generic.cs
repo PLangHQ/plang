@@ -140,6 +140,10 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.list.@this> All(global::app.actor.context.@this context,
         global::app.type.item.dict.@this? setting = null)
     {
+        // A plain list<T> with no setting filters nothing: it is its own "all".
+        bool unfiltered = setting is null && GetType() == typeof(@this<T>);
+        if (unfiltered) return this;
+
         var every = new @this<T>();
         await foreach (var item in Walk(setting, context)) every.Add(item);
         return every;

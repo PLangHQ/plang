@@ -18,14 +18,11 @@ public sealed class @this : global::app.type.item.text.@this, global::app.type.i
     private readonly string? _name;
 
     /// <summary>Any characters as written.</summary>
-    public @this(string characters) : base(characters) { }
+    public @this(string characters) : base(characters, new global::app.type.@this("text", typeof(@this), "separator")) { }
 
     /// <summary>A named separator — its name and the characters it stands for.</summary>
-    private @this(string name, string characters) : base(characters) => _name = name;
-
-    /// <summary>A separator's type is <c>{text, kind: separator}</c> — a text with the separator kind, whatever
-    /// its characters. (text's own Type hardcodes text's kind, so a separator says its own.)</summary>
-    protected internal override global::app.type.@this Type => new("text", typeof(@this), "separator");
+    private @this(string name, string characters)
+        : base(characters, new global::app.type.@this("text", typeof(@this), "separator")) => _name = name;
 
     /// <summary>The characters it stands for — a named one's (<c>line</c> a new line), else its own.</summary>
     public string Characters => ToString();

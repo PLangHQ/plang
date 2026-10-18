@@ -275,18 +275,16 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         Created = StartedAt;
         Updated = StartedAt;
 
-        // Context is fundamental — it is born before almost everything else. The
-        // system & user actors (each owning a long-lived context) are constructed
-        // first so Type, Code, and the rest can be handed the context they birth
-        // values from. System is the cancellation root; User links to its token.
-        // The actor/context ctor touches App only lazily (Settings/Code via deferred
-        // lambdas) and uses pure-static type seeds, so nothing here needs Type/Code yet.
+        // The types come first: every value is born holding its type from this list, the actors' contexts too.
+        type = new(this);
+        type.list.Replace(type);   // %!app.type% and the list's entry named type are one object
+
+        // The system & user actors, each owning a long-lived context. System is the cancellation root; User links
+        // to its token.
         actor = new(this);
 
         // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
-        type = new(this);
-        type.list.Replace(type);   // %!app.type% and the list's entry named type are one object
         Code = new AppCode(actor.list.System.Context);
         module = new(this);
         goal = new(this);

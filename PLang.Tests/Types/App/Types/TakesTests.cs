@@ -32,7 +32,7 @@ public class TakesTests : System.IAsyncDisposable
 
         await Assert.That(made).IsTypeOf<UrlValue>();
         await Assert.That(((UrlValue)made).Path).IsSameReferenceAs(address);
-        await Assert.That(made.Template?.Name).IsEqualTo("plang");
+        await Assert.That(made.Type.Template?.Name).IsEqualTo("plang");
     }
 
     // The declaration rides beside the binding: a binding that declares nothing still births a template.
@@ -44,8 +44,8 @@ public class TakesTests : System.IAsyncDisposable
         var aFile = FileValue.Create(PathValue.Resolve("some.txt", Ctx), declared, binding);
         var aUrl = UrlValue.Create(PathValue.Resolve("https://example.com/t.txt", Ctx), declared, binding);
 
-        await Assert.That(aFile!.Template?.Name).IsEqualTo("plang");
-        await Assert.That(aUrl!.Template?.Name).IsEqualTo("plang");
+        await Assert.That(aFile!.Type.Template?.Name).IsEqualTo("plang");
+        await Assert.That(aUrl!.Type.Template?.Name).IsEqualTo("plang");
     }
 
     [Test] public async Task APlainList_DeclaredATypedList_IsTakenAsIt()

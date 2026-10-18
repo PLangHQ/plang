@@ -150,7 +150,7 @@ public class CreateEventTests : System.IAsyncDisposable
         await born.IsSuccess();
         await Assert.That(born.Peek()).IsTypeOf<global::app.type.item.file.@this>();
         await Assert.That(((global::app.type.item.file.@this)born.Peek()).Path).IsSameReferenceAs(path);
-        await Assert.That(born.Peek().Template?.Name).IsEqualTo("plang");
+        await Assert.That(born.Peek().Type.Template?.Name).IsEqualTo("plang");
     }
 
     [Test] public async Task DecodedContent_IsABirth_ThroughItsTypesCreate()

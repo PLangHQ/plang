@@ -1369,14 +1369,13 @@ abstract class app.type.item.content.this : app.type.item.this [PlangType]
   ContentText() : System.String
   IsLoaded : System.Boolean { get; }
   Path : app.type.item.path.this { get; } [LlmBuilder, Out, Store]
-  ctor(app.type.item.path.this path, app.actor.context.this context, app.type.item.template.kind.this template)
+  ctor(System.Type clr, app.type.item.path.this path, app.actor.context.this context, app.type.item.template.kind.this template)
   override Cacheable : System.Boolean { get; }
   override Open(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.error.this>
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Write(app.type.format.IWriter writer) : System.Void
-  protected override Type : app.type.this { get; }
   protected virtual Format(app.data.this read, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.kind.this>
   static Internal : System.Boolean { get; }
 
@@ -2451,7 +2450,6 @@ class app.type.item.separator.this : app.type.item.text.this, app.type.item.ICre
   Characters : System.String { get; }
   ctor(System.String characters)
   override Write(app.type.format.IWriter w) : System.Void
-  protected override Type : app.type.this { get; }
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.separator.this
   static Offer : System.Collections.Generic.IReadOnlyList<app.type.item.this> { get; }
 

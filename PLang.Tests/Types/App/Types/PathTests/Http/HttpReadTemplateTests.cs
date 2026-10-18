@@ -13,7 +13,7 @@ public class HttpReadTemplateTests
         var read = await url.Read(ctx, new global::app.type.item.template.kind.plang.@this());
 
         await read.IsSuccess();
-        await Assert.That(read.Peek()!.Template?.Name).IsEqualTo("plang");
+        await Assert.That(read.Peek()!.Type.Template?.Name).IsEqualTo("plang");
     }
 
     // Its text content renders at use: the url's variables are filled from the reader's.
@@ -43,6 +43,6 @@ public class HttpReadTemplateTests
         var read = await url.Read(ctx);
 
         await read.IsSuccess();
-        await Assert.That(read.Peek()!.Template).IsNull();
+        await Assert.That(read.Peek()!.Type.Template).IsNull();
     }
 }

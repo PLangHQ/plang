@@ -36,19 +36,18 @@ public abstract class @this : global::app.type.item.@this
     private byte[]? _bytes;
     private global::app.type.kind.@this? _format;
 
-    // The canonical kind of what is at the path ("json", "csv", …), named at creation through the creator's
-    // format registry and kept as a fact — a format registered later does not change a reference already made.
-    private readonly global::app.type.kind.@this? _kind;
-
     /// <summary>A reference at <paramref name="path"/>; <paramref name="context"/> is the creator's, used once to
     /// name the kind and not kept. <paramref name="template"/> is a birth fact: the programmer asked for the
     /// content's variables to be filled (<c>read … resolve variables</c>) — its text content is born a template
-    /// and renders itself at use.</summary>
-    protected @this(global::app.type.item.path.@this path, global::app.actor.context.@this context, global::app.type.item.template.kind.@this? template)
+    /// and renders itself at use. <paramref name="clr"/> is the concrete reference type (file, url).</summary>
+    protected @this(System.Type clr, global::app.type.item.path.@this path, global::app.actor.context.@this context, global::app.type.item.template.kind.@this? template)
+        : base(new global::app.type.@this(clr)
+        {
+            kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null,
+            Template = template,
+        })
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
-        _kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null;
-        Template = template;
         // Born from a path — its type joins this value's history, so `is path` answers from the chain.
         history.Add(path);
     }
@@ -66,12 +65,7 @@ public abstract class @this : global::app.type.item.@this
     /// what they hold at each use — never kept (the reference stays; its bytes are sampled once). Content holding
     /// none (a template whose text names only what it may not fill) renders the same every time: kept once
     /// opened, as unmarked content is.</summary>
-    public override bool Cacheable => (Template == null || _plain) && base.Cacheable;
-
-    /// <summary>The reference's type: its own name, with the kind named at creation — location metadata, never
-    /// reads content.</summary>
-    protected internal override global::app.type.@this Type =>
-        new global::app.type.@this(GetType()) { kind = _kind, Template = Template };
+    public override bool Cacheable => (Type.Template == null || _plain) && base.Cacheable;
 
     /// <summary>The format the sampled bytes are in, as the <paramref name="read"/> that fetched them tells — by
     /// default the path's.</summary>
@@ -89,7 +83,7 @@ public abstract class @this : global::app.type.item.@this
     {
         var sample = await Content(data.Context);
         if (!sample.Success) { data.Fail(sample.Error!); return Absent; }
-        var read = await _format!.Decode(Bytes, data.Context, template: Template, origin: Path);
+        var read = await _format!.Decode(Bytes, data.Context, template: Type.Template, origin: Path);
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         // the decoded value says whether it holds variables (born holding only what its origin allows)
         _plain = !read.Peek().HasVariable;
