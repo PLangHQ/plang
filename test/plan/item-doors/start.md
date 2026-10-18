@@ -211,16 +211,18 @@ Ingi asked for an OBP scan of settings ("we havent really done proper obp scan o
 
 | what | where | the fix |
 |---|---|---|
-| their own member system, all reflection (`Options`, `Option`, `Switch`, `Apply`'s `GetProperty`/`SetValue`, `Copy`, `Rows`, `Construct`) | `type/item/setting/this.cs:120–306` | a setting's options are its type's member list (#4) |
+| their own member system, all reflection (`Options`, `Option`, `Switch`, `Apply`'s `GetProperty`/`SetValue`, `Copy`, `Rows`, `Construct`) | `type/item/setting/this.cs:120–306` | a setting's options are its type's member list, `Type.Property` (singular, a `property.list`, #4). The plural `Options` (`:274`, a bare `IEnumerable<PropertyInfo>`) goes |
 | the address cut out of the C# namespace (`StartsWith("app.module.")`) | `setting/this.cs:23–32` | its address is its type's name (#1) |
 | an index made by making one of every settings class to read its address | `actor/setting/this.cs:350–359`, `:341` | the type list is the index |
-| this run's values as flat `"path.option"` strings, rebuilt into dicts by splitting on `.` | `actor/setting/this.cs:19`, `:117`, `:151`, `:403–431` | the values kept on the setting itself |
+| this run's values as flat `"path.option"` strings in a plural `_values` dict, rebuilt into dicts by splitting on `.` | `actor/setting/this.cs:19`, `:117`, `:151`, `:403–431` | each value kept on the setting itself, in its member. If a collection is still needed, it's singular with its own `.list`, never a plural bare dict |
 | six doors to get a setting (`Of<T>()`, `Of(owner)`, `Of(type)`, `Of(Type)`, `Of(module)`, `Of(action)`) | `actor/setting/this.cs:310–398` | one `await Get<T>()` |
 | branches on what something is (`key == "Path"`/`"Rows"`, a row checked for setting or action, `Apply`'s three branches, `IsComposite` by C# shape) | `setting/this.cs:110–115`, `:179–229`, `:236–245`; `actor/setting/this.cs:223–231` | each answers for itself |
 | throws where it could answer (`Set`, `Build` twice, `Apply` catching four exception types) | `setting/this.cs:137–144`, `:221–227`; `actor/setting/this.cs:295`, `:304` | the error is the answer |
 | a static (`Path<T>`) | `actor/setting/this.cs:314–317` | goes with the address |
 | every row read when the app starts, with a guard for reads during that read | `actor/setting/this.cs:79–94`, `:26`, `app/this.cs:406` | read on use |
 | two names for one fact (`Enabled` and `Disabled`); the row key `"{actor}!{path}"` built and parsed in three places | `setting/this.cs:41–47`; `actor/setting/this.cs:174`, `:189`, `:238` | one name; the key owned once |
+
+**Names follow the pattern** (Ingi: "Errors, Values og Options dont follow the correct pattern. should be sigular with .list"): a collection is a singular property naming the concept, of its own `X.list` type (`Type.Property`, a setting's `error` list if it holds several). Never a plural name (`Options`, `Values`, `Errors`) or a bare `List`/`Dictionary`/`IEnumerable`.
 
 The settings door and read-on-use were agreed for llm-provider (its 854). They're core, so they're built here, and llm-provider uses them. A setting asking for itself (`[Ask]`) stays llm-provider's.
 
