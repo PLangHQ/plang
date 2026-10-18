@@ -144,6 +144,20 @@ callStack.Audit.Add(error);      // "the callstack's audit — add this one"
 callStack.Audit.Newest           // the latest error
 ```
 
+**The node answers its default; `.list` answers them all.** Read alone, a singular node is one instance, the one its owner names as the default; `.list` is every one. Each owner decides its default: a dict's key is its first key, a task the last one written, a concept the current one.
+
+```
+%dict!key%          the first key
+%dict!key.list%     every key
+%task%              the last task written to the variable
+%task.list%         every task written there
+%!app.goal.list%    every goal; %!app.goal.current% the one running
+```
+
+The shape is the same everywhere: the concept nodes (`type/this.Generic.cs`, with `current`), `module.list`, `error.list`, `history.list`, `task.list`, `channel.list`. A new collection reuses it; it never invents a second one.
+
+The rule is for what plang reaches: a member a step navigates, or a field on the wire (`[Out]`) or in the store (`[Store]`). C# working over CLR objects can stay plural: a walk for `foreach` (`list.Items`, `dict.Entries`), an assembly list, a reflection cache.
+
 And the owner never proxies it. `callStack.AddError(...)` is wrong in every world — a middleman hiding what's actually happening. When the collection needs domain operations (`Load`, `Run`), those belong on the collection type — still never on the parent.
 
 Bare collections are fine as transient locals, private backing fields, and DTO fields at serialization boundaries.
