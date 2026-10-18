@@ -205,28 +205,65 @@ foreach (var row in Rows(incoming, context))
 
 What goes: `FromJson`, the `is dict or list` branch in `Step.Set`, and `item.Set`'s C# lowering fallback. It's locked: a new implementation of the serializer's `IReader`.
 
-### 6. Settings through the type system (agreed, 892)
+### 6. Settings store data and give it back (agreed, 892; 894)
 
-Ingi asked for an OBP scan of settings ("we havent really done proper obp scan of the setting"). They work, but beside the type system, not through it. Ingi: "yes, lets do that".
+Ingi asked for an OBP scan of settings ("we havent really done proper obp scan of the setting"). They work, but beside the type system, not through it. Ingi: "yes, lets do that". Then (894): "setting is just data, we dont really care what is in it, it´s the responsiblity of the user to 'convert' it (with something like Get<T>) to the right form, settings is just about storing and retrieving".
 
-| what | where | the fix |
+So the settings list keeps data by its address, in layers (this scope's, then the actor's saved row, the user's before the system's), and gives it back. It never looks inside: no check on a set, a save or a flag. The caller converts. `Get<T>()` reads the data at T's address (its type's name) and T's type makes a T from it, with T's own defaults for what the data leaves out. A bad row, or a member T can't take, is the answer's error.
+
+```csharp
+// actor/setting/this.cs, what stays (the bodies are the coder's)
+public async Task<data.@this> Get(string address)               // the closest scope's data, else the saved row,
+                                                                 // read from the store the first time it is asked; NotFound when none
+public async Task<data.@this<T>> Get<T>()                        // NEW (854): Get(T's type's name), made into T by T's type
+public data.@this Set(string address, data.@this data)          // this scope's, whole
+public Task<data.@this> Save(string address, data.@this data)   // the actor's row, whole
+public Task<data.@this> Remove(string address)
+```
+
+A member write, `set %!llm.setting.cache% = true`, goes through the variable path. It reads `llm.setting`'s data, sets `cache` on a copy (#4's `Set`, which adds a member the data lacks), and the settings list keeps the whole data in this scope. No path string is split. An action's fallback to its settings (`Get(action, option)`, `:102`) reads the action's address, then the module's, each data's member, else the action's default.
+
+What goes:
+
+| what | where | why |
 |---|---|---|
-| their own member system, all reflection (`Options`, `Option`, `Switch`, `Apply`'s `GetProperty`/`SetValue`, `Copy`, `Rows`, `Construct`) | `type/item/setting/this.cs:120–306` | a setting's options are its type's member list, `Type.Property` (singular, a `property.list`, #4). The plural `Options` (`:274`, a bare `IEnumerable<PropertyInfo>`) goes |
-| the address cut out of the C# namespace (`StartsWith("app.module.")`) | `setting/this.cs:23–32` | its address is its type's name (#1) |
-| an index made by making one of every settings class to read its address | `actor/setting/this.cs:350–359`, `:341` | the type list is the index |
-| this run's values as flat `"path.option"` strings in a plural `_values` dict, rebuilt into dicts by splitting on `.` | `actor/setting/this.cs:19`, `:117`, `:151`, `:403–431` | each value kept on the setting itself, in its member. If a collection is still needed, it's singular with its own `.list`, never a plural bare dict |
-| six doors to get a setting (`Of<T>()`, `Of(owner)`, `Of(type)`, `Of(Type)`, `Of(module)`, `Of(action)`) | `actor/setting/this.cs:310–398` | one `await Get<T>()` |
-| branches on what something is (`key == "Path"`/`"Rows"`, a row checked for setting or action, `Apply`'s three branches, `IsComposite` by C# shape) | `setting/this.cs:110–115`, `:179–229`, `:236–245`; `actor/setting/this.cs:223–231` | each answers for itself |
-| throws where it could answer (`Set`, `Build` twice, `Apply` catching four exception types) | `setting/this.cs:137–144`, `:221–227`; `actor/setting/this.cs:295`, `:304` | the error is the answer |
-| a static (`Path<T>`) | `actor/setting/this.cs:314–317` | goes with the address |
-| every row read when the app starts, with a guard for reads during that read | `actor/setting/this.cs:79–94`, `:26`, `app/this.cs:406` | read on use |
-| two names for one fact (`Enabled` and `Disabled`); the row key `"{actor}!{path}"` built and parsed in three places | `setting/this.cs:41–47`; `actor/setting/this.cs:174`, `:189`, `:238` | one name; the key owned once |
+| the setting's own member system, all reflection: `Options` (plural, a bare `IEnumerable<PropertyInfo>`), `Option`, `Switch`, `Apply`, `IsComposite`, `Construct`, `Copy`, its `Get`/`Set`/`Write`/`Next` overrides, `Create`'s option walk | `type/item/setting/this.cs:53–283` | a settings class is a plain type: its members are `Type.Property` (#4), and its type makes it (#1) |
+| `Rows`, the teaching rows | `setting/this.cs:290–306` | the type's `Property` list |
+| the address cut out of the C# namespace (`StartsWith("app.module.")`) | `setting/this.cs:23–32` | the address is the type's name |
+| `Enabled` and `Disabled`, two names for one fact | `setting/this.cs:41–47` | one name |
+| the option checks in the action and module nodes (`NotSupportedException`) | `setting/action/this.cs:39–52`, `setting/module/this.cs:27–37` | the store doesn't look inside. Whether the two classes stay as the address is traced in stage 0 and comes back |
+| this run's values as flat `"path.option"` strings in a plural `_values` dict; `Flatten`; `Under`'s split on `.`; `Set(path, IDictionary)` and its `Apply` check | `actor/setting/this.cs:19`, `:117–158`, `:403–431` | this scope's data by address, whole |
+| `_built`, `_version`, `Root`, `Move`, `Build`, `this[path]` (a built-setting cache) | `actor/setting/this.cs:27–47`, `:275–306` | nothing is built; `Get<T>` converts when asked |
+| six doors (`Of<T>()`, `Of(owner)`, `Of(type)`, `Of(Type)`, `Of(module)`, `Of(action)`), `Named`, `Instance`, `Fresh`, `Make`, `Class`, the `_classes` index made by making one of every settings class, the static `Path<T>` | `actor/setting/this.cs:308–398`, `:347–368` | one `await Get<T>()` |
+| every row read when the app starts: `Load`, `_rows`, `_held`, `_unread`, `_reading` | `actor/setting/this.cs:21–26`, `:79–94`, `:235–268`, `app/this.cs:406` | read on use |
+| `Option(row, name)`'s switch on what a row is; `Save`'s `NotASettingClass` refusal | `actor/setting/this.cs:160–180`, `:223–231` | the store doesn't look inside |
+| `Own` and `OwnAttribute`: no class carries it | `actor/setting/this.cs:219–220`, `setting/Own.cs` | dead |
+| the throws (`Owner`, `Build` twice, `Apply`'s four caught exception types) | `actor/setting/this.cs:203`, `:292`, `:295`, `:304`; `setting/this.cs:221–227` | the error is the answer |
+| the row key `"{actor}!{path}"` built and parsed in three places | `actor/setting/this.cs:174`, `:189`, `:238` | owned once |
 
-**Names follow the pattern** (Ingi: "Errors, Values og Options dont follow the correct pattern. should be sigular with .list"): a collection is a singular property naming the concept, of its own `X.list` type (`Type.Property`, a setting's `error` list if it holds several). Never a plural name (`Options`, `Values`, `Errors`) or a bare `List`/`Dictionary`/`IEnumerable`.
-
-The settings door and read-on-use were agreed for llm-provider (its 854). They're core, so they're built here, and llm-provider uses them. A setting asking for itself (`[Ask]`) stays llm-provider's.
+The settings door and read-on-use were agreed for llm-provider (its 854). They're core, so they're built here, and llm-provider uses them. A setting asking for itself (`[Ask]`) stays llm-provider's: it runs in `Get<T>`, where the conversion is.
 
 Each settings class is born with its type through a one-line constructor (891), part of stage 1.
+
+### 7. Collections are singular, with their own list (893, 894)
+
+Ingi: "Errors, Values og Options dont follow the correct pattern. should be sigular with .list", then "and any other plural you see". A collection is a singular property naming the concept, of its own `X.list` type (`Type.Property`). Never a plural name or a bare `List`/`Dictionary`/`IEnumerable`. Each is fixed in the stage that already touches its file. Plang-visible names and locked surfaces are marked; they wait for Ingi's yes.
+
+| what | where | the fix | stage |
+|---|---|---|---|
+| `property.Arguments`, a bare `IReadOnlyList` | `type/property/this.cs:69` (4 uses) | `Argument`, a `property.list` | 5 |
+| `type.Values`, `OwnValues`, `_values`: a choice's words as strings, beside `Offers`, which gives the same options as items. Plang-visible (`%x!type.values%`), locked | `type/this.cs:668`, `:676–677`; overrides in `choice/set/this.cs:35`, `choice/set/member/this.cs:10`, `choice/set/family/this.cs:23` | one door: `Option`, a list of plang values on the kind; `Offers` reads it for a closed kind | 5 |
+| the static `Alias` on text, list, dict, bool and binary, read by its name through reflection in two places; the kinds declare theirs through `OwnAlias` | `text/this.cs:68`, `list/this.cs:29`, `dict/this.cs:27`, `bool/this.cs:17`, `binary/this.cs:153`; read at `type/this.cs:805`, `type/list/Registry.cs:149` | the type is born with its alias (#1), declared once on `[PlangType]` (`[PlangType("text", "string")]`). Locked (an attribute) | 1 |
+| `item._identities`, a static cache | `type/item/this.cs:563` | goes: the registry asks once while it builds the type, and the type keeps the answer | 1 |
+| `number`'s static `Kinds` dict | `number/this.cs:72` | goes with step 2 (kinds in each app's list) | 1 |
+| `item.Fields` and dict's override | `type/item/this.cs:646`, `dict/this.cs:426` (6 uses) | goes: the type's `Property` list names the members (#4) | 5 |
+| `dict.KeyNames` (plural and glued) | `dict/this.cs:154` (3 uses) | goes: the dict's walk below | 5 |
+| four names for one walk: `list.Items(context)`, `dict.Entries(context)`, `item.Rows(context)`, `EnumerateItems` (also verb+noun) | `item/this.cs:347`, `:395`; `list/this.cs:277`, `:313`, `:325`; `dict/this.cs:165` (about 180 uses) | one walk on `item`, overridden by each container. Its name is Ingi's | 1b |
+| `Registry.Assemblies` and `reader.Assemblies`: public bare `List<Assembly>`, the same list twice | `type/list/Registry.cs:27`, `type/reader/this.cs:56` | one, singular, of its own list type, owned by the app's type list | 2 |
+| `table.Headers`, names only. Plang-visible (`%t.headers%`) | `type/table/this.cs:36` (31 uses) | the table's columns as a `property.list`, each a name and its type (#3 labels a column by its type) | 3 |
+| `data.Properties` and its class `app.data.Properties`; `property.Properties`. Locked (data) | `data/this.cs:205`, `type/property/this.cs:145` (241 uses) | a singular name. The name is Ingi's | 2 |
+
+Not in this branch's files (a later sweep, its own list): `call.Errors`, `Diffs`, `Tags`, `Arguments` (`call/this.cs:120–258`); `call.list.Variables` (`call/list/this.cs:81`); `error.Params`, `CallFrames`, `Variables`, `HelpfulLinks` (`error/this.cs:61–168`); `app.Services` (`app/this.cs:247`); `service.Channels`, `channel.Channels`, `channel.list.ChannelNames` and the static `Defaults` (`channel/list/this.cs:47`, `:153`); `module.ActionNames` (`module/this.cs:220`); `goal.setup.Goals`; `pick.question.Values`; `signature.Contracts`; the static `permission.AllVerbs`; `build.Files`; `snapshot.Entries`; the static `Choices` (`data/Operator.cs:80`, `module/code/kind/this.cs:16`, `test/format/this.cs:20`); `RequiresCapability.Capabilities`; `note.IAbout.Parts`; the screen and terminal modules' internals (`Codecs`, `Globals`, `Types`, `Fds`, `Tools`, `Rules`). llm's message `Images` and `ToolCalls` go with llm-provider, which rewrites the message.
 
 ## What the developer gets
 
@@ -245,7 +282,9 @@ Each stage ends with its tests built and run, and each test must go red without 
 3. **A type speaks for itself to a writer** (#3): the record door always, plang's own writer, the JSON Schema entries. It needs #2's registry.
 4. **Reading a plang value as tokens** (#5). It comes before #4 because #4's `Write` reads a dict into a record through this reader.
 5. **A type's members through its own list** (#4).
-6. **Settings through the type system** (#6). It needs #4, since a setting's options are its type's members. Then the list's rows made when read (#1b).
+6. **Settings store data and give it back** (#6). It needs #4: a member write and `Get<T>`'s conversion go through the type's members. Then the list's rows made when read (#1b).
+
+The plural names (#7) are fixed in the stage named beside each.
 
 ## Demolition
 
