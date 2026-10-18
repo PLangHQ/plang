@@ -1,6 +1,6 @@
 # item-doors
 
-**Status: designed (decisions 867–872); waiting for Ingi's go before the line starts.** Nothing is built.
+**Status: designed (decisions 1–6); waiting for Ingi's go before the line starts.** Nothing is built.
 
 Traces to: the conversation with Ingi on 2026-10-17, logged in `.bot/item-doors/architect/summary.md`. The branch is cut from runtime2 (c47265322), with kind-is-type merged in. It was called "branch A" until now. llm-provider and llm-writer are parked waiting for it, because their clean answers kept landing here.
 
@@ -30,9 +30,9 @@ public string Mime => Type.kind.Mime.FirstOrDefault() ?? "application/octet-stre
 
 Also from kind-is-type: the four strict-kind tests (F-SC-1), which wait on this.
 
-**No value is made without its app (880).** Ingi: "why would the be a type created without app, app always exists"; "maybe we need to remove Implicit conversions to plang type, fine to clr type. can't we give Create(raw) the app" → "yes". There were 57 context-free births: 34 implicit operators and 23 `Create(raw)` pure cores.
+**No value is made without its app (14).** Ingi: "why would the be a type created without app, app always exists"; "maybe we need to remove Implicit conversions to plang type, fine to clr type. can't we give Create(raw) the app" → "yes". There were 57 context-free births: 34 implicit operators and 23 `Create(raw)` pure cores.
 - The implicit conversions *into* plang types go (28 that make a plang value from a C# one). The ones out to C# stay.
-- `Create(raw)` takes the type that makes the value, called by the type's `Make`, the one door (796):
+- `Create(raw)` takes the type that makes the value, called by the type's `Make`, the one door (kind-is-type 796):
 
 ```csharp
 public static @this? Create(object? raw, type.@this type)           // today: Create(object? raw), no context
@@ -41,14 +41,14 @@ var value = await context.App.type.list["text"].Make("x", context);  // the type
 
 The coder's option of a cached stand-in stamped later by `Create` was ruled out: it's the late-stamp smell and it keeps the bare type.
 
-**Whether a value is a template is the build's decision, read from the `.pr` (896).** Ingi: "today it should be decided at build time, from the .pr file" → "lets go with a". A row's type carries `"template": "plang"` and the row lists its variables (`os/system/builder/.build/emitbuildevent.pr:47–62`); the reader takes that type from the row (`goal/step/action/serializer/Reader.cs:129`, `:147`, `:155`).
+**Whether a value is a template is the build's decision, read from the `.pr` (30).** Ingi: "today it should be decided at build time, from the .pr file" → "lets go with a". A row's type carries `"template": "plang"` and the row lists its variables (`os/system/builder/.build/emitbuildevent.pr:47–62`); the reader takes that type from the row (`goal/step/action/serializer/Reader.cs:129`, `:147`, `:155`).
 - A row's own value is born with the row's type and stores the variables the row lists. Text's second check in its constructor (`text/this.cs:353–358`) goes.
 - dict and list are born with the type the reader hands them, the row's template mode, as today (`type/item/serializer/json.cs:165`, `:173`).
 - A container's inner slot has no mark of its own. A text slot is a template when its content holds one of the row's variables. It is matched against the row's list, never parsed on load. A slot holding none stays a raw string (`json.cs:68`), so its canonical form and signing don't change. The match is in one place, not in each reader.
 - A template with no `.pr` list (one made while building) is parsed by whoever makes it, as today.
 - Checks: every `.pr` read and written again byte-equal, and the signing tests.
 
-### 1b. A list's rows are made when read (agreed, 890; built after stage 1's step 3)
+### 1b. A list's rows are made when read (agreed, 24; built after stage 1's step 3)
 
 Ingi spotted `_hasWrapped` in `list/this.cs:64` ("everytime I see some bool or name like wrapped, it feels wrong design"). Today a list can hold a C# list's rows raw. A row read is made into a value and written back into its slot (`Element`/`Keep`, `:178–192`), and the flag records that a slot has changed, so a never-touched list can go back to C# as the same object (`:653`). The list's own comment says rows are never cached back (`:31–35`), so the comment and the code disagree. Making every row up front is wrong for a billion rows (Ingi). Neither is two fields for the rows (Ingi: "_source and _own is double storage").
 
@@ -89,16 +89,16 @@ internal override object? Clr(System.Type target) => new lowered(_items, target)
 
 - **The writer carries its output kind**, an object, not `string Format`.
 - **`Owns` and its 5 checks go.**
-- **The byte door** (844, Ingi's yes): `Bytes(byte[] value, kind kind)` replaces `Bytes(byte[])` and `Raw(byte[])`.
-- **The pair registry** (846, Ingi's yes): what an input kind looks like in an output kind, when it isn't the default. json in json is copied as is; a list in formal is a list of arguments, which replaces list's `_formats`. It's looked up in one place, `data.Output`.
+- **The byte door** (kind-is-type 844, Ingi's yes): `Bytes(byte[] value, kind kind)` replaces `Bytes(byte[])` and `Raw(byte[])`.
+- **The pair registry** (kind-is-type 846, Ingi's yes): what an input kind looks like in an output kind, when it isn't the default. json in json is copied as is; a list in formal is a list of arguments, which replaces list's `_formats`. It's looked up in one place, `data.Output`.
 - **The json writer's `Value(object)`** keeps only C# primitives.
 
 ### 3. A type speaks for itself to a writer (agreed)
 
-- **Data always tells the writer what it is, and each writer decides how much to show.** The record door already exists (`BeginRecord(data)`, `kind/json/writer.cs:69`, `text/writer.cs:84`), so the `EmitsSchema` bool (`IWriter.cs:36`) and Data's two `if`s on it (`data/this.Output.cs:83`, `:126`) go. That's 813.
+- **Data always tells the writer what it is, and each writer decides how much to show.** The record door already exists (`BeginRecord(data)`, `kind/json/writer.cs:69`, `text/writer.cs:84`), so the `EmitsSchema` bool (`IWriter.cs:36`) and Data's two `if`s on it (`data/this.Output.cs:83`, `:126`) go. That's kind-is-type 813.
   - Bare json shows only the value.
   - plang is its own output kind with its own writer: `{"type", "value", "signature"}` on the wire, plus `name` only in the Store view. The wire already leaves the name out (`data/this.Output.cs:94–99`; Ingi: "name should now be serialized on the data class" → "good").
-  - The llm table learns a column's type from the cell's record (815).
+  - The llm table learns a column's type from the cell's record (kind-is-type 815).
 - **When a type looks different in another output kind, that lives in the type's own folder** (`type/<name>/serializer/<kind>.cs`, discovered as readers are, `type/reader/this.cs:14–18`), as #2's pair-registry entry, through `IOutput` (`type/format/IOutput.cs`).
   - The first entries are each type's JSON Schema (todos.md 2026-09-23), used by llm-provider's tools: number → `"number"`, its int kind → `"integer"`, path → `"string"`.
   - plang's own word rides in JSON Schema's free `format` field (`{"type": "string", "format": "path"}`). OpenAI checks `type`, so plang's word can't go there (Ingi: "can we not use the plang types … if not that is ok").
@@ -129,7 +129,7 @@ public void EndRecord(data.@this record)
     _json.WriteEndObject();
 }
 
-// module/llm/table.cs: a column's type from the cell itself (815)
+// module/llm/table.cs: a column's type from the cell itself (kind-is-type 815)
 public void BeginRecord(data.@this record) => _column ??= record.Type;
 
 // type/item/number/serializer/schema.cs: NEW, a number's type as a JSON Schema
@@ -212,19 +212,19 @@ foreach (var row in Rows(incoming, context))
 
 What goes: `FromJson`, the `is dict or list` branch in `Step.Set`, and `item.Set`'s C# lowering fallback. It's locked: a new implementation of the serializer's `IReader`.
 
-### 6. Settings store data and give it back (agreed, 892; 894)
+### 6. Settings store data and give it back (agreed, 26; 28)
 
-Ingi asked for an OBP scan of settings ("we havent really done proper obp scan of the setting"). They work, but beside the type system, not through it. Ingi: "yes, lets do that". Then (894): "setting is just data, we dont really care what is in it, it´s the responsiblity of the user to 'convert' it (with something like Get<T>) to the right form, settings is just about storing and retrieving".
+Ingi asked for an OBP scan of settings ("we havent really done proper obp scan of the setting"). They work, but beside the type system, not through it. Ingi: "yes, lets do that". Then (28): "setting is just data, we dont really care what is in it, it´s the responsiblity of the user to 'convert' it (with something like Get<T>) to the right form, settings is just about storing and retrieving".
 
 So the settings list keeps data by its address, in layers (this scope's, then the actor's saved row, the user's before the system's), and gives it back. It never looks inside: no check on a set, a save or a flag. The caller converts. `Get<T>()` reads the data at T's address (its type's name) and T's type makes a T from it, with T's own defaults for what the data leaves out. A bad row, or a member T can't take, is the answer's error.
 
-Each reader decides its default (Ingi, 895: "each should decide what default is"). A plang read (`%!llm.setting.cache%`) gives what is stored, and nothing when nothing is; the step that reads it decides. `Get<T>` is the same rule in C#: T decides.
+Each reader decides its default (Ingi, 29: "each should decide what default is"). A plang read (`%!llm.setting.cache%`) gives what is stored, and nothing when nothing is; the step that reads it decides. `Get<T>` is the same rule in C#: T decides.
 
 ```csharp
 // actor/setting/this.cs, what stays (the bodies are the coder's)
 public async Task<data.@this> Get(string address)               // the closest scope's data, else the saved row,
                                                                  // read from the store the first time it is asked; NotFound when none
-public async Task<data.@this<T>> Get<T>()                        // NEW (854): Get(T's type's name), made into T by T's type
+public async Task<data.@this<T>> Get<T>()                        // NEW (llm-provider 2): Get(T's type's name), made into T by T's type
 public data.@this Set(string address, data.@this data)          // this scope's, whole
 public Task<data.@this> Save(string address, data.@this data)   // the actor's row, whole
 public Task<data.@this> Remove(string address)
@@ -250,20 +250,20 @@ What goes:
 | the throws (`Owner`, `Build` twice, `Apply`'s four caught exception types) | `actor/setting/this.cs:203`, `:292`, `:295`, `:304`; `setting/this.cs:221–227` | the error is the answer |
 | the row key `"{actor}!{path}"` built and parsed in three places | `actor/setting/this.cs:174`, `:189`, `:238` | owned once |
 
-The settings door and read-on-use were agreed for llm-provider (its 854). They're core, so they're built here, and llm-provider uses them. A setting asking for itself (`[Ask]`) stays llm-provider's: it runs in `Get<T>`, where the conversion is.
+The settings door and read-on-use were agreed for llm-provider (its 2). They're core, so they're built here, and llm-provider uses them. A setting asking for itself (`[Ask]`) stays llm-provider's: it runs in `Get<T>`, where the conversion is.
 
-Each settings class is born with its type through a one-line constructor (891), part of stage 1.
+Each settings class is born with its type through a one-line constructor (25), part of stage 1.
 
-### 7. Plang's collections are singular, with their own list (893–895)
+### 7. Plang's collections are singular, with their own list (27–29)
 
-Ingi: "Errors, Values og Options dont follow the correct pattern. should be sigular with .list", then "and any other plural you see". A collection plang reaches (a member a step navigates, a wire or store field) is a singular property naming the concept, of its own `X.list` type (`Type.Property`). C# working over CLR objects (a walk for `foreach`, an assembly list, a reflection cache, internal name lists) can stay plural (Ingi, 895: "those are working with the clr objects, they can be plural"). Ingi said yes to these four (895):
+Ingi: "Errors, Values og Options dont follow the correct pattern. should be sigular with .list", then "and any other plural you see". A collection plang reaches (a member a step navigates, a wire or store field) is a singular property naming the concept, of its own `X.list` type (`Type.Property`). C# working over CLR objects (a walk for `foreach`, an assembly list, a reflection cache, internal name lists) can stay plural (Ingi, 29: "those are working with the clr objects, they can be plural"). Ingi said yes to these four (29):
 
 | what | where | the fix | stage |
 |---|---|---|---|
 | `type.Values`, `OwnValues`, `_values`: a choice's words as strings, beside `Offers`, which gives the same options as items. Plang reaches it (`%x!type.values%`) | `type/this.cs:668`, `:676–677`; overrides in `choice/set/this.cs:35`, `choice/set/member/this.cs:10`, `choice/set/family/this.cs:23` | one door: `Option`, a list of plang values on the kind; `Offers` reads it for a closed kind | 5 |
 | the static `Alias` on text, list, dict, bool and binary, read by its name through reflection in two places; the kinds declare theirs through `OwnAlias` | `text/this.cs:68`, `list/this.cs:29`, `dict/this.cs:27`, `bool/this.cs:17`, `binary/this.cs:153`; read at `type/this.cs:805`, `type/list/Registry.cs:149` | the type is born with its alias (#1), declared once on `[PlangType]` (`[PlangType("text", "string")]`) | 1 |
 | `table.Headers`, names only. Plang reaches it (`%t.headers%`) | `type/table/this.cs:36` (31 uses) | the table's columns as a `property.list`, each a name and its type (#3 labels a column by its type) | 3 |
-| `data.Properties` and its class `app.data.Properties`; `property.Properties`. On the wire as `"properties": {…}` (`data/Properties.cs:6–7`); no `.pr` carries it (the `.pr`'s `property` is the action's list) | `data/this.cs:205`, `type/property/this.cs:145` (241 uses) | `data.Property`, the wire key `property` (897, Ingi: "it is data.property and type.property") | 2 |
+| `data.Properties` and its class `app.data.Properties`; `property.Properties`. On the wire as `"properties": {…}` (`data/Properties.cs:6–7`); no `.pr` carries it (the `.pr`'s `property` is the action's list) | `data/this.cs:205`, `type/property/this.cs:145` (241 uses) | `data.Property`, the wire key `property` (31, Ingi: "it is data.property and type.property") | 2 |
 
 Not in this branch's files, a later sweep (collections plang reaches; each checked for that when the sweep starts): `call.Errors`, `Diffs`, `Tags` (`call/this.cs:120–164`); `call.list.Variables` (`call/list/this.cs:81`); `error.Params`, `CallFrames`, `Variables` (`error/this.cs:77–168`); `app.Services` (`app/this.cs:247`); `service.Channels`, `channel.Channels`; `goal.setup.Goals`; `signature.Contracts`; `snapshot.Entries`. llm's message `Images` and `ToolCalls` go with llm-provider, which rewrites the message.
 
@@ -309,7 +309,7 @@ The verdicts are the contract; the order inside a stage is the coder's. If a ver
 - [ ] `kind.Owns(IWriter)` (`type/kind/this.cs:177`), its overrides (`type/item/kind/json/this.cs:26`, `type/item/wire/kind/plang/this.cs:126`), and its calls (`type/format/IWriter.cs:76`, `type/item/content/this.cs:138`, `type/item/source.cs:363`, `type/item/wire/this.cs:61`, `:74`)
 - [ ] `IWriter.Format` and `IReader.Format` as strings (`type/format/IWriter.cs:26`, `IReader.cs:49`); the writer carries its output kind
 - [ ] list's `_formats` (`type/item/list/this.cs:293–300`); its formal form (`list/format/formal.cs`) becomes formal's pair-registry entry for list
-- [ ] `IWriter.Bytes(byte[])` and `IWriter.Raw(byte[])` (`IWriter.cs:51`, `:64`), replaced by `Bytes(byte[] value, kind kind)` (844)
+- [ ] `IWriter.Bytes(byte[])` and `IWriter.Raw(byte[])` (`IWriter.cs:51`, `:64`), replaced by `Bytes(byte[] value, kind kind)` (kind-is-type 844)
 - [ ] the dict, list and item arms of the json writer's `Value(object)`
 
 **Stage 3:**
@@ -326,8 +326,8 @@ The verdicts are the contract; the order inside a stage is the coder's. If a ver
 - [ ] `property.IsDefault`'s decision by type names and text (`type/property/this.cs:118–138`)
 
 **Not this branch, its own item:** the formal reader's lexing, for the builder's parser, with its own trace:
-- the chain switching on type names (`goal/step/action/formal/reader.cs:317`: text, duration, number arms). The direction: each type answers how a bare word reads as it (877).
-- `LiteralType` (`:415`), a static helper switching on a literal's shape to return a type name. I ruled it "stays"; Ingi flagged it to the coder ("LiteralType obpv if it's on code base not a test"). The literal answers its own type (878).
+- the chain switching on type names (`goal/step/action/formal/reader.cs:317`: text, duration, number arms). The direction: each type answers how a bare word reads as it (11).
+- `LiteralType` (`:415`), a static helper switching on a literal's shape to return a type name. I ruled it "stays"; Ingi flagged it to the coder ("LiteralType obpv if it's on code base not a test"). The literal answers its own type (12).
 
 **Stays:**
 - the reader registry and its folder discovery (`type/reader/this.cs`);
@@ -344,11 +344,11 @@ The verdicts are the contract; the order inside a stage is the coder's. If a ver
 - **Byte-equal outputs:** every `.pr` read and written again; the plang wire (`application/plang`); json writes; the decider pins and the builder's prompts.
 - **A real build after stage 4,** because the builder's answer path changes.
 - **The surface golden re-pinned for each locked change**, with its decision:
-  - `item`'s `Type` (867);
-  - `IWriter`/`IReader`, kind, the pair registry (868, 844, 846);
-  - the record door's writers (869);
-  - `IReader`'s new implementation (871);
-  - `item`'s `Get`/`Set` and `property`'s members (870, 872).
+  - `item`'s `Type` (1);
+  - `IWriter`/`IReader`, kind, the pair registry (2, kind-is-type 844, 846);
+  - the record door's writers (3);
+  - `IReader`'s new implementation (5);
+  - `item`'s `Get`/`Set` and `property`'s members (4, 6).
 - **Every stage:** PLNG001/002 at 0; no new red against runtime2's baseline.
 
 ## OBP validation
