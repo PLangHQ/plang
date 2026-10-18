@@ -1470,6 +1470,7 @@ class app.type.item.dict.this : app.type.item.this, app.type.item.ICreate<app.ty
   Set(System.String key, System.Object value) : app.type.item.dict.this
   Set(app.data.this value) : app.type.item.dict.this
   ctor()
+  ctor(app.type.this type)
   override Cacheable : System.Boolean { get; }
   override Contains(app.data.this needle) : System.Threading.Tasks.ValueTask<System.Boolean>
   override Copy() : app.type.item.this
@@ -1487,7 +1488,6 @@ class app.type.item.dict.this : app.type.item.this, app.type.item.ICreate<app.ty
   override Where(app.type.item.text.this field, app.data.Operator op, app.data.this value, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   protected override Fields : System.Collections.Generic.IEnumerable<System.String> { get; }
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  protected override Type : app.type.this { get; }
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.dict.this
   static Create(app.type.item.this value) : app.type.item.dict.this
@@ -2691,7 +2691,6 @@ class app.type.item.text.this : app.type.item.this, System.IEquatable<app.type.i
   Grep(app.type.item.text.this pattern, app.actor.context.this context, app.type.item.number.this lines = …) : System.Threading.Tasks.Task<app.data.this<app.type.item.list.this<app.type.item.text.this>>> [LlmBuilder]
   GrepCount(app.type.item.text.this pattern, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.number.this>> [LlmBuilder]
   IndexOf(System.String other) : System.Int32
-  Kind : System.String { get; init; }
   Length : app.type.item.number.this { get; } [LlmBuilder]
   MaxLength(app.type.item.number.this max) : app.type.item.text.this [LlmBuilder]
   Replace(System.String oldValue, System.String newValue) : app.type.item.text.this
@@ -2702,9 +2701,8 @@ class app.type.item.text.this : app.type.item.this, System.IEquatable<app.type.i
   ToLower() : app.type.item.text.this [LlmBuilder]
   ToUpper() : app.type.item.text.this [LlmBuilder]
   Trim() : app.type.item.text.this [LlmBuilder]
-  ctor(System.Object raw, app.type.item.template.kind.this template = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …)
-  ctor(System.String value)
-  ctor(System.String value, app.type.item.template.kind.this template, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …)
+  ctor(System.Object raw, app.type.this type = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …)
+  ctor(System.String value, app.type.this type = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …)
   override Cacheable : System.Boolean { get; }
   override Contains(app.data.this needle) : System.Threading.Tasks.ValueTask<System.Boolean>
   override Debug(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.String>
@@ -2728,7 +2726,6 @@ class app.type.item.text.this : app.type.item.this, System.IEquatable<app.type.i
   override Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; }
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  protected override Type : app.type.this { get; }
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   static Create(System.Object raw) : app.type.item.text.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.text.this

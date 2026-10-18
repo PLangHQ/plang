@@ -251,7 +251,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     // goal names a type and a kind of text: the type wins, so a text of kind goal is no goal
     [Test] public async Task Is_AWordThatNamesATypeAndAKind_AsksTheType()
     {
-        var goalText = new global::app.type.item.text.@this("Start\n- write out 'hi'") { Kind = "goal" };
+        var goalText = new global::app.type.item.text.@this("Start\n- write out 'hi'", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), "goal"));
         await Assert.That(goalText.Is("goal", _app.type.list)).IsFalse();
         await Assert.That(IsFalse(await EvalIf(goalText, "is", "goal"))).IsTrue();
     }

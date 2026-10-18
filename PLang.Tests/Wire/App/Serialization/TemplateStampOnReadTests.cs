@@ -20,13 +20,21 @@ public class TemplateStampOnReadTests : System.IAsyncDisposable
     }
 
     [Test] public async Task AuthoredMode_StampsRefText()
-        => await Assert.That(ReadText("\"hi %name%\"", new global::app.type.item.template.kind.plang.@this()).Template?.Name).IsEqualTo("plang");
+    {
+        var text = ReadText("\"hi %name%\"", new global::app.type.item.template.kind.plang.@this());
+        await Assert.That(text.Type.Template?.Name).IsEqualTo("plang");
+        await Assert.That(text.HasVariable).IsTrue();
+    }
 
     [Test] public async Task RuntimeMode_DoesNotStampRefText()
-        => await Assert.That(ReadText("\"hi %name%\"", null).Template).IsNull();
+    {
+        var text = ReadText("\"hi %name%\"", null);
+        await Assert.That(text.Type.Template).IsNull();
+        await Assert.That(text.HasVariable).IsFalse();
+    }
 
     [Test] public async Task HolelessText_NeverStamps_EvenAuthored()
-        => await Assert.That(ReadText("\"hello\"", new global::app.type.item.template.kind.plang.@this()).Template).IsNull();
+        => await Assert.That(ReadText("\"hello\"", new global::app.type.item.template.kind.plang.@this()).HasVariable).IsFalse();
 
     private global::app.type.item.list.@this ReadList(string json, global::app.type.item.template.kind.@this? mode)
     {

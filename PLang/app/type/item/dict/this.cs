@@ -53,9 +53,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this()
         : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase)) { }
 
+    /// <summary>An empty dict born holding <paramref name="type"/> — the reader hands it the row's type (its
+    /// template mode); the dict itself never checks its content.</summary>
+    public @this(global::app.type.@this type)
+        : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase), type) { }
+
     /// <summary>A dict's own type entity — the type owns its name (no namespace reflection). Carries
     /// the template flag so a template=plang dict resolves its %var% leaves at .Value().</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this)) { Template = Template };
 
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>dict</c> through; any other value declines (<c>null</c>). Real construction
@@ -94,9 +98,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// hands the same instance back; the first write diverges it (<see cref="_hasWrapped"/>).
     /// The comparer is the source's own — PLang's own dicts are built case-insensitive
     /// via the default ctor.</summary>
-    internal @this(Dictionary<string, object?> backing) => _value = backing;
+    internal @this(Dictionary<string, object?> backing, global::app.type.@this? type = null)
+        : base(type ?? new global::app.type.@this("dict", typeof(@this))) => _value = backing;
 
-    private @this(Dictionary<string, object?> backing, bool wrapped) : this(backing) => _hasWrapped = wrapped;
+    private @this(Dictionary<string, object?> backing, bool wrapped, global::app.type.@this? type = null)
+        : this(backing, type) => _hasWrapped = wrapped;
 
     /// <summary>A dict no other holder's change reaches: its entries copied (a nested container copied, every other
     /// value shared), in their order, with its keys' casing.</summary>
@@ -104,7 +110,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         var entries = new Dictionary<string, object?>(_value.Comparer);
         foreach (var (key, slot) in _value) entries[key] = Copied(slot);
-        return new @this(entries, _hasWrapped) { Template = Template };
+        return new @this(entries, _hasWrapped, Type);
     }
 
     // Type-on-read: hand back the entry under `key` as a FRESH Data born with the asker's
@@ -364,7 +370,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // on the consumer or a sync Clr.
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
-        if (Template == null) return this;
+        if (Type.Template == null) return this;
         var result = new @this();
         foreach (var key in _value.Keys)
         {
@@ -385,11 +391,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override bool IsTruthy() => _value.Count > 0;
 
     /// <summary>A stamped container's render depends on outside state — never kept.</summary>
-    public override bool Cacheable => Template == null;
+    public override bool Cacheable => Type.Template == null;
 
     /// <summary>A stamped container holds the variables its entries hold.</summary>
     public override IReadOnlyList<global::app.type.item.variable.@this> Variable
-        => Template == null ? [] : _value.Values
+        => Type.Template == null ? [] : _value.Values
             .SelectMany(slot => slot switch
             {
                 global::app.data.@this held => held.Peek().Variable,

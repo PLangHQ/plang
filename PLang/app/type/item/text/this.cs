@@ -80,17 +80,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <inheritdoc/>
     public override IReadOnlyList<global::app.type.item.variable.@this> Variable => _variable;
 
-    /// <summary>The value's kind — the file-extension vocabulary (md, csv, …).
-    /// An ordinary typed property stamped at creation, never after.</summary>
-    public string? Kind { get; init; }
-
-    // The text's type, made once, when it is first asked for (a text's kind and template are stamped at creation, so
-    // it never changes after). A text writes itself by asking its type's kind, so it holds its type, never
-    // rebuilding it on every read.
-    private global::app.type.@this? _type;
-
-    protected internal override global::app.type.@this Type
-        => _type ??= new("text", typeof(@this), Kind, template: Template);
 
     /// <summary>
     /// THE PURE CORE — "text, make yourself from this value, or decline." A <c>text</c> passes
@@ -125,7 +114,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>A stamped template's answer depends on outside state (%refs%
     /// can change between uses) — never kept. Plain text caches as always.</summary>
-    public override bool Cacheable => Template == null;
+    public override bool Cacheable => Type.Template == null;
 
     /// <summary>
     /// THE door — ready means ready: a stamped template fills its holes
@@ -138,7 +127,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
-        if (Template == null) return this;
+        if (Type.Template == null) return this;
         var context = data.Context;
         if (context?.Variable == null) return this;
         if (IsVariable)
@@ -237,7 +226,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
-        if (Template == null || mode == global::app.View.Store || context?.Variable == null)
+        if (Type.Template == null || mode == global::app.View.Store || context?.Variable == null)
         {
             writer.Content(_value, Format(context));
             return;
@@ -267,7 +256,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (it resolves to the named binding, not renders). A partial template
     /// (<c>"hello %name%"</c>) is content — it renders, so it is NOT a variable.</summary>
     public override bool IsVariable
-        => Template != null && _variable is [var only] && only.Text == _value;
+        => Type.Template != null && _variable is [var only] && only.Text == _value;
 
     /// <inheritdoc/>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
@@ -326,60 +315,46 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return System.Threading.Tasks.ValueTask.FromResult(err);
     }
 
-    public @this(string value) { _value = value ?? string.Empty; }
+    /// <summary>
+    /// Born holding <paramref name="type"/> — the row's type (<c>text&lt;md&gt;</c>, a template text), or plain
+    /// <c>text</c> when none is given (a runtime value, the operator). The build decided template-ness and the
+    /// .pr carries it on the type; the run never re-parses on load.
+    /// <para><paramref name="variable"/> is the row's own variable list (from the <c>.pr</c>); the text keeps the
+    /// ones its content holds, matched by name. A template made without a .pr list (built, or at run) parses its
+    /// content for them, as before. A non-template text holds none.</para>
+    /// </summary>
+    public @this(string value, global::app.type.@this? type = null, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+        : base(type ?? new global::app.type.@this("text", typeof(@this)))
+    {
+        _value = value ?? string.Empty;
+        _variable = Type.Template == null ? []
+            : variable is { } rows ? rows.Where(v => _value.Contains(v.Text, System.StringComparison.Ordinal)).DistinctBy(v => v.Text).ToList()
+            : new global::app.type.item.variable.parser.@this(_value).Variable;
+    }
 
     /// <summary>The empty text — what a text holds before anything is in it (type.Empty).</summary>
     internal @this() : this(string.Empty) { }
 
-    /// <summary>
-    /// Construction with a template mode. <paramref name="template"/> is the
-    /// authored-content mode the reader carries — <c>"plang"</c> when the bytes are
-    /// developer-authored (a goal/<c>.pr</c>), null for runtime-ingest. Text decides
-    /// for itself whether there is actually a template to stamp: only a value holding a
-    /// variable keeps the mode, so a plain string never reports as a variable reference.
-    /// Resolution stays lazy — nothing renders until the door (<see cref="Value"/>). The
-    /// trust is the mode, not the content: a structural text (a dict key, a type name) or a
-    /// runtime-ingest value is born with a null mode and prints literally.
-    /// <para><paramref name="variable"/> is what the <c>.pr</c> row says its value holds (the
-    /// ones written in this text are taken); without it — a template born at build or at run —
-    /// the text is parsed.</para>
-    /// </summary>
-    public @this(string value, global::app.type.item.template.kind.@this? template, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
-    {
-        _value = value ?? string.Empty;
-        // Container inner slots (list/dict entries) have no per-slot .pr flag; the authored
-        // read mode + a variable in the content marks them. Flagging literal slots would change
-        // their canonicalization/signing.
-        if (template == null || !_value.Contains('%')) return;
-        var held = variable?.Where(v => _value.Contains(v.Text, System.StringComparison.Ordinal)).ToList()
-                   ?? (IReadOnlyList<global::app.type.item.variable.@this>)new global::app.type.item.variable.parser.@this(_value).Variable;
-        if (held.Count == 0) return;
-        _variable = held.DistinctBy(v => v.Text).ToList();
-        Template = template;
-    }
-
-    // A re-kinded copy: the same content and variables, the declared kind stamped.
-    private @this(@this source, string? kind)
+    // A re-kinded copy: the same content and variables, born holding the kinded type.
+    private @this(@this source, global::app.type.@this type) : base(type)
     {
         _value = source._value;
         _variable = source._variable;
-        Template = source.Template;
-        Kind = kind;
     }
 
     /// <summary>
     /// Construction from a raw form — a string is the value as-is; binary bytes
     /// off I/O decode as UTF-8. Text is only ever born from a string, so this is
     /// the one place bytes become that string (a reader handed raw stream bytes
-    /// reaches the text here). <paramref name="template"/> and <paramref name="variable"/> as above.
+    /// reaches the text here). <paramref name="type"/> and <paramref name="variable"/> as above.
     /// </summary>
-    public @this(object raw, global::app.type.item.template.kind.@this? template = null, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+    public @this(object raw, global::app.type.@this? type = null, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
         : this(raw switch
         {
             byte[] b => System.Text.Encoding.UTF8.GetString(b),
             string s => s,
             _ => raw?.ToString() ?? string.Empty,
-        }, template, variable)
+        }, type, variable)
     { }
 
     // INBOUND only — the entry lift (`.Ok("x")` constructs). The outbound
@@ -473,7 +448,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>A re-kinded copy — same content, the declared kind stamped
     /// (values immutable, never restamped in place).</summary>
-    public override global::app.type.item.@this Kinded(string? kind) => new @this(this, kind);
+    public override global::app.type.item.@this Kinded(string? kind)
+        => new @this(this, new global::app.type.@this("text", typeof(@this), kind, false, Type.Template));
 
     /// <summary>text's raw string face — its characters.</summary>
     public override string? RawText => _value;

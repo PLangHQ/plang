@@ -288,7 +288,9 @@ public class source : @this
     /// the one renderer fills it. Null for a plain source and a whole <c>%ref%</c> (a reference, resolved
     /// through the variable's own door); a wire's slice is no text (it overrides).</summary>
     private protected virtual global::app.type.item.text.@this? Text
-        => HasVariable && !IsVariable && Peek() is string template ? new(template, Type.Template, _variable) : null;
+        => HasVariable && !IsVariable && Peek() is string template
+            ? new(template, new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, Type.Template), _variable)
+            : null;
 
     /// <summary>The type reads its own raw form — the declaration is the whole selector. One
     /// token over the raw via <see cref="global::app.type.format.value.Reader"/>; the
@@ -403,7 +405,7 @@ public class source : @this
             throw new global::app.error.VariableNotFoundException(resolved?.Name ?? template.Trim('%'));
         }
         // a partial template is a text's to render: hand over to one
-        await new global::app.type.item.text.@this(template, Type.Template, _variable).Output(writer, mode, context);
+        await new global::app.type.item.text.@this(template, new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, Type.Template), _variable).Output(writer, mode, context);
     }
 
 

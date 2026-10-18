@@ -120,7 +120,7 @@ public class FileHandlerTests : IDisposable
         var ctx = _app.actor.list.User.Context;
         var asText = new global::app.data.@this("type", _app.type.list["text"], context: ctx).As<global::app.type.@this>();
         var varPath = new global::app.data.@this("Path",
-            new global::app.type.item.text.@this("%somefile%", new global::app.type.item.template.kind.plang.@this()),
+            new global::app.type.item.text.@this("%somefile%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())),
             context: ctx).As<global::app.type.item.path.@this>();
         await Assert.That(varPath.HasVariable).IsTrue();
         var build = await new Read(ctx) { Path = varPath, Type = asText }.Build();

@@ -19,5 +19,5 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.type.format.IReader, allows ref struct
         => reader.Null()
             ? new global::app.type.item.@null.@this("text", kind)
-            : new global::app.type.item.text.@this(reader.String(), ctx.Template, ctx.Variable) { Kind = kind };
+            : new global::app.type.item.text.@this(reader.String(), new global::app.type.@this("text", typeof(global::app.type.item.text.@this), kind, false, ctx.Template), ctx.Variable);
 }
