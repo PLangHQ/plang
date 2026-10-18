@@ -43,14 +43,6 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
 
     private protected abstract void Applied(ITarget target);
 
-    /// <summary>The modifier keys in <paramref name="held"/> (the wire's bits), by name.</summary>
-    private protected static global::app.type.item.list.@this<global::app.type.item.choice.@this<Modifier>> Named(int held)
-        => new(Enum.GetValues<Modifier>().Where(m => (held & (int)m) != 0)
-            .Select(m => (global::app.type.item.@this)new global::app.type.item.choice.@this<Modifier>(m)),
-            // a bare {list, choice}: an input event holds no app to ask for the list's type
-            new global::app.type.@this(typeof(global::app.type.item.list.@this),
-                global::app.type.item.@this.NameOf(typeof(global::app.type.item.choice.@this<Modifier>))));
-
     /// <summary>Its members, then the stamp, inside the object the variant opens.</summary>
     private protected void WriteStamp(global::app.type.format.IWriter writer)
     {
@@ -70,10 +62,6 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         return null;
     }
 }
-
-/// <summary>A modifier key held — the wire's bits, as DevTools counts them.</summary>
-[Flags, global::app.Attributes.PlangType("modifier")]
-public enum Modifier { alt = 1, ctrl = 2, meta = 4, shift = 8 }
 
 /// <summary>What takes input — a display, a window: one door per variant, each handed the variant whole, to read what it
 /// needs of it.</summary>

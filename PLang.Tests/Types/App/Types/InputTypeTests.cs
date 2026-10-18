@@ -35,9 +35,9 @@ public class InputTypeTests : IAsyncDisposable
         public readonly List<string> Calls = new();
         public void Stamped(long stamp) => Calls.Add($"stamp {stamp}");
         public void Mouse(Input.mouse.@this m)
-            => Calls.Add($"mouse {m.Action.Value} {m.X},{m.Y} {m.Button.Value} {m.Clicks} {m.Dx}/{m.Dy} [{string.Join(",", m.Modifiers.Items().Select(h => h.Value))}]");
+            => Calls.Add($"mouse {m.Action.Value} {m.X},{m.Y} {m.Button.Value} {m.Clicks} {m.Dx}/{m.Dy} [{m.Modifier}]");
         public void Key(Input.key.@this k)
-            => Calls.Add($"key {(k.Down.Value ? "down" : "up")} {k.Scancode} {k.Extended.Value} {k.Vk} {k.Name} [{string.Join(",", k.Modifiers.Items().Select(h => h.Value))}]");
+            => Calls.Add($"key {(k.Down.Value ? "down" : "up")} {k.Scancode} {k.Extended.Value} {k.Vk} {k.Name} [{k.Modifier}]");
         public void Text(Input.text.@this t) => Calls.Add($"text {t.Typed}");
         public void Navigate(Input.navigate.@this n) => Calls.Add($"nav {n.To.Value}");
     }
@@ -47,9 +47,9 @@ public class InputTypeTests : IAsyncDisposable
     {
         var values = new global::app.type.item.@this[]
         {
-            new Input.mouse.@this(Input.mouse.Gesture.down, 120, 40, Input.mouse.Button.left, 2, mods: 4, stamp: 77),
+            new Input.mouse.@this(Input.mouse.Gesture.down, 120, 40, Input.mouse.Button.left, 2, modifier: new Input.modifier.list.@this(4), stamp: 77),
             new Input.mouse.@this(Input.mouse.Gesture.wheel, 10, 20, dy: -120),
-            new Input.key.@this(true, 30, extended: false, vk: 65, name: "A", mods: 1),
+            new Input.key.@this(true, 30, extended: false, vk: 65, name: "A", modifier: new Input.modifier.list.@this(1)),
             new Input.key.@this(false, 75, extended: true),
             new Input.text.@this("þú"),
             new Input.navigate.@this(Input.navigate.Direction.back),
@@ -103,12 +103,29 @@ public class InputTypeTests : IAsyncDisposable
         await Assert.That((await Context.Variable.Get("variant"))?.ToString()).IsEqualTo("mouse");
     }
 
+    // %click.modifier% is the first key held, %click.modifier.list% every one; shown, it is the whole list
+    [Test]
+    public async Task AClicksModifier_IsTheFirstKeyHeld_AndItsListIsEvery()
+    {
+        await Context.Variable.Set("click", new Input.mouse.@this(Input.mouse.Gesture.down, 1, 2, Input.mouse.Button.left, 1,
+            modifier: new Input.modifier.list.@this(2 | 8)));
+        var goal = Make.Goal(Context, "Modifier",
+            Make.Step("the first", Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "first", "variable"), ("Value", "%click.modifier%"))),
+            Make.Step("every one", Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "every", "variable"), ("Value", "%click.modifier.list%"))));
+        await (await _app.Start(goal, Context)).IsSuccess();
+        await Assert.That((await (await Context.Variable.Get("first"))!.Value())?.ToString()).IsEqualTo("ctrl");
+        var every = await (await Context.Variable.Get("every"))!.Value();
+        await Assert.That(every).IsTypeOf<global::app.type.item.list.@this<Input.modifier.@this>>();
+        await Assert.That(string.Join(",", ((global::app.type.item.list.@this<Input.modifier.@this>)every!).Items())).IsEqualTo("ctrl,shift");
+        await Assert.That(await Line(new Input.modifier.list.@this(2 | 8))).IsEqualTo("[\"ctrl\",\"shift\"]");
+    }
+
     [Test]
     public async Task AKey_NamesItselfFromItsVirtualKey_ButNotUnderAlt()
     {
         await Assert.That((await Line(new Input.key.@this(true, 28, vk: 0x0D))).Contains("\"name\":\"Enter\"")).IsTrue();
-        await Assert.That((await Line(new Input.key.@this(true, 30, vk: 0x41, mods: 2))).Contains("\"name\":\"a\"")).IsTrue();
-        await Assert.That((await Line(new Input.key.@this(true, 28, vk: 0x0D, mods: 1))).Contains("\"name\":null")).IsTrue();
+        await Assert.That((await Line(new Input.key.@this(true, 30, vk: 0x41, modifier: new Input.modifier.list.@this(2)))).Contains("\"name\":\"a\"")).IsTrue();
+        await Assert.That((await Line(new Input.key.@this(true, 28, vk: 0x0D, modifier: new Input.modifier.list.@this(1)))).Contains("\"name\":null")).IsTrue();
     }
 
     [Test]

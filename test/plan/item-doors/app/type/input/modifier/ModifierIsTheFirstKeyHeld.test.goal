@@ -1,0 +1,7 @@
+/ item-doors 41: a click's modifier, read alone, is the first key held; `.list` is every one, in the wire's order.
+/ The click is read from the screen's input line, mods 10 = ctrl (2) + shift (8).
+ModifierIsTheFirstKeyHeld
+- set %line% = '{"mouse": "down", "x": 1, "y": 2, "button": "left", "clicks": 1, "mods": 10}'
+- convert %line% to input, write to %click%
+- assert %click.modifier% equals "ctrl"
+- assert %click.modifier.list% equals ["ctrl", "shift"]

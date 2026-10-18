@@ -22,7 +22,7 @@ public class HeadlessInputTests
     public async Task TheMouse_IsADispatchedMouseEvent_WithItsModifierBits()
     {
         // alt 1 + shift 8: the wire's bits, which are DevTools' too
-        var down = Lowered(new Input.mouse.@this(Input.mouse.Gesture.down, 10, 20, Input.mouse.Button.left, 2, mods: 1 | 8));
+        var down = Lowered(new Input.mouse.@this(Input.mouse.Gesture.down, 10, 20, Input.mouse.Button.left, 2, modifier: new Input.modifier.list.@this(1 | 8)));
         await Assert.That(down.Method).IsEqualTo("Input.dispatchMouseEvent");
         await Assert.That(down.Parameters!.ToJsonString())
             .IsEqualTo("{\"x\":10,\"y\":20,\"modifiers\":9,\"type\":\"mousePressed\",\"button\":\"left\",\"clickCount\":2}");

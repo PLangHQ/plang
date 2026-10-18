@@ -16,12 +16,13 @@ public sealed class @this : input.@this
 {
     // (the enums by their full names: the member Button is this value's plang face)
     private readonly global::app.type.item.input.mouse.Gesture _action;
-    private readonly int _x, _y, _clicks, _dx, _dy, _mods;
+    private readonly int _x, _y, _clicks, _dx, _dy;
     private readonly global::app.type.item.input.mouse.Button _button;
 
     public @this(global::app.type.item.input.mouse.Gesture action, int x, int y,
         global::app.type.item.input.mouse.Button button = global::app.type.item.input.mouse.Button.none,
-        int clicks = 0, int dx = 0, int dy = 0, int mods = 0, long? stamp = null) : base(stamp)
+        int clicks = 0, int dx = 0, int dy = 0, global::app.type.item.input.modifier.list.@this? modifier = null,
+        long? stamp = null) : base(stamp)
     {
         _action = action;
         _x = x;
@@ -30,7 +31,7 @@ public sealed class @this : input.@this
         _clicks = clicks;
         _dx = dx;
         _dy = dy;
-        _mods = mods;
+        Modifier = modifier ?? new global::app.type.item.input.modifier.list.@this(0);
     }
 
     /// <summary>What it did: move, down, up, wheel.</summary>
@@ -48,7 +49,7 @@ public sealed class @this : input.@this
     /// <summary>How far the wheel turned, down (up is negative).</summary>
     [Out] public global::app.type.item.number.@this Dy => _dy;
     /// <summary>The modifier keys held: alt, ctrl, meta, shift.</summary>
-    [Out] public global::app.type.item.list.@this<global::app.type.item.choice.@this<Modifier>> Modifiers => Named(_mods);
+    [Out] public global::app.type.item.input.modifier.list.@this Modifier { get; }
 
     private protected override void Applied(ITarget target) => target.Mouse(this);
 
@@ -68,7 +69,7 @@ public sealed class @this : input.@this
             writer.Name("button"); writer.String(_button.ToString());
             writer.Name("clicks"); writer.Int(_clicks);
         }
-        writer.Name("mods"); writer.Int(_mods);
+        writer.Name("mods"); Modifier.Write(writer);
         WriteStamp(writer);
         writer.EndObject();
     }

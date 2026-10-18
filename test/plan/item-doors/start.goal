@@ -33,6 +33,8 @@ Stage1
 - call /app/type/kind/strict/SetAsTextSlashMarkdownStrictUnverifiable
 / a plural plang reaches is a singular node (item-doors 39): a dict's key read alone is its first key, .list every key
 - call /plan/item-doors/app/type/dict/key/KeyIsTheFirstKey
+/ a click's modifier read alone is the first key held, .list every one (item-doors 41)
+- call /plan/item-doors/app/type/input/modifier/ModifierIsTheFirstKeyHeld
 
 Stage2
 / one door for writing (decision 868): Output only; the sync Write and the IsLeaf branch go;

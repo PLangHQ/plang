@@ -12,6 +12,9 @@ public sealed class @this : global::app.type.item.@this
     /// <summary>The key of <paramref name="dict"/>, born holding the app's <paramref name="type"/> for it.</summary>
     internal @this(global::app.type.item.dict.@this dict, global::app.type.@this type) : base(type) => _dict = dict;
 
+    /// <summary>A dict's own node, never LLM vocabulary — kept out of the catalog.</summary>
+    public static bool Internal => true;
+
     /// <summary>Every key, in order — a list of text, each made by the asker's types.</summary>
     [global::app.LlmBuilder]
     public global::app.type.item.list.@this<global::app.type.item.text.@this> list(global::app.actor.context.@this context)

@@ -24,6 +24,7 @@ public class NavigableFactsTests
         "app.type.item.list.this.Random",
         // a dict's keys, born per ask from its key names: nothing kept, the dict untouched
         "app.type.item.dict.key.this.list",
+        "app.type.item.input.modifier.list.this.list",
         // the same location written from the asker's root
         "app.type.item.path.this.Relative",
         "app.type.item.path.file.this.Relative",

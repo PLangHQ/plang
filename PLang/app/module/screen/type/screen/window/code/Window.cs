@@ -676,7 +676,7 @@ internal sealed class Window
                 ScreenToClient(h, ref point);   // wheel positions are screen coordinates
                 var delta = High(wParam);          // negative when scrolling down
                 onEvent(new global::app.type.item.input.mouse.@this(global::app.type.item.input.mouse.Gesture.wheel, point.x, point.y,
-                    dy: -delta, mods: Mods(), stamp: Environment.TickCount64));
+                    dy: -delta, modifier: new global::app.type.item.input.modifier.list.@this(Mods()), stamp: Environment.TickCount64));
                 return IntPtr.Zero;
 
             case WM_KEYDOWN: case WM_SYSKEYDOWN:
@@ -734,7 +734,8 @@ internal sealed class Window
         int x = Low(lParam), y = High(lParam);   // negative outside the window while dragging
         // a click is stamped: the screen echoes it after the next frame, which times input → picture
         onEvent(new global::app.type.item.input.mouse.@this(Enum.Parse<global::app.type.item.input.mouse.Gesture>(kind), x, y,
-            Enum.Parse<global::app.type.item.input.mouse.Button>(button), clicks, mods: Mods(),
+            Enum.Parse<global::app.type.item.input.mouse.Button>(button), clicks,
+            modifier: new global::app.type.item.input.modifier.list.@this(Mods()),
             stamp: kind == "move" ? null : Environment.TickCount64));
     }
 
@@ -743,8 +744,8 @@ internal sealed class Window
     // as navigation. Typed characters come through WM_CHAR as text too — each side takes what it uses.
     private bool Key(string kind, int vk, IntPtr lParam)
     {
-        var mods = Mods();
-        var alt = (mods & 1) != 0; var ctrl = (mods & 2) != 0;
+        var modifier = new global::app.type.item.input.modifier.list.@this(Mods());
+        var alt = modifier.Holds("alt"); var ctrl = modifier.Holds("ctrl");
         var sc = (int)((lParam.ToInt64() >> 16) & 0xFF);
         var ext = ((lParam.ToInt64() >> 24) & 1) != 0;
         if (kind == "down" && alt && vk == VK_LEFT) onEvent(new global::app.type.item.input.navigate.@this(global::app.type.item.input.navigate.Direction.back));
@@ -752,10 +753,10 @@ internal sealed class Window
         if (kind == "down" && vk == VK_F5) onEvent(new global::app.type.item.input.navigate.@this(global::app.type.item.input.navigate.Direction.reload));
         // paste: Windows' clipboard reaches PlangOS before the keys do (copied before this window
         // listened, or before PlangOS was up)
-        if (kind == "down" && ((ctrl && vk == 'V') || ((mods & 8) != 0 && vk == VK_INSERT))) ShareClipboard();
+        if (kind == "down" && ((ctrl && vk == 'V') || (modifier.Holds("shift") && vk == VK_INSERT))) ShareClipboard();
         if (kind == "down") heldKeys.Add((sc, ext)); else heldKeys.Remove((sc, ext));
         // the key names itself from its virtual key (the key type owns its codes)
-        onEvent(new global::app.type.item.input.key.@this(kind == "down", (uint)sc, ext, vk, mods: mods,
+        onEvent(new global::app.type.item.input.key.@this(kind == "down", (uint)sc, ext, vk, modifier: modifier,
             stamp: kind == "down" ? Environment.TickCount64 : null));
         return !alt;   // Alt combinations stay Windows' too (Alt+F4 closes the window)
     }

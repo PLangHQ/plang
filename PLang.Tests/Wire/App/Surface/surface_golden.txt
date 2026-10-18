@@ -1456,6 +1456,7 @@ class app.type.item.dict.key.this : app.type.item.this [PlangType]
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Write(app.type.format.IWriter writer) : System.Void
+  static Internal : System.Boolean { get; }
 
 static class app.type.item.dict.serializer.Default
   static Read(System.Object raw, System.String kind, app.type.reader.ReadContext ctx) : System.Object
@@ -1652,22 +1653,35 @@ interface app.type.item.input.ITarget
   abstract Stamped(System.Int64 stamp) : System.Void
   abstract Text(app.type.item.input.text.this text) : System.Void
 
-enum app.type.item.input.Modifier [PlangType]
-  static const alt : app.type.item.input.Modifier
-  static const ctrl : app.type.item.input.Modifier
-  static const meta : app.type.item.input.Modifier
-  static const shift : app.type.item.input.Modifier
-
 class app.type.item.input.key.this : app.type.item.input.this
   Down : app.type.item.bool.this { get; } [Out]
   Extended : app.type.item.bool.this { get; } [Out]
-  Modifiers : app.type.item.list.this<app.type.item.choice.this<app.type.item.input.Modifier>> { get; } [Out]
+  Modifier : app.type.item.input.modifier.list.this { get; } [Out]
   Name : app.type.item.text.this { get; } [Out]
   Scancode : app.type.item.number.this { get; } [Out]
   Vk : app.type.item.number.this { get; } [Out]
-  ctor(System.Boolean down, System.UInt32 scancode, System.Boolean extended = …, System.Int32 vk = …, System.String name = …, System.Int32 mods = …, System.Nullable<System.Int64> stamp = …)
+  ctor(System.Boolean down, System.UInt32 scancode, System.Boolean extended = …, System.Int32 vk = …, System.String name = …, app.type.item.input.modifier.list.this modifier = …, System.Nullable<System.Int64> stamp = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Write(app.type.format.IWriter writer) : System.Void
+
+class app.type.item.input.modifier.list.this : app.type.item.this
+  list(app.actor.context.this context) : app.type.item.list.this<app.type.item.input.modifier.this> [LlmBuilder]
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  override ToString() : System.String
+  override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
+  override Write(app.type.format.IWriter writer) : System.Void
+  static Internal : System.Boolean { get; }
+
+class app.type.item.input.modifier.this : app.type.item.this, app.type.item.ICreate<app.type.item.input.modifier.this> [PlangType]
+  override Equals(System.Object other) : System.Boolean
+  override GetHashCode() : System.Int32
+  override IsLeaf : System.Boolean { get; }
+  override ToString() : System.String
+  override Write(app.type.format.IWriter writer) : System.Void
+  static Create(System.Object raw) : app.type.item.input.modifier.this
+  static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.input.modifier.this
+  static Internal : System.Boolean { get; }
 
 enum app.type.item.input.mouse.Button [PlangType]
   static const back : app.type.item.input.mouse.Button
@@ -1689,10 +1703,10 @@ class app.type.item.input.mouse.this : app.type.item.input.this
   Clicks : app.type.item.number.this { get; } [Out]
   Dx : app.type.item.number.this { get; } [Out]
   Dy : app.type.item.number.this { get; } [Out]
-  Modifiers : app.type.item.list.this<app.type.item.choice.this<app.type.item.input.Modifier>> { get; } [Out]
+  Modifier : app.type.item.input.modifier.list.this { get; } [Out]
   X : app.type.item.number.this { get; } [Out]
   Y : app.type.item.number.this { get; } [Out]
-  ctor(app.type.item.input.mouse.Gesture action, System.Int32 x, System.Int32 y, app.type.item.input.mouse.Button button = …, System.Int32 clicks = …, System.Int32 dx = …, System.Int32 dy = …, System.Int32 mods = …, System.Nullable<System.Int64> stamp = …)
+  ctor(app.type.item.input.mouse.Gesture action, System.Int32 x, System.Int32 y, app.type.item.input.mouse.Button button = …, System.Int32 clicks = …, System.Int32 dx = …, System.Int32 dy = …, app.type.item.input.modifier.list.this modifier = …, System.Nullable<System.Int64> stamp = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Write(app.type.format.IWriter writer) : System.Void
 
@@ -3393,6 +3407,9 @@ type app.task.list
 
 type app.test.setting
 
+type app.type.item.input.modifier.list
+  .list : list<modifier>
+
 type app.type.item.note
 
 type app.type.item.note.line
@@ -3539,6 +3556,8 @@ type message
   .role : text
   .content : text
   .images : list<text>
+
+type modifier
 
 type module
 
