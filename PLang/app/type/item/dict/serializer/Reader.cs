@@ -16,7 +16,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("dict", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("dict", kind), ctx.Context]);
         reader.BeginObject();
         var parser = new global::app.type.item.serializer.json(ctx.Context);
         // An authored dict (ctx carries "plang") is born a template and re-resolves its `%ref%` string

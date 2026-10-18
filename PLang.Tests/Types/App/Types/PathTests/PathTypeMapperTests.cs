@@ -25,7 +25,7 @@ public class PathTypeMapperTests
     // the raw string, landing any failure on the carrier Data.
     private static (PLangPath? value, global::app.error.@this? error) Build(string raw, global::app.actor.context.@this ctx)
     {
-        var d = new global::app.data.@this("", new global::app.type.item.@null.@this("path", null), context: ctx);
+        var d = new global::app.data.@this("", new global::app.type.item.@null.@this(new global::app.type.@this("path")), context: ctx);
         var v = PLangPath.Create(raw, d.Type, d);
         return (v, d.Error);
     }

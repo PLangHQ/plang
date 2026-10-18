@@ -10,7 +10,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("status", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("status", kind), ctx.Context]);
         var written = global::app.type.item.@this.Create(new global::app.type.item.serializer.json(ctx.Context).Read(ref reader, ctx), ctx.Context);
         var carrier = new global::app.data.@this("", written, context: ctx.Context);
         // a status that refuses what was written says why, at the read boundary

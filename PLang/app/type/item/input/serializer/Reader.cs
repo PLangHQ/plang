@@ -13,7 +13,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("input", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("input", kind), ctx.Context]);
         reader.BeginObject();
         string? variant = null, what = null, button = null, name = null;
         int x = 0, y = 0, clicks = 0, dx = 0, dy = 0, mods = 0, vk = 0;

@@ -60,7 +60,7 @@ public class ValueConversionHookTests : System.IAsyncDisposable
     public async Task ImageConversion_PathStringMintsLazyHandle_NoIo()
     {
         var (_, ctx) = MakeApp();
-        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("image", null), context: ctx);
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(new global::app.type.@this("image")), context: ctx);
         var v = Image.Create("photo.png", carrier.Type, carrier) as Image;
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.Path).IsNotNull();

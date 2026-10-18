@@ -15,8 +15,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("table", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("table", kind), ctx.Context]);
         return (global::app.type.item.@this)(csv.Read(reader.String(), kind ?? "csv", ctx)
-            ?? new global::app.type.item.@null.@this("table", kind));
+            ?? new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("table", kind), ctx.Context]));
     }
 }

@@ -42,6 +42,19 @@ public class OneTypeObjectTests : System.IAsyncDisposable
     }
 
     // A kinded type ({list, step}) is one object: asked twice, the same one.
+    // a null read off the wire for a declared type holds that type's one object, the same as a value of it
+    [Test] public async Task ATypedNullReadOffTheWire_HoldsTheAppsType()
+    {
+        var context = app.actor.list.User.Context;
+        var bytes = System.Text.Encoding.UTF8.GetBytes("null");
+        var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
+        utf8.Read();
+        var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
+        var read = app.type.list.Reader.Typed("guid", null)!.Read(ref reader, null, new global::app.type.reader.ReadContext(context));
+        await Assert.That(read.IsNull).IsTrue();
+        await Assert.That(ReferenceEquals(read.Type, app.type.list["guid"])).IsTrue();
+    }
+
     [Test] public async Task AKindedType_IsOneObject()
         => await Assert.That(ReferenceEquals(
             app.type.list[typeof(global::app.goal.step.list.@this)],

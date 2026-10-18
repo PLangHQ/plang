@@ -28,6 +28,12 @@ while a value builds its own type.
 - **Last:** number's 15 static kinds and `KindOfClass` lose their last user and go; item's `Type` becomes
   `_type ?? (type.@this)this` (item-doors 34).
 
+## Carried to a type's turn
+- number: input's numbers (`number.@this.Create(x)!`) become `Create(x, types[...])`, the `!` goes.
+- choice: mouse Action/Button and navigate To are held from birth, not made on read.
+- group 6 (17): `culture.Machine` and every setting default made at birth through its type.
+- call memory: a call frame's StartedAt/CompletedAt take the app's datetime type once a frame is born with it.
+
 ## Checks
 - C# sweep against the baseline (6 Wire snapshot/resume and ImageFromBytes are pre-existing).
 - byte-equal `.pr` (`plang build` + diff) and the signing tests.

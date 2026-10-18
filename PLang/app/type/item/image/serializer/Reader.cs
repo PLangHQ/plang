@@ -18,7 +18,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("image", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("image", kind), ctx.Context]);
         byte[] bytes = reader.Bytes();
         return new global::app.type.item.image.@this(bytes, kind);
     }

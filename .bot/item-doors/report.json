@@ -75,6 +75,34 @@
           "category": "code",
           "confidence": "high",
           "context": "Settings born-whole, no exception (891, Ingi): every settings class (~23) gets `public X(type.@this type) : base(type) {}`; the base setting ctors carry the type; the reflection sites (actor/setting, item/setting, Executor.Flag) pass it from the app's list (Activator.CreateInstance(clr, app.type.list[clr])); the discovery gate checks for the (type) ctor; ISetting/IConcept/Of<T>/Listed<T> drop their new() constraint; owned-setting field-defaults and `new X()` callers/tests pass the type. Pushed b5b03185e, 43 files, all green (Modules/Data/Generator/Runtime 0; Types 1 = ImageFromBytes parallel flake; Wire 6 baseline). OPEN QUESTION to architect: text/dict/list/separator flag template only when a container inner slot's content holds a variable (literal slots stay plain so signing/canonicalization don't change) — a content-decided, post-construction fact the born-at-ctor type can't capture. Proposed: the reader decides template-ness from content and hands the value a type carrying the template only when a var is held. Holding on that before reshaping text/dict/list (touches signing). Remaining: text, dict, list, separator, list<T> (element kind), content (file/url lazy base, GetType-like)."
+        },
+        {
+          "paths": ["PLang/app/type/item/input/modifier/this.cs", "PLang/app/type/item/input/modifier/list/this.cs", "PLang/app/type/item/input/mouse/this.cs", "PLang/app/type/item/input/key/this.cs", "PLang/app/type/item/dict/key/this.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 41: modifier class + modifier.list replace the enum; mouse/key hold Modifier from birth; Bits renamed Code (Ingi); key's VK naming stays on the key (43); dict.key, modifier, modifier.list internal so the decider pin is back. Pushed 4c6b7cde8."
+        },
+        {
+          "paths": ["PLang/app/type/item/guid", "PLang/app/type/item/date", "PLang/app/type/item/time", "PLang/app/type/item/tag", "PLang/app/type/item/culture", "PLang/app/type/item/prose", "PLang/app/type/item/note", "PLang/app/type/item/datetime", "PLang/app/type/item/input"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 33 step 4: required ctor per type; makers hand the app's type; readers ask the context's list; the Windows window gets the type list at birth. Interims flagged: culture.Machine, call frame StartedAt/CompletedAt, input numbers via number.Create(x)!. Pushed 1c1833878, e5c21d879, 71ed14eac, 89e76eb90, 48712efa2."
+        },
+        {
+          "paths": ["PLang/app/type/item/datetime/this.cs", "PLang/app/type/item/duration/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 42/47: parts and units are one-context [LlmBuilder] members answering data<T>.From(context.Ok(raw)) — the existing typed door; no helper, no cast; %now.year% unchanged."
+        },
+        {
+          "paths": [".bot/item-doors/coder/summary.md", ".bot/item-doors/coder/v2/plan.md"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Measured 42's scope by marking the 22 into-plang operators [Obsolete(error)] (reverted): 1,726 production lines, 1,330 error status codes (906 generator-emitted). Blocked list sent to the architect: kinded types, status, bool, typeless null (Ingi)."
         }
       ],
       "after": null

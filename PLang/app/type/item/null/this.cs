@@ -29,16 +29,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     private @this() : base(new global::app.type.@this(typeof(@this))) { }
 
-    // A TYPED null — a declared slot that holds no value yet (`set %x% as path`
-    // with no value, a tool-definition parameter the LLM will fill, a typed null
-    // result). It is still null (IsNull, falsy, empty, renders/serialises null);
-    // the declaration only surfaces through its born type. Absorbs the former
-    // `item.absent` — a value-less slot is just a null that remembers its type.
-    internal @this(string typeName, string? kind = null)
-        : base(string.IsNullOrWhiteSpace(typeName)
-            ? new global::app.type.@this(typeof(@this))
-            : new global::app.type.@this(typeName, kind)) { }
-
     /// <summary>A null of <paramref name="declared"/> — born holding the type as declared, its class with it.</summary>
     internal @this(global::app.type.@this declared) : base(declared) { }
 

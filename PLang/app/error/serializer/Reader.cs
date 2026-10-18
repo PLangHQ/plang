@@ -20,7 +20,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("error", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("error", kind), ctx.Context]);
         reader.BeginObject();
         string id = "", message = "", key = "Error";
         global::app.type.item.status.@this status = 400;

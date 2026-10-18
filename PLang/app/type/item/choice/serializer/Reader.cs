@@ -19,7 +19,7 @@ public sealed class Reader<T> : global::app.type.reader.ITypeReader where T : no
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("choice", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("choice", kind), ctx.Context]);
         return global::app.type.item.choice.@this<T>.Read(ref reader);
     }
 }

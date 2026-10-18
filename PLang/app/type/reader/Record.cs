@@ -19,7 +19,7 @@ internal sealed class Record : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this(_type, kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this(_type, kind), ctx.Context]);
         global::app.type.item.@this record = reader.Peek() switch
         {
             global::app.type.format.TokenKind.Object => new global::app.type.item.dict.serializer.Reader().Read(ref reader, null, ctx),
@@ -46,7 +46,7 @@ internal sealed class Record : global::app.type.reader.ITypeReader
         if (made is null)
             return data.Error is { } err
                 ? throw new global::app.error.DeclinedException(err)
-                : new global::app.type.item.@null.@this(_type, kind);
+                : new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this(_type, kind), ctx.Context]);
         return made;
     }
 }

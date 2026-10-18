@@ -18,13 +18,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("bool", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("bool", kind), ctx.Context]);
         return reader.Peek() switch
         {
             TokenKind.Bool => new global::app.type.item.@bool.@this(reader.Bool()),
             TokenKind.String when bool.TryParse(reader.String(), out var parsed)
                 => new global::app.type.item.@bool.@this(parsed),
-            _ => new global::app.type.item.@null.@this("bool", kind),
+            _ => new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("bool", kind), ctx.Context]),
         };
     }
 }

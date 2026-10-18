@@ -17,7 +17,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
         => reader.Null()
-            ? new global::app.type.item.@null.@this("time", kind)
+            ? new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("time", kind), ctx.Context])
             : new global::app.type.item.time.@this(System.TimeOnly.Parse(
                 reader.String(), System.Globalization.CultureInfo.InvariantCulture),
                 ctx.Context.App.type.list[typeof(global::app.type.item.time.@this)]);

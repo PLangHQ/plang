@@ -10,7 +10,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        var nothing = new global::app.type.item.@null.@this("limit", kind);
+        var nothing = new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("limit", kind), ctx.Context]);
         if (reader.Null()) return nothing;
         var written = global::app.type.item.@this.Create(new global::app.type.item.serializer.json(ctx.Context).Read(ref reader, ctx), ctx.Context);
         var carrier = new global::app.data.@this("", nothing, context: ctx.Context);

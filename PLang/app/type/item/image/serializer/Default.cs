@@ -16,7 +16,7 @@ public static class Default
     {
         if (raw is byte[] bytes)
             return new global::app.type.item.image.@this(bytes, kind);
-        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("image", kind), context: ctx.Context);
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("image", kind), ctx.Context]), context: ctx.Context);
         return global::app.type.item.image.@this.Create(raw, carrier.Type, carrier);
     }
 }

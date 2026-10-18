@@ -16,7 +16,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("number", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("number", kind), ctx.Context]);
         // A declared kind reads through the kind; a bare token with no declared kind (a literal a .pr row
         // holds as `number`) reads at its natural precision — the format reads its token by number's one rule
         // (an integer long, or biginteger past it; any other a double); a string parses through the family.
@@ -24,7 +24,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             return k.Read(ref reader);
         if (reader.Peek() == global::app.type.format.TokenKind.String)
             return num.Create(new global::app.type.item.text.@this(reader.String())) ?? (global::app.type.item.@this)
-                new global::app.type.item.@null.@this("number", kind);
-        return num.Create(reader.Number()) ?? (global::app.type.item.@this)new global::app.type.item.@null.@this("number", kind);
+                new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("number", kind), ctx.Context]);
+        return num.Create(reader.Number()) ?? (global::app.type.item.@this)new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("number", kind), ctx.Context]);
     }
 }

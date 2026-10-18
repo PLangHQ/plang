@@ -15,7 +15,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("permission", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("permission", kind), ctx.Context]);
         reader.BeginObject();
         string actor = "", path = "";
         var match = global::app.type.item.permission.Match.exact;

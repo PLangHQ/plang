@@ -14,7 +14,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("size", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("size", kind), ctx.Context]);
         var text = reader.Peek() == global::app.type.format.TokenKind.Number ? reader.Number().ToString() ?? "" : reader.String();
         var named = string.IsNullOrEmpty(kind) ? null
             : ctx.Context.App.type.list["size"].kind[kind!] as global::app.type.item.size.kind.@this;
