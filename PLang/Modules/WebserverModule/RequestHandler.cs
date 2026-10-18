@@ -287,7 +287,16 @@ namespace PLang.Modules.WebserverModule
 			}
 			if (string.IsNullOrEmpty(callbackValue) && request.HasFormContentType)
 			{
-				callbackValue = request.Form["callback"];
+				// A body we cannot read carries no callback. Reading it throws on a truncated or
+				// malformed multipart body, which scanners send all day, and that became a 500.
+				try
+				{
+					callbackValue = request.Form["callback"];
+				}
+				catch (Exception)
+				{
+					return (null, goal, null);
+				}
 				if (string.IsNullOrEmpty(callbackValue))
 				{
 					return (null, goal, null);
@@ -833,8 +842,19 @@ namespace PLang.Modules.WebserverModule
 		private static bool HasCallback(HttpRequest request)
 		{
 			if (request.Headers.ContainsKey("X-Callback")) return true;
-			if (request.HasFormContentType && !string.IsNullOrEmpty(request.Form["callback"])) return true;
-			return false;
+			if (!request.HasFormContentType) return false;
+
+			// request.Form reads the body, and a truncated or malformed multipart body throws here.
+			// Routing then died with a 500 although nothing was wrong on our side: a body we cannot
+			// read carries no callback, which is all this question asks.
+			try
+			{
+				return !string.IsNullOrEmpty(request.Form["callback"]);
+			}
+			catch (Exception)
+			{
+				return false;
+			}
 		}
 
 		private (bool, List<ObjectValue>?, IError?) TryMatch(Routing routing, HttpRequest request)
