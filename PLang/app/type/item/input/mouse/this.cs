@@ -16,38 +16,38 @@ public sealed class @this : input.@this
 {
     // (the enums by their full names: the member Button is this value's plang face)
     private readonly global::app.type.item.input.mouse.Gesture _action;
-    private readonly int _x, _y, _clicks, _dx, _dy;
     private readonly global::app.type.item.input.mouse.Button _button;
 
-    public @this(global::app.type.item.input.mouse.Gesture action, int x, int y,
+    /// <summary>A mouse input, born with the app's <paramref name="types"/>: its own, and its numbers' and keys'.</summary>
+    public @this(global::app.type.list.@this types, global::app.type.item.input.mouse.Gesture action, int x, int y,
         global::app.type.item.input.mouse.Button button = global::app.type.item.input.mouse.Button.none,
         int clicks = 0, int dx = 0, int dy = 0, global::app.type.item.input.modifier.list.@this? modifier = null,
-        long? stamp = null) : base(stamp)
+        long? stamp = null) : base(types[typeof(@this)], stamp)
     {
         _action = action;
-        _x = x;
-        _y = y;
         _button = button;
-        _clicks = clicks;
-        _dx = dx;
-        _dy = dy;
-        Modifier = modifier ?? new global::app.type.item.input.modifier.list.@this(0);
+        X = global::app.type.item.number.@this.Create(x)!;
+        Y = global::app.type.item.number.@this.Create(y)!;
+        Clicks = global::app.type.item.number.@this.Create(clicks)!;
+        Dx = global::app.type.item.number.@this.Create(dx)!;
+        Dy = global::app.type.item.number.@this.Create(dy)!;
+        Modifier = modifier ?? new global::app.type.item.input.modifier.list.@this(0, types);
     }
 
     /// <summary>What it did: move, down, up, wheel.</summary>
     [Out] public global::app.type.item.choice.@this<global::app.type.item.input.mouse.Gesture> Action => new(_action);
     /// <summary>Where, across the screen.</summary>
-    [Out] public global::app.type.item.number.@this X => _x;
+    [Out] public global::app.type.item.number.@this X { get; }
     /// <summary>Where, down the screen.</summary>
-    [Out] public global::app.type.item.number.@this Y => _y;
+    [Out] public global::app.type.item.number.@this Y { get; }
     /// <summary>Which button: left, right, middle, back, forward — none while only moving.</summary>
     [Out] public global::app.type.item.choice.@this<global::app.type.item.input.mouse.Button> Button => new(_button);
     /// <summary>1 for a click, 2 for a double click.</summary>
-    [Out] public global::app.type.item.number.@this Clicks => _clicks;
+    [Out] public global::app.type.item.number.@this Clicks { get; }
     /// <summary>How far the wheel turned, sideways.</summary>
-    [Out] public global::app.type.item.number.@this Dx => _dx;
+    [Out] public global::app.type.item.number.@this Dx { get; }
     /// <summary>How far the wheel turned, down (up is negative).</summary>
-    [Out] public global::app.type.item.number.@this Dy => _dy;
+    [Out] public global::app.type.item.number.@this Dy { get; }
     /// <summary>The modifier keys held: alt, ctrl, meta, shift.</summary>
     [Out] public global::app.type.item.input.modifier.list.@this Modifier { get; }
 
@@ -57,17 +57,17 @@ public sealed class @this : input.@this
     {
         writer.BeginObject();
         writer.Name("mouse"); writer.String(_action.ToString());
-        writer.Name("x"); writer.Int(_x);
-        writer.Name("y"); writer.Int(_y);
+        writer.Name("x"); X.Write(writer);
+        writer.Name("y"); Y.Write(writer);
         if (_action == global::app.type.item.input.mouse.Gesture.wheel)
         {
-            writer.Name("dx"); writer.Int(_dx);
-            writer.Name("dy"); writer.Int(_dy);
+            writer.Name("dx"); Dx.Write(writer);
+            writer.Name("dy"); Dy.Write(writer);
         }
         else
         {
             writer.Name("button"); writer.String(_button.ToString());
-            writer.Name("clicks"); writer.Int(_clicks);
+            writer.Name("clicks"); Clicks.Write(writer);
         }
         writer.Name("mods"); Modifier.Write(writer);
         WriteStamp(writer);

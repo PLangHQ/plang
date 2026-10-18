@@ -12,6 +12,7 @@ public class InputTypeTests : IAsyncDisposable
     private readonly global::app.@this _app = new global::app.@this("/app").Testing();
     public async ValueTask DisposeAsync() => await _app.DisposeAsync();
     private global::app.actor.context.@this Context => _app.actor.list.User.Context;
+    private global::app.type.list.@this Types => _app.type.list;
 
     private async Task<string> Line(global::app.type.item.@this value)
     {
@@ -47,12 +48,12 @@ public class InputTypeTests : IAsyncDisposable
     {
         var values = new global::app.type.item.@this[]
         {
-            new Input.mouse.@this(Input.mouse.Gesture.down, 120, 40, Input.mouse.Button.left, 2, modifier: new Input.modifier.list.@this(4), stamp: 77),
-            new Input.mouse.@this(Input.mouse.Gesture.wheel, 10, 20, dy: -120),
-            new Input.key.@this(true, 30, extended: false, vk: 65, name: "A", modifier: new Input.modifier.list.@this(1)),
-            new Input.key.@this(false, 75, extended: true),
-            new Input.text.@this("þú"),
-            new Input.navigate.@this(Input.navigate.Direction.back),
+            new Input.mouse.@this(Types, Input.mouse.Gesture.down, 120, 40, Input.mouse.Button.left, 2, modifier: new Input.modifier.list.@this(4, Types), stamp: 77),
+            new Input.mouse.@this(Types, Input.mouse.Gesture.wheel, 10, 20, dy: -120),
+            new Input.key.@this(Types, true, 30, extended: false, vk: 65, name: "A", modifier: new Input.modifier.list.@this(1, Types)),
+            new Input.key.@this(Types, false, 75, extended: true),
+            new Input.text.@this(Types, "þú"),
+            new Input.navigate.@this(Types, Input.navigate.Direction.back),
         };
         foreach (var value in values)
         {
@@ -64,6 +65,17 @@ public class InputTypeTests : IAsyncDisposable
         // the line as it has always been on the screen's wire
         await Assert.That(await Line(values[0])).IsEqualTo("{\"mouse\":\"down\",\"x\":120,\"y\":40,\"button\":\"left\",\"clicks\":2,\"mods\":4,\"t\":77}");
         await Assert.That(await Line(values[5])).IsEqualTo("{\"nav\":\"back\"}");
+    }
+
+    // an input read from its line is born holding the app's own type objects — its own and its keys'
+    [Test]
+    public async Task AnInputReadFromItsLine_HoldsTheAppsTypes()
+    {
+        var click = (Input.mouse.@this)Read("input", "{\"mouse\":\"down\",\"x\":1,\"y\":2,\"button\":\"left\",\"clicks\":1,\"mods\":2}");
+        await Assert.That(ReferenceEquals(click.Type, Types[typeof(Input.mouse.@this)])).IsTrue();
+        await Assert.That(ReferenceEquals(click.Modifier.Type, Types[typeof(Input.modifier.list.@this)])).IsTrue();
+        var ctrl = (Input.modifier.@this)(await click.Modifier.Value(Context.Ok(click.Modifier)));
+        await Assert.That(ReferenceEquals(ctrl.Type, Types[typeof(Input.modifier.@this)])).IsTrue();
     }
 
     [Test]
@@ -80,7 +92,7 @@ public class InputTypeTests : IAsyncDisposable
         async Task<bool> Is(global::app.type.item.@this value, string type)
             => (await new global::app.data.Operator("is").Evaluate(new global::app.data.@this("e", value, context: Context),
                 new global::app.data.@this("", type, context: Context), Context)).ToBoolean();
-        var click = new Input.mouse.@this(Input.mouse.Gesture.down, 1, 2, Input.mouse.Button.left, 1);
+        var click = new Input.mouse.@this(Types, Input.mouse.Gesture.down, 1, 2, Input.mouse.Button.left, 1);
         var copied = new global::app.type.item.clipboard.@this((global::app.type.item.text.@this)"x");
         global::app.type.item.text.@this line = "{\"stats\":{}}";
         await Assert.That(await Is(click, "input")).IsTrue().Because("a click is input");
@@ -96,7 +108,7 @@ public class InputTypeTests : IAsyncDisposable
     [Test]
     public async Task AGoalReadsTheVariant_AsTheTypesKind()
     {
-        await Context.Variable.Set("click", new Input.mouse.@this(Input.mouse.Gesture.down, 1, 2, Input.mouse.Button.left, 1));
+        await Context.Variable.Set("click", new Input.mouse.@this(Types, Input.mouse.Gesture.down, 1, 2, Input.mouse.Button.left, 1));
         var goal = Make.Goal(Context, "Kind", Make.Step("the kind",
             Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "variant", "variable"), ("Value", "%click!type.kind%"))));
         await (await _app.Start(goal, Context)).IsSuccess();
@@ -107,8 +119,8 @@ public class InputTypeTests : IAsyncDisposable
     [Test]
     public async Task AClicksModifier_IsTheFirstKeyHeld_AndItsListIsEvery()
     {
-        await Context.Variable.Set("click", new Input.mouse.@this(Input.mouse.Gesture.down, 1, 2, Input.mouse.Button.left, 1,
-            modifier: new Input.modifier.list.@this(2 | 8)));
+        await Context.Variable.Set("click", new Input.mouse.@this(Types, Input.mouse.Gesture.down, 1, 2, Input.mouse.Button.left, 1,
+            modifier: new Input.modifier.list.@this(2 | 8, Types)));
         var goal = Make.Goal(Context, "Modifier",
             Make.Step("the first", Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "first", "variable"), ("Value", "%click.modifier%"))),
             Make.Step("every one", Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "every", "variable"), ("Value", "%click.modifier.list%"))));
@@ -117,15 +129,15 @@ public class InputTypeTests : IAsyncDisposable
         var every = await (await Context.Variable.Get("every"))!.Value();
         await Assert.That(every).IsTypeOf<global::app.type.item.list.@this<Input.modifier.@this>>();
         await Assert.That(string.Join(",", ((global::app.type.item.list.@this<Input.modifier.@this>)every!).Items())).IsEqualTo("ctrl,shift");
-        await Assert.That(await Line(new Input.modifier.list.@this(2 | 8))).IsEqualTo("[\"ctrl\",\"shift\"]");
+        await Assert.That(await Line(new Input.modifier.list.@this(2 | 8, Types))).IsEqualTo("[\"ctrl\",\"shift\"]");
     }
 
     [Test]
     public async Task AKey_NamesItselfFromItsVirtualKey_ButNotUnderAlt()
     {
-        await Assert.That((await Line(new Input.key.@this(true, 28, vk: 0x0D))).Contains("\"name\":\"Enter\"")).IsTrue();
-        await Assert.That((await Line(new Input.key.@this(true, 30, vk: 0x41, modifier: new Input.modifier.list.@this(2)))).Contains("\"name\":\"a\"")).IsTrue();
-        await Assert.That((await Line(new Input.key.@this(true, 28, vk: 0x0D, modifier: new Input.modifier.list.@this(1)))).Contains("\"name\":null")).IsTrue();
+        await Assert.That((await Line(new Input.key.@this(Types, true, 28, vk: 0x0D))).Contains("\"name\":\"Enter\"")).IsTrue();
+        await Assert.That((await Line(new Input.key.@this(Types, true, 30, vk: 0x41, modifier: new Input.modifier.list.@this(2, Types)))).Contains("\"name\":\"a\"")).IsTrue();
+        await Assert.That((await Line(new Input.key.@this(Types, true, 28, vk: 0x0D, modifier: new Input.modifier.list.@this(1, Types)))).Contains("\"name\":null")).IsTrue();
     }
 
     [Test]

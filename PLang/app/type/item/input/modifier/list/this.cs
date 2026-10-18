@@ -15,10 +15,14 @@ public sealed class @this : global::app.type.item.@this
     /// <summary>A part of an input, never LLM vocabulary of its own — kept out of the catalog.</summary>
     public static bool Internal => true;
 
-    /// <summary>The keys held in <paramref name="code"/>, the screen's wire count — where an input comes in.</summary>
-    internal @this(int code)
-        => _held = new (string Name, int Code)[] { ("alt", Alt), ("ctrl", Ctrl), ("meta", Meta), ("shift", Shift) }
-            .Where(k => (code & k.Code) != 0).Select(k => new modifier.@this(k.Name, k.Code)).ToArray();
+    /// <summary>The keys held in <paramref name="code"/>, the screen's wire count — where an input comes in; born with
+    /// the app's <paramref name="types"/>, its own and each key's.</summary>
+    internal @this(int code, global::app.type.list.@this types) : base(types[typeof(@this)])
+    {
+        var type = types[typeof(modifier.@this)];
+        _held = new (string Name, int Code)[] { ("alt", Alt), ("ctrl", Ctrl), ("meta", Meta), ("shift", Shift) }
+            .Where(k => (code & k.Code) != 0).Select(k => new modifier.@this(k.Name, k.Code, type)).ToArray();
+    }
 
     /// <summary>Its code on the screen's wire: each key held, counted once.</summary>
     internal int Code => _held.Aggregate(0, (code, modifier) => code | modifier.Code);

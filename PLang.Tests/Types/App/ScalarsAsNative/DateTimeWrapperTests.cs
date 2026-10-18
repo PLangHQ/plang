@@ -18,7 +18,7 @@ public class DateTimeWrapperTests : IAsyncDisposable
     public async Task DateTime_AcceptsClrDateTime_LandsAsDatetime()
     {
         var dt = new DateTimeT(new System.DateTime(2024, 3, 15, 10, 30, 0, System.DateTimeKind.Utc));
-        await Assert.That(dt.Year(Context)).IsEqualTo(2024);
+        await Assert.That(await dt.Year(Context).Value()).IsEqualTo(2024);
         await Assert.That(dt.Value).IsTypeOf<System.DateTimeOffset>();
     }
 
@@ -53,12 +53,12 @@ public class DateTimeWrapperTests : IAsyncDisposable
     public async Task DateTime_Parts_YearMonthDayHourMinuteSecond()
     {
         var dt = new DateTimeT(System.DateTimeOffset.Parse("2024-03-15T10:30:45Z"));
-        await Assert.That(dt.Year(Context)).IsEqualTo(2024);
-        await Assert.That(dt.Month(Context)).IsEqualTo(3);
-        await Assert.That(dt.Day(Context)).IsEqualTo(15);
-        await Assert.That(dt.Hour(Context)).IsEqualTo(10);
-        await Assert.That(dt.Minute(Context)).IsEqualTo(30);
-        await Assert.That(dt.Second(Context)).IsEqualTo(45);
+        await Assert.That(await dt.Year(Context).Value()).IsEqualTo(2024);
+        await Assert.That(await dt.Month(Context).Value()).IsEqualTo(3);
+        await Assert.That(await dt.Day(Context).Value()).IsEqualTo(15);
+        await Assert.That(await dt.Hour(Context).Value()).IsEqualTo(10);
+        await Assert.That(await dt.Minute(Context).Value()).IsEqualTo(30);
+        await Assert.That(await dt.Second(Context).Value()).IsEqualTo(45);
     }
 
     [Test]

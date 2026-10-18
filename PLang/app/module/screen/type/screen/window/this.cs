@@ -29,7 +29,7 @@ public sealed class @this : screen.@this
         var events = System.Threading.Channels.Channel.CreateUnbounded<global::app.type.item.@this>();
         var errors = System.Threading.Channels.Channel.CreateUnbounded<byte[]>();
         Text closedLine = "{\"closed\":true}";
-        var window = new Native(title, width, height,
+        var window = new Native(title, width, height, context.App.type.list,
             onEvent: e => events.Writer.TryWrite(e),
             onClosed: () => { events.Writer.TryWrite(closedLine); errors.Writer.TryComplete(); },
             onError: json => errors.Writer.TryWrite(json));

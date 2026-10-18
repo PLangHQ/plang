@@ -9,7 +9,7 @@ public sealed class @this : input.@this
 {
     private readonly Direction _to;
 
-    public @this(Direction to, long? stamp = null) : base(stamp) => _to = to;
+    public @this(global::app.type.list.@this types, Direction to, long? stamp = null) : base(types[typeof(@this)], stamp) => _to = to;
 
     /// <summary>back, forward or reload.</summary>
     [Out] public global::app.type.item.choice.@this<Direction> To => new(_to);

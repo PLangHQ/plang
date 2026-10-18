@@ -1422,19 +1422,19 @@ class app.type.item.datetime.serializer.Reader : app.type.reader.ITypeReader
 class app.type.item.datetime.this : app.type.item.this, System.IEquatable<app.type.item.datetime.this>, app.type.item.ICreate<app.type.item.datetime.this> [PlangType]
   AreEqual(System.Object other) : System.Boolean
   Date(app.actor.context.this context) : app.type.item.date.this [LlmBuilder]
-  Day(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Day(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
   Equals(app.type.item.datetime.this other) : System.Boolean
-  Hour(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
-  Millisecond(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
-  Minute(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
-  Month(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
-  Offset(app.actor.context.this context) : app.type.item.duration.this [LlmBuilder]
-  Second(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
-  Ticks(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Hour(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
+  Millisecond(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
+  Minute(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
+  Month(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
+  Offset(app.actor.context.this context) : app.data.this<app.type.item.duration.this> [LlmBuilder]
+  Second(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
+  Ticks(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
   Time(app.actor.context.this context) : app.type.item.time.this [LlmBuilder]
   Value : System.DateTimeOffset { get; }
-  Weekday(app.actor.context.this context) : app.type.item.text.this [LlmBuilder]
-  Year(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Weekday(app.actor.context.this context) : app.data.this<app.type.item.text.this> [LlmBuilder]
+  Year(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
   ctor(System.DateTime value, app.type.this type = …)
   ctor(System.DateTimeOffset value, app.type.this type = …)
   override Equals(System.Object obj) : System.Boolean
@@ -1540,12 +1540,12 @@ class app.type.item.duration.serializer.Reader : app.type.reader.ITypeReader
 
 class app.type.item.duration.this : app.type.item.this, System.IEquatable<app.type.item.duration.this>, app.type.item.ICreate<app.type.item.duration.this> [PlangType]
   AreEqual(System.Object other) : System.Boolean
-  Days(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Days(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
   Equals(app.type.item.duration.this other) : System.Boolean
-  Hours(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
-  Milliseconds(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
-  Minutes(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
-  Seconds(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Hours(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
+  Milliseconds(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
+  Minutes(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
+  Seconds(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
   Text : System.String { get; }
   Value : System.TimeSpan { get; }
   ctor(System.TimeSpan value)
@@ -1660,7 +1660,7 @@ class app.type.item.input.key.this : app.type.item.input.this
   Name : app.type.item.text.this { get; } [Out]
   Scancode : app.type.item.number.this { get; } [Out]
   Vk : app.type.item.number.this { get; } [Out]
-  ctor(System.Boolean down, System.UInt32 scancode, System.Boolean extended = …, System.Int32 vk = …, System.String name = …, app.type.item.input.modifier.list.this modifier = …, System.Nullable<System.Int64> stamp = …)
+  ctor(app.type.list.this types, System.Boolean down, System.UInt32 scancode, System.Boolean extended = …, System.Int32 vk = …, System.String name = …, app.type.item.input.modifier.list.this modifier = …, System.Nullable<System.Int64> stamp = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Write(app.type.format.IWriter writer) : System.Void
 
@@ -1706,7 +1706,7 @@ class app.type.item.input.mouse.this : app.type.item.input.this
   Modifier : app.type.item.input.modifier.list.this { get; } [Out]
   X : app.type.item.number.this { get; } [Out]
   Y : app.type.item.number.this { get; } [Out]
-  ctor(app.type.item.input.mouse.Gesture action, System.Int32 x, System.Int32 y, app.type.item.input.mouse.Button button = …, System.Int32 clicks = …, System.Int32 dx = …, System.Int32 dy = …, app.type.item.input.modifier.list.this modifier = …, System.Nullable<System.Int64> stamp = …)
+  ctor(app.type.list.this types, app.type.item.input.mouse.Gesture action, System.Int32 x, System.Int32 y, app.type.item.input.mouse.Button button = …, System.Int32 clicks = …, System.Int32 dx = …, System.Int32 dy = …, app.type.item.input.modifier.list.this modifier = …, System.Nullable<System.Int64> stamp = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Write(app.type.format.IWriter writer) : System.Void
 
@@ -1717,7 +1717,7 @@ enum app.type.item.input.navigate.Direction [PlangType]
 
 class app.type.item.input.navigate.this : app.type.item.input.this
   To : app.type.item.choice.this<app.type.item.input.navigate.Direction> { get; } [Out]
-  ctor(app.type.item.input.navigate.Direction to, System.Nullable<System.Int64> stamp = …)
+  ctor(app.type.list.this types, app.type.item.input.navigate.Direction to, System.Nullable<System.Int64> stamp = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Write(app.type.format.IWriter writer) : System.Void
 
@@ -1728,7 +1728,7 @@ class app.type.item.input.serializer.Reader : app.type.reader.ITypeReader
 
 class app.type.item.input.text.this : app.type.item.input.this
   Typed : app.type.item.text.this { get; } [Out]
-  ctor(System.String typed, System.Nullable<System.Int64> stamp = …)
+  ctor(app.type.list.this types, System.String typed, System.Nullable<System.Int64> stamp = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Write(app.type.format.IWriter writer) : System.Void
 

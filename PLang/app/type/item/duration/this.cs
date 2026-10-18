@@ -96,21 +96,25 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>A span holds a number a step wrote when it is the whole span in one of its units — 1s holds 1000 (as
     /// milliseconds) and 1 (as seconds), never 7.</summary>
     internal override async System.Threading.Tasks.ValueTask<bool> Holds(global::app.type.item.number.@this number, global::app.actor.context.@this context)
-        => await base.Holds(number, context)
-           || new[] { Milliseconds(context), Seconds(context), Minutes(context), Hours(context), Days(context) }
-               .Any(unit => unit.CompareTo(number) == 0);
+    {
+        if (await base.Holds(number, context)) return true;
+        foreach (var unit in new[] { Milliseconds(context), Seconds(context), Minutes(context), Hours(context), Days(context) })
+            if ((await unit.Value())?.CompareTo(number) == 0) return true;
+        return false;
+    }
 
     // ---- The span in each unit, whole: %elapsed.seconds% is 90 for 1m30s. How a span looks (1h30m) is its
-    //      writer's, so there are no component members. Each is made by the asker's app, through its number type ----
-    [LlmBuilder] public global::app.type.item.number.@this Days(global::app.actor.context.@this context) => Number(Value.TotalDays, context);
-    [LlmBuilder] public global::app.type.item.number.@this Hours(global::app.actor.context.@this context) => Number(Value.TotalHours, context);
-    [LlmBuilder] public global::app.type.item.number.@this Minutes(global::app.actor.context.@this context) => Number(Value.TotalMinutes, context);
-    [LlmBuilder] public global::app.type.item.number.@this Seconds(global::app.actor.context.@this context) => Number(Value.TotalSeconds, context);
-    [LlmBuilder] public global::app.type.item.number.@this Milliseconds(global::app.actor.context.@this context) => Number(Value.TotalMilliseconds, context);
-
-    // a unit, made by the app's number type
-    private static global::app.type.item.number.@this Number(double unit, global::app.actor.context.@this context)
-        => (global::app.type.item.number.@this)context.App.type.list["number"].Make(unit, context);
+    //      writer's, so there are no component members. Each is the carrier the asker's context births ----
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Days(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.TotalDays));
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Hours(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.TotalHours));
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Minutes(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.TotalMinutes));
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Seconds(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.TotalSeconds));
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Milliseconds(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.TotalMilliseconds));
 
     /// <summary>Its text in its kind (<see cref="Text"/>).</summary>
     public override string ToString() => Text;

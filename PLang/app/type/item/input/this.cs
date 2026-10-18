@@ -22,22 +22,21 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
 {
     public static string Shape => "object";
 
-    // the host's clock when it happened ("t"): echoed with the picture that answers it, so the time from a click to
-    // its picture can be measured. Absent on input that needs no answer timed.
-    private readonly long? _stamp;
-
-    private protected @this(long? stamp) => _stamp = stamp;
+    /// <summary>Born holding the app's <paramref name="type"/> for its variant; its stamp a number from birth.</summary>
+    private protected @this(global::app.type.@this type, long? stamp) : base(type)
+        => Stamp = stamp is { } t ? global::app.type.item.number.@this.Create(t) : null;
 
     public override bool IsLeaf => false;
 
-    /// <summary>The host's clock when it happened, when it carries one.</summary>
-    [Out] public global::app.type.item.number.@this? Stamp => _stamp is { } t ? (global::app.type.item.number.@this)t : null;
+    /// <summary>The host's clock when it happened ("t"), when it carries one: echoed with the picture that answers it, so
+    /// the time from a click to its picture can be measured. Absent on input that needs no answer timed.</summary>
+    [Out] public global::app.type.item.number.@this? Stamp { get; }
 
     /// <summary>Hands itself to what takes input: the stamp first (the answer's picture echoes it), then the variant
     /// to the target's own door for it.</summary>
     public void Apply(ITarget target)
     {
-        if (_stamp is { } t) target.Stamped(t);
+        if (Stamp is { } t) target.Stamped(t.Clr<long>());
         Applied(target);
     }
 
@@ -46,9 +45,9 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// <summary>Its members, then the stamp, inside the object the variant opens.</summary>
     private protected void WriteStamp(global::app.type.format.IWriter writer)
     {
-        if (_stamp is not { } t) return;
+        if (Stamp is not { } t) return;
         writer.Name("t");
-        writer.Long(t);
+        t.Write(writer);
     }
 
     /// <summary>An input passes; anything else declines — an input is made by what saw it happen (a screen), or read

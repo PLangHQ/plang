@@ -9,7 +9,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 {
     private readonly string _name;
 
-    internal @this(string name, int code)
+    internal @this(string name, int code, global::app.type.@this type) : base(type)
     {
         _name = name;
         Code = code;

@@ -39,11 +39,11 @@ public class DurationWrapperTests : IAsyncDisposable
     public async Task Duration_EachUnit_IsTheWholeSpan()
     {
         var d = new Duration(System.TimeSpan.FromSeconds(90));
-        await Assert.That(d.Seconds(Context).ToString()).IsEqualTo("90");
-        await Assert.That(d.Minutes(Context).ToString()).IsEqualTo("1.5");
-        await Assert.That(d.Milliseconds(Context).ToString()).IsEqualTo("90000");
-        await Assert.That(d.Hours(Context).AsDouble()).IsEqualTo(0.025);
-        await Assert.That(new Duration(System.TimeSpan.FromHours(36)).Days(Context).ToString()).IsEqualTo("1.5");
+        await Assert.That((await d.Seconds(Context).Value())!.ToString()).IsEqualTo("90");
+        await Assert.That((await d.Minutes(Context).Value())!.ToString()).IsEqualTo("1.5");
+        await Assert.That((await d.Milliseconds(Context).Value())!.ToString()).IsEqualTo("90000");
+        await Assert.That((await d.Hours(Context).Value())!.AsDouble()).IsEqualTo(0.025);
+        await Assert.That((await new Duration(System.TimeSpan.FromHours(36)).Days(Context).Value())!.ToString()).IsEqualTo("1.5");
     }
 
     [Test]

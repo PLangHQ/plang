@@ -44,15 +44,16 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             }
         }
         reader.EndObject();
-        var modifier = new modifier.list.@this(mods);
+        var types = ctx.Context.App.type.list;
+        var modifier = new modifier.list.@this(mods, types);
         return variant switch
         {
-            "mouse" => new mouse.@this(Parsed<mouse.Gesture>(what, "mouse"), x, y,
+            "mouse" => new mouse.@this(types, Parsed<mouse.Gesture>(what, "mouse"), x, y,
                 button == null ? mouse.Button.none : Parsed<mouse.Button>(button, "button"), clicks, dx, dy, modifier, stamp),
-            "key" => new key.@this(what == "down" ? true : what == "up" ? false
+            "key" => new key.@this(types, what == "down" ? true : what == "up" ? false
                 : throw new FormatException($"a key goes down or up, not '{what}'"), (uint)scancode, extended, vk, name, modifier, stamp),
-            "text" => new text.@this(what ?? "", stamp),
-            "nav" => new navigate.@this(Parsed<navigate.Direction>(what, "nav"), stamp),
+            "text" => new text.@this(types, what ?? "", stamp),
+            "nav" => new navigate.@this(types, Parsed<navigate.Direction>(what, "nav"), stamp),
             _ => throw new FormatException("an input names what it is first: mouse, key, text or nav"),
         };
     }

@@ -8,23 +8,18 @@ namespace app.type.item.input.key;
 /// </summary>
 public sealed class @this : input.@this
 {
-    private readonly bool _down, _extended;
-    private readonly uint _scancode;
-    private readonly int _vk;
-    private readonly string? _name;
-
-    /// <summary>A key by its scancode; its <paramref name="name"/> when given, else the one its virtual key has (none
-    /// while Alt is held: those combinations are the system's).</summary>
-    public @this(bool down, uint scancode, bool extended = false, int vk = 0, string? name = null,
-        global::app.type.item.input.modifier.list.@this? modifier = null, long? stamp = null)
-        : base(stamp)
+    /// <summary>A key by its scancode, born with the app's <paramref name="types"/>; its <paramref name="name"/> when
+    /// given, else the one its virtual key has (none while Alt is held: those combinations are the system's).</summary>
+    public @this(global::app.type.list.@this types, bool down, uint scancode, bool extended = false, int vk = 0,
+        string? name = null, global::app.type.item.input.modifier.list.@this? modifier = null, long? stamp = null)
+        : base(types[typeof(@this)], stamp)
     {
-        _down = down;
-        _scancode = scancode;
-        _extended = extended;
-        _vk = vk;
-        Modifier = modifier ?? new global::app.type.item.input.modifier.list.@this(0);
-        _name = name ?? Named(vk, Modifier);
+        Down = new global::app.type.item.@bool.@this(down, types["bool"]);
+        Scancode = global::app.type.item.number.@this.Create((long)scancode)!;
+        Extended = new global::app.type.item.@bool.@this(extended, types["bool"]);
+        Vk = global::app.type.item.number.@this.Create(vk)!;
+        Modifier = modifier ?? new global::app.type.item.input.modifier.list.@this(0, types);
+        Name = (name ?? Named(vk, Modifier)) is { } named ? new global::app.type.item.text.@this(named, types["text"]) : null;
     }
 
     // a key's name from its virtual key (Windows' VK codes) — the keys that aren't text, and Ctrl+letter (Ctrl+A, Ctrl+C)
@@ -39,15 +34,15 @@ public sealed class @this : input.@this
         };
 
     /// <summary>True while it goes down, false as it comes up.</summary>
-    [Out] public global::app.type.item.@bool.@this Down => _down;
+    [Out] public global::app.type.item.@bool.@this Down { get; }
     /// <summary>The keyboard's number for the key.</summary>
-    [Out] public global::app.type.item.number.@this Scancode => (long)_scancode;
+    [Out] public global::app.type.item.number.@this Scancode { get; }
     /// <summary>An extended key (the arrows, Home, the right Ctrl): its scancode means another key.</summary>
-    [Out] public global::app.type.item.@bool.@this Extended => _extended;
+    [Out] public global::app.type.item.@bool.@this Extended { get; }
     /// <summary>The host's virtual key for it, 0 when not known.</summary>
-    [Out] public global::app.type.item.number.@this Vk => _vk;
+    [Out] public global::app.type.item.number.@this Vk { get; }
     /// <summary>The key's name, when it has one (Enter, ArrowLeft, a with Ctrl).</summary>
-    [Out] public global::app.type.item.text.@this? Name => _name is { } n ? (global::app.type.item.text.@this)n : null;
+    [Out] public global::app.type.item.text.@this? Name { get; }
     /// <summary>The modifier keys held: alt, ctrl, meta, shift.</summary>
     [Out] public global::app.type.item.input.modifier.list.@this Modifier { get; }
 
@@ -56,12 +51,12 @@ public sealed class @this : input.@this
     public override void Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        writer.Name("key"); writer.String(_down ? "down" : "up");
-        writer.Name("sc"); writer.Long(_scancode);
-        writer.Name("ext"); writer.Bool(_extended);
-        writer.Name("vk"); writer.Int(_vk);
+        writer.Name("key"); writer.String(Down.Value ? "down" : "up");
+        writer.Name("sc"); Scancode.Write(writer);
+        writer.Name("ext"); Extended.Write(writer);
+        writer.Name("vk"); Vk.Write(writer);
         writer.Name("name");
-        if (_name is { } name) writer.String(name); else writer.Null();
+        if (Name is { } name) name.Write(writer); else writer.Null();
         writer.Name("mods"); Modifier.Write(writer);
         WriteStamp(writer);
         writer.EndObject();
