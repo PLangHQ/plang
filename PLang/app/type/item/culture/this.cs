@@ -12,11 +12,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     private readonly System.Globalization.CultureInfo _info;
 
-    private @this(System.Globalization.CultureInfo info, global::app.type.@this? type = null)
-        : base(type ?? new global::app.type.@this(typeof(@this))) => _info = info;
+    private @this(System.Globalization.CultureInfo info, global::app.type.@this type) : base(type) => _info = info;
 
-    /// <summary>The machine's culture — what the app reads numbers as text by when none is set.</summary>
-    public static @this Machine => new(System.Globalization.CultureInfo.CurrentCulture);
+    /// <summary>The machine's culture — what the app reads numbers as text by when none is set. A setting's default,
+    /// made where no type list is in reach; it holds the app's type when settings make their defaults at birth.</summary>
+    public static @this Machine => new(System.Globalization.CultureInfo.CurrentCulture, new global::app.type.@this(typeof(@this)));
 
     /// <summary>Its name, <c>is-IS</c>.</summary>
     public string Name => _info.Name;
@@ -27,7 +27,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override bool IsLeaf => true;
 
     /// <summary>The culture a name names, or null when no culture has that name.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? type = null)
+    public static @this? Create(object? raw, global::app.type.@this type)
     {
         if (raw is @this self) return self;
         var name = raw is global::app.type.item.@this item ? item.Clr<object>()?.ToString() : raw?.ToString();
@@ -39,7 +39,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The culture a value names; a name no culture has is refused on <paramref name="data"/>.</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Create(value, declared) is { } culture) return culture;
+        if (value is @this self) return self;
+        if (declared is { } type && Create(value, type) is { } culture) return culture;
         data.Fail(new global::app.error.@this(
             $"'{(value as global::app.type.item.@this)?.Clr<object>() ?? value}' is no culture — a culture is named as is-IS or en-US.",
             "UnknownCulture", 400));

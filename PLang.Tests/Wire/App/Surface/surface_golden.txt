@@ -1384,7 +1384,7 @@ class app.type.item.culture.this : app.type.item.this, app.type.item.ICreate<app
   override IsLeaf : System.Boolean { get; }
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
-  static Create(System.Object raw, app.type.this type = …) : app.type.item.culture.this
+  static Create(System.Object raw, app.type.this type) : app.type.item.culture.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.culture.this
   static Machine : app.type.item.culture.this { get; }
   static Shape : System.String { get; }

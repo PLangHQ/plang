@@ -15,10 +15,10 @@ public class TextWriterItemArmTests : System.IAsyncDisposable
 
     private Ctx C => app.actor.list.User.Context;
 
-    private static string Render(global::app.type.item.@this item)
+    private string Render(global::app.type.item.@this item)
     {
         using var ms = new System.IO.MemoryStream();
-        var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US")!);
+        var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US", C.App.type.list[typeof(global::app.type.item.culture.@this)])!);
         w.Value(item);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }

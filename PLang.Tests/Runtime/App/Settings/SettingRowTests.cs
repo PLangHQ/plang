@@ -100,7 +100,7 @@ public class SettingRowTests
         await using (var app = new global::app.@this(_dir))
         {
             var setting = app.actor.list.User.Setting.Of<global::app.setting.@this>();
-            setting.Culture = global::app.type.item.culture.@this.Create("is-IS")!;
+            setting.Culture = global::app.type.item.culture.@this.Create("is-IS", app.type.list[typeof(global::app.type.item.culture.@this)])!;
             await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
 
