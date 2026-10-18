@@ -114,9 +114,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         writer.Bytes(Bytes);
     }
 
-    /// <summary>An image's entity: name "image", kind = the canonical kind named at birth.</summary>
-    protected internal override global::app.type.@this Type =>
-        new global::app.type.@this("image", typeof(@this), _kind?.Name);
 
     /// <summary>
     /// Source path. Set for a path-backed image (content lazy-loads from here)
@@ -178,13 +175,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             "StrictKindMismatch", 400)
         : null;
 
-    /// <summary>Bytes-backed, no source: the content is in hand (base64 decode, the wire).
-    /// <paramref name="kind"/> is the format name the creator already has — sniffed off the magic
-    /// bytes or read off the wire; null when unknown. The mime is asked of the kind, not stored.</summary>
+    /// <summary>Bytes-backed, no source: the content is in hand (base64 decode, the wire). <paramref name="kind"/>
+    /// is the format name the creator has — sniffed off the magic bytes or read off the wire; null when unknown.
+    /// The image is born holding <c>image&lt;kind&gt;</c>, and the mime is asked of that kind, not stored.</summary>
     public @this(byte[] bytes, string? kind = null)
+        : base(new global::app.type.@this("image", typeof(@this), kind))
     {
         _bytes = bytes ?? System.Array.Empty<byte>();
-        _kind = kind is { Length: > 0 } ? new global::app.type.kind.@this(kind) : null;
+        _kind = Type.kind.IsEmpty ? null : Type.kind;
     }
 
     /// <summary>
@@ -195,9 +193,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the kind from the path's extension, and not kept.
     /// </summary>
     public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
+        : base(new global::app.type.@this("image", typeof(@this),
+            (path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } pk } ? pk : null)?.Name))
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
-        _kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null;
+        _kind = Type.kind.IsEmpty ? null : Type.kind;
         history.Add(path);   // born from a path → `is path` from its history
     }
 

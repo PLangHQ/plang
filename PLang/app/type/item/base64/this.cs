@@ -22,11 +22,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Content-family token off a data-url mime ("gif", "json"); null for a bare payload.</summary>
     public string? Kind { get; init; }
 
-    protected internal override global::app.type.@this Type
-        => new("base64", typeof(@this), Kind);
-
-    public @this(string value) { _value = value; }
-    private @this(global::app.type.item.@this source) { _source = source; }
+    public @this(string value, string? kind = null)
+        : base(new global::app.type.@this("base64", typeof(@this), kind)) { _value = value; Kind = kind; }
+    private @this(global::app.type.item.@this source)
+        : base(new global::app.type.@this("base64", typeof(@this))) { _source = source; }
 
     /// <summary>
     /// The one string-parse home, shared by the pure core and the wire reader: a
@@ -52,7 +51,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             var mime = header[..^7];
             var slash = mime.IndexOf('/');
             var kind = slash >= 0 ? mime[(slash + 1)..] : null;
-            return new @this(payload) { Kind = kind == "octet-stream" ? null : kind };
+            return new @this(payload, kind == "octet-stream" ? null : kind);
         }
         if (!System.Buffers.Text.Base64.IsValid(raw))
             throw new System.FormatException("not a valid base64 payload.");
@@ -158,7 +157,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override bool IsTruthy() => !string.IsNullOrEmpty(_value) || _source != null;
 
     public override global::app.type.item.@this Kinded(string? kind)
-        => _value is { } v ? new @this(v) { Kind = kind } : this;
+        => _value is { } v ? new @this(v, kind) : this;
 
     /// <summary>CLR exit — a byte[] target gets the DECODED bytes; anything else the payload string.</summary>
     internal override object? Clr(System.Type target)

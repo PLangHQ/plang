@@ -1204,7 +1204,7 @@ class app.type.item.base64.serializer.Reader : app.type.reader.ITypeReader
 
 class app.type.item.base64.this : app.type.item.this, app.type.item.ICreate<app.type.item.base64.this> [PlangType]
   Kind : System.String { get; init; }
-  ctor(System.String value)
+  ctor(System.String value, System.String kind = …)
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
   override Kinded(System.String kind) : app.type.item.this
@@ -1216,7 +1216,6 @@ class app.type.item.base64.this : app.type.item.this, app.type.item.ICreate<app.
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  protected override Type : app.type.this { get; }
   static Create(System.Object raw) : app.type.item.base64.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.base64.this
   static Shape : System.String { get; }
@@ -1230,7 +1229,7 @@ class app.type.item.binary.this : app.type.item.this, app.type.item.ICreate<app.
   AreEqual(System.Object other) : System.Boolean
   Kind : System.String { get; init; }
   Value : System.Byte[] { get; }
-  ctor(System.Byte[] value)
+  ctor(System.Byte[] value, System.String kind = …)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
@@ -1242,7 +1241,6 @@ class app.type.item.binary.this : app.type.item.this, app.type.item.ICreate<app.
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  protected override Type : app.type.this { get; }
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   static Create(System.Object raw) : app.type.item.binary.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.binary.this
@@ -1634,7 +1632,6 @@ class app.type.item.image.this : app.type.item.this, app.data.IKindValidatable, 
   override RawBytes : System.Byte[] { get; }
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Write(app.type.format.IWriter writer) : System.Void
-  protected override Type : app.type.this { get; }
   static Create(System.Object raw) : app.type.item.image.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.image.this
   static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>

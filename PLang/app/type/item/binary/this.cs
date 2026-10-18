@@ -159,10 +159,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// typed property stamped at creation, never after.</summary>
     public string? Kind { get; init; }
 
-    protected internal override global::app.type.@this Type
-        => new("binary", typeof(@this), Kind);
-
-    public @this(byte[] value) { Value = value ?? System.Array.Empty<byte>(); }
+    public @this(byte[] value, string? kind = null)
+        : base(new global::app.type.@this("binary", typeof(@this), kind))
+    { Value = value ?? System.Array.Empty<byte>(); Kind = kind; }
 
     /// <summary>THE PURE CORE — a <c>binary</c> passes through; a raw <c>byte[]</c> passes; a text is its UTF-8
     /// bytes (text is bytes in an encoding); a raw base64 string (binary's wire form) decodes; anything else (or
@@ -195,7 +194,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>A re-kinded copy — same bytes, the declared kind stamped.</summary>
-    public override global::app.type.item.@this Kinded(string? kind) => new @this(Value) { Kind = kind };
+    public override global::app.type.item.@this Kinded(string? kind) => new @this(Value, kind);
 
     // INBOUND only — the entry lift (`.Ok(bytes)` constructs). The outbound
     // implicit (binary → byte[]) is gone: every site was a silent CLR exit;
