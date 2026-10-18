@@ -205,6 +205,27 @@ foreach (var row in Rows(incoming, context))
 
 What goes: `FromJson`, the `is dict or list` branch in `Step.Set`, and `item.Set`'s C# lowering fallback. It's locked: a new implementation of the serializer's `IReader`.
 
+### 6. Settings through the type system (agreed, 892)
+
+Ingi asked for an OBP scan of settings ("we havent really done proper obp scan of the setting"). They work, but beside the type system, not through it. Ingi: "yes, lets do that".
+
+| what | where | the fix |
+|---|---|---|
+| their own member system, all reflection (`Options`, `Option`, `Switch`, `Apply`'s `GetProperty`/`SetValue`, `Copy`, `Rows`, `Construct`) | `type/item/setting/this.cs:120–306` | a setting's options are its type's member list (#4) |
+| the address cut out of the C# namespace (`StartsWith("app.module.")`) | `setting/this.cs:23–32` | its address is its type's name (#1) |
+| an index made by making one of every settings class to read its address | `actor/setting/this.cs:350–359`, `:341` | the type list is the index |
+| this run's values as flat `"path.option"` strings, rebuilt into dicts by splitting on `.` | `actor/setting/this.cs:19`, `:117`, `:151`, `:403–431` | the values kept on the setting itself |
+| six doors to get a setting (`Of<T>()`, `Of(owner)`, `Of(type)`, `Of(Type)`, `Of(module)`, `Of(action)`) | `actor/setting/this.cs:310–398` | one `await Get<T>()` |
+| branches on what something is (`key == "Path"`/`"Rows"`, a row checked for setting or action, `Apply`'s three branches, `IsComposite` by C# shape) | `setting/this.cs:110–115`, `:179–229`, `:236–245`; `actor/setting/this.cs:223–231` | each answers for itself |
+| throws where it could answer (`Set`, `Build` twice, `Apply` catching four exception types) | `setting/this.cs:137–144`, `:221–227`; `actor/setting/this.cs:295`, `:304` | the error is the answer |
+| a static (`Path<T>`) | `actor/setting/this.cs:314–317` | goes with the address |
+| every row read when the app starts, with a guard for reads during that read | `actor/setting/this.cs:79–94`, `:26`, `app/this.cs:406` | read on use |
+| two names for one fact (`Enabled` and `Disabled`); the row key `"{actor}!{path}"` built and parsed in three places | `setting/this.cs:41–47`; `actor/setting/this.cs:174`, `:189`, `:238` | one name; the key owned once |
+
+The settings door and read-on-use were agreed for llm-provider (its 854). They're core, so they're built here, and llm-provider uses them. A setting asking for itself (`[Ask]`) stays llm-provider's.
+
+Each settings class is born with its type through a one-line constructor (891), part of stage 1.
+
 ## What the developer gets
 
 The same plang, the same output: every `.pr`, wire and json write stays byte-equal. Three things change for a developer:
@@ -222,6 +243,7 @@ Each stage ends with its tests built and run, and each test must go red without 
 3. **A type speaks for itself to a writer** (#3): the record door always, plang's own writer, the JSON Schema entries. It needs #2's registry.
 4. **Reading a plang value as tokens** (#5). It comes before #4 because #4's `Write` reads a dict into a record through this reader.
 5. **A type's members through its own list** (#4).
+6. **Settings through the type system** (#6). It needs #4, since a setting's options are its type's members. Then the list's rows made when read (#1b).
 
 ## Demolition
 
