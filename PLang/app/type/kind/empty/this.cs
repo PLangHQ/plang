@@ -20,7 +20,11 @@ public sealed class @this : global::app.type.kind.@this
     // The type's own format — its class's [Format("", …)]: plain text is {text}, opaque bytes {binary}.
     private global::app.type.kind.@this? _format;
 
-    public @this(string owner) : base("") => _owner = owner;
+    public @this(string owner, global::app.type.kind.@this? format = null) : base("")
+    {
+        _owner = owner;
+        _format = format;
+    }
 
     /// <summary>The empty kind is its own kind — ends the <c>kind : type</c> ctor's kind-minting chain
     /// without a new allocation. (Serializers are kept off <c>type.kind</c>, so this self-reference

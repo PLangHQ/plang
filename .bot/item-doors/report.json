@@ -1,0 +1,62 @@
+{
+  "branch": "item-doors",
+  "sessions": [
+    {
+      "id": "7e8796cb-5ab8-42c5-93f7-b60ae409ca01",
+      "bot": "coder",
+      "timestamp_start": "2026-10-17T22:03:03Z",
+      "timestamp_end": null,
+      "intent": "Stage 1: a value is born whole — the base item holds its registered type, set at construction, forwarded by every subtype; the INTO-plang implicit operators go; Create(raw) takes the type; the re-resolves, text floor, :754, source.cs:240, action-slot checks, list doors, bare-type makers, image _mime and name-sniffing all collapse.",
+      "before": {
+        "assumptions": "Ingi approved fork (a): every value is born with its type from the app's list (the app always exists). The 28 subtype Type overrides rebuild the type per read; source.cs:115 floors text's IsText by Name; three re-resolves (type.Get:886, Out:63, Setting:900) patch the bare type at navigation.",
+        "risk": "Big-bang: base item ctor becomes required (type.@this), so every subtype ctor and every construction site must supply the type at birth. Removing ~28 INTO-plang implicit operators surfaces a large caller wall (number especially). Must land as one coherent change with the 6 reds green, guards green, no new reds vs runtime2."
+      },
+      "plan": ".bot/item-doors/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/item-doors/coder/v1/plan.md", ".bot/item-doors/coder/v1/baseline-tests.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote stage-1 plan and captured baseline (3 stage-1 reds: ImageFromBytes_Kind_CarriesItsRegisteredMime, PlainText_Kind_IsText_WithoutNameFloor, AFreshTypeByNameCarriesNoFacts; 6 Wire + TheActorNamed pre-existing). Mapped all 28 subtypes (ctors/Type overrides/kind sources/self-construction) and the scattered sites (3 re-resolves, floor, :754, :240, image _mime, name-sniffs, 4 action-slot checks, bare-type makers, list doors) via two Explore agents."
+        },
+        {
+          "paths": ["PLang/app/type/this.cs", "PLang/app/type/list/this.cs", "PLang/app/type/item/this.cs"],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Surfaced the hinge to the architect: context-free births (bool.True singleton, sniffed image FromBytes, text.ToUpper, number arithmetic) have no app, yet the 3 reds demand whole kind facts + by-name ClrType. Proposed a static assembly-scan facts cache ([Format]/[PlangType] metadata) backing the kind/by-name ctor — matches Ingi's 'facts from class declarations' and 876 'by-name ctor becomes the list's own'. Flagged as a new static (no-static-without-consent) + locked-core (type system). Holding the 28-file big-bang on the answer."
+        },
+        {
+          "paths": ["PLang/app/type/item/bool/this.cs", "PLang/app/type/item/null/this.cs", "PLang/app/type/item/given/this.cs", "PLang/app/type/item/culture/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Architect ruled (decision 880): NO static — every birth reaches the app's type via its maker (type.Make hands the registered type), from the value it came from (this.Type), or a passed context; the by-name test is the test-designer's to reroute. Enumerated the four static value singletons that can't hold an app's type and delivered the list with uses to the architect (REPLY asked for the singletons list first): bool.True/False (7 uses, mostly [Out,Store] setting field-defaults), null.Instance (the typeless-null citizen, ~18 uses — proposed exempt), given.Instance (1 use), culture.Machine (1 use). Holding the base-ctor big-bang until the architect rules how these four get their type."
+        },
+        {
+          "paths": ["PLang/app/type/kind/empty/this.cs", "PLang/app/type/this.cs", "PLang/app/type/item/image/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 1 (facts fix, static-free): the type entity, when built from a CLR class, reads its class's [Format] into its kind (KindOfClass via reflection — the empty kind now carries its _format, a named kind is a kind.format<T>). empty kind ctor takes an optional format. image's Type override passes the kind NAME so the type builds it from [Format]. Both Types reds green (PlainText_Kind_IsText_WithoutNameFloor, ImageFromBytes_Kind_CarriesItsRegisteredMime); Types suite 32/0, no regressions. This is the foundation born-whole builds each value's _type on."
+        },
+        {
+          "paths": [".bot/item-doors/coder/v1/born-whole-map.md", "PLang/app/type/this.cs", "PLang/app/type/item/this.cs"],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Wrote the born-whole execution map (per-subtype forwarding type, operator-removal list, singleton handling, collapses). Surfaced two locked-core forks the briefing didn't cover and the architect ruled both: (1) meta-type recursion — Ingi: one self-typed root in the app's list (ctor sets _type=this), type+kind forward it via : base(root), no Type override. (2) the scope hinge now open — a value's type entity holds the per-app root (needs context), but the two green Types reds + internal helpers construct values context-free; asked whether origin-births route through context (option a, values always from the list/Make/context, the 2 Types tests reroute like the by-name one) vs keep context-free value ctors (option b). Holding the base-ctor big-bang on that answer."
+        },
+        {
+          "paths": ["PLang/app/type/item/number/this.cs", "PLang/app/type/kind/this.cs", "PLang/app/type/this.cs"],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Integrated architect/test-designer commits (decision 886; 2 Types tests + ActionSlot rerouted through app.type.list). Verified: reds 1&2 GREEN via the facts fix through the app's Create door (thread-safe). Red 3 (AKindedSlot) needs a targeted element-kind ClrType fix. Found and surfaced a hard COLLISION with concrete evidence: the required base ctor + per-app root (884) + no-static (882) collides with the type system's ~15 STATIC kind singletons — number's precision kinds (number/this.cs:57-71, `static readonly kind.@this @int = new kind.@int.@this()`) and other static kinds across ~50 kind classes. kind.@this : type.@this : item.@this, so every kind would have to hold the per-app root, but a static can't. Full swing = ~100+ files atomic + ~15 static-kind rulings (every number op would need the app for its precision kind). Offered 3 paths to the architect: (A) full per-app-kinds swing, (B) ship observable reds-green (facts fix + element fix + no-base-ctor collapses), (C) lighter born-whole (only value types born-whole; type/kind keep static bootstrap). Reverted the base-ctor change to keep the tree green (facts-fix-only). Holding for the ruling."
+        }
+      ],
+      "after": null
+    }
+  ]
+}

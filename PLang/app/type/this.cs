@@ -122,6 +122,24 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// never loops a walk.</summary>
     protected virtual global::app.type.kind.@this BornKind() => new global::app.type.kind.empty.@this(Name);
 
+    /// <summary>The kind a value class declares for <paramref name="name"/> — or its own format for the empty
+    /// name — read from the class's <c>[Format]</c>: the facts (MIME, extension, whether it is characters) a
+    /// value carries without asking the app. Null when the class declares no such format, so the caller keeps
+    /// the bare by-name kind.</summary>
+    private static global::app.type.kind.@this? KindOfClass(System.Type clr, string? name)
+    {
+        var wanted = name ?? "";
+        global::app.Attributes.FormatAttribute? format = null;
+        foreach (var attribute in clr.GetCustomAttributes(typeof(global::app.Attributes.FormatAttribute), inherit: false))
+            if (attribute is global::app.Attributes.FormatAttribute fmt
+                && string.Equals(fmt.Name, wanted, System.StringComparison.OrdinalIgnoreCase)) { format = fmt; break; }
+        if (format == null) return null;
+        var owner = global::app.type.item.@this.NameOf(clr);
+        var facts = (global::app.type.kind.@this)System.Activator.CreateInstance(
+            typeof(global::app.type.kind.format.@this<>).MakeGenericType(clr), format, null, null)!;
+        return wanted.Length == 0 ? new global::app.type.kind.empty.@this(owner, facts) : facts;
+    }
+
     /// <summary>
     /// When true, <see cref="kind"/> is a requirement (enforced at build for
     /// literals via <c>app.data.IKindValidatable</c>; deferred to runtime for
@@ -742,7 +760,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         : this(name, kind, strict, template)
     {
         _clrType = clrType;
-        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType)) Namespace = item.@this.NamespaceOf(clrType);
+        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType))
+        {
+            Namespace = item.@this.NamespaceOf(clrType);
+            // The kind carries its class's [Format] facts, read from the class — so a value's own type answers
+            // its MIME / extension / text without asking the app. A class that declares no such format keeps
+            // the bare by-name kind the base ctor built.
+            if (KindOfClass(clrType, kind) is { } declared) _kind = declared;
+        }
     }
 
     /// <summary>A kinded type of <paramref name="family"/> ({text, md}, {choice, operator}): born holding the family

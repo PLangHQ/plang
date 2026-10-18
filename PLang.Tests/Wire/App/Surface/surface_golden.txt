@@ -3039,7 +3039,7 @@ class app.type.item.wire.this : app.type.item.source [PlangType]
   static Internal : System.Boolean { get; }
 
 class app.type.kind.empty.this : app.type.kind.this
-  ctor(System.String owner)
+  ctor(System.String owner, app.type.kind.this format = …)
   override Coin(System.String name) : app.type.kind.this
   override Compressible : System.Boolean { get; }
   override Decode(System.Byte[] raw, app.actor.context.this context, System.String name = …, app.View view = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
