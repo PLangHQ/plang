@@ -46,7 +46,10 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// <summary>The modifier keys in <paramref name="held"/> (the wire's bits), by name.</summary>
     private protected static global::app.type.item.list.@this<global::app.type.item.choice.@this<Modifier>> Named(int held)
         => new(Enum.GetValues<Modifier>().Where(m => (held & (int)m) != 0)
-            .Select(m => (global::app.type.item.@this)new global::app.type.item.choice.@this<Modifier>(m)));
+            .Select(m => (global::app.type.item.@this)new global::app.type.item.choice.@this<Modifier>(m)),
+            // a bare {list, choice}: an input event holds no app to ask for the list's type
+            new global::app.type.@this(typeof(global::app.type.item.list.@this),
+                global::app.type.item.@this.NameOf(typeof(global::app.type.item.choice.@this<Modifier>))));
 
     /// <summary>Its members, then the stamp, inside the object the variant opens.</summary>
     private protected void WriteStamp(global::app.type.format.IWriter writer)

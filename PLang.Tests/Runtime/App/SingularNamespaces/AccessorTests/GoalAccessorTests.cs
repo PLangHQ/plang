@@ -10,7 +10,7 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 public class GoalAccessorTests
 {
     private static global::app.goal.@this Goal(PLangEngine app, string name)
-        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.actor.list.User.Context) };
+        => new(app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.actor.list.User.Context) };
 
     [Test] public async Task AppGoal_GetByAddress_ReturnsTheGoal()
     {

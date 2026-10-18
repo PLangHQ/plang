@@ -94,7 +94,7 @@ public class DebugSmokeTests
         var show = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Show",
             Make.Step("set seen", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "seen", "variable"), ("Value", "%!error.Message%")))));
         _app.goal.list.Add(show);
-        var failing = new global::app.goal.step.@this { Text = "fail" };
+        var failing = new global::app.goal.step.@this(_app.type.list) { Text = "fail" };
         var line = (global::app.goal.step.action.list.@this)new global::app.goal.step.action.formal.Reader(failing, _app.module.list)
             .Read("error.throw(Message=\"it broke\", Key=\"Broke\"); on.error(Recovery=[goal.call(Name=\"Show\")])", ctx).Peek()!;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Dbg", Make.Step("fail", line.Items().ToArray())));

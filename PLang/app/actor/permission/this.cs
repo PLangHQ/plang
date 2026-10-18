@@ -189,7 +189,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     private async Task<global::app.data.@this> Save(setting.@this setting, List<Grant> grants)
     {
         var saved = (global::app.actor.permission.setting.@this)setting.Copy();
-        saved.Grant = new global::app.type.item.list.@this<Grant>(grants);
+        saved.Grant = new global::app.type.item.list.@this<Grant>(grants, _actor.App.type.list[typeof(global::app.type.item.list.@this<Grant>)]);
         return await _actor.Setting.Save(saved);
     }
 }

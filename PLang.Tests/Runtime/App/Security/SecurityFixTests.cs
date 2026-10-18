@@ -23,7 +23,7 @@ public class SecurityFixTests
     public async Task Binding_HandlerThrows_ExitEventStillCalled()
     {
         var context = _app.actor.list.User.Context;
-        var step = new Step { Index = 0, Text = "s" };
+        var step = new Step(_app.type.list) { Index = 0, Text = "s" };
 
         // A binding whose handler throws the first time it fires
         var callCount = 0;

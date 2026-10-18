@@ -132,18 +132,18 @@ public class GetGoalsTests
         var buildDir = System.IO.Path.Combine(_tempDir, ".build");
         System.IO.Directory.CreateDirectory(buildDir);
 
-        var prGoal = new Goal
+        var prGoal = new Goal(_app.type.list)
         {
             Name = "Start",
             Path = global::app.type.item.path.@this.Resolve("/Start.goal", _app.actor.list.User.Context),
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
-                new Step
+                new Step(_app.type.list)
                 {
                     Text = "write out 'hello'",
-                    Code = new StepActions(new[]
+                    Code = new StepActions(_app.type.list, new[]
                     {
-                        new global::app.goal.step.action.@this
+                        new global::app.goal.step.action.@this(_app.type.list)
                         {
                             Module = _app.actor.list.User.Context.App.Module("output"),
                             Name = "write",

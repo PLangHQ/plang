@@ -142,7 +142,7 @@ public class ThrowTests : System.IAsyncDisposable
         // `- throw %order%, %item%` — multiple values ride as a plang list, each
         // element keeping its own value/type.
         var (context, _) = CreateContext();
-        var inner = new ListType(new[] { Data.Ok((Text)"order-123"), Data.Ok((Text)"item-9") });
+        var inner = new ListType(new[] { Data.Ok((Text)"order-123"), Data.Ok((Text)"item-9") }, context.App.type.list["list"]);
 
         var action = new Throw(context) { Data = Data.Ok(inner) };
         var result = await action.Start();

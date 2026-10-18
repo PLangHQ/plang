@@ -9,9 +9,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>
 {
     private readonly goal.@this _owner;
 
-    internal @this(goal.@this owner) : base(new List<object?>()) => _owner = owner;
+    internal @this(goal.@this owner, global::app.type.@this type) : base(new List<object?>(), type) => _owner = owner;
 
-    protected override global::app.type.item.list.@this Empty() => new @this(_owner);
 
     protected override void Admit(object? slot)
     {

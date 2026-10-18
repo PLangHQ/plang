@@ -28,7 +28,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("step", kind);
 
-        var step = new global::app.goal.step.@this { Goal = _goal };   // shell first — children hold it
+        var step = new global::app.goal.step.@this(ctx.Context.App.type.list) { Goal = _goal };   // shell first — children hold it
         var action = new global::app.goal.step.action.serializer.Reader(step);
 
         reader.BeginObject();

@@ -17,7 +17,11 @@ public sealed partial class @this
 {
     /// <summary>The types hold no context and no app: a lookup that needs the app's formats takes
     /// the caller's context.</summary>
-    public @this() { }
+    public @this() : base(new List<object?>()) { }
+
+    /// <summary>The type list's own type, <c>{list, type}</c>, asked of itself: it is the maker of types, so it is
+    /// born without one and answers from its own entries (one of item's two bootstraps; the root type is the other).</summary>
+    protected internal override app.type.@this Type => this[typeof(@this)];
 
     /// <summary>
     /// The kind of <paramref name="type"/> — the type's own kind by its kind's name. A kind the type holds
@@ -170,11 +174,15 @@ public sealed partial class @this
         var kind = name == null ? null
             : entry?.kind[name] is { } held ? (held.IsEmpty ? null : held)
             : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
-        if (entry == null)
-            return new app.type.@this(type.Name, kind?.Name, type.Strict, type.Template) { kind = kind };
-        if (kind == null && !type.Strict && type.Template == null) return entry;
-        return new app.type.@this(entry, kind, type.Strict, type.Template);
+        if (entry != null && kind == null && !type.Strict && type.Template == null) return entry;
+        return _full.GetOrAdd((entry, type.Name, kind?.Name, type.Strict, type.Template?.Name), _ => entry == null
+            ? new app.type.@this(type.Name, kind?.Name, type.Strict, type.Template) { kind = kind }
+            : new app.type.@this(entry, kind, type.Strict, type.Template));
     }
+
+    // The full types made, one per entry, kind, strict and template: a kinded type is one object in this app.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<
+        (app.type.@this? Entry, string Name, string? Kind, bool Strict, string? Template), app.type.@this> _full = new();
 
     // The container families whose element rides as the KIND (list<path> = {list, kind:path}).
     // The one generic recognition (PlangName names through it) — the element is the kind; dict's kind is the VALUE

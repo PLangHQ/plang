@@ -23,7 +23,7 @@ public class GoalResumeTests
     private static Step SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
     {
         var action = context.Action($"variable.set(Name=%{varName}%, Value={System.Text.Json.JsonSerializer.Serialize(value)})");
-        var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
+        var step = new Step(context.App.type.list) { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action = action.In(step);
         step.Code.Add(action);
         goal.Step.Add(step);
@@ -31,7 +31,7 @@ public class GoalResumeTests
     }
 
     private static Goal Build(global::app.actor.context.@this context, string name) =>
-        new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", context) };
+        new Goal(context.App.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", context) };
 
     [Test]
     public async Task StepRunFrom_Zero_RunsAllActions()
@@ -40,7 +40,7 @@ public class GoalResumeTests
         var context = app.actor.list.User.Context;
         var actionA = context.Action("variable.set(Name=%a%, Value=\"A\")");
         var actionB = context.Action("variable.set(Name=%b%, Value=\"B\")");
-        var step = new Step { Index = 0, Text = "multi" };
+        var step = new Step(context.App.type.list) { Index = 0, Text = "multi" };
         actionA = actionA.In(step); actionB = actionB.In(step);
         step.Code.Add(actionA); step.Code.Add(actionB);
 
@@ -57,7 +57,7 @@ public class GoalResumeTests
         var context = app.actor.list.User.Context;
         var actionA = context.Action("variable.set(Name=%a%, Value=\"A\")");
         var actionB = context.Action("variable.set(Name=%b%, Value=\"B\")");
-        var step = new Step { Index = 0, Text = "multi" };
+        var step = new Step(context.App.type.list) { Index = 0, Text = "multi" };
         actionA = actionA.In(step); actionB = actionB.In(step);
         step.Code.Add(actionA); step.Code.Add(actionB);
 

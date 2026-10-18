@@ -30,10 +30,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The run's tests.</summary>
     public static list.@this List(global::app.@this app) => new(app);
 
-    public @this()
+    /// <summary>A test, born holding its type and its tag and timing lists from <paramref name="types"/>, the app's
+    /// type list (read at birth, never kept).</summary>
+    public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
     {
-        Tags = new global::app.type.item.list.@this<global::app.type.item.tag.@this>();
-        Timings = new global::app.type.item.list.@this<global::app.test.timing.@this>();
+        Tags = new global::app.type.item.list.@this<global::app.type.item.tag.@this>(
+            types[typeof(global::app.type.item.list.@this<global::app.type.item.tag.@this>)]);
+        Timings = new global::app.type.item.list.@this<global::app.test.timing.@this>(
+            types[typeof(global::app.type.item.list.@this<global::app.test.timing.@this>)]);
     }
 
     /// <summary>
@@ -46,7 +50,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         var reach = new List<global::app.goal.@this> { goal };
         reach.AddRange(await goal.Callee(context));
-        var test = new @this { Goal = goal, Reach = reach };
+        var test = new @this(context.App.type.list) { Goal = goal, Reach = reach };
 
         test.Tags.Add(goal.Tag);
         foreach (var reached in reach)

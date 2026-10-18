@@ -15,11 +15,10 @@ public sealed class @this : global::app.type.item.list.@this<Step>
 {
     // Two ways to be born: EMPTY (callers Add each step in — the reader, the parser, the fold), or
     // ADOPT a list value's rows (the value→slot materialization when a reader produced a generic list).
-    public @this() : base(new List<object?>()) { }
-    public @this(global::app.type.item.list.@this source) : base(source) { }
+    public @this(global::app.type.@this type) : base(new List<object?>(), type) { }
+    public @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
 
     /// <summary>Clone/render keep this concrete node type, context-free.</summary>
-    protected override global::app.type.item.list.@this Empty() => new @this();
 
     /// <summary>Starts the steps in sequence. A return / exit propagates up (ShouldExit folds Returned).
     /// No indent skip-state — a fired control-flow action starts its own Child, so nesting is structural.
@@ -58,7 +57,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     /// step's indent). Empty when nothing is indented under it.</summary>
     public @this Body(int index)
     {
-        var body = new @this();
+        var body = new @this(Type);
         if (index < 0 || index >= CountRaw) return body;
         var indent = this[index].Line.Indent;
         for (int j = index + 1; j < CountRaw && this[j].Line.Indent > indent; j++) body.Add(this[j]);
@@ -180,7 +179,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 {
                     var inside = action.Child.Items().SelectMany(c => c.Code.Own).ToList();
                     var spare = below.ToList();
-                    if (inside.All(spare.Remove)) action.Child = new @this();
+                    if (inside.All(spare.Remove)) action.Child = new @this(action.Child.Type);
                     else Refuse(i, $"step {i}'s body is the steps indented under it ({string.Join(", ", body.Items().Select(b => b.Index))}); " +
                                    $"the builder places them — write step {i} without {{ }} and each indented step on its own line");
                 }
@@ -210,7 +209,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 ? (new List<string>(), new List<global::app.warning.@this>()) : step.Pick.Agree(actions);
             foreach (var why in disagree) Refuse(i, why);
             foreach (var declined in await step.Scope(scratch)) Refuse(i, $"step {i} (\"{step.Text}\") — {declined.Message}");
-            if (refused.ContainsKey(i) || asked) step.Code = new global::app.goal.step.action.list.@this();   // open again
+            if (refused.ContainsKey(i) || asked) step.Code = new global::app.goal.step.action.list.@this(step.Code.Type);   // open again
             else
             {
                 // the step takes its code: with its warnings, and its defaults frozen

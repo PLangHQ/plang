@@ -201,7 +201,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
         var ctx = _app.actor.list.User.Context;
         var first = global::app.type.item.number.@this.Parse("0.30000000000000004")!;
         var second = global::app.type.item.number.@this.Parse("0.3")!;
-        var list = new global::app.type.item.list.@this(new global::app.type.item.@this[] { first, second, global::app.type.item.number.@this.Parse("0.1")! });
+        var list = new global::app.type.item.list.@this(new global::app.type.item.@this[] { first, second, global::app.type.item.number.@this.Parse("0.1")! }, _app.type.list["list"]);
         var sorted = await (await list.Sort(null, false, ctx)).Value() as global::app.type.item.list.@this;
         var order = sorted!.Items(ctx).Select(d => d.Peek()).ToList();
         await Assert.That(order[1]).IsSameReferenceAs(first);

@@ -30,7 +30,7 @@ public class ForeachStringNotIterableTests
         context.Variable.Set("s", "hello");
 
         // Body goal runs once per iteration.
-        _app.goal.list.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
+        _app.goal.list.Add(new Goal(_app.type.list) { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "StringRunner",
             Make.Step("foreach %s%, call DoNothing",
@@ -55,7 +55,7 @@ public class ForeachStringNotIterableTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("s", "hello");
 
-        _app.goal.list.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
+        _app.goal.list.Add(new Goal(_app.type.list) { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "WholeStringRunner",
             Make.Step("foreach %s%, call DoNothing",
@@ -78,7 +78,7 @@ public class ForeachStringNotIterableTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("n", 42);
 
-        _app.goal.list.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
+        _app.goal.list.Add(new Goal(_app.type.list) { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "NumberRunner",
             Make.Step("foreach %n%, call DoNothing",

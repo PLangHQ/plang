@@ -26,7 +26,7 @@ public class DictListToRecordTests : System.IAsyncDisposable
 
     private PlangList L(params global::app.type.item.@this[] items)
     {
-        var l = new PlangList();
+        var l = new PlangList(app.type.list["list"]);
         foreach (var i in items) l.Add(i);
         return l;
     }

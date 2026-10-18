@@ -54,16 +54,16 @@ public class RunActionTests
             goalText.AppendLine($"- action {i}");
         System.IO.File.WriteAllText(absFile, goalText.ToString());
 
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = goalName,
             Path = global::app.type.item.path.@this.Resolve("/" + relativePath, _app.actor.list.User.Context),
-            Step = new GoalSteps()
+            Step = new GoalSteps(_app.type.list)
         };
         for (int i = 0; i < actions.Length; i++)
         {
-            var step = new Step { Index = i, Text = $"action {i}" };
-            step.Code.Add(new PrAction
+            var step = new Step(_app.type.list) { Index = i, Text = $"action {i}" };
+            step.Code.Add(new PrAction(_app.type.list)
             {
                 Module = _app.actor.list.User.Context.App.Module(actions[i].module),
                 Name = actions[i].actionName,
@@ -335,11 +335,11 @@ public class RunActionTests
             {
                 ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) })
             });
-            var stale = new global::app.test.@this() {
-                Goal = new Goal { Name = "Stale", Path = global::app.type.item.path.@this.Resolve("/Stale.test.goal", _app.actor.list.User.Context) },
+            var stale = new global::app.test.@this(_app.type.list) {
+                Goal = new Goal(_app.type.list) { Name = "Stale", Path = global::app.type.item.path.@this.Resolve("/Stale.test.goal", _app.actor.list.User.Context) },
                 Status = global::app.test.Status.Stale, StatusReason = "no .pr" };
-            var skipped = new global::app.test.@this() {
-                Goal = new Goal { Name = "Skip", Path = global::app.type.item.path.@this.Resolve("/Skip.test.goal", _app.actor.list.User.Context) },
+            var skipped = new global::app.test.@this(_app.type.list) {
+                Goal = new Goal(_app.type.list) { Name = "Skip", Path = global::app.type.item.path.@this.Resolve("/Skip.test.goal", _app.actor.list.User.Context) },
                 Status = global::app.test.Status.Skipped, StatusReason = "excluded by tag" };
 
             var results = await RunTests(new List<global::app.test.@this> { ready, stale, skipped });
@@ -510,20 +510,20 @@ public class RunActionTests
         // Helper sub-goal: 2 steps. Written as a sibling .pr next to the entry's
         // .build directory so goal.call's name-based resolver (slot 3 in
         // GoalCall.GetGoalAsync — `{callerDir}/.build/{name}.pr`) finds it.
-        var helperGoal = new Goal
+        var helperGoal = new Goal(_app.type.list)
         {
             Name = "Helper",
             Path = global::app.type.item.path.@this.Resolve("/Helper.goal", _app.actor.list.User.Context),
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
-                new Step { Index = 0, Text = "h0", Code = new StepActions
+                new Step(_app.type.list) { Index = 0, Text = "h0", Code = new StepActions(_app.type.list)
                 {
-                    new PrAction { Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
+                    new PrAction(_app.type.list) { Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
                         Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.type.item.variable.@this("h0"), context: _app.actor.list.User.Context), new("Value", 0, context: _app.actor.list.User.Context) }) }
                 }},
-                new Step { Index = 1, Text = "h1", Code = new StepActions
+                new Step(_app.type.list) { Index = 1, Text = "h1", Code = new StepActions(_app.type.list)
                 {
-                    new PrAction { Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
+                    new PrAction(_app.type.list) { Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
                         Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.type.item.variable.@this("h1"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) }) }
                 }}
             }

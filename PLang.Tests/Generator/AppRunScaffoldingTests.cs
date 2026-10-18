@@ -21,7 +21,7 @@ public class AppRunScaffoldingTests
     private PrAction MakeAction(string module, string actionName,
         params (string name, object? value)[] parameters)
     {
-        return new PrAction
+        return new PrAction(_app.type.list)
         {
             Module = _app.Module(module),
             Name = actionName,
@@ -49,10 +49,10 @@ public class AppRunScaffoldingTests
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
         var ctx = _app.actor.list.User.Context;
 
-        var stepBefore = new Step { Index = 9, Text = "before-step" };
+        var stepBefore = new Step(_app.type.list) { Index = 9, Text = "before-step" };
         await using var caller = ctx.call.Push(stepBefore);
 
-        var dispatchStep = new Step { Index = 0, Text = "dispatch-step" };
+        var dispatchStep = new Step(_app.type.list) { Index = 0, Text = "dispatch-step" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
         action = action.In(dispatchStep);
         Step? during = null;
@@ -75,10 +75,10 @@ public class AppRunScaffoldingTests
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
         var ctx = _app.actor.list.User.Context;
 
-        var goalBefore = new Goal { Name = "before-goal", Path = global::app.type.item.path.@this.Resolve("/g.goal", _app.actor.list.User.Context) };
+        var goalBefore = new Goal(_app.type.list) { Name = "before-goal", Path = global::app.type.item.path.@this.Resolve("/g.goal", _app.actor.list.User.Context) };
         await using var caller = ctx.call.Push(goalBefore);
 
-        var step = new Step { Index = 0, Text = "s" };
+        var step = new Step(_app.type.list) { Index = 0, Text = "s" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "x"));
         action = action.In(step);
 
@@ -166,7 +166,7 @@ public class AppRunScaffoldingTests
         cts.Cancel();
         _app.actor.list.User.Context.PushCancellation(cts);
 
-        var step = new Step { Index = 0, Text = "test" };
+        var step = new Step(_app.type.list) { Index = 0, Text = "test" };
         step.Code.Add(MakeAction("matrix.plain", "stringplain", ("path", "x")).In(step));
 
         await Assert.That(async () => await step.Start(_app.actor.list.User.Context))

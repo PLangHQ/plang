@@ -64,7 +64,7 @@ public class ItemApexTests : System.IAsyncDisposable
         await Assert.That(() => CompareTestOps.OrdD(new Data("a", d1, context: ctx), new Data("b", d2, context: ctx)))
             .Throws<global::app.data.IncomparableException>();
         // list, which DOES implement IOrderableValue, still sorts (empty == empty).
-        await Assert.That(CompareTestOps.OrdD(new Data("", new PList()), new Data("", new PList()))).IsEqualTo(0);
+        await Assert.That(CompareTestOps.OrdD(new Data("", new PList(app.type.list["list"])), new Data("", new PList(app.type.list["list"])))).IsEqualTo(0);
     }
 
     [Test]
@@ -73,7 +73,7 @@ public class ItemApexTests : System.IAsyncDisposable
         // A dict, a number, and an empty list treated as `item` each report their
         // truthiness through the base — the universal contract `item` *does* carry.
         Item emptyDict = new Dict();
-        Item emptyList = new PList();
+        Item emptyList = new PList(app.type.list["list"]);
         Item five = ((Number)(5));
         var fullDict = new Dict();
         fullDict.Set(new Data("k", "v", context: app.actor.list.User.Context));
@@ -95,7 +95,7 @@ public class ItemApexTests : System.IAsyncDisposable
         // it returns self, carrying no un-narrowed state. (The un-narrowed
         // item-kind-json blob rides on Data, not on item.@this — storage-free apex.)
         Item dict = new Dict();
-        Item list = new PList();
+        Item list = new PList(app.type.list["list"]);
         Item num = ((Number)(1));
         await Assert.That(ReferenceEquals(dict.Narrow(), dict)).IsTrue();
         await Assert.That(ReferenceEquals(list.Narrow(), list)).IsTrue();

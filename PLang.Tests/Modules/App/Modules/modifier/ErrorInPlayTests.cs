@@ -23,7 +23,7 @@ public class ErrorInPlayTests
 
     // An error.throw with its on.error clauses after it.
     private PrAction Throw(string message, PrAction[]? modifiers = null) =>
-        global::PLang.Tests.Shared.Make.With(new PrAction
+        global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("error"), Name = "throw",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
@@ -42,12 +42,12 @@ public class ErrorInPlayTests
     /// <summary>Registers a goal whose single step runs the given actions.</summary>
     private Goal RegisterGoal(string name, params PrAction[] actions)
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = name,
             Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", _app.actor.list.User.Context)
         };
-        var step = new Step { Goal = goal, Text = $"step of {name}" };
+        var step = new Step(_app.type.list) { Goal = goal, Text = $"step of {name}" };
         // The .pr load applies the template seam; without it a %var% parameter never resolves.
         foreach (var a in actions) { TemplateStamp.Apply(a, _app.actor.list.User.Context); step.Code.Add(a.In(step)); }
         goal.Step.Add(step);
@@ -56,7 +56,7 @@ public class ErrorInPlayTests
     }
 
     /// <summary>An action that copies %!error.Message% into the named variable.</summary>
-    private PrAction CaptureError(string varName) => new()
+    private PrAction CaptureError(string varName) => new(_app.type.list)
     {
         Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
         Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
@@ -172,7 +172,7 @@ public class ErrorInPlayTests
     }
 
     /// <summary>An action that copies %!error.Key% into the named variable.</summary>
-    private PrAction CaptureErrorKey(string varName) => new()
+    private PrAction CaptureErrorKey(string varName) => new(_app.type.list)
     {
         Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
         Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
@@ -197,7 +197,7 @@ public class ErrorInPlayTests
         var ctx = _app.actor.list.User.Context;
         // timer.sleep(3s); on.error(GoalFirst, Recovery=[call Recover]); on.timeout(1ms) — the recovery runs on
         // the error outcome, after the attempt, and sees the verdict the deadline produced.
-        var sleep = global::PLang.Tests.Shared.Make.With(new PrAction
+        var sleep = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = ctx.App.Module("timer"), Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("Duration", "3s", context: ctx) })

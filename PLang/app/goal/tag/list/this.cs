@@ -13,11 +13,10 @@ namespace app.goal.tag.list;
 public sealed class @this : global::app.type.item.list.@this<Tag>
 {
     // Two ways to be born: EMPTY (callers Add each tag in) + ADOPT a list value's rows (value→slot).
-    public @this() : base(new List<object?>()) { }
-    public @this(global::app.type.item.list.@this source) : base(source) { }
+    public @this(global::app.type.@this type) : base(new List<object?>(), type) { }
+    public @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
 
     /// <summary>Clone/render keep this concrete node type, context-free.</summary>
-    protected override global::app.type.item.list.@this Empty() => new @this();
 
     /// <summary>Writes the goal's tag array — each tag its bare string, the shape the goal reader reads
     /// (not the base's per-row value face).</summary>

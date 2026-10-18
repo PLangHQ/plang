@@ -14,5 +14,5 @@ public sealed class @this : global::app.type.item.setting.module.@this
     public static bool Internal => true;
 
     /// <summary>Each identity, its keys with it; the one marked default signs for the actor.</summary>
-    [Out, Store] public global::app.type.item.list.@this<global::app.module.identity.Identity> Identity { get; set; } = new();
+    [Out, Store] public global::app.type.item.list.@this<global::app.module.identity.Identity> Identity { get; set; }
 }

@@ -118,7 +118,8 @@ public sealed class @this : global::app.type.kind.@this
 
     /// <summary>This type's kinds, each as the full type it makes.</summary>
     public override global::app.type.kind.list.@this list(global::app.actor.context.@this context)
-        => new(Held.Select(k => context.App.type.list[new global::app.type.@this(_owner, k.Name), context]));
+        => new(Held.Select(k => context.App.type.list[new global::app.type.@this(_owner, k.Name), context]),
+            context.App.type.list[typeof(global::app.type.kind.list.@this)]);
 
     /// <summary>Adds a kind of this type; a kind of the same name replaces the one before it. The type's own
     /// format (the empty name) is held as the type's, not as a kind.</summary>

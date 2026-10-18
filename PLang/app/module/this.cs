@@ -62,7 +62,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         Name = "";
         _app = app;
-        _modules = new global::app.type.item.list.@this<@this>();
+        _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
         _registering = new object();
         Discover(typeof(@this).Assembly);
     }
@@ -147,25 +147,26 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // The catalog action carries the [Action] cache flag so the teaching template can tag
         // [no-cache] — read off the attribute, its single source, not defaulted.
         var cacheable = clr.GetCustomAttribute<global::app.module.ActionAttribute>()?.Cacheable ?? true;
+        var types = App.type.list;
         // The catalog action is born with its class's properties, reflected on first read.
         _action[actionName] =
             typeof(global::app.module.IClause).IsAssignableFrom(clr)
-                ? new global::app.goal.step.action.clause.@this
+                ? new global::app.goal.step.action.clause.@this(types)
                     { Module = this, Name = actionName, Cacheable = cacheable, Class = clr, Property = new(this, actionName) }
             : typeof(global::app.module.ILoop).IsAssignableFrom(clr)
-                ? new global::app.goal.step.action.loop.@this
+                ? new global::app.goal.step.action.loop.@this(types)
                     { Module = this, Name = actionName, Cacheable = cacheable, Class = clr, Property = new(this, actionName) }
             : typeof(global::app.module.IKeep).IsAssignableFrom(clr)
-                ? new global::app.goal.step.action.keep.@this
+                ? new global::app.goal.step.action.keep.@this(types)
                     { Module = this, Name = actionName, Cacheable = cacheable, Class = clr, Property = new(this, actionName) }
-            : new global::app.goal.step.action.@this
+            : new global::app.goal.step.action.@this(types)
                 { Module = this, Name = actionName, Cacheable = cacheable, Class = clr, Property = new(this, actionName) };
     }
 
     /// <summary>The module's actions as the NATIVE plang list — step actions and clauses alike (the type
     /// IS the role). Filterable by the list module, renderable by templates.</summary>
     public global::app.type.item.list.@this Action
-        => new(_action.Values.Select(a => (object?)a).ToList());
+        => new(_action.Values.Select(a => (object?)a).ToList(), App.type.list["list"]);
 
     /// <summary>Select one catalog element by action name — a step action or a clause; the type answers
     /// the role. Null when the name isn't in this module.</summary>

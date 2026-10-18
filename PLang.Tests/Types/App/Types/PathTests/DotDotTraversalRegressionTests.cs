@@ -55,7 +55,7 @@ public class DotDotTraversalRegressionTests
         var (app, context, root) = MakeApp();
         // Stage a goal whose source is inside root, so
         // its Folder is <root>/subdir/.
-        var goal = new Goal
+        var goal = new Goal(app.type.list)
         {
             Name = "Probe",
             Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context)
@@ -92,7 +92,7 @@ public class DotDotTraversalRegressionTests
             // Channel that denies any AuthGate prompt.
             app.actor.list.User.Channel.Register(new CannedChannel("n"));
 
-                await using var inGoal = context.call.Push(new Goal
+                await using var inGoal = context.call.Push(new Goal(app.type.list)
             {
                 Name = "Probe",
                 Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context)

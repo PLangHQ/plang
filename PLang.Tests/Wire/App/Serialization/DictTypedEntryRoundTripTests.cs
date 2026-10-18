@@ -23,7 +23,7 @@ public class DictTypedEntryRoundTripTests
         var context = app.actor.list.User.Context;
 
         // value = dict { description: text, steps: list[ dict{index:number} ] }
-        var steps = new global::app.type.item.list.@this()
+        var steps = new global::app.type.item.list.@this(app.type.list["list"])
             .Add(new global::app.data.@this("", new global::app.type.item.dict.@this().Set("index", 0L), context: context));
         var value = new global::app.type.item.dict.@this()
             .Set("description", "a plan")

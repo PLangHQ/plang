@@ -70,7 +70,7 @@ public class RenderTests : IDisposable
     {
         WriteTemplateFile("d.json", "{\"common\": {\"a.x\": {\"true\": \"yes-a\"}, \"b.y\": {\"true\": \"yes-b\"}}, \"popular\": [\"p1\", \"p2\"]}");
         var context = _app.actor.list.User.Context;
-        var code = new global::app.goal.step.action.list.@this();
+        var code = new global::app.goal.step.action.list.@this(_app.type.list[typeof(global::app.goal.step.action.list.@this)]);
         code.Add(global::PLang.Tests.Shared.Make.Action(context, "file", "read", ("Path", "/d.json")));
         code.Add(global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
             global::PLang.Tests.Shared.Make.Param(context, "Name", "d", "variable"), ("Value", "%!data%")));
@@ -286,11 +286,11 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_ExecutesGoalAndInsertsResult()
     {
         // Create a real goal that sets a variable — the goal result is the last step's Data
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "Greeter",
             Path = global::app.type.item.path.@this.Resolve("/Greeter.goal", _app.actor.list.User.Context),
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "greeting" }, { "value", "Hello from goal" } },
@@ -510,7 +510,7 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_EmptyGoalReturnsEmptyOutput()
     {
         // An empty goal (no steps) returns Data.Ok() — callGoal writes "" to output
-        var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", _app.actor.list.User.Context) };
+        var goal = new Goal(_app.type.list) { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", _app.actor.list.User.Context) };
         _app.goal.list.Add(goal);
 
         var context = _app.actor.list.User.Context;
@@ -530,7 +530,7 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_GoalNameFromVariable()
     {
         // callGoal can use a Liquid variable for the goal name
-        var goal = new Goal { Name = "DynamicGoal", Path = global::app.type.item.path.@this.Resolve("/DynamicGoal.goal", _app.actor.list.User.Context) };
+        var goal = new Goal(_app.type.list) { Name = "DynamicGoal", Path = global::app.type.item.path.@this.Resolve("/DynamicGoal.goal", _app.actor.list.User.Context) };
         _app.goal.list.Add(goal);
 
         var context = _app.actor.list.User.Context;
@@ -550,11 +550,11 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_SuccessWritesValueToOutput()
     {
         // Goal that sets a variable — verify the result value appears in template output
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "GetNumber",
             Path = global::app.type.item.path.@this.Resolve("/GetNumber.goal", _app.actor.list.User.Context),
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "num" }, { "value", 42 } },
@@ -691,7 +691,7 @@ public class RenderTests : IDisposable
         // Create a goal in a subdirectory and a partial next to it
         WriteTemplateFile("goals/templates/footer.html", "Footer content");
         var context = _app.actor.list.User.Context;
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "SubGoal",
             Path = global::app.type.item.path.@this.Resolve("/goals/SubGoal.goal", context)
@@ -714,7 +714,7 @@ public class RenderTests : IDisposable
 
     private Step MakeStep(string actionClass, string method, object? parameters = null, int index = 0, string text = "")
     {
-        var action = new global::app.goal.step.action.@this
+        var action = new global::app.goal.step.action.@this(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module(actionClass),
             Name = method,
@@ -725,11 +725,11 @@ public class RenderTests : IDisposable
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
         TemplateStamp.Apply(action, _app.actor.list.User.Context);
-        return new Step
+        return new Step(_app.type.list)
         {
             Index = index,
             Text = text,
-            Code = new StepActions { action }
+            Code = new StepActions(_app.type.list) { action }
         };
     }
 

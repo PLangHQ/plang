@@ -20,5 +20,5 @@ public sealed class @this : global::app.type.item.setting.module.@this
     /// <summary>The files to build, in order — every goal when empty. A native plang list: each row lifts
     /// to a path at its reader's door (<c>row.Value&lt;path&gt;()</c>).
     /// <c>--build={"files":"test.goal"}</c> or <c>--build={"files":["test.goal","run.goal"]}</c>.</summary>
-    [Out, Store] public global::app.type.item.list.@this Files { get; set; } = new();
+    [Out, Store] public global::app.type.item.list.@this Files { get; set; }
 }

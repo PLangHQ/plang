@@ -61,8 +61,13 @@ public sealed class @this
             if (hop == null) { Fail(_text, $"'{_text[_pos]}' can't follow '{_text[..start]}'"); return null; }
             hops.Add(hop);
         }
-        return new code.@this(hops);
+        return new code.@this(hops, Code);
     }
+
+    // Bare list types: the parser reads text alone (a text's own birth asks it) and holds no app to ask them of.
+    private global::app.type.@this Code
+        => new(typeof(global::app.type.item.list.@this), global::app.type.item.@this.NameOf(typeof(code.Hop)));
+    private global::app.type.@this List => new(typeof(global::app.type.item.list.@this));
 
     /// <summary>The one variable the whole text is — written with its % signs (<c>%user.name%</c>), or a bare
     /// name (<c>user</c>, the form a name slot may carry) read as <c>%user%</c>. The one way a variable is made
@@ -161,7 +166,7 @@ public sealed class @this
                 return Fail(text, _pos < _end ? $"'{_text[_pos]}' can't follow '{_text[(at + 1)..start]}'" : "it ends early");
             hops.Add(hop);
         }
-        return new variable.@this(text, new code.@this(hops));
+        return new variable.@this(text, new code.@this(hops, Code));
     }
 
     private variable.@this? Fail(string text, string why)
@@ -223,14 +228,14 @@ public sealed class @this
         _pos++;
         var values = new List<global::app.type.item.@this>();
         Space();
-        if (_pos < _end && _text[_pos] == ')') { _pos++; return new(values); }
+        if (_pos < _end && _text[_pos] == ')') { _pos++; return new(values, List); }
         while (_pos < _end)
         {
             if (Value(bare: false) is not { } value) return null;
             values.Add(value);
             Space();
             if (_pos < _end && _text[_pos] == ',') { _pos++; Space(); continue; }
-            if (_pos < _end && _text[_pos] == ')') { _pos++; return new(values); }
+            if (_pos < _end && _text[_pos] == ')') { _pos++; return new(values, List); }
             return null;
         }
         return null;

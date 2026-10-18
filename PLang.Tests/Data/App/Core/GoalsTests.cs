@@ -15,7 +15,7 @@ public class GoalsTests : System.IAsyncDisposable
 
     // a goal at path — a setup goal is one by its place (/setup/) or its name (Setup)
     private Goal Named(string name, string path, string? comment = null)
-        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve(path, app.actor.list.User.Context), Comment = comment };
+        => new(app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve(path, app.actor.list.User.Context), Comment = comment };
 
     private static string TempApp()
     {
@@ -67,7 +67,7 @@ public class GoalsTests : System.IAsyncDisposable
     [Test]
     public async Task Add_ThrowsWhenNoPrPath()
     {
-        await Assert.That(() => Goals().Add(new Goal { Name = "TestGoal" })).ThrowsException();
+        await Assert.That(() => Goals().Add(new Goal(app.type.list) { Name = "TestGoal" })).ThrowsException();
     }
 
     [Test]
@@ -270,7 +270,7 @@ public class GoalsTests : System.IAsyncDisposable
             var both = new global::app.type.item.dict.@this();
             both.Set("os", false);
             both.Set("visibility", new global::app.type.item.list.@this(new global::app.type.item.@this[]
-                { new global::app.type.item.text.@this("public"), new global::app.type.item.text.@this("private") }));
+                { new global::app.type.item.text.@this("public"), new global::app.type.item.text.@this("private") }, engine.type.list["list"]));
             var all = await engine.goal.list.All(context, both);
             await Assert.That(((global::app.type.item.list.@this<Goal>)all).Items().Select(g => g.Name).ToList())
                 .IsEquivalentTo(new[] { "Start", "Show" });
@@ -286,7 +286,7 @@ public class GoalsTests : System.IAsyncDisposable
     public async Task AllWord_OnAList_IsEveryItem_EvenOnAnEmptyList()
     {
         var context = app.actor.list.User.Context;
-        var empty = new global::app.data.@this("l", new global::app.type.item.list.@this(), context: context);
+        var empty = new global::app.data.@this("l", new global::app.type.item.list.@this(app.type.list["list"]), context: context);
 
         var all = await empty.Get("all");
 

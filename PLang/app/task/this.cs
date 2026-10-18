@@ -30,7 +30,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Every task written where this one is, in the order written — the last this one.</summary>
     /// <remarks>JsonIgnore: the list holds this task itself, so a dump writing it would never end.</remarks>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.type.item.list.@this list => new(Written.Cast<global::app.type.item.@this>());
+    public global::app.type.item.list.@this list
+        => new(Written.Cast<global::app.type.item.@this>(), _run.Actor.App.type.list["list"]);
 
     private System.Collections.Generic.IEnumerable<@this> Written
         => (_replaced?.Written ?? []).Append(this);

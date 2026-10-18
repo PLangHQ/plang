@@ -24,13 +24,12 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     private IReadOnlyList<global::app.type.item.path.@this>? _app, _system;
 
     /// <summary>The goals of <paramref name="app"/> — the list is born knowing the App it loads for.</summary>
-    public @this(app.@this app) : base(new List<object?>())
+    public @this(app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
     {
         App = app;
         Setup = new setup.@this(this);
     }
 
-    protected override global::app.type.item.list.@this Empty() => new @this(App);
 
     /// <summary>
     /// Adds a goal read from its <c>.pr</c>; the goal held from the same <c>.pr</c> gives way.

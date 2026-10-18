@@ -75,7 +75,7 @@ public class Phase0Proof : System.IAsyncDisposable
     {
         // INPUT: Data.Ok with a native list — the list names its own type
         var ctx = app.actor.list.User.Context;
-        var listValue = new global::app.type.item.list.@this();
+        var listValue = new global::app.type.item.list.@this(app.type.list["list"]);
         foreach (var n in new[] { 1, 2, 3 }) listValue.Add(new Data("", n, context: ctx));
         var result = ctx.Ok(listValue);
 

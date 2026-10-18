@@ -171,7 +171,7 @@ public partial class json
 
     private list.@this ArrayLeaf(System.Text.Json.JsonElement element, global::app.type.reader.ReadContext? ctx, int depth)
     {
-        var l = new list.@this { Template = ctx?.Template };
+        var l = new list.@this(_context.App.type.list[new global::app.type.@this("list", null, false, ctx?.Template), _context]);
         foreach (var item in element.EnumerateArray())
             l.AddRaw(RawSlot(item, ctx, depth + 1));
         return l;

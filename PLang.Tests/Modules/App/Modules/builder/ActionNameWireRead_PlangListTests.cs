@@ -19,12 +19,12 @@ public class ActionNameWireRead_PlangListTests : System.IAsyncDisposable
     private async System.Threading.Tasks.Task<Goal> ReadOneAction(string actionsJson)
     {
         var context = _app.actor.list.User.Context;
-        var goal = new Goal
+        var goal = new Goal(context.App.type.list)
         {
             Name = "G",
             Path = global::app.type.item.path.@this.Resolve("/G.goal", context),
         };
-        goal.Step.Add(new Step { Goal = goal, Index = 0, Text = "do stuff" });
+        goal.Step.Add(new Step(context.App.type.list) { Goal = goal, Index = 0, Text = "do stuff" });
         _app.goal.list.Add(goal);
         await context.Variable.Set("goal", goal);
 

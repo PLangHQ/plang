@@ -99,9 +99,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The app's goals: the list that reads them from their <c>.pr</c>.</summary>
     public static global::app.goal.list.@this List(global::app.@this app) => new(app);
 
-    /// <summary>The goal's own type entity — its class's.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this));
-
     /// <summary>A goal passes through; anything else is declined. Program structure has one way in —
     /// its reader (<c>serializer/Reader.cs</c>) — and is never converted from a value.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)

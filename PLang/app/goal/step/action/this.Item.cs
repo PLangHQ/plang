@@ -15,9 +15,6 @@ namespace app.goal.step.action;
 [global::app.Attributes.PlangType("action")]
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    /// <summary>The action's own type entity — its class's.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this));
-
     /// <summary>An action passes through; anything else is declined. The one way in is its reader
     /// (<c>serializer/Reader.cs</c>) — the .pr wire, a held callback and a nested modifier chain all
     /// read there — so an action is built by its step, never converted from a value.</summary>

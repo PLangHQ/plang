@@ -273,7 +273,7 @@ public class VariablesTests : System.IAsyncDisposable
         var stack = _app.actor.list.User.Context.Variable;
         var alice = new global::app.type.item.dict.@this(); alice.Set("Name", "Alice");
         var bob = new global::app.type.item.dict.@this(); bob.Set("Name", "Bob");
-        var people = new global::app.type.item.list.@this();
+        var people = new global::app.type.item.list.@this(_app.type.list["list"]);
         people.Add(_app.Data("", alice));
         people.Add(_app.Data("", bob));
         await stack.Set("people", people);
@@ -293,7 +293,7 @@ public class VariablesTests : System.IAsyncDisposable
         var stack = _app.actor.list.User.Context.Variable;
         var alice = new global::app.type.item.dict.@this(); alice.Set("Name", "Alice");
         var bob = new global::app.type.item.dict.@this(); bob.Set("Name", "Bob");
-        var people = new global::app.type.item.list.@this();
+        var people = new global::app.type.item.list.@this(_app.type.list["list"]);
         people.Add(_app.Data("", alice));
         people.Add(_app.Data("", bob));
         await stack.Set("people", people);
@@ -828,10 +828,10 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     public async Task Get_GoalSubGoalName_NavigatesCorrectly()
     {
         var stack = _app.actor.list.User.Context.Variable;
-        var goal = new global::app.goal.@this { Name = "BuildGoal" };
-        goal.Child.Add(new global::app.goal.@this { Name = "ProcessGroup" });
-        goal.Child.Add(new global::app.goal.@this { Name = "LlmFixer" });
-        goal.Child.Add(new global::app.goal.@this { Name = "HandleFailure" });
+        var goal = new global::app.goal.@this(_app.type.list) { Name = "BuildGoal" };
+        goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "ProcessGroup" });
+        goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "LlmFixer" });
+        goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "HandleFailure" });
         stack.Set("goal", goal);
 
         var name0 = await new global::app.type.item.variable.@this("goal.Child[0].Name").Start(stack.Context);
@@ -848,7 +848,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     public async Task Get_GoalName_ReturnsGoalName()
     {
         var stack = _app.actor.list.User.Context.Variable;
-        var goal = new global::app.goal.@this { Name = "BuildGoal" };
+        var goal = new global::app.goal.@this(_app.type.list) { Name = "BuildGoal" };
         stack.Set("goal", goal);
 
         var name = await new global::app.type.item.variable.@this("goal.Name").Start(stack.Context);
@@ -861,9 +861,9 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     public async Task Get_GoalGoalsCount_ReturnsCount()
     {
         var stack = _app.actor.list.User.Context.Variable;
-        var goal = new global::app.goal.@this { Name = "BuildGoal" };
-        goal.Child.Add(new global::app.goal.@this { Name = "Sub1" });
-        goal.Child.Add(new global::app.goal.@this { Name = "Sub2" });
+        var goal = new global::app.goal.@this(_app.type.list) { Name = "BuildGoal" };
+        goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "Sub1" });
+        goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "Sub2" });
         stack.Set("goal", goal);
 
         var count = await new global::app.type.item.variable.@this("goal.Child.Count").Start(stack.Context);
@@ -876,14 +876,14 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     public async Task Set_GoalStepsBracketIndex_PreservesGoalIdentity()
     {
         var stack = _app.actor.list.User.Context.Variable;
-        var goal = new global::app.goal.@this { Name = "BuildGoal" };
-        goal.Child.Add(new global::app.goal.@this { Name = "SubGoal" });
-        var step = new global::app.goal.step.@this { Index = 0, Text = "original" };
+        var goal = new global::app.goal.@this(_app.type.list) { Name = "BuildGoal" };
+        goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "SubGoal" });
+        var step = new global::app.goal.step.@this(_app.type.list) { Index = 0, Text = "original" };
         goal.Step.Add(step);
         stack.Set("goal", goal);
 
         // Simulate what builder.merge does: set %goal.Step[0]% = newStep
-        var newStep = new global::app.goal.step.@this { Index = 0, Text = "updated" };
+        var newStep = new global::app.goal.step.@this(_app.type.list) { Index = 0, Text = "updated" };
         new global::app.type.item.variable.@this("goal.Step[0]").Set(newStep, stack.Context);
 
         // Goal should still be a Goal, not a dictionary — it is a plang item now (the
@@ -905,7 +905,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
     public async Task Set_GoalRidesAsItem_PreservingIdentity()
     {
         var stack = new Variables(_app.actor.list.User.Context);
-        var goal = new global::app.goal.@this { Name = "MyGoal" };
+        var goal = new global::app.goal.@this(_app.type.list) { Name = "MyGoal" };
         stack.Set("goal", goal);
 
         // A goal is a plang item now (the hosts-stay-hosts model was reversed) — it rides as

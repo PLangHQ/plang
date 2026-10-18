@@ -34,16 +34,16 @@ public class Stage0_BuildMethodTests
 
     private PrAction Make(string module, string actionName,
         params (string name, object? value)[] parameters)
-        => new PrAction
+        => new PrAction(_app.type.list)
         {
             Module = _app.Module(module),
             Name = actionName,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.actor.list.User.Context)).ToList())
         };
 
-    private static StepActions ActionsOf(params PrAction[] actions)
+    private StepActions ActionsOf(params PrAction[] actions)
     {
-        var s = new StepActions();
+        var s = new StepActions(_app.type.list);
         foreach (var a in actions) s.Add(a);
         return s;
     }
@@ -51,7 +51,7 @@ public class Stage0_BuildMethodTests
     // The chain finishes itself (action.list.Build); an empty list means nothing failed.
     private async Task<List<string>> Build(StepActions actions)
     {
-        var chain = new global::app.goal.step.action.list.@this();
+        var chain = new global::app.goal.step.action.list.@this(_app.type.list[typeof(global::app.goal.step.action.list.@this)]);
         foreach (var a in actions) chain.Add(a);
         return await chain.Build(_app.actor.list.User.Context) is { } failed ? new() { failed.Message } : new();
     }

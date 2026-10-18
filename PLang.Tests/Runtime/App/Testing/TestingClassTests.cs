@@ -67,7 +67,7 @@ public class TestingClassTests
     public async Task TestSession_IsCurrent_AndTakesTheWrites()
     {
         await using var plain = new global::app.@this("/test");
-        var test = new global::app.test.@this { Goal = new global::app.goal.@this { Name = "Start" } };
+        var test = new global::app.test.@this(_app.type.list) { Goal = new global::app.goal.@this(_app.type.list) { Name = "Start" } };
         var session = plain.test.list.Open(test);
 
         await Assert.That(global::app.test.@this.Current(plain.actor.list.User.Context)).IsSameReferenceAs(test);
@@ -174,7 +174,7 @@ public class TestingClassTests
 
     private global::app.goal.@this TaggedGoal(string tag)
     {
-        var goal = new global::app.goal.@this
+        var goal = new global::app.goal.@this(_app.type.list)
         {
             Name = "T",
             Path = global::app.type.item.path.@this.Resolve("/test/T.test.goal", _app.actor.list.User.Context)
@@ -224,11 +224,12 @@ public class TestingClassTests
     public async Task TheSetting_AnswersWhyItLeavesATestOut()
     {
         var context = _app.actor.list.User.Context;
-        var setting = new global::app.test.setting.@this(new global::app.type.@this(typeof(global::app.test.setting.@this)));
+        var setting = new global::app.test.setting.@this(_app.type.list[typeof(global::app.test.setting.@this)]);
+        setting.Apply(new Dictionary<string, object?>(), context);
         setting.Include.Add(new global::app.type.item.text.@this("fast"));
-        var slow = new global::app.test.@this { Goal = TaggedGoal("slow") };
+        var slow = new global::app.test.@this(_app.type.list) { Goal = TaggedGoal("slow") };
         slow.Tags.Add(new global::app.type.item.tag.@this("slow"));
-        var fast = new global::app.test.@this { Goal = TaggedGoal("fast") };
+        var fast = new global::app.test.@this(_app.type.list) { Goal = TaggedGoal("fast") };
         fast.Tags.Add(new global::app.type.item.tag.@this("fast"));
 
         await Assert.That(setting.Exclusion(slow, context)?.ToString()).IsEqualTo("no include match");
@@ -245,7 +246,7 @@ public class TestingClassTests
         goal.Tag.Add(new global::app.type.item.tag.@this("skip"));
         var test = await global::app.test.@this.From(goal, _app.actor.list.User.Context);
 
-        await _app.test.list.Start(new global::app.type.item.list.@this<global::app.test.@this>(new[] { test }), _app.actor.list.User.Context);
+        await _app.test.list.Start(new global::app.type.item.list.@this<global::app.test.@this>(new[] { test }, _app.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]), _app.actor.list.User.Context);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);
         await Assert.That(_app.test.list.Report.Coverage.BranchChains.Keys.Any(site => site.Contains("Covered"))).IsTrue();

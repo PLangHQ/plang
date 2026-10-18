@@ -14,17 +14,11 @@ namespace app.type.item.list;
 public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
 {
-    public @this() { }
-
-    /// <summary>A typed list is written with its element (<c>list&lt;goal&gt;</c>) however it was born; a list of
-    /// any item (<c>list&lt;item&gt;</c>) is the plain list.</summary>
-    protected internal override global::app.type.@this Type
-        => base.Type is { kind.IsEmpty: false } kinded || typeof(T) == typeof(global::app.type.item.@this)
-            ? base.Type
-            : new(typeof(global::app.type.item.list.@this), global::app.type.item.@this.NameOf(typeof(T))) { Template = Template };
-
-    public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items) : base(items) { }
-    public @this(System.Collections.Generic.IEnumerable<global::app.type.item.@this> values) : base(values) { }
+    /// <summary>A typed list holds the app's <c>{list, T}</c> type its maker hands it (<c>list&lt;goal&gt;</c>); a list of
+    /// any item (<c>list&lt;item&gt;</c>) holds the plain list's.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+    public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items, global::app.type.@this type) : base(items, type) { }
+    public @this(System.Collections.Generic.IEnumerable<global::app.type.item.@this> values, global::app.type.@this type) : base(values, type) { }
 
     /// <summary>The typed items — INTERNAL, the engine face a node subclass runs/walks (a
     /// <c>list&lt;action&gt;</c>'s <c>Run</c>, a <c>list&lt;step&gt;</c>'s sequence). NOT public:
@@ -45,20 +39,19 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
 
     /// <summary>Program-node birth — a graph node (action.list / step.list) is
     /// shared across runs, so it stores no context. The elements ride as typed items in the backing.</summary>
-    protected @this(System.Collections.Generic.List<object?> backing) : base(backing) { }
+    protected @this(System.Collections.Generic.List<object?> backing, global::app.type.@this type) : base(backing, type) { }
+
+    /// <summary>Born without a type — the type list alone (see the base overload).</summary>
+    private protected @this(System.Collections.Generic.List<object?> backing) : base(backing) { }
 
     /// <summary>Adopt another list's rows — the value→slot materialization (see the base overload).</summary>
-    protected @this(global::app.type.item.list.@this source) : base(source) { }
+    protected @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
 
-    /// <summary>Render/clone preserve the element-type tag — a list&lt;T&gt; stays
-    /// a list&lt;T&gt; instead of degrading to the non-generic base.</summary>
-    protected override global::app.type.item.list.@this Empty() => new @this<T>();
-
-    private @this(System.Collections.Generic.List<object?> rows, bool wrapped) : base(rows, wrapped, null) { }
+    private @this(System.Collections.Generic.List<object?> rows, bool wrapped, global::app.type.@this type) : base(rows, wrapped, type) { }
 
     /// <summary>A copy is a <c>list&lt;T&gt;</c> too; a program's node list (a subtype) is itself.</summary>
     private protected override global::app.type.item.list.@this Holding(System.Collections.Generic.List<object?> rows)
-        => GetType() == typeof(@this<T>) ? new @this<T>(rows, wrapped: true) { Template = Template } : this;
+        => GetType() == typeof(@this<T>) ? new @this<T>(rows, wrapped: true, Type) : this;
 
     /// <summary>Value-membership typed to the element — because the parameter is
     /// <typeparamref name="T"/>, a caller can pass what converts to T (e.g. a bare
@@ -73,13 +66,17 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     public static new @this<T>? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (value is @this<T> already) return already;
-        if (value is @this list) return new @this<T>(list);
+        // the app's {list, T} type, with the template a re-tagged list carries
+        global::app.type.@this type(global::app.type.item.template.kind.@this? template)
+            => data.Context.App.type.list[new global::app.type.@this("list",
+                typeof(T) == typeof(global::app.type.item.@this) ? null : NameOf(typeof(T)), false, template), data.Context];
+        if (value is @this list) return new @this<T>(list, type(list.Type.Template));
         // A raw container lifts to a base list first, then re-tags; one value is a list of one, as the list's reader
         // reads it.
         return global::app.type.item.@this.Create((value as global::app.type.item.@this)?.Clr<object>() ?? value, data.Context) switch
         {
-            @this lifted => new @this<T>(lifted),
-            { IsNull: false } one => new @this<T>(new[] { one }),
+            @this lifted => new @this<T>(lifted, type(lifted.Type.Template)),
+            { IsNull: false } one => new @this<T>(new[] { one }, type(null)),
             _ => null,
         };
     }
@@ -144,7 +141,7 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
         bool unfiltered = setting is null && GetType() == typeof(@this<T>);
         if (unfiltered) return this;
 
-        var every = new @this<T>();
+        var every = new @this<T>(context.App.type.list[typeof(@this<T>)]);
         await foreach (var item in Walk(setting, context)) every.Add(item);
         return every;
     }

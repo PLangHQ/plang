@@ -44,7 +44,7 @@ public static class AppTesting
     /// <c>Start(context)</c> runs it as plang does. A line the reader refuses is the test's own mistake: thrown.</summary>
     public static global::app.goal.step.action.@this Action(this global::app.actor.context.@this context, string formal)
     {
-        var step = new global::app.goal.step.@this { Text = formal };
+        var step = new global::app.goal.step.@this(context.App.type.list) { Text = formal };
         var read = new global::app.goal.step.action.formal.Reader(step, context.App.module.list).Read(formal, context);
         if (!read.Success) throw new System.InvalidOperationException($"'{formal}' does not read: {read.Error!.Message}");
         return ((global::app.goal.step.action.list.@this)read.Peek())[0];

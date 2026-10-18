@@ -7,9 +7,7 @@ namespace app.type.item.variable.code;
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<Hop>
 {
-    internal @this(System.Collections.Generic.IEnumerable<Hop> hops) : base(hops) { }
-
-    protected override global::app.type.item.list.@this Empty() => new @this([]);
+    internal @this(System.Collections.Generic.IEnumerable<Hop> hops, global::app.type.@this type) : base(hops, type) { }
 
     /// <summary>Its <c>.pr</c> form: the hops in order, each under its kind.</summary>
     public override void Write(global::app.type.format.IWriter writer)

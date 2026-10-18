@@ -10,9 +10,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private readonly global::app.type.item.kept.list.@this _kept = new();
     internal override global::app.type.item.kept.list.@this Kept => _kept;
 
-    /// <summary>The step's own type entity — its class's.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this));
-
     /// <summary>A step passes through; anything else is declined. A step is built by its goal, never
     /// converted from a value.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
@@ -44,7 +41,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         // The reader is born holding THIS step, so every action it makes is born holding it too —
         // the value bridges its own format, the reader carries the parent. Nothing is stamped.
         var reader = new global::app.goal.step.action.serializer.Reader(this);
-        var node = new global::app.goal.step.action.list.@this();
+        var node = new global::app.goal.step.action.list.@this(_code.Type);
         foreach (var row in Rows(incoming, context))
             if (row is global::app.goal.step.action.@this built) node.Add(built);
             // a value that bridges its own format (a clr(json) element) reads through the action reader directly

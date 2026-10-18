@@ -10,6 +10,8 @@ namespace app.error.list;
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<global::app.error.@this>, IReadOnlyList<global::app.error.@this>
 {
+    public @this(global::app.type.@this type) : base(type) { }
+
     /// <summary>The most recent error — null when none. A frame that failed twice is in play on the second.</summary>
     public global::app.error.@this? Newest => Items().LastOrDefault();
 

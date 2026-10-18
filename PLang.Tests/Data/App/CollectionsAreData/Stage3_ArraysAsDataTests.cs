@@ -51,7 +51,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     public async Task ListValueType_HoldsListOfData()
     {
         // app/type/list/'s value type holds List<data.@this> — symmetric to dict.
-        var list = new ListV();
+        var list = new ListV(app.type.list["list"]);
         list.Add(app.Data("", 1L));
         list.Add(app.Data("", "x"));
         await Assert.That(list.Count).IsEqualTo(2);
@@ -66,7 +66,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         // returns the SAME element Data it holds (identity/signature intact), and the
         // implicit-first (`%list.name%` → list[0].name) stays.
         var element = app.Data("", "first");
-        var list = new ListV();
+        var list = new ListV(app.type.list["list"]);
         list.Add(element);
         list.Add(app.Data("", "second"));
         var data = app.Data("items", list);
@@ -77,7 +77,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         await Assert.That(((global::app.type.item.number.@this)(await (await data.Get("count")).Value())!).ToInt32()).IsEqualTo(2);
 
         // Implicit-first through a list of dicts.
-        var people = new ListV();
+        var people = new ListV(app.type.list["list"]);
         var p0 = new DictV();
         p0.Set(app.Data("name", "alice"));
         people.Add(app.Data("", p0));
@@ -100,7 +100,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         // Coercing the list value type to a typed List<T> reads each element Data's value (I).
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var list = new ListV();
+        var list = new ListV(app.type.list["list"]);
         list.Add(app.Data("", 1L));
         list.Add(app.Data("", 2L));
         list.Add(app.Data("", 3L));
@@ -128,7 +128,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
 
-        var list = new ListV();
+        var list = new ListV(app.type.list["list"]);
         list.Add(app.Data("signed", "hello world"));
         var listData = app.Data("list", list);
 

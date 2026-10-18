@@ -47,7 +47,7 @@ public static class Make
         var owner = context.App.Module(module);
         var catalog = owner[actionName];
         var action = catalog?.Program(null)
-            ?? new global::app.goal.step.action.@this { Module = owner, Name = actionName };
+            ?? new global::app.goal.step.action.@this(context.App.type.list) { Module = owner, Name = actionName };
         foreach (var (name, value) in parameters) action.Property.Add(Row(context, catalog, name, value));
         return action;
     }
@@ -106,7 +106,7 @@ public static class Make
             ? Built(ctx, a.name, s, new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()))
             : new global::app.data.@this(a.name, a.value, context: ctx)).ToList();
         return Action(ctx, "goal", "call", ("Name", goal),
-            ("Parameter", new global::app.type.item.list.@this(rows)));
+            ("Parameter", new global::app.type.item.list.@this(rows, ctx.App.type.list["list"])));
     }
 
     /// <summary>An llm.query tool: a <c>goal.call</c> action whose <c>Parameter</c> rows declare what
@@ -116,7 +116,7 @@ public static class Make
     {
         var tool = Action(ctx, "goal", "call", ("Name", goal));
         if (parameter is { Count: > 0 })
-            tool.Property.Add(Property(new global::app.data.@this("Parameter", new global::app.type.item.list.@this(parameter), context: ctx)));
+            tool.Property.Add(Property(new global::app.data.@this("Parameter", new global::app.type.item.list.@this(parameter, ctx.App.type.list["list"]), context: ctx)));
         if (parallel)
             tool.Property.Add(Property(new global::app.data.@this("Parallel", true, context: ctx)));
         return tool;
@@ -189,7 +189,8 @@ public static class Make
     public static global::app.goal.step.action.@this With(
         global::app.goal.step.action.@this action, params global::app.goal.step.action.@this[] clauses)
     {
-        var code = new global::app.goal.step.action.list.@this();
+        var code = new global::app.goal.step.action.list.@this(
+            action.Module.App.type.list[typeof(global::app.goal.step.action.list.@this)]);
         code.Add(action);
         foreach (var clause in clauses) code.Add(clause);
         code.Attach();
@@ -199,7 +200,7 @@ public static class Make
     /// <summary>on.error's Recovery row — the actions that run to recover.</summary>
     public static (string name, object? value) Recovery(global::app.actor.context.@this context, params global::app.goal.step.action.@this[] actions)
     {
-        var list = new global::app.goal.step.action.list.@this();
+        var list = new global::app.goal.step.action.list.@this(context.App.type.list[typeof(global::app.goal.step.action.list.@this)]);
         foreach (var a in actions) list.Add(a);
         return ("Recovery", new global::app.data.@this("Recovery", list, context: context));
     }
@@ -232,22 +233,23 @@ public static class Make
     /// </summary>
     public static global::app.goal.@this Goal(global::app.actor.context.@this context, string name, string path, params StepDef[] steps)
     {
-        var goal = new global::app.goal.@this
+        var types = context.App.type.list;
+        var goal = new global::app.goal.@this(types)
         {
             Name = name,
             Path = global::app.type.item.path.@this.Resolve(path, context),
         };
 
-        var stepNode = new global::app.goal.step.list.@this();
+        var stepNode = goal.Step;
         for (int i = 0; i < steps.Length; i++)
         {
-            var actionNode = new global::app.goal.step.action.list.@this();
+            var actionNode = new global::app.goal.step.action.list.@this(types[typeof(global::app.goal.step.action.list.@this)]);
             foreach (var action in steps[i].Actions)
                 actionNode.Add(action);
             // the code is in: each clause attaches to the action before it, as the reader does
             actionNode.Attach();
 
-            stepNode.Add(new global::app.goal.step.@this
+            stepNode.Add(new global::app.goal.step.@this(types)
             {
                 Goal = goal,
                 Index = i,
@@ -256,7 +258,6 @@ public static class Make
                 Code = actionNode,
             });
         }
-        goal.Step = stepNode;
 
         return goal;
     }
@@ -280,7 +281,7 @@ public static class Make
     public static global::app.type.item.list.@this List(
         System.Collections.IEnumerable seq, global::app.actor.context.@this context)
     {
-        var list = new global::app.type.item.list.@this();
+        var list = new global::app.type.item.list.@this(context.App.type.list["list"]);
         foreach (var item in seq)
         {
             if (item is global::app.data.@this existing) { list.Add(existing); continue; }

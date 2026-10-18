@@ -359,10 +359,15 @@ public sealed class @this : IDisposable
         return map;
     }
 
-    // A fresh value of the class at path — its defaults; null when no class there. The value stores no
-    // context (Rows takes the asker's), so a fresh instance is all it is.
+    // A fresh value of the class at path — its defaults (the empty lists the one apply walk gives a member left
+    // out); null when no class there. The value stores no context (Rows takes the asker's).
     private global::app.type.item.setting.@this? Make(string path)
-        => Class(path) is { } clr ? (global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])! : null;
+    {
+        if (Class(path) is not { } clr) return null;
+        var made = (global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])!;
+        made.Apply(new Dictionary<string, object?>(), _context);
+        return made;
+    }
 
     /// <summary>A fresh value of the settings class a <paramref name="path"/> names — its defaults; null
     /// when no class names it. What the build's step scope teaches from (its Path and its Rows).</summary>

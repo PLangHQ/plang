@@ -11,13 +11,13 @@ public class EngineTests : System.IAsyncDisposable
 
     private Step MakeStep(string actionClass, string method, object? parameters = null, int index = 0, string text = "")
     {
-        return new Step
+        return new Step(app.type.list)
         {
             Index = index,
             Text = text,
-            Code = new StepActions
+            Code = new StepActions(app.type.list)
             {
-                new global::app.goal.step.action.@this
+                new global::app.goal.step.action.@this(app.type.list)
                 {
                     Module = app.actor.list.User.Context.App.Module(actionClass),
                     Name = method,
@@ -31,13 +31,13 @@ public class EngineTests : System.IAsyncDisposable
 
     private Step MakeStepWithReturn(string actionClass, string method, object? parameters, string returnVarName, int index = 0, string text = "")
     {
-        return new Step
+        return new Step(app.type.list)
         {
             Index = index,
             Text = text,
-            Code = new StepActions
+            Code = new StepActions(app.type.list)
             {
-                new global::app.goal.step.action.@this
+                new global::app.goal.step.action.@this(app.type.list)
                 {
                     Module = app.actor.list.User.Context.App.Module(actionClass),
                     Name = method,
@@ -45,7 +45,7 @@ public class EngineTests : System.IAsyncDisposable
                         ? PrParam.List(app.actor.list.User.Context, actionClass, method, dict)
                         : new List<Data>()),
                 },
-                new global::app.goal.step.action.@this
+                new global::app.goal.step.action.@this(app.type.list)
                 {
                     Module = app.actor.list.User.Context.App.Module("variable"),
                     Name = "set",
@@ -257,7 +257,7 @@ public class EngineTests : System.IAsyncDisposable
     public async Task RunGoalAsync_EmptyGoal_ReturnsSuccess()
     {
         await using var engine = new global::app.@this("/app").Testing();
-        var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", app.actor.list.User.Context) };
+        var goal = new Goal(engine.type.list) { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", app.actor.list.User.Context) };
         engine.goal.list.Add(goal);
 
         var result = await Make.Call(app.actor.list.User.Context, "EmptyGoal").Start(engine.actor.list.User.Context);
@@ -269,11 +269,11 @@ public class EngineTests : System.IAsyncDisposable
     public async Task RunGoalAsync_CancelledToken_ReturnsError()
     {
         await using var engine = new global::app.@this("/app").Testing();
-        var goal = new Goal
+        var goal = new Goal(engine.type.list)
         {
             Name = "TestGoal",
             Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context),
-            Step = new GoalSteps
+            Step = new GoalSteps(engine.type.list)
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "x" }, { "value", "y" } },
@@ -295,7 +295,7 @@ public class EngineTests : System.IAsyncDisposable
     public async Task RunGoalAsync_SetsContextGoal()
     {
         await using var engine = new global::app.@this("/app").Testing();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context) };
+        var goal = new Goal(engine.type.list) { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context) };
         engine.goal.list.Add(goal);
         var context = engine.actor.list.User.Context;
         await engine.Start(goal, context);
@@ -310,7 +310,7 @@ public class EngineTests : System.IAsyncDisposable
     public async Task RunGoalAsync_PushesCall()
     {
         await using var engine = new global::app.@this("/app").Testing();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context) };
+        var goal = new Goal(engine.type.list) { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context) };
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -342,11 +342,11 @@ public class EngineTests : System.IAsyncDisposable
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        var goal = new Goal
+        var goal = new Goal(engine.type.list)
         {
             Name = "TestGoal",
             Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context),
-            Step = new GoalSteps
+            Step = new GoalSteps(engine.type.list)
             {
                 MakeStep("variable", "get", index: 0, text: "get variable")
                 // Missing name parameter -> will fail
@@ -366,7 +366,7 @@ public class EngineTests : System.IAsyncDisposable
         var step = MakeStep("nonexistent", "method");
         var context = engine.actor.list.User.Context;
 
-        var steps = new GoalSteps { step };
+        var steps = new GoalSteps(engine.type.list) { step };
         var result = await steps.Start(context);
 
         await result.IsFailure();
@@ -382,7 +382,7 @@ public class EngineTests : System.IAsyncDisposable
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
 
         var context = engine.actor.list.User.Context;
-        var steps = new GoalSteps { step };
+        var steps = new GoalSteps(engine.type.list) { step };
         await steps.Start(context);
 
         await Assert.That((await context.Variable.GetValue("source"))).IsEqualTo("hello");
@@ -397,7 +397,7 @@ public class EngineTests : System.IAsyncDisposable
         var context = app.actor.list.User.Context;
 
         // the action dispatch answers a handler's exception as ServiceError
-        var steps = new GoalSteps { step };
+        var steps = new GoalSteps(app.type.list) { step };
         var result = await steps.Start(context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
@@ -411,7 +411,7 @@ public class EngineTests : System.IAsyncDisposable
         var step = MakeStep("legacy", "do");
         var context = app.actor.list.User.Context;
 
-        var steps = new GoalSteps { step };
+        var steps = new GoalSteps(app.type.list) { step };
         var result = await steps.Start(context);
 
         await result.IsFailure();

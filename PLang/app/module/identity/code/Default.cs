@@ -177,7 +177,7 @@ public sealed class Default : IIdentity
         var active = items!.Where(i => !i.IsArchived)
             .Select(i => new data.@this("", i, context: action.Context)).ToList();
         return action.Context.Ok<global::app.type.item.list.@this<Identity>>(
-            new global::app.type.item.list.@this<Identity>(active));
+            new global::app.type.item.list.@this<Identity>(active, action.Context.App.type.list[typeof(global::app.type.item.list.@this<Identity>)]));
     }
 
     public async Task<data.@this<Identity>> ExportAsync(Export action)
@@ -239,7 +239,7 @@ public sealed class Default : IIdentity
     // Saves the identities as the system actor's identity setting — one row, whole.
     private async Task<data.@this> Store(IContext action, setting.@this setting, List<Identity> identities)
     {
-        setting.Identity = new global::app.type.item.list.@this<Identity>(identities);
+        setting.Identity = new global::app.type.item.list.@this<Identity>(identities, action.Context.App.type.list[typeof(global::app.type.item.list.@this<Identity>)]);
         return await action.Context.App.actor.list.System.Setting.Save(setting);
     }
 

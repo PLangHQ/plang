@@ -17,11 +17,10 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
 {
     // Two ways to be born: EMPTY (callers Add each action in — the reader, Nest), or ADOPT a list
     // value's rows (the value→slot materialization, set %step.action% = %json%).
-    public @this() : base(new List<object?>()) { }
-    public @this(global::app.type.item.list.@this source) : base(source) { }
+    public @this(global::app.type.@this type) : base(new List<object?>(), type) { }
+    public @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
 
     /// <summary>Clone/render keep this concrete node type, context-free.</summary>
-    protected override global::app.type.item.list.@this Empty() => new @this();
 
     /// <summary>Starts the chain: setup / non-condition actions dispatch in order; a condition evaluates,
     /// and if truthy starts its <c>Child</c> branch and stops (the rest of the chain — elseif/else — is

@@ -12,7 +12,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
 {
     private readonly global::app.@this _app;
 
-    public @this(global::app.@this app) : base(new List<object?>())
+    public @this(global::app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
     {
         _app = app;
         Report = new(this);
@@ -67,7 +67,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         var tests = new List<global::app.test.@this>();
         foreach (var row in given.Items(context))
             if (await row.Value() is global::app.test.@this test) tests.Add(test);
-        var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests);
+        var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests, given.Type);
         if (tests.Count == 0) return executed;
 
         var parallel = context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32();
@@ -105,7 +105,8 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
                     if (await row.Value<global::app.type.item.path.@this>() is global::app.type.item.path.file.@this file)
                         found.Add(new data.@this("", await Of(file, context), context: context));
             return (data.@this)context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
-                new global::app.type.item.list.@this<global::app.test.@this>(found));
+                new global::app.type.item.list.@this<global::app.test.@this>(found,
+                    context.App.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]));
         }));
 
     // The test a .test.goal file is: its goal read first (even with no .pr the source names the test), then
@@ -115,10 +116,10 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         var goalRead = await file.Read(context);
         var goalContent = goalRead.Success ? await goalRead.Value() : null;
         if (!goalRead.Success)
-            return Stale(new global::app.goal.@this { Path = file }, "goal read error: " + (goalRead.Error?.Message ?? ""));
+            return Stale(new global::app.goal.@this(context.App.type.list) { Path = file }, "goal read error: " + (goalRead.Error?.Message ?? ""));
         var source = goalContent as global::app.goal.@this
             ?? global::app.goal.@this.Parse(goalContent?.ToString() ?? "", file, context)
-            ?? new global::app.goal.@this { Path = file };
+            ?? new global::app.goal.@this(context.App.type.list) { Path = file };
 
         if (source.PrPath is not global::app.type.item.path.file.@this pr) return Stale(source, "no PrPath derivable from goal source");
         var prExists = await pr.Exists(context);
@@ -137,8 +138,8 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
 
         return await global::app.test.@this.From(built, context);
 
-        static global::app.test.@this Stale(global::app.goal.@this goal, string reason)
-            => new() { Goal = goal, Status = Status.Stale, StatusReason = reason };
+        global::app.test.@this Stale(global::app.goal.@this goal, string reason)
+            => new(context.App.type.list) { Goal = goal, Status = Status.Stale, StatusReason = reason };
     }
 
     // One test: this run's coverage takes in the goals it reaches (a site that never runs still shows); a test

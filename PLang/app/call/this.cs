@@ -117,7 +117,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// the error stays in the list either way (audit trail). See <see cref="error.@this"/>
     /// for thread-safety semantics.
     /// </summary>
-    public global::app.error.list.@this Errors { get; } = new();
+    public global::app.error.list.@this Errors { get; }
 
     /// <summary>
     /// Flipped <c>true</c> by on.error's Wrap on recovery success. Renderers use this to
@@ -210,6 +210,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         _previousCurrent = previousCurrent;
         _diffSource = diffSource;
         _for = held;
+        Errors = new global::app.error.list.@this(stack.Audit.Type);
         Children = new child.list.@this(stack);
         foreach (var name in names ?? [])
         {

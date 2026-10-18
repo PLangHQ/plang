@@ -65,7 +65,8 @@ public class SettingRowTests
         {
             var setting = app.actor.list.User.Setting.Of<global::app.goal.list.setting.@this>();
             setting.Visibility = new global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>>(
-                new global::app.type.item.choice.@this<global::app.goal.Visibility>[] { global::app.goal.Visibility.Public, global::app.goal.Visibility.Private });
+                new global::app.type.item.choice.@this<global::app.goal.Visibility>[] { global::app.goal.Visibility.Public, global::app.goal.Visibility.Private },
+                app.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>>)]);
             await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
 
@@ -81,7 +82,8 @@ public class SettingRowTests
         {
             var setting = app.actor.list.User.Setting.Of<global::app.test.setting.@this>();
             setting.Include = new global::app.type.item.list.@this<global::app.type.item.text.@this>(
-                new global::app.type.item.text.@this[] { "smoke", "fast" });
+                new global::app.type.item.text.@this[] { "smoke", "fast" },
+                app.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.text.@this>)]);
             await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
 

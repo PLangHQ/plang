@@ -49,11 +49,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
         // A sequence of Data / native items narrows to a native list, preserving the instances.
         if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
-            return new global::app.type.item.list.@this(dataSeq);
+            return new global::app.type.item.list.@this(dataSeq, context!.App.type.list["list"]);
         if (raw is System.Collections.Generic.IEnumerable<@this> itemSeq)
-            return new global::app.type.item.list.@this(itemSeq);
+            return new global::app.type.item.list.@this(itemSeq, context!.App.type.list["list"]);
         if (raw is System.Collections.Generic.List<object?> objList)
-            return new global::app.type.item.list.@this(objList);
+            return new global::app.type.item.list.@this(objList, context!.App.type.list["list"]);
         if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
             return new global::app.type.item.dict.@this(objDict);
         // A non-generic container narrows the same way its generic sibling above does — build the
@@ -74,7 +74,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         {
             var l = new System.Collections.Generic.List<object?>();
             foreach (var e in seq) l.Add(e);
-            return new global::app.type.item.list.@this(l);
+            return new global::app.type.item.list.@this(l, context!.App.type.list["list"]);
         }
 
         // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum. BEFORE
@@ -416,9 +416,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// This value's OWN type entity — the type that MADE it, handed in at birth (the app's list for an
     /// origin birth via <c>Make</c>, or forwarded from the value it came from). The single owner of its
     /// identity; provenance lives on the value's <see cref="list"/> history and is asked via <see cref="Is"/>.
-    /// <para>Step 1 (born-whole): a value moved to born-whole holds <c>_type</c>; one not yet moved leaves it
-    /// null and falls back to the old rebuild. The parameterless ctor is the step-1 stand-in, removed when the
-    /// type ctor becomes required (step 3) — then no value exists without its type.</para>
+    /// <para>A value its maker does not hand a type leaves it null and answers the rebuild.</para>
     /// </summary>
     private readonly global::app.type.@this? _type;
 
@@ -428,8 +426,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>A value born holding the type that made it.</summary>
     protected @this(global::app.type.@this type) => _type = type;
 
-    /// <summary>Step-1 stand-in: a value not yet moved to born-whole; <c>Type</c> falls back to the rebuild.
-    /// Removed in step 3, when the type ctor is required.</summary>
+    /// <summary>A value born without a type: the root type (its own type) and the type list (which answers its own
+    /// type from itself) — the two makers of types. A value whose maker does not hand its type is born here too,
+    /// and answers the rebuild.</summary>
     protected @this() { }
 
     /// <summary>

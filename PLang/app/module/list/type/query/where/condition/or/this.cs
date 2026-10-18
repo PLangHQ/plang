@@ -20,7 +20,7 @@ public sealed class @this : condition.@this
         // the rows' elements held once, as Data: a condition keeps these very elements, so one kept is known by
         // reference
         var elements = rows.Items(context).ToList();
-        var held = new List(elements);
+        var held = new List(elements, rows.Type);
         var kept = new HashSet<Data>(ReferenceEqualityComparer.Instance);
         foreach (var condition in _condition)
         {

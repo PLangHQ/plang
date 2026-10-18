@@ -33,9 +33,9 @@ public class LoudRunTests
 
     private global::app.test.@this NewTest(string name, Status status, string? reason = null)
     {
-        var test = new global::app.test.@this
+        var test = new global::app.test.@this(_app.type.list)
         {
-            Goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", _app.actor.list.User.Context) },
+            Goal = new Goal(_app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", _app.actor.list.User.Context) },
         };
         if (status is Status.Stale or Status.Skipped)
         {
@@ -133,7 +133,7 @@ public class LoudRunTests
         var run = new global::app.type.item.list.@this<global::app.test.@this>(new List<global::app.test.@this>
         {
             NewTest("Old", Status.Stale, "no .pr"), NewTest("A", Status.Pass),
-        });
+        }, _app.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]);
         using var ms = new System.IO.MemoryStream();
         await (await new global::app.test.junit.@this().Encode(ms, ctx.Ok(run), ctx)).IsSuccess();
         var xml = System.Text.Encoding.UTF8.GetString(ms.ToArray());

@@ -47,7 +47,7 @@ public class BornTypedDeclineTests
     public async Task Set_NameTypedAsText_DeclinesAtDispatch()
     {
         var ctx = _app.actor.list.User.Context;
-        var act = new global::app.goal.step.action.@this
+        var act = new global::app.goal.step.action.@this(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"),
             Name = "set",
@@ -70,7 +70,7 @@ public class BornTypedDeclineTests
     public async Task Set_NameStampedVariable_Succeeds()
     {
         var ctx = _app.actor.list.User.Context;
-        var act = new global::app.goal.step.action.@this
+        var act = new global::app.goal.step.action.@this(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"),
             Name = "set",

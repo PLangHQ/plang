@@ -84,6 +84,7 @@ public class AppRootTests
 
     private sealed class CasedList : global::app.type.item.list.@this
     {
+        public CasedList(global::app.type.@this type) : base(type) { }
         [global::app.LlmBuilder] public global::app.type.item.number.@this Total => 1;
         [global::app.LlmBuilder] public global::app.type.item.number.@this total => 2;
     }
@@ -94,7 +95,7 @@ public class AppRootTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var held = new global::app.data.@this("rows", new CasedList(), context: ctx);
+        var held = new global::app.data.@this("rows", new CasedList(app.type.list["list"]), context: ctx);
 
         foreach (var spelling in new[] { "total", "Total", "TOTAL" })
         {

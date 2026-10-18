@@ -46,7 +46,7 @@ public class GraphCreateTests
     public async Task Goal_PassesThrough()
     {
         await using var app = new global::app.@this("/t").Testing();
-        var goal = new global::app.goal.@this { Name = "Start" };
+        var goal = new global::app.goal.@this(app.type.list) { Name = "Start" };
         var slot = new global::app.data.@this("node", goal, context: app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.@this>()).IsSameReferenceAs(goal);
     }
@@ -55,7 +55,7 @@ public class GraphCreateTests
     public async Task Step_PassesThrough()
     {
         await using var app = new global::app.@this("/t").Testing();
-        var step = new global::app.goal.step.@this { Index = 0, Text = "write out 'hi'" };
+        var step = new global::app.goal.step.@this(app.type.list) { Index = 0, Text = "write out 'hi'" };
         var slot = new global::app.data.@this("node", step, context: app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.step.@this>()).IsSameReferenceAs(step);
     }
@@ -64,7 +64,7 @@ public class GraphCreateTests
     public async Task Action_PassesThrough()
     {
         await using var app = new global::app.@this("/t").Testing();
-        var action = new global::app.goal.step.action.@this { Module = app.Module("output"), Name = "write" };
+        var action = new global::app.goal.step.action.@this(app.type.list) { Module = app.Module("output"), Name = "write" };
         var slot = new global::app.data.@this("node", action, context: app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.step.action.@this>()).IsSameReferenceAs(action);
     }

@@ -48,8 +48,13 @@ public sealed partial class @this : global::app.type.item.@this
     // at birth (a context's calls are born while the context is, before its settings can be read).
     private readonly Func<global::app.actor.setting.@this> _settings;
 
-    /// <summary>A context's calls, reading what they capture through its <paramref name="settings"/>.</summary>
-    public @this(Func<global::app.actor.setting.@this> settings) => _settings = settings;
+    /// <summary>A context's calls, reading what they capture through its <paramref name="settings"/>; <paramref name="audit"/>
+    /// is where every error they observe is kept.</summary>
+    public @this(Func<global::app.actor.setting.@this> settings, global::app.error.list.@this audit)
+    {
+        _settings = settings;
+        Audit = audit;
+    }
 
     /// <summary>What this stack captures (<c>%!app.call.setting%</c>), as its settings have it now — a read is
     /// a lookup in their cache, built again only after a write. A push reads it once.</summary>
@@ -71,7 +76,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// Every error observed this run at every frame (handled or unhandled). Survives Pop.
     /// See <see cref="global::app.error.list.@this"/> for thread-safety + lifecycle.
     /// </summary>
-    public global::app.error.list.@this Audit { get; } = new();
+    public global::app.error.list.@this Audit { get; }
 
     /// <summary>
     /// Optional Variables source for diff capture — the store a Call captures when pushed with none of its own

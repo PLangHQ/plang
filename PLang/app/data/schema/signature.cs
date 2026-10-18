@@ -55,7 +55,7 @@ public sealed class signature : ISchemaReader
                     while (reader.NextElement())
                         items.Add(Data.Ok(new global::app.type.item.text.@this(reader.String())));
                     reader.EndArray();
-                    contracts = new global::app.type.item.list.@this(items);
+                    contracts = new global::app.type.item.list.@this(items, context.App.type.list["list"]);
                     break;
                 }
                 case "hash":

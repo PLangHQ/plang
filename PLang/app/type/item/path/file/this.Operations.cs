@@ -140,7 +140,8 @@ public sealed partial class @this
                     context: context))
                 .ToList();
             return context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(
-                new global::app.type.item.list.@this<global::app.type.item.path.@this>(files));
+                new global::app.type.item.list.@this<global::app.type.item.path.@this>(files,
+                    context.App.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.path.@this>)]));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

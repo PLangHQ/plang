@@ -93,6 +93,6 @@ public sealed class @this : global::app.type.item.@this
 
         public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this data, string key)
             => System.Threading.Tasks.ValueTask.FromResult(new global::app.data.@this(key,
-                new global::app.goal.@this { Name = key, Elsewhere = parent }, parent: data));
+                new global::app.goal.@this(data.Context.App.type.list) { Name = key, Elsewhere = parent }, parent: data));
     }
 }

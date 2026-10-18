@@ -46,7 +46,7 @@ public sealed class Entry
             reader.EndObject();
             if (text == null || hops is not { Count: > 0 } || hops[0] is not code.Variable)
                 throw new global::app.error.PrFormatOutdatedException("a variable in the .pr is its text and its code, the root first", ctx.Origin);
-            read.Add(new variable.@this(text, new code.@this(hops)));
+            read.Add(new variable.@this(text, new code.@this(hops, ctx.Context!.App.type.list[typeof(code.@this)])));
         }
         reader.EndArray();
         return read;
@@ -85,7 +85,7 @@ public sealed class Entry
                     var rows = new global::app.data.reader.@this();
                     while (reader.NextElement()) values.Add(rows.Read(ref reader, ctx).Peek());
                     reader.EndArray();
-                    hop = new code.Method($".{name}(…)", name, new global::app.type.item.list.@this(values));
+                    hop = new code.Method($".{name}(…)", name, new global::app.type.item.list.@this(values, ctx.Context!.App.type.list["list"]));
                     break;
                 default:
                     throw new global::app.error.PrFormatOutdatedException($"hop kind '{kind}' isn't in this .pr format", ctx.Origin);

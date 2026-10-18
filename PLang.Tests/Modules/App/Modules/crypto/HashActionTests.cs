@@ -207,7 +207,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_NullInput_ReturnsError()
     {
-        var action = new PrAction
+        var action = new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("crypto"), Name = "hash",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", null, context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })
@@ -312,7 +312,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_NullHash_ReturnsError()
     {
-        var action = new PrAction
+        var action = new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("crypto"), Name = "verify",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", "hello", context: Ctx), new Data("hash", null, context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })
@@ -329,7 +329,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_NullInput_ReturnsError()
     {
-        var action = new PrAction
+        var action = new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("crypto"), Name = "verify",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", null, context: Ctx), new Data("hash", "abc123", context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })

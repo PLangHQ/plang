@@ -13,7 +13,7 @@ public class ActionSyntheticTests
     [Test] public async Task Synthetic_DefaultsToTrue_OnInlineCSharpConstruction()
     {
         await using var app = new global::app.@this("/app").Testing();
-        var a = new ActionEntity { Module = app.Module("variable"), Name = "set" };
+        var a = new ActionEntity(app.type.list) { Module = app.Module("variable"), Name = "set" };
         await Assert.That(a.Synthetic).IsTrue();
     }
     [Test] public async Task Synthetic_SourceGenEmits_FalseFor_PrBuiltAction()
@@ -23,7 +23,7 @@ public class ActionSyntheticTests
         // here — pin the contract that Synthetic is `set`-able (init would
         // make the post-load sweep impossible).
         await using var app = new global::app.@this("/app").Testing();
-        var a = new ActionEntity { Module = app.Module("variable"), Name = "set" };
+        var a = new ActionEntity(app.type.list) { Module = app.Module("variable"), Name = "set" };
         a.Synthetic = false;
         await Assert.That(a.Synthetic).IsFalse();
     }
@@ -32,7 +32,7 @@ public class ActionSyntheticTests
     {
         var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        var synthetic = new ActionEntity { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" };
+        var synthetic = new ActionEntity(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" };
 
         await using var s1 = app.actor.list.User.Context.call.Push(synthetic);
         await Assert.That(s1.Action!.Synthetic).IsTrue();
@@ -46,7 +46,7 @@ public class ActionSyntheticTests
         // shape deferred). Pin the contract that the flag is readable.
         var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs2-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        var prLoaded = new ActionEntity { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }; prLoaded.Synthetic = false;
+        var prLoaded = new ActionEntity(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }; prLoaded.Synthetic = false;
         await using var call = app.actor.list.User.Context.call.Push(prLoaded);
         await Assert.That(call.Action!.Synthetic).IsFalse();
     }
@@ -57,7 +57,7 @@ public class ActionSyntheticTests
         // Pin: a synthetic frame appears in the snapshot section.
         var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs3-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        var synthetic = new ActionEntity { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" };
+        var synthetic = new ActionEntity(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" };
         await using var call = app.actor.list.User.Context.call.Push(synthetic);
         var snap = app.Snapshot(app.actor.list.User.Context);
         await Assert.That(snap).IsNotNull();

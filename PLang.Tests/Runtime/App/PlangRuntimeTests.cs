@@ -39,13 +39,13 @@ public class PlangRuntimeTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain", Framed = true });
 
-        var step = new Step
+        var step = new Step(_app.type.list)
         {
             Index = 0,
             Text = "write hello",
-            Code = new StepActions
+            Code = new StepActions(_app.type.list)
             {
-                new global::app.goal.step.action.@this
+                new global::app.goal.step.action.@this(_app.type.list)
                 {
                     Module = _app.actor.list.User.Context.App.Module("output"),
                     Name = "write",
@@ -54,7 +54,7 @@ public class PlangRuntimeTests : IDisposable
             }
         };
 
-        var steps = new GoalSteps { step };
+        var steps = new GoalSteps(_app.type.list) { step };
         var context = _app.actor.list.User.Context;
         var result = await steps.Start(context);
 
@@ -70,7 +70,7 @@ public class PlangRuntimeTests : IDisposable
     [Test]
     public async Task Step_On_Start_Before_IsEmptyWhenNothingIsBound()
     {
-        var step = new Step { Index = 0, Text = "test step" };
+        var step = new Step(_app.type.list) { Index = 0, Text = "test step" };
 
         await Assert.That(step.on["start"]!.before.Count).IsEqualTo(0);
         await Assert.That(_app.type.list["step"].on["start"]!.before.Count).IsEqualTo(0);

@@ -20,8 +20,8 @@ public class CallBuildTests
             new Data("path", "%path%", context: ctx),
             new Data("kind", "build", context: ctx),
             new Data("target", "%path%", context: ctx),
-        });
-        var action = new PrAction
+        }, app.type.list["list"]);
+        var action = new PrAction(app.type.list)
         {
             Module = app.actor.list.User.Context.App.Module("goal"),
             Name = "call",

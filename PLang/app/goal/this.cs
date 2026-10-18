@@ -36,20 +36,28 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
 
-    private global::app.goal.step.list.@this _step = new();
+    /// <summary>A goal, born holding its type and its step, child and tag lists from <paramref name="types"/>, the
+    /// app's type list (read at birth, never kept).</summary>
+    public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
+    {
+        _step = new(types[typeof(global::app.goal.step.list.@this)]);
+        Child = new(this, types[typeof(child.@this)]);
+        Tag = new(types[typeof(global::app.goal.tag.list.@this)]);
+    }
+
+    private global::app.goal.step.list.@this _step;
     [Store, Debug, Default]
     public global::app.goal.step.list.@this Step
     {
         // A plain slot. Every step in it was born knowing this goal — the reader constructs the
         // goal shell first and hands it down, so there is nothing to repair on read.
         get => _step;
-        set => _step = value ?? new();
+        set => _step = value;
     }
 
-    private child.@this? _child;
     /// <summary>The goals written after this one in its file; each knows this goal as its parent.</summary>
     [Store, Debug, Default]
-    public child.@this Child => _child ??= new(this);
+    public child.@this Child { get; }
 
     /// <summary>A file's first goal is public; the goals under it are private to it.</summary>
     [Store, LlmBuilder, Debug, Default]
@@ -146,7 +154,7 @@ public sealed partial class @this
     /// <summary>The goal's tags — a build-birth fact stamped by <c>test.tag</c>'s Build hook (skip,
     /// user tags). A <c>list&lt;tag&gt;</c> program node; each tag owns its case-insensitive equality.</summary>
     [Store, Debug]
-    public global::app.goal.tag.list.@this Tag { get; init; } = new();
+    public global::app.goal.tag.list.@this Tag { get; init; }
 
 
     /// <summary>
@@ -296,7 +304,7 @@ public sealed partial class @this
         foreach (var step in Step.Items().Where(s => s.IsCached).ToList())
         {
             if (await step.Validate(context) is not { } invalid) continue;
-            step.Code = new global::app.goal.step.action.list.@this();
+            step.Code = new global::app.goal.step.action.list.@this(step.Code.Type);
             step.Warning.Add(new global::app.warning.@this
             {
                 Key = "Reopened",
@@ -405,12 +413,6 @@ public sealed partial class @this
         }
         return result;
     }
-
-    public static @this NotFound(string name) => new()
-    {
-        Name = name,
-        Comment = "Goal not found"
-    };
 
     /// <summary>
     /// Visits every action in every step (ignoring Steps' disabled-skip iterator).
@@ -525,14 +527,13 @@ public sealed partial class @this
             {
                 if (currentGoal == null)
                 {
-                    currentGoal = new @this
+                    currentGoal = new @this(context.App.type.list)
                     {
                         Name = "Start",
                         Path = path
                     };
                     goals.Add(currentGoal);
-                    stepNode = new global::app.goal.step.list.@this();
-                    currentGoal.Step = stepNode;
+                    stepNode = currentGoal.Step;
                     stepIndex = 0;
                 }
 
@@ -548,7 +549,7 @@ public sealed partial class @this
                 var comment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
                 pendingComment.Clear();
 
-                currentStep = new Step
+                currentStep = new Step(context.App.type.list)
                 {
                     Goal = currentGoal,   // birth fact — the parser holds the goal, so it hands it over
                     Index = stepIndex,
@@ -564,7 +565,7 @@ public sealed partial class @this
             // Continuation line
             if (currentStep != null && raw.Length > 0 && raw[0] == ' ')
             {
-                currentStep = new Step
+                currentStep = new Step(context.App.type.list)
                 {
                     Goal = currentStep.Goal,
                     Index = currentStep.Index,
@@ -578,7 +579,7 @@ public sealed partial class @this
             if (currentStep != null && trimmed.StartsWith("\\"))
             {
                 var escapedText = trimmed[1..].TrimEnd(); // strip the leading backslash
-                currentStep = new Step
+                currentStep = new Step(context.App.type.list)
                 {
                     Goal = currentStep.Goal,
                     Index = currentStep.Index,
@@ -598,15 +599,14 @@ public sealed partial class @this
 
             // what the goal is — setup, system, a test — it answers itself from where it lives; a sub-goal lives in
             // its parent's file, so only the file's first goal holds the path
-            currentGoal = new @this
+            currentGoal = new @this(context.App.type.list)
             {
                 Name = goalName,
                 Comment = goalComment,
                 Path = goals.Count == 0 ? path : null,
             };
             goals.Add(currentGoal);
-            stepNode = new global::app.goal.step.list.@this();
-            currentGoal.Step = stepNode;
+            stepNode = currentGoal.Step;
             stepIndex = 0;
             currentStep = null;
         }

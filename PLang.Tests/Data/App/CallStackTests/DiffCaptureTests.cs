@@ -20,7 +20,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_FlagOff_DiffsListIsNull()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = new Calls(TestCalls.Settings(), new global::app.error.list.@this(_app.type.list[typeof(global::app.error.list.@this)]));
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         await Assert.That(call.Diffs).IsNull();

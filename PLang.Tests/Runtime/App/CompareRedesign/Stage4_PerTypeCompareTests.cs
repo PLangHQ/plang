@@ -112,7 +112,7 @@ public class Stage4_PerTypeCompareTests : System.IAsyncDisposable
         var ctx = app.actor.list.User.Context;
         static global::app.type.item.list.@this L(global::app.actor.context.@this c, params object[] items)
         {
-            var l = new global::app.type.item.list.@this();
+            var l = new global::app.type.item.list.@this(c.App.type.list["list"]);
             foreach (var i in items) l.Add(new Data("", i, context: c));
             return l;
         }
@@ -178,7 +178,7 @@ public class Stage4_PerTypeCompareTests : System.IAsyncDisposable
         // sort places null entries last
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var list = new global::app.type.item.list.@this();
+        var list = new global::app.type.item.list.@this(app.type.list["list"]);
         list.Add(new Data("", 3, context: ctx));
         list.Add(new Data("", null, context: ctx));
         list.Add(new Data("", 1, context: ctx));

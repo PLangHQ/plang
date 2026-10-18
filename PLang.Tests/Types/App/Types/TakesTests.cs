@@ -50,7 +50,7 @@ public class TakesTests : System.IAsyncDisposable
 
     [Test] public async Task APlainList_DeclaredATypedList_IsTakenAsIt()
     {
-        var plain = new global::app.type.item.list.@this();
+        var plain = new global::app.type.item.list.@this(app.type.list["list"]);
 
         var made = Declared("list", "path").Make(plain, Ctx);
 

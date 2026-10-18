@@ -155,8 +155,9 @@ public class ErrorTests
     [Test]
     public async Task Step_CanBeSet()
     {
-        var goal = new Goal { Name = "TestGoal" };
-        var step = new Step { Goal = goal, Index = 0, Text = "do something" };
+        await using var app = new global::app.@this("/app").Testing();
+        var goal = new Goal(app.type.list) { Name = "TestGoal" };
+        var step = new Step(app.type.list) { Goal = goal, Index = 0, Text = "do something" };
         var error = new Error("Error", step);
 
         await Assert.That(error.Step).IsNotNull();

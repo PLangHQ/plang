@@ -51,7 +51,7 @@ public class Default : IBuilder
 
         var files = (await listResult.Value()).Clr<List<path>>();
         if (files == null || files.Count == 0)
-            return context.Ok(new global::app.type.item.list.@this<Goal>());
+            return context.Ok(new global::app.type.item.list.@this<Goal>(context.App.type.list[typeof(global::app.type.item.list.@this<Goal>)]));
 
         // Filter by build's files setting if set (--build={"files":[...]}, %!build.setting.files%)
         // Honor the user's specified order — building has bootstrapping concerns
@@ -128,7 +128,7 @@ public class Default : IBuilder
 
         _buildTimer.Restart();
 
-        return context.Ok(new global::app.type.item.list.@this<Goal>(allGoals));
+        return context.Ok(new global::app.type.item.list.@this<Goal>(allGoals, context.App.type.list[typeof(global::app.type.item.list.@this<Goal>)]));
     }
 
     // --- Fold: indent-authored sub-steps → gate-action Child ---
@@ -165,7 +165,7 @@ public class Default : IBuilder
     private global::app.goal.step.list.@this Fold(
         global::app.goal.step.list.@this flat, List<global::app.error.@this> errors)
     {
-        var top = new global::app.goal.step.list.@this();   // Add each real step into the node
+        var top = new global::app.goal.step.list.@this(flat.Type);   // Add each real step into the node
         int i = 0;
         while (i < flat.Count)
         {

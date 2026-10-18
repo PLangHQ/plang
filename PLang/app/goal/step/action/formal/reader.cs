@@ -50,7 +50,7 @@ public sealed class Reader
             var cursor = new Cursor(text, _step, context, _step.Index, _modules);
             cursor.Space();
             if (cursor.AtEnd) cursor.Fail("a step holds at least one action");
-            var list = new global::app.goal.step.action.list.@this();
+            var list = new global::app.goal.step.action.list.@this(context.App.type.list[typeof(global::app.goal.step.action.list.@this)]);
             foreach (var action in cursor.Actions(null)) list.Add(action);
             return context.Ok(list);
         }
@@ -225,7 +225,7 @@ public sealed class Reader
                     var written = Value(null);
                     if (written.Items == null || written.Items.Count == 0 || written.Items.Any(i => i.Action == null))
                         Fail($"`{prop}` is a list of actions: [goal.call(Name=\"X\")]", at);
-                    var actions = new global::app.goal.step.action.list.@this();
+                    var actions = new global::app.goal.step.action.list.@this(_context.App.type.list[typeof(global::app.goal.step.action.list.@this)]);
                     foreach (var r in written.Items!) actions.Add(r.Action!);
                     action.Property.Add(new global::app.type.property.@this { Name = prop, Type = declared.Type, Value = actions });
                     continue;
@@ -247,13 +247,13 @@ public sealed class Reader
                     // an empty body reads: it breaks a rule, not the syntax — the chain check refuses it,
                     // with the step's other problems, saying where the body goes for that step
                     Take("}");
-                    action.Child.Add(new global::app.goal.step.@this { Goal = _step.Goal, Line = _step.Line });
+                    action.Child.Add(new global::app.goal.step.@this(_context.App.type.list) { Goal = _step.Goal, Line = _step.Line });
                     return (action, start);
                 }
                 var bodyStart = _pos;
                 // a condition's body is a child step of this step's goal, its actions born holding it —
                 // written on this step's line
-                var child = new global::app.goal.step.@this { Goal = _step.Goal, Line = _step.Line };
+                var child = new global::app.goal.step.@this(_context.App.type.list) { Goal = _step.Goal, Line = _step.Line };
                 var body = new Cursor(_text, child, _context, _index, _modules) { _pos = _pos };
                 var bodyActions = body.Actions("}");
                 _pos = body._pos;

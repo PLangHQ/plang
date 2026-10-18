@@ -11,11 +11,11 @@ public class @this : global::app.goal.step.action.@this
 {
     /// <summary>A clause IS a distinct plang type (the role is the type): its wire shape is action's, its identity
     /// its own.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this));
+    public @this(global::app.type.list.@this types) : base(types, types[typeof(@this)]) { }
 
     /// <summary>A program action of this clause's kind, in <paramref name="step"/>.</summary>
     internal override global::app.goal.step.action.@this Program(global::app.goal.step.@this? step)
-        => new @this { Module = Module, Name = Name, Step = step, Synthetic = false };
+        => new @this(Module.App.type.list) { Module = Module, Name = Name, Step = step, Synthetic = false };
 
     /// <summary>Binds this clause on <paramref name="before"/>'s own events — its handler knows which, and on
     /// which side.</summary>

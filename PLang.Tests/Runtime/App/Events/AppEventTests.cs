@@ -13,7 +13,7 @@ public class AppEventTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        var goal = new global::app.goal.@this { Name = "Checkout",
+        var goal = new global::app.goal.@this(app.type.list) { Name = "Checkout",
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
         var fired = app.goal.on.start;
         // as the binding scopes it: the event, what it fired for, the result so far — on the frame it fired in

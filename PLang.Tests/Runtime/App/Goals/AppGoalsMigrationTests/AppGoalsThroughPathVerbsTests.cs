@@ -52,7 +52,7 @@ public class AppGoalsThroughPathVerbsTests
     [Test] public async Task AppGoals_FuzzyGetByName_StaysSeparateFromPathKeying()
     {
         var (app, _) = await NewApp();
-        var goal = new Goal
+        var goal = new Goal(app.type.list)
         {
             Name = "ProcessData",
             Path = global::app.type.item.path.@this.Resolve("/processdata.goal", app.actor.list.User.Context)

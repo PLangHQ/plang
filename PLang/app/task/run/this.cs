@@ -19,6 +19,9 @@ internal sealed class @this
 
     public global::app.goal.@this Goal { get; }
     public string Id { get; }
+
+    /// <summary>The actor the run is its own task of.</summary>
+    internal global::app.actor.@this Actor => _actor;
     public bool Ended => _run.IsCompleted;
 
     /// <summary>The run's end, awaited without asking for its result — a failure nobody asked for still reports itself.</summary>

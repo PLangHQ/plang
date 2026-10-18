@@ -32,7 +32,7 @@ public class CacheWrapTests
     [Test]
     public async Task Wrap_CacheMiss_RunsActionAndStoresResult()
     {
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
@@ -60,7 +60,7 @@ public class CacheWrapTests
             new CacheSettings { DurationMs = 60_000, Sliding = false });
 
         // variable.set would put "fresh-value" but the cache hit bypasses dispatch.
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
@@ -80,7 +80,7 @@ public class CacheWrapTests
     [Test]
     public async Task Wrap_ActionFailure_DoesNotCache()
     {
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("error"), Name = "throw",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("message", "boom", context: _app.actor.list.User.Context) })
@@ -98,7 +98,7 @@ public class CacheWrapTests
     [Test]
     public async Task Wrap_CustomKey_UsedWhenProvided()
     {
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
@@ -117,10 +117,10 @@ public class CacheWrapTests
     public async Task Wrap_DefaultKey_DerivedFromGoalPathAndStepIndex()
     {
         // The action's step is the step in play while it runs — the default key reads its Goal.Path + Index
-        var goal = new Goal { Path = global::app.type.item.path.@this.Resolve("/foo/bar.goal", _app.actor.list.User.Context) };
-        var step = new Step { Index = 7, Goal = goal };
+        var goal = new Goal(_app.type.list) { Path = global::app.type.item.path.@this.Resolve("/foo/bar.goal", _app.actor.list.User.Context) };
+        var step = new Step(_app.type.list) { Index = 7, Goal = goal };
 
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
@@ -143,7 +143,7 @@ public class CacheWrapTests
         // this asserts by behavior: sliding=true should still populate the cache
         // and cached values should be retrievable. The handler plumbs Sliding through
         // to CacheSettings; if it didn't, this entry wouldn't be stored at all.
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
@@ -166,7 +166,7 @@ public class CacheWrapTests
         await Ctx.App!.Cache.SetAsync("restore-key", stashed,
             new CacheSettings { DurationMs = 60_000, Sliding = false });
 
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
@@ -206,7 +206,7 @@ public class CacheWrapTests
     {
         // math.add(1, 2); on.cache(…); variable.set(%sum%, %!data%) — the clause was bound at read and never
         // starts, so %!data% is still the add's result when the set reads it.
-        var code = new global::app.goal.step.action.list.@this();
+        var code = new global::app.goal.step.action.list.@this(_app.type.list[typeof(global::app.goal.step.action.list.@this)]);
         code.Add(global::PLang.Tests.Shared.Make.Action(Ctx, "math", "add", ("A", 1), ("B", 2)));
         code.Add(CacheModifier(60_000, "sum-key"));
         code.Add(global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set",

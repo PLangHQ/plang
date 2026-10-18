@@ -12,7 +12,7 @@ public class GoalCallTests
     {
         _app = new global::app.@this("/app").Testing();
         // Register a stub goal that call.cs can find
-        _app.goal.list.Add(new global::app.goal.@this
+        _app.goal.list.Add(new global::app.goal.@this(_app.type.list)
         {
             Name = "TestGoal",
             Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", _app.actor.list.User.Context)
@@ -66,7 +66,7 @@ public class GoalCallTests
         {
             Name = Named(await Seer("myParam")),
             Parameter = new global::app.type.item.list.@this(
-                new List<Data> { new Data("myParam", "myValue", context: _app.actor.list.User.Context) })
+                new List<Data> { new Data("myParam", "myValue", context: _app.actor.list.User.Context) }, _app.type.list["list"])
         };
         var result = await action.Start();
 

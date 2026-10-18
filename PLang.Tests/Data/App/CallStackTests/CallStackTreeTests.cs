@@ -10,7 +10,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Push_SetsCurrentToNewCall()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = new Calls(TestCalls.Settings(), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
         await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await Assert.That(stack.Current).IsEqualTo(call);
     }
@@ -18,7 +18,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Push_NestedPush_SetsCallerToOuter()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = new Calls(TestCalls.Settings(), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await Assert.That(inner.Caller).IsEqualTo(outer);
@@ -27,7 +27,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Push_AppendsCallToCallerChildren()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = new Calls(TestCalls.Settings(), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await Assert.That(outer.Children.Contains(inner)).IsTrue();
@@ -36,7 +36,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Pop_RestoresCurrentToCaller()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = new Calls(TestCalls.Settings(), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using (var inner = stack.Push(MakeAction(app.actor.list.User.Context, "B")))
         {
@@ -48,7 +48,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Pop_RemovesFromCallerChildren_WhenHistoryFalse()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = new Calls(TestCalls.Settings(), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var snapshotInner = (object?)null;
         await using (var inner = stack.Push(MakeAction(app.actor.list.User.Context, "B")))
@@ -62,7 +62,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Pop_RetainsInCallerChildren_WhenHistoryTrue()
     {
-        var stack = new Calls(TestCalls.Settings(new Dictionary<string, object?> { ["history"] = true }));
+        var stack = new Calls(TestCalls.Settings(new Dictionary<string, object?> { ["history"] = true }), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using (var inner = stack.Push(MakeAction(app.actor.list.User.Context, "B")))
         {
@@ -74,7 +74,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Root_IsFirstPushedCall()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = new Calls(TestCalls.Settings(), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
         await using var first = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var second = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await Assert.That(stack.Root).IsEqualTo(first);
@@ -83,7 +83,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Root_NullBeforeAnyPush()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = new Calls(TestCalls.Settings(), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
         await Assert.That(stack.Root).IsNull();
     }
 
@@ -93,7 +93,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
         var stack = new Calls(TestCalls.Settings(new Dictionary<string, object?>
         {
             ["history"] = true, ["frame"] = new Dictionary<string, object?> { ["max"] = 2 },
-        }));
+        }), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
 
         // Push and pop three siblings; with history retention, all three start as Children
@@ -111,7 +111,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Audit_StartsEmpty()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = new Calls(TestCalls.Settings(), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
         await Assert.That(stack.Audit.Count).IsEqualTo(0);
     }
 }

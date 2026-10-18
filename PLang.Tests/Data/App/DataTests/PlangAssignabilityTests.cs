@@ -64,7 +64,7 @@ public class PlangAssignabilityTests
     public async Task EnumerateItems_OfAReference_WalksWhatItNames_AndLeavesTheCarrier()
     {
         var ctx = _app.actor.list.User.Context;
-        var list = new global::app.type.item.list.@this();
+        var list = new global::app.type.item.list.@this(_app.type.list["list"]);
         list.Add((global::app.type.item.text.@this)"a");
         list.Add((global::app.type.item.text.@this)"b");
         await ctx.Variable.Set("items", list);
@@ -84,7 +84,7 @@ public class PlangAssignabilityTests
     public async Task UseAs_OfAReference_HandsWhatItNames()
     {
         var ctx = _app.actor.list.User.Context;
-        var list = new global::app.type.item.list.@this();
+        var list = new global::app.type.item.list.@this(_app.type.list["list"]);
         list.Add((global::app.type.item.text.@this)"a");
         await ctx.Variable.Set("items", list);
         var source = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items"), context: ctx);

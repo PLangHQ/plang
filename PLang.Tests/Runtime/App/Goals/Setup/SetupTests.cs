@@ -30,10 +30,10 @@ public class SetupTests
     [Test]
     public async Task Setup_Goals_OrdersSetupFirst_ThenAlphabetical()
     {
-        _app.goal.list.Add(new Goal { Name = "Zebra", Path = global::app.type.item.path.@this.Resolve("/setup/Zebra.goal", _app.actor.list.User.Context) });
-        _app.goal.list.Add(new Goal { Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context) });
-        _app.goal.list.Add(new Goal { Name = "Alpha", Path = global::app.type.item.path.@this.Resolve("/setup/Alpha.goal", _app.actor.list.User.Context) });
-        _app.goal.list.Add(new Goal { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal(_app.type.list) { Name = "Zebra", Path = global::app.type.item.path.@this.Resolve("/setup/Zebra.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal(_app.type.list) { Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal(_app.type.list) { Name = "Alpha", Path = global::app.type.item.path.@this.Resolve("/setup/Alpha.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal(_app.type.list) { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", _app.actor.list.User.Context) });
 
         var setupGoals = _app.goal.list.Setup.Goals.ToList();
 
@@ -46,8 +46,8 @@ public class SetupTests
     [Test]
     public async Task Setup_ExcludesSetupGoalsFromRegularLookup()
     {
-        _app.goal.list.Add(new Goal { Name = "SetupGoal", Path = global::app.type.item.path.@this.Resolve("/setup/SetupGoal.goal", _app.actor.list.User.Context) });
-        _app.goal.list.Add(new Goal { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal(_app.type.list) { Name = "SetupGoal", Path = global::app.type.item.path.@this.Resolve("/setup/SetupGoal.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal(_app.type.list) { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", _app.actor.list.User.Context) });
 
         var found = await _app.goal.list.Find("SetupGoal").Found();
         var normal = await _app.goal.list.Find("NormalGoal").Found();
@@ -59,7 +59,7 @@ public class SetupTests
     [Test]
     public async Task IsExecuted_ReturnsFalse_ForNewStep()
     {
-        var step = new Step { Text = "do something" };
+        var step = new Step(_app.type.list) { Text = "do something" };
         var result = await _app.goal.list.Setup.IsExecuted(step, _app);
 
         await Assert.That(result).IsFalse();
@@ -68,7 +68,7 @@ public class SetupTests
     [Test]
     public async Task Record_ThenIsExecuted_ReturnsTrue()
     {
-        var step = new Step { Text = "do something", Index = 0 };
+        var step = new Step(_app.type.list) { Text = "do something", Index = 0 };
 
         await _app.goal.list.Setup.Record(step, _app);
         var result = await _app.goal.list.Setup.IsExecuted(step, _app);
@@ -79,7 +79,7 @@ public class SetupTests
     [Test]
     public async Task IsExecuted_ReturnsFalse_ForNullHash()
     {
-        var step = new Step { Text = "" };
+        var step = new Step(_app.type.list) { Text = "" };
         var result = await _app.goal.list.Setup.IsExecuted(step, _app);
 
         await Assert.That(result).IsFalse();
@@ -90,14 +90,14 @@ public class SetupTests
     {
         // Create a setup goal with two steps
         // Goal first, then its steps — a step is born knowing its goal (Goal is init).
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
-        var step1 = new Step { Goal = goal, Index = 0, Text = "step one",
-            Code = CreateNoOpActions() };
-        var step2 = new Step { Goal = goal, Index = 1, Text = "step two",
-            Code = CreateNoOpActions() };
+        var step1 = new Step(_app.type.list) { Goal = goal, Index = 0, Text = "step one",
+            Code = CreateNoOpActions(_app.type.list) };
+        var step2 = new Step(_app.type.list) { Goal = goal, Index = 1, Text = "step two",
+            Code = CreateNoOpActions(_app.type.list) };
         goal.Step.Add(step1);
         goal.Step.Add(step2);
 
@@ -126,12 +126,12 @@ public class SetupTests
     [Test]
     public async Task RunAsync_RerunsStepWithChangedHash()
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
-        var step = new Step { Goal = goal, Index = 0, Text = "create table",
-            Code = CreateNoOpActions() };
+        var step = new Step(_app.type.list) { Goal = goal, Index = 0, Text = "create table",
+            Code = CreateNoOpActions(_app.type.list) };
         goal.Step.Add(step);
         _app.goal.list.Add(goal);
 
@@ -140,8 +140,8 @@ public class SetupTests
         await Assert.That(await _app.goal.list.Setup.IsExecuted(step, _app)).IsTrue();
 
         // Simulate changed step (different hash) — new step object with different hash
-        var changedStep = new Step { Goal = goal, Index = 0, Text = "create table v2",
-            Code = CreateNoOpActions() };
+        var changedStep = new Step(_app.type.list) { Goal = goal, Index = 0, Text = "create table v2",
+            Code = CreateNoOpActions(_app.type.list) };
 
         // The changed step should NOT be found as executed
         await Assert.That(await _app.goal.list.Setup.IsExecuted(changedStep, _app)).IsFalse();
@@ -150,10 +150,10 @@ public class SetupTests
     [Test]
     public async Task RunAsync_SetsAndClearsContextSetup()
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
-            Step = new GoalSteps()
+            Step = new GoalSteps(_app.type.list)
         };
         _app.goal.list.Add(goal);
 
@@ -182,11 +182,11 @@ public class SetupTests
     public async Task RunAsync_FailedStepNotRecorded()
     {
         // A step that fails (unknown module) and does NOT have on.error ignore
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
-        var step = new Step
+        var step = new Step(_app.type.list)
         {
             Goal = goal, Index = 0, Text = "failing step",
             Code = CreateFailingActions()
@@ -206,14 +206,14 @@ public class SetupTests
     public async Task RunAsync_CancellationAborts()
     {
         // Goal first, then its steps — a step is born knowing its goal (Goal is init).
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
-        var step1 = new Step { Goal = goal, Index = 0, Text = "step one",
-            Code = CreateNoOpActions() };
-        var step2 = new Step { Goal = goal, Index = 1, Text = "step two",
-            Code = CreateNoOpActions() };
+        var step1 = new Step(_app.type.list) { Goal = goal, Index = 0, Text = "step one",
+            Code = CreateNoOpActions(_app.type.list) };
+        var step2 = new Step(_app.type.list) { Goal = goal, Index = 1, Text = "step two",
+            Code = CreateNoOpActions(_app.type.list) };
         goal.Step.Add(step1);
         goal.Step.Add(step2);
         _app.goal.list.Add(goal);
@@ -370,9 +370,9 @@ public class SetupTests
     /// Creates a minimal no-op Actions collection that won't fail during step execution.
     /// Steps with empty actions succeed immediately.
     /// </summary>
-    private static StepActions CreateNoOpActions()
+    private static StepActions CreateNoOpActions(global::app.type.list.@this types)
     {
-        return new StepActions();
+        return new StepActions(types);
     }
 
     /// <summary>
@@ -380,9 +380,9 @@ public class SetupTests
     /// </summary>
     private StepActions CreateFailingActions()
     {
-        return new StepActions
+        return new StepActions(_app.type.list)
         {
-            new global::app.goal.step.action.@this
+            new global::app.goal.step.action.@this(_app.type.list)
             {
                 Module = _app.actor.list.User.Context.App.Module("nonexistent"),
                 Name = "doesnotexist",

@@ -43,14 +43,14 @@ public class TestMetadataTests
 
     private global::app.test.@this NewTest(string name, string? builderVersion = null, string? goalHash = "deadbeef")
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = name,
             Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", _app.actor.list.User.Context),
             Hash = goalHash,
             BuilderVersion = builderVersion
         };
-        var test = new global::app.test.@this() { Goal = goal };
+        var test = new global::app.test.@this(_app.type.list) { Goal = goal };
         test.Complete(global::app.test.Status.Pass);
         return test;
     }

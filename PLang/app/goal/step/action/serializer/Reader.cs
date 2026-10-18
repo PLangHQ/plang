@@ -46,7 +46,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // Provenance at birth: an action READ is authored, not injected — so it is non-synthetic. A name
                 // the module doesn't carry still reads (validation names it), as a plain action.
                 : module[actionName]?.Program(_step)
-                  ?? new global::app.goal.step.action.@this { Module = module, Name = actionName, Step = _step, Synthetic = false };
+                  ?? new global::app.goal.step.action.@this(ctx.Context.App.type.list) { Module = module, Name = actionName, Step = _step, Synthetic = false };
 
         reader.BeginObject();
         while (reader.NextName(out var name))
@@ -83,7 +83,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     throw new global::app.error.PrFormatOutdatedException($"action key '{name}' is now 'property'", ctx.Origin);
                 case "child":
                     // chain self-feeds: a child step's goal is this action's step's goal
-                    var childSteps = new global::app.goal.step.list.@this();
+                    var childSteps = new global::app.goal.step.list.@this(ctx.Context.App.type.list[typeof(global::app.goal.step.list.@this)]);
                     var stepReader = new global::app.goal.step.serializer.Reader(_step.Goal);
                     reader.BeginArray();
                     while (reader.NextElement())
@@ -170,7 +170,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     private global::app.goal.step.action.list.@this Actions<TReader>(ref TReader reader, global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        var actions = new global::app.goal.step.action.list.@this();
+        var actions = new global::app.goal.step.action.list.@this(ctx.Context.App.type.list[typeof(global::app.goal.step.action.list.@this)]);
         reader.BeginArray();
         while (reader.NextElement())
             if (Read(ref reader, null, ctx) is global::app.goal.step.action.@this action) actions.Add(action);

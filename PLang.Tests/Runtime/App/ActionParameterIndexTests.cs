@@ -16,7 +16,7 @@ public class ActionParameterIndexTests
 
     private PrAction Action(params (string name, object? value)[] parameters)
     {
-        return new PrAction
+        return new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("test"),
             Name = "fixture",
@@ -28,7 +28,7 @@ public class ActionParameterIndexTests
         IEnumerable<(string name, object? value)> parameters,
         IEnumerable<(string name, object? value)> defaults)
     {
-        return new PrAction
+        return new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("test"),
             Name = "fixture",
@@ -76,7 +76,7 @@ public class ActionParameterIndexTests
     [Test]
     public async Task Index_EmptyLists_IsNull()
     {
-        var action = new PrAction { Module = _app.actor.list.User.Context.App.Module("test"), Name = "fixture" };
+        var action = new PrAction(_app.type.list) { Module = _app.actor.list.User.Context.App.Module("test"), Name = "fixture" };
 
         await Assert.That(action["anything"]).IsNull();
     }

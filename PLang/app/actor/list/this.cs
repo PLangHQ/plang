@@ -8,7 +8,7 @@ namespace app.actor.list;
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyncDisposable
 {
-    public @this(global::app.@this app) : base(new List<object?>())
+    public @this(global::app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
     {
         System = new actor.@this("System", app, app.ShutdownToken);
         // the runtime's shared os folder is the system's to write: every actor reads and runs there, only it writes

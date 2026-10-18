@@ -10,9 +10,9 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
     private (Goal goal, Step step, ActionEntity action) MakeFrame(
         string goalName, string stepText = "step", string module = "test", string actionName = "test")
     {
-        var goal = new Goal { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", app.actor.list.User.Context) };
-        var step = new Step { Index = 0, Text = stepText, Goal = goal };
-        var action = new ActionEntity { Module = app.actor.list.User.Context.App.Module(module), Name = actionName, Step = step };
+        var goal = new Goal(app.type.list) { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", app.actor.list.User.Context) };
+        var step = new Step(app.type.list) { Index = 0, Text = stepText, Goal = goal };
+        var action = new ActionEntity(app.type.list) { Module = app.actor.list.User.Context.App.Module(module), Name = actionName, Step = step };
         step.Code.Add(action);
         goal.Step.Add(step);
         return (goal, step, action);

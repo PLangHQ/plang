@@ -245,18 +245,18 @@ public class DiscoverActionTests
     public async Task Discover_AutoTags_TraverseSubGoals_UnionsAcrossCallChain()
     {
         // Register a Helper goal in the App (not a separate .test.goal) that uses http.
-        var helper = new Goal
+        var helper = new Goal(_app.type.list)
         {
             Name = "Helper",
             Path = global::app.type.item.path.@this.Resolve("/Helper.goal", _app.actor.list.User.Context),
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
-                new Step
+                new Step(_app.type.list)
                 {
                     Index = 0, Text = "http get",
-                    Code = new StepActions
+                    Code = new StepActions(_app.type.list)
                     {
-                        new PrAction
+                        new PrAction(_app.type.list)
                         {
                             Module = _app.actor.list.User.Context.App.Module("http"), Name = "request",
                             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Url", "https://example.com", context: _app.actor.list.User.Context) })

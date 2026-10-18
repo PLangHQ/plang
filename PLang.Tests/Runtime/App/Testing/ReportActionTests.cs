@@ -46,14 +46,14 @@ public class ReportActionTests
 
     private global::app.test.@this NewTest(string name, global::app.test.Status status, global::app.error.@this? error = null, string? output = null)
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = name,
             Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", _app.actor.list.User.Context),
             Hash = "deadbeef",
             BuilderVersion = "v1"
         };
-        var test = new global::app.test.@this() { Goal = goal };
+        var test = new global::app.test.@this(_app.type.list) { Goal = goal };
         if (output != null) test.Stdout = output;
         test.Complete(status, error);
         return test;
@@ -114,8 +114,8 @@ public class ReportActionTests
     public async Task Report_NamesTheGoal_WithoutWritingItsProgram()
     {
         var test = NewTest("X", global::app.test.Status.Pass);
-        var steps = new global::app.goal.step.list.@this();
-        steps.Add(new global::app.goal.step.@this { Goal = test.Goal, Text = "write out %response%" });
+        var steps = new global::app.goal.step.list.@this(_app.type.list[typeof(global::app.goal.step.list.@this)]);
+        steps.Add(new global::app.goal.step.@this(_app.type.list) { Goal = test.Goal, Text = "write out %response%" });
         test.Goal.Step = steps;
         _app.test.list.Add(test);
 

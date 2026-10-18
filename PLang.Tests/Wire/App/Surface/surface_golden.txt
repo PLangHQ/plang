@@ -106,7 +106,7 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Tags : app.type.item.bool.this { get; }
   Timing : app.type.item.bool.this { get; }
   Variables : app.type.item.variable.list.this { get; }
-  ctor(System.Func<app.actor.setting.this> settings)
+  ctor(System.Func<app.actor.setting.this> settings, app.error.list.this audit)
   override IsLeaf : System.Boolean { get; }
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
 
@@ -1896,11 +1896,11 @@ class app.type.item.list.this : app.type.item.this, app.type.item.ICreate<app.ty
   SetAt(app.type.item.number.this index, app.data.this value, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   Sort(app.type.item.text.this by, app.type.item.bool.this descending, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   Unique(app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
-  ctor()
-  ctor(System.Collections.Generic.IEnumerable<app.data.this> items)
-  ctor(System.Collections.Generic.IEnumerable<app.type.item.this> values)
-  ctor(System.Collections.Generic.List<System.Object> backing)
-  ctor(app.type.item.list.this source)
+  ctor(System.Collections.Generic.IEnumerable<app.data.this> items, app.type.this type)
+  ctor(System.Collections.Generic.IEnumerable<app.type.item.this> values, app.type.this type)
+  ctor(System.Collections.Generic.List<System.Object> backing, app.type.this type)
+  ctor(app.type.item.list.this source, app.type.this type)
+  ctor(app.type.this type)
   override Cacheable : System.Boolean { get; }
   override Contains(app.data.this needle) : System.Threading.Tasks.ValueTask<System.Boolean>
   override Copy() : app.type.item.this
@@ -1919,10 +1919,8 @@ class app.type.item.list.this : app.type.item.this, app.type.item.ICreate<app.ty
   override Where(app.type.item.text.this field, app.data.Operator op, app.data.this value, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   protected Slots() : System.Collections.Generic.IEnumerable<System.Object>
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  protected override Type : app.type.this { get; }
   protected virtual Admit(System.Object slot) : System.Void
   protected virtual Admit(app.type.item.list.this other) : System.Void
-  protected virtual Empty() : app.type.item.list.this
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   static Create(System.Object value) : app.type.item.list.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.list.this
@@ -1931,14 +1929,12 @@ class app.type.item.list.this : app.type.item.this, app.type.item.ICreate<app.ty
 
 class app.type.item.list.this<T> : app.type.item.list.this, app.type.item.ICreate<app.type.item.list.this<T>>
   Contains(T value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
-  ctor()
-  ctor(System.Collections.Generic.IEnumerable<app.data.this> items)
-  ctor(System.Collections.Generic.IEnumerable<app.type.item.this> values)
-  ctor(System.Collections.Generic.List<System.Object> backing)
-  ctor(app.type.item.list.this source)
+  ctor(System.Collections.Generic.IEnumerable<app.data.this> items, app.type.this type)
+  ctor(System.Collections.Generic.IEnumerable<app.type.item.this> values, app.type.this type)
+  ctor(System.Collections.Generic.List<System.Object> backing, app.type.this type)
+  ctor(app.type.item.list.this source, app.type.this type)
+  ctor(app.type.this type)
   override All(app.actor.context.this context, app.type.item.dict.this setting = …) : System.Threading.Tasks.ValueTask<app.type.item.list.this>
-  protected override Empty() : app.type.item.list.this
-  protected override Type : app.type.this { get; }
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.list.this<T>
   static Takes(app.type.this other) : System.Boolean
 
@@ -2913,7 +2909,6 @@ class app.type.item.variable.code.this : app.type.item.list.this<app.type.item.v
   Start(app.actor.context.this context, app.data.this from = …) : System.Threading.Tasks.ValueTask<app.data.this>
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Write(app.type.format.IWriter writer) : System.Void
-  protected override Empty() : app.type.item.list.this
 
 class app.type.item.variable.list.this : app.snapshot.ISnapshot
   Capture(app.snapshot.this s) : System.Void
@@ -3034,7 +3029,7 @@ class app.type.kind.format.this<T> : app.type.kind.this<T>
   ctor(app.Attributes.FormatAttribute format, app.type.kind.this+Encoder encode = …, app.type.kind.this+Decoder decode = …)
 
 class app.type.kind.list.this : app.type.item.list.this<app.type.this>
-  ctor(System.Collections.Generic.IEnumerable<app.type.this> types)
+  ctor(System.Collections.Generic.IEnumerable<app.type.this> types, app.type.this type)
 
 class app.type.kind.subclass.this<T> : app.type.kind.this<T>
   ctor(System.String name, System.Type class)
@@ -3124,6 +3119,7 @@ class app.type.list.this : app.type.item.list.this<app.type.this>
   ctor()
   protected override Admit(System.Object slot) : System.Void
   protected override Admit(app.type.item.list.this other) : System.Void
+  protected override Type : app.type.this { get; }
 
 class app.type.property.list.this : System.Collections.Generic.IEnumerable<app.type.property.this>, System.Collections.Generic.IReadOnlyCollection<app.type.property.this>, System.Collections.Generic.IReadOnlyList<app.type.property.this>, System.Collections.IEnumerable
   Add(app.type.property.this property) : System.Void

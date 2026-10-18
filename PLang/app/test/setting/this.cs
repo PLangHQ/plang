@@ -27,10 +27,10 @@ public sealed class @this : global::app.type.item.setting.@this
     [Out, Store] public global::app.type.item.choice.@this<global::app.test.format.@this> Format { get; set; } = new global::app.test.format.@this("json");
 
     /// <summary>The tags a test must carry one of to run (empty = every test). Case-insensitive.</summary>
-    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Include { get; set; } = new();
+    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Include { get; set; }
 
     /// <summary>The tags that leave a test out (empty = none). Applied after include — exclude wins.</summary>
-    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Exclude { get; set; } = new();
+    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Exclude { get; set; }
 
     /// <summary>Why these options leave <paramref name="test"/> out — a tag in <see cref="Exclude"/> (exclude
     /// wins), or no tag in a non-empty <see cref="Include"/>. Null when the run takes it. Tags compare by the

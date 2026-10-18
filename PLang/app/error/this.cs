@@ -29,7 +29,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public static Error? Current(global::app.actor.context.@this context) => context.call.Error;
 
     /// <summary>The app holds no errors of its own: every error is an asker's.</summary>
-    public static global::app.error.list.@this List(global::app.@this app) => new();
+    public static global::app.error.list.@this List(global::app.@this app) => new(app.type.list[typeof(global::app.error.list.@this)]);
 
     /// <summary>The errors the asker sees (<c>%!app.error.list%</c>) — every error on its call stack, handled or not.</summary>
     public static global::app.error.list.@this? Of(global::app.actor.context.@this context) => context.call.Audit;

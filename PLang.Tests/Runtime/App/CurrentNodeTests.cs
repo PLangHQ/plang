@@ -23,7 +23,7 @@ public class CurrentNodeTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        var goal = new global::app.goal.@this { Name = "Checkout",
+        var goal = new global::app.goal.@this(ctx.App.type.list) { Name = "Checkout",
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
         await using var frame = ctx.call.Push(goal);
 

@@ -38,7 +38,7 @@ public static class MatrixRunner
         EnsureRegistered<TAction>(app);
 
         var (module, actionName) = ModuleAndAction<TAction>();
-        var action = new PrAction
+        var action = new PrAction(app.type.list)
         {
             Module = app.Module(module),
             Name = actionName,
@@ -78,7 +78,7 @@ public static class MatrixRunner
         where TAction : class, ICodeGenerated, new()
     {
         var (module, actionName) = ModuleAndAction<TAction>();
-        var action = new PrAction
+        var action = new PrAction(app.type.list)
         {
             Module = app.Module(module),
             Name = actionName,

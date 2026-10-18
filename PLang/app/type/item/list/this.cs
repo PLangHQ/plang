@@ -70,22 +70,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         => slot is Data or global::app.type.item.@this or Chunk;
 
     // A list stores no context: an element is handed out with the context of whoever asks for it
-    // (Row, Items, At). A stored Data keeps its own.
-    public @this() : this(new List<object?>()) { }
-    public @this(IEnumerable<Data> items) : this(new List<object?>(items)) { _hasWrapped = true; }
-
-    // The element kind the list was born with — stated by whoever makes it (an empty list has no
-    // elements to narrow from); null for a list born without one.
-    private readonly global::app.type.kind.@this? _kind;
-
-    /// <summary>An empty list of <paramref name="kind"/> — a <c>list&lt;goal&gt;</c> with nothing in it
-    /// yet, born by the type entity that knows its kind (type.Empty).</summary>
-    internal @this(global::app.type.kind.@this kind) : this(new List<object?>()) { _kind = kind; }
-
-    /// <summary>A list's own type entity — the type owns its name (no namespace reflection). Carries
-    /// the template flag so a template=plang list resolves its %var% leaves at .Value(), and the kind
-    /// it was born with.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this)) { Template = Template, kind = _kind };
+    // (Row, Items, At). A stored Data keeps its own. Every list holds the app's type its maker hands it:
+    // its element kind and its template ride on that type.
+    public @this(global::app.type.@this type) : this(new List<object?>(), type) { }
+    public @this(IEnumerable<Data> items, global::app.type.@this type) : this(new List<object?>(items), type) { _hasWrapped = true; }
 
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>list</c> through; any other value declines (<c>null</c>). Real construction
@@ -107,21 +95,24 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             value = global::app.type.item.@this.Create(value, data.Context);
             if (value is @this born) return born;
         }
-        if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this();
+        // the list the slot declares is the app's list type (the type that made this ask); else the app's — asked only
+        // when a list is made
+        global::app.type.@this type() => declared?.Is("list") == true ? declared : data.Context.App.type.list["list"];
+        if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this(type());
         // Never route a list.@this through reflection (it has no parameterless ctor); the item owns its own
         // conversion.
         // a C# carrier holds a native sequence, and a dict has a list form of its own: each re-tags through its Clr
         if (value is global::app.type.clr.@this or global::app.type.item.dict.@this)
-            return ((global::app.type.item.@this)value).Clr(typeof(@this)) as @this;
-        return value is global::app.type.item.@this { IsNull: false } one ? new @this(new[] { one }) : null;
+            return ((global::app.type.item.@this)value).Clr(typeof(@this), data.Context) as @this;
+        return value is global::app.type.item.@this { IsNull: false } one ? new @this(new[] { one }, type()) : null;
     }
 
     /// <summary>Builds from a sequence of native plang VALUES — each stored as itself, preserving
     /// the strong value (a list&lt;type&gt; keeps real type instances, never degraded to dicts on a
     /// JSON round-trip). The list owns how a sequence of values becomes its rows; callers just
     /// hand over the values.</summary>
-    public @this(IEnumerable<global::app.type.item.@this> values)
-        : this(new List<object?>(values)) { _hasWrapped = true; }
+    public @this(IEnumerable<global::app.type.item.@this> values, global::app.type.@this type)
+        : this(new List<object?>(values), type) { _hasWrapped = true; }
 
     /// <summary>Aliases a foreign CLR list as this list's backing — O(1), no walk,
     /// no copy. The handoff contract: the source becomes the backing, so its slots
@@ -129,13 +120,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// from here). A pure read keeps the backing pristine, so the CLR exit door hands
     /// the same instance back; the first write elevates a slot and the backing diverges.
     /// The program nodes (action.list / step.list) are born here too.</summary>
-    protected internal @this(List<object?> backing) => _items = backing;
+    protected internal @this(List<object?> backing, global::app.type.@this type) : base(type) => _items = backing;
 
-    private protected @this(List<object?> backing, bool wrapped, global::app.type.kind.@this? kind) : this(backing)
-    {
-        _hasWrapped = wrapped;
-        _kind = kind;
-    }
+    /// <summary>A list born without a type — the type list alone, the maker of types, which answers its own type
+    /// from itself (one of item's two bootstraps).</summary>
+    private protected @this(List<object?> backing) => _items = backing;
+
+    private protected @this(List<object?> backing, bool wrapped, global::app.type.@this type) : this(backing, type)
+        => _hasWrapped = wrapped;
 
     /// <summary>A list no other holder's change reaches: its rows copied, in order (a nested container or a joined
     /// list copied, every other value shared), as a list of its own kind (<see cref="Holding"/>).</summary>
@@ -150,15 +142,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// list (<c>list&lt;T&gt;</c>) answers its own. A list that is a program's node (its steps, its actions) is itself:
     /// a program is shared, never copied.</summary>
     private protected virtual @this Holding(List<object?> rows)
-        => GetType() == typeof(@this) ? new @this(rows, _hasWrapped, _kind) { Template = Template } : this;
+        => GetType() == typeof(@this) ? new @this(rows, _hasWrapped, Type) : this;
 
     /// <summary>Adopt another list's rows into a fresh instance of THIS (sub)type — the value→slot
     /// materialization when a typed node slot (<c>list&lt;action&gt;</c>) is set from a value the
     /// generic list reader produced as a base <c>list</c>. The rows are already the right elements
     /// (the element reader ran); only the container wrapper needs to be the declared type.
-    /// Context-free (a program node adopts nothing run-scoped). The source's template comes along: a
-    /// program list of `%x%` rows re-tagged into a typed slot (list&lt;LlmMessage&gt;) still renders them.</summary>
-    protected @this(@this source) : this(new List<object?>(source.Now)) { Template = source.Template; }
+    /// Context-free (a program node adopts nothing run-scoped). Its maker hands it the type, carrying the
+    /// source's template: a program list of `%x%` rows re-tagged into a typed slot (list&lt;LlmMessage&gt;) still
+    /// renders them.</summary>
+    protected @this(@this source, global::app.type.@this type) : this(new List<object?>(source.Now), type) { }
 
     // Type-on-read: a row's slot as a FRESH Data wrapping the raw value, born with the asker's
     // context — never cached back. Leaving the slot raw keeps the backing pristine (enumeration-safe,
@@ -413,8 +406,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             else if (inner != null)
             {
                 // inside a chunk: split it at the offset so the extend lands between its halves
-                var head = new @this(inner.Slots().Take(offset).ToList()) { _hasWrapped = true };
-                var tail = new @this(inner.Slots().Skip(offset).ToList()) { _hasWrapped = true };
+                var head = new @this(inner.Slots().Take(offset).ToList(), wrapped: true, inner.Type);
+                var tail = new @this(inner.Slots().Skip(offset).ToList(), wrapped: true, inner.Type);
                 list._items[row] = new Chunk(tail);
                 list._items.Insert(row, new Chunk(other));
                 list._items.Insert(row, new Chunk(head));
@@ -647,18 +640,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// A signed value never rides a typed numeric/record list, so the wrong-unwrap of
     /// a value with no raw form (a signature) can't happen on this path.
     /// </summary>
+    // A typed plang list (list<T>) asked of a plain list is this list re-tagged by list<T>'s own Create: its rows
+    // move in as they are, each read as T when taken out, the list holding the app's {list, T} type.
+    internal override object? Clr(System.Type target, actor.context.@this? context)
+        => context != null && target.IsGenericType && target.GetGenericTypeDefinition() == typeof(@this<>) && !target.IsInstanceOfType(this)
+            ? target.GetMethod(nameof(Create), [typeof(object), typeof(global::app.type.@this), typeof(Data)])!
+                .Invoke(null, [this, null, new Data("", this, context: context)])
+            : Clr(target);
+
     internal override object? Clr(System.Type target)
     {
         // All-raw backing IS the raw form the caller wants → hand it back (O(1)).
         if (!_hasWrapped && target.IsInstanceOfType(_items)) return _items;
-
-        // A typed plang list (list<T>) asked of a plain list is this list re-tagged: its rows move
-        // into the typed list as they are (its adopting constructor), each read as T when taken out
-        // — list<T>.Create's own rule.
-        if (target.IsGenericType && target.GetGenericTypeDefinition() == typeof(@this<>) && !target.IsInstanceOfType(this))
-            return System.Activator.CreateInstance(target,
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public,
-                null, new object[] { this }, null);
 
         // A CLR collection target: each row lowers ITSELF to the element type (terminal —
         // a scalar row hits ChangeType, a nested container its own Clr), assembled into
@@ -729,8 +722,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // recurses, a scalar answers itself). See dict.@this.Value — same rule, mirrored for a list.
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
-        if (Template == null) return this;
-        var result = new @this();
+        if (Type.Template == null) return this;
+        var result = new @this(data.Context.App.type.list["list"]);
         foreach (var row in Items(data.Context))
         {
             var value = await row.Value();
@@ -757,11 +750,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public override bool IsTruthy() => Count > 0;
 
     /// <summary>A stamped container's render depends on outside state — never kept.</summary>
-    public override bool Cacheable => Template == null;
+    public override bool Cacheable => Type.Template == null;
 
     /// <summary>A stamped container holds the variables its elements hold.</summary>
     public override IReadOnlyList<global::app.type.item.variable.@this> Variable
-        => Template == null ? [] : Slots()
+        => Type.Template == null ? [] : Slots()
             .SelectMany(slot => slot switch
             {
                 global::app.data.@this held => held.Peek().Variable,
@@ -769,18 +762,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 _ => [],
             })
             .DistinctBy(v => v.Text).ToList();
-
-    /// <summary>
-    /// THE door — a stamped container renders its entries, each through its
-    /// own door (door recursion; string re-scanning never happens). An entry
-    /// whose ref is unset keeps its literal form — the builder's preservation
-    /// rule for partially-bound structures.
-    /// </summary>
-    /// <summary>An empty instance of THIS concrete list type — the polymorphic
-    /// seam the base render uses so it never hard-codes the non-generic type. The
-    /// generic <c>list&lt;T&gt;</c> overrides it so render/clone preserve the
-    /// element-type tag (a <c>list&lt;path&gt;</c> stays a <c>list&lt;path&gt;</c>).</summary>
-    protected virtual @this Empty() => _kind == null ? new() : new(_kind);
 
     /// <summary>A container is never final — an element may be non-final (a template,
     /// a nested container), so a read must go through the element's OWN door. The list
@@ -962,7 +943,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// element kept as it is. A new list, born through its type.</summary>
     public async System.Threading.Tasks.Task<Data> Flatten(actor.context.@this context)
     {
-        var flat = new @this();
+        var flat = new @this(context.App.type.list["list"]);
         await Spread(flat, context.Ok(this), context);
         return await context.App.type.list["list"].Create(flat, context);
     }
@@ -982,7 +963,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             var name = held.IsInitialized ? (await held.Value())?.ToString() ?? "" : "";
             if (!buckets.TryGetValue(name, out var bucket))
             {
-                buckets[name] = bucket = new @this();
+                buckets[name] = bucket = new @this(context.App.type.list["list"]);
                 order.Add(name);
             }
             bucket.Add(element);
@@ -1017,7 +998,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (held.Count > 0 && held.All(h => h.field == null))
             return NoField(name, held.SelectMany(h => h.item?.Fields ?? []), context);
 
-        var kept = new @this();
+        var kept = new @this(context.App.type.list["list"]);
         foreach (var (element, _, at) in held)
         {
             var holds = await op.Evaluate(at ?? Data.NotFound(name, context), value, context);

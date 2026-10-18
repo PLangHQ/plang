@@ -98,7 +98,7 @@ public class ConditionHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Framed = true });
 
-        var step = new Step { Index = 0, Text = text };
+        var step = new Step(_app.type.list) { Index = 0, Text = text };
         foreach (var action in actions) step.Code.Add(action.In(step));
 
         var result = await step.Start(_app.actor.list.User.Context);

@@ -11,15 +11,15 @@ public class StepTests : System.IAsyncDisposable
     [Test]
     public async Task Properties_CanBeInitialized()
     {
-        var step = new Step
+        var step = new Step(app.type.list)
         {
             Index = 5,
             Text = "call http endpoint",
             Line = new() { Number = 10, Indent = 2 },
             Comment = "This makes an HTTP call",
-            Code = new StepActions
+            Code = new StepActions(app.type.list)
             {
-                new global::app.goal.step.action.@this
+                new global::app.goal.step.action.@this(app.type.list)
                 {
                     Module = app.actor.list.User.Context.App.Module("http"),
                     Name = "get",
@@ -41,7 +41,7 @@ public class StepTests : System.IAsyncDisposable
     [Test]
     public async Task Actions_DefaultsToEmptyList()
     {
-        var step = new Step();
+        var step = new Step(app.type.list);
 
         await Assert.That(step.Code).IsNotNull();
         await Assert.That(step.Code.Count).IsEqualTo(0);
@@ -50,8 +50,8 @@ public class StepTests : System.IAsyncDisposable
     [Test]
     public async Task Goal_CanBeSet()
     {
-        var goal = new Goal { Name = "TestGoal" };
-        var step = new Step { Goal = goal };   // born with it — Goal is init
+        var goal = new Goal(app.type.list) { Name = "TestGoal" };
+        var step = new Step(app.type.list) { Goal = goal };   // born with it — Goal is init
 
         await Assert.That(step.Goal).IsEqualTo(goal);
     }
@@ -59,7 +59,7 @@ public class StepTests : System.IAsyncDisposable
     [Test]
     public async Task ToString_ReturnsFormattedString()
     {
-        var step = new Step { Index = 5, Text = "call http endpoint" };
+        var step = new Step(app.type.list) { Index = 5, Text = "call http endpoint" };
 
         var str = step.ToString();
 
@@ -69,7 +69,7 @@ public class StepTests : System.IAsyncDisposable
     [Test]
     public async Task ToString_EmptyText_ReturnsEmptyBrackets()
     {
-        var step = new Step { Index = 0 };
+        var step = new Step(app.type.list) { Index = 0 };
 
         var str = step.ToString();
 
@@ -79,7 +79,7 @@ public class StepTests : System.IAsyncDisposable
     [Test]
     public async Task Text_DefaultsToEmptyString()
     {
-        var step = new Step();
+        var step = new Step(app.type.list);
 
         await Assert.That(step.Text).IsEqualTo("");
     }
@@ -87,7 +87,7 @@ public class StepTests : System.IAsyncDisposable
     [Test]
     public async Task Comment_DefaultsToNull()
     {
-        var step = new Step();
+        var step = new Step(app.type.list);
 
         await Assert.That(step.Comment).IsNull();
     }
@@ -95,7 +95,7 @@ public class StepTests : System.IAsyncDisposable
     [Test]
     public async Task Warning_DefaultsToEmptyList()
     {
-        var step = new Step();
+        var step = new Step(app.type.list);
 
         await Assert.That(step.Warning).IsNotNull();
         await Assert.That(step.Warning.Count).IsEqualTo(0);

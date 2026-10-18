@@ -69,12 +69,12 @@ public class ForeachErrorPropagationTests
         // Inner goal with a single step: a condition whose body calls a goal that doesn't exist
         var innerCondAction = context.Action("condition.if(Left=true, Operator=\"==\", Right=true) { goal.call(Name=\"MissingGoal\") }");
         // Goal first, then its step — a step is born knowing its goal (Goal is init).
-        var innerGoal = new Goal
+        var innerGoal = new Goal(_app.type.list)
         {
             Name = "Inner",
             Path = global::app.type.item.path.@this.Resolve("/Inner.goal", _app.actor.list.User.Context),
         };
-        var innerStep = new Step
+        var innerStep = new Step(_app.type.list)
         {
             Goal = innerGoal,
             Index = 0,
@@ -114,7 +114,7 @@ public class ForeachErrorPropagationTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
-        _app.goal.list.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
+        _app.goal.list.Add(new Goal(_app.type.list) { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", _app.actor.list.User.Context), Step = new GoalSteps(_app.type.list) });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "NoopRunner",
             Make.Step("foreach %items%, call Noop item=%item%",

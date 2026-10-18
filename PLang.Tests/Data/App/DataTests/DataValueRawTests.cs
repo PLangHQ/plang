@@ -110,7 +110,7 @@ public class DataValueRawTests
     public async Task DataFlow_ThroughActionIndex_ValueIdentityPreserved()
     {
         var stored = _app.Data("greeting", "Hello %name%");
-        var action = new PrAction
+        var action = new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("test"),
             Name = "fixture",

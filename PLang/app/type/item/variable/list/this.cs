@@ -376,7 +376,8 @@ public partial class @this
             var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys)
                 .Where(n => !n.StartsWith('!'))
                 .Distinct(StringComparer.OrdinalIgnoreCase);
-            var held = new global::app.type.item.list.@this<global::app.type.item.variable.@this>();
+            var held = new global::app.type.item.list.@this<global::app.type.item.variable.@this>(
+                _context.App.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.variable.@this>)]);
             foreach (var name in names)
                 // a name the parser doesn't read back whole (stored by C#, not written in plang) isn't
                 // one a program can name

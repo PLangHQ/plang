@@ -69,7 +69,8 @@ public sealed class @this
         }
 
         // the run written by the chosen format's kind, its Out face, to the file that kind writes a report to
-        var run = new global::app.type.item.list.@this<global::app.test.@this>(tests);
+        var run = new global::app.type.item.list.@this<global::app.test.@this>(tests,
+            context.App.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]);
         using var ms = new System.IO.MemoryStream();
         var encoded = await chosen.Kind.Encode(ms, context.Ok(run), context, global::app.View.Out);
         if (!encoded.Success) return encoded;

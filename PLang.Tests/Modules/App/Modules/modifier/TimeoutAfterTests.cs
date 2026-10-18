@@ -25,7 +25,7 @@ public class TimeoutAfterTests
     // An action only its deadline can end: a sleep far longer than any deadline here, honouring the attempt's
     // cancellation — so "the deadline fires first" is arranged, not raced. With no deadline it sleeps it out.
     private PrAction Held()
-        => new PrAction
+        => new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("timer"),
             Name = "sleep",
@@ -35,7 +35,7 @@ public class TimeoutAfterTests
     [Test]
     public async Task After_ActionCompletesBefore_PassesThroughResult()
     {
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"),
             Name = "set",
@@ -111,7 +111,7 @@ public class TimeoutAfterTests
     {
         // timer.sleep(5000); on.error(ignore); on.timeout(50): the sleep exceeds the deadline, so the attempt's
         // verdict is a 408 — and the error outcome, after the attempt, ignores it like any other error → Ok.
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("timer"),
             Name = "sleep",

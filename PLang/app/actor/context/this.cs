@@ -137,7 +137,7 @@ public sealed class @this : IDisposable
 
         // Stamp context on Variables (propagates to all existing Data)
         Variable.Context = this;
-        call = new(() => Setting);
+        call = new(() => Setting, new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
 
         // Register context variables on the Variables
         RegisterContextVariables();

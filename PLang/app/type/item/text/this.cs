@@ -427,7 +427,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (!found.Success) return global::app.data.@this<global::app.type.item.list.@this<@this>>.From(found);
         var text = (await found.Value())?.ToString() ?? "";
         return context.Ok(new global::app.type.item.list.@this<@this>(
-            text.Length == 0 ? [] : [.. text.Split('\n').Select(line => (@this)line.TrimEnd('\r'))]));
+            text.Length == 0 ? [] : [.. text.Split('\n').Select(line => (global::app.type.item.@this)(@this)line.TrimEnd('\r'))],
+            context.App.type.list[typeof(global::app.type.item.list.@this<@this>)]));
     }
 
     /// <summary>How many lines match <paramref name="pattern"/>.</summary>

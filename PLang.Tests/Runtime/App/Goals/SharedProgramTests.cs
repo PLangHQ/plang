@@ -145,7 +145,7 @@ public class SharedProgramTests
     {
         const int n = 500;
         await _app.actor.list.User.Context.Variable.Set("x", "user");
-        if (listExists) await _app.actor.list.User.Context.Variable.Set("l", new global::app.type.item.list.@this());
+        if (listExists) await _app.actor.list.User.Context.Variable.Set("l", new global::app.type.item.list.@this(_app.type.list["list"]));
         var goal = await ReadFromPr("Start", global::PLang.Tests.Shared.Make.Step("add x",
             global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "list", "add", ("ListName", Var("ListName", "l")), ("Value", "%x%"))));
 

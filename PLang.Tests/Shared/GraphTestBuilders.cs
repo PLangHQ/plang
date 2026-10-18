@@ -8,11 +8,14 @@ using Action = global::app.goal.step.action.@this;
 /// <c>Step = new GoalSteps { new Step { … }, … }</c> after the runtime moved to node storage.</summary>
 public sealed class GoalSteps : System.Collections.Generic.List<Step>
 {
-    public GoalSteps() { }
-    public GoalSteps(System.Collections.Generic.IEnumerable<Step> steps) : base(steps) { }
+    // the node's type, asked of the app's type list when the sugar is made
+    private readonly global::app.type.@this _type;
+    public GoalSteps(global::app.type.list.@this types) => _type = types[typeof(global::app.goal.step.list.@this)];
+    public GoalSteps(global::app.type.list.@this types, System.Collections.Generic.IEnumerable<Step> steps) : base(steps)
+        => _type = types[typeof(global::app.goal.step.list.@this)];
     public static implicit operator global::app.goal.step.list.@this(GoalSteps s)
     {
-        var node = new global::app.goal.step.list.@this();
+        var node = new global::app.goal.step.list.@this(s._type);
         foreach (var step in s) node.Add(step);
         return node;
     }
@@ -24,11 +27,14 @@ public sealed class GoalSteps : System.Collections.Generic.List<Step>
 /// immutable <c>action.list</c> node.</summary>
 public sealed class StepActions : System.Collections.Generic.List<Action>
 {
-    public StepActions() { }
-    public StepActions(System.Collections.Generic.IEnumerable<Action> actions) : base(actions) { }
+    // the node's type, asked of the app's type list when the sugar is made
+    private readonly global::app.type.@this _type;
+    public StepActions(global::app.type.list.@this types) => _type = types[typeof(global::app.goal.step.action.list.@this)];
+    public StepActions(global::app.type.list.@this types, System.Collections.Generic.IEnumerable<Action> actions) : base(actions)
+        => _type = types[typeof(global::app.goal.step.action.list.@this)];
     public static implicit operator global::app.goal.step.action.list.@this(StepActions a)
     {
-        var node = new global::app.goal.step.action.list.@this();
+        var node = new global::app.goal.step.action.list.@this(a._type);
         foreach (var action in a) node.Add(action);
         return node;
     }

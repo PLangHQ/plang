@@ -149,7 +149,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         get
         {
-            var keys = new global::app.type.item.list.@this<global::app.type.item.text.@this>();
+            // a bare {list, text}: a dict holds no app to ask for the list's type
+            var keys = new global::app.type.item.list.@this<global::app.type.item.text.@this>(
+                new global::app.type.@this(typeof(global::app.type.item.list.@this), "text"));
             foreach (var k in _value.Keys)
                 keys.Add(new Data(k, new global::app.type.item.text.@this(k)));
             return keys;
@@ -350,6 +352,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // firing site for dict.Json dies here.
         return new global::app.type.item.kind.reflection.@this().Read(this, target);
     }
+
+    // A plang value read from this dict's slots that is born holding its type is handed the app's — the asker's
+    // context names it; anything else is the record read above.
+    internal override object? Clr(System.Type target, global::app.actor.context.@this? context)
+        => context != null && typeof(global::app.type.item.@this).IsAssignableFrom(target)
+           && target.GetConstructor([typeof(global::app.type.@this)]) is { } typed
+            ? new global::app.type.item.kind.reflection.@this().Read(this, typed.Invoke([context.App.type.list[target]]), context)
+            : Clr(target);
 
     /// <summary>The entry under <paramref name="key"/> lowered to <paramref name="target"/> at the
     /// CLR exit door. A raw slot is already a CLR value, so no context is needed; a stored Data or

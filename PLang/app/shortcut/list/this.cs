@@ -12,7 +12,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
     private readonly global::app.@this _app;
     private readonly System.Lazy<System.Threading.Tasks.Task<global::app.data.@this>> _read;
 
-    public @this(global::app.@this app) : base(new List<object?>())
+    public @this(global::app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
     {
         _app = app;
         _read = new(() => Fill(), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);

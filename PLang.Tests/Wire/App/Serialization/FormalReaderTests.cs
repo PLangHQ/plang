@@ -12,7 +12,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     private global::app.data.@this Read(string formal, out global::app.goal.step.@this step)
     {
         var goal = FormalWriterTests.Goal(app.actor.list.User.Context);
-        step = new global::app.goal.step.@this { Goal = goal };
+        step = new global::app.goal.step.@this(app.type.list) { Goal = goal };
         return new global::app.goal.step.action.formal.Reader(step, app.actor.list.User.Context.App.module.list).Read(formal, app.actor.list.User.Context);
     }
 
@@ -419,7 +419,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     public async Task ABodyStep_IsWrittenOnItsParentsLine()
     {
         var goal = FormalWriterTests.Goal(app.actor.list.User.Context);
-        var step = new global::app.goal.step.@this { Goal = goal, Line = new() { Number = 12, Indent = 1 } };
+        var step = new global::app.goal.step.@this(app.type.list) { Goal = goal, Line = new() { Number = 12, Indent = 1 } };
 
         var read = new global::app.goal.step.action.formal.Reader(step, app.actor.list.User.Context.App.module.list).Read(
             "condition.if(Left=%n%, Operator=\"<\", Right=5) { goal.return() }", app.actor.list.User.Context);

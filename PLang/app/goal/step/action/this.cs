@@ -49,7 +49,7 @@ public partial class @this
     /// Both nesting forms land here: inline <c>if/elseif/else</c> (each condition action carries its body)
     /// and indented sub-step blocks (folded onto the gate action). A <c>step.list</c>, so it runs itself.</summary>
     [Store, Debug, Default]
-    public global::app.goal.step.list.@this Child { get; set; } = new();
+    public global::app.goal.step.list.@this Child { get; set; }
 
     // `new`: this is the ACTION-cache flag (may this action's run result be
     // cached), a distinct concept from the item base's answer-keep rule —
@@ -87,8 +87,13 @@ public partial class @this
     /// </summary>
     public module.ICodeGenerated? Seed { get; init; }
 
-    /// <summary>An action read or built field by field (a <c>.pr</c> row, a catalog element).</summary>
-    public @this() { }
+    /// <summary>An action read or built field by field (a <c>.pr</c> row, a catalog element), born holding its type
+    /// and its child step list from <paramref name="types"/>, the app's type list (read at birth, never kept).</summary>
+    public @this(global::app.type.list.@this types) : this(types, types[typeof(@this)]) { }
+
+    /// <summary>An action of a role of its own (a clause, a keep, a loop), born holding <paramref name="type"/>.</summary>
+    protected @this(global::app.type.list.@this types, global::app.type.@this type) : base(type)
+        => Child = new(types[typeof(global::app.goal.step.list.@this)]);
 
     /// <summary>
     /// The action a C#-composed <paramref name="seed"/> is — an operation one owner composes from another's
@@ -99,7 +104,7 @@ public partial class @this
     /// started together, the calling frame is this invocation's provenance (null at the boot edge, before any
     /// goal runs).
     /// </summary>
-    public @this(module.ICodeGenerated seed, actor.context.@this context)
+    public @this(module.ICodeGenerated seed, actor.context.@this context) : this(context.App.type.list)
     {
         var catalog = context.App.module[seed.GetType()]
             ?? throw new System.InvalidOperationException($"no module holds the action {seed.GetType().Name}");
@@ -245,7 +250,7 @@ public partial class @this
     /// <summary>A program action of this catalog element's kind, in <paramref name="step"/> — a clause when this
     /// one is (the role was decided when its module registered it).</summary>
     internal virtual @this Program(global::app.goal.step.@this? step)
-        => new() { Module = Module, Name = Name, Step = step, Synthetic = false };
+        => new(Module.App.type.list) { Module = Module, Name = Name, Step = step, Synthetic = false };
 
     // A step's code is a walk of its actions, each answering its own part. A step action runs and anchors
     // what follows it; a clause (clause.@this) overrides each part.

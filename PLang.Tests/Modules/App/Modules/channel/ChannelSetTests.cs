@@ -11,7 +11,7 @@ public class ChannelSetTests
     public void Setup()
     {
         _app = new global::app.@this("/app").Testing();
-        _app.goal.list.Add(new global::app.goal.@this
+        _app.goal.list.Add(new global::app.goal.@this(_app.type.list)
         {
             Name = "LogIt",
             Path = global::app.type.item.path.@this.Resolve("/LogIt.goal", _app.actor.list.User.Context)

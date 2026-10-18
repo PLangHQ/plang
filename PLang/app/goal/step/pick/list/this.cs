@@ -49,7 +49,11 @@ public sealed class @this
     // The app's modules by name, awaited once when the answer is taken — what the picks are made from.
     private Dictionary<string, global::app.module.@this> _modules = new(StringComparer.OrdinalIgnoreCase);
 
-    public @this(global::app.goal.step.@this step) => _step = step;
+    public @this(global::app.goal.step.@this step)
+    {
+        _step = step;
+        Known = new(step.Code.Type);
+    }
 
     /// <summary>The id of one of this step's questions: <c>s{index}_{question}</c>.</summary>
     public string Key(string question) => $"s{_step.Index}_{question}";
@@ -90,7 +94,7 @@ public sealed class @this
     /// variable binding its item (<c>as %i%</c>, else <c>%item%</c>) first, then each other certain
     /// action as it is (its values still to fill), a certain <c>set %x% = </c>one literal or one variable,
     /// and a <c>write to %x%</c> last. Empty when nothing is certain.</summary>
-    public global::app.goal.step.action.list.@this Known { get; private set; } = new();
+    public global::app.goal.step.action.list.@this Known { get; private set; }
 
     // The step's words the known code reads: its first variable, and a `%x% = ` that ends in one
     // literal (quoted text, a number, true/false) or one variable. The variables are the parser's;
@@ -346,11 +350,11 @@ public sealed class @this
             }
             else action.Know(line, $"{name}()");
         }
-        if (line.Count == 0) return new();
+        if (line.Count == 0) return new(_step.Code.Type);
         var read = new global::app.goal.step.action.formal.Reader(_step, modules).Read(string.Join("; ", line), context);
         if (read.Success) return (global::app.goal.step.action.list.@this)read.Peek()!;
         await (context.App.Debug?.Write($"build.pick: step {_step.Index}'s known code does not read: {read.Error?.Message}") ?? Task.CompletedTask);
-        return new();
+        return new(_step.Code.Type);
     }
 
     // One action as the pre-fill starts it: its required properties by name alone — a slot still to fill, nothing

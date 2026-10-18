@@ -364,7 +364,8 @@ public class TaskTests
     public async Task AnAddInATask_ToItsCallersTypedList_CopiesItAsATypedList()
     {
         await Ctx.Variable.Set("items", new global::app.type.item.list.@this<global::app.type.item.text.@this>(
-            new global::app.type.item.@this[] { new global::app.type.item.text.@this("a") }));
+            new global::app.type.item.@this[] { new global::app.type.item.text.@this("a") },
+            _app.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.text.@this>)]));
         await Load("Adds", Make.Step("add x", Add("items", "x")), Make.Step("return items", Return("%items%")));
 
         var waited = await (await Started("Adds")).Wait();

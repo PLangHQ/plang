@@ -140,7 +140,7 @@ public class Stage7_SurfaceGateTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var l = new global::app.type.item.list.@this();
+        var l = new global::app.type.item.list.@this(app.type.list["list"]);
         l.Add(new Data("", 1, context: ctx));
         l.Add(new Data("", 2, context: ctx));
         object count = l.Count;

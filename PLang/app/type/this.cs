@@ -199,9 +199,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             return new item.@null.@this(this);
         const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
             | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
-        // a kinded type is born with its kind (an empty list<goal>) when it takes one
-        if (!kind.IsEmpty && clr.GetConstructor(any, [typeof(global::app.type.kind.@this)]) is { } kinded)
-            return (item.@this)kinded.Invoke([kind]);
+        // a value class born holding its type is handed this one (an empty list<goal> holds {list, goal})
+        if (clr.GetConstructor(any, [typeof(@this)]) is { } typed)
+            return (item.@this)typed.Invoke([this]);
         if (clr.GetConstructor(any, System.Type.EmptyTypes) is { } empty)
             return (item.@this)empty.Invoke(null);
         return new item.@null.@this(this);

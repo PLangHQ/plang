@@ -15,5 +15,5 @@ public sealed class @this : global::app.type.item.setting.@this
     public static bool Internal => true;
 
     /// <summary>The saved grants; one per path — granting a path again replaces it.</summary>
-    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.permission.@this> Grant { get; set; } = new();
+    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.permission.@this> Grant { get; set; }
 }

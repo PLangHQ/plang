@@ -19,7 +19,7 @@ public sealed class @this : global::app.type.item.setting.module.@this
 
     /// <summary>The variables to watch, by name. A watched variable prints at every step and logs each time
     /// it is created, changed or deleted. <c>--debug={"variables":["trace","goal"]}</c></summary>
-    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables { get; set; } = new();
+    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables { get; set; }
 
     /// <summary>How long a line runs before it is cut (<c>length.max</c>, default 500).</summary>
     [Out, Store] public length.@this Length { get; set; } = new(new global::app.type.@this(typeof(length.@this)));

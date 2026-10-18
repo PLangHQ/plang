@@ -11,20 +11,20 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task Properties_CanBeInitialized()
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "TestGoal",
             Comment = "This is a comment",
             Path = global::app.type.item.path.@this.Resolve("/setup/to/goal.goal", _app.actor.list.User.Context),
             Hash = "abc123",
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
-                new Step { Index = 0, Text = "first step" },
-                new Step { Index = 1, Text = "second step" }
+                new Step(_app.type.list) { Index = 0, Text = "first step" },
+                new Step(_app.type.list) { Index = 1, Text = "second step" }
             }
         };
-        goal.Child.Add(new global::app.goal.@this { Name = "SubGoal1" });
-        goal.Child.Add(new global::app.goal.@this { Name = "SubGoal2" });
+        goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "SubGoal1" });
+        goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "SubGoal2" });
 
         await Assert.That(goal.Name).IsEqualTo("TestGoal");
         await Assert.That(goal.Comment).IsEqualTo("This is a comment");
@@ -41,7 +41,7 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task Name_DefaultsToEmptyString()
     {
-        var goal = new Goal();
+        var goal = new Goal(_app.type.list);
 
         await Assert.That(goal.Name).IsEqualTo("");
     }
@@ -49,8 +49,8 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task Visibility_AFilesGoalIsPublic_ASubGoalPrivate()
     {
-        var goal = new Goal();
-        var sub = new Goal();
+        var goal = new Goal(_app.type.list);
+        var sub = new Goal(_app.type.list);
         goal.Child.Add(sub);
 
         await Assert.That(goal.Visibility.Value).IsEqualTo(Visibility.Public);
@@ -60,7 +60,7 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task IsSetup_DefaultsToFalse()
     {
-        var goal = new Goal();
+        var goal = new Goal(_app.type.list);
 
         await Assert.That(goal.IsSetup).IsFalse();
     }
@@ -91,7 +91,7 @@ public class GoalTests : System.IAsyncDisposable
     [Arguments("/Start.goal", "Start", false, false, false)]
     public async Task AGoalIs_WhatItsPathSays(string path, string name, bool system, bool setup, bool test)
     {
-        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve(path, _app.actor.list.User.Context) };
+        var goal = new Goal(_app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve(path, _app.actor.list.User.Context) };
 
         await Assert.That(goal.IsSystem).IsEqualTo(system);
         await Assert.That(goal.IsSetup).IsEqualTo(setup);
@@ -101,7 +101,7 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task Steps_DefaultsToEmptyList()
     {
-        var goal = new Goal();
+        var goal = new Goal(_app.type.list);
 
         await Assert.That(goal.Step).IsNotNull();
         await Assert.That(goal.Step.Count).IsEqualTo(0);
@@ -110,7 +110,7 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task SubGoals_DefaultsToEmptyList()
     {
-        var goal = new Goal();
+        var goal = new Goal(_app.type.list);
 
         await Assert.That(goal.Child).IsNotNull();
         await Assert.That(goal.Child.CountRaw).IsEqualTo(0);
@@ -119,8 +119,8 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task Parent_CanBeSet()
     {
-        var parent = new Goal { Name = "ParentGoal" };
-        var child = new Goal { Name = "ChildGoal" };
+        var parent = new Goal(_app.type.list) { Name = "ParentGoal" };
+        var child = new Goal(_app.type.list) { Name = "ChildGoal" };
 
         child.Parent = parent;
 
@@ -130,7 +130,7 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task FullPath_NoParent_ReturnsName()
     {
-        var goal = new Goal { Name = "TestGoal" };
+        var goal = new Goal(_app.type.list) { Name = "TestGoal" };
 
         await Assert.That(goal.FullPath).IsEqualTo("TestGoal");
     }
@@ -138,8 +138,8 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task FullPath_WithParent_IncludesParentPath()
     {
-        var parent = new Goal { Name = "ParentGoal" };
-        var child = new Goal { Name = "ChildGoal", Parent = parent };
+        var parent = new Goal(_app.type.list) { Name = "ParentGoal" };
+        var child = new Goal(_app.type.list) { Name = "ChildGoal", Parent = parent };
 
         await Assert.That(child.FullPath).IsEqualTo("ParentGoal/ChildGoal");
     }
@@ -147,9 +147,9 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task FullPath_MultipleParents_IncludesFullHierarchy()
     {
-        var grandparent = new Goal { Name = "Grandparent" };
-        var parent = new Goal { Name = "Parent", Parent = grandparent };
-        var child = new Goal { Name = "Child", Parent = parent };
+        var grandparent = new Goal(_app.type.list) { Name = "Grandparent" };
+        var parent = new Goal(_app.type.list) { Name = "Parent", Parent = grandparent };
+        var child = new Goal(_app.type.list) { Name = "Child", Parent = parent };
 
         await Assert.That(child.FullPath).IsEqualTo("Grandparent/Parent/Child");
     }
@@ -157,13 +157,13 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task ToText_ReturnsFormattedGoal()
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "TestGoal",
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
-                new Step { Index = 0, Text = "first step" },
-                new Step { Index = 1, Text = "second step" }
+                new Step(_app.type.list) { Index = 0, Text = "first step" },
+                new Step(_app.type.list) { Index = 1, Text = "second step" }
             }
         };
         var text = goal.ToText();
@@ -176,7 +176,7 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task ToText_IncludesComment()
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "TestGoal",
             Comment = "This is a goal comment"
@@ -189,12 +189,12 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task ToText_IncludesStepComments()
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "TestGoal",
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
-                new Step { Index = 0, Text = "step", Comment = "step comment" }
+                new Step(_app.type.list) { Index = 0, Text = "step", Comment = "step comment" }
             }
         };
         var text = goal.ToText();
@@ -205,14 +205,14 @@ public class GoalTests : System.IAsyncDisposable
     [Test]
     public async Task ToText_RespectsStepIndent()
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "TestGoal",
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
-                new Step { Index = 0, Text = "no indent", Line = new() { Indent = 0 } },
-                new Step { Index = 1, Text = "one indent", Line = new() { Indent = 1 } },
-                new Step { Index = 2, Text = "two indent", Line = new() { Indent = 2 } }
+                new Step(_app.type.list) { Index = 0, Text = "no indent", Line = new() { Indent = 0 } },
+                new Step(_app.type.list) { Index = 1, Text = "one indent", Line = new() { Indent = 1 } },
+                new Step(_app.type.list) { Index = 2, Text = "two indent", Line = new() { Indent = 2 } }
             }
         };
         var text = goal.ToText();
@@ -223,23 +223,14 @@ public class GoalTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task NotFound_CreatesPlaceholderGoal()
-    {
-        var goal = Goal.NotFound("MissingGoal");
-
-        await Assert.That(goal.Name).IsEqualTo("MissingGoal");
-        await Assert.That(goal.Comment).IsEqualTo("Goal not found");
-    }
-
-    [Test]
     public async Task ToString_ReturnsGoalText()
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = "Start",
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
-                new Step { Index = 0, Text = "write out \"hello\"" }
+                new Step(_app.type.list) { Index = 0, Text = "write out \"hello\"" }
             }
         };
         var str = goal.ToString();
@@ -274,21 +265,21 @@ public class GoalCacheTests
         await using var _app = new global::app.@this("/app").Testing();
         var set = global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "variable", "set", global::PLang.Tests.Shared.Make.Param(_app.actor.list.User.Context, "Name", "%x%", "variable"), ("Value", 1));
         var condition = global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", "%b%"));
-        var body = new Step { Index = 1, Text = "set %x% = 1", Line = new() { Number = 5, Indent = 1 } };
+        var body = new Step(_app.type.list) { Index = 1, Text = "set %x% = 1", Line = new() { Number = 5, Indent = 1 } };
         body.Code.Add(set);
         condition.Child.Add(body);
-        var gate = new Step { Index = 0, Text = "if %b%", Line = new() { Number = 4 } };
+        var gate = new Step(_app.type.list) { Index = 0, Text = "if %b%", Line = new() { Number = 4 } };
         gate.Code.Add(condition);
-        var cached = new Goal { Name = "Start", Step = new GoalSteps { gate } };
+        var cached = new Goal(_app.type.list) { Name = "Start", Step = new GoalSteps(_app.type.list) { gate } };
 
-        var source = new Goal
+        var source = new Goal(_app.type.list)
         {
             Name = "Start",
             Comment = "a comment the cached goal didn't have",
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
-                new Step { Index = 0, Text = "if %b%", Line = new() { Number = 4 } },
-                new Step { Index = 1, Text = "set %x% = 1", Line = new() { Number = 5, Indent = 1 } },
+                new Step(_app.type.list) { Index = 0, Text = "if %b%", Line = new() { Number = 4 } },
+                new Step(_app.type.list) { Index = 1, Text = "set %x% = 1", Line = new() { Number = 5, Indent = 1 } },
             },
         };
         source.Merge(cached);
@@ -300,11 +291,13 @@ public class GoalCacheTests
     [Test]
     public async Task Hash_CoversTheGoalsAndTheStepsComments()
     {
-        Goal Written(string? goalComment, string? stepComment) => new()
+        await using var app = new global::app.@this("/app").Testing();
+        var types = app.type.list;
+        Goal Written(string? goalComment, string? stepComment) => new(types)
         {
             Name = "Show",
             Comment = goalComment,
-            Step = new GoalSteps { new Step { Index = 0, Text = "write out 'hi'", Comment = stepComment } },
+            Step = new GoalSteps(types) { new Step(types) { Index = 0, Text = "write out 'hi'", Comment = stepComment } },
         };
         var plain = Written(null, null).Hash;
         await Assert.That(Written(null, null).Hash).IsEqualTo(plain);

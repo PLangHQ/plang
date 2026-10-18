@@ -70,12 +70,13 @@ public static class TemplateStamp
                     : null;
             }
 
-            case global::app.type.item.list.@this l when l.Template == null:
+            case global::app.type.item.list.@this l when l.Type.Template == null:
             {
                 var items = l.Items(context).ToList();   // materialize once — entries rebind in place
                 bool any = false;
                 foreach (var entry in items) any |= StampEntry(entry, context);
-                return any ? new global::app.type.item.list.@this(items) { Template = new global::app.type.item.template.kind.plang.@this() } : null;
+                return any ? new global::app.type.item.list.@this(items, context.App.type.list[
+                    new global::app.type.@this("list", null, false, new global::app.type.item.template.kind.plang.@this()), context]) : null;
             }
 
             case global::app.type.item.dict.@this d when d.Template == null:
@@ -136,7 +137,8 @@ public static class TemplateStamp
                 var items = new List<global::app.data.@this>();
                 foreach (var el in e)
                     items.Add(new global::app.data.@this("", Build(el, context), context: context));
-                return new global::app.type.item.list.@this(items) { Template = new global::app.type.item.template.kind.plang.@this() };
+                return new global::app.type.item.list.@this(items, context.App.type.list[
+                    new global::app.type.@this("list", null, false, new global::app.type.item.template.kind.plang.@this()), context]);
             }
 
             // A literal leaf (holeless string, number, bool) — built as its plain type.

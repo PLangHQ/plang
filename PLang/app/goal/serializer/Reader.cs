@@ -38,7 +38,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx, global::app.goal.@this? parent = null)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        var goal = new global::app.goal.@this { Parent = parent };
+        var goal = new global::app.goal.@this(ctx.Context.App.type.list) { Parent = parent };
         var step = new global::app.goal.step.serializer.Reader(goal);   // born holding this goal
 
         var named = false;

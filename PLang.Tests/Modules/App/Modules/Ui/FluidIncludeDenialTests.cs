@@ -44,7 +44,7 @@ public class FluidIncludeDenialTests
         // Anchor the goal under the App root so GetTemplateBaseDir picks
         // the goal's parent; the include path "../../foreign/secret.liquid"
         // walks out and AuthGate denies.
-        var goal = new Goal
+        var goal = new Goal(app.type.list)
         {
             Name = "Host",
             Path = global::app.type.item.path.@this.Resolve("/host.goal", app.actor.list.User.Context)
@@ -77,7 +77,7 @@ public class FluidIncludeDenialTests
         System.IO.Directory.CreateDirectory(partialsDir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(partialsDir, "footer.liquid"), "Hello footer");
 
-        var goal = new Goal
+        var goal = new Goal(app.type.list)
         {
             Name = "Host",
             Path = global::app.type.item.path.@this.Resolve("/host.goal", app.actor.list.User.Context)

@@ -22,7 +22,7 @@ public class ElseWithoutIfTests : System.IAsyncDisposable
 
     private async Task<global::app.error.@this?> Validate(params global::app.goal.step.action.@this[] actions)
     {
-        var list = new global::app.goal.step.action.list.@this();
+        var list = new global::app.goal.step.action.list.@this(app.type.list[typeof(global::app.goal.step.action.list.@this)]);
         foreach (var a in actions) list.Add(a);
         return await list.Validate(app.actor.list.System.Context);
     }
@@ -62,7 +62,7 @@ public class ElseWithoutIfTests : System.IAsyncDisposable
     private global::app.goal.step.action.@this WithBody(global::app.goal.step.action.@this condition, string text,
         params global::app.goal.step.action.@this[] body)
     {
-        var step = new Step { Text = text };
+        var step = new Step(app.type.list) { Text = text };
         foreach (var a in body) step.Code.Add(a);
         condition.Child.Add(step);
         return condition;

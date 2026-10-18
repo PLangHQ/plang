@@ -23,7 +23,7 @@ public class StringPlainTests
         // Direct ExecuteAsync — read the property twice through the handler instance.
         await using var app = new global::app.@this("/app").Testing();
         var handler = new StringPlain(app.actor.list.User.Context);
-        var action = new PrAction
+        var action = new PrAction(app.type.list)
         {
             Module = app.Module("matrix.plain"),
             Name = "stringplain",

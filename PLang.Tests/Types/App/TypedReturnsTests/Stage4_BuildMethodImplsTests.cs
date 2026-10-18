@@ -22,7 +22,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task TearDown() { await _app.DisposeAsync(); }
 
     private PrAction Make(string module, string action, params (string name, object? value)[] parameters)
-        => new PrAction
+        => new PrAction(_app.type.list)
         {
             Module = _app.Module(module),
             Name = action,
@@ -192,7 +192,7 @@ public class Stage4_BuildMethodImplsTests
     {
         // a %variable% url, as the builder writes it: the text marked a template (an unmarked "%x%" is literal)
         var context = _app.actor.list.User.Context;
-        var a = new PrAction
+        var a = new PrAction(_app.type.list)
         {
             Module = _app.Module("http"),
             Name = "upload",

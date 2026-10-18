@@ -34,7 +34,7 @@ public class ListAddIdentityTests
     public async Task ListAdd_PlainDataList_MutatesLiveVariableValueDirectly()
     {
         var (context, vars) = Ctx();
-        var existing = new global::app.type.item.list.@this();
+        var existing = new global::app.type.item.list.@this(_app.type.list["list"]);
         existing.Add(new Data("", "a", context: context));
         existing.Add(new Data("", "b", context: context));
         vars.Set("products", existing);
@@ -60,7 +60,7 @@ public class ListAddIdentityTests
     public async Task ListAdd_ReturnsLiveVariableData_NotNewData()
     {
         var (context, vars) = Ctx();
-        var live = new global::app.type.item.list.@this();
+        var live = new global::app.type.item.list.@this(_app.type.list["list"]);
         live.Add(new Data("", 1, context: context));
         live.Add(new Data("", 2, context: context));
         vars.Set("products", live);
@@ -81,7 +81,7 @@ public class ListAddIdentityTests
     public async Task ListAdd_ItemAsLiveVarRef_AppendsCurrentValue()
     {
         var (context, vars) = Ctx();
-        vars.Set("products", new global::app.type.item.list.@this());
+        vars.Set("products", new global::app.type.item.list.@this(_app.type.list["list"]));
 
         // C# direct-composition path bypasses the .pr resolver, so we wrap "hello"
         // explicitly the same way the variable %item% follows to its Data.
@@ -108,12 +108,12 @@ public class ListAddIdentityTests
     public async Task ListAdd_AfterReplacement_HandlerSeesNewValue()
     {
         var (context, vars) = Ctx();
-        var orphan = new global::app.type.item.list.@this();
+        var orphan = new global::app.type.item.list.@this(_app.type.list["list"]);
         orphan.Add(new Data("", "x", context: context));
         vars.Set("products", orphan);
 
         // Replace under the same name — variable.set's Variables.Set replaces the binding.
-        var fresh = new global::app.type.item.list.@this();
+        var fresh = new global::app.type.item.list.@this(_app.type.list["list"]);
         fresh.Add(new Data("", "y", context: context));
         vars.Set("products", fresh);
 

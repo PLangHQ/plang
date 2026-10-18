@@ -53,7 +53,12 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
 
-    private global::app.goal.step.action.list.@this _code = new();
+    /// <summary>A step, born holding its type and its code list from <paramref name="types"/>, the app's type list
+    /// (read at birth, never kept).</summary>
+    public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
+        => _code = new(types[typeof(global::app.goal.step.action.list.@this)]);
+
+    private global::app.goal.step.action.list.@this _code;
     /// <summary>The step's code: the actions it runs, as the .pr holds them under <c>code</c>.</summary>
     [Store, Debug, Default]
     public global::app.goal.step.action.list.@this Code
@@ -61,7 +66,7 @@ public sealed partial class @this
         // A plain slot. Every action in it was born knowing this step — the reader constructs the
         // step shell first and hands it down, so there is nothing to repair on read.
         get => _code;
-        set => _code = value ?? new();
+        set => _code = value;
     }
 
     private global::app.goal.step.pick.list.@this? _pick;

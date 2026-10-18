@@ -210,7 +210,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                     }
                     // a list whose element is itself a closed type (list<choice<visibility>>) the type door can't
                     // close yet — its element kind names no single type — is re-tagged by its CLR form
-                    val = prop.PropertyType.IsInstanceOfType(built) ? built : built.Clr(prop.PropertyType);
+                    val = prop.PropertyType.IsInstanceOfType(built) ? built : built.Clr(prop.PropertyType, context);
                 }
                 catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
                     or System.OverflowException or System.NotSupportedException)
@@ -222,6 +222,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 prop.SetValue(node, val);
             }
         }
+        // a list member the values leave out holds an empty list of its own class, born holding the app's type for it
+        foreach (var member in node.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+            if (member.SetMethod?.IsPublic == true && typeof(global::app.type.item.list.@this).IsAssignableFrom(member.PropertyType)
+                && member.GetValue(node) == null)
+                member.SetValue(node, System.Activator.CreateInstance(member.PropertyType, context.App.type.list[member.PropertyType]));
         return context.Ok();
     }
 
