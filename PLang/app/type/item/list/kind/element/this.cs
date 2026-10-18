@@ -14,6 +14,10 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.li
     /// so the nesting is kept, not flattened.</summary>
     public @this(global::app.type.@this element) : base(element.Name, element.kind.IsEmpty ? null : element.kind) => _element = element;
 
+    /// <summary>The kind's class is its element's — a <c>list&lt;action&gt;</c> kind IS the registered action
+    /// type at its kind, so it carries action's ClrType, not null.</summary>
+    internal override System.Type? ClrType => _element.ClrType;
+
     /// <summary>The list's class closed over the element's (<c>list&lt;path&gt;</c>) when the element is an item that
     /// makes itself; else the list's class as it is.</summary>
     public override System.Type? Of(System.Type? type)

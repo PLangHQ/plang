@@ -14,9 +14,9 @@ public class ImageValueTests : System.IAsyncDisposable
 
     private static readonly byte[] PngHeader = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
-    [Test] public async Task Image_FromBytesAndMime_StoresBoth()
+    [Test] public async Task Image_FromBytesWithKind_MimeComesFromTheKind()
     {
-        var img = new image(PngHeader, "image/png");
+        var img = new image(PngHeader, "png");
         await Assert.That(img.Bytes).IsEqualTo(PngHeader);
         await Assert.That(img.Mime).IsEqualTo("image/png");
     }

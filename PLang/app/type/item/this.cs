@@ -413,14 +413,24 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal global::app.type.item.history.@this history => _history ??= new();
 
     /// <summary>
-    /// This value's OWN type entity — each type answers ITS way (number stamps its precision as
-    /// kind, text its extension, a source its declared judgement, dict/list name themselves). The
-    /// single owner of its identity; provenance lives on the value's <see cref="list"/> and is asked
-    /// via <see cref="Is"/>. The default is its class's type — the word the class declares, else its
-    /// namespace.
+    /// This value's OWN type entity — the type that MADE it, handed in at birth (the app's list for an
+    /// origin birth via <c>Make</c>, or forwarded from the value it came from). The single owner of its
+    /// identity; provenance lives on the value's <see cref="list"/> history and is asked via <see cref="Is"/>.
+    /// <para>Step 1 (born-whole): a value moved to born-whole holds <c>_type</c>; one not yet moved leaves it
+    /// null and falls back to the old rebuild. The parameterless ctor is the step-1 stand-in, removed when the
+    /// type ctor becomes required (step 3) — then no value exists without its type.</para>
     /// </summary>
+    private readonly global::app.type.@this? _type;
+
     protected internal virtual global::app.type.@this Type
-        => FamilyOf(GetType()) is { } kind ? new(NameOf(kind.Family), kind.Family, kind.Kind) : new(GetType());
+        => _type ?? (FamilyOf(GetType()) is { } kind ? new(NameOf(kind.Family), kind.Family, kind.Kind) : new(GetType()));
+
+    /// <summary>A value born holding the type that made it.</summary>
+    protected @this(global::app.type.@this type) => _type = type;
+
+    /// <summary>Step-1 stand-in: a value not yet moved to born-whole; <c>Type</c> falls back to the rebuild.
+    /// Removed in step 3, when the type ctor is required.</summary>
+    protected @this() { }
 
     /// <summary>
     /// Is this value (now or in its narrow history) an <paramref name="other"/>? Asks its type

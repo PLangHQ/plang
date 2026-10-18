@@ -15,11 +15,7 @@ public static class Default
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
     {
         if (raw is byte[] bytes)
-        {
-            var mime = ctx.Context == null ? $"image/{kind}"
-                : (string.IsNullOrEmpty(kind) ? null : ctx.Context.App.type.list["image"].kind[kind]?.Mime.FirstOrDefault()) ?? "application/octet-stream";
-            return new global::app.type.item.image.@this(bytes, mime, kind);
-        }
+            return new global::app.type.item.image.@this(bytes, kind);
         var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("image", kind), context: ctx.Context);
         return global::app.type.item.image.@this.Create(raw, carrier.Type, carrier);
     }

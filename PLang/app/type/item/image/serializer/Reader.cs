@@ -20,8 +20,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("image", kind);
         byte[] bytes = reader.Bytes();
-        string mime = ctx.Context == null ? $"image/{kind}"
-            : (string.IsNullOrEmpty(kind) ? null : ctx.Context.App.type.list["image"].kind[kind]?.Mime.FirstOrDefault()) ?? "application/octet-stream";
-        return new global::app.type.item.image.@this(bytes, mime, kind);
+        return new global::app.type.item.image.@this(bytes, kind);
     }
 }

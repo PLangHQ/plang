@@ -14,7 +14,7 @@ public class ImageFormatTests
             await using var app = new global::app.@this(root).Testing();
             var ctx = app.actor.list.User.Context;
             var target = global::app.type.item.path.@this.Resolve(System.IO.Path.Combine(root, "photo.png"), ctx)!;
-            var saved = await target.Save(ctx.Ok(new global::app.type.item.image.@this(Png, "image/png", "png")), ctx);
+            var saved = await target.Save(ctx.Ok(new global::app.type.item.image.@this(Png, "png")), ctx);
             await saved.IsSuccess();
             await Assert.That(await System.IO.File.ReadAllBytesAsync(System.IO.Path.Combine(root, "photo.png"))).IsEquivalentTo(Png);
         }
@@ -28,7 +28,7 @@ public class ImageFormatTests
         var channel = new StreamChannel("img", capture, ChannelDirection.Output, ownsStream: false) { Mime = "image/png" };
         app.actor.list.User.Channel.Register(channel);
 
-        var written = await channel.Write(app.actor.list.User.Context.Ok(new global::app.type.item.image.@this(Png, "image/png", "png")));
+        var written = await channel.Write(app.actor.list.User.Context.Ok(new global::app.type.item.image.@this(Png, "png")));
         await written.IsSuccess();
         await Assert.That(capture.ToArray()).IsEquivalentTo(Png);
     }

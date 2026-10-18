@@ -56,7 +56,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // Null until loaded — a path-backed image reads nothing until first content
     // access. A bytes-backed image sets this in the constructor.
     private byte[]? _bytes;
-    private string? _mime;
 
     // The canonical kind ("png", "jpg", …) — a fact named at birth: from the creator's
     // format registry for a path-born image, from the magic bytes or the wire otherwise.
@@ -81,10 +80,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// materializes at its Value door (the encode door loads first, which is right).</summary>
     public override byte[]? RawBytes => _bytes;
 
-    /// <summary>The image's mime — a fact set at birth (bytes with a known mime, or a path's
-    /// extension read through the creator's format registry) or at first load.</summary>
+    /// <summary>The image's mime — asked of its kind (the kind carries its format's MIME), so there is one
+    /// source: the image's own type. An image with no kind is opaque bytes.</summary>
     [global::app.Out, global::app.Store]
-    public string Mime => _mime ?? "application/octet-stream";
+    public string Mime => Type.kind.Mime is { Count: > 0 } m ? m[0] : "application/octet-stream";
 
     /// <summary>An image writes its own form (<see cref="Write"/>) in every view; it never loads while it
     /// writes.</summary>
@@ -180,12 +179,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         : null;
 
     /// <summary>Bytes-backed, no source: the content is in hand (base64 decode, the wire).
-    /// <paramref name="kind"/> is a fact the creator already has — sniffed off the magic
-    /// bytes or read off the wire; null when unknown.</summary>
-    public @this(byte[] bytes, string mime, string? kind = null)
+    /// <paramref name="kind"/> is the format name the creator already has — sniffed off the magic
+    /// bytes or read off the wire; null when unknown. The mime is asked of the kind, not stored.</summary>
+    public @this(byte[] bytes, string? kind = null)
     {
         _bytes = bytes ?? System.Array.Empty<byte>();
-        _mime = mime ?? "application/octet-stream";
         _kind = kind is { Length: > 0 } ? new global::app.type.kind.@this(kind) : null;
     }
 
@@ -194,12 +192,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// — the content materializes from the path on the first <see cref="Value"/>.
     /// The proving instance for reference-fundamental laziness (audio/video follow
     /// the same shape). <paramref name="context"/> is the creator's, used once to name
-    /// the mime and the kind from the path's extension, and not kept.
+    /// the kind from the path's extension, and not kept.
     /// </summary>
     public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
-        _mime = path.Mime(context).ToString();
         _kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null;
         history.Add(path);   // born from a path → `is path` from its history
     }

@@ -186,7 +186,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// only for a name no type answers to.
     /// </summary>
     [JsonIgnore]
-    internal System.Type? ClrType => _clrType;
+    internal virtual System.Type? ClrType => _clrType;
     private System.Type? _clrType;
 
     /// <summary>This type's empty value — what a value of it holds before anything is in it: the value
