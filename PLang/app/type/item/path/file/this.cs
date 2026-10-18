@@ -20,7 +20,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// invariant for free.
     /// </summary>
     public @this(string absolutePath)
-        : base(Canonicalize(absolutePath))
+        : base(Canonicalize(absolutePath), "file")
     {
     }
 

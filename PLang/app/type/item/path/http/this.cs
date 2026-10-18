@@ -64,7 +64,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     private readonly Uri _uri;
 
     public @this(string raw)
-        : base(raw)
+        : base(raw, raw.StartsWith("https:", StringComparison.OrdinalIgnoreCase) ? "https" : "http")
     {
         if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))
             throw new ArgumentException($"Not a valid http(s) URL: '{raw}'", nameof(raw));

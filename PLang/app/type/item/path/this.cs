@@ -20,12 +20,6 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// </summary>
     [Out, Store] public abstract string Scheme { get; }
 
-    /// <summary>A path value's type is "path"; its scheme ("file", "http") is the Kind — so
-    /// every scheme variant answers <c>is path</c> by name (no CLR-inheritance lattice), and a
-    /// value that narrowed from a path (an image) carries this "path" entry in its type history.</summary>
-    protected internal override global::app.type.@this Type
-        => new global::app.type.@this("path", typeof(@this), Scheme);
-
 
     /// <summary>
     /// String comparison for "is this path under that root" checks. Linux
@@ -65,11 +59,13 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// context (the running goal's folder, the root) and hand the resolved form here; nothing
     /// of that context is kept.
     /// </summary>
-    protected @this(string path)
+    protected @this(string path, string scheme)
+        : base(new global::app.type.@this("path", typeof(@this), scheme))
     {
         // Producers that resolved the path hand the resolved form here and
         // override the as-typed location via the Raw init; a verbatim
-        // construction is both at once.
+        // construction is both at once. The scheme ("file", "http") is the path's kind,
+        // so the value is born holding {path, <scheme>} — every scheme answers `is path` by name.
         _location = path ?? string.Empty;
         _absolute = _location;
     }

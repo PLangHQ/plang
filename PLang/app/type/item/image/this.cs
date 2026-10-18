@@ -194,7 +194,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
         : base(new global::app.type.@this("image", typeof(@this),
-            (path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } pk } ? pk : null)?.Name))
+            (path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } kind } ? kind : null)?.Name))
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
         _kind = Type.kind.IsEmpty ? null : Type.kind;

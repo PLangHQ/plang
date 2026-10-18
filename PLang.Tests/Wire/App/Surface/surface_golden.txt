@@ -1981,7 +1981,6 @@ class app.type.item.null.this : app.type.item.this, app.type.item.ICreate<app.ty
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  protected override Type : app.type.this { get; }
   static Instance : app.type.item.null.this { get; }
   static IsNullValue(System.Object value) : System.Boolean
   static Shape : System.String { get; }
@@ -2352,7 +2351,7 @@ abstract class app.type.item.path.this : app.type.item.this, app.type.item.ICrea
   abstract WithName(System.String name) : app.type.item.path.this
   abstract WriteBytes(System.Byte[] content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   abstract WriteText(System.String content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
-  ctor(System.String path)
+  ctor(System.String path, System.String scheme)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
@@ -2363,7 +2362,6 @@ abstract class app.type.item.path.this : app.type.item.this, app.type.item.ICrea
   protected IsInRoot(app.actor.context.this context) : System.Boolean
   protected Reference(System.String type, app.actor.context.this context) : app.type.this
   protected SignAndStore(app.actor.this actor, app.type.item.permission.Verb verb, System.Boolean persist, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
-  protected override Type : app.type.this { get; }
   protected virtual AuthorizationHint(app.type.item.permission.Verb verb, app.actor.context.this context) : System.String
   static Create(System.Object value) : app.type.item.path.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.path.this
