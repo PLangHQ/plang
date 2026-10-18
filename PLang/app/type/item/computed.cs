@@ -11,23 +11,16 @@ namespace app.type.item;
 public sealed class computed : @this
 {
     private readonly System.Func<actor.context.@this, @this?> _factory;
-    private readonly string? _declared;
-    private readonly string? _declaredKind;
 
     /// <summary>A value found at each read by <paramref name="factory"/>, handed the asker's context.</summary>
     public computed(System.Func<actor.context.@this, @this?> factory,
         string? declaredTypeName = null, string? declaredKind = null)
+        : base(declaredTypeName == null
+            ? new global::app.type.@this(typeof(@this), declaredKind)
+            : new global::app.type.@this(declaredTypeName, declaredKind))
     {
         _factory = factory ?? throw new System.ArgumentNullException(nameof(factory));
-        _declared = declaredTypeName;
-        _declaredKind = declaredKind;
     }
-
-    /// <summary>The declared answer type when the cell advertises one
-    /// (%Now% is a datetime); "item" when undeclared — the computation's
-    /// answer carries its own truth at each use.</summary>
-    protected internal override global::app.type.@this Type
-        => _declared == null ? new(typeof(@this), _declaredKind) : new(_declared, _declaredKind);
 
     public override bool Cacheable => false;
 

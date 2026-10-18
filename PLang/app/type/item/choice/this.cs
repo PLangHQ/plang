@@ -39,7 +39,13 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
 
     public T Value { get; }
 
-    public @this(T value) { Value = value; }
+    // Born holding {choice, <set>} — the set's name is its T's own [PlangType], read directly so a T with no
+    // name (not a declared set) is a bare choice type, never a throw; the throwing `_set` is left to the paths
+    // that truly need the set (Parse, the options).
+    public @this(T value)
+        : base(new global::app.type.@this(typeof(@this<T>),
+            (System.Attribute.GetCustomAttribute(typeof(T), typeof(global::app.Attributes.PlangTypeAttribute), inherit: false)
+                as global::app.Attributes.PlangTypeAttribute)?.Name)) { Value = value; }
 
     public static implicit operator T(@this<T> c) => c.Value;
     // T → choice (so `.Ok(HttpMethod.GET)` and a `[Default(HttpMethod.GET)]` cast construct).
@@ -57,8 +63,6 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
 
     string IChoice.Symbol => ToString();
 
-    /// <summary>A choice names itself by its set: <c>{choice, kind: operator}</c>.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this<T>), _set.Name);
 
     /// <summary>The one symbol→choice resolution home — the wire form is the option's SYMBOL
     /// (an enum member's name, a named-set registry key like "=="). Shared by the ICreate core

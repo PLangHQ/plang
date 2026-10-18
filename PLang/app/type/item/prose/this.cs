@@ -15,10 +15,13 @@ public sealed class @this : global::app.type.item.@this
     // what it reads as when it reads empty
     private readonly @this? _otherwise;
 
-    /// <summary>Prose of <paramref name="pieces"/>: each a string, written as it is, or a value, read when asked.</summary>
-    public @this(params object[] pieces) => _pieces = pieces;
+    /// <summary>Prose of <paramref name="pieces"/>: each a string, written as it is, or a value, read when asked.
+    /// Prose reads as text, so it holds the text type.</summary>
+    public @this(params object[] pieces)
+        : base(new global::app.type.@this("text", typeof(global::app.type.item.text.@this))) => _pieces = pieces;
 
     private @this(System.Collections.Generic.IReadOnlyList<object> pieces, @this otherwise)
+        : base(new global::app.type.@this("text", typeof(global::app.type.item.text.@this)))
     {
         _pieces = pieces;
         _otherwise = otherwise;
@@ -27,8 +30,6 @@ public sealed class @this : global::app.type.item.@this
     /// <summary>This prose, or <paramref name="other"/> when this reads empty — a list of records says what its element
     /// is, else what a list is.</summary>
     public @this Or(@this other) => new(_pieces, _otherwise == null ? other : _otherwise.Or(other));
-
-    protected internal override global::app.type.@this Type => new("text", typeof(global::app.type.item.text.@this));
 
     public override bool IsLeaf => true;
 

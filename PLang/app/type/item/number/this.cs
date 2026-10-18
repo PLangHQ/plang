@@ -32,7 +32,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the value owns its kind, so <c>Write</c>/arithmetic never look it up.</summary>
     public kind.@this Kind { get; }
 
-    private @this(object value, kind.@this kind) { _value = value; Kind = kind; }
+    private @this(object value, kind.@this kind)
+        : base(new global::app.type.@this("number", typeof(@this), kind.Name)) { _value = value; Kind = kind; }
 
     /// <summary>The empty number, 0 — what a number holds before anything is in it (type.Empty).</summary>
     internal @this() : this(0L, @long) { }
@@ -41,10 +42,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public object BoxedValue => _value;
     public override bool IsLeaf => true;
     public override void Write(global::app.type.format.IWriter w) => Kind.Write(this, w);
-
-    /// <summary>A number's entity: the exact boxed CLR numeric as the mate, the kind name as kind.</summary>
-    protected internal override global::app.type.@this Type
-        => new("number", typeof(@this), Kind.Name);
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
 

@@ -25,7 +25,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     // the standard it is written in (short, iso, dotnet), born with it; and its type, {duration, <kind>}, made once
     private readonly kind.@this _kind;
-    private readonly global::app.type.@this _type;
 
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
@@ -36,17 +35,16 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>A duration writes its text in its own kind: <c>30s</c> stays <c>30s</c>, <c>PT5M</c> stays <c>PT5M</c>.</summary>
     public override void Write(global::app.type.format.IWriter w) => w.Content(Text, _kind);
-    protected internal override global::app.type.@this Type => _type;
 
     /// <summary>A span made with no text (a C# span, an elapsed time) — written short, the form a step reads.</summary>
     public @this(System.TimeSpan value) : this(value, new kind.@short.@this()) { }
 
-    /// <summary>A span in <paramref name="kind"/>'s standard.</summary>
+    /// <summary>A span in <paramref name="kind"/>'s standard — born holding its type, {duration, kind}.</summary>
     public @this(System.TimeSpan value, kind.@this kind)
+        : base(new global::app.type.@this("duration", typeof(@this), kind.Name))
     {
         Value = value;
         _kind = kind;
-        _type = new global::app.type.@this("duration", typeof(@this), kind.Name);
     }
 
     /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan or a string (ISO-8601
