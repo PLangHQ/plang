@@ -265,6 +265,16 @@ Ingi: "Errors, Values og Options dont follow the correct pattern. should be sigu
 | `table.Headers`, names only. Plang reaches it (`%t.headers%`) | `type/table/this.cs:36` (31 uses) | the table's columns as a `property.list`, each a name and its type (#3 labels a column by its type) | 3 |
 | `data.Properties` and its class `app.data.Properties`; `property.Properties`. On the wire as `"properties": {…}` (`data/Properties.cs:6–7`); no `.pr` carries it (the `.pr`'s `property` is the action's list) | `data/this.cs:205`, `type/property/this.cs:145` (241 uses) | `data.Property`, the wire key `property` (31, Ingi: "it is data.property and type.property") | 2 |
 
+**A singular node: its default, and `.list`** (39, Ingi: "%dict!key% would give the default key … %dict!key.list% would give the list"; "this one of core fundimental obp thingy"). Read alone, the node answers its default instance (each owner decides which); `.list` answers them all. The shape exists already: the concept nodes (`type/this.Generic.cs:36`, with `current`), `module.list`, `error.list`, `history.list`, `task.list`, `channel.list`. Reused for:
+
+| what | where | the fix | stage |
+|---|---|---|---|
+| `dict.Keys` (`%dict!keys%`) | `type/item/dict/this.cs:148` | `Key(context)`, a `dict.key` value: the first key; `.list` every key | 1 |
+| `Modifiers` on mouse and key, `[Out]` | `type/item/input/mouse/this.cs:51`, `input/key/this.cs:53` | `modifier`, with `.list` | 1 |
+| the build setting's `Files`, the debug setting's `Variables`, `[Out, Store]` (the saved rows change) | `module/build/setting/this.cs:23`, `module/debug/setting/this.cs:22` | `file`, `variable`, each with `.list` | 1 |
+
+Plural action parameters (`test.start`'s `Tests`, …) are their own sweep later: their names are in every `.pr` and the builder's teaching (Ingi: "yes").
+
 Not in this branch's files, a later sweep (collections plang reaches; each checked for that when the sweep starts): `call.Errors`, `Diffs`, `Tags` (`call/this.cs:120–164`); `call.list.Variables` (`call/list/this.cs:81`); `error.Params`, `CallFrames`, `Variables` (`error/this.cs:77–168`); `app.Services` (`app/this.cs:247`); `service.Channels`, `channel.Channels`; `goal.setup.Goals`; `signature.Contracts`; `snapshot.Entries`. llm's message `Images` and `ToolCalls` go with llm-provider, which rewrites the message.
 
 ## What the developer gets
