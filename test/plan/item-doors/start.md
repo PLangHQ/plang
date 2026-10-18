@@ -211,6 +211,8 @@ Ingi asked for an OBP scan of settings ("we havent really done proper obp scan o
 
 So the settings list keeps data by its address, in layers (this scope's, then the actor's saved row, the user's before the system's), and gives it back. It never looks inside: no check on a set, a save or a flag. The caller converts. `Get<T>()` reads the data at T's address (its type's name) and T's type makes a T from it, with T's own defaults for what the data leaves out. A bad row, or a member T can't take, is the answer's error.
 
+Each reader decides its default (Ingi, 895: "each should decide what default is"). A plang read (`%!llm.setting.cache%`) gives what is stored, and nothing when nothing is; the step that reads it decides. `Get<T>` is the same rule in C#: T decides.
+
 ```csharp
 // actor/setting/this.cs, what stays (the bodies are the coder's)
 public async Task<data.@this> Get(string address)               // the closest scope's data, else the saved row,
@@ -245,25 +247,18 @@ The settings door and read-on-use were agreed for llm-provider (its 854). They'r
 
 Each settings class is born with its type through a one-line constructor (891), part of stage 1.
 
-### 7. Collections are singular, with their own list (893, 894)
+### 7. Plang's collections are singular, with their own list (893–895)
 
-Ingi: "Errors, Values og Options dont follow the correct pattern. should be sigular with .list", then "and any other plural you see". A collection is a singular property naming the concept, of its own `X.list` type (`Type.Property`). Never a plural name or a bare `List`/`Dictionary`/`IEnumerable`. Each is fixed in the stage that already touches its file. Plang-visible names and locked surfaces are marked; they wait for Ingi's yes.
+Ingi: "Errors, Values og Options dont follow the correct pattern. should be sigular with .list", then "and any other plural you see". A collection plang reaches (a member a step navigates, a wire or store field) is a singular property naming the concept, of its own `X.list` type (`Type.Property`). C# working over CLR objects (a walk for `foreach`, an assembly list, a reflection cache, internal name lists) can stay plural (Ingi, 895: "those are working with the clr objects, they can be plural"). Ingi said yes to these four (895):
 
 | what | where | the fix | stage |
 |---|---|---|---|
-| `property.Arguments`, a bare `IReadOnlyList` | `type/property/this.cs:69` (4 uses) | `Argument`, a `property.list` | 5 |
-| `type.Values`, `OwnValues`, `_values`: a choice's words as strings, beside `Offers`, which gives the same options as items. Plang-visible (`%x!type.values%`), locked | `type/this.cs:668`, `:676–677`; overrides in `choice/set/this.cs:35`, `choice/set/member/this.cs:10`, `choice/set/family/this.cs:23` | one door: `Option`, a list of plang values on the kind; `Offers` reads it for a closed kind | 5 |
-| the static `Alias` on text, list, dict, bool and binary, read by its name through reflection in two places; the kinds declare theirs through `OwnAlias` | `text/this.cs:68`, `list/this.cs:29`, `dict/this.cs:27`, `bool/this.cs:17`, `binary/this.cs:153`; read at `type/this.cs:805`, `type/list/Registry.cs:149` | the type is born with its alias (#1), declared once on `[PlangType]` (`[PlangType("text", "string")]`). Locked (an attribute) | 1 |
-| `item._identities`, a static cache | `type/item/this.cs:563` | goes: the registry asks once while it builds the type, and the type keeps the answer | 1 |
-| `number`'s static `Kinds` dict | `number/this.cs:72` | goes with step 2 (kinds in each app's list) | 1 |
-| `item.Fields` and dict's override | `type/item/this.cs:646`, `dict/this.cs:426` (6 uses) | goes: the type's `Property` list names the members (#4) | 5 |
-| `dict.KeyNames` (plural and glued) | `dict/this.cs:154` (3 uses) | goes: the dict's walk below | 5 |
-| four names for one walk: `list.Items(context)`, `dict.Entries(context)`, `item.Rows(context)`, `EnumerateItems` (also verb+noun) | `item/this.cs:347`, `:395`; `list/this.cs:277`, `:313`, `:325`; `dict/this.cs:165` (about 180 uses) | one walk on `item`, overridden by each container. Its name is Ingi's | 1b |
-| `Registry.Assemblies` and `reader.Assemblies`: public bare `List<Assembly>`, the same list twice | `type/list/Registry.cs:27`, `type/reader/this.cs:56` | one, singular, of its own list type, owned by the app's type list | 2 |
-| `table.Headers`, names only. Plang-visible (`%t.headers%`) | `type/table/this.cs:36` (31 uses) | the table's columns as a `property.list`, each a name and its type (#3 labels a column by its type) | 3 |
-| `data.Properties` and its class `app.data.Properties`; `property.Properties`. Locked (data) | `data/this.cs:205`, `type/property/this.cs:145` (241 uses) | a singular name. The name is Ingi's | 2 |
+| `type.Values`, `OwnValues`, `_values`: a choice's words as strings, beside `Offers`, which gives the same options as items. Plang reaches it (`%x!type.values%`) | `type/this.cs:668`, `:676–677`; overrides in `choice/set/this.cs:35`, `choice/set/member/this.cs:10`, `choice/set/family/this.cs:23` | one door: `Option`, a list of plang values on the kind; `Offers` reads it for a closed kind | 5 |
+| the static `Alias` on text, list, dict, bool and binary, read by its name through reflection in two places; the kinds declare theirs through `OwnAlias` | `text/this.cs:68`, `list/this.cs:29`, `dict/this.cs:27`, `bool/this.cs:17`, `binary/this.cs:153`; read at `type/this.cs:805`, `type/list/Registry.cs:149` | the type is born with its alias (#1), declared once on `[PlangType]` (`[PlangType("text", "string")]`) | 1 |
+| `table.Headers`, names only. Plang reaches it (`%t.headers%`) | `type/table/this.cs:36` (31 uses) | the table's columns as a `property.list`, each a name and its type (#3 labels a column by its type) | 3 |
+| `data.Properties` and its class `app.data.Properties`; `property.Properties`. Plang reaches it, and the wire and every `.pr` carry it as `properties` | `data/this.cs:205`, `type/property/this.cs:145` (241 uses) | a singular name; the name, and whether the wire key follows, are Ingi's | 2 |
 
-Not in this branch's files (a later sweep, its own list): `call.Errors`, `Diffs`, `Tags`, `Arguments` (`call/this.cs:120–258`); `call.list.Variables` (`call/list/this.cs:81`); `error.Params`, `CallFrames`, `Variables`, `HelpfulLinks` (`error/this.cs:61–168`); `app.Services` (`app/this.cs:247`); `service.Channels`, `channel.Channels`, `channel.list.ChannelNames` and the static `Defaults` (`channel/list/this.cs:47`, `:153`); `module.ActionNames` (`module/this.cs:220`); `goal.setup.Goals`; `pick.question.Values`; `signature.Contracts`; the static `permission.AllVerbs`; `build.Files`; `snapshot.Entries`; the static `Choices` (`data/Operator.cs:80`, `module/code/kind/this.cs:16`, `test/format/this.cs:20`); `RequiresCapability.Capabilities`; `note.IAbout.Parts`; the screen and terminal modules' internals (`Codecs`, `Globals`, `Types`, `Fds`, `Tools`, `Rules`). llm's message `Images` and `ToolCalls` go with llm-provider, which rewrites the message.
+Not in this branch's files, a later sweep (collections plang reaches; each checked for that when the sweep starts): `call.Errors`, `Diffs`, `Tags` (`call/this.cs:120–164`); `call.list.Variables` (`call/list/this.cs:81`); `error.Params`, `CallFrames`, `Variables` (`error/this.cs:77–168`); `app.Services` (`app/this.cs:247`); `service.Channels`, `channel.Channels`; `goal.setup.Goals`; `signature.Contracts`; `snapshot.Entries`. llm's message `Images` and `ToolCalls` go with llm-provider, which rewrites the message.
 
 ## What the developer gets
 
