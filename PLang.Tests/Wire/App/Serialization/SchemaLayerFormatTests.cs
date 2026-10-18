@@ -32,7 +32,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
             value: inner,
             algorithm: new global::app.type.item.text.@this("ed25519"),
             nonce: new global::app.type.item.text.@this("9f"),
-            created: new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero)),
+            created: new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero), app.type.list[typeof(global::app.type.item.datetime.@this)]),
             identity: new global::app.type.item.text.@this("alice"),
             hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
             signature: new global::app.type.item.binary.@this(System.Convert.FromBase64String("c2ln")));
@@ -70,7 +70,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
             value: inner,
             algorithm: new global::app.type.item.text.@this("ed25519"),
             nonce: new global::app.type.item.text.@this("n"),
-            created: new global::app.type.item.datetime.@this(System.DateTimeOffset.UnixEpoch),
+            created: new global::app.type.item.datetime.@this(System.DateTimeOffset.UnixEpoch, app.type.list[typeof(global::app.type.item.datetime.@this)]),
             identity: new global::app.type.item.text.@this("id"),
             hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, new global::app.module.crypto.type.hash.kind.keccak256.@this()),
             signature: new global::app.type.item.binary.@this(new byte[] { 0x01 }));

@@ -26,10 +26,11 @@ public sealed class @this : global::app.type.item.@this
     [global::app.Out, global::app.Debug]
     public global::app.type.item.datetime.@this Started { get; }
 
-    public @this()
+    /// <summary>A trace starting now, its time born holding the app's datetime type from <paramref name="types"/>.</summary>
+    public @this(global::app.type.list.@this types)
     {
         var started = DateTimeOffset.UtcNow;
-        Started = new(started);
+        Started = new(started, types[typeof(global::app.type.item.datetime.@this)]);
         Id = $"{started.Ticks}_{Guid.NewGuid().ToString("N")[..8]}";
     }
 }

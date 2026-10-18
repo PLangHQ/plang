@@ -1435,8 +1435,8 @@ class app.type.item.datetime.this : app.type.item.this, System.IEquatable<app.ty
   Value : System.DateTimeOffset { get; }
   Weekday(app.actor.context.this context) : app.data.this<app.type.item.text.this> [LlmBuilder]
   Year(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
-  ctor(System.DateTime value, app.type.this type = …)
-  ctor(System.DateTimeOffset value, app.type.this type = …)
+  ctor(System.DateTime value, app.type.this type)
+  ctor(System.DateTimeOffset value, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
@@ -1444,7 +1444,7 @@ class app.type.item.datetime.this : app.type.item.this, System.IEquatable<app.ty
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  static Create(System.Object raw, app.type.this type = …) : app.type.item.datetime.this
+  static Create(System.Object raw, app.type.this type) : app.type.item.datetime.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.datetime.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
   static Resolve(System.String raw, app.actor.context.this context) : app.type.item.datetime.this

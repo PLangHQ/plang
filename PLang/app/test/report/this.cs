@@ -10,10 +10,16 @@ public sealed class @this
 {
     private readonly global::app.test.list.@this _tests;
 
-    public @this(global::app.test.list.@this tests) => _tests = tests;
+    /// <summary>The report of <paramref name="tests"/>, its start born holding the app's datetime type from
+    /// <paramref name="types"/>.</summary>
+    public @this(global::app.test.list.@this tests, global::app.type.list.@this types)
+    {
+        _tests = tests;
+        StartedAt = new(System.DateTime.UtcNow, types[typeof(global::app.type.item.datetime.@this)]);
+    }
 
     /// <summary>When the run started.</summary>
-    public global::app.type.item.datetime.@this StartedAt { get; } = new(System.DateTime.UtcNow);
+    public global::app.type.item.datetime.@this StartedAt { get; }
 
     /// <summary>The run's coverage. Each test's App records its own, then merges it in here.</summary>
     public Coverage Coverage { get; } = new();

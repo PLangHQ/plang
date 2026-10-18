@@ -39,15 +39,16 @@ public class Ed25519 : ISigning
 
         // Build the unsigned signature wrapping the data, compute its signing bytes,
         // sign with the identity's private key, stamp the signature in.
+        var datetime = action.Context.App.type.list[typeof(global::app.type.item.datetime.@this)];
         var unsigned = new global::app.type.item.signature.@this(
             value: action.Data!,
             algorithm: new global::app.type.item.text.@this(Name),
             nonce: new global::app.type.item.text.@this(nonce),
-            created: new global::app.type.item.datetime.@this(now),
+            created: new global::app.type.item.datetime.@this(now, datetime),
             identity: new global::app.type.item.text.@this(identity.PublicKey),
             hash: hash,
             signature: new global::app.type.item.binary.@this(Array.Empty<byte>()),
-            expires: expires is { } e ? new global::app.type.item.datetime.@this(e) : null,
+            expires: expires is { } e ? new global::app.type.item.datetime.@this(e, datetime) : null,
             contracts: contracts);
 
         try

@@ -140,10 +140,13 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
 
     // --- Timing tier (null when Flags.Timing off) ---
     /// <summary>When it was pushed. Null when the Timing flag was off at Push.</summary>
-    public global::app.type.item.datetime.@this? StartedAt => _startedAt is { } started ? new(started) : null;
+    // a frame holds no type list: its times make their own datetime type until the frame is born with the app's
+    public global::app.type.item.datetime.@this? StartedAt => _startedAt is { } started
+        ? new(started, new global::app.type.@this(typeof(global::app.type.item.datetime.@this))) : null;
 
     /// <summary>When it was popped. Null while in flight, and when the Timing flag was off.</summary>
-    public global::app.type.item.datetime.@this? CompletedAt => _completedAt is { } completed ? new(completed) : null;
+    public global::app.type.item.datetime.@this? CompletedAt => _completedAt is { } completed
+        ? new(completed, new global::app.type.@this(typeof(global::app.type.item.datetime.@this))) : null;
 
     /// <summary>Wall time this frame has run — while in flight (an after-binding runs inside the frame) and, once
     /// popped, its whole duration. Null when the Timing flag was off at Push.</summary>

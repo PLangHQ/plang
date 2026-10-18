@@ -93,10 +93,11 @@ public sealed class signature : ISchemaReader
         // A signature read live off the wire is good for the signing setting's window after it was made; one read
         // from plang's own store keeps only what its signer signed, and covers the value's stored form.
         var stored = ctx.View == global::app.View.Store;
+        var datetime = context.App.type.list[typeof(global::app.type.item.datetime.@this)];
         var layer = new global::app.type.item.signature.@this(
-            inner, algorithm, nonce, new global::app.type.item.datetime.@this(created), identity,
+            inner, algorithm, nonce, new global::app.type.item.datetime.@this(created, datetime), identity,
             new global::app.module.crypto.type.hash.@this(hashValue, hashKind), sig,
-            expires is { } ex ? new global::app.type.item.datetime.@this(ex) : null, contracts,
+            expires is { } ex ? new global::app.type.item.datetime.@this(ex, datetime) : null, contracts,
             stored ? global::app.type.item.signature.Origin.Stored : global::app.type.item.signature.Origin.Live,
             stored ? null : context.Setting.Of<global::app.module.signing.setting.@this>().Expiry);
 

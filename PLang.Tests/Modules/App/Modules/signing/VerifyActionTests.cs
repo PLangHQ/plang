@@ -147,7 +147,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         var live = Live(signed, window: TimeSpan.FromSeconds(1),
-            created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
+            created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1), _app.type.list[typeof(global::app.type.item.datetime.@this)]));
 
         var result = await VerifyHelper(live, contracts: new List<string> { "C0" });
         await result.IsFailure();
@@ -211,7 +211,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper("test");
         var past = Live(signed, window: TimeSpan.FromSeconds(1),
-            created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
+            created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1), _app.type.list[typeof(global::app.type.item.datetime.@this)]));
         await Assert.That((await (await past.Get("expired")).Value())?.ToString()).IsEqualTo("true");
         await Assert.That((await (await Live(signed).Get("expired")).Value())?.ToString()).IsEqualTo("false");
     }
@@ -398,7 +398,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         var live = Live(signed, window: TimeSpan.FromSeconds(1),
-            created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
+            created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1), _app.type.list[typeof(global::app.type.item.datetime.@this)]));
 
         var result = await VerifyHelper(live, contracts: new List<string> { "C1" });
         await result.IsFailure();

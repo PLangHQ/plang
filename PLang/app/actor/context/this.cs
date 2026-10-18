@@ -28,7 +28,7 @@ public sealed class @this : IDisposable
     /// output (trace JSON, LLM debug files) under a single id for one execution.
     /// Accessible from PLang as <c>%!trace.id%</c>.
     /// </summary>
-    public TraceContext Trace { get; } = new();
+    public TraceContext Trace { get; }
 
     /// <summary>
     /// Reference to the app.
@@ -127,6 +127,7 @@ public sealed class @this : IDisposable
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         App = app;
+        Trace = new(app.type.list);
         Actor = owner;
         FileSystem = fileSystem ?? parent?.FileSystem ?? app.FileSystem;
         Variable = variables ?? new Variables(this);

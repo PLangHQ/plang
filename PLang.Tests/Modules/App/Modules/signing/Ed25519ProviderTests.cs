@@ -110,7 +110,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
             value: app.actor.list.User.Context.Ok(new global::app.type.item.text.@this("payload")),
             algorithm: new global::app.type.item.text.@this("ed25519"),
             nonce: new global::app.type.item.text.@this(nonce),
-            created: new global::app.type.item.datetime.@this(DateTimeOffset.UnixEpoch),
+            created: new global::app.type.item.datetime.@this(DateTimeOffset.UnixEpoch, app.type.list[typeof(global::app.type.item.datetime.@this)]),
             identity: new global::app.type.item.text.@this(identityPublicKey),
             hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
             signature: new global::app.type.item.binary.@this(Array.Empty<byte>()));

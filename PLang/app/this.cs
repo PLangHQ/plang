@@ -271,13 +271,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
         _folder = lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
         AbsolutePath = absolutePath;
-        StartedAt = new(DateTimeOffset.UtcNow);
-        Created = StartedAt;
-        Updated = StartedAt;
 
         // The types come first: every value is born holding its type from this list, the actors' contexts too.
         type = new(this);
         type.list.Replace(type);   // %!app.type% and the list's entry named type are one object
+
+        StartedAt = new(DateTimeOffset.UtcNow, type.list[typeof(global::app.type.item.datetime.@this)]);
+        Created = StartedAt;
+        Updated = StartedAt;
 
         // The system & user actors, each owning a long-lived context. System is the cancellation root; User links
         // to its token.

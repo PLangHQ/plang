@@ -69,7 +69,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             if (Origin.Value != global::app.type.item.signature.Origin.Live || _window is not { } window) return _expires;
             var live = Created.Value + (System.TimeSpan)window;
-            return _expires is { } signed && signed.Value <= live ? signed : new datetime(live);
+            return _expires is { } signed && signed.Value <= live ? signed : new datetime(live, Created.Type);
         }
     }
 

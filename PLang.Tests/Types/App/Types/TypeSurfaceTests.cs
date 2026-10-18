@@ -24,7 +24,7 @@ public class TypeSurfaceTests : System.IAsyncDisposable
 
     [Test] public async Task ADatetime_ItsPartsAreNumbers_ItsWeekdayANamedText()
     {
-        await Ctx.Variable.Set("dt", new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 10, 3, 9, 30, 0, System.TimeSpan.Zero)));
+        await Ctx.Variable.Set("dt", new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 10, 3, 9, 30, 0, System.TimeSpan.Zero), _app.type.list[typeof(global::app.type.item.datetime.@this)]));
 
         await Assert.That((await Read("dt.year")).Peek() is global::app.type.item.number.@this).IsTrue();
         await Assert.That((await Read("dt.weekday")).Peek().ToString()).IsEqualTo("Saturday");

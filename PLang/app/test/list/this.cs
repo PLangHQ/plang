@@ -15,7 +15,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     public @this(global::app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
     {
         _app = app;
-        Report = new(this);
+        Report = new(this, app.type.list);
     }
 
     /// <summary>What the run comes to.</summary>
