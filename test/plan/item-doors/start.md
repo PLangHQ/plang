@@ -41,6 +41,13 @@ var value = await context.App.type.list["text"].Make("x", context);  // the type
 
 The coder's option of a cached stand-in stamped later by `Create` was ruled out: it's the late-stamp smell and it keeps the bare type.
 
+**Whether a value is a template is the build's decision, read from the `.pr` (896).** Ingi: "today it should be decided at build time, from the .pr file" → "lets go with a". A row's type carries `"template": "plang"` and the row lists its variables (`os/system/builder/.build/emitbuildevent.pr:47–62`); the reader takes that type from the row (`goal/step/action/serializer/Reader.cs:129`, `:147`, `:155`).
+- A row's own value is born with the row's type and stores the variables the row lists. Text's second check in its constructor (`text/this.cs:353–358`) goes.
+- dict and list are born with the type the reader hands them, the row's template mode, as today (`type/item/serializer/json.cs:165`, `:173`).
+- A container's inner slot has no mark of its own. A text slot is a template when its content holds one of the row's variables. It is matched against the row's list, never parsed on load. A slot holding none stays a raw string (`json.cs:68`), so its canonical form and signing don't change. The match is in one place, not in each reader.
+- A template with no `.pr` list (one made while building) is parsed by whoever makes it, as today.
+- Checks: every `.pr` read and written again byte-equal, and the signing tests.
+
 ### 1b. A list's rows are made when read (agreed, 890; built after stage 1's step 3)
 
 Ingi spotted `_hasWrapped` in `list/this.cs:64` ("everytime I see some bool or name like wrapped, it feels wrong design"). Today a list can hold a C# list's rows raw. A row read is made into a value and written back into its slot (`Element`/`Keep`, `:178–192`), and the flag records that a slot has changed, so a never-touched list can go back to C# as the same object (`:653`). The list's own comment says rows are never cached back (`:31–35`), so the comment and the code disagree. Making every row up front is wrong for a billion rows (Ingi). Neither is two fields for the rows (Ingi: "_source and _own is double storage").
