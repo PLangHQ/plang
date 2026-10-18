@@ -565,7 +565,9 @@ public partial class @this
             Fail(chosen.Error!);
             return null;
         }
-        return value.Refuses(new global::app.type.@this(typeof(T)), this) ? null : T.Create(value, null, this);
+        // T is made by the app's type for it: this Data's asker names the app
+        var type = Context?.App.type.list[typeof(T)];
+        return value.Refuses(type ?? new global::app.type.@this(typeof(T)), this) ? null : T.Create(value, type, this);
     }
 
     /// <summary>

@@ -19,5 +19,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         => reader.Null()
             ? new global::app.type.item.@null.@this("time", kind)
             : new global::app.type.item.time.@this(System.TimeOnly.Parse(
-                reader.String(), System.Globalization.CultureInfo.InvariantCulture));
+                reader.String(), System.Globalization.CultureInfo.InvariantCulture),
+                ctx.Context.App.type.list[typeof(global::app.type.item.time.@this)]);
 }

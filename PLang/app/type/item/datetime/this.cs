@@ -57,23 +57,32 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(System.DateTime value, global::app.type.@this? type = null) : this(new System.DateTimeOffset(value), type) { }
 
     // ---- Parts: each a plang value (%now.year%, %now.weekday%) ----
-    [LlmBuilder] public global::app.type.item.number.@this Year => Value.Year;
-    [LlmBuilder] public global::app.type.item.number.@this Month => Value.Month;
-    [LlmBuilder] public global::app.type.item.number.@this Day => Value.Day;
-    [LlmBuilder] public global::app.type.item.number.@this Hour => Value.Hour;
-    [LlmBuilder] public global::app.type.item.number.@this Minute => Value.Minute;
-    [LlmBuilder] public global::app.type.item.number.@this Second => Value.Second;
-    [LlmBuilder] public global::app.type.item.number.@this Millisecond => Value.Millisecond;
-    [LlmBuilder] public global::app.type.item.number.@this Ticks => Value.Ticks;
+    // each part is made by the asker's app, through its type for the part
+    [LlmBuilder] public global::app.type.item.number.@this Year(global::app.actor.context.@this context) => Number(Value.Year, context);
+    [LlmBuilder] public global::app.type.item.number.@this Month(global::app.actor.context.@this context) => Number(Value.Month, context);
+    [LlmBuilder] public global::app.type.item.number.@this Day(global::app.actor.context.@this context) => Number(Value.Day, context);
+    [LlmBuilder] public global::app.type.item.number.@this Hour(global::app.actor.context.@this context) => Number(Value.Hour, context);
+    [LlmBuilder] public global::app.type.item.number.@this Minute(global::app.actor.context.@this context) => Number(Value.Minute, context);
+    [LlmBuilder] public global::app.type.item.number.@this Second(global::app.actor.context.@this context) => Number(Value.Second, context);
+    [LlmBuilder] public global::app.type.item.number.@this Millisecond(global::app.actor.context.@this context) => Number(Value.Millisecond, context);
+    [LlmBuilder] public global::app.type.item.number.@this Ticks(global::app.actor.context.@this context) => Number(Value.Ticks, context);
 
     /// <summary>The day of the week by its name (<c>Monday</c>).</summary>
-    [LlmBuilder] public global::app.type.item.text.@this Weekday => Value.DayOfWeek.ToString();
+    [LlmBuilder] public global::app.type.item.text.@this Weekday(global::app.actor.context.@this context)
+        => (global::app.type.item.text.@this)context.App.type.list["text"].Make(Value.DayOfWeek.ToString(), context);
 
     // Compound parts carry their own plang type: the calendar day is a `date`, the
     // wall-clock time a `time`, the zone offset a `duration`.
-    [LlmBuilder] public global::app.type.item.date.@this Date => new(System.DateOnly.FromDateTime(Value.Date));
-    [LlmBuilder] public global::app.type.item.time.@this Time => new(System.TimeOnly.FromTimeSpan(Value.TimeOfDay));
-    [LlmBuilder] public global::app.type.item.duration.@this Offset => new(Value.Offset);
+    [LlmBuilder] public global::app.type.item.date.@this Date(global::app.actor.context.@this context)
+        => new(System.DateOnly.FromDateTime(Value.Date), context.App.type.list[typeof(global::app.type.item.date.@this)]);
+    [LlmBuilder] public global::app.type.item.time.@this Time(global::app.actor.context.@this context)
+        => new(System.TimeOnly.FromTimeSpan(Value.TimeOfDay), context.App.type.list[typeof(global::app.type.item.time.@this)]);
+    [LlmBuilder] public global::app.type.item.duration.@this Offset(global::app.actor.context.@this context)
+        => (global::app.type.item.duration.@this)context.App.type.list[typeof(global::app.type.item.duration.@this)].Make(Value.Offset, context);
+
+    // a number part, made by the app's number type
+    private static global::app.type.item.number.@this Number(object part, global::app.actor.context.@this context)
+        => (global::app.type.item.number.@this)context.App.type.list["number"].Make(part, context);
 
     /// <summary>Bare ISO round-trip form — the serializer renders this.</summary>
     public override string ToString() =>

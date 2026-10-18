@@ -18,13 +18,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override bool IsLeaf => true;
     public override void Write(global::app.type.format.IWriter w) => w.String(ToString());
 
-    public @this(System.TimeOnly value, global::app.type.@this? type = null)
-        : base(type ?? new global::app.type.@this(typeof(@this))) { Value = value; }
+    /// <summary>Born holding the app's <c>time</c> type its maker hands it.</summary>
+    public @this(System.TimeOnly value, global::app.type.@this type) : base(type) { Value = value; }
 
     /// <summary>THE PURE CORE — a <c>time</c> passes through; a TimeOnly/DateTime/DateTimeOffset or
-    /// an ISO <c>HH:mm:ss</c> string parses; anything else declines (<c>null</c>). Shared by the
-    /// ICreate courier and comparison coercion.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? type = null)
+    /// an ISO <c>HH:mm:ss</c> string parses into a time of <paramref name="type"/>; anything else declines
+    /// (<c>null</c>). Shared by the ICreate courier and comparison coercion.</summary>
+    public static @this? Create(object? raw, global::app.type.@this type)
     {
         if (raw is @this self) return self;
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
@@ -43,7 +43,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// on <paramref name="data"/> (a bad ISO string vs a wrong type).</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Create(value, declared) is { } built) return built;
+        if (value is @this self) return self;
+        // made by the type that asks; with none (a read that names no app) no time is made
+        if (declared is { } type && Create(value, type) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as time — expected ISO HH:mm:ss.", "TimeParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to time.", "TimeConversionFailed", 400));

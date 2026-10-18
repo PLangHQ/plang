@@ -38,9 +38,10 @@ public sealed class @this : global::app.type.item.setting.@this
     public global::app.type.item.text.@this? Exclusion(global::app.test.@this test, global::app.actor.context.@this context)
     {
         var tags = test.Tags.Items().ToHashSet();
+        var type = context.App.type.list[typeof(global::app.type.item.tag.@this)];
         // Each filter row is taken out as a value (a list set from the CLI holds its raw rows).
         bool Carries(global::app.type.item.list.@this<global::app.type.item.text.@this> filter)
-            => filter.Items(context).Any(row => global::app.type.item.tag.@this.Create(row.Peek()) is { } tag && tags.Contains(tag));
+            => filter.Items(context).Any(row => global::app.type.item.tag.@this.Create(row.Peek(), type) is { } tag && tags.Contains(tag));
 
         if (Exclude.CountRaw > 0 && Carries(Exclude)) return "excluded by tag";
         if (Include.CountRaw > 0 && !Carries(Include)) return "no include match";

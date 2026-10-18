@@ -14,5 +14,5 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.type.format.IReader, allows ref struct
         => reader.Null()
             ? new global::app.type.item.@null.@this("tag", kind)
-            : new global::app.type.item.tag.@this(reader.String());
+            : new global::app.type.item.tag.@this(reader.String(), ctx.Context.App.type.list[typeof(global::app.type.item.tag.@this)]);
 }

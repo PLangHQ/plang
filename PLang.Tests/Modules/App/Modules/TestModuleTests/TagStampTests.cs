@@ -19,7 +19,7 @@ public class TagStampTests
         var refused = await goal.Step.Read("", context);
 
         await Assert.That(refused?.Message).IsNull();
-        await Assert.That(goal.Tag.Has(new global::app.type.item.tag.@this("skip"))).IsTrue();
+        await Assert.That(goal.Tag.Has(new global::app.type.item.tag.@this("skip", app.type.list[typeof(global::app.type.item.tag.@this)]))).IsTrue();
         await Assert.That(await context.Pr(goal)).Contains("\"tag\"");
         var test = await global::app.test.@this.From(goal, context);
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);

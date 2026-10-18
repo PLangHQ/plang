@@ -8,7 +8,7 @@ namespace app.type.item.input.modifier.list;
 public sealed class @this : global::app.type.item.@this
 {
     // the screen's wire count for each key, as DevTools counts them
-    private static readonly (string Name, int Code)[] Known = [("alt", 1), ("ctrl", 2), ("meta", 4), ("shift", 8)];
+    private const int Alt = 1, Ctrl = 2, Meta = 4, Shift = 8;
 
     private readonly modifier.@this[] _held;
 
@@ -17,7 +17,8 @@ public sealed class @this : global::app.type.item.@this
 
     /// <summary>The keys held in <paramref name="code"/>, the screen's wire count — where an input comes in.</summary>
     internal @this(int code)
-        => _held = Known.Where(k => (code & k.Code) != 0).Select(k => new modifier.@this(k.Name, k.Code)).ToArray();
+        => _held = new (string Name, int Code)[] { ("alt", Alt), ("ctrl", Ctrl), ("meta", Meta), ("shift", Shift) }
+            .Where(k => (code & k.Code) != 0).Select(k => new modifier.@this(k.Name, k.Code)).ToArray();
 
     /// <summary>Its code on the screen's wire: each key held, counted once.</summary>
     internal int Code => _held.Aggregate(0, (code, modifier) => code | modifier.Code);

@@ -1401,7 +1401,7 @@ class app.type.item.date.this : app.type.item.this, System.IEquatable<app.type.i
   Month : System.Int32 { get; }
   Value : System.DateOnly { get; }
   Year : System.Int32 { get; }
-  ctor(System.DateOnly value, app.type.this type = …)
+  ctor(System.DateOnly value, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
@@ -1409,7 +1409,7 @@ class app.type.item.date.this : app.type.item.this, System.IEquatable<app.type.i
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  static Create(System.Object raw, app.type.this type = …) : app.type.item.date.this
+  static Create(System.Object raw, app.type.this type) : app.type.item.date.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.date.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
   static Shape : System.String { get; }
@@ -1421,20 +1421,20 @@ class app.type.item.datetime.serializer.Reader : app.type.reader.ITypeReader
 
 class app.type.item.datetime.this : app.type.item.this, System.IEquatable<app.type.item.datetime.this>, app.type.item.ICreate<app.type.item.datetime.this> [PlangType]
   AreEqual(System.Object other) : System.Boolean
-  Date : app.type.item.date.this { get; } [LlmBuilder]
-  Day : app.type.item.number.this { get; } [LlmBuilder]
+  Date(app.actor.context.this context) : app.type.item.date.this [LlmBuilder]
+  Day(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
   Equals(app.type.item.datetime.this other) : System.Boolean
-  Hour : app.type.item.number.this { get; } [LlmBuilder]
-  Millisecond : app.type.item.number.this { get; } [LlmBuilder]
-  Minute : app.type.item.number.this { get; } [LlmBuilder]
-  Month : app.type.item.number.this { get; } [LlmBuilder]
-  Offset : app.type.item.duration.this { get; } [LlmBuilder]
-  Second : app.type.item.number.this { get; } [LlmBuilder]
-  Ticks : app.type.item.number.this { get; } [LlmBuilder]
-  Time : app.type.item.time.this { get; } [LlmBuilder]
+  Hour(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Millisecond(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Minute(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Month(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Offset(app.actor.context.this context) : app.type.item.duration.this [LlmBuilder]
+  Second(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Ticks(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Time(app.actor.context.this context) : app.type.item.time.this [LlmBuilder]
   Value : System.DateTimeOffset { get; }
-  Weekday : app.type.item.text.this { get; } [LlmBuilder]
-  Year : app.type.item.number.this { get; } [LlmBuilder]
+  Weekday(app.actor.context.this context) : app.type.item.text.this [LlmBuilder]
+  Year(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
   ctor(System.DateTime value, app.type.this type = …)
   ctor(System.DateTimeOffset value, app.type.this type = …)
   override Equals(System.Object obj) : System.Boolean
@@ -1540,12 +1540,12 @@ class app.type.item.duration.serializer.Reader : app.type.reader.ITypeReader
 
 class app.type.item.duration.this : app.type.item.this, System.IEquatable<app.type.item.duration.this>, app.type.item.ICreate<app.type.item.duration.this> [PlangType]
   AreEqual(System.Object other) : System.Boolean
-  Days : app.type.item.number.this { get; } [LlmBuilder]
+  Days(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
   Equals(app.type.item.duration.this other) : System.Boolean
-  Hours : app.type.item.number.this { get; } [LlmBuilder]
-  Milliseconds : app.type.item.number.this { get; } [LlmBuilder]
-  Minutes : app.type.item.number.this { get; } [LlmBuilder]
-  Seconds : app.type.item.number.this { get; } [LlmBuilder]
+  Hours(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Milliseconds(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Minutes(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
+  Seconds(app.actor.context.this context) : app.type.item.number.this [LlmBuilder]
   Text : System.String { get; }
   Value : System.TimeSpan { get; }
   ctor(System.TimeSpan value)
@@ -1591,7 +1591,7 @@ class app.type.item.guid.this : app.type.item.this, System.IEquatable<app.type.i
   AreEqual(System.Object other) : System.Boolean
   Equals(app.type.item.guid.this other) : System.Boolean
   Value : System.Guid { get; }
-  ctor(System.Guid value, app.type.this type = …)
+  ctor(System.Guid value, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
@@ -1600,7 +1600,7 @@ class app.type.item.guid.this : app.type.item.this, System.IEquatable<app.type.i
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  static Create(System.Object raw, app.type.this type = …) : app.type.item.guid.this
+  static Create(System.Object raw, app.type.this type) : app.type.item.guid.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.guid.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
   static Resolve(System.String raw, app.actor.context.this context) : app.type.item.guid.this
@@ -2639,7 +2639,7 @@ class app.type.item.tag.this : app.type.item.this, System.IEquatable<app.type.it
   AreEqual(System.Object other) : System.Boolean
   Equals(app.type.item.tag.this other) : System.Boolean
   Value : System.String { get; }
-  ctor(System.String value, app.type.this type = …)
+  ctor(System.String value, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
@@ -2648,7 +2648,7 @@ class app.type.item.tag.this : app.type.item.this, System.IEquatable<app.type.it
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  static Create(System.Object raw, app.type.this type = …) : app.type.item.tag.this
+  static Create(System.Object raw, app.type.this type) : app.type.item.tag.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.tag.this
   static Shape : System.String { get; }
 
@@ -2814,7 +2814,7 @@ class app.type.item.time.this : app.type.item.this, System.IEquatable<app.type.i
   Minute : System.Int32 { get; }
   Second : System.Int32 { get; }
   Value : System.TimeOnly { get; }
-  ctor(System.TimeOnly value, app.type.this type = …)
+  ctor(System.TimeOnly value, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
@@ -2822,7 +2822,7 @@ class app.type.item.time.this : app.type.item.this, System.IEquatable<app.type.i
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  static Create(System.Object raw, app.type.this type = …) : app.type.item.time.this
+  static Create(System.Object raw, app.type.this type) : app.type.item.time.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.time.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
   static Shape : System.String { get; }

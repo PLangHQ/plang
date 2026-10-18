@@ -179,7 +179,7 @@ public class TestingClassTests
             Name = "T",
             Path = global::app.type.item.path.@this.Resolve("/test/T.test.goal", _app.actor.list.User.Context)
         };
-        goal.Tag.Add(new global::app.type.item.tag.@this(tag));
+        goal.Tag.Add(new global::app.type.item.tag.@this(tag, _app.type.list[typeof(global::app.type.item.tag.@this)]));
         return goal;
     }
 
@@ -228,9 +228,9 @@ public class TestingClassTests
         setting.Apply(new Dictionary<string, object?>(), context);
         setting.Include.Add(new global::app.type.item.text.@this("fast"));
         var slow = new global::app.test.@this(_app.type.list) { Goal = TaggedGoal("slow") };
-        slow.Tags.Add(new global::app.type.item.tag.@this("slow"));
+        slow.Tags.Add(new global::app.type.item.tag.@this("slow", _app.type.list[typeof(global::app.type.item.tag.@this)]));
         var fast = new global::app.test.@this(_app.type.list) { Goal = TaggedGoal("fast") };
-        fast.Tags.Add(new global::app.type.item.tag.@this("fast"));
+        fast.Tags.Add(new global::app.type.item.tag.@this("fast", _app.type.list[typeof(global::app.type.item.tag.@this)]));
 
         await Assert.That(setting.Exclusion(slow, context)?.ToString()).IsEqualTo("no include match");
         await Assert.That(setting.Exclusion(fast, context)).IsNull();
@@ -243,7 +243,7 @@ public class TestingClassTests
     {
         var goal = Make.Goal(_app.actor.list.User.Context, "Covered",
             Make.Step("if %x% is 1", Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", "%x%"), ("Operator", "=="), ("Right", 1))));
-        goal.Tag.Add(new global::app.type.item.tag.@this("skip"));
+        goal.Tag.Add(new global::app.type.item.tag.@this("skip", _app.type.list[typeof(global::app.type.item.tag.@this)]));
         var test = await global::app.test.@this.From(goal, _app.actor.list.User.Context);
 
         await _app.test.list.Start(new global::app.type.item.list.@this<global::app.test.@this>(new[] { test }, _app.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]), _app.actor.list.User.Context);

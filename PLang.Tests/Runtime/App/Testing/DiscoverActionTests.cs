@@ -214,9 +214,9 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("http"), _app.actor.list.User.Context).IsTrue();
-        await file.Tags.Contains(new global::app.type.item.tag.@this("fast"), _app.actor.list.User.Context).IsTrue();
-        await file.Tags.Contains(new global::app.type.item.tag.@this("slow"), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("http", _app.type.list[typeof(global::app.type.item.tag.@this)]), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("fast", _app.type.list[typeof(global::app.type.item.tag.@this)]), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("slow", _app.type.list[typeof(global::app.type.item.tag.@this)]), _app.actor.list.User.Context).IsTrue();
     }
 
     // For each action in the .pr, resolves the handler class (via App.Modules.
@@ -235,7 +235,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("network"), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("network", _app.type.list[typeof(global::app.type.item.tag.@this)]), _app.actor.list.User.Context).IsTrue();
     }
 
     // Sub-goal reached via static goal.call: its actions' capabilities propagate up
@@ -280,7 +280,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("network"), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("network", _app.type.list[typeof(global::app.type.item.tag.@this)]), _app.actor.list.User.Context).IsTrue();
     }
 
     // Config.Include=["fast"]: tests without the "fast" tag are returned as

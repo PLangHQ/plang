@@ -53,13 +53,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var test = new @this(context.App.type.list) { Goal = goal, Reach = reach };
 
         test.Tags.Add(goal.Tag);
+        var tag = context.App.type.list[typeof(global::app.type.item.tag.@this)];
         foreach (var reached in reach)
             foreach (var step in reached.Step.Items())
                 foreach (var action in step.Code.Items())
                     foreach (var required in action.Requirement)
-                        if (global::app.type.item.tag.@this.Create(required) is { } tag) test.Tags.Add(tag);
+                        if (global::app.type.item.tag.@this.Create(required, tag) is { } made) test.Tags.Add(made);
 
-        if (goal.Tag.Has(new global::app.type.item.tag.@this("skip")))
+        if (goal.Tag.Has(new global::app.type.item.tag.@this("skip", tag)))
         {
             test.Status = Status.Skipped;
             test.StatusReason = "tagged 'skip'";

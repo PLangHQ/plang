@@ -8,13 +8,17 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // datetime.@this is backed by DateTimeOffset, also accepts CLR DateTime on construction.
 // Implements IOrderableValue (instant compare), IEquatableValue, item truthiness.
 // Bare wire form is ISO ("o").
-public class DateTimeWrapperTests
+public class DateTimeWrapperTests : IAsyncDisposable
 {
+    private readonly global::app.@this _app = new global::app.@this("/app").Testing();
+    public async ValueTask DisposeAsync() => await _app.DisposeAsync();
+    private global::app.actor.context.@this Context => _app.actor.list.User.Context;
+
     [Test]
     public async Task DateTime_AcceptsClrDateTime_LandsAsDatetime()
     {
         var dt = new DateTimeT(new System.DateTime(2024, 3, 15, 10, 30, 0, System.DateTimeKind.Utc));
-        await Assert.That(dt.Year).IsEqualTo(2024);
+        await Assert.That(dt.Year(Context)).IsEqualTo(2024);
         await Assert.That(dt.Value).IsTypeOf<System.DateTimeOffset>();
     }
 
@@ -49,12 +53,12 @@ public class DateTimeWrapperTests
     public async Task DateTime_Parts_YearMonthDayHourMinuteSecond()
     {
         var dt = new DateTimeT(System.DateTimeOffset.Parse("2024-03-15T10:30:45Z"));
-        await Assert.That(dt.Year).IsEqualTo(2024);
-        await Assert.That(dt.Month).IsEqualTo(3);
-        await Assert.That(dt.Day).IsEqualTo(15);
-        await Assert.That(dt.Hour).IsEqualTo(10);
-        await Assert.That(dt.Minute).IsEqualTo(30);
-        await Assert.That(dt.Second).IsEqualTo(45);
+        await Assert.That(dt.Year(Context)).IsEqualTo(2024);
+        await Assert.That(dt.Month(Context)).IsEqualTo(3);
+        await Assert.That(dt.Day(Context)).IsEqualTo(15);
+        await Assert.That(dt.Hour(Context)).IsEqualTo(10);
+        await Assert.That(dt.Minute(Context)).IsEqualTo(30);
+        await Assert.That(dt.Second(Context)).IsEqualTo(45);
     }
 
     [Test]

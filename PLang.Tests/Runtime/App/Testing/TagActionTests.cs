@@ -29,7 +29,7 @@ public class TagActionTests
     private global::app.data.@this<global::app.type.item.list.@this> Tags(params string[] tags) =>
         new("Tags", global::PLang.Tests.Shared.Make.List(tags, Ctx));
 
-    private static global::app.type.item.tag.@this T(string value) => new(value);
+    private global::app.type.item.tag.@this T(string value) => new(value, Ctx.App.type.list[typeof(global::app.type.item.tag.@this)]);
 
     [Test]
     public async Task Build_StampsTheGoalBeingBuilt()
