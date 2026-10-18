@@ -112,12 +112,12 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
 
 class app.call.setting.diff.this : app.type.item.setting.this
   Deep : app.type.item.bool.this { get; set; } [Out, Store]
-  ctor()
+  ctor(app.type.this type)
   static Internal : System.Boolean { get; }
 
 class app.call.setting.frame.this : app.type.item.setting.this
   Max : app.type.item.number.this { get; set; } [Out, Store]
-  ctor()
+  ctor(app.type.this type)
   static Internal : System.Boolean { get; }
 
 class app.call.setting.this : app.type.item.setting.this
@@ -126,7 +126,7 @@ class app.call.setting.this : app.type.item.setting.this
   History : app.type.item.bool.this { get; set; } [Out, Store]
   Tags : app.type.item.bool.this { get; set; } [Out, Store]
   Timing : app.type.item.bool.this { get; set; } [Out, Store]
-  ctor()
+  ctor(app.type.this type)
   static Internal : System.Boolean { get; }
 
 class app.call.this : app.type.item.this, System.IAsyncDisposable
@@ -2477,8 +2477,8 @@ class app.type.item.setting.action.this : app.type.item.setting.this
   static Internal : System.Boolean { get; }
 
 class app.type.item.setting.module.this : app.type.item.setting.this
-  ctor()
   ctor(System.String module)
+  ctor(app.type.this type)
   override Set(System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.this>
   static Internal : System.Boolean { get; }
 
@@ -2488,14 +2488,13 @@ class app.type.item.setting.this : app.type.item.this, app.type.item.ICreate<app
   Enabled : app.type.item.bool.this { get; set; } [Out, Store]
   Path : System.String { get; }
   Rows(app.actor.context.this context) : app.type.property.list.this
-  ctor()
-  ctor(System.String path)
+  ctor(System.String path, app.type.this type = …)
+  ctor(app.type.this type)
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
   override Set(System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.this>
   protected Write(System.String key, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  protected override Type : app.type.this { get; }
   protected virtual Next(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.setting.this
 
@@ -2549,7 +2548,7 @@ class app.type.item.size.serializer.Reader : app.type.reader.ITypeReader
 
 class app.type.item.size.setting.this : app.type.item.setting.this
   Standard : app.type.item.choice.this<app.type.item.size.kind.this> { get; set; } [Out, Store]
-  ctor()
+  ctor(app.type.this type)
   static Internal : System.Boolean { get; }
 
 class app.type.item.size.this : app.type.item.this, System.IEquatable<app.type.item.size.this>, app.type.item.ICreate<app.type.item.size.this>, app.type.item.setting.ISetting<app.type.item.size.setting.this> [PlangType]

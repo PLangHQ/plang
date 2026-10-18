@@ -213,7 +213,7 @@ public class QueryConversationTests
     [Test]
     public async Task TheKey_DefaultsToTheEnvironment_AndNeverShows()
     {
-        var llm = new global::app.module.llm.setting.@this();
+        var llm = new global::app.module.llm.setting.@this(new global::app.type.@this(typeof(global::app.module.llm.setting.@this)));
         await Assert.That(llm.Key.ToString()).IsEqualTo(System.Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "");
 
         llm.Key = "sk-never-shown";

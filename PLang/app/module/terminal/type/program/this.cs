@@ -34,7 +34,7 @@ public sealed partial class @this(IProgram asked)
     internal bool Pipe { get; private set; }
 
     /// <summary>The terminal's settings it runs by: the actor's, or the defaults for a start trusted by its origin.</summary>
-    internal setting.@this Setting { get; private set; } = new();
+    internal setting.@this Setting { get; private set; } = new(new global::app.type.@this(typeof(setting.@this)));
 
     /// <summary>The program found and permitted, with its arguments, environment and folder, held when the step gives
     /// it permissions; or why not (null when ready).</summary>
@@ -54,7 +54,7 @@ public sealed partial class @this(IProgram asked)
                 $"The step gives the program permissions, but {named} holds none — leave Permission out to run it free.", "PermissionInvalid", 400));
         if (await Found(held: given != null) is { } failed) return failed;
         // a start trusted by its origin runs by the terminal's defaults, none of the actor's settings (579)
-        Setting = Trusted ? new() : context.Setting.Of<setting.@this>();
+        Setting = Trusted ? new(context.App.type.list[typeof(setting.@this)]) : context.Setting.Of<setting.@this>();
         if (given == null) return null;
         var (sandbox, refused) = await Sandbox.Of(given.Rows(context), File!, context);
         Sandbox = sandbox;

@@ -49,7 +49,7 @@ public class SettingRowTests
 
     // The values a saved row's typed-list option holds, as the next App reads it back.
     private static async Task<List<string>> Listed<T>(global::app.@this app, System.Func<T, global::app.type.item.list.@this> option)
-        where T : global::app.type.item.setting.@this, new()
+        where T : global::app.type.item.setting.@this
     {
         await app.actor.list.User.Setting.Load();
         var values = new List<string>();

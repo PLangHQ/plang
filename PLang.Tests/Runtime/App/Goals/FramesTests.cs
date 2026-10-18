@@ -69,7 +69,7 @@ public class FramesTests
     [Test]
     public async Task AStepsAfterBinding_ReadsItsTimeOffItsFrame()
     {
-        await _app.actor.list.System.Setting.Set(new global::app.call.setting.@this().Path + ".timing", _app.actor.list.System.Context.Ok(true));
+        await _app.actor.list.System.Setting.Set(new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Path + ".timing", _app.actor.list.System.Context.Ok(true));
         var (caller, _) = await CallerAndCallee();
 
         var took = new List<TimeSpan?>();

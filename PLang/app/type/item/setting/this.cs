@@ -12,22 +12,24 @@ namespace app.type.item.setting;
 [global::app.Attributes.PlangType("setting")]
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    /// <summary>A node: the path it stands for.</summary>
-    public @this(string path) => Path = path;
+    /// <summary>A node: the path it stands for, born holding its type (the base setting when none is given).</summary>
+    public @this(string path, global::app.type.@this? type = null)
+        : base(type ?? new global::app.type.@this(typeof(@this))) => Path = path;
 
-    /// <summary>A class of options: its path is its namespace — a module's read from the module, so
-    /// <c>app.module.llm.setting</c> is <c>llm.setting</c>; a type's read where types are, at <c>app.type</c>, so
-    /// <c>app.type.item.size.setting</c> is <c>app.type.size.setting</c>. A class declared inside what it configures
-    /// (an action's: <c>app.module.llm.decider.setting</c>, the action being a class) is read the same way, through
-    /// its owner: <c>llm.decider.setting</c>.</summary>
-    protected @this()
+    /// <summary>A class of options, born holding its type (the app's list hands it its own class's type). Its path is
+    /// its namespace — a module's read from the module, so <c>app.module.llm.setting</c> is <c>llm.setting</c>; a
+    /// type's read where types are, at <c>app.type</c>, so <c>app.type.item.size.setting</c> is
+    /// <c>app.type.size.setting</c>. A class declared inside what it configures (an action's:
+    /// <c>app.module.llm.decider.setting</c>, the action being a class) is read the same way, through its owner:
+    /// <c>llm.decider.setting</c>.</summary>
+    protected @this(global::app.type.@this type) : base(type)
     {
         var path = GetType() is { DeclaringType: { } owner } declared
             ? $"{declared.Namespace}.{owner.Name}.{declared.Name}"
             : GetType().Namespace!;
-        const string module = "app.module.", type = "app.type.item.";
+        const string module = "app.module.", at = "app.type.item.";
         Path = path.StartsWith(module) ? path[module.Length..]
-            : path.StartsWith(type) ? "app.type." + path[type.Length..]
+            : path.StartsWith(at) ? "app.type." + path[at.Length..]
             : path;
     }
 
@@ -57,7 +59,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             && declared?.ClrType is { IsAbstract: false } clr && typeof(@this).IsAssignableFrom(clr)
             && clr != typeof(@this))
         {
-            var fresh = (@this)System.Activator.CreateInstance(clr)!;
+            var fresh = (@this)System.Activator.CreateInstance(clr, data.Context.App.type.list[clr])!;
             // each option the record holds, read through the option's own type in Apply (the convert walk the
             // CLI flags take); a field that is no option of this class (the base's Enabled, a dropped option) is
             // not applied — the class takes only its own.
@@ -90,14 +92,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         => new($"setting '{key}' was saved in an older shape and can't be read — delete it and set it again.",
             "SettingsUnreadable", 400) { list = cause is { } c ? new() { c } : new() };
 
-    /// <summary>A settings CLASS is its own type, named like any type by its namespace
-    /// (<c>app.module.llm.setting</c>) — settings are settings, not kinds (decision 774); a saved row
-    /// reads back into its class by its KEY (the path), never by a kind. A bare NODE (a module/action
-    /// with no class) is a value of the base <c>setting</c> type.</summary>
-    protected internal override global::app.type.@this Type
-        => GetType() == typeof(@this)
-            ? new(NameOf(typeof(@this)), typeof(@this))
-            : new(NameOf(GetType()), GetType());
 
     /// <summary>A structure — written through the reflection kind, its [Out] members.</summary>
     public override bool IsLeaf => false;
@@ -246,12 +240,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     // A composite the walk found null: one that takes a context gets the asker's; else parameterless.
     private object Construct(System.Type t, global::app.actor.context.@this context)
-    {
-        var withContext = t.GetConstructor(new[] { typeof(global::app.actor.context.@this) });
-        return withContext != null
-            ? withContext.Invoke(new object[] { context })
-            : System.Activator.CreateInstance(t)!;
-    }
+        => System.Activator.CreateInstance(t, context.App.type.list[t])!;
 
     /// <summary>The option named <paramref name="key"/> — a public settable property this class declares
     /// (the base's own members are not options); null when there is none.</summary>

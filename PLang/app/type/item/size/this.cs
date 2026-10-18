@@ -32,7 +32,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         : this(bytes, context.Setting.Of<setting.@this>().Standard.Value) { }
 
     // a count with no asker: the setting's own default
-    private @this(long bytes) : this(bytes, new setting.@this().Standard.Value) { }
+    private @this(long bytes) : this(bytes, new setting.@this(new global::app.type.@this(typeof(setting.@this))).Standard.Value) { }
 
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);

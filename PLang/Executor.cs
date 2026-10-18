@@ -69,10 +69,11 @@ namespace PLang
 			// user falls back to it): --debug → %!debug%, --test → %!app.test.setting%, --app →
 			// %!app.setting%, --callstack → %!app.call.setting% (both actors' call stacks read it),
 			// --build → %!build.setting%. A key that isn't one of the class's options is refused.
-			global::app.data.@this? Flag<TSetting>(string name) where TSetting : global::app.type.item.setting.@this, new()
+			global::app.data.@this? Flag<TSetting>(string name) where TSetting : global::app.type.item.setting.@this
 			{
 				if (!parameters.TryGetValue(name, out var value) || value is not IDictionary<string, object?> dict) return null;
-				var set = app.actor.list.System.Setting.Set(new TSetting().Path, dict);
+				var path = ((TSetting)System.Activator.CreateInstance(typeof(TSetting), app.type.list[typeof(TSetting)])!).Path;
+				var set = app.actor.list.System.Setting.Set(path, dict);
 				return set.Success ? null : set;
 			}
 
@@ -100,7 +101,7 @@ namespace PLang
 			// A debug run shows each step's time: this run's call stacks time their frames. An explicit
 			// --callstack={"timing":false} below still has the last word.
 			if (app.Debug != null)
-				app.actor.list.System.Setting.Set(new global::app.call.setting.@this().Path, new Dictionary<string, object?> { ["timing"] = true });
+				app.actor.list.System.Setting.Set(new global::app.call.setting.@this(app.type.list[typeof(global::app.call.setting.@this)]).Path, new Dictionary<string, object?> { ["timing"] = true });
 
 			// Each actor owns its own call tree; both read the one setting (the user's falls back to the
 			// system's). (Service actors are spawned later — carrying the flag to them is a separate concern.)
@@ -123,7 +124,7 @@ namespace PLang
 				// The run's value is in memory, so the sync Configure sets it at once.
 				var cache = app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Cache;
 				if (cache.Value == global::app.module.cache.type.cache.skip)
-					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this().Path + ".cache", app.actor.list.System.Context.Ok(cache))
+					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this(app.type.list[typeof(global::app.module.llm.setting.@this)]).Path + ".cache", app.actor.list.System.Context.Ok(cache))
 						.GetAwaiter().GetResult();
 			}
 

@@ -83,7 +83,7 @@ public class SettingOwnerTests
         await using var app = new global::app.@this("/test").Testing();
         // as the CLI does it: build mode born, then the flag's values written
         app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
-        var path = new global::app.module.build.setting.@this().Path;
+        var path = new global::app.module.build.setting.@this(new global::app.type.@this(typeof(global::app.module.build.setting.@this))).Path;
         await app.actor.list.System.Setting.Set(path, new Dictionary<string, object?> { ["cache"] = "skip" }).IsSuccess();
 
         foreach (var ctx in new[] { app.actor.list.System.Context, app.actor.list.User.Context })
@@ -109,7 +109,7 @@ public class SettingOwnerTests
         {
             await using (var first = new global::app.@this(dir))
             {
-                var saved = new global::app.test.setting.@this { Timeout = System.TimeSpan.FromSeconds(7) };
+                var saved = new global::app.test.setting.@this(new global::app.type.@this(typeof(global::app.test.setting.@this))) { Timeout = System.TimeSpan.FromSeconds(7) };
                 await (await first.actor.list.System.Setting.Save(saved)).IsSuccess();
             }
 

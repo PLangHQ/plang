@@ -12,7 +12,7 @@ public static class TestCalls
         var settings = new global::app.actor.setting.@this(App.actor.list.User.Context);
         if (options != null)
         {
-            var set = settings.Set(new global::app.call.setting.@this().Path, options);
+            var set = settings.Set(new global::app.call.setting.@this(App.type.list[typeof(global::app.call.setting.@this)]).Path, options);
             if (!set.Success) throw new System.InvalidOperationException(set.Error!.Message);
         }
         return () => settings;

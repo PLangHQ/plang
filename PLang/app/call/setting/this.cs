@@ -6,6 +6,9 @@ namespace app.call.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {
+    /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
     /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
     public static bool Internal => true;
 
@@ -13,7 +16,7 @@ public sealed class @this : global::app.type.item.setting.@this
     [Out, Store] public global::app.type.item.@bool.@this Timing { get; set; } = global::app.type.item.@bool.@this.False;
 
     /// <summary>The variable changes a call makes — scalars only, unless <c>diff.deep</c>.</summary>
-    [Out, Store] public diff.@this Diff { get; set; } = new();
+    [Out, Store] public diff.@this Diff { get; set; } = new(new global::app.type.@this(typeof(diff.@this)));
 
     /// <summary>A hint for exporters; a call's own tags are written either way.</summary>
     [Out, Store] public global::app.type.item.@bool.@this Tags { get; set; } = global::app.type.item.@bool.@this.False;
@@ -22,5 +25,5 @@ public sealed class @this : global::app.type.item.setting.@this
     [Out, Store] public global::app.type.item.@bool.@this History { get; set; } = global::app.type.item.@bool.@this.False;
 
     /// <summary>The frames kept — how many returned calls <see cref="History"/> keeps (<c>frame.max</c>).</summary>
-    [Out, Store] public frame.@this Frame { get; set; } = new();
+    [Out, Store] public frame.@this Frame { get; set; } = new(new global::app.type.@this(typeof(frame.@this)));
 }

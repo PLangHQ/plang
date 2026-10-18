@@ -307,13 +307,14 @@ public sealed class @this : IDisposable
 
     /// <summary>The setting class <typeparamref name="T"/>, as this scope sees it — the class says its own
     /// path (<c>context.Setting.Of&lt;test.setting&gt;()</c>).</summary>
-    public T Of<T>() where T : global::app.type.item.setting.@this, new() => (T)this[Path<T>.Of];
+    public T Of<T>() where T : global::app.type.item.setting.@this => (T)this[Path<T>.Of];
 
     // A setting class's path, read once: a pure fact of T (derived from its namespace), memoized per class as
     // choice<T> holds its set — so a read on every push is a lookup, never a throwaway instance.
-    private static class Path<T> where T : global::app.type.item.setting.@this, new()
+    private static class Path<T> where T : global::app.type.item.setting.@this
     {
-        public static readonly string Of = new T().Path;
+        public static readonly string Of =
+            ((T)System.Activator.CreateInstance(typeof(T), new global::app.type.@this(typeof(T)))!).Path;
     }
 
     /// <summary>The settings <paramref name="owner"/> names with <c>ISetting&lt;T&gt;</c>, as this scope sees
@@ -338,7 +339,7 @@ public sealed class @this : IDisposable
     public async ValueTask<data.@this> Of(System.Type @class)
     {
         await Load();
-        return Instance(((global::app.type.item.setting.@this)Activator.CreateInstance(@class)!).Path);
+        return Instance(((global::app.type.item.setting.@this)Activator.CreateInstance(@class, _context.App.type.list[@class])!).Path);
     }
 
     // The settings class at path, from actor/setting's own path→class index over the settings types
@@ -353,15 +354,15 @@ public sealed class @this : IDisposable
         foreach (var type in _context.App.type.list.Items())
             if (type.ClrType is { } clr && typeof(global::app.type.item.setting.@this).IsAssignableFrom(clr)
                 && clr != typeof(global::app.type.item.setting.@this) && !clr.IsAbstract
-                && clr.GetConstructor(System.Type.EmptyTypes) != null)
-                map[((global::app.type.item.setting.@this)System.Activator.CreateInstance(clr)!).Path] = clr;
+                && clr.GetConstructor(new[] { typeof(global::app.type.@this) }) != null)
+                map[((global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])!).Path] = clr;
         return map;
     }
 
     // A fresh value of the class at path — its defaults; null when no class there. The value stores no
     // context (Rows takes the asker's), so a fresh instance is all it is.
     private global::app.type.item.setting.@this? Make(string path)
-        => Class(path) is { } clr ? (global::app.type.item.setting.@this)System.Activator.CreateInstance(clr)! : null;
+        => Class(path) is { } clr ? (global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])! : null;
 
     /// <summary>A fresh value of the settings class a <paramref name="path"/> names — its defaults; null
     /// when no class names it. What the build's step scope teaches from (its Path and its Rows).</summary>

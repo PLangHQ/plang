@@ -224,7 +224,7 @@ public class TestingClassTests
     public async Task TheSetting_AnswersWhyItLeavesATestOut()
     {
         var context = _app.actor.list.User.Context;
-        var setting = new global::app.test.setting.@this();
+        var setting = new global::app.test.setting.@this(new global::app.type.@this(typeof(global::app.test.setting.@this)));
         setting.Include.Add(new global::app.type.item.text.@this("fast"));
         var slow = new global::app.test.@this { Goal = TaggedGoal("slow") };
         slow.Tags.Add(new global::app.type.item.tag.@this("slow"));

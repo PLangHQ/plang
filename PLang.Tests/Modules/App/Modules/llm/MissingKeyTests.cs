@@ -29,7 +29,7 @@ public class MissingKeyTests
         await using var _ = app;
         var ctx = app.actor.list.User.Context;
 
-        var first = await new global::app.module.llm.setting.@this { Key = "" }.Asked(ctx);
+        var first = await new global::app.module.llm.setting.@this(new global::app.type.@this(typeof(global::app.module.llm.setting.@this))) { Key = "" }.Asked(ctx);
         var again = await ctx.Setting.Of<global::app.module.llm.setting.@this>().Asked(ctx);
         var stored = await new global::app.type.item.variable.@this("%!llm.setting.key%").Start(ctx);
 
@@ -51,7 +51,7 @@ public class MissingKeyTests
         var ctx = app.actor.list.User.Context;
         ctx.Actor!.Channel.Remove(global::app.channel.list.@this.Input, ctx);
 
-        var asked = await new global::app.module.llm.setting.@this { Key = "" }.Asked(ctx);
+        var asked = await new global::app.module.llm.setting.@this(new global::app.type.@this(typeof(global::app.module.llm.setting.@this))) { Key = "" }.Asked(ctx);
 
         await asked.IsFailure();
         await Assert.That(asked.Error!.Key).IsEqualTo("MissingLlmKey");

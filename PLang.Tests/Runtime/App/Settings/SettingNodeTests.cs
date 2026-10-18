@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Settings;
 /// </summary>
 public class SettingNodeTests
 {
-    private static string Path => new global::app.call.setting.@this().Path;
+    private static string Path => new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Path;
 
     private static async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
         => await new global::app.type.item.variable.parser.@this(text).Variable.Single().Start(ctx);
@@ -50,7 +50,7 @@ public class SettingNodeTests
     [Test] public async Task ANode_RefusesAValueThatIsNoBool()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var applied = new global::app.call.setting.@this().Apply(
+        var applied = new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Apply(
             new Dictionary<string, object?> { ["diff"] = 5 }, app.actor.list.System.Context);
 
         await Assert.That(applied.Success).IsFalse();

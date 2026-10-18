@@ -13,10 +13,10 @@ public class @this : global::app.type.item.setting.@this
     private const string Own = ".setting";
 
     /// <summary>A module with no setting class of its own.</summary>
-    public @this(string module) : base(module + Own) { }
+    public @this(string module) : base(module + Own, new global::app.type.@this(typeof(@this))) { }
 
-    /// <summary>A module's own class — its path is the module's, then <c>.setting</c>.</summary>
-    protected @this() { }
+    /// <summary>A module's own class — its path is the module's, then <c>.setting</c>; born holding its type.</summary>
+    protected @this(global::app.type.@this type) : base(type) { }
 
     /// <summary>The module these settings configure — the path before <c>.setting</c>.</summary>
     private string Module => Path[..^Own.Length];

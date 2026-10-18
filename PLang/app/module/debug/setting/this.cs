@@ -5,6 +5,9 @@ namespace app.module.debug.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
+    /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
     /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
     public static bool Internal => true;
 
@@ -19,7 +22,7 @@ public sealed class @this : global::app.type.item.setting.module.@this
     [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables { get; set; } = new();
 
     /// <summary>How long a line runs before it is cut (<c>length.max</c>, default 500).</summary>
-    [Out, Store] public length.@this Length { get; set; } = new();
+    [Out, Store] public length.@this Length { get; set; } = new(new global::app.type.@this(typeof(length.@this)));
 
     /// <summary>Regex string to filter debug output lines.</summary>
     [Out, Store] public global::app.type.item.text.@this? Grep { get; set; }

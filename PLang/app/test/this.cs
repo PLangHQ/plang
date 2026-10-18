@@ -166,7 +166,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private async System.Threading.Tasks.Task<global::app.@event.binding.@this[]> Time(global::app.actor.context.@this context)
     {
         var system = context.App.actor.list.System;
-        var call = new global::app.call.setting.@this().Path;
+        var call = new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Path;
         await system.Setting.Set(call + ".timing", system.Context.Ok(true));
 
         var entry = Goal.Path?.ToString();
