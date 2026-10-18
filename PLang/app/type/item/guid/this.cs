@@ -24,22 +24,24 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.type.format.IWriter w) => w.Guid(Value);
-    protected internal override global::app.type.@this Type => new(typeof(@this));
 
-    public @this(System.Guid value) { Value = value; }
+    /// <summary>Born holding its type — the app's <c>guid</c> from <c>Make</c>, or its own when none is given
+    /// (a legacy build / the operator). The <c>Type</c> override is gone; the base returns the born type.</summary>
+    public @this(System.Guid value, global::app.type.@this? type = null)
+        : base(type ?? new global::app.type.@this(typeof(@this))) { Value = value; }
 
     /// <summary>THE PURE CORE — a <c>guid</c> passes through; a CLR <see cref="System.Guid"/> or a
     /// guid string (canonical/braced/hyphenless) parses; anything else declines (<c>null</c>). A
     /// text-wrapped literal unwraps through <c>Clr&lt;object&gt;()</c>. Context-free (the parse is
     /// <c>Guid.TryParse</c>). Shared by the ICreate courier and comparison coercion.</summary>
-    public static @this? Create(object? raw)
+    public static @this? Create(object? raw, global::app.type.@this? type = null)
     {
         if (raw is @this self) return self;
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
         return value switch
         {
-            System.Guid g => new @this(g),
-            string s when System.Guid.TryParse(s.Trim(), out var v) => new @this(v),
+            System.Guid g => new @this(g, type),
+            string s when System.Guid.TryParse(s.Trim(), out var v) => new @this(v, type),
             _ => null,
         };
     }
@@ -48,7 +50,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// on <paramref name="data"/> (a string that didn't parse vs a wrong type).</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Create(value) is { } built) return built;
+        if (Create(value, declared) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as guid — expected a 36-char guid (e.g. 550e8400-e29b-41d4-a716-446655440000).", "GuidParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to guid.", "GuidConversionFailed", 400));
@@ -83,7 +85,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the pure <c>Create</c> core (guid text → guid). Non-coercible → Incomparable.</summary>
     protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
-        var b = other as @this ?? Create(other);
+        var b = other as @this ?? Create(other, Type);
         if (b is null) return new(global::app.data.Comparison.Incomparable);
         var c = Value.CompareTo(b.Value);
         return new(c < 0 ? global::app.data.Comparison.Less

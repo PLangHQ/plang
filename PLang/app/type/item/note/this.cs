@@ -32,12 +32,11 @@ public sealed class @this : global::app.type.item.@this
 
     /// <summary>The notes of <paramref name="about"/>, in <paramref name="file"/> — nothing read yet.</summary>
     internal @this(IAbout about, global::app.type.item.file.@this file)
+        : base(new global::app.type.@this(typeof(@this)))
     {
         _about = about;
         _file = file;
     }
-
-    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     /// <summary>Plang's own teaching, read by its templates — never a type a program's value is.</summary>
     public static bool Internal => true;

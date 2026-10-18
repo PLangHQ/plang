@@ -17,24 +17,24 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.type.format.IWriter w) => w.String(ToString());
-    protected internal override global::app.type.@this Type => new(typeof(@this));
 
-    public @this(System.TimeOnly value) { Value = value; }
+    public @this(System.TimeOnly value, global::app.type.@this? type = null)
+        : base(type ?? new global::app.type.@this(typeof(@this))) { Value = value; }
 
     /// <summary>THE PURE CORE — a <c>time</c> passes through; a TimeOnly/DateTime/DateTimeOffset or
     /// an ISO <c>HH:mm:ss</c> string parses; anything else declines (<c>null</c>). Shared by the
     /// ICreate courier and comparison coercion.</summary>
-    public static @this? Create(object? raw)
+    public static @this? Create(object? raw, global::app.type.@this? type = null)
     {
         if (raw is @this self) return self;
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
         return value switch
         {
-            System.TimeOnly t0 => new @this(t0),
-            System.DateTime dt => new @this(System.TimeOnly.FromDateTime(dt)),
-            System.DateTimeOffset dto => new @this(System.TimeOnly.FromDateTime(dto.DateTime)),
+            System.TimeOnly t0 => new @this(t0, type),
+            System.DateTime dt => new @this(System.TimeOnly.FromDateTime(dt), type),
+            System.DateTimeOffset dto => new @this(System.TimeOnly.FromDateTime(dto.DateTime), type),
             string s when System.TimeOnly.TryParse(s, System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out var t) => new @this(t),
+                System.Globalization.DateTimeStyles.None, out var t) => new @this(t, type),
             _ => null,
         };
     }
@@ -43,7 +43,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// on <paramref name="data"/> (a bad ISO string vs a wrong type).</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Create(value) is { } built) return built;
+        if (Create(value, declared) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as time — expected ISO HH:mm:ss.", "TimeParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to time.", "TimeConversionFailed", 400));
@@ -67,7 +67,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the pure <c>Create</c> core (ISO text → time). Non-coercible → Incomparable.</summary>
     protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
-        var b = other as @this ?? Create(other);
+        var b = other as @this ?? Create(other, Type);
         if (b is null) return new(global::app.data.Comparison.Incomparable);
         var c = Value.CompareTo(b.Value);
         return new(c < 0 ? global::app.data.Comparison.Less

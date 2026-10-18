@@ -9,8 +9,6 @@ namespace app.type.item.note.line;
 /// </summary>
 public sealed class @this : global::app.type.item.@this
 {
-    protected internal override global::app.type.@this Type => new(typeof(@this));
-
     /// <summary>Plang's own teaching, read by its templates — never a type a program's value is.</summary>
     public static bool Internal => true;
 
@@ -39,11 +37,12 @@ public sealed class @this : global::app.type.item.@this
     public global::app.type.item.text.@this? Ask { get; }
 
     /// <summary>A free line: its characters, as written.</summary>
-    public @this(global::app.type.item.text.@this prose) { Prose = prose; }
+    public @this(global::app.type.item.text.@this prose) : base(new global::app.type.@this(typeof(@this))) { Prose = prose; }
 
     /// <summary>A named line.</summary>
     public @this(global::app.type.item.text.@this name, global::app.type.item.text.@this prose,
         global::app.type.item.text.@this? say, global::app.type.item.text.@this? builder, global::app.type.item.text.@this? ask = null)
+        : base(new global::app.type.@this(typeof(@this)))
     {
         Name = name;
         Prose = prose;

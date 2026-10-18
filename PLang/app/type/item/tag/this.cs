@@ -19,28 +19,28 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The normalized label — trimmed at birth; equality folds case.</summary>
     public string Value { get; }
 
-    public @this(string value) { Value = Normalize(value); }
+    public @this(string value, global::app.type.@this? type = null)
+        : base(type ?? new global::app.type.@this(typeof(@this))) { Value = Normalize(value); }
 
     private static string Normalize(string s) => s.Trim();
 
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
     public override void Write(global::app.type.format.IWriter w) => w.String(Value);
-    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     /// <summary>THE PURE CORE — a <c>tag</c> passes through; a non-blank string / <c>text</c> becomes a
     /// tag (normalized once); blank/other declines (<c>null</c>). Context-free.</summary>
-    public static @this? Create(object? raw)
+    public static @this? Create(object? raw, global::app.type.@this? type = null)
     {
         if (raw is @this self) return self;
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
-        return value is string s && !string.IsNullOrWhiteSpace(s) ? new @this(s) : null;
+        return value is string s && !string.IsNullOrWhiteSpace(s) ? new @this(s, type) : null;
     }
 
     /// <summary>The ICreate courier face — delegates to the pure core; on decline names the reason.</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Create(value) is { } built) return built;
+        if (Create(value, declared) is { } built) return built;
         data.Fail(new global::app.error.@this(
             $"Cannot make a tag from {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name ?? "null")} — expected a non-empty label.",
             "TagConversionFailed", 400));
@@ -63,7 +63,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
-        var b = other as @this ?? Create(other);
+        var b = other as @this ?? Create(other, Type);
         if (b is null) return new(global::app.data.Comparison.Incomparable);
         var c = string.Compare(Value, b.Value, System.StringComparison.OrdinalIgnoreCase);
         return new(c < 0 ? global::app.data.Comparison.Less

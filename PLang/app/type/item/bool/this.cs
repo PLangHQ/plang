@@ -18,9 +18,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static string Shape => "bool";
 
     public bool Value { get; }
-    protected internal override global::app.type.@this Type => new(typeof(@this));
 
-    public @this(bool value) { Value = value; }
+    public @this(bool value, global::app.type.@this? type = null)
+        : base(type ?? new global::app.type.@this(typeof(@this))) { Value = value; }
 
     /// <summary>The empty bool, false — what a bool holds before anything is in it (type.Empty).</summary>
     internal @this() : this(false) { }

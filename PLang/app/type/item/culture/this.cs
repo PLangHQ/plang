@@ -12,7 +12,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     private readonly System.Globalization.CultureInfo _info;
 
-    private @this(System.Globalization.CultureInfo info) => _info = info;
+    private @this(System.Globalization.CultureInfo info, global::app.type.@this? type = null)
+        : base(type ?? new global::app.type.@this(typeof(@this))) => _info = info;
 
     /// <summary>The machine's culture — what the app reads numbers as text by when none is set.</summary>
     public static @this Machine => new(System.Globalization.CultureInfo.CurrentCulture);
@@ -23,24 +24,22 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>How it writes numbers — the decimals it shows and its separator.</summary>
     internal System.Globalization.NumberFormatInfo Number => _info.NumberFormat;
 
-    protected internal override global::app.type.@this Type => new(typeof(@this));
-
     public override bool IsLeaf => true;
 
     /// <summary>The culture a name names, or null when no culture has that name.</summary>
-    public static @this? Create(object? raw)
+    public static @this? Create(object? raw, global::app.type.@this? type = null)
     {
         if (raw is @this self) return self;
         var name = raw is global::app.type.item.@this item ? item.Clr<object>()?.ToString() : raw?.ToString();
         if (name == null) return null;
-        try { return new(System.Globalization.CultureInfo.GetCultureInfo(name, predefinedOnly: true)); }
+        try { return new(System.Globalization.CultureInfo.GetCultureInfo(name, predefinedOnly: true), type); }
         catch (System.Globalization.CultureNotFoundException) { return null; }
     }
 
     /// <summary>The culture a value names; a name no culture has is refused on <paramref name="data"/>.</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Create(value) is { } culture) return culture;
+        if (Create(value, declared) is { } culture) return culture;
         data.Fail(new global::app.error.@this(
             $"'{(value as global::app.type.item.@this)?.Clr<object>() ?? value}' is no culture — a culture is named as is-IS or en-US.",
             "UnknownCulture", 400));
