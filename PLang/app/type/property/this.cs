@@ -87,7 +87,7 @@ public sealed class @this : global::app.type.item.note.IAbout
     /// them, or an argument no line names. Null when this is no type's member.</summary>
     [LlmBuilder]
     public global::app.type.item.note.@this? Note(global::app.actor.context.@this context)
-        => Notes(context) is { } file ? new(this, file) : null;
+        => Notes(context) is { } file ? new(this, file, context.App.type.list[typeof(global::app.type.item.note.@this)]) : null;
 
     // What a member's notes are about: the member — its arguments the parts each line names, its own name a line too
     string global::app.type.item.note.IAbout.Noted => $"{Owner}.{Name}";

@@ -2435,7 +2435,7 @@ class app.type.item.permission.this : app.type.item.this, app.type.item.ICreate<
 
 class app.type.item.prose.this : app.type.item.this
   Or(app.type.item.prose.this other) : app.type.item.prose.this
-  ctor(System.Object[] pieces)
+  ctor(app.type.this type, System.Object[] pieces)
   override Cacheable : System.Boolean { get; }
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean

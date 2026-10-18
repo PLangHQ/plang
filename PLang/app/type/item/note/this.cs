@@ -30,9 +30,9 @@ public sealed class @this : global::app.type.item.@this
     private System.Collections.Generic.IReadOnlyList<line.@this>? _line;
     private global::app.warning.list.@this _warning = new();
 
-    /// <summary>The notes of <paramref name="about"/>, in <paramref name="file"/> — nothing read yet.</summary>
-    internal @this(IAbout about, global::app.type.item.file.@this file)
-        : base(new global::app.type.@this(typeof(@this)))
+    /// <summary>The notes of <paramref name="about"/>, in <paramref name="file"/> — nothing read yet; born holding the
+    /// app's <paramref name="type"/> for notes.</summary>
+    internal @this(IAbout about, global::app.type.item.file.@this file, global::app.type.@this type) : base(type)
     {
         _about = about;
         _file = file;

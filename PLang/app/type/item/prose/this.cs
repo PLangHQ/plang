@@ -16,12 +16,10 @@ public sealed class @this : global::app.type.item.@this
     private readonly @this? _otherwise;
 
     /// <summary>Prose of <paramref name="pieces"/>: each a string, written as it is, or a value, read when asked.
-    /// Prose reads as text, so it holds the text type.</summary>
-    public @this(params object[] pieces)
-        : base(new global::app.type.@this("text", typeof(global::app.type.item.text.@this))) => _pieces = pieces;
+    /// Prose reads as text, so it holds the app's text <paramref name="type"/>.</summary>
+    public @this(global::app.type.@this type, params object[] pieces) : base(type) => _pieces = pieces;
 
-    private @this(System.Collections.Generic.IReadOnlyList<object> pieces, @this otherwise)
-        : base(new global::app.type.@this("text", typeof(global::app.type.item.text.@this)))
+    private @this(System.Collections.Generic.IReadOnlyList<object> pieces, @this otherwise) : base(otherwise.Type)
     {
         _pieces = pieces;
         _otherwise = otherwise;

@@ -107,7 +107,8 @@ public partial class @this : global::app.type.item.note.IAbout
 
     /// <summary>The action's notes, read line by line — {Name}.notes.md; no lines when the action has none.</summary>
     [JsonIgnore]
-    public global::app.type.item.note.@this Note => _note ??= new(this, new(Module.Folder.Combine($"{Name}.notes.md"), App!.actor.list.System.Context!));
+    public global::app.type.item.note.@this Note => _note ??= new(this, new(Module.Folder.Combine($"{Name}.notes.md"), App!.actor.list.System.Context!),
+        App!.type.list[typeof(global::app.type.item.note.@this)]);
 
     // What its notes are about: the action, its properties the parts each line names
     string global::app.type.item.note.IAbout.Noted => $"{Module.Name}.{Name}";

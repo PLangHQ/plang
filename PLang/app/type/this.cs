@@ -711,15 +711,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// its element), else <c>type.description.md</c>; read when asked, empty when there is none.</summary>
     [LlmBuilder] public item.prose.@this Description(actor.context.@this context)
         => (OwnDescription(context) ?? kind.OwnDescription(context)) is { } its
-            ? its.Or(new item.prose.@this(Taught("type.description.md", context)))
-            : new item.prose.@this(Taught("type.description.md", context));
+            ? its.Or(new item.prose.@this(context.App.type.list["text"], Taught("type.description.md", context)))
+            : new item.prose.@this(context.App.type.list["text"], Taught("type.description.md", context));
 
     /// <summary>A value of this type as a step writes one (<c>5m</c>, <c>42</c>) — the kind's own when it shows one (a
     /// list of records, one of its element), else <c>type.examples.md</c>; read when asked, empty when there is none.</summary>
     [LlmBuilder] public item.prose.@this Example(actor.context.@this context)
         => (OwnExample(context) ?? kind.OwnExample(context)) is { } its
-            ? its.Or(new item.prose.@this(Taught("type.examples.md", context)))
-            : new item.prose.@this(Taught("type.examples.md", context));
+            ? its.Or(new item.prose.@this(context.App.type.list["text"], Taught("type.examples.md", context)))
+            : new item.prose.@this(context.App.type.list["text"], Taught("type.examples.md", context));
 
     /// <summary>What the builder is taught about this type — <c>type.notes.md</c>; falsy when it has none.</summary>
     [LlmBuilder] public item.file.@this Notes(actor.context.@this context) => Taught("type.notes.md", context);
