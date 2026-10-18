@@ -143,20 +143,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The interior raw count — loop bounds and emptiness checks.</summary>
     internal int CountRaw => _value.Count;
 
-    /// <summary>Keys in insertion order, as a native <c>list&lt;text&gt;</c> —
-    /// the public surface answers in PLang values (<c>%dict!keys%</c>).</summary>
-    public global::app.type.item.list.@this<global::app.type.item.text.@this> Keys
-    {
-        get
-        {
-            // a bare {list, text}: a dict holds no app to ask for the list's type
-            var keys = new global::app.type.item.list.@this<global::app.type.item.text.@this>(
-                new global::app.type.@this(typeof(global::app.type.item.list.@this), "text"));
-            foreach (var k in _value.Keys)
-                keys.Add(new Data(k, new global::app.type.item.text.@this(k)));
-            return keys;
-        }
-    }
+    /// <summary>The dict's key (<c>%dict!key%</c>): read alone its first key, <c>.list</c> every key.</summary>
+    public key.@this Key(global::app.actor.context.@this context) => new(this, context.App.type.list[typeof(key.@this)]);
+
+    /// <summary>A dict's own facts, read with <c>!</c>: <c>key</c>.</summary>
+    internal override Data? Fact(string key, Data parent)
+        => string.Equals(key, "key", System.StringComparison.OrdinalIgnoreCase) && parent.Context is { } context
+            ? new Data(key, Key(context), parent: parent)
+            : null;
 
     /// <summary>Keys in insertion order — the interior raw view.</summary>
     internal IEnumerable<string> KeyNames => _value.Keys;

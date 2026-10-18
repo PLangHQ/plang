@@ -128,7 +128,7 @@ public class Stage7_SurfaceGateTests
         var d = new global::app.type.item.dict.@this();
         d.Set(new Data("name", "a", context: ctx));
         d.Set(new Data("age", 30L, context: ctx));
-        object keys = d.Keys;
+        object keys = d.Key(ctx).list(ctx);
         await Assert.That(keys).IsTypeOf<global::app.type.item.list.@this<global::app.type.item.text.@this>>();
         var names = ((global::app.type.item.list.@this<global::app.type.item.text.@this>)keys)
             .Items(ctx).Select(k => k.Peek()).ToList();

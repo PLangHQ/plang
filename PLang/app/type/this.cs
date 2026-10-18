@@ -333,7 +333,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // scalar → born through the family lift, then refined. ALWAYS returns a value (never null); a
     // bad conversion throws (the throw boundary — rides MaterializeFailed like a reader parse).
     // Fires nothing: it is the build a birth runs, and every re-type inside the type system.
-    internal item.@this Make(object? raw, global::app.actor.context.@this? context, global::app.type.item.path.@this? origin = null)
+    internal item.@this Make(object? raw, global::app.actor.context.@this context, global::app.type.item.path.@this? origin = null)
     {
         // context-never-null: a value is born WITH context. A null here is a construction site that
         // forgot to pass one — fail with a pointer, not an NRE deep in materialization.

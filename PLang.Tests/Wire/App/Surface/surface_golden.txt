@@ -1450,6 +1450,13 @@ class app.type.item.datetime.this : app.type.item.this, System.IEquatable<app.ty
   static Resolve(System.String raw, app.actor.context.this context) : app.type.item.datetime.this
   static Shape : System.String { get; }
 
+class app.type.item.dict.key.this : app.type.item.this [PlangType]
+  list(app.actor.context.this context) : app.type.item.list.this<app.type.item.text.this> [LlmBuilder]
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  override ToString() : System.String
+  override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
+  override Write(app.type.format.IWriter writer) : System.Void
+
 static class app.type.item.dict.serializer.Default
   static Read(System.Object raw, System.String kind, app.type.reader.ReadContext ctx) : System.Object
 
@@ -1465,7 +1472,7 @@ class app.type.item.dict.this : app.type.item.this, app.type.item.ICreate<app.ty
   Get(System.String key, app.actor.context.this context) : app.data.this
   Get<T>(System.String path, app.actor.context.this context) : T
   Has(System.String key) : System.Boolean
-  Keys : app.type.item.list.this<app.type.item.text.this> { get; }
+  Key(app.actor.context.this context) : app.type.item.dict.key.this
   Set(System.String key, System.Object value) : app.type.item.dict.this
   Set(app.data.this value) : app.type.item.dict.this
   ctor()
@@ -3512,6 +3519,9 @@ type item
 
 type keep
   .name : text
+
+type key
+  .list : list<text>
 
 type limit
 

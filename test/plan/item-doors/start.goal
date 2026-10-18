@@ -31,6 +31,8 @@ Stage1
 - call /app/type/kind/strict/SetAsImageGifStrictMismatch
 - call /app/type/kind/strict/SetAsImageStrictNoKind
 - call /app/type/kind/strict/SetAsTextSlashMarkdownStrictUnverifiable
+/ a plural plang reaches is a singular node (item-doors 39): a dict's key read alone is its first key, .list every key
+- call /plan/item-doors/app/type/dict/key/KeyIsTheFirstKey
 
 Stage2
 / one door for writing (decision 868): Output only; the sync Write and the IsLeaf branch go;

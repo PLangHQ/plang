@@ -42,7 +42,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
         d.Set(app.Data("age", 30L));
         d.Set(app.Data("city", "Reyk"));
         // Keys is the typed list<text> surface; assert over the text values.
-        await Assert.That(d.Keys.Items(app.actor.list.User.Context).Select(k => k.Peek()?.ToString()).ToList())
+        await Assert.That(d.Key(app.actor.list.User.Context).list(app.actor.list.User.Context).Items(app.actor.list.User.Context).Select(k => k.Peek()?.ToString()).ToList())
             .IsEquivalentTo(new[] { "name", "age", "city" });
     }
 

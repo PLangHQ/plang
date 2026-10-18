@@ -38,7 +38,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <c>App.type.list[name].Create(raw, ctx)</c> (the entity door) builds the type the caller named.
     /// ALWAYS returns a value (never null); a bare <c>Data</c> is a producer bug and throws.
     /// </summary>
-    public static @this Create(object? raw, global::app.actor.context.@this? context)
+    public static @this Create(object? raw, global::app.actor.context.@this context)
     {
         if (raw is null) return global::app.type.item.@null.@this.Instance;
         if (raw is @this already) return already;
@@ -49,13 +49,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
         // A sequence of Data / native items narrows to a native list, preserving the instances.
         if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
-            return new global::app.type.item.list.@this(dataSeq, context!.App.type.list["list"]);
+            return new global::app.type.item.list.@this(dataSeq, context.App.type.list["list"]);
         if (raw is System.Collections.Generic.IEnumerable<@this> itemSeq)
-            return new global::app.type.item.list.@this(itemSeq, context!.App.type.list["list"]);
+            return new global::app.type.item.list.@this(itemSeq, context.App.type.list["list"]);
         if (raw is System.Collections.Generic.List<object?> objList)
-            return new global::app.type.item.list.@this(objList, context!.App.type.list["list"]);
+            return new global::app.type.item.list.@this(objList, context.App.type.list["list"]);
         if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
-            return new global::app.type.item.dict.@this(objDict);
+            return new global::app.type.item.dict.@this(objDict, context.App.type.list["dict"]);
         // A non-generic container narrows the same way its generic sibling above does — build the
         // native dict/list DIRECTLY from its entries (store raw, type on read), no STJ round-trip.
         if (raw is System.Collections.IDictionary idict)
@@ -63,7 +63,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             var d = new System.Collections.Generic.Dictionary<string, object?>();
             foreach (System.Collections.DictionaryEntry e in idict)
                 d[e.Key?.ToString() ?? ""] = e.Value;
-            return new global::app.type.item.dict.@this(d);
+            return new global::app.type.item.dict.@this(d, context.App.type.list["dict"]);
         }
         // Any remaining enumerable — an IList, an IReadOnlyList<T> (a domain X.list like warning.list),
         // an array, a HashSet<T> — narrows to a native plang list (store raw, type on read). string is
@@ -74,7 +74,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         {
             var l = new System.Collections.Generic.List<object?>();
             foreach (var e in seq) l.Add(e);
-            return new global::app.type.item.list.@this(l, context!.App.type.list["list"]);
+            return new global::app.type.item.list.@this(l, context.App.type.list["list"]);
         }
 
         // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum. BEFORE
@@ -87,7 +87,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         // Create thunk (int → number, string → text). The door is never null — a CLR type no value
         // type owns answers the clr entity, whose Create builds the carrier — so this is the single
         // terminal rung; the old separate Clr fallback dissolves into entity dispatch.
-        return context!.App.type.list[raw.GetType()].Make(raw, context);
+        return context.App.type.list[raw.GetType()].Make(raw, context);
     }
 
     /// <summary>The birth of an item with a DECLARED type (decisions 786/787): an item declared with a KIND
@@ -416,7 +416,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// This value's OWN type entity — the type that MADE it, handed in at birth (the app's list for an
     /// origin birth via <c>Make</c>, or forwarded from the value it came from). The single owner of its
     /// identity; provenance lives on the value's <see cref="list"/> history and is asked via <see cref="Is"/>.
-    /// <para>A value its maker does not hand a type leaves it null and answers the rebuild.</para>
+    /// <para>Only the root type and the type list are born without one. A value whose maker does not hand its type
+    /// yet answers the rebuild; that goes once every maker hands one.</para>
     /// </summary>
     private readonly global::app.type.@this? _type;
 
@@ -427,8 +428,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     protected @this(global::app.type.@this type) => _type = type;
 
     /// <summary>A value born without a type: the root type (its own type) and the type list (which answers its own
-    /// type from itself) — the two makers of types. A value whose maker does not hand its type is born here too,
-    /// and answers the rebuild.</summary>
+    /// type from itself) — the two makers of types, no other value. A value whose maker does not hand its type yet
+    /// reaches here too until every maker hands one.</summary>
     protected @this() { }
 
     /// <summary>
