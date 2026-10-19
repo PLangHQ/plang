@@ -23,42 +23,36 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public System.TimeSpan Value { get; }
 
-    // the standard it is written in (short, iso, dotnet), born with it; and its type, {duration, <kind>}, made once
-    private readonly kind.@this _kind;
-
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
 
-    /// <summary>Its text in its kind — <c>30s</c>, <c>PT5M</c>; <c>%d.text%</c>.</summary>
-    public string Text => _kind.Text(Value);
+    /// <summary>A duration is written by its type's kind, the standard it is in: <c>30s</c> stays <c>30s</c>,
+    /// <c>PT5M</c> stays <c>PT5M</c>.</summary>
+    public override void Write(global::app.type.format.IWriter w) => Type.kind.Write(this, w);
 
-    /// <summary>A duration writes its text in its own kind: <c>30s</c> stays <c>30s</c>, <c>PT5M</c> stays <c>PT5M</c>.</summary>
-    public override void Write(global::app.type.format.IWriter w) => w.Content(Text, _kind);
+    /// <summary>A span born holding <paramref name="type"/> — the app's {duration, kind}, the standard it is written
+    /// in its type's kind.</summary>
+    public @this(System.TimeSpan value, global::app.type.@this type) : base(type) => Value = value;
 
-    /// <summary>A span made with no text (a C# span, an elapsed time) — written short, the form a step reads.</summary>
-    public @this(System.TimeSpan value) : this(value, new kind.@short.@this()) { }
+    // A span through the C# implicit conversion, written short: its type is built here, from its class and the short
+    // standard, until the implicit-conversion branch removes that conversion.
+    private @this(System.TimeSpan value)
+        : base(new global::app.type.@this("duration", typeof(@this)) { kind = new kind.@short.@this() }) => Value = value;
 
-    /// <summary>A span in <paramref name="kind"/>'s standard — born holding its type, {duration, kind}.</summary>
-    public @this(System.TimeSpan value, kind.@this kind)
-        : base(new global::app.type.@this("duration", typeof(@this), kind.Name))
-    {
-        Value = value;
-        _kind = kind;
-    }
-
-    /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan or a string (ISO-8601
-    /// <c>PT30S</c> or .NET <c>00:00:30</c>, via <see cref="Resolve"/> whose context is unused)
-    /// parses; anything else declines (<c>null</c>). A text-wrapped literal unwraps through
-    /// <c>Clr&lt;object&gt;()</c>. Shared by the ICreate courier and comparison coercion.</summary>
-    public static @this? Create(object? raw)
+    /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan is born short; a string (30s, ISO-8601
+    /// <c>PT30S</c> or .NET <c>00:00:30</c>, via <see cref="Resolve"/>) parses in its own standard — each made with
+    /// the app's duration kinds, as <paramref name="context"/>'s types hold them; anything else declines
+    /// (<c>null</c>). A text-wrapped literal unwraps through <c>Clr&lt;object&gt;()</c>. Shared by the ICreate
+    /// courier and comparison coercion.</summary>
+    public static @this? Create(object? raw, global::app.actor.context.@this context)
     {
         if (raw is @this self) return self;
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
         return value switch
         {
-            System.TimeSpan ts => (@this)ts,
-            string s => Resolve(s, null!),
+            System.TimeSpan ts => new @this(ts, context.App.type.list[new global::app.type.@this("duration", "short"), context]),
+            string s => Resolve(s, context),
             _ => null,
         };
     }
@@ -67,12 +61,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// on <paramref name="data"/> (a bad string vs a wrong type).</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Create(value) is { } built)
+        if (Create(value, data.Context) is { } built)
         {
             // asked for in a standard (`as iso`): the same span, written in that one
-            if (declared?.kind is { IsEmpty: false } asked && !string.Equals(asked.Name, built._kind.Name, System.StringComparison.OrdinalIgnoreCase)
-                && data.Context?.App.type.list["duration"].kind[asked.Name] is kind.@this standard)
-                return new @this(built.Value, standard);
+            if (declared?.kind is { IsEmpty: false } asked && !string.Equals(asked.Name, built.Type.kind.Name, System.StringComparison.OrdinalIgnoreCase)
+                && data.Context.App.type.list["duration"].kind[asked.Name] is not null)
+                return new @this(built.Value, data.Context.App.type.list[new global::app.type.@this("duration", asked.Name), data.Context]);
             return built;
         }
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
@@ -116,9 +110,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Milliseconds(global::app.actor.context.@this context)
         => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.TotalMilliseconds));
 
-    /// <summary>Its text in its kind (<see cref="Text"/>).</summary>
-    public override string ToString() => Text;
-
     // ---- Truthiness (item): zero is falsy ----
     public override bool IsTruthy() => Value != System.TimeSpan.Zero;
 
@@ -131,7 +122,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the pure <c>Create</c> core (ISO text → duration). Non-coercible → Incomparable.</summary>
     protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
-        var b = other as @this ?? Create(other);
+        var b = other as @this ?? Create(other, context);
         if (b is null) return new(global::app.data.Comparison.Incomparable);
         var c = Value.CompareTo(b.Value);
         return new(c < 0 ? global::app.data.Comparison.Less

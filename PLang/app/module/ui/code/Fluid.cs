@@ -85,6 +85,17 @@ public class Fluid : ITemplate
         options.ValueConverters.Add(value =>
             value is global::app.type.item.@null.@this ? NilValue.Instance : null);
 
+        // A span (a duration) Fluid would show as a date: it renders as it writes itself out as text — 30s, PT5M,
+        // its kind's form — through its own Write in the render's culture, never a ToString.
+        options.ValueConverters.Add(value =>
+        {
+            if (value is not global::app.type.item.@this { IsLeaf: true, Backing: TimeSpan } span) return null;
+            using var written = new MemoryStream();
+            span.Write(new global::app.type.item.text.Writer(written, System.Text.Encoding.UTF8,
+                action.Context.Setting.Of<global::app.setting.@this>().Culture));
+            return new StringValue(System.Text.Encoding.UTF8.GetString(written.ToArray()));
+        });
+
         // A plang container — a dict, a list, a json host, a file's content, any value that is not a
         // leaf — is one Fluid value that reads through the item's own doors (Item, below), whatever the
         // container is. Converters run wherever FluidValue.Create does — the variable-binding loops

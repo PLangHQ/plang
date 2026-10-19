@@ -16,7 +16,7 @@ public class ConceptSettingTests : System.IAsyncDisposable
         await using var app = new global::app.@this("/test").Testing();
         var read = await Read("%!app.test.setting.timeout%", app.actor.list.User.Context);
         await read.IsSuccess();
-        await Assert.That((await read.Value())?.ToString()).IsEqualTo("30s");
+        await Assert.That(await app.actor.list.User.Context.Written((await read.Value())!)).IsEqualTo("30s");
     }
 
     [Test] public async Task AWriteThroughTheConceptType_IsThisRunsSetting()

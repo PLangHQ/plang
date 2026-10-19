@@ -311,6 +311,12 @@ public class @this : global::app.type.@this
         return default;
     }
 
+    /// <summary>Writes <paramref name="value"/>, a value of this kind, in this kind's own form — a kind is a type, and
+    /// writes the values of it (a duration's <c>short</c> writes <c>30s</c>, its <c>iso</c> <c>PT30S</c>). A kind
+    /// with no form of its own writes none.</summary>
+    public virtual void Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        => throw new System.NotSupportedException($"kind '{Name}' has no form to write a value in");
+
     /// <summary>Write a host value OF this kind to the wire — json emits raw json, <c>*</c>
     /// reflects a POCO's tagged fields. The carrier delegates its <c>Output</c> here.</summary>
     public virtual global::System.Threading.Tasks.ValueTask Output(

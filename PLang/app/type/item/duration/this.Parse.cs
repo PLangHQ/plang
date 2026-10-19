@@ -3,7 +3,8 @@ namespace app.type.item.duration;
 /// <summary>
 /// String → duration. Each standard a duration is written in is a kind of it (<c>kind/short</c> 30s,
 /// <c>kind/iso</c> PT30S, <c>kind/dotnet</c> 00:00:30) and reads its own form; the forms don't overlap, so the
-/// text names its kind and the duration is born with it.
+/// text names its kind and the duration is born with it. The standards asked are the app's own kinds of duration,
+/// each through its own parse.
 /// </summary>
 public sealed partial class @this
 {
@@ -11,8 +12,8 @@ public sealed partial class @this
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
         raw = raw.Trim();
-        foreach (kind.@this standard in new kind.@this[] { new kind.@short.@this(), new kind.iso.@this(), new kind.dotnet.@this() })
-            if (standard.Span(raw) is { } span) return new @this(span, standard);
+        foreach (var type in context.App.type.list["duration"].kind.list(context).Items())
+            if (type.kind.Parse(raw, context) is @this span) return span;
         return null;
     }
 }

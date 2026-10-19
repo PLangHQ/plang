@@ -106,7 +106,7 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Tags : app.type.item.bool.this { get; }
   Timing : app.type.item.bool.this { get; }
   Variables : app.type.item.variable.list.this { get; }
-  ctor(System.Func<app.actor.setting.this> settings, app.error.list.this audit)
+  ctor(app.type.this datetime, app.type.this duration, System.Func<app.actor.setting.this> settings, app.error.list.this audit)
   override IsLeaf : System.Boolean { get; }
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
 
@@ -1521,6 +1521,7 @@ class app.type.item.duration.kind.short.this : app.type.item.duration.kind.this
 abstract class app.type.item.duration.kind.this : app.type.kind.this<app.type.item.duration.this>
   ctor(System.String name)
   override Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
+  override Write(app.type.item.this value, app.type.format.IWriter writer) : System.Void
 
 static class app.type.item.duration.serializer.Default
   static Read(System.Object raw, System.String kind, app.type.reader.ReadContext ctx) : System.Object
@@ -1538,19 +1539,16 @@ class app.type.item.duration.this : app.type.item.this, System.IEquatable<app.ty
   Milliseconds(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
   Minutes(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
   Seconds(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
-  Text : System.String { get; }
   Value : System.TimeSpan { get; }
-  ctor(System.TimeSpan value)
-  ctor(System.TimeSpan value, app.type.item.duration.kind.this kind)
+  ctor(System.TimeSpan value, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
   override Rank : System.Int32 { get; }
-  override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  static Create(System.Object raw) : app.type.item.duration.this
+  static Create(System.Object raw, app.actor.context.this context) : app.type.item.duration.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.duration.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
   static Resolve(System.String raw, app.actor.context.this context) : app.type.item.duration.this
@@ -3087,6 +3085,7 @@ class app.type.kind.this : app.type.this
   virtual Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.actor.context.this context) : System.Object
   virtual Report : System.String { get; }
   virtual Set(System.Object host, System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.type.item.this>
+  virtual Write(app.type.item.this value, app.type.format.IWriter writer) : System.Void
   virtual list(app.actor.context.this context) : app.type.kind.list.this
 
 class app.type.kind.this+Decoder : System.MulticastDelegate

@@ -204,15 +204,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             : clr.GetConstructor(any, [typeof(@this)]) is { } typed ? () => (item.@this)typed.Invoke([this])
             : clr.GetConstructor(any, System.Type.EmptyTypes) is { } empty ? () => (item.@this)empty.Invoke(null)
             : () => new item.@null.@this(this);
-        // a type whose empty value is a null holds that one null — it holds nothing to share: the app's null (and
-        // each typed null) is one value, its type's own
+        // an empty value no holder's change can reach (its Copy is itself — a null, 0, "") is one value, its type's
+        // own: the app's null is one per app; a container's empty is made fresh for each holder
         var first = _empty();
-        if (first.IsNull) _empty = () => first;
+        if (ReferenceEquals(first.Copy(), first)) _empty = () => first;
         return first;
     }
 
-    // How this type makes its empty value — its class's constructor, found once (every value-less Data asks); for a
-    // type whose empty value is a null, that one null.
+    // How this type makes its empty value — its class's constructor, found once (every value-less Data asks); for an
+    // empty value that can be shared, that one value.
     private System.Func<item.@this>? _empty;
 
 

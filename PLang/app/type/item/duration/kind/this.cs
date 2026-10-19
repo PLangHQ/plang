@@ -15,7 +15,15 @@ public abstract class @this : global::app.type.kind.@this<global::app.type.item.
     /// <summary><paramref name="span"/> written in this standard.</summary>
     internal abstract string Text(System.TimeSpan span);
 
-    /// <summary>A text in this standard, as a duration born with it.</summary>
+    /// <summary>A duration written in this standard: its span's text, as content in this kind.</summary>
+    public override void Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+    {
+        if (value is duration.@this span) writer.Content(Text(span.Value), this);
+        else base.Write(value, writer);
+    }
+
+    /// <summary>A text in this standard, as a duration born with it and the app's {duration, this}.</summary>
     public override global::app.type.item.@this? Parse(object raw, global::app.actor.context.@this ctx)
-        => raw is string text && Span(text.Trim()) is { } span ? new duration.@this(span, this) : null;
+        => raw is string text && Span(text.Trim()) is { } span
+            ? new duration.@this(span, ctx.App.type.list[new global::app.type.@this("duration", Name), ctx]) : null;
 }

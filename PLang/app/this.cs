@@ -122,7 +122,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// How long the app has been running.
     /// </summary>
-    public global::app.type.item.duration.@this Uptime => new(DateTimeOffset.UtcNow - StartedAt.Value);
+    public global::app.type.item.duration.@this Uptime
+        => global::app.type.item.duration.@this.Create(DateTimeOffset.UtcNow - StartedAt.Value, actor.list.System.Context)!;
 
     /// <summary>
     /// Cancellation token for graceful shutdown — a handle, never written with the app.

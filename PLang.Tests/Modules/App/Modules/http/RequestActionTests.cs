@@ -513,7 +513,7 @@ public class RequestActionTests
         };
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/slow",
-            Timeout = new global::app.type.item.duration.@this(System.TimeSpan.FromSeconds(1)),
+            Timeout = Ctx.Duration(System.TimeSpan.FromSeconds(1)),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);

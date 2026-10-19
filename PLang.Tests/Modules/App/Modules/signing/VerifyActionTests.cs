@@ -84,7 +84,7 @@ public class VerifyActionTests
             l.Identity, hash ?? l.Hash, signature ?? l.Signature, l.Expires,
             contractsNull ? null : l.Contracts,
             window is null ? global::app.type.item.signature.Origin.Signed : global::app.type.item.signature.Origin.Live,
-            window is { } w ? new global::app.type.item.duration.@this(w) : null);
+            window is { } w ? signed.Context.Duration(w) : null);
         return signed.Context.Ok(rebuilt);
     }
 

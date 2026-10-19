@@ -19,7 +19,7 @@ public class FrameKindTests : System.IAsyncDisposable
     [Test]
     public async Task ABindingFrame_DoesNotDeepenTheChain_NorCountTowardItsLimit()
     {
-        var stack = new Calls(TestCalls.Settings(), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)])) { MaxDepth = 2 };
+        var stack = TestCalls.Stack(app, TestCalls.Settings(), maxDepth: 2);
         await using var a = stack.Push(MakeAction(Ctx, "A"));
         await using var item = stack.Push(Names("item", 1));
         await using var b = stack.Push(MakeAction(Ctx, "B"));
@@ -31,7 +31,7 @@ public class FrameKindTests : System.IAsyncDisposable
     [Test]
     public async Task ABindingFrame_StandsWhereItsCallerStands_IsAmongItsChildren_AndIsNeverTheScope()
     {
-        var stack = new Calls(TestCalls.Settings(new Dictionary<string, object?> { ["timing"] = true }), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
+        var stack = TestCalls.Stack(app, TestCalls.Settings(new Dictionary<string, object?> { ["timing"] = true }));
         var action = MakeAction(Ctx, "A");
         await using var frame = stack.Push(action);
         await using var item = stack.Push(Names("item", 1));
@@ -47,7 +47,7 @@ public class FrameKindTests : System.IAsyncDisposable
     [Test]
     public async Task AFrameIsBornWithItsNames_AndReadsOutward()
     {
-        var stack = new Calls(TestCalls.Settings(), new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
         await using var outer = stack.Push(Names("city", "Reykjavik"));
         await using var inner = stack.Push(Names("day", "today"));
 

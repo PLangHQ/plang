@@ -33,7 +33,7 @@ public class TypeSurfaceTests : System.IAsyncDisposable
 
     [Test] public async Task ADuration_IsTheWholeSpanInEachUnit()
     {
-        await Ctx.Variable.Set("elapsed", new global::app.type.item.duration.@this(System.TimeSpan.FromSeconds(90)));
+        await Ctx.Variable.Set("elapsed", Ctx.Duration(System.TimeSpan.FromSeconds(90)));
 
         await Assert.That((await Read("elapsed.seconds")).Peek().ToString()).IsEqualTo("90");
         await Assert.That((await Read("elapsed.minutes")).Peek().ToString()).IsEqualTo("1.5");

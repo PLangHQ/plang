@@ -103,6 +103,27 @@
           "category": "doc",
           "confidence": "high",
           "context": "Measured 42's scope by marking the 22 into-plang operators [Obsolete(error)] (reverted): 1,726 production lines, 1,330 error status codes (906 generator-emitted). Blocked list sent to the architect: kinded types, status, bool, typeless null (Ingi)."
+        },
+        {
+          "paths": ["PLang/app/type/this.cs", "PLang/app/type/item/text/this.cs", "PLang/app/type/item/base64", "PLang/app/type/item/binary"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 49: Kinded removed; a kindless leaf declared a kind is made through the type's Make (its courier re-births a value of its class holding the declared type); base64 and binary born with the app's type."
+        },
+        {
+          "paths": ["PLang/app/data/this.cs", "PLang/app/data/this.Result.cs", "PLang.Generators/Emission", "PLang/app/type/item/null/this.cs", "PLang.Tests"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 52: every Data born with its context (a birth guard found the sites); Instance/Absent gone; FromError/NotFound/Uninitialized/Null take the context; the emitter hands __ctx/context/Context; the C# Get doors take the asker's context; the app's null is one value per type (an empty value whose Copy is itself is kept). ~110 test files moved by two Haiku passes, checked per class."
+        },
+        {
+          "paths": ["PLang/app/call", "PLang/app/actor/context/this.cs", "PLang/app/type/item/duration", "PLang/app/type/kind/this.cs", "PLang/app/module/ui/code/Fluid.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 51/56/57: the call stack is handed the app's datetime and {duration, short}; duration born (TimeSpan, type) and written by its type's kind (kind.Write, Ingi's locked addition); duration.Text and its ToString go — a duration shown as text is its Output (Fluid's span converter writes it through a text writer)."
         }
       ],
       "after": null

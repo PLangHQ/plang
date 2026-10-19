@@ -1,7 +1,7 @@
 # coder — item-doors — summary
 
 ## Version
-v2 (stage 1: a value is born whole — lists, singular nodes, and the per-type required ctor; item-doors 32–47)
+v2 (stage 1: a value is born whole — lists, singular nodes, and the per-type required ctor; item-doors 32–57)
 
 ## What this is
 Every plang value holds the one type object its app made for it (item-doors 33): the maker hands it in, and a value
@@ -23,20 +23,32 @@ in turn, smallest first. Decisions are numbered per branch (item-doors 1–47, `
 - **Parts take the context (42, 47)**: datetime's parts and duration's units are one-context `[LlmBuilder]` members
   answering their carrier: `data<number>.From(context.Ok(Value.Year))`. `%now.year%` reads the same.
 - **Measured (42 widened)**: 1,726 production lines use a C# → plang implicit operator; 1,330 are error status codes
-  (906 generator-emitted). That scope and the error status are with Ingi.
+  (906 generator-emitted). Ingi (50): those operators and the error status are their own branch after item-doors.
+- **Kinded goes (49)**: a kindless leaf declared a kind is made through the type's own `Make` (its courier re-births
+  a value of its class holding the declared type); base64 and binary are born with the app's type.
+- **Every Data is born with its context (52)**: a Data with no context (handed or its parent's) is refused at birth;
+  its empty slot is its app's null — one value per app, held by the null type (`type.Empty` keeps an empty value
+  whose `Copy()` is itself). `FromError`/`NotFound`/`Uninitialized`/`Null` take the context (the emitter hands it);
+  `null.Instance`, `item.Absent` and the context-less `Ok` statics are gone; `type.Get(key, ctx)` and
+  `module.Get(name, ctx)` answer with the asker's context.
+- **Call stack and duration (51, 56, 57)**: the context hands its stack the app's datetime and {duration, short}
+  types, the stack hands them to each frame. duration is born `(TimeSpan, type)`, written by its type's kind
+  (`kind.Write(item, IWriter)`, Ingi's locked addition); `Resolve` asks each of the app's duration kinds to parse.
+  `duration.Text` and its `ToString` are gone: a duration shown as text is its Output (Fluid renders a span that way).
 
 ## Interims (each flagged in code, each has its turn)
 - `culture.Machine` (the app setting's default) makes its own type — setting defaults move to birth in group 6 (17).
-- A call frame's `StartedAt`/`CompletedAt` make their own datetime type — a frame holds no type list (call memory locked).
 - input's numbers are `number.@this.Create(x)!` until number is born whole; then `Create(x, types[...])`, the `!` goes.
 - choice values (mouse Action/Button, navigate To) are made on read; at choice's turn they're held from birth.
+- The C# implicit operators (50): `data<T>(T)` keeps a private context-less birth (and refuses a null); binary's and
+  duration's keep a class-built type — all until the implicit-conversion branch.
+- number keeps its own copy of its kind (`Kind`) until its turn, when it writes through `kind.Write` (56).
 
-## Blocked (asked of the architect)
-- **Kinded types** (base64, binary, image, duration, text, path): the app's kinded type needs a context
-  (`types[new type(name, kind), context]`), but `Parse(raw)` and item's locked `Kinded(kind)` have none.
-- **status**: group A (error status codes), with Ingi.
-- **null**: `@null.Instance` static + 75 makers — stay typeless like the root, or per app?
-- **bool**: `True`/`False` statics, tied to the C# → plang operator (42 scope).
+## Open
+- test/plan/app-systems/type/duration/KeepsItsKind.test.goal asserts `%short.text%` (57: Text is gone); new steps
+  sent to the architect, the test-designer rebuilds it.
+- text made from a value (`%d as text%`) is `Convert.ToString` of its CLR value — text's turn (57).
+- A sweep of the ToString-for-display uses is its own later item (57).
 
 ## Code example
 ```csharp
@@ -55,5 +67,5 @@ new global::app.type.item.datetime.@this(reader.DateTimeOffset(), ctx.Context.Ap
   `test/plan/item-doors/app/type/input/modifier/ModifierIsTheFirstKeyHeld.test.goal` — the test-designer builds them.
 
 ## Next
-The architect's answers on the blocked list; then on in the order (binary, image, duration, choice, bool, path,
-dict, text, number; then setting, content, source, separator); last, number's static kinds and `KindOfClass` go.
+On in the order: image, choice, bool (born with its type where its makers have one; True/False stay per 50), path,
+dict, text, number; then setting, content, source, separator; last, number's static kinds and `KindOfClass` go.

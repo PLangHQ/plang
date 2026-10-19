@@ -32,7 +32,17 @@ while a value builds its own type.
 - number: input's numbers (`number.@this.Create(x)!`) become `Create(x, types[...])`, the `!` goes.
 - choice: mouse Action/Button and navigate To are held from birth, not made on read.
 - group 6 (17): `culture.Machine` and every setting default made at birth through its type.
-- call memory: a call frame's StartedAt/CompletedAt take the app's datetime type once a frame is born with it.
+- number: its own copy of its kind (`Kind`) goes once it writes through the type's kind (`kind.Write(item, IWriter)`, 56).
+- the C# implicit operators (50): their own branch after item-doors; the operator births (data<T>(T), binary,
+  duration) keep a context-less / class-built fallback until then. Error status (A) goes there too.
+
+## Done since (49–56)
+- 49: `Kinded` gone; a kindless leaf declared a kind is made through the type's Make; base64 and binary born with
+  the app's type.
+- 52: every Data born with its context (birth guard), the app's null one value per app (its type's), FromError /
+  NotFound / Uninitialized / Null take the context, the C# Get doors take the asker's.
+- 51 + 56: the call stack is handed the app's datetime and {duration, short}; duration born `(TimeSpan, type)`,
+  written by its type's kind (`kind.Write`).
 
 ## Checks
 - C# sweep against the baseline (6 Wire snapshot/resume and ImageFromBytes are pre-existing).

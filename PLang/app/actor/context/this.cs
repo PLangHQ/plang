@@ -138,7 +138,10 @@ public sealed class @this : IDisposable
 
         // Stamp context on Variables (propagates to all existing Data)
         Variable.Context = this;
-        call = new(() => Setting, new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
+        // a frame's times are the app's: when it ran (datetime), and how long (duration, written short)
+        call = new(app.type.list[typeof(global::app.type.item.datetime.@this)],
+            app.type.list[new global::app.type.@this("duration", "short"), this],
+            () => Setting, new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
 
         // Register context variables on the Variables
         RegisterContextVariables();

@@ -17,9 +17,9 @@ public class DurationWrapperTests : IAsyncDisposable
     public async Task Duration_Order_ByLength()
     {
         await using var app = new global::app.@this("/app").Testing();
-        var s = new Duration(System.TimeSpan.FromSeconds(1));
-        var m = new Duration(System.TimeSpan.FromMinutes(1));
-        var h = new Duration(System.TimeSpan.FromHours(1));
+        var s = Context.Duration(System.TimeSpan.FromSeconds(1));
+        var m = Context.Duration(System.TimeSpan.FromMinutes(1));
+        var h = Context.Duration(System.TimeSpan.FromHours(1));
         await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, s, m)).IsLessThan(0);
         await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, m, h)).IsLessThan(0);
         await Assert.That(CompareTestOps.OrdD(new Data("", s, context: Context), new Data("", h, context: Context))).IsLessThan(0);
@@ -28,8 +28,8 @@ public class DurationWrapperTests : IAsyncDisposable
     [Test]
     public async Task Duration_Equality_SameTimeSpanValueEqualAndHashEqual()
     {
-        var a = new Duration(System.TimeSpan.FromSeconds(90));
-        var b = new Duration(System.TimeSpan.FromMinutes(1.5));
+        var a = Context.Duration(System.TimeSpan.FromSeconds(90));
+        var b = Context.Duration(System.TimeSpan.FromMinutes(1.5));
         await Assert.That(a.Equals(b)).IsTrue();
         await Assert.That(a.GetHashCode()).IsEqualTo(b.GetHashCode());
     }
@@ -38,20 +38,20 @@ public class DurationWrapperTests : IAsyncDisposable
     // each unit is the whole span in it, a number: 1m30s is 1.5 minutes, 90 seconds, 90000 milliseconds
     public async Task Duration_EachUnit_IsTheWholeSpan()
     {
-        var d = new Duration(System.TimeSpan.FromSeconds(90));
+        var d = Context.Duration(System.TimeSpan.FromSeconds(90));
         await Assert.That((await d.Seconds(Context).Value())!.ToString()).IsEqualTo("90");
         await Assert.That((await d.Minutes(Context).Value())!.ToString()).IsEqualTo("1.5");
         await Assert.That((await d.Milliseconds(Context).Value())!.ToString()).IsEqualTo("90000");
         await Assert.That((await d.Hours(Context).Value())!.AsDouble()).IsEqualTo(0.025);
-        await Assert.That((await new Duration(System.TimeSpan.FromHours(36)).Days(Context).Value())!.ToString()).IsEqualTo("1.5");
+        await Assert.That((await Context.Duration(System.TimeSpan.FromHours(36)).Days(Context).Value())!.ToString()).IsEqualTo("1.5");
     }
 
     [Test]
     public async Task Duration_Truthiness_ZeroVsNonZeroPolicyDocumented()
     {
         // Documented policy: zero duration is falsy; any non-zero span is truthy.
-        Item zero = new Duration(System.TimeSpan.Zero);
-        Item nonZero = new Duration(System.TimeSpan.FromSeconds(1));
+        Item zero = Context.Duration(System.TimeSpan.Zero);
+        Item nonZero = Context.Duration(System.TimeSpan.FromSeconds(1));
         await Assert.That(zero.IsTruthy()).IsFalse();
         await Assert.That(nonZero.IsTruthy()).IsTrue();
     }
@@ -60,10 +60,10 @@ public class DurationWrapperTests : IAsyncDisposable
     public async Task Duration_BareSerialize_InItsKind_RoundTrips()
     {
         // A span made with no text is short, written bare in its largest whole unit, and reads back as itself.
-        var d = new Duration(System.TimeSpan.FromMinutes(90));
-        var text = d.ToString();
+        var d = Context.Duration(System.TimeSpan.FromMinutes(90));
+        var text = await Context.Written(d);
         await Assert.That(text).IsEqualTo("90m");
-        await Assert.That(Duration.Resolve(text, null!)!.Value).IsEqualTo(d.Value);
+        await Assert.That(Duration.Resolve(text, Context)!.Value).IsEqualTo(d.Value);
     }
 
     [Test]
