@@ -81,16 +81,16 @@ public class CollectedTypeTests
         await Assert.That(face).DoesNotContain("\"clr\"");
     }
 
-    [Test] public async Task Face_OfOneType_IsItsFacts_AndItsKindNames()
+    // a type written alone is its face — the word it goes by, with its kind — as a kind is; its facts are navigated
+    [Test] public async Task Face_OfOneType_IsItsWord_AndItsFactsAreNavigated()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var face = await Out(app, app.type.list["number"]);
-        // named by its namespace; the word it goes by beside it
-        await Assert.That(face).Contains("\"name\":\"app.type.item.number\"");
-        await Assert.That(face).Contains("\"word\":\"number\"");
-        await Assert.That(face).Contains("\"description\"");
-        await Assert.That(face).Contains("\"example\":\"42\"");
-        await Assert.That(face).Contains("\"int\"");
+        var context = app.actor.list.User.Context;
+        await Assert.That(await Out(app, app.type.list["number"])).IsEqualTo("\"number\"");
+        await Assert.That(await context.Written(app.type.list[new global::app.type.@this("list", "path"), context])).IsEqualTo("list<path>");
+        var type = new global::app.data.@this("", app.type.list["number"], context: context);
+        await Assert.That((await (await type.Get("description")).Value())?.IsTruthy()).IsTrue();
+        await Assert.That(await context.Written((await (await type.Get("example")).Value())!)).IsEqualTo("42");
     }
 
     [Test] public async Task A_TypeInTheStoreView_StaysItsIdentity()
