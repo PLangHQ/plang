@@ -283,7 +283,7 @@ Not in this branch's files, a later sweep (collections plang reaches; each check
 
 **What plang sees** (the app has goals Start and Build, Start running):
 ```
-- write out %!app.goal%                → Start               the app's goal node: the running goal
+- write out %!app.goal%                → the running goal, written whole (its record: name, path, steps, …)
 - write out %!app.goal.name%           → Start               a dot reads the running goal
 - write out %!app.goal.type.name%      → goal
 - write out %!app.goal.list%           → [Start, Build]
