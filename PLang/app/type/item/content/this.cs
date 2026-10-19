@@ -82,14 +82,14 @@ public abstract class @this : global::app.type.item.@this
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         var sample = await Content(data.Context);
-        if (!sample.Success) { data.Fail(sample.Error!); return Absent; }
+        if (!sample.Success) { data.Fail(sample.Error!); return data.Empty; }
         var read = await _format!.Decode(Bytes, data.Context, template: Type.Template, origin: Path);
-        if (!read.Success) { data.Fail(read.Error!); return Absent; }
+        if (!read.Success) { data.Fail(read.Error!); return data.Empty; }
         // the decoded value says whether it holds variables (born holding only what its origin allows)
         _plain = !read.Peek().HasVariable;
         // what the decode answers — a template's render at this use, which its Data never keeps
         var answer = await read.Value();
-        if (!read.Success) { data.Fail(read.Error!); return Absent; }
+        if (!read.Success) { data.Fail(read.Error!); return data.Empty; }
         if (answer == null || ReferenceEquals(answer, this)) return this;
         answer.history.Add(this);
         return answer;

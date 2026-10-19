@@ -11,15 +11,17 @@ public class AskAnswerTests
 {
     private sealed class TestMessageChannel : global::app.channel.type.message.@this
     {
-        public TestMessageChannel(string name)
+        private readonly global::app.actor.context.@this _ctx;
+        public TestMessageChannel(string name, global::app.actor.context.@this ctx)
         {
             Name = name;
+            _ctx = ctx;
             Direction = global::app.channel.ChannelDirection.Bidirectional;
         }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok());
+            => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+            => Task.FromResult(_ctx.Ok((object?)null));
     }
 
     private static global::app.channel.type.stream.@this Console(global::app.@this app, string typed)
@@ -79,7 +81,7 @@ public class AskAnswerTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
         var ctx = app.actor.list.User.Context;
-        app.actor.list.User.Channel.Register(new TestMessageChannel("input"));
+        app.actor.list.User.Channel.Register(new TestMessageChannel("input", app.actor.list.User.Context));
 
         var pending = await Asked(ctx);
         await Assert.That(pending.Peek()).IsTypeOf<Ask>();

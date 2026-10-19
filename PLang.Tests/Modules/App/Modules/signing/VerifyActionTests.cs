@@ -47,7 +47,7 @@ public class VerifyActionTests
     {
         var action = new sign(Ctx) { Data = new Data("", data, context: Ctx),
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.item.list.@this>("", global::PLang.Tests.Shared.Make.List(contracts, Ctx), context: Ctx),
-            Expires = expires.HasValue ? (global::app.type.item.duration.@this)expires.Value : null,
+            Expires = expires.HasValue ? Ctx.Ok<global::app.type.item.duration.@this>((global::app.type.item.duration.@this)expires.Value) : null,
             Header = headers?.ToDictData(Ctx)
         };
         return await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);

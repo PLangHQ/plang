@@ -619,13 +619,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         var context = parent.Context;
         if (int.TryParse(key, out var index))
-            return At(index, context) ?? Data.NotFound(key);
+            return At(index, context) ?? context.NotFound(key);
 
         // its own surface and its settings (%!app.goal.list.setting%) answer even when it holds no items
         if (await Member(parent, key) is { } member) return member;
         if (await Setting(parent, key) is { } setting) return setting;
 
-        if (CountRaw == 0) return Data.NotFound(key);
+        if (CountRaw == 0) return context.NotFound(key);
         // Implicit first: %list.street% → %list[0].street%.
         return await First(context)!.Get(key);
     }
@@ -728,7 +728,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         {
             var value = await row.Value();
             // an element that can't be read (a %variable% not set) fails the list, as reading it anywhere fails
-            if (!row.Success) { data.Fail(row.Error!); return Absent; }
+            if (!row.Success) { data.Fail(row.Error!); return data.Empty; }
             result.AddRaw(value);
         }
         return result;

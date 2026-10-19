@@ -62,11 +62,12 @@ public class OsTrustTests : IDisposable
     private sealed class Questions : global::app.channel.@this
     {
         public List<string> Asked { get; } = new();
-        public Questions() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        private readonly global::app.actor.context.@this _ctx;
+        public Questions(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok());
+            => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+            => Task.FromResult(_ctx.Ok((object?)null));
         public override async Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             Asked.Add((await action.Question!.Value())?.ToString() ?? "");
@@ -79,7 +80,7 @@ public class OsTrustTests : IDisposable
     [Arguments(global::app.type.item.permission.Verb.delete)]
     public async Task ChangingAFileUnderTheOsFolder_IsAsked_SayingWhatAYesMeans(global::app.type.item.permission.Verb verb)
     {
-        var questions = new Questions();
+        var questions = new Questions(Context);
         Context.Actor!.Channel.Register(questions);
         var file = new global::app.type.item.path.file.@this(Os("Changed.goal"));
         var asked = await file.Authorize(verb, Context);
@@ -91,7 +92,7 @@ public class OsTrustTests : IDisposable
     [Test]
     public async Task ReadingUnderTheOsFolder_OrWritingInTheAppsRoot_SaysNothingOfIt()
     {
-        var questions = new Questions();
+        var questions = new Questions(Context);
         Context.Actor!.Channel.Register(questions);
         await (await new global::app.type.item.path.file.@this(Path.Combine(_root, "own.txt")).Authorize(global::app.type.item.permission.Verb.write, Context)).IsSuccess();
         await new global::app.type.item.path.file.@this(Os("Read.goal")).Authorize(global::app.type.item.permission.Verb.read, Context);

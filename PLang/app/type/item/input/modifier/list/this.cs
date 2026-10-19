@@ -46,7 +46,7 @@ public sealed class @this : global::app.type.item.@this
 
     /// <summary>The first key held; the null value when none is.</summary>
     public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
-        => new(_held.Length == 0 ? global::app.type.item.@null.@this.Instance : _held[0]);
+        => new(_held.Length == 0 ? data.Empty : _held[0]);
 
     /// <summary><c>.list</c> is every key held; any other step walks the first.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)

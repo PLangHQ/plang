@@ -4,8 +4,11 @@ namespace PLang.Tests.App.ScalarsAsNative;
 
 // A duration's standards are its kinds (short 30s, iso PT30S, dotnet 00:00:30): it is born with the one its text
 // is written in and writes back in it; a span made with no text is short; a kind asked for converts it.
-public class DurationKindTests
+public class DurationKindTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     [Arguments("30s", "short")]
     [Arguments("PT5M", "iso")]
@@ -17,7 +20,7 @@ public class DurationKindTests
         await Assert.That(duration.ToString()).IsEqualTo(text);
         await Assert.That(duration.Text).IsEqualTo(text);
         await Assert.That(((global::app.type.item.@this)duration).Clr<object>()).IsNotNull();
-        await Assert.That(new global::app.data.@this("d", duration).Type.kind.Name).IsEqualTo(kind);
+        await Assert.That(new global::app.data.@this("d", duration, context: app.actor.list.User.Context).Type.kind.Name).IsEqualTo(kind);
     }
 
     [Test]

@@ -4,8 +4,11 @@ namespace PLang.Tests.App.ScalarsAsNative;
 
 // A size's standards are its kinds (iec 95.4 MiB, si 100 MB): a size read from text is born with the one its suffix
 // names and writes back in it; a size made from a count is written in the standard its asker's setting names.
-public class SizeKindTests
+public class SizeKindTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static async Task<global::app.data.@this> Read(global::app.actor.context.@this context, string path)
         => await new global::app.type.item.variable.parser.@this(path).Variable.Single().Start(context);
 
@@ -21,7 +24,7 @@ public class SizeKindTests
         var size = Size.Resolve(text, null)!;
 
         await Assert.That(size.Value).IsEqualTo(bytes);
-        await Assert.That(new global::app.data.@this("s", size).Type.kind.Name).IsEqualTo(kind);
+        await Assert.That(new global::app.data.@this("s", size, context: app.actor.list.User.Context).Type.kind.Name).IsEqualTo(kind);
     }
 
     [Test]

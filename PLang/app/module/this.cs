@@ -87,9 +87,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The module <paramref name="name"/> names, by its own <see cref="Match"/>; NotFound when none does.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this<@this>> Get(string name)
     {
+        // a C# door with no asker: the answer is born with the app's own context
+        var context = App.actor.list.System.Context;
         foreach (var module in list.Items())
-            if (await module.Match(name) is { } found) return global::app.data.@this<@this>.Ok(found);
-        return global::app.data.@this<@this>.FromError(new global::app.error.@this($"no module '{name}'", "NotFound", 404));
+            if (await module.Match(name) is { } found) return context.Ok<@this>(found);
+        return global::app.data.@this<@this>.FromError(new global::app.error.@this($"no module '{name}'", "NotFound", 404), context);
     }
 
     /// <summary>The module a <c>.pr</c> row names — for the readers, which read a synchronous pass; null when the

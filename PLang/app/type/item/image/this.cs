@@ -229,14 +229,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             {
                 data.Fail(read.Error ?? new global::app.error.@this(
                     $"could not read image from '{Path}'.", "ImageReadFailed", 400));
-                return Absent;
+                return data.Empty;
             }
             _bytes = (await read.Value())?.Value ?? System.Array.Empty<byte>();
             // Strict kind fires here, at byte-materialization — the set stayed lazy.
             if (Mismatch() is { } refused)
             {
                 data.Fail(refused);
-                return Absent;
+                return data.Empty;
             }
         }
         else if (_bytes == null)

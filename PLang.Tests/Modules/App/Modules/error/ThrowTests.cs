@@ -124,7 +124,7 @@ public class ThrowTests : System.IAsyncDisposable
         // never flattened. Reachable as %!error.data%.
         var (context, _) = CreateContext();
 
-        var action = new Throw(context) { Data = Data.Ok((Text)"order-123") };
+        var action = new Throw(context) { Data = context.Ok((Text)"order-123") };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -142,9 +142,9 @@ public class ThrowTests : System.IAsyncDisposable
         // `- throw %order%, %item%` — multiple values ride as a plang list, each
         // element keeping its own value/type.
         var (context, _) = CreateContext();
-        var inner = new ListType(new[] { Data.Ok((Text)"order-123"), Data.Ok((Text)"item-9") }, context.App.type.list["list"]);
+        var inner = new ListType(new[] { context.Ok((Text)"order-123"), context.Ok((Text)"item-9") }, context.App.type.list["list"]);
 
-        var action = new Throw(context) { Data = Data.Ok(inner) };
+        var action = new Throw(context) { Data = context.Ok(inner) };
         var result = await action.Start();
 
         await result.IsFailure();

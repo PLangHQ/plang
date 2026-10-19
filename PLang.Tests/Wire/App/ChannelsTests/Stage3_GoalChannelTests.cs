@@ -137,7 +137,7 @@ public class Stage3_GoalChannelTests
         var goal = new EngineGoal(app.type.list) { Name = "Asker", Path = global::app.type.item.path.@this.Resolve("Asker.goal", app.actor.list.User.Context) };
         app.goal.list.Add(goal);
         var ch = await Make.GoalChannel("input", Make.Call(app.actor.list.User.Context, goal.Name), app.actor.list.User);
-        var result = await ch.Ask(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
+        var result = await ch.Ask(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?", context: app.actor.list.User.Context) });
         await result.IsSuccess();
     }
 

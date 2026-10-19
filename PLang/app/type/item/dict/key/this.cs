@@ -32,7 +32,7 @@ public sealed class @this : global::app.type.item.@this
 
     /// <summary>The first key as text, made by the asker's types; the null value for a dict with no key.</summary>
     public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
-        => new(First is not { } name ? global::app.type.item.@null.@this.Instance
+        => new(First is not { } name ? data.Empty
             : data.Context is { } context ? context.App.type.list["text"].Make(name, context)
             : new global::app.type.item.text.@this(name));
 

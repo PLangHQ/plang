@@ -65,7 +65,7 @@ public sealed class @this : global::app.type.item.@this
         if (await _file.AsBooleanAsync(data.Context))
         {
             var sample = await _file.Content(data.Context);
-            if (!sample.Success) { data.Fail(sample.Error!); return Absent; }
+            if (!sample.Success) { data.Fail(sample.Error!); return data.Empty; }
             var fenced = false;
             foreach (var text in _file.ContentText().Split('\n').Select(text => text.TrimEnd('\r')))
             {

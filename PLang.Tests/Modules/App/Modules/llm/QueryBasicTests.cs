@@ -201,7 +201,7 @@ public class QueryBasicTests
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "Hello" }
             }.ToListData<LlmMessage>(Ctx),
-            Model = new global::app.data.@this<global::app.type.item.text.@this>("Model", "claude-99-future")
+            Model = new global::app.data.@this<global::app.type.item.text.@this>("Model", "claude-99-future", context: Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -254,7 +254,7 @@ public class QueryBasicTests
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "Hello" }
             }.ToListData<LlmMessage>(Ctx),
-            Model = new global::app.data.@this<global::app.type.item.text.@this>("Model", "gpt-5.4-mini-2026-03-17")
+            Model = new global::app.data.@this<global::app.type.item.text.@this>("Model", "gpt-5.4-mini-2026-03-17", context: Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();

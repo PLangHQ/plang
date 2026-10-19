@@ -108,8 +108,7 @@ public class Stage4_TypeHintPrecedenceTests
         var (handler, _) = await shell!.Resolve(action, _app.actor.list.User.Context);
         var result = await ((IClass)handler!).Build();
 
-        await result.IsSuccess();
-        await Assert.That((await result.Value())!.IsTruthy()).IsFalse()
-            .Because("output.ask defers Type to the (type) hint on the write target.");
+        await Assert.That(result).IsNull()
+            .Because("output.ask defers Type to the (type) hint on the write target: its Build has nothing to say.");
     }
 }

@@ -194,18 +194,21 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// (a goal, an item, a host) answers its typed null: still null, still this type.</summary>
     public item.@this Empty(global::app.actor.context.@this context)
     {
+        if (_empty is { } made) return made();
         var clr = ClrType;
-        if (clr == null || !typeof(item.@this).IsAssignableFrom(clr) || clr.IsAbstract || clr.ContainsGenericParameters)
-            return new item.@null.@this(this);
         const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
             | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
         // a value class born holding its type is handed this one (an empty list<goal> holds {list, goal})
-        if (clr.GetConstructor(any, [typeof(@this)]) is { } typed)
-            return (item.@this)typed.Invoke([this]);
-        if (clr.GetConstructor(any, System.Type.EmptyTypes) is { } empty)
-            return (item.@this)empty.Invoke(null);
-        return new item.@null.@this(this);
+        _empty = clr == null || !typeof(item.@this).IsAssignableFrom(clr) || clr.IsAbstract || clr.ContainsGenericParameters
+            ? () => new item.@null.@this(this)
+            : clr.GetConstructor(any, [typeof(@this)]) is { } typed ? () => (item.@this)typed.Invoke([this])
+            : clr.GetConstructor(any, System.Type.EmptyTypes) is { } empty ? () => (item.@this)empty.Invoke(null)
+            : () => new item.@null.@this(this);
+        return _empty();
     }
+
+    // How this type makes its empty value — its class's constructor, found once (every value-less Data asks).
+    private System.Func<item.@this>? _empty;
 
 
     /// <summary>
@@ -917,7 +920,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // comparing as its name; nothing when it has none.
         if (string.Equals(key, "kind", System.StringComparison.OrdinalIgnoreCase))
             return full.kind.IsEmpty
-                ? new global::app.data.@this(key, global::app.type.item.@null.@this.Instance, context: parent.Context)
+                ? new global::app.data.@this(key, context: parent.Context)
                 : new global::app.data.@this(key, full.kind, context: parent.Context);
         var member = await new global::app.type.clr.@this(full, parent.Context).Get(parent, key);
         return member.IsInitialized ? member : await Setting(parent, key) ?? member;

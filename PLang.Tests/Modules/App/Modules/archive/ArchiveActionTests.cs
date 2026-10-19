@@ -33,7 +33,7 @@ public class ArchiveActionTests : IDisposable
         => new global::app.data.@this("", name, context: Ctx).As<global::app.type.item.choice.@this<Kind>>();
 
     private global::app.data.@this<global::app.type.item.path.@this> At(string plang)
-        => global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(plang, Ctx));
+        => Ctx.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve(plang, Ctx));
 
     private async Task<global::app.data.@this> Pack(global::app.data.@this value, string? format = null, string? to = null)
     {
@@ -54,7 +54,7 @@ public class ArchiveActionTests : IDisposable
             Value = global::app.data.@this<Archive>.From(new global::app.data.@this("archive", archive, context: Ctx)),
             Into = into == null ? null : At(into),
             Format = format == null ? null : Format(format),
-            Max = max == null ? global::app.data.@this<global::app.type.item.size.@this>.Uninitialized("max") : new global::app.type.item.size.@this(max.Value, Ctx),
+            Max = max == null ? global::app.data.@this<global::app.type.item.size.@this>.Uninitialized("max", Ctx) : new global::app.type.item.size.@this(max.Value, Ctx),
         };
         await action.Attach(null, Ctx);
         return await action.Start();

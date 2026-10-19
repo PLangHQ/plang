@@ -74,7 +74,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     // The null citizen is written without a type: its value is null.
                     if (typeRef is not { IsNull: false } && reader.Null())
                     {
-                        value = global::app.type.item.@null.@this.Instance;
+                        value = born.App.type.list["null"].Empty(born);
                         break;
                     }
                     // Loud, never a guess — plang is strongly typed. The build's retry hands this

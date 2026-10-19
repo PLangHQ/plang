@@ -43,7 +43,7 @@ public static class SerializerSyncTestExtensions
     public static global::app.data.@this<T> Deserialize<T>(this global::app.type.kind.@this format, string str, global::app.actor.context.@this ctx)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        if (string.IsNullOrEmpty(str)) return global::app.data.@this<T>.Ok(default!);
+        if (string.IsNullOrEmpty(str)) return global::app.data.@this<T>.From(ctx.Null());
         var read = DeserializeFrom(format, str, ctx, global::app.View.Out);
         return read.Success ? read.As<T>() : global::app.data.@this<T>.From(read);
     }
@@ -82,14 +82,14 @@ public static class SerializerSyncTestExtensions
         using var ms = new MemoryStream();
         var r = format.Encode(ms, d, ctx, view).GetAwaiter().GetResult();
         return r.Error != null
-            ? global::app.data.@this<global::app.type.item.text.@this>.FromError(r.Error)
-            : global::app.data.@this<global::app.type.item.text.@this>.Ok(Encoding.UTF8.GetString(ms.ToArray()));
+            ? global::app.data.@this<global::app.type.item.text.@this>.FromError(r.Error, ctx)
+            : ctx.Ok<global::app.type.item.text.@this>(Encoding.UTF8.GetString(ms.ToArray()));
     }
 
     private static global::app.data.@this DeserializeFrom(global::app.type.kind.@this format, string str,
         global::app.actor.context.@this ctx, global::app.View view)
     {
-        if (string.IsNullOrEmpty(str)) return global::app.data.@this.Ok(null);
+        if (string.IsNullOrEmpty(str)) return ctx.Null();
         return format.Decode(Encoding.UTF8.GetBytes(str), ctx, view: view).GetAwaiter().GetResult();
     }
 }

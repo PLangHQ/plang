@@ -54,13 +54,13 @@ public class ImageValueTests : System.IAsyncDisposable
         var p = global::app.type.item.path.@this.Resolve("photo.jpeg", app.actor.list.User.Context);
         var img = new image(p, app.actor.list.User.Context);
         await Assert.That(img.Mime).IsEqualTo("image/jpeg");
-        await Assert.That(global::app.data.@this.Ok(img).Type.kind.Name).IsEqualTo("jpg");
+        await Assert.That(app.actor.list.User.Context.Ok(img).Type.kind.Name).IsEqualTo("jpg");
     }
 
     [Test] public async Task Image_FromSniffedJpegBytes_KindIsCanonicalJpg()
     {
         var img = image.FromBytes(new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 })!;
-        await Assert.That(global::app.data.@this.Ok(img).Type.kind.Name).IsEqualTo("jpg");
+        await Assert.That(app.actor.list.User.Context.Ok(img).Type.kind.Name).IsEqualTo("jpg");
     }
 
     [Test] public async Task Image_WidthHeight_LazyEvaluation()

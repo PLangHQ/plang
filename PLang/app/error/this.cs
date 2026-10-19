@@ -149,8 +149,9 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         get
         {
             if (_callback != null) return _callback;
+            // an error not raised inside a run has no context for its answer to be born with
             if (Context == null)
-                return global::app.data.@this<global::app.snapshot.@this>.FromError(new Error(
+                throw new global::app.error.AppException(new Error(
                     $"error '{Key}' was not raised inside a run, so it has no callback to resume.", "NoCallback", 400));
             var snap = Context.App.Snapshot(this, Context);
             _callback = Context.Ok<global::app.snapshot.@this>(snap);

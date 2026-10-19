@@ -13,7 +13,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Constructor_WithName_SetsName()
     {
-        var ov = new Data("testVar");
+        var ov = _app.Data("testVar", null);
 
         await Assert.That(ov.Name).IsEqualTo("testVar");
     }
@@ -32,7 +32,7 @@ public class DataTests : System.IAsyncDisposable
     {
         // (object?) forces the value ctor — a bare null binds to the item.@this
         // instance ctor by overload resolution.
-        var ov = new Data("test", (object?)null);
+        var ov = _app.Data("test", (object?)null);
 
         // A null value is the plang null citizen (a real item), not C# null.
         await Assert.That((await ov.Value())!.IsNull).IsTrue();
@@ -62,7 +62,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Constructor_KeepsTheNameAsGiven()
     {
-        var ov = new Data("varName");
+        var ov = _app.Data("varName", null);
 
         await Assert.That(ov.Name).IsEqualTo("varName");
     }
@@ -72,7 +72,7 @@ public class DataTests : System.IAsyncDisposable
     {
         var before = DateTime.UtcNow;
 
-        var ov = new Data("test");
+        var ov = _app.Data("test", null);
 
         var after = DateTime.UtcNow;
         await Assert.That(ov.Created).IsGreaterThanOrEqualTo(before);
@@ -82,7 +82,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Constructor_InitializesProperties()
     {
-        var ov = new Data("test");
+        var ov = _app.Data("test", null);
 
         await Assert.That(ov.Properties).IsNotNull();
         await Assert.That(ov.Properties.Count).IsEqualTo(0);
@@ -91,7 +91,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Path_WithNoParent_EqualsName()
     {
-        var ov = new Data("testVar");
+        var ov = _app.Data("testVar", null);
 
         await Assert.That(ov.Path).IsEqualTo("testVar");
     }
@@ -192,7 +192,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task GetValue_ByType_Null_ReturnsNull()
     {
-        var ov = new Data("test");
+        var ov = _app.Data("test", null);
 
         var value = ov.GetValue(typeof(string));
 
@@ -341,7 +341,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Truthy_NullValue_IsFalse()
     {
-        var ov = new Data("test");
+        var ov = _app.Data("test", null);
 
         await Assert.That(await ov.ToBooleanAsync()).IsFalse();
     }
@@ -388,7 +388,7 @@ public class DataTests : System.IAsyncDisposable
     {
         await Assert.That(_app.Data("test", "").HasValue).IsTrue();
         await Assert.That(_app.Data("test", false).HasValue).IsTrue();
-        await Assert.That(new Data("test").HasValue).IsFalse();
+        await Assert.That(_app.Data("test", null).HasValue).IsFalse();
         await Assert.That(_app.NotFound("test").HasValue).IsFalse();
     }
 
@@ -400,7 +400,7 @@ public class DataTests : System.IAsyncDisposable
         await Assert.That(ov.Name).IsEqualTo("test");
         // Born-native: a present null value carries the null.@this singleton
         // (not a C# null _value). IsInitialized stays true — value, not absence.
-        await Assert.That(ReferenceEquals((ov.Peek()), app.type.item.@null.@this.Instance)).IsTrue();
+        await Assert.That(ov.Peek() is global::app.type.item.@null.@this).IsTrue();
         await Assert.That(ov.IsInitialized).IsTrue();
     }
 
@@ -420,7 +420,7 @@ public class DataTests : System.IAsyncDisposable
         var ov = _app.Null();
 
         await Assert.That(ov.Name).IsEqualTo("");
-        await Assert.That(ReferenceEquals((ov.Peek()), app.type.item.@null.@this.Instance)).IsTrue();
+        await Assert.That(ov.Peek() is global::app.type.item.@null.@this).IsTrue();
     }
 
     [Test]
@@ -436,7 +436,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task ToString_NullValue_ReturnsNullString()
     {
-        var ov = new Data("test");
+        var ov = _app.Data("test", null);
 
         var str = ov.ToString();
 
@@ -456,7 +456,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Parent_WhenNotSet_IsNull()
     {
-        var ov = new Data("test");
+        var ov = _app.Data("test", null);
 
         await Assert.That(ov.Parent).IsNull();
     }
@@ -512,7 +512,7 @@ public class DataTests : System.IAsyncDisposable
         // is carried as the synthetic Null entity instead of a literal null,
         // so consumers don't need a Type? null guard.  Wire serialization
         // skips the Null sentinel so the on-wire shape is unchanged.
-        var ov = new Data("test");
+        var ov = _app.Data("test", null);
 
         await Assert.That(ov.Type.IsNull).IsTrue();
     }
@@ -764,14 +764,14 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task IsVariable_StandardVariable_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.item.text.@this("%var%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
+        var d = _app.Data("x", new global::app.type.item.text.@this("%var%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
         await Assert.That(d.IsVariable).IsTrue();
     }
 
     [Test]
     public async Task IsVariable_ShortName_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.item.text.@this("%v%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
+        var d = _app.Data("x", new global::app.type.item.text.@this("%v%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
         await Assert.That(d.IsVariable).IsTrue();
     }
 
@@ -806,7 +806,7 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task IsVariable_NullValue_ReturnsFalse()
     {
-        var d = new Data("x");
+        var d = _app.Data("x", null);
         await Assert.That(d.IsVariable).IsFalse();
     }
 
@@ -815,21 +815,21 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task HasVariable_EmbeddedVariable_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.item.text.@this("hello %name%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
+        var d = _app.Data("x", new global::app.type.item.text.@this("hello %name%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
         await Assert.That(d.HasVariable).IsTrue();
     }
 
     [Test]
     public async Task HasVariable_MultipleVariables_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.item.text.@this("%a% + %b%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
+        var d = _app.Data("x", new global::app.type.item.text.@this("%a% + %b%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
         await Assert.That(d.HasVariable).IsTrue();
     }
 
     [Test]
     public async Task HasVariable_SingleVariable_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.item.text.@this("%var%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
+        var d = _app.Data("x", new global::app.type.item.text.@this("%var%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
         await Assert.That(d.HasVariable).IsTrue();
     }
 
@@ -857,7 +857,7 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task HasVariable_NullValue_ReturnsFalse()
     {
-        var d = new Data("x");
+        var d = _app.Data("x", null);
         await Assert.That(d.HasVariable).IsFalse();
     }
 }

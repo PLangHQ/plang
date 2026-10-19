@@ -118,11 +118,11 @@ public class DiscoverActionTests
 
     private async Task<List<global::app.test.@this>> Discover(string path = ".", bool recursive = true)
     {
-        var action = new global::app.module.test.discover(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+        var action = new global::app.module.test.discover(_app.actor.list.User.Context) { Path = _app.actor.list.User.Context.Ok<global::app.type.item.path.@this>(
                 global::app.type.item.path.@this.Resolve(path, _app.actor.list.User.Context)),
-            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
+            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal", context: _app.actor.list.User.Context),
             Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.type.item.path.subfolder>>("Subfolder",
-                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(recursive ? global::app.type.item.path.subfolder.include : global::app.type.item.path.subfolder.skip))
+                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(recursive ? global::app.type.item.path.subfolder.include : global::app.type.item.path.subfolder.skip), context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
         return result.GetValue<List<global::app.test.@this>>() ?? new List<global::app.test.@this>();

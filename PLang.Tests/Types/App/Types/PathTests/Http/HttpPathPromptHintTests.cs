@@ -18,22 +18,25 @@ public class HttpPathPromptHintTests
         public string LastQuestion = "";
         public string Answer = "n";
 
-        public CapturingChannel()
+        private readonly global::app.actor.context.@this _ctx;
+
+        public CapturingChannel(global::app.actor.context.@this ctx)
         {
+            _ctx = ctx;
             Name = "input";
             Direction = global::app.channel.ChannelDirection.Bidirectional;
         }
 
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok());
+            => Task.FromResult(_ctx.Ok());
 
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+            => Task.FromResult(_ctx.Ok((object?)null));
 
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             LastQuestion = (action.Question.Peek()?.ToString()) ?? "";
-            return Task.FromResult(global::app.data.@this.Ok(Answer));
+            return Task.FromResult(_ctx.Ok(Answer));
         }
     }
 
@@ -43,7 +46,7 @@ public class HttpPathPromptHintTests
             "plang-http-hint-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
         var app = new AppEngine(dir);
-        var ch = new CapturingChannel();
+        var ch = new CapturingChannel(app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         return (app, app.actor.list.User.Context, ch);
     }

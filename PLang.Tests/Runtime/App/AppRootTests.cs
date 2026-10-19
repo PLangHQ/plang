@@ -10,13 +10,14 @@ public class AppRootTests
     private sealed class AskCountingChannel : global::app.channel.@this
     {
         public int AskCount;
-        public AskCountingChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        private readonly global::app.actor.context.@this _ctx;
+        public AskCountingChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             System.Threading.Interlocked.Increment(ref AskCount);
-            return Task.FromResult(global::app.data.@this.Ok("n"));
+            return Task.FromResult(_ctx.Ok("n"));
         }
     }
 
@@ -34,7 +35,7 @@ public class AppRootTests
         {
             await using var runner = new global::app.@this(root).Testing();
             await using var app = new global::app.@this(runner.AbsolutePath).Testing();
-            var ch = new AskCountingChannel();
+            var ch = new AskCountingChannel(app.actor.list.User.Context);
             app.actor.list.User.Channel.Register(ch);
 
             await (await new FilePath(System.IO.Path.Combine(root, "in.txt")).Touch(app.actor.list.User.Context)).IsSuccess();

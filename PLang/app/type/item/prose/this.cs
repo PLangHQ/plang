@@ -41,7 +41,7 @@ public sealed class @this : global::app.type.item.@this
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
         => await Text(data.Context!) is { Length: > 0 } words
             ? new global::app.type.item.text.@this(words)
-            : global::app.type.item.@null.@this.Instance;
+            : data.Empty;
 
     /// <summary>The words it reads as now, for <paramref name="context"/>.</summary>
     internal async System.Threading.Tasks.ValueTask<string> Text(global::app.actor.context.@this context)

@@ -69,7 +69,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var listed = await List(data.Context!);
         if (listed.Success) return this;
         data.Fail(listed.Error!);
-        return Absent;
+        return data.Empty;
     }
 
     /// <summary>The item membership hook — routes to the listing rule below.</summary>

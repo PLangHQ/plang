@@ -177,7 +177,7 @@ public sealed class @this : IDisposable
 
     /// <summary>A present-null Data, born with this context.</summary>
     public data.@this Null(string name = "")
-        => new(name, global::app.type.item.@null.@this.Instance, context: this);
+        => new(name, context: this);
 
     /// <summary>An error Data carrying <paramref name="error"/>, born with this context. An error
     /// meeting its first run here takes this context as where it happened.</summary>

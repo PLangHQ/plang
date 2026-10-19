@@ -2,13 +2,12 @@ namespace app.type.item.@null;
 
 /// <summary>
 /// PLang <c>null</c> value — the null <em>value</em> (a present value that is
-/// null), hosted as a process-wide <b>singleton</b> (<see cref="Instance"/>) so
-/// the scattered <c>is null</c> / <c>== null</c> value-switches dissolve onto a
-/// type like every other scalar. There is one null in the world; it is never
-/// per-value allocated.
+/// null), a type like every other scalar so the scattered <c>is null</c> /
+/// <c>== null</c> value-switches dissolve onto it. Each null is born holding its
+/// app's null type (or the declared type it is the null of); there is no shared one.
 ///
 /// <para><b>The null value, and the absent item.</b> A <c>Data</c> whose value is
-/// null carries this singleton (a present null, <c>IsInitialized = true</c>). A
+/// null carries its app's null (a present null, <c>IsInitialized = true</c>). A
 /// <em>missing</em> variable / <c>NotFound</c> / uninitialised Data
 /// (<c>IsInitialized = false</c>) holds it too, so the item answers for the absence:
 /// not truthy, empty, <c>== null</c>. Whether the Data was given is Data's own
@@ -23,11 +22,6 @@ namespace app.type.item.@null;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Shape => "null";
-
-    /// <summary>The one typeless null value in the world.</summary>
-    public static @this Instance { get; } = new();
-
-    private @this() : base(new global::app.type.@this(typeof(@this))) { }
 
     /// <summary>A null of <paramref name="declared"/> — born holding the type as declared, its class with it.</summary>
     internal @this(global::app.type.@this declared) : base(declared) { }

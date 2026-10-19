@@ -64,7 +64,7 @@ public class ItemApexTests : System.IAsyncDisposable
         await Assert.That(() => CompareTestOps.OrdD(new Data("a", d1, context: ctx), new Data("b", d2, context: ctx)))
             .Throws<global::app.data.IncomparableException>();
         // list, which DOES implement IOrderableValue, still sorts (empty == empty).
-        await Assert.That(CompareTestOps.OrdD(new Data("", new PList(app.type.list["list"])), new Data("", new PList(app.type.list["list"])))).IsEqualTo(0);
+        await Assert.That(CompareTestOps.OrdD(new Data("", new PList(app.type.list["list"]), context: app.actor.list.User.Context), new Data("", new PList(app.type.list["list"]), context: app.actor.list.User.Context))).IsEqualTo(0);
     }
 
     [Test]

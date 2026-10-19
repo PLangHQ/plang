@@ -164,7 +164,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a" });
 
-        var action = new Get(context) { ListName = new app.type.item.variable.@this("myList"), Index = global::app.data.@this<global::app.type.item.number.@this>.Uninitialized("index") };
+        var action = new Get(context) { ListName = new app.type.item.variable.@this("myList"), Index = global::app.data.@this<global::app.type.item.number.@this>.Uninitialized("index", context) };
         var result = await action.Start();
 
         // the index's own answer — it never resolved to a number

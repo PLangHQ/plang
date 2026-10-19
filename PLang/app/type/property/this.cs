@@ -170,7 +170,8 @@ public sealed class @this : global::app.type.item.note.IAbout
         // A template is program text: a diagnostic shows it as written, never run against live
         // variables. Any other value writes in the asked view (a [Sensitive] member stays masked).
         var asWritten = mode == global::app.View.Debug && Value is { HasVariable: true } ? global::app.View.Store : mode;
-        await (Value ?? global::app.type.item.@null.@this.Instance).Output(writer, asWritten, context);
+        if (Value is { } value) await value.Output(writer, asWritten, context);
+        else writer.Null();
         // A stored row names the variables its value holds, parsed once at build.
         if (mode == global::app.View.Store && Value is { HasVariable: true } held)
         {
@@ -198,10 +199,11 @@ public sealed class @this : global::app.type.item.note.IAbout
         bool frozen, global::app.View mode, global::app.actor.context.@this? context)
     {
         writer.Row(Name, Type.kind.IsEmpty ? Type.Name : $"{Type.Name}<{Type.kind.Name}>", frozen);
-        await (Value ?? global::app.type.item.@null.@this.Instance).Output(writer, mode, context);
+        if (Value is { } value) await value.Output(writer, mode, context);
+        else writer.Null();
     }
 
     /// <summary>The run's own Data over this property — born with the run's context, the bag its own copy.</summary>
     public global::app.data.@this Data(global::app.actor.context.@this context)
-        => new(Name, Value ?? global::app.type.item.@null.@this.Instance, context: context) { Properties = Properties.Clone() };
+        => new(Name, (object?)Value, context: context) { Properties = Properties.Clone() };
 }

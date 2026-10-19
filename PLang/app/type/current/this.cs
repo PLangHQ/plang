@@ -17,7 +17,7 @@ public sealed class @this<T, L> : global::app.type.@this<T, L>
     /// nothing is inside one. Its Data is born with the asker's context.</summary>
     public data.@this<T> current(actor.context.@this context)
         => T.Current(context) is { } one ? new data.@this<T>("current", one, context: context)
-            : data.@this<T>.FromError(new global::app.error.@this($"no {Name} is current", "NotFound", 404));
+            : data.@this<T>.FromError(new global::app.error.@this($"no {Name} is current", "NotFound", 404), context);
 
     /// <summary>One step by dot: <c>current</c>, the node's own members, the type's facts, then the current's member.</summary>
     public override async System.Threading.Tasks.ValueTask<data.@this> Get(data.@this parent, string key)

@@ -69,9 +69,11 @@ public class @this<T, L> : @this
     // reads them (goal's) stops at the match.
     private async System.Threading.Tasks.ValueTask<data.@this<T>> Find(System.Collections.Generic.IAsyncEnumerable<T> every, string key)
     {
+        // a C# door with no asker: the answer is born with the app's own context
+        var context = _app.actor.list.System.Context;
         await foreach (var p in every)
-            if (await p.Match(key) is { } found) return data.@this<T>.Ok(found);
-        return data.@this<T>.FromError(new global::app.error.@this($"no {Name} '{key}'", "NotFound", 404));
+            if (await p.Match(key) is { } found) return context.Ok<T>(found);
+        return data.@this<T>.FromError(new global::app.error.@this($"no {Name} '{key}'", "NotFound", 404), context);
     }
 
     /// <summary>What a value of this concept can be in <paramref name="step"/>: the members its collection offers from

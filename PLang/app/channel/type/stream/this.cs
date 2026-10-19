@@ -113,7 +113,7 @@ public sealed class @this : global::app.channel.type.session.@this
     {
         if (!CanRead)
             return global::app.data.@this.FromError(new ServiceError(
-                $"Channel '{Name}' does not support reading", "ChannelWriteOnly", 400));
+                $"Channel '{Name}' does not support reading", "ChannelWriteOnly", 400), Context!);
 
         try
         {
@@ -124,7 +124,7 @@ public sealed class @this : global::app.channel.type.session.@this
             if (Framed)
             {
                 if (await Message(ct) is not { } message)
-                    return global::app.data.@this.FromError(new ServiceError($"Channel '{Name}' has ended", "ChannelEnded", 410));
+                    return global::app.data.@this.FromError(new ServiceError($"Channel '{Name}' has ended", "ChannelEnded", 410), Context!);
                 bytes = message;
             }
             else bytes = await ReadAllBytesAsync(ct);
@@ -135,7 +135,7 @@ public sealed class @this : global::app.channel.type.session.@this
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             return global::app.data.@this.FromError(new ServiceError(
-                $"Failed to read from channel '{Name}': {ex.Message}", "ReadError") { Exception = ex });
+                $"Failed to read from channel '{Name}': {ex.Message}", "ReadError") { Exception = ex }, Context!);
         }
     }
 

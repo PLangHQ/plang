@@ -17,15 +17,17 @@ public class OutputAskRoutingTests
 
     private sealed class TestMessageChannel : global::app.channel.type.message.@this
     {
-        public TestMessageChannel(string name)
+        private readonly global::app.actor.context.@this _ctx;
+        public TestMessageChannel(string name, global::app.actor.context.@this ctx)
         {
             Name = name;
+            _ctx = ctx;
             Direction = global::app.channel.ChannelDirection.Bidirectional;
         }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok());
+            => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+            => Task.FromResult(_ctx.Ok((object?)null));
     }
 
     [Test] public async Task OutputAsk_AnswerSentinelPresent_ReturnsOkAndConsumesIt()
@@ -35,7 +37,7 @@ public class OutputAskRoutingTests
         var answer = new global::app.type.item.variable.@this(ask.AnswerVariableName);
         await answer.Set("Alice", context);
 
-        var handler = new ask(context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?") };
+        var handler = new ask(context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?", context: context) };
         var result = await handler.Start();
         await result.IsSuccess();
         // the answer as it came — the user's data, not an Ask around it
@@ -49,10 +51,10 @@ public class OutputAskRoutingTests
         var app = NewApp();
         var context = app.actor.list.User.Context;
 
-        var msg = new TestMessageChannel("input");
+        var msg = new TestMessageChannel("input", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(msg);
 
-        var handler = new ask(context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?") };
+        var handler = new ask(context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?", context: context) };
         var result = await handler.Start();
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
@@ -67,7 +69,7 @@ public class OutputAskRoutingTests
         { Mime = "text/plain" };
         // Empty question to skip WriteCore — exercises Ask's read-line path
         // without needing a registered Channels collection for the serializer.
-        var action = new ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") };
+        var action = new ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) };
         var result = await ch.Ask(action);
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Alice");
@@ -84,7 +86,7 @@ public class OutputAskRoutingTests
     [Test] public async Task MessageChannelAsk_ReturnsDataAsk_WithSuspendShape()
     {
         var app = NewApp();
-        var ch = new TestMessageChannel("input");
+        var ch = new TestMessageChannel("input", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var action = new ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "Allow X?", context: app.actor.list.User.Context)
         };
@@ -97,7 +99,7 @@ public class OutputAskRoutingTests
     [Test] public async Task MessageChannelAsk_AttachesSnapshotToReturnedData()
     {
         var app = NewApp();
-        var ch = new TestMessageChannel("input");
+        var ch = new TestMessageChannel("input", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var action = new ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "?", context: app.actor.list.User.Context)
         };

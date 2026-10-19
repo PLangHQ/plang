@@ -86,7 +86,7 @@ public class Stage4_ChannelResolutionTests
     {
         // Plan rule 7: relay don't repackage. Channel.WriteAsync receives full Data.
         var app = new global::app.@this("/tmp/s4f").Testing();
-        var probe = new EnvelopeProbeChannel();
+        var probe = new EnvelopeProbeChannel(app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(probe);
 
         var data = app.Ok("payload");
@@ -115,17 +115,19 @@ public class Stage4_ChannelResolutionTests
     private sealed class EnvelopeProbeChannel : Channel
     {
         public Data? Received { get; private set; }
-        public EnvelopeProbeChannel()
+        private readonly global::app.actor.context.@this _ctx;
+        public EnvelopeProbeChannel(global::app.actor.context.@this ctx)
         {
+            _ctx = ctx;
             Name = "probe";
             Direction = ChannelDirection.Output;
         }
         public override Task<Data> Write(Data data, CancellationToken ct = default)
         {
             Received = data;
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(data.Context.Ok());
         }
-        public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(action.Context.Ok());
     }
 }

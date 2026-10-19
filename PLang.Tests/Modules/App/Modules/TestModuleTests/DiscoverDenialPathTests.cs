@@ -13,10 +13,11 @@ public class DiscoverDenialPathTests
     private sealed class CannedChannel : global::app.channel.@this
     {
         private readonly string _answer;
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
+        private readonly global::app.actor.context.@this _ctx;
+        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(_ctx.Ok(_answer));
     }
 
     private static PLangEngine NewApp(out string root)
@@ -30,13 +31,13 @@ public class DiscoverDenialPathTests
     [Test] public async Task Discover_WithTestPathOutsideRoot_DenialNotSilentEmpty()
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
         var outOfRoot = "//etc";
-        var action = new global::app.module.test.discover(app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+        var action = new global::app.module.test.discover(app.actor.list.User.Context) { Path = app.actor.list.User.Context.Ok<global::app.type.item.path.@this>(
                 global::app.type.item.path.@this.Resolve(outOfRoot, app.actor.list.User.Context)),
-            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
+            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal", context: app.actor.list.User.Context),
             Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.type.item.path.subfolder>>("Subfolder",
-                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(global::app.type.item.path.subfolder.skip))
+                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(global::app.type.item.path.subfolder.skip), context: app.actor.list.User.Context)
         };
         var result = await action.Start();
         // Denial surfaces as Fail, not as an empty list of tests.
@@ -46,12 +47,12 @@ public class DiscoverDenialPathTests
     [Test] public async Task Discover_WithDotDotTraversal_DeniedByAuthGate()
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new CannedChannel("n"));
-        var action = new global::app.module.test.discover(app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+        app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
+        var action = new global::app.module.test.discover(app.actor.list.User.Context) { Path = app.actor.list.User.Context.Ok<global::app.type.item.path.@this>(
                 global::app.type.item.path.@this.Resolve("//../../../etc", app.actor.list.User.Context)),
-            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
+            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal", context: app.actor.list.User.Context),
             Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.type.item.path.subfolder>>("Subfolder",
-                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(global::app.type.item.path.subfolder.skip))
+                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(global::app.type.item.path.subfolder.skip), context: app.actor.list.User.Context)
         };
         var result = await action.Start();
         // Either denial → Fail, or the resolved path lands under root → empty.

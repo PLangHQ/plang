@@ -11,7 +11,7 @@ namespace app.module.typedreturns;
 public partial class NoopBuild : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
-    public Task<global::app.data.@this> Start() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Start() => Task.FromResult(Context.Ok());
 }
 
 /// <summary>Build() returns Fail — exercises the abort-validation path.</summary>
@@ -19,9 +19,9 @@ public partial class NoopBuild : global::app.module.IContext
 public partial class BuildFails : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
-    public Task<global::app.data.@this> Start() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Start() => Task.FromResult(Context.Ok());
     public Task<global::app.data.@this> Build() => Task.FromResult(
-        global::app.data.@this.FromError(new global::app.error.ActionError("forced build failure", "BuildFail", 400)));
+        global::app.data.@this.FromError(new global::app.error.ActionError("forced build failure", "BuildFail", 400), Context));
 }
 
 /// <summary>Build() returns bare Ok() — exercises the "no value, no stamp" path.</summary>
@@ -29,8 +29,8 @@ public partial class BuildFails : global::app.module.IContext
 public partial class BuildBareOk : global::app.module.IContext
 {
     public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
-    public Task<global::app.data.@this> Start() => Task.FromResult(global::app.data.@this.Ok());
-    public Task<global::app.data.@this> Build() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Start() => Task.FromResult(Context.Ok());
+    public Task<global::app.data.@this> Build() => Task.FromResult(Context.Ok());
 }
 
 /// <summary>Records the order Build() is invoked across an action sequence.</summary>
@@ -39,10 +39,10 @@ public partial class BuildOrdered : global::app.module.IContext
 {
     public static readonly List<string> InvocationLog = new();
     public partial global::app.data.@this<global::app.type.item.text.@this>? Marker { get; init; }
-    public Task<global::app.data.@this> Start() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Start() => Task.FromResult(Context.Ok());
     public Task<global::app.data.@this> Build()
     {
         InvocationLog.Add((Marker.Peek()?.ToString()) ?? "?");
-        return Task.FromResult(global::app.data.@this.Ok());
+        return Task.FromResult(Context.Ok());
     }
 }

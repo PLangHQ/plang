@@ -123,7 +123,7 @@ public sealed class @this
     /// </summary>
     public async Task<data.@this> Record(Step step, app.@this app, global::app.error.@this? error = null)
     {
-        if (string.IsNullOrEmpty(step.Hash)) return data.@this.Ok();
+        if (string.IsNullOrEmpty(step.Hash)) return app.actor.list.System.Context.Ok();
 
         var metadata = new Dictionary<string, object?>
         {

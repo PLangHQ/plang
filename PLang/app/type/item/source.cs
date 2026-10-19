@@ -159,14 +159,8 @@ public class source : @this
         // The value loads with the context of the Data that asks — never the source's own: a
         // source in a program property is read by every run, and each run's Data carries its
         // own actor (its variables, its permissions).
-        var asking = data.Context;
-        if (asking is null)
-        {
-            data.Fail(new global::app.error.@this(
-                $"'{data.Name}' has no context to load with — a value is read through a Data born with its run's context.",
-                "NoContextToLoad", 500));
-            return Absent;
-        }
+        var asking = data.Context ?? throw new System.InvalidOperationException(
+            $"'{data.Name}' has no context to load with — a value is read through a Data born with its run's context.");
 
         // A full-match %ref% names a binding — hand back what it holds through its OWN door,
         // never parse the name through the declared type's reader (a `list` reader on the string
@@ -182,7 +176,7 @@ public class source : @this
             {
                 data.Fail(new global::app.error.@this(
                     $"{_value} is not set — nothing to answer for it.", "VariableNotFound", 404));
-                return Absent;
+                return data.Empty;
             }
             return await resolved.Value();
         }
@@ -247,12 +241,12 @@ public class source : @this
         catch (global::app.error.DeclinedException declined)
         {
             data.Fail(declined.Error);
-            return Absent;
+            return data.Empty;
         }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException or System.NotSupportedException)
         {
             data.Fail(Unread(ex, data));
-            return Absent;
+            return data.Empty;
         }
     }
 

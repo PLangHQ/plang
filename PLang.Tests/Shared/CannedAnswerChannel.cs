@@ -21,10 +21,10 @@ internal sealed class CannedAnswerChannel : global::app.channel.@this
     }
 
     public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-        => Task.FromResult(global::app.data.@this.Ok());
+        => Task.FromResult(data.Context.Ok());
 
     public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-        => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        => Task.FromResult(Context!.Null());
 
     public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         => Task.FromResult(action.Context.Ok(_answer));

@@ -330,7 +330,7 @@ public class LibrariesTests : System.IAsyncDisposable
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Context.Ok());
     }
 
     /// <summary>
@@ -347,7 +347,7 @@ public class LibrariesTests : System.IAsyncDisposable
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
         public Task<global::app.error.@this?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
         { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.@this?>(null); }
-        public Task<Data> Start() => Task.FromResult(Data.Ok());
+        public Task<Data> Start() => Task.FromResult(Context.Ok());
     }
 
     #endregion

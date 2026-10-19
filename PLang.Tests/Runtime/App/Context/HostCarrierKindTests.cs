@@ -23,7 +23,7 @@ public class HostCarrierKindTests
         var cell = await _app.actor.list.User.Context.Variable.Get(name);
         await Assert.That(cell).IsNotNull();
         var carrier = await cell!.Value();
-        var probe = new global::app.data.@this("probe");
+        var probe = new global::app.data.@this("probe", context: _app.actor.list.User.Context);
         probe.SetValueDirect(carrier);
         return probe;
     }

@@ -40,7 +40,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public static @this Create(object? raw, global::app.actor.context.@this context)
     {
-        if (raw is null) return global::app.type.item.@null.@this.Instance;
+        if (raw is null) return context.App.type.list["null"].Empty(context);
         if (raw is @this already) return already;
         if (raw is global::app.data.@this)
             throw new System.InvalidOperationException(
@@ -135,7 +135,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <para><b>Failure:</b> every failure is authored by the type that failed
     /// — the door catches only its OWN known failure modes (file tells IO
     /// stories, source tells parse stories), reports via
-    /// <c>data.Fail(error)</c> and answers <see cref="Absent"/>. A truly
+    /// <c>data.Fail(error)</c> and answers the Data's empty value (its app's null). A truly
     /// unexpected exception is a bug and propagates. The blessed surface of
     /// <paramref name="data"/> here is <c>Fail</c> alone.</para>
     /// </summary>
@@ -179,11 +179,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     protected virtual System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(@this other, global::app.actor.context.@this context)
         => new(ReferenceEquals(this, other) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual);
-
-    /// <summary>The value-less citizen — what a failed door answers (the error
-    /// rides the asking binding; the value slot stays never-null). The typeless
-    /// null; a declared-but-empty slot uses <c>new null.@this(type, kind)</c>.</summary>
-    public static @this Absent => global::app.type.item.@null.@this.Instance;
 
     /// <summary>
     /// What is in memory NOW — sync, no I/O, no parse, no resolve: the

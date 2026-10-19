@@ -11,7 +11,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     private readonly global::app.@this _app = new global::app.@this("/tmp/defeval-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    private Data D(object? value) => value == null ? new Data("") : _app.actor.list.User.Context.Ok(value);
+    private Data D(object? value) => value == null ? new Data("", context: _app.actor.list.User.Context) : _app.actor.list.User.Context.Ok(value);
 
     private Task<global::app.data.@this<global::app.type.item.@bool.@this>> Eval(object? left, string op, object? right)
         => _eval.Evaluate(new Compare(_app.actor.list.User.Context) { Left = D(left), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op)), Right = D(right) });

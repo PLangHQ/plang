@@ -28,7 +28,7 @@ public class DateTimeWrapperTests : IAsyncDisposable
         await using var app = new global::app.@this("/app").Testing();
         var earlier = new DateTimeT(System.DateTimeOffset.Parse("2024-01-01T00:00:00Z"), _app.type.list[typeof(global::app.type.item.datetime.@this)]);
         var later = new DateTimeT(System.DateTimeOffset.Parse("2024-06-01T00:00:00Z"), _app.type.list[typeof(global::app.type.item.datetime.@this)]);
-        await Assert.That(CompareTestOps.OrdD(new Data("", earlier), new Data("", later))).IsLessThan(0);
+        await Assert.That(CompareTestOps.OrdD(new Data("", earlier, context: Context), new Data("", later, context: Context))).IsLessThan(0);
         await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, earlier, later)).IsLessThan(0);
     }
 

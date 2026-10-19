@@ -80,7 +80,7 @@ public class ActorSettingsStoreTests
         var original = new global::app.module.identity.Identity("work")
             { PublicKey = "pub-abc", PrivateKey = "priv-xyz", IsDefault = true };
         await engine.store.Set("identity", "work",
-            new Data("work", original));
+            new Data("work", original, context: engine.actor.list.User.Context));
 
         var data   = await engine.store.Get<global::app.module.identity.Identity>("identity", "work");
         var loaded = await data.Value();

@@ -43,7 +43,7 @@ public class DeciderSettingTests : System.IAsyncDisposable
         _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse("""{"answers": {"s0": {"noul": 0.9}}}"""));
         var action = new decider(Ctx)
         {
-            State = new global::app.data.@this<global::app.type.item.text.@this>("", "A plang goal."),
+            State = new global::app.data.@this<global::app.type.item.text.@this>("", "A plang goal.", context: Ctx),
             Question = new("", (Dict)global::app.type.item.@this.Create(new Dictionary<string, object?>
             {
                 ["s0"] = new Dictionary<string, object?> { ["type"] = "noul", ["instructions"] = "?" },

@@ -54,7 +54,7 @@ public sealed class signature : ISchemaReader
                     reader.BeginArray();
                     var items = new System.Collections.Generic.List<Data>();
                     while (reader.NextElement())
-                        items.Add(Data.Ok(new global::app.type.item.text.@this(reader.String())));
+                        items.Add(context.Ok(new global::app.type.item.text.@this(reader.String())));
                     reader.EndArray();
                     contracts = new global::app.type.item.list.@this(items, context.App.type.list["list"]);
                     break;

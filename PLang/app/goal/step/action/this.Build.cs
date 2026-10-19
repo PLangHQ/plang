@@ -51,7 +51,7 @@ public partial class @this
                     causes.Add(complaint);
                 else
                 {
-                    var built = await own.Build();
+                    var built = await own.Build() ?? context.Ok();
                     if (!built.Success) causes.Add(built.Error ?? new global::app.error.@this("Build() failed", "BuildFailed", 400));
                     else await context.Variable.Set("!buildData", built);
                 }

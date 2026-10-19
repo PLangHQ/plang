@@ -117,7 +117,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         if (_value != null || _source == null) return this;
         var ready = await _source.Value(data);
-        if (!data.Success) return Absent;
+        if (!data.Success) return data.Empty;
         byte[] bytes;
         if (ready.RawBytes is { } raw) bytes = raw;
         else
@@ -129,7 +129,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             {
                 data.Fail(written.Error ?? new global::app.error.@this(
                     "could not serialize value for base64 encode.", "Base64EncodeFailed", 400));
-                return Absent;
+                return data.Empty;
             }
             bytes = ms.ToArray();
         }

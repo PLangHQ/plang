@@ -166,7 +166,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
                 result = global::app.data.@this.FromError(new global::app.error.ServiceError(
-                    $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex });
+                    $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex }, context!);
             }
         }
         return context != null ? await on.read.After(this, result, context) : result;

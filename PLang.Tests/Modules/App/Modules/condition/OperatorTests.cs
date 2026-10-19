@@ -9,7 +9,7 @@ public class OperatorTests : System.IAsyncDisposable
     private readonly global::app.@this _app = new global::app.@this("/tmp/optests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    private Data D(object? value) => value == null ? new Data("") : _app.actor.list.User.Context.Ok(value);
+    private Data D(object? value) => value == null ? new Data("", context: _app.actor.list.User.Context) : _app.actor.list.User.Context.Ok(value);
 
     // The operator's plang answer, read as its bool once it is known to be an answer, not an error.
     private async Task<bool> Is(Operator op, Data? left, Data? right)
@@ -97,7 +97,7 @@ public class OperatorTests : System.IAsyncDisposable
         // Null Data == true → not initialized
         await Assert.That(Is(op, null, D(true))).IsFalse();
         // Uninitialized Data == true → false
-        await Assert.That(Is(op, new Data(""), D(true))).IsFalse();
+        await Assert.That(Is(op, new Data("", context: _app.actor.list.User.Context), D(true))).IsFalse();
     }
 
     [Test]

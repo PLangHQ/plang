@@ -22,7 +22,7 @@ public class DurationWrapperTests : IAsyncDisposable
         var h = new Duration(System.TimeSpan.FromHours(1));
         await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, s, m)).IsLessThan(0);
         await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, m, h)).IsLessThan(0);
-        await Assert.That(CompareTestOps.OrdD(new Data("", s), new Data("", h))).IsLessThan(0);
+        await Assert.That(CompareTestOps.OrdD(new Data("", s, context: Context), new Data("", h, context: Context))).IsLessThan(0);
     }
 
     [Test]

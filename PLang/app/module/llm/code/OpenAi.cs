@@ -222,14 +222,14 @@ public sealed class OpenAi : ILlm
 
             var httpAction = new request(context)
             {
-                Url = new data.@this<global::app.type.item.text.@this>("", endpoint),
-                Method = new data.@this<global::app.type.item.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
+                Url = new data.@this<global::app.type.item.text.@this>("", endpoint, context: context),
+                Method = new data.@this<global::app.type.item.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST, context: context),
                 Body = new data.@this("", body, context: context),
-                Header = new data.@this<global::app.type.item.dict.@this>("", (global::app.type.item.dict.@this)global::app.type.item.@this.Create(headers, context)),
-                Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true),
-                Timeout = new data.@this<global::app.type.item.duration.@this>("", new global::app.type.item.duration.@this(System.TimeSpan.FromMinutes(2))),
+                Header = new data.@this<global::app.type.item.dict.@this>("", (global::app.type.item.dict.@this)global::app.type.item.@this.Create(headers, context), context: context),
+                Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true, context: context),
+                Timeout = new data.@this<global::app.type.item.duration.@this>("", new global::app.type.item.duration.@this(System.TimeSpan.FromMinutes(2)), context: context),
                 OnStream = action.OnStream,
-                StreamAs = (action.OnStream == null ? null : await action.OnStream.Value()) != null ? new data.@this<global::app.type.item.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
+                StreamAs = (action.OnStream == null ? null : await action.OnStream.Value()) != null ? new data.@this<global::app.type.item.choice.@this<StreamFormat>>("", StreamFormat.SSE, context: context) : default
             };
 
             data.@this httpResult = await new global::app.goal.step.action.@this(httpAction, context).Start(context);

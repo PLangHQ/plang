@@ -105,7 +105,7 @@ public class LoadSeamTests
     [Test] public async Task Value_NoLazyContent_IsNoOp()
     {
         // A bytes-backed image and a scalar graph carry nothing lazy — materializing succeeds.
-        var bytesBacked = Data.Ok(new image(Png1x1, "image/png"));
+        var bytesBacked = Ctx.Ok(new image(Png1x1, "image/png"));
         await bytesBacked.Value();
         await bytesBacked.IsSuccess();
 

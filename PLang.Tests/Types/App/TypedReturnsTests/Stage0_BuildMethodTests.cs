@@ -67,14 +67,12 @@ public class Stage0_BuildMethodTests
         await Assert.That(method.GetParameters().Length).IsEqualTo(0);
     }
 
-    // A handler without a Build override gets the IClass default impl — Ok() with null Value.
+    // A handler without a Build override gets the IClass default — nothing to say (null); the build stores an empty success.
     [Test]
-    public async Task IClass_BuildDefaultImpl_ReturnsDataOkNoValue()
+    public async Task IClass_BuildDefaultImpl_AnswersNothing()
     {
         var handler = (IClass)new NoopBuild(_app.actor.list.User.Context);
-        var result = await handler.Build();
-        await result.IsSuccess();
-        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
+        await Assert.That(await handler.Build()).IsNull();
     }
 
     // RunBuildPass walks actions left-to-right; the per-action log records call order.

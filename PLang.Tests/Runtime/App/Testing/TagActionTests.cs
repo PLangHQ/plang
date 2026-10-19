@@ -27,7 +27,7 @@ public class TagActionTests
                 global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", new (string, object?)[] { ("Name", "x"), ("Value", 1) })));
 
     private global::app.data.@this<global::app.type.item.list.@this> Tags(params string[] tags) =>
-        new("Tags", global::PLang.Tests.Shared.Make.List(tags, Ctx));
+        new("Tags", global::PLang.Tests.Shared.Make.List(tags, Ctx), context: Ctx);
 
     private global::app.type.item.tag.@this T(string value) => new(value, Ctx.App.type.list[typeof(global::app.type.item.tag.@this)]);
 

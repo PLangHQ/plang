@@ -48,7 +48,7 @@ public class BoolWrapperTests : System.IAsyncDisposable
         // bool is equality-only: unequal bools answer NotEqual (never an order),
         // so the ordering boundary errors.
         await Assert.That(await new Bool(true).Compare(new Bool(false), app.actor.list.User.Context)).IsEqualTo(global::app.data.Comparison.NotEqual);
-        await Assert.That(() => CompareTestOps.OrdD(new Data("", new Bool(true)), new Data("", new Bool(false))))
+        await Assert.That(() => CompareTestOps.OrdD(new Data("", new Bool(true), context: app.actor.list.User.Context), new Data("", new Bool(false), context: app.actor.list.User.Context)))
             .Throws<global::app.data.IncomparableException>();
     }
 }

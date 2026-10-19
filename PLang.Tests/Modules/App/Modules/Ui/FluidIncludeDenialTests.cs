@@ -19,13 +19,14 @@ public class FluidIncludeDenialTests
     {
         public int AskCount;
         private readonly string _answer;
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        private readonly global::app.actor.context.@this _ctx;
+        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             System.Threading.Interlocked.Increment(ref AskCount);
-            return Task.FromResult(global::app.data.@this.Ok(_answer));
+            return Task.FromResult(_ctx.Ok(_answer));
         }
     }
 
@@ -40,7 +41,7 @@ public class FluidIncludeDenialTests
     [Test] public async Task FluidInclude_TemplateOutsideRoot_DeniedByAuthGate()
     {
         var app = NewApp(out var root);
-        app.actor.list.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
         // Anchor the goal under the App root so GetTemplateBaseDir picks
         // the goal's parent; the include path "../../foreign/secret.liquid"
         // walks out and AuthGate denies.
@@ -57,8 +58,8 @@ public class FluidIncludeDenialTests
 
         var fluid = new global::app.module.ui.code.Fluid();
         var action = new global::app.module.ui.Render(app.actor.list.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template",
-                "{% include '" + outOfRoot + "/secret.liquid' %}"),
-            IsFile = new global::app.data.@this<global::app.type.item.@bool.@this>("IsFile", false)
+                "{% include '" + outOfRoot + "/secret.liquid' %}", context: app.actor.list.User.Context),
+            IsFile = new global::app.data.@this<global::app.type.item.@bool.@this>("IsFile", false, context: app.actor.list.User.Context)
         };
         var result = await fluid.Render(action);
         // The output MUST NOT contain the secret file's content. Either the
@@ -70,7 +71,7 @@ public class FluidIncludeDenialTests
     [Test] public async Task FluidInclude_InRootTemplate_RendersSilently()
     {
         var app = NewApp(out var root);
-        var ch = new CannedChannel("UNEXPECTED");
+        var ch = new CannedChannel("UNEXPECTED", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         // In-root partial: goal at /host.goal, partial at /partials/footer.liquid.
         var partialsDir = System.IO.Path.Combine(root, "partials");
@@ -85,8 +86,8 @@ public class FluidIncludeDenialTests
         await using var inGoal = app.actor.list.User.Context.call.Push(goal);
 
         var fluid = new global::app.module.ui.code.Fluid();
-        var action = new global::app.module.ui.Render(app.actor.list.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template", "{% include 'partials/footer.liquid' %}"),
-            IsFile = new global::app.data.@this<global::app.type.item.@bool.@this>("IsFile", false)
+        var action = new global::app.module.ui.Render(app.actor.list.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template", "{% include 'partials/footer.liquid' %}", context: app.actor.list.User.Context),
+            IsFile = new global::app.data.@this<global::app.type.item.@bool.@this>("IsFile", false, context: app.actor.list.User.Context)
         };
         var result = await fluid.Render(action);
         await result.IsSuccess();

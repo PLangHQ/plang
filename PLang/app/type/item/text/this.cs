@@ -140,7 +140,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 data.Fail(new global::app.error.@this(
                     $"%{_variable[0].Name}% is not set — nothing to answer for {_value}.",
                     "VariableNotFound", 404));
-                return Absent;
+                return data.Empty;
             }
             return await resolved.Value();
         }

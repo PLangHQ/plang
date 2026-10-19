@@ -53,7 +53,7 @@ public class SaveGoalsTests
             Step = new GoalSteps(_app.type.list) { step }
         };
 
-        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
+        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal, context: _app.actor.list.User.Context) };
         var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
 
         await result.IsSuccess();
@@ -76,7 +76,7 @@ public class SaveGoalsTests
             Comment = null
         };
 
-        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
+        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal, context: _app.actor.list.User.Context) };
         await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
@@ -105,7 +105,7 @@ public class SaveGoalsTests
         };
         goal.Child.Add(new Goal(_app.type.list) { Name = "Private" });
 
-        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
+        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal, context: _app.actor.list.User.Context) };
         var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
 
         await result.IsSuccess();
@@ -130,7 +130,7 @@ public class SaveGoalsTests
             Step = new GoalSteps(_app.type.list) { new Step(_app.type.list) { Text = "write hello", Index = 0 } }
         };
 
-        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
+        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal, context: _app.actor.list.User.Context) };
         var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
 
         await result.IsFailure();
@@ -145,7 +145,7 @@ public class SaveGoalsTests
     public async Task SaveGoal_NoPrPath_ReturnsError()
     {
         var goal = new Goal(_app.type.list) { Name = "Test" }; // No Path → no PrPath
-        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
+        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal, context: _app.actor.list.User.Context) };
         var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
 
         await result.IsFailure();

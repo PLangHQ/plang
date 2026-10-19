@@ -244,21 +244,21 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Truth_DataWithToBooleanTrue_IsTrue()
     {
-        var data = new TestData(true);
+        var data = new TestData(true, _app.actor.list.User.Context);
         await Assert.That(await (await Operator.Truth(data, _app.actor.list.User.Context)).ToBooleanAsync()).IsTrue();
     }
 
     [Test]
     public async Task Truth_DataWithToBooleanFalse_IsFalse()
     {
-        var data = new TestData(false);
+        var data = new TestData(false, _app.actor.list.User.Context);
         await Assert.That(await (await Operator.Truth(data, _app.actor.list.User.Context)).ToBooleanAsync()).IsFalse();
     }
 
     [Test]
     public async Task Run_EqualsTrueWithToBooleanTrue_ReturnsTrue()
     {
-        var data = new TestData(true);
+        var data = new TestData(true, _app.actor.list.User.Context);
         var action = new If(_app.actor.list.User.Context) { Left = data, Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.actor.list.User.Context.Ok(true) };
         await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
@@ -270,7 +270,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_EqualsTrueWithToBooleanFalse_ReturnsFalse()
     {
-        var data = new TestData(false);
+        var data = new TestData(false, _app.actor.list.User.Context);
         var action = new If(_app.actor.list.User.Context) { Left = data, Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.actor.list.User.Context.Ok(true) };
         await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
@@ -438,7 +438,7 @@ public class IfHandlerTests : IDisposable
 // real value (path, bool) does.
 public class TestData : Data
 {
-    public TestData(bool boolean) : base("test", new TruthyValue(boolean)) { }
+    public TestData(bool boolean, global::app.actor.context.@this ctx) : base("test", new TruthyValue(boolean), context: ctx) { }
 
     private sealed class TruthyValue(bool b) : global::app.type.item.@this, global::app.data.IBooleanResolvable
     {

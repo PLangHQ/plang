@@ -17,7 +17,7 @@ public partial class @this
             return this;
         var parser = new global::app.type.item.variable.parser.@this(path);
         if (parser.Path() is not { } code)
-            return _context?.Error(parser.Error[0]) ?? NotFound(path);
+            return _context.Error(parser.Error[0]);
         return await code.Start(Context, this);
     }
 

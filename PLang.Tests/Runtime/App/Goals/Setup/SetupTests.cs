@@ -335,35 +335,35 @@ public class SetupTests
     [Test]
     public async Task IsTolerableError_RecognizesTableAlreadyExists()
     {
-        var error = Data.FromError(new Error("SQLite Error 1: 'table users already exists'"));
+        var error = Data.FromError(new Error("SQLite Error 1: 'table users already exists'"), _app.actor.list.User.Context);
         await Assert.That(_app.goal.list.Setup.IsTolerableError(error)).IsTrue();
     }
 
     [Test]
     public async Task IsTolerableError_RecognizesIndexAlreadyExists()
     {
-        var error = Data.FromError(new Error("index idx_users_email already exists"));
+        var error = Data.FromError(new Error("index idx_users_email already exists"), _app.actor.list.User.Context);
         await Assert.That(_app.goal.list.Setup.IsTolerableError(error)).IsTrue();
     }
 
     [Test]
     public async Task IsTolerableError_RecognizesDuplicateColumnName()
     {
-        var error = Data.FromError(new Error("duplicate column name: email"));
+        var error = Data.FromError(new Error("duplicate column name: email"), _app.actor.list.User.Context);
         await Assert.That(_app.goal.list.Setup.IsTolerableError(error)).IsTrue();
     }
 
     [Test]
     public async Task IsTolerableError_RejectsUnrelatedError()
     {
-        var error = Data.FromError(new Error("connection refused"));
+        var error = Data.FromError(new Error("connection refused"), _app.actor.list.User.Context);
         await Assert.That(_app.goal.list.Setup.IsTolerableError(error)).IsFalse();
     }
 
     [Test]
     public async Task IsTolerableError_ReturnsFalseForSuccess()
     {
-        await Assert.That(_app.goal.list.Setup.IsTolerableError(Data.Ok())).IsFalse();
+        await Assert.That(_app.goal.list.Setup.IsTolerableError(_app.actor.list.User.Context.Ok())).IsFalse();
     }
 
     /// <summary>

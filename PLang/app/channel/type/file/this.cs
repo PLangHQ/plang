@@ -53,7 +53,7 @@ public sealed class @this : global::app.channel.@this
 
     public override Task<global::app.data.@this> Read(CancellationToken ct = default)
         => Task.FromResult(global::app.data.@this.FromError(new ServiceError(
-            $"Channel '{Name}' does not support reading", "ChannelWriteOnly", 400)));
+            $"Channel '{Name}' does not support reading", "ChannelWriteOnly", 400), Context!));
 
     public override Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default)
         => Task.FromResult(action.Context.Error(new ServiceError(

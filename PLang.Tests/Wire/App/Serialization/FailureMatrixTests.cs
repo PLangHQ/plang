@@ -79,6 +79,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
     [Test] public async Task ChannelRead_OnOutputOnlyChannel_ReturnsServiceErrorChannelWriteOnly()
     {
         var ch = global::app.channel.type.stream.@this.Output("stdout", new MemoryStream());
+        app.actor.list.User.Channel.Register(ch);
         var result = await ch.Read();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelWriteOnly");
@@ -91,7 +92,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
             global::app.channel.ChannelDirection.Bidirectional);
         var action = new global::app.module.output.ask(app.actor.list.User.Context)
         {
-            Question = new global::app.data.@this<global::app.type.item.text.@this>("", "")
+            Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context)
         };
         var result = await ch.Ask(action);
         await result.IsFailure();

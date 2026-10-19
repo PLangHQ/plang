@@ -292,7 +292,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// so the caller falls through. An entry is handed out with the asker's context.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<Data> Get(Data parent, string key)
-        => Get(key, parent.Context) ?? await Member(parent, key) ?? Data.NotFound(key);
+        => Get(key, parent.Context) ?? await Member(parent, key) ?? parent.Context.NotFound(key);
 
     // The one mutation seam — last-wins on a duplicate key (json object
     // semantics), order preserved at the position of the first occurrence (the
@@ -381,7 +381,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             var entry = Slot(key, data.Context);
             var value = await entry.Value();
             // an entry that can't be read (a %variable% not set) fails the dict, as reading it anywhere fails
-            if (!entry.Success) { data.Fail(entry.Error!); return Absent; }
+            if (!entry.Success) { data.Fail(entry.Error!); return data.Empty; }
             result.Set(key, value);
         }
         return result;

@@ -250,7 +250,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.error.ServiceError("persistent failure", "TransientError", 503)));
+                new global::app.error.ServiceError("persistent failure", "TransientError", 503), Ctx));
         };
 
         var result = await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 2), ("order", "RetryFirst"))).Start(Ctx);
@@ -269,7 +269,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.error.ServiceError("failure", "TransientError", 503)));
+                new global::app.error.ServiceError("failure", "TransientError", 503), Ctx));
         };
 
         var result = await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 1), ("order", "GoalFirst"))).Start(Ctx);
@@ -287,7 +287,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.error.ServiceError("intentional failure", "TransientError", 503)));
+                new global::app.error.ServiceError("intentional failure", "TransientError", 503), Ctx));
         };
 
         var result = await Attempting(persistentlyFailing,
@@ -302,7 +302,7 @@ public class ErrorHandleTests
     public async Task Handle_GoalFirst_RecoveryThenAFailedRetry_TheRecoveryStands()
     {
         Func<Task<global::app.data.@this>> persistentlyFailing = () => Task.FromResult(global::app.data.@this.FromError(
-            new global::app.error.ServiceError("always fails", "TransientError", 503)));
+            new global::app.error.ServiceError("always fails", "TransientError", 503), Ctx));
         var fix = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set",
             global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "fixed", "variable"), ("Value", true));
 
@@ -322,7 +322,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.error.ServiceError("always fails", "TransientError", 503)));
+                new global::app.error.ServiceError("always fails", "TransientError", 503), Ctx));
         };
 
         var result = await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 3))).Start(Ctx);
@@ -342,8 +342,8 @@ public class ErrorHandleTests
             callCount++;
             if (callCount == 1)
                 return Task.FromResult(global::app.data.@this.FromError(
-                    new global::app.error.ServiceError("transient failure", "TransientError", 503)));
-            return Task.FromResult(global::app.data.@this.Ok());
+                    new global::app.error.ServiceError("transient failure", "TransientError", 503), Ctx));
+            return Task.FromResult(Ctx.Ok());
         };
 
         var result = await Attempting(statefulNext, ErrorHandler(("retryCount", 3))).Start(Ctx);
@@ -403,7 +403,7 @@ public class ErrorHandleTests
             var fixedFlag = await Ctx.Variable.Get("fixed");
             return fixedFlag.IsInitialized
                 ? Ctx.Ok("done after fix")
-                : global::app.data.@this.FromError(new global::app.error.ServiceError("not fixed yet", "NotFixed", 404));
+                : global::app.data.@this.FromError(new global::app.error.ServiceError("not fixed yet", "NotFixed", 404), Ctx);
         };
 
         var result = await Attempting(needsFix, ErrorHandlerCalling("Fix", ("order", "GoalFirst"), ("retryCount", 1))).Start(Ctx);

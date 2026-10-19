@@ -66,7 +66,7 @@ public class WireKindShapeTests : System.IAsyncDisposable
 
     [Test] public async Task Wire_Write_OmitsTypeForNullSentinel()
     {
-        var d = new global::app.data.@this("x", null, global::app.type.@this.Null);
+        var d = new global::app.data.@this("x", null, global::app.type.@this.Null, context: app.actor.list.User.Context);
         var json = ToJson(d);
         // the data row itself — inside the signing layer the wire wraps it in, which has a type of its own
         using var doc = System.Text.Json.JsonDocument.Parse(json);

@@ -24,15 +24,16 @@ public class MoveCopyBundledConsentTests
         public string LastQuestion { get; private set; } = "";
         public int AskCount { get; private set; }
         private readonly string _answer;
-        public CapturingChannel(string answer)
+        private readonly global::app.actor.context.@this _ctx;
+        public CapturingChannel(string answer, global::app.actor.context.@this ctx)
         {
-            _answer = answer; Name = "input";
+            _answer = answer; _ctx = ctx; Name = "input";
             Direction = global::app.channel.ChannelDirection.Bidirectional;
         }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok());
+            => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+            => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             LastQuestion = (action.Question.Peek()?.ToString()) ?? "";
@@ -54,7 +55,7 @@ public class MoveCopyBundledConsentTests
         // Source out-of-root (no grant), destination in-root (auto-granted).
         // The bundled prompt should mention only the source.
         var app = NewApp(out var root);
-        var ch = new CapturingChannel("a");
+        var ch = new CapturingChannel("a", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
@@ -77,7 +78,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_BothPathsMissing_ProducesBundledAsk_OneQuestionTwoPaths()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("a");
+        var ch = new CapturingChannel("a", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
@@ -103,7 +104,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Copy_MirrorsMove_BundledBehavior()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("a");
+        var ch = new CapturingChannel("a", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
@@ -125,7 +126,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task BundledAsk_AnswerA_StoresBothGrants_SourceReadAndDestWrite()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("a");
+        var ch = new CapturingChannel("a", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
@@ -145,21 +146,23 @@ public class MoveCopyBundledConsentTests
 
     private sealed class StatelessChannel : global::app.channel.type.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        private readonly global::app.actor.context.@this _ctx;
+        public StatelessChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok());
+            => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+            => Task.FromResult(_ctx.Ok((object?)null));
     }
 
     // Nobody able to answer (a closed input): the ask fails ChannelEof.
     private sealed class EofChannel : global::app.channel.@this
     {
-        public EofChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        private readonly global::app.actor.context.@this _ctx;
+        public EofChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok());
+            => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+            => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
             => Task.FromResult(action.Context.Error(new global::app.error.NoAnswer("no interactive answerer")));
     }
@@ -168,7 +171,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_BundledAsk_EmptyAnswer_IsDenied_AskedOnce()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("");
+        var ch = new CapturingChannel("", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var srcFile = System.IO.Path.Combine(ForeignDir(), "x");
         System.IO.File.WriteAllText(srcFile, "data");
@@ -186,7 +189,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_BundledAsk_ClosedInput_IsPermissionDenied_WithTheChannelCause()
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new EofChannel());
+        app.actor.list.User.Channel.Register(new EofChannel(app.actor.list.User.Context));
         var srcFile = System.IO.Path.Combine(ForeignDir(), "x");
         System.IO.File.WriteAllText(srcFile, "data");
         var dstFile = System.IO.Path.Combine(ForeignDir(), "y");
@@ -202,7 +205,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_BundledAsk_AnswerN_ReturnsPermissionDenied_NoFsMutation()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("n");
+        var ch = new CapturingChannel("n", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
@@ -227,7 +230,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Copy_BundledAsk_AnswerN_ReturnsPermissionDenied_NoFsMutation()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("n");
+        var ch = new CapturingChannel("n", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
@@ -249,7 +252,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_StatelessChannel_BubblesDataAskUnchanged_NoFsMutation()
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new StatelessChannel());
+        app.actor.list.User.Channel.Register(new StatelessChannel(app.actor.list.User.Context));
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");

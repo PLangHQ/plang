@@ -444,13 +444,10 @@ class app.data.this
   ctor(System.String name, System.Object value = …, app.type.this type = …, app.data.this parent = …, app.actor.context.this context = …)
   ctor(System.String name, app.type.item.this instance, app.data.this parent = …, app.actor.context.this context = …)
   override ToString() : System.String
-  static FromError(app.error.this error) : app.data.this
-  static FromError<T>(app.error.this error) : T
-  static NotFound(System.String name = …, app.actor.context.this context = …) : app.data.this
-  static Null(System.String name = …) : app.data.this
-  static Ok() : app.data.this
-  static Ok(System.Object value, app.type.this type = …) : app.data.this
-  static Uninitialized(System.String name) : app.data.this
+  static FromError(app.error.this error, app.actor.context.this context) : app.data.this
+  static NotFound(System.String name, app.actor.context.this context) : app.data.this
+  static Null(System.String name, app.actor.context.this context) : app.data.this
+  static Uninitialized(System.String name, app.actor.context.this context) : app.data.this
   static const WireSchema : System.String
   static const WireSchemaData : System.String
   virtual Clone() : app.data.this
@@ -471,9 +468,8 @@ class app.data.this<T> : app.data.this
   override Given() : System.Threading.Tasks.ValueTask<app.data.this>
   override Settle() : System.Threading.Tasks.ValueTask<app.data.this>
   static From(app.data.this source) : app.data.this<T>
-  static FromError(app.error.this error) : app.data.this<T>
-  static Ok(T value, app.type.this type = …) : app.data.this<T>
-  static Uninitialized(System.String name) : app.data.this<T>
+  static FromError(app.error.this error, app.actor.context.this context) : app.data.this<T>
+  static Uninitialized(System.String name, app.actor.context.this context) : app.data.this<T>
 
 enum app.event.When [PlangType]
   static const after : app.event.When
@@ -1993,7 +1989,6 @@ class app.type.item.null.this : app.type.item.this, app.type.item.ICreate<app.ty
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  static Instance : app.type.item.null.this { get; }
   static IsNullValue(System.Object value) : System.Boolean
   static Shape : System.String { get; }
 
@@ -2761,7 +2756,6 @@ abstract class app.type.item.this : app.data.IBooleanResolvable, app.type.item.I
   protected virtual Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   protected virtual Setting(app.data.this parent) : System.Threading.Tasks.ValueTask<app.data.this>
   protected virtual Type : app.type.this { get; }
-  static Absent : app.type.item.this { get; }
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.this
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.this
   virtual AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>

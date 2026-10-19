@@ -101,10 +101,8 @@ public partial class @this
 
     // --- Static helpers (replace Return helpers) ---
 
-    public static @this Ok() => new("");
-    public static @this Ok(object? value, type? type = null) => new("", value, type);
-    public static @this FromError(global::app.error.@this error) => new("") { Error = error };
-    public static T FromError<T>(global::app.error.@this error) where T : @this, new() => new() { Error = error };
+    public static @this FromError(global::app.error.@this error, actor.context.@this context)
+        => new("", context: context) { Error = error };
 
     /// <summary>
     /// Produces a typed error Data from this instance's error. The error object creates the conversion.

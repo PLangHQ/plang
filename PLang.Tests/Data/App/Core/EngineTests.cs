@@ -505,7 +505,7 @@ public class EngineTests : System.IAsyncDisposable
         public System.Type? ParameterType => null;
 
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Context.Ok());
     }
 
     private class ThrowingHandler : IAction, ICodeGenerated

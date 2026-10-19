@@ -66,7 +66,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         // remote scheme routes to `url` with NO fetch — pure construction
         var http = new global::app.type.item.path.http.@this("http://example.com/data.json") {};
-        var action = new Read(_app.actor.list.User.Context) { Path = new global::app.data.@this<PLangPath>("", http) };
+        var action = new Read(_app.actor.list.User.Context) { Path = new global::app.data.@this<PLangPath>("", http, context: _app.actor.list.User.Context) };
         var result = await action.Start();
         await result.IsSuccess();
         await Assert.That(result.Type!.Name).IsEqualTo("url");
