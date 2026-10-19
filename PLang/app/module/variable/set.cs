@@ -100,7 +100,7 @@ public partial class Set : IContext, IScope, IKeep
         var source = (await Context.Variable.Get("!buildData")).Peek();
         var inferred = source as global::app.type.@this;
         if (inferred == null && source is global::app.type.item.text.@this t && t.ToString() is { Length: > 0 } n
-            && await Context.App.type.Get(n) is { Success: true } named)
+            && await Context.App.type.Get(n, Context) is { Success: true } named)
             inferred = await named.Value();
         if (inferred is { IsNull: false })
             __action.Property.Add(new global::app.type.property.@this
@@ -163,7 +163,7 @@ public partial class Set : IContext, IScope, IKeep
             // still names a type by name. No dict rebuild — that was the pre-reader path.
             // The developer named the type — an unknown name is their error, answered as plang's.
             var declaredName = (typeValue as global::app.type.@this)?.Name ?? typeValue.ToString()!;
-            var named = await Context.App.type.Get(declaredName);
+            var named = await Context.App.type.Get(declaredName, Context);
             if (!named.Success || await named.Value() is not { } declared)
                 return Context.Error(
                     new global::app.error.ServiceError($"Unknown type '{declaredName}'", "UnknownType", 400));

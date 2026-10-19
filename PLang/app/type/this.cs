@@ -204,10 +204,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             : clr.GetConstructor(any, [typeof(@this)]) is { } typed ? () => (item.@this)typed.Invoke([this])
             : clr.GetConstructor(any, System.Type.EmptyTypes) is { } empty ? () => (item.@this)empty.Invoke(null)
             : () => new item.@null.@this(this);
-        return _empty();
+        // a type whose empty value is a null holds that one null — it holds nothing to share: the app's null (and
+        // each typed null) is one value, its type's own
+        var first = _empty();
+        if (first.IsNull) _empty = () => first;
+        return first;
     }
 
-    // How this type makes its empty value — its class's constructor, found once (every value-less Data asks).
+    // How this type makes its empty value — its class's constructor, found once (every value-less Data asks); for a
+    // type whose empty value is a null, that one null.
     private System.Func<item.@this>? _empty;
 
 

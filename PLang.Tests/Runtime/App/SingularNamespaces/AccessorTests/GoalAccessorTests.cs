@@ -18,7 +18,7 @@ public class GoalAccessorTests
         var goal = Goal(app, "AlphaGoal");
         app.goal.list.Add(goal);
 
-        var found = await app.goal.Get("/AlphaGoal");
+        var found = await app.goal.Get("/AlphaGoal", app.actor.list.User.Context);
 
         await found.IsSuccess();
         await Assert.That((await found.Value())!.Name).IsEqualTo("AlphaGoal");
@@ -45,7 +45,7 @@ public class GoalAccessorTests
     {
         await using var app = new global::app.@this("/test").Testing();
 
-        var found = await app.goal.Get("/nope");
+        var found = await app.goal.Get("/nope", app.actor.list.User.Context);
 
         await found.IsFailure();
         await Assert.That(found.Error!.Key).IsEqualTo("NotFound");

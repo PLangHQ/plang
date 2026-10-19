@@ -5,14 +5,14 @@ using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 
-// app.module is the app's module: app.module.Get("file") selects, app.module.list enumerates. A module is
+// app.module is the app's module: app.module.Get("file", app.actor.list.User.Context) selects, app.module.list enumerates. A module is
 // never inside anything, so the element's Current answers nothing a program walks into.
 public class ModuleAccessorTests
 {
     [Test] public async Task AppModule_GetByName_SelectsTheModuleElement()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var found = await app.module.Get("file");
+        var found = await app.module.Get("file", app.actor.list.User.Context);
         await found.IsSuccess();
         var file = await found.Value();
         await Assert.That(file).IsNotNull();
@@ -22,7 +22,7 @@ public class ModuleAccessorTests
     [Test] public async Task AppModule_GetIgnoresCase()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var found = await app.module.Get("FILE");
+        var found = await app.module.Get("FILE", app.actor.list.User.Context);
         await found.IsSuccess();
         await Assert.That((await found.Value())!.Name).IsEqualTo("file");
     }
@@ -39,14 +39,14 @@ public class ModuleAccessorTests
     [Test] public async Task AppModule_ResolvesAction_UnderTheNewShape()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var file = await (await app.module.Get("file")).Value();
+        var file = await (await app.module.Get("file", app.actor.list.User.Context)).Value();
         await Assert.That(file!["read"]).IsNotNull();
     }
 
     [Test] public async Task AppModule_GetOfUnknownName_Fails()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var found = await app.module.Get("nope");
+        var found = await app.module.Get("nope", app.actor.list.User.Context);
         await Assert.That(found.Success).IsFalse();
     }
 

@@ -28,7 +28,7 @@ public class @this : global::app.type.item.setting.@this
         object? value, global::app.actor.context.@this context)
     {
         if (Option(key) != null) return await base.Set(key, isIndex, value, context);
-        var module = await context.App.module.Get(Module);
+        var module = await context.App.module.Get(Module, context);
         if (!module.Success || await module.Value() is not { } found
             || !found.ActionNames.Any(name => found[name]?.Property[key] != null))
             throw new System.NotSupportedException($"module '{Module}' has no option '{key}'");

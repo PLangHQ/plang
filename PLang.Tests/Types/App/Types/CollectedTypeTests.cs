@@ -12,11 +12,11 @@ public class CollectedTypeTests
         probes.list.Add(new Probe.@this("a"));
         probes.list.Add(new Probe.@this("b"));
 
-        var found = await probes.Get("b");
+        var found = await probes.Get("b", app.actor.list.User.Context);
         await Assert.That(found.Success).IsTrue();
         await Assert.That((await found.Value())!.Key).IsEqualTo("b");
 
-        var missing = await probes.Get("c");
+        var missing = await probes.Get("c", app.actor.list.User.Context);
         await Assert.That(missing.Success).IsFalse();
         await Assert.That(missing.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
@@ -34,14 +34,14 @@ public class CollectedTypeTests
         await using var app = new global::app.@this("/test").Testing();
         await Assert.That(app.type.Name).IsEqualTo("type");
 
-        var text = await app.type.Get("string");
+        var text = await app.type.Get("string", app.actor.list.User.Context);
         await Assert.That(text.Success).IsTrue();
         await Assert.That((await text.Value())!.Name).IsEqualTo("text");
 
-        var missing = await app.type.Get("csv");
+        var missing = await app.type.Get("csv", app.actor.list.User.Context);
         await Assert.That(missing.Error!.Status.Code.ToInt32()).IsEqualTo(404);
 
-        await Assert.That(await app.type.Get("type") is var self && (await self.Value()) is { } entry
+        await Assert.That(await app.type.Get("type", app.actor.list.User.Context) is var self && (await self.Value()) is { } entry
             && ReferenceEquals(entry, app.type)).IsTrue();
     }
 

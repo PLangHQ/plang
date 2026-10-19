@@ -84,11 +84,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.item.list.@this<@this> list => Root._modules!;
 
-    /// <summary>The module <paramref name="name"/> names, by its own <see cref="Match"/>; NotFound when none does.</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.data.@this<@this>> Get(string name)
+    /// <summary>The module <paramref name="name"/> names, by its own <see cref="Match"/>; NotFound when none does. The
+    /// answer is born with the asker's <paramref name="context"/>.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this<@this>> Get(string name, global::app.actor.context.@this context)
     {
-        // a C# door with no asker: the answer is born with the app's own context
-        var context = App.actor.list.System.Context;
         foreach (var module in list.Items())
             if (await module.Match(name) is { } found) return context.Ok<@this>(found);
         return global::app.data.@this<@this>.FromError(new global::app.error.@this($"no module '{name}'", "NotFound", 404), context);

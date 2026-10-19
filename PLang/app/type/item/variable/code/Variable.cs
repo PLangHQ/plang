@@ -27,12 +27,12 @@ public sealed class Variable : Hop
         var bound = await context.Variable.Get(Name);
         if (bound.IsInitialized || !Name.StartsWith('!')) return bound;
         var name = Name[1..];
-        if (await context.App.shortcut.Get(name) is { Success: true } shortcut && await shortcut.Value() is { } held)
+        if (await context.App.shortcut.Get(name, context) is { Success: true } shortcut && await shortcut.Value() is { } held)
             return await held.Read(context);
         var app = await context.Variable.Get("!app");
         var member = await app.Peek().Get(app, name);
         if (member.IsInitialized && !member.Peek().IsNull) return member;
-        var module = await context.App.module.Get(name);
+        var module = await context.App.module.Get(name, context);
         return module.Success ? new global::app.data.@this(name, await module.Value(), context: context) : context.NotFound(name);
     }
 

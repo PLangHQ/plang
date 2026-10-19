@@ -63,14 +63,14 @@ public class @this<T, L> : @this
     /// <c>Match(key)</c> answers (a goal by its address, a type by its name or alias). No match is a
     /// NotFound result. C#'s door; plang's <c>["key"]</c> and <c>.key</c> reach it through navigation.
     /// </summary>
-    public System.Threading.Tasks.ValueTask<data.@this<T>> Get(string key) => Find(list.Walk(), key);
+    public System.Threading.Tasks.ValueTask<data.@this<T>> Get(string key, actor.context.@this context)
+        => Find(list.Walk(), key, context);
 
     // The one key names among the items given — walked as the list reaches them, so a list that
-    // reads them (goal's) stops at the match.
-    private async System.Threading.Tasks.ValueTask<data.@this<T>> Find(System.Collections.Generic.IAsyncEnumerable<T> every, string key)
+    // reads them (goal's) stops at the match. The answer is born with the asker's context.
+    private async System.Threading.Tasks.ValueTask<data.@this<T>> Find(System.Collections.Generic.IAsyncEnumerable<T> every, string key,
+        actor.context.@this context)
     {
-        // a C# door with no asker: the answer is born with the app's own context
-        var context = _app.actor.list.System.Context;
         await foreach (var p in every)
             if (await p.Match(key) is { } found) return context.Ok<T>(found);
         return data.@this<T>.FromError(new global::app.error.@this($"no {Name} '{key}'", "NotFound", 404), context);
@@ -130,7 +130,7 @@ public class @this<T, L> : @this
     {
         if (await T.Select(new global::app.type.item.text.@this(key), parent.Context) is { IsInitialized: true } selected)
             return selected.Success ? new data.@this(key, selected.Peek(), parent: parent) : selected;
-        var found = await Find(Of(parent.Context).Walk(null, parent.Context), key);
+        var found = await Find(Of(parent.Context).Walk(null, parent.Context), key, parent.Context);
         if (!found.Success) return found;
         return new data.@this(key, (await found.Value())!, parent: parent);
     }

@@ -45,7 +45,7 @@ public class LibrariesTests : System.IAsyncDisposable
         await using var modulesHost = new global::app.@this("/app").Testing();
         modulesHost.module.Register("test", "do", typeof(MockHandler));
 
-        await Assert.That((await modulesHost.module.Get("test")).Success).IsTrue();
+        await Assert.That((await modulesHost.module.Get("test", modulesHost.actor.list.User.Context)).Success).IsTrue();
     }
 
     [Test]
@@ -53,7 +53,7 @@ public class LibrariesTests : System.IAsyncDisposable
     {
         await using var modulesHost = new global::app.@this("/app").Testing();
 
-        await Assert.That((await modulesHost.module.Get("nonexistent_xyz_123")).Success).IsFalse();
+        await Assert.That((await modulesHost.module.Get("nonexistent_xyz_123", modulesHost.actor.list.User.Context)).Success).IsFalse();
     }
 
     [Test]

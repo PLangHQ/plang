@@ -3,7 +3,7 @@ namespace PLang.Tests.App.Modules.app;
 /// <summary>
 /// An actor slot names WHO — a choice from the closed set {system, user} (<c>choice&lt;actor&gt;</c>).
 /// Each handler's slot is bound from a .pr-shaped action and read through the typed door; the name
-/// selects the live actor through <c>app.actor.Get(name)</c>.
+/// selects the live actor through <c>app.actor.Get(name, app.actor.list.User.Context)</c>.
 /// </summary>
 public class ActorChoiceTests
 {
@@ -34,7 +34,7 @@ public class ActorChoiceTests
     {
         var named = await slot!.Value();
         await Assert.That(named).IsNotNull();
-        await Assert.That(ReferenceEquals(await (await _app.actor.Get(named!.ToString()!)).Value(), _app.actor.list.System)).IsTrue();
+        await Assert.That(ReferenceEquals(await (await _app.actor.Get(named!.ToString()!, _app.actor.list.User.Context)).Value(), _app.actor.list.System)).IsTrue();
     }
 
     [Test] public async Task GoalCall_System_SelectsSystem()
@@ -84,7 +84,7 @@ public class ActorChoiceTests
         var slot = (await ChannelSet("%who%")).Actor!;
 
         var named = await slot.Value();
-        await Assert.That(ReferenceEquals(await (await _app.actor.Get(named!.ToString()!)).Value(), _app.actor.list.User)).IsTrue();
+        await Assert.That(ReferenceEquals(await (await _app.actor.Get(named!.ToString()!, _app.actor.list.User.Context)).Value(), _app.actor.list.User)).IsTrue();
     }
 
     [Test]

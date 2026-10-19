@@ -236,11 +236,11 @@ public class GoalsTests : System.IAsyncDisposable
             var goal = Named("Helper", "/a/Helper.goal");
             engine.goal.list.Add(goal);
 
-            var found = await engine.goal.Get("/a/helper");
+            var found = await engine.goal.Get("/a/helper", engine.actor.list.User.Context);
 
             await found.IsSuccess();
             await Assert.That(await found.Value()).IsEqualTo(goal);
-            await Assert.That((await engine.goal.Get("/no/such")).Error!.Key).IsEqualTo("NotFound");
+            await Assert.That((await engine.goal.Get("/no/such", engine.actor.list.User.Context)).Error!.Key).IsEqualTo("NotFound");
         }
         finally { System.IO.Directory.Delete(dir, true); }
     }

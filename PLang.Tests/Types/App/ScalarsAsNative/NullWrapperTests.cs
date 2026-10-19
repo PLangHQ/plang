@@ -17,12 +17,15 @@ public class NullWrapperTests : System.IAsyncDisposable
     private NullV Nul => (NullV)app.actor.list.User.Context.Null().Peek();
 
     [Test]
-    public async Task APresentNull_HoldsTheAppsNullType()
+    public async Task APresentNull_IsItsAppsOneNull()
     {
-        // a present null is its app's null: born holding the one null type the app made, no shared one
+        // a present null is its app's null: the one value its null type holds, never one shared across apps
         var held = app.actor.list.User.Context.Null("a").Peek();
         await Assert.That(held is NullV).IsTrue();
         await Assert.That(ReferenceEquals(held.Type, app.type.list["null"])).IsTrue();
+        await Assert.That(ReferenceEquals(held, app.actor.list.System.Context.Null("b").Peek())).IsTrue();
+        await using var other = new global::app.@this("/other").Testing();
+        await Assert.That(ReferenceEquals(held, other.actor.list.User.Context.Null("c").Peek())).IsFalse();
         var ctors = typeof(NullV).GetConstructors(
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         await Assert.That(ctors.Length).IsEqualTo(0); // no public ctor — a null is made by its type
