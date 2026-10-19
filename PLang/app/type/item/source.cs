@@ -329,6 +329,15 @@ public class source : @this
         return await materialized.Get(parent, key);
     }
 
+    /// <summary>A fact read with <c>!</c> is a use, as navigation is: a resting source opens, the Data narrowing to
+    /// what it parses to, and that value answers its own facts (a dict's <c>!key</c>).</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Fact(string key, global::app.data.@this parent)
+    {
+        var opened = await parent.Open();
+        if (!parent.Success || opened is source) return null;
+        return await opened.Fact(key, parent);
+    }
+
     public override bool IsTruthy() => _value switch
     {
         string s => s.Length > 0,

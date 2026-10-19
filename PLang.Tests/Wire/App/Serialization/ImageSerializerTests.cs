@@ -43,10 +43,11 @@ public class ImageSerializerTests
     // The image states what it has; the format is not its question.
     [Test] public async Task Image_Loaded_WritesItsBytes_WhateverTheFormat()
     {
+        await using var app = new global::app.@this("/test").Testing();
         foreach (var format in new[] { "text", "json", "plang", "protobuf" })
         {
             var w = new CaptureWriter(format);
-            new image(PngBytes, "image/png").Write(w);
+            app.actor.list.User.Context.Image(PngBytes, "image/png").Write(w);
             await Assert.That(w.LastMethod).IsEqualTo("Bytes");
             await Assert.That(w.Last).IsEqualTo(PngBytes);
         }
@@ -58,7 +59,7 @@ public class ImageSerializerTests
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.actor.list.User.Context);
         var w = new CaptureWriter("text");
-        new image(PngBytes, p!, app.actor.list.User.Context).Write(w);
+        app.actor.list.User.Context.Image(p!, PngBytes).Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("Bytes");
         await Assert.That(w.Last).IsEqualTo(PngBytes);
     }
@@ -69,15 +70,17 @@ public class ImageSerializerTests
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.actor.list.User.Context);
         var w = new CaptureWriter("json");
-        new image(p!, app.actor.list.User.Context).Write(w);
+        app.actor.list.User.Context.Image(p!).Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That((string)w.Last!).Contains("photo.png");
     }
 
     [Test] public async Task Image_RoundTrip_JsonBase64_PreservesBytesAndMime()
     {
-        // Write → base64 string. Round-trip back via image.Resolve(byte[]).
-        var img = new image(PngBytes, "image/png");
+        // Write → base64 string. Round-trip back via image.FromBytes.
+        await using var app = new global::app.@this("/test").Testing();
+        var ctx = app.actor.list.User.Context;
+        var img = ctx.Image(PngBytes, "image/png");
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
@@ -89,7 +92,7 @@ public class ImageSerializerTests
         await Assert.That(json.StartsWith("\"")).IsTrue();
         // Decode back.
         var b64 = json.Trim('"');
-        var roundTripped = image.FromBytes(System.Convert.FromBase64String(b64));
+        var roundTripped = image.FromBytes(System.Convert.FromBase64String(b64), ctx);
         await Assert.That(roundTripped!.Mime).IsEqualTo("image/png");
         await Assert.That(roundTripped.Bytes.SequenceEqual(PngBytes)).IsTrue();
     }

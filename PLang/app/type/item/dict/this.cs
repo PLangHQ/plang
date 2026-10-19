@@ -147,10 +147,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public key.@this Key(global::app.actor.context.@this context) => new(this, context.App.type.list[typeof(key.@this)]);
 
     /// <summary>A dict's own facts, read with <c>!</c>: <c>key</c>.</summary>
-    internal override Data? Fact(string key, Data parent)
+    internal override System.Threading.Tasks.ValueTask<Data?> Fact(string key, Data parent)
         => string.Equals(key, "key", System.StringComparison.OrdinalIgnoreCase) && parent.Context is { } context
-            ? new Data(key, Key(context), parent: parent)
-            : null;
+            ? new(new Data(key, Key(context), parent: parent))
+            : default;
 
     /// <summary>Keys in insertion order — the interior raw view.</summary>
     internal IEnumerable<string> KeyNames => _value.Keys;

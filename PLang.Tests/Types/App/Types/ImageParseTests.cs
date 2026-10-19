@@ -25,7 +25,7 @@ public class ImageParseTests : System.IAsyncDisposable
         // A data-url is a base64 value (kind off the mime header); its decoded bytes build the
         // image through Create's base64 arm — mime sniffed off the magic bytes (content truth).
         var dataUrl = "data:image/png;base64," + System.Convert.ToBase64String(PngBytes);
-        var img = image.Create(base64.Parse(dataUrl, B64, app.actor.list.User.Context));
+        var img = image.Create(base64.Parse(dataUrl, B64, app.actor.list.User.Context), app.actor.list.User.Context);
         await Assert.That(img).IsNotNull();
         await Assert.That(((image)img!).Mime).IsEqualTo("image/png");
     }
@@ -33,25 +33,25 @@ public class ImageParseTests : System.IAsyncDisposable
     [Test] public async Task RawBase64_AsBase64_ThenImage_DetectsAsImage()
     {
         var b64 = new base64(System.Convert.ToBase64String(PngBytes), B64);
-        var img = image.Create(b64);
+        var img = image.Create(b64, app.actor.list.User.Context);
         await Assert.That(img).IsNotNull();
         await Assert.That(((image)img!).Mime).IsEqualTo("image/png");
     }
 
     [Test] public async Task FromBytes_PngMagicBytes_PicksImagePng()
     {
-        var img = image.FromBytes(PngBytes);
+        var img = image.FromBytes(PngBytes, app.actor.list.User.Context);
         await Assert.That(img!.Mime).IsEqualTo("image/png");
     }
 
     [Test] public async Task FromBytes_JpegMagicBytes_PicksImageJpeg()
     {
-        var img = image.FromBytes(JpegBytes);
+        var img = image.FromBytes(JpegBytes, app.actor.list.User.Context);
         await Assert.That(img!.Mime).IsEqualTo("image/jpeg");
     }
 
     [Test] public async Task FromBytes_NonImageBytes_ReturnsNull_NoThrow()
     {
-        await Assert.That(image.FromBytes(new byte[] { 0x00, 0x01, 0x02, 0x03 })).IsNull();
+        await Assert.That(image.FromBytes(new byte[] { 0x00, 0x01, 0x02, 0x03 }, app.actor.list.User.Context)).IsNull();
     }
 }

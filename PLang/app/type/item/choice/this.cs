@@ -39,10 +39,13 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
 
     public T Value { get; }
 
-    // Born holding {choice, <set>} — the set's name is its T's own [PlangType], read directly so a T with no
-    // name (not a declared set) is a bare choice type, never a throw; the throwing `_set` is left to the paths
-    // that truly need the set (Parse, the options).
-    public @this(T value)
+    /// <summary>The option <paramref name="value"/>, born holding <paramref name="type"/> — the app's
+    /// <c>{choice, &lt;set&gt;}</c>, handed in by its maker.</summary>
+    public @this(T value, global::app.type.@this type) : base(type) { Value = value; }
+
+    // The T → choice operator's birth: it has no app to ask, so it holds {choice, <set>} built from the set's name
+    // (its T's own [PlangType]; a T with no name is a bare choice type) — until the implicit-operator branch.
+    private @this(T value)
         : base(new global::app.type.@this(typeof(@this<T>),
             (System.Attribute.GetCustomAttribute(typeof(T), typeof(global::app.Attributes.PlangTypeAttribute), inherit: false)
                 as global::app.Attributes.PlangTypeAttribute)?.Name)) { Value = value; }
@@ -72,16 +75,20 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     /// NUMBER also appears on disk: every .pr built before this field became a choice carries the
     /// enum's ordinal, and 790 of them still do. <see cref="Parse"/> accepts an ordinal in its
     /// text form, so both land in one place — the type that owns the wire form.</summary>
-    public static @this<T> Read<TReader>(ref TReader reader)
+    public static @this<T> Read<TReader>(ref TReader reader, global::app.type.@this type)
         where TReader : global::app.type.format.IReader, allows ref struct
         => Parse(reader.Peek() == global::app.type.format.TokenKind.Number
             ? reader.Number().ToString() ?? ""
-            : reader.String());
+            : reader.String(), type);
 
-    public static @this<T> Parse(string symbol)
+    /// <summary>The option <paramref name="symbol"/> names, born holding <paramref name="type"/>.</summary>
+    public static @this<T> Parse(string symbol, global::app.type.@this type) => new(Member(symbol), type);
+
+    /// <summary>The member <paramref name="symbol"/> names in the set — an enum's, a family's kind, a named set's.
+    /// THROWS FormatException naming the options when it names none.</summary>
+    public static T Member(string symbol)
     {
-        // the set answers the member its symbol names — an enum's, a family's kind, a named set's
-        try { return new((T)_set.Member(symbol)); }
+        try { return (T)_set.Member(symbol); }
         catch (System.ArgumentException ex)
         {
             throw new System.FormatException(
@@ -90,20 +97,21 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     }
 
     /// <summary>THE PURE CORE — pass-through; a raw member wraps; a string face parses
-    /// (malformed throws per the error policy); anything else declines.</summary>
-    public static @this<T>? Create(object? raw)
+    /// (malformed throws per the error policy), each born holding <paramref name="type"/>; anything else declines.</summary>
+    public static @this<T>? Create(object? raw, global::app.type.@this type)
     {
         if (raw is @this<T> self) return self;
-        if (raw is T member) return new(member);
+        if (raw is T member) return new(member, type);
         var symbol = raw as string ?? (raw as global::app.type.item.@this)?.RawText;
-        return symbol is null ? null : Parse(symbol);
+        return symbol is null ? null : Parse(symbol, type);
     }
 
     /// <summary>The courier — converts Parse's throw to data.Fail with the option list;
-    /// declines fail typed.</summary>
+    /// declines fail typed. A value is born holding the declared type, else the app's for its set.</summary>
     public static @this<T>? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
-        try { if (Create(raw) is { } made) return made; }
+        if (raw is @this<T> self) return self;
+        try { if (Create(raw, declared ?? data.Context.App.type.list[typeof(@this<T>)]) is { } made) return made; }
         catch (System.FormatException ex)
         {
             data.Fail(new global::app.error.@this(ex.Message, "ChoiceInvalid", 400)

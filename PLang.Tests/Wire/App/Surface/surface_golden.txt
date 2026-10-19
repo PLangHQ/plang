@@ -1253,7 +1253,7 @@ class app.type.item.bool.this : app.type.item.this, System.IEquatable<app.type.i
   AreEqual(System.Object other) : System.Boolean
   Equals(app.type.item.bool.this other) : System.Boolean
   Value : System.Boolean { get; }
-  ctor(System.Boolean value, app.type.this type = …)
+  ctor(System.Boolean value, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
@@ -1263,7 +1263,7 @@ class app.type.item.bool.this : app.type.item.this, System.IEquatable<app.type.i
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
-  static Create(System.Object raw) : app.type.item.bool.this
+  static Create(System.Object raw, app.type.this type) : app.type.item.bool.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.bool.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
   static Shape : System.String { get; }
@@ -1304,7 +1304,7 @@ abstract class app.type.item.choice.set.this : app.type.kind.this
 class app.type.item.choice.this<T> : app.type.item.this, app.type.item.ICreate<app.type.item.choice.this<T>>, app.type.item.choice.IChoice [PlangType]
   AreEqual(System.Object other) : System.Boolean
   Value : T { get; }
-  ctor(T value)
+  ctor(T value, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
@@ -1313,10 +1313,11 @@ class app.type.item.choice.this<T> : app.type.item.this, app.type.item.ICreate<a
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  static Create(System.Object raw) : app.type.item.choice.this<T>
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.choice.this<T>
-  static Parse(System.String symbol) : app.type.item.choice.this<T>
-  static Read<TReader>(TReader& reader) : app.type.item.choice.this<T>
+  static Create(System.Object raw, app.type.this type) : app.type.item.choice.this<T>
+  static Member(System.String symbol) : T
+  static Parse(System.String symbol, app.type.this type) : app.type.item.choice.this<T>
+  static Read<TReader>(TReader& reader, app.type.this type) : app.type.item.choice.this<T>
 
 interface app.type.item.clipboard.IHolder
   abstract Copied(System.String text) : System.Void
@@ -1615,19 +1616,19 @@ class app.type.item.image.this : app.type.item.this, app.data.IKindValidatable, 
   RequireStrictKind(System.String kind) : System.Void
   ValidateKind(System.Object value, System.String requiredKind) : System.ValueTuple<System.Boolean, System.String>
   Width : System.Int32 { get; }
-  ctor(System.Byte[] bytes, System.String kind = …)
-  ctor(System.Byte[] bytes, app.type.item.path.this path, app.actor.context.this context)
-  ctor(app.type.item.path.this path, app.actor.context.this context)
+  ctor(System.Byte[] bytes, app.type.item.path.this path, app.type.this type)
+  ctor(System.Byte[] bytes, app.type.this type)
+  ctor(app.type.item.path.this path, app.type.this type)
   override AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   override Open(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.error.this>
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override RawBytes : System.Byte[] { get; }
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Write(app.type.format.IWriter writer) : System.Void
-  static Create(System.Object raw) : app.type.item.image.this
+  static Create(System.Object raw, app.actor.context.this context) : app.type.item.image.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.image.this
   static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
-  static FromBytes(System.Byte[] bytes) : app.type.item.image.this
+  static FromBytes(System.Byte[] bytes, app.actor.context.this context) : app.type.item.image.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
   static Shape : System.String { get; }
 

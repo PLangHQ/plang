@@ -43,7 +43,7 @@ public class SettingsDataTests
     {
         var ctx = _app.actor.list.System.Context;
         var llm = Llm(ctx);
-        llm.Cache = new(global::app.module.cache.type.cache.skip);
+        llm.Cache = ctx.Choice(global::app.module.cache.type.cache.skip);
 
         var result = await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start();
         await result.IsSuccess();
@@ -57,7 +57,7 @@ public class SettingsDataTests
     {
         var ctx = _app.actor.list.System.Context;
         var llm = Llm(ctx);
-        llm.Cache = new(global::app.module.cache.type.cache.skip);
+        llm.Cache = ctx.Choice(global::app.module.cache.type.cache.skip);
         await (await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start()).IsSuccess();
 
         var result = await new global::app.module.setting.Remove(ctx) { Setting = Given(Llm(ctx), ctx) }.Start();
@@ -99,7 +99,7 @@ public class SettingsDataTests
         {
             var ctx = onDisk.actor.list.System.Context;
             var llm = Llm(ctx);
-            llm.Cache = new(global::app.module.cache.type.cache.skip);
+            llm.Cache = ctx.Choice(global::app.module.cache.type.cache.skip);
             await (await onDisk.actor.list.System.Setting.Save(llm)).IsSuccess();
 
             await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(_tempDir, ".data", "setting", "data.sqlite"))).IsTrue();

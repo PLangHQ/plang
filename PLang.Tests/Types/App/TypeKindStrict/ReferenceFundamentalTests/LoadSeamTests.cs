@@ -42,8 +42,8 @@ public class LoadSeamTests
     private image PathBackedPng(string name)
     {
         System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.AbsolutePath, name), Png1x1);
-        return new image(global::app.type.item.path.@this.Resolve(
-            System.IO.Path.Combine(_app.AbsolutePath, name), _app.actor.list.User.Context), _app.actor.list.User.Context);
+        return _app.actor.list.User.Context.Image(global::app.type.item.path.@this.Resolve(
+            System.IO.Path.Combine(_app.AbsolutePath, name), _app.actor.list.User.Context));
     }
 
     [Test] public async Task Value_MaterializesPathBackedImage_SyncBytesThenReal()
@@ -105,7 +105,7 @@ public class LoadSeamTests
     [Test] public async Task Value_NoLazyContent_IsNoOp()
     {
         // A bytes-backed image and a scalar graph carry nothing lazy — materializing succeeds.
-        var bytesBacked = Ctx.Ok(new image(Png1x1, "image/png"));
+        var bytesBacked = Ctx.Ok(Ctx.Image(Png1x1, "image/png"));
         await bytesBacked.Value();
         await bytesBacked.IsSuccess();
 

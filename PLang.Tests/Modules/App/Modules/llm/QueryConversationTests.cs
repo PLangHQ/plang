@@ -45,8 +45,8 @@ public class QueryConversationTests
     {
         var message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = user } }.ToListData<LlmMessage>(Ctx);
         var action = continues == null
-            ? new query(Ctx) { Message = message, Schema = schema, Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(cache ? global::app.module.cache.type.cache.use : global::app.module.cache.type.cache.skip) }
-            : new query(Ctx) { Message = message, Schema = schema, Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(cache ? global::app.module.cache.type.cache.use : global::app.module.cache.type.cache.skip),
+            ? new query(Ctx) { Message = message, Schema = schema, Cache = Ctx.Choice(cache ? global::app.module.cache.type.cache.use : global::app.module.cache.type.cache.skip) }
+            : new query(Ctx) { Message = message, Schema = schema, Cache = Ctx.Choice(cache ? global::app.module.cache.type.cache.use : global::app.module.cache.type.cache.skip),
                 Conversation = new global::app.module.llm.type.conversation.@this(continues) };
         await action.Attach(null, Ctx);
         return await action.Start();

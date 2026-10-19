@@ -62,7 +62,7 @@ public class FileChannelTests
         await using var _ = app;
         app.type.list["image"].Own().Bind("create", global::app.@event.When.before, (_, _, ctx) =>
         {
-            global::app.data.@this made = ctx.Ok(new global::app.type.item.image.@this(Png1x1, "image/png"));
+            global::app.data.@this made = ctx.Ok(context.Image(Png1x1, "image/png"));
             made.Handled = true;
             return Task.FromResult(made);
         }, app.actor.list.User, global::app.@event.binding.Scope.actor);

@@ -138,6 +138,13 @@
           "category": "code",
           "confidence": "high",
           "context": "item-doors 62-64 (group 8): the app's nodes move to app/type/node as items of the internal type node; Replace goes; events through the plain type; the goal offer goes (64); the type `type` is made by its list holding it. Trace sent first; the Offers gap (no app reachable) went to the architect, answered by 64. error.Exception made internal, plang reads %!error.trace% (Show_A500, 60's red)."
+        },
+        {
+          "paths": ["PLang/app/type/item/image", "PLang/app/type/item/choice", "PLang/app/type/item/bool", "PLang/app/type/item/source.cs", "PLang/app/type/list/this.cs", "PLang.Tests/Shared"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Type order: image, choice, bool born holding the app's type (operator births stay class-built until 50); ImageFromBytes (a known red) green; an unnamed enum is a bare choice. Dict !key on an unread dict: source.Fact opens (Fact async). Test makers moved to ctx.Image/ctx.Choice/ctx.Bool by Haiku passes, checked by build and sweep."
         }
       ],
       "after": null

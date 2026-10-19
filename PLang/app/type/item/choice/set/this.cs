@@ -34,9 +34,11 @@ public abstract class @this : global::app.type.kind.@this
     /// (a choice set IS a kind of its type; <c>%x!type.values%</c> reads this through <c>type.Values</c>).</summary>
     protected abstract override System.Collections.Generic.IReadOnlyList<string>? OwnValues { get; }
 
-    /// <summary>A choice is one of its options, whatever the step's words — each a choice from this set.</summary>
+    /// <summary>A choice is one of its options, whatever the step's words — each a choice from this set, born as the
+    /// T → choice operator births one (no app is asked for an offer) until the implicit-operator branch.</summary>
     public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
-        => new(Values!.Select(option => (global::app.type.item.@this)System.Activator.CreateInstance(_form, Member(option))!).ToList());
+        => new(Values!.Select(option => (global::app.type.item.@this)System.Activator.CreateInstance(_form,
+            BindingFlags.Instance | BindingFlags.NonPublic, null, [Member(option)], null)!).ToList());
 
     /// <summary>A choice is none but its options.</summary>
     public override bool IsClosed => true;

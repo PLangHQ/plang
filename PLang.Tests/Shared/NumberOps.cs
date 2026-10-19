@@ -16,13 +16,13 @@ public static class NumberOps
     public static readonly (number.Overflow o, number.Precision p) Lenient = (number.Overflow.Promote, number.Precision.Error);
     public static readonly (number.Overflow o, number.Precision p) Strict  = (number.Overflow.Throw,   number.Precision.Error);
 
-    public static number Add(number a, number b, (number.Overflow o, number.Precision p) x) => a.Add(b, new OChoice(x.o), new PChoice(x.p));
-    public static number Subtract(number a, number b, (number.Overflow o, number.Precision p) x) => a.Subtract(b, new OChoice(x.o), new PChoice(x.p));
-    public static number Multiply(number a, number b, (number.Overflow o, number.Precision p) x) => a.Multiply(b, new OChoice(x.o), new PChoice(x.p));
-    public static number Divide(number a, number b, (number.Overflow o, number.Precision p) x) => a.Divide(b, new OChoice(x.o), new PChoice(x.p));
-    public static number IntDivide(number a, number b, (number.Overflow o, number.Precision p) x) => a.IntDivide(b, new OChoice(x.o), new PChoice(x.p));
-    public static number Modulo(number a, number b, (number.Overflow o, number.Precision p) x) => a.Modulo(b, new OChoice(x.o), new PChoice(x.p));
-    public static number Power(number a, number b, (number.Overflow o, number.Precision p) x) => a.Power(b, new OChoice(x.o), new PChoice(x.p));
+    public static number Add(number a, number b, (number.Overflow o, number.Precision p) x) => a.Add(b, (OChoice)x.o, (PChoice)x.p);
+    public static number Subtract(number a, number b, (number.Overflow o, number.Precision p) x) => a.Subtract(b, (OChoice)x.o, (PChoice)x.p);
+    public static number Multiply(number a, number b, (number.Overflow o, number.Precision p) x) => a.Multiply(b, (OChoice)x.o, (PChoice)x.p);
+    public static number Divide(number a, number b, (number.Overflow o, number.Precision p) x) => a.Divide(b, (OChoice)x.o, (PChoice)x.p);
+    public static number IntDivide(number a, number b, (number.Overflow o, number.Precision p) x) => a.IntDivide(b, (OChoice)x.o, (PChoice)x.p);
+    public static number Modulo(number a, number b, (number.Overflow o, number.Precision p) x) => a.Modulo(b, (OChoice)x.o, (PChoice)x.p);
+    public static number Power(number a, number b, (number.Overflow o, number.Precision p) x) => a.Power(b, (OChoice)x.o, (PChoice)x.p);
     public static number Min(number a, number b) => a.Min(b);
     public static number Max(number a, number b) => a.Max(b);
     public static number Min(number a, number b, (number.Overflow o, number.Precision p) _) => a.Min(b);

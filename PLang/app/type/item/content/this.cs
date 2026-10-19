@@ -16,15 +16,15 @@ public abstract class @this : global::app.type.item.@this
     /// <summary>A reference's facts are its own public members, read without reading its content (<c>!path</c>,
     /// <c>!size</c>, <c>!host</c>); one that needs the asker's context (<c>!kind</c>, <c>!mimetype</c>) is asked with
     /// the binding's own.</summary>
-    internal override global::app.data.@this? Fact(string key, global::app.data.@this parent)
+    internal override System.Threading.Tasks.ValueTask<global::app.data.@this?> Fact(string key, global::app.data.@this parent)
     {
         const System.Reflection.BindingFlags Public = System.Reflection.BindingFlags.Public
             | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase;
         if (GetType().GetProperty(key, Public) is { } own)
-            return new global::app.data.@this(key, own.GetValue(this), parent: parent);
+            return new(new global::app.data.@this(key, own.GetValue(this), parent: parent));
         if (GetType().GetMethod(key, Public, binder: null, types: [typeof(global::app.actor.context.@this)], modifiers: null) is { } asks)
-            return new global::app.data.@this(key, asks.Invoke(this, [parent.Context]), parent: parent);
-        return null;
+            return new(new global::app.data.@this(key, asks.Invoke(this, [parent.Context]), parent: parent));
+        return default;
     }
 
     /// <summary>The location — owns scheme, auth gate, stat and fetch.</summary>

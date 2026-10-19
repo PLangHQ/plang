@@ -12,6 +12,6 @@ public static class Default
         => raw is string s && !string.IsNullOrEmpty(s)
             ? global::app.module.crypto.type.hash.@this.FromBase64(s,
                 string.IsNullOrEmpty(kind) ? null
-                    : global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse(kind).Value)
+                    : global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Member(kind))
             : null;
 }

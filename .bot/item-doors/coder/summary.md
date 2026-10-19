@@ -44,6 +44,14 @@ in turn, smallest first. Decisions are numbered per branch (item-doors 1–47, `
   `Registry.Replace` is gone; events bind on the plain type (`%!app.type.goal.on.start%`, `app.goal.type.on`).
   The goal offer is gone (64): a goal slot is offered the step's variables; the type `type` is made by its list
   holding it (its values, as a choice holds its set) and offers the type names.
+- **image, choice, bool born whole**: each ctor takes the app's type; makers hand it (image: the kind its magic bytes,
+  extension or wire name, `{image, png}` from the app's list, so its mime is the registered kind's; choice: the
+  app's `{choice, <set>}`; bool: the app's bool). The C# operator births (`T → choice`, `bool → bool`, `True`/`False`)
+  and a set's offers keep a class-built type until the implicit-operator branch (50). `choice.Member(symbol)` for
+  the sites that want only the member. Mouse and navigate hold their choices from birth. An enum that declares no
+  plang name is a bare choice.
+- **A dict's `!key` on an unread dict (39)**: a fact read with `!` is a use — a resting source (a `.pr` literal, a
+  json read) opens and its value answers (`source.Fact`; `Fact` is async).
 - **An error's exception (60's red)**: `error.Exception` is C#-only (internal); plang and the 500 templates read
   `%!error.trace%` (its C# type, message and stack as text).
 
@@ -78,5 +86,4 @@ new global::app.type.item.datetime.@this(reader.DateTimeOffset(), ctx.Context.Ap
   `test/plan/item-doors/app/type/input/modifier/ModifierIsTheFirstKeyHeld.test.goal` — the test-designer builds them.
 
 ## Next
-On in the order: image, choice, bool (born with its type where its makers have one; True/False stay per 50), path,
-dict, text, number; then setting, content, source, separator; last, number's static kinds and `KindOfClass` go.
+On in the order: path, dict, text, number; then setting, content, source, separator; last, number's static kinds and `KindOfClass` go.

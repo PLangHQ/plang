@@ -9,15 +9,18 @@ namespace app.type.item.image;
 public sealed partial class @this
 {
     /// <summary>
-    /// Bytes → image. MIME is sniffed from the magic bytes. Named distinctly
-    /// from <see cref="Create(object?)"/> because catalog reflection
+    /// Bytes → image. MIME is sniffed from the magic bytes; the image is born holding the app's type of that
+    /// kind (<c>image&lt;png&gt;</c>), asked of <paramref name="context"/>'s types. Named distinctly
+    /// from <see cref="Create(object?, global::app.actor.context.@this)"/> because catalog reflection
     /// (<c>GetMethod("Create", static)</c>) can't disambiguate same-name static
     /// overloads — a documented exception, not a pattern.
     /// </summary>
-    public static @this? FromBytes(byte[] bytes)
+    public static @this? FromBytes(byte[] bytes, global::app.actor.context.@this context)
     {
         if (bytes == null || bytes.Length == 0) return null;
-        return Sniff(bytes) is { } kind ? new @this(bytes, kind) : null;
+        return Sniff(bytes) is { } kind
+            ? new @this(bytes, context.App.type.list[new global::app.type.@this("image", kind), context])
+            : null;
     }
 
     /// <summary>The canonical kind name the magic bytes name — the image looks it up in its own kinds, and

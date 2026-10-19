@@ -15,7 +15,7 @@ public sealed class @this : global::app.type.item.setting.module.@this
     /// <summary>Whether the builder's LLM answers kept from before are used — used, unless
     /// <c>--build={"cache":"skip"}</c> skips them.</summary>
     [Out, Store] public global::app.type.item.choice.@this<global::app.module.cache.type.cache> Cache { get; set; }
-        = new(global::app.module.cache.type.cache.use);
+        = global::app.module.cache.type.cache.use;
 
     /// <summary>The files to build, in order — every goal when empty. A native plang list: each row lifts
     /// to a path at its reader's door (<c>row.Value&lt;path&gt;()</c>).

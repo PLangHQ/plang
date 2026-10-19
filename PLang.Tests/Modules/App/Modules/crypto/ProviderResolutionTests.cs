@@ -74,7 +74,7 @@ public class ProviderResolutionTests
         _app.Code.SetDefault<ICrypto>("always-true");
 
         // Even with garbage hash, mock returns true
-        var action = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(Convert.ToBase64String(new byte[32])), Algorithm = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse("keccak256") };
+        var action = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(Convert.ToBase64String(new byte[32])), Algorithm = Ctx.Choice<global::app.module.crypto.type.hash.kind.@this>("keccak256") };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 

@@ -25,7 +25,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [Out] public global::app.type.item.text.@this Id => new(_run.Id);
 
     /// <summary>Whether its run has ended (it has left its actor's list by then).</summary>
-    [Out] public global::app.type.item.@bool.@this Ended => new(_run.Ended);
+    [Out] public global::app.type.item.@bool.@this Ended
+        => new(_run.Ended, _run.Actor.App.type.list[typeof(global::app.type.item.@bool.@this)]);
 
     /// <summary>Every task written where this one is, in the order written — the last this one.</summary>
     /// <remarks>JsonIgnore: the list holds this task itself, so a dump writing it would never end.</remarks>

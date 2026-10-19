@@ -129,8 +129,8 @@ public partial class json
             {
                 System.Text.Json.JsonValueKind.String => TextLeaf(element.GetString() ?? "", ctx),
                 System.Text.Json.JsonValueKind.Number => number.@this.Parse(element.GetRawText())!,
-                System.Text.Json.JsonValueKind.True => new @bool.@this(true),
-                System.Text.Json.JsonValueKind.False => new @bool.@this(false),
+                System.Text.Json.JsonValueKind.True => new @bool.@this(true, _context.App.type.list[typeof(@bool.@this)]),
+                System.Text.Json.JsonValueKind.False => new @bool.@this(false, _context.App.type.list[typeof(@bool.@this)]),
                 System.Text.Json.JsonValueKind.Null => _context.App.type.list["null"].Empty(_context),
                 System.Text.Json.JsonValueKind.Undefined => _context.App.type.list["null"].Empty(_context),
                 // A value object is a dict, whatever its shape — a Data rides only as a

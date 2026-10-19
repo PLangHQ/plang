@@ -120,7 +120,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         kind.@this? algorithm = null;
         if (characters.IndexOf(':') is > 0 and var colon && characters[..colon].All(char.IsLetterOrDigit))
         {
-            algorithm = global::app.type.item.choice.@this<kind.@this>.Parse(characters[..colon]).Value;
+            algorithm = global::app.type.item.choice.@this<kind.@this>.Member(characters[..colon]);
             characters = characters[(colon + 1)..];
         }
         if (characters.Length > 0 && characters.Length % 2 == 0 && (length is null || characters.Length == length * 2)

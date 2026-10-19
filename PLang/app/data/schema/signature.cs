@@ -84,7 +84,7 @@ public sealed class signature : ISchemaReader
             throw new global::app.error.DeclinedException(new global::app.error.@this(
                 "a signature's hash names no kind (its hash.type) — it can't be checked", "SignatureInvalid", 400));
         global::app.module.crypto.type.hash.kind.@this hashKind;
-        try { hashKind = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse(hashAlgo).Value; }
+        try { hashKind = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Member(hashAlgo); }
         catch (System.FormatException unknown)
         {
             throw new global::app.error.DeclinedException(new global::app.error.@this(

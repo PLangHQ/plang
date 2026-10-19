@@ -34,11 +34,12 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
     }
 
     public Task<global::app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(global::app.module.signing.verify action)
-        => Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(new global::app.type.item.@bool.@this(true)));
+        => Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(new global::app.type.item.@bool.@this(true,
+            action.Context.App.type.list[typeof(global::app.type.item.@bool.@this)])));
 
     public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey)
         => new global::app.type.item.binary.@this(System.Array.Empty<byte>(), unsigned.Signature.Type);
 
     public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
-        => new global::app.type.item.@bool.@this(true);
+        => global::app.type.item.@bool.@this.True;
 }

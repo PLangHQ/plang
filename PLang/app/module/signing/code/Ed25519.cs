@@ -193,6 +193,6 @@ public class Ed25519 : ISigning
         var publicKeyBytes = System.Buffers.Text.Base64Url.DecodeFromChars(
             signature.Identity.ToString().Replace('+', '-').Replace('/', '_').TrimEnd('='));
         var nsecPublicKey = NSec.Cryptography.PublicKey.Import(algorithm, publicKeyBytes, KeyBlobFormat.RawPublicKey);
-        return new global::app.type.item.@bool.@this(algorithm.Verify(nsecPublicKey, signature.ToSigningBytes(), signature.Signature.Value));
+        return algorithm.Verify(nsecPublicKey, signature.ToSigningBytes(), signature.Signature.Value);
     }
 }

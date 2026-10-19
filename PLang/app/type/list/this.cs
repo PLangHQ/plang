@@ -248,8 +248,12 @@ public sealed partial class @this
         // the item classes, which would answer a plain "list" with no element.
         if (typeof(app.type.item.list.@this).IsAssignableFrom(type) && ContainerFamily(type) is { } node)
             return (node.Family, Face(PlangName(node.Element)));
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
-            return ("choice", global::app.type.item.choice.set.@this.For(type.GetGenericArguments()[0])?.Name ?? type.GetGenericArguments()[0].Name);
+        // a choice by its set's name; an enum that declares none is a bare choice, a class that is no set its class's name
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>)
+            && type.GetGenericArguments()[0] is var options)
+            return ("choice", options.IsEnum && options.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false) is null
+                ? null
+                : global::app.type.item.choice.set.@this.For(options)?.Name ?? options.Name);
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && Array.Find(types, t => t.ClrType == type) is { } own)
             return (own.Name, null);
         // the app's node for a concept (node<goal>, its current node) is a node

@@ -14,18 +14,15 @@ public enum Button { left, right, middle, back, forward, none }
 /// </summary>
 public sealed class @this : input.@this
 {
-    // (the enums by their full names: the member Button is this value's plang face)
-    private readonly global::app.type.item.input.mouse.Gesture _action;
-    private readonly global::app.type.item.input.mouse.Button _button;
-
-    /// <summary>A mouse input, born with the app's <paramref name="types"/>: its own, and its numbers' and keys'.</summary>
+    /// <summary>A mouse input, born with the app's <paramref name="types"/>: its own, its choices', and its numbers'
+    /// and keys'.</summary>
     public @this(global::app.type.list.@this types, global::app.type.item.input.mouse.Gesture action, int x, int y,
         global::app.type.item.input.mouse.Button button = global::app.type.item.input.mouse.Button.none,
         int clicks = 0, int dx = 0, int dy = 0, global::app.type.item.input.modifier.list.@this? modifier = null,
         long? stamp = null) : base(types[typeof(@this)], stamp)
     {
-        _action = action;
-        _button = button;
+        Action = new(action, types[typeof(global::app.type.item.choice.@this<global::app.type.item.input.mouse.Gesture>)]);
+        Button = new(button, types[typeof(global::app.type.item.choice.@this<global::app.type.item.input.mouse.Button>)]);
         X = global::app.type.item.number.@this.Create(x)!;
         Y = global::app.type.item.number.@this.Create(y)!;
         Clicks = global::app.type.item.number.@this.Create(clicks)!;
@@ -35,13 +32,13 @@ public sealed class @this : input.@this
     }
 
     /// <summary>What it did: move, down, up, wheel.</summary>
-    [Out] public global::app.type.item.choice.@this<global::app.type.item.input.mouse.Gesture> Action => new(_action);
+    [Out] public global::app.type.item.choice.@this<global::app.type.item.input.mouse.Gesture> Action { get; }
     /// <summary>Where, across the screen.</summary>
     [Out] public global::app.type.item.number.@this X { get; }
     /// <summary>Where, down the screen.</summary>
     [Out] public global::app.type.item.number.@this Y { get; }
     /// <summary>Which button: left, right, middle, back, forward — none while only moving.</summary>
-    [Out] public global::app.type.item.choice.@this<global::app.type.item.input.mouse.Button> Button => new(_button);
+    [Out] public global::app.type.item.choice.@this<global::app.type.item.input.mouse.Button> Button { get; }
     /// <summary>1 for a click, 2 for a double click.</summary>
     [Out] public global::app.type.item.number.@this Clicks { get; }
     /// <summary>How far the wheel turned, sideways.</summary>
@@ -56,17 +53,17 @@ public sealed class @this : input.@this
     public override void Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        writer.Name("mouse"); writer.String(_action.ToString());
+        writer.Name("mouse"); Action.Write(writer);
         writer.Name("x"); X.Write(writer);
         writer.Name("y"); Y.Write(writer);
-        if (_action == global::app.type.item.input.mouse.Gesture.wheel)
+        if (Action.Value == global::app.type.item.input.mouse.Gesture.wheel)
         {
             writer.Name("dx"); Dx.Write(writer);
             writer.Name("dy"); Dy.Write(writer);
         }
         else
         {
-            writer.Name("button"); writer.String(_button.ToString());
+            writer.Name("button"); Button.Write(writer);
             writer.Name("clicks"); Clicks.Write(writer);
         }
         writer.Name("mods"); Modifier.Write(writer);

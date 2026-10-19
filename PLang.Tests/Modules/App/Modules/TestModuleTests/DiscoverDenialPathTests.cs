@@ -37,7 +37,7 @@ public class DiscoverDenialPathTests
                 global::app.type.item.path.@this.Resolve(outOfRoot, app.actor.list.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal", context: app.actor.list.User.Context),
             Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.type.item.path.subfolder>>("Subfolder",
-                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(global::app.type.item.path.subfolder.skip), context: app.actor.list.User.Context)
+                app.actor.list.User.Context.Choice(global::app.type.item.path.subfolder.skip), context: app.actor.list.User.Context)
         };
         var result = await action.Start();
         // Denial surfaces as Fail, not as an empty list of tests.
@@ -52,7 +52,7 @@ public class DiscoverDenialPathTests
                 global::app.type.item.path.@this.Resolve("//../../../etc", app.actor.list.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal", context: app.actor.list.User.Context),
             Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.type.item.path.subfolder>>("Subfolder",
-                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(global::app.type.item.path.subfolder.skip), context: app.actor.list.User.Context)
+                app.actor.list.User.Context.Choice(global::app.type.item.path.subfolder.skip), context: app.actor.list.User.Context)
         };
         var result = await action.Start();
         // Either denial → Fail, or the resolved path lands under root → empty.

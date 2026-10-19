@@ -64,8 +64,9 @@ public class SettingRowTests
         await using (var app = new global::app.@this(_dir))
         {
             var setting = app.actor.list.User.Setting.Of<global::app.goal.list.setting.@this>();
+            var ctx = app.actor.list.User.Context;
             setting.Visibility = new global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>>(
-                new global::app.type.item.choice.@this<global::app.goal.Visibility>[] { global::app.goal.Visibility.Public, global::app.goal.Visibility.Private },
+                new global::app.type.item.choice.@this<global::app.goal.Visibility>[] { ctx.Choice(global::app.goal.Visibility.Public), ctx.Choice(global::app.goal.Visibility.Private) },
                 app.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>>)]);
             await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
@@ -144,7 +145,7 @@ public class SettingRowTests
     {
         await using var app = new global::app.@this(_dir).Testing();
         var llm = (global::app.module.llm.setting.@this)(await Read("%!llm.setting%", app.actor.list.User.Context)).Peek()!;
-        llm.Cache = new(global::app.module.cache.type.cache.skip);
+        llm.Cache = app.actor.list.User.Context.Choice(global::app.module.cache.type.cache.skip);
         await (await app.actor.list.User.Setting.Save(llm)).IsSuccess();
 
         var seam = await app.actor.list.User.Context.Setting.Get(app.Module("llm")["query"]!, "cache");

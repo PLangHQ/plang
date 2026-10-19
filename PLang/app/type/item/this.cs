@@ -79,9 +79,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
         // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum. BEFORE
         // the index ask: an enum is neither an item nor _clr-owned, so the door would answer clr.
-        if (raw is System.Enum)
-            return (@this)System.Activator.CreateInstance(
-                typeof(global::app.type.item.choice.@this<>).MakeGenericType(raw.GetType()), raw)!;
+        if (raw is System.Enum && typeof(global::app.type.item.choice.@this<>).MakeGenericType(raw.GetType()) is var choice)
+            return (@this)System.Activator.CreateInstance(choice, raw, context.App.type.list[choice])!;
 
         // The natural lift, NAVIGATED off the identity door: the owning entity drives its own cached
         // Create thunk (int → number, string → text). The door is never null — a CLR type no value
@@ -850,7 +849,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
     /// <summary>A fact about the thing this value is, read with <c>!</c> (<c>%config!path%</c>) — null: a plain value
     /// has none, its members are read with a dot. A reference answers its own (a file's path, size, kind).</summary>
-    internal virtual global::app.data.@this? Fact(string key, global::app.data.@this parent) => null;
+    internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this?> Fact(string key, global::app.data.@this parent)
+        => default;
 
     /// <summary>What packing this value writes into <paramref name="into"/>, and what that holds — so unpacking gives
     /// it back: a value packs as its Data whole, <paramref name="self"/>, in plang's own format (held: <c>data</c>); a

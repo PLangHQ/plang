@@ -14,9 +14,12 @@ public static class Default
     /// </summary>
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
     {
+        var type = ctx.Context.App.type.list[new global::app.type.@this("image", kind), ctx.Context];
+        // bytes the wire names no kind for are the kind their magic bytes name
         if (raw is byte[] bytes)
-            return new global::app.type.item.image.@this(bytes, kind);
-        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("image", kind), ctx.Context]), context: ctx.Context);
+            return (kind == null ? global::app.type.item.image.@this.FromBytes(bytes, ctx.Context) : null)
+                   ?? new global::app.type.item.image.@this(bytes, type);
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(type), context: ctx.Context);
         return global::app.type.item.image.@this.Create(raw, carrier.Type, carrier);
     }
 }

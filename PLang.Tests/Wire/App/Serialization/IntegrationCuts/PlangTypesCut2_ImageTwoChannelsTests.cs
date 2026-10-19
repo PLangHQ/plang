@@ -47,7 +47,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.actor.list.User.Context);
-        var img = new image(PngBytes, p!, app.actor.list.User.Context);
+        var img = app.actor.list.User.Context.Image(p!, PngBytes);
 
         using var ms = new System.IO.MemoryStream();
         img.Write(new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US", app.type.list[typeof(global::app.type.item.culture.@this)])!));
@@ -58,7 +58,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2j-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        var img = new image(PngBytes, "image/png");
+        var img = app.actor.list.User.Context.Image(PngBytes, "image/png");
 
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
@@ -75,7 +75,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2s-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/x.png", app.actor.list.User.Context);
-        var img = new image(PngBytes, p!, app.actor.list.User.Context);
+        var img = app.actor.list.User.Context.Image(p!, PngBytes);
         var beforeBytes = img.Bytes;
 
         img.Write(new CaptureWriter("text"));
@@ -89,7 +89,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2i-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        var img = new image(PngBytes, "image/png");
+        var img = app.actor.list.User.Context.Image(PngBytes, "image/png");
         var data = new global::app.data.@this("photo", img,
             new global::app.type.@this("image"), context: app.actor.list.User.Context);
 

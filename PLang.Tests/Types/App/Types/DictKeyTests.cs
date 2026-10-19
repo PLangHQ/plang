@@ -28,6 +28,17 @@ public class DictKeyTests : System.IAsyncDisposable
         await Assert.That((await key.Value())?.ToString()).IsEqualTo("name");
     }
 
+    // a dict still its unread source (a .pr's literal, a json read) opens when its key is read, as a dot opens it
+    [Test] public async Task Key_OfAnUnreadDict_OpensIt_AndIsTheFirstKey()
+    {
+        var slice = Context.App.type.list["dict"].Make("{\"name\":\"Ada\",\"age\":36}",
+            (global::app.type.item.wire.kind.plang.@this)Context.App.type.list["wire"].kind["plang"]!);
+        Context.Variable.Set(new global::app.data.@this("person", slice, context: Context));
+
+        var key = await Read("%person!key%");
+        await Assert.That((await key.Value())?.ToString()).IsEqualTo("name");
+    }
+
     [Test] public async Task KeyList_IsEveryKey_InOrder()
     {
         Person();

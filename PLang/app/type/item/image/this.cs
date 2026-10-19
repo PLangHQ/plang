@@ -57,10 +57,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // access. A bytes-backed image sets this in the constructor.
     private byte[]? _bytes;
 
-    // The canonical kind ("png", "jpg", …) — a fact named at birth: from the creator's
-    // format registry for a path-born image, from the magic bytes or the wire otherwise.
-    private readonly global::app.type.kind.@this? _kind;
-
     // Imprinted strict-kind requirement (from `as image/<kind> strict`). When
     // set, the content must sniff to this kind the moment bytes are present —
     // checked at the set for an already-loaded image, or at BytesAsync for a
@@ -134,32 +130,35 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Lazy height — read on first access via SixLabors.ImageSharp.</summary>
     public int Height => _height ??= ProbeDimensions().h;
 
-    /// <summary>Bytes-backed: the content is already in hand (network fetch, base64 decode).</summary>
-    /// <summary>THE PURE CORE (context-free part) — an <c>image</c> passes through; a <c>byte[]</c>
-    /// declared <c>as image</c> becomes the image its magic bytes name (the declaration is the ask).
-    /// A string source needs the scheme registry (a context) and lives in the courier below; anything
-    /// else declines (<c>null</c>).</summary>
-    public static @this? Create(object? raw)
+    /// <summary>THE PURE CORE — an <c>image</c> passes through; a <c>byte[]</c> declared <c>as image</c> becomes the
+    /// image its magic bytes name (the declaration is the ask), born holding the app's type of that kind, asked of
+    /// <paramref name="context"/>'s types. A string source needs the scheme registry and lives in the courier below;
+    /// anything else declines (<c>null</c>).</summary>
+    public static @this? Create(object? raw, global::app.actor.context.@this context)
     {
         if (raw is @this self) return self;
         // A base64 → its DECODED bytes → an image (mime sniffed off the magic bytes). Before the
         // unwrap below: lowering a base64 to its payload STRING would then die in the scheme registry.
         if (raw is global::app.type.item.base64.@this b64)
-            return b64.RawBytes is { } bts ? FromBytes(bts) : null;
+            return b64.RawBytes is { } bts ? FromBytes(bts, context) : null;
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
-        return value is byte[] bytes ? FromBytes(bytes) : null;
+        return value is byte[] bytes ? FromBytes(bytes, context) : null;
     }
 
     /// <summary>The ICreate courier face — pass-through / byte[] via the core; a string is a path,
-    /// made by path's own courier, and the image is held over it. A non-string source declines silently;
+    /// made by path's own courier, and the image is held over it, holding the type its extension names (a
+    /// <c>.png</c> is <c>image&lt;png&gt;</c>), else the plain image type. A non-string source declines silently;
     /// a location path declines (an unregistered scheme, an empty one) lands its reason on <paramref name="data"/>.
     /// A strict declaration (<c>as image/png strict</c>) is the image's own: imprinted at birth, checked now when
     /// the bytes are in hand (a mismatch declines onto <paramref name="data"/>), else when they load.</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        var image = Create(value)
+        var context = data.Context;
+        var image = Create(value, context)
             ?? (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string
-                && global::app.type.item.path.@this.Create(value, null, data) is { } path ? new @this(path, data.Context) : null);
+                && global::app.type.item.path.@this.Create(value, null, data) is { } path
+                    ? new @this(path, path.Kind(context) is { } named && named.Is("image") ? named : context.App.type.list[typeof(@this)])
+                    : null);
         if (image == null || declared is not { Strict: true, kind.IsEmpty: false }) return image;
         image.RequireStrictKind(declared.kind.Name);
         if (image.Mismatch() is { } refused) { data.Fail(refused); return null; }
@@ -175,35 +174,28 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             "StrictKindMismatch", 400)
         : null;
 
-    /// <summary>Bytes-backed, no source: the content is in hand (base64 decode, the wire). <paramref name="kind"/>
-    /// is the format name the creator has — sniffed off the magic bytes or read off the wire; null when unknown.
-    /// The image is born holding <c>image&lt;kind&gt;</c>, and the mime is asked of that kind, not stored.</summary>
-    public @this(byte[] bytes, string? kind = null)
-        : base(new global::app.type.@this("image", typeof(@this), kind))
-    {
-        _bytes = bytes ?? System.Array.Empty<byte>();
-        _kind = Type.kind.IsEmpty ? null : Type.kind;
-    }
+    /// <summary>Bytes-backed, no source: the content is in hand (base64 decode, the wire), born holding
+    /// <paramref name="type"/> — the app's <c>image&lt;kind&gt;</c> its maker names from the magic bytes or the
+    /// wire, the plain image type when unknown. The mime is asked of that kind, not stored.</summary>
+    public @this(byte[] bytes, global::app.type.@this type) : base(type)
+        => _bytes = bytes ?? System.Array.Empty<byte>();
 
     /// <summary>
     /// Path-backed: a lazy handle. <c>.Path</c> is set and <b>nothing is read</b>
     /// — the content materializes from the path on the first <see cref="Value"/>.
     /// The proving instance for reference-fundamental laziness (audio/video follow
-    /// the same shape). <paramref name="context"/> is the creator's, used once to name
-    /// the kind from the path's extension, and not kept.
+    /// the same shape). Born holding <paramref name="type"/>, the image type its maker names from the path's
+    /// extension.
     /// </summary>
-    public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
-        : base(new global::app.type.@this("image", typeof(@this),
-            (path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } kind } ? kind : null)?.Name))
+    public @this(global::app.type.item.path.@this path, global::app.type.@this type) : base(type)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
-        _kind = Type.kind.IsEmpty ? null : Type.kind;
         history.Add(path);   // born from a path → `is path` from its history
     }
 
     /// <summary>Path-backed with the content already read (the file read keeps images eager).</summary>
-    public @this(byte[] bytes, global::app.type.item.path.@this path, global::app.actor.context.@this context)
-        : this(path, context)
+    public @this(byte[] bytes, global::app.type.item.path.@this path, global::app.type.@this type)
+        : this(path, type)
         => _bytes = bytes ?? System.Array.Empty<byte>();
 
     /// <summary>Imprint the strict kind this image's content must match (from `as image/<kind> strict`).</summary>

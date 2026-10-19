@@ -7,19 +7,19 @@ public enum Direction { back, forward, reload }
 /// <summary>Back, forward or reload — asked by a key (Alt+←, Alt+→, F5) or a mouse's side buttons.</summary>
 public sealed class @this : input.@this
 {
-    private readonly Direction _to;
-
-    public @this(global::app.type.list.@this types, Direction to, long? stamp = null) : base(types[typeof(@this)], stamp) => _to = to;
+    /// <summary>A navigation, born with the app's <paramref name="types"/>: its own and its choice's.</summary>
+    public @this(global::app.type.list.@this types, Direction to, long? stamp = null) : base(types[typeof(@this)], stamp)
+        => To = new(to, types[typeof(global::app.type.item.choice.@this<Direction>)]);
 
     /// <summary>back, forward or reload.</summary>
-    [Out] public global::app.type.item.choice.@this<Direction> To => new(_to);
+    [Out] public global::app.type.item.choice.@this<Direction> To { get; }
 
     private protected override void Applied(ITarget target) => target.Navigate(this);
 
     public override void Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        writer.Name("nav"); writer.String(_to.ToString());
+        writer.Name("nav"); To.Write(writer);
         WriteStamp(writer);
         writer.EndObject();
     }

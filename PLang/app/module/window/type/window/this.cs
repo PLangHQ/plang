@@ -109,7 +109,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             var png = await (await Page()).Screenshot();
             return png.Length == 0
                 ? context.Error(new global::app.error.ActionError("The page gave no picture.", "NoScreenshot", 500))
-                : context.Ok<global::app.type.item.image.@this>(new global::app.type.item.image.@this(Convert.FromBase64String(png), "image/png"));
+                : context.Ok<global::app.type.item.image.@this>(new global::app.type.item.image.@this(Convert.FromBase64String(png),
+                    context.App.type.list[new global::app.type.@this("image", "png"), context]));
         }
         catch (Exception ex) when (ex is TimeoutException or IOException or FormatException)
         {

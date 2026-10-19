@@ -53,7 +53,7 @@ public class Base64Tests : System.IAsyncDisposable
 
     [Test] public async Task AsBase64_EncodesImageBytes_NotDoubleEncoded()
     {
-        var img = image.FromBytes(PngBytes);
+        var img = image.FromBytes(PngBytes, Ctx);
         var given = app.actor.list.User.Context.Ok(img!);
         var b64 = base64.Create(img, B64, given);
         var ready = await b64!.Value(app.actor.list.User.Context.Ok(b64));
@@ -85,7 +85,7 @@ public class Base64Tests : System.IAsyncDisposable
     [Test] public async Task Base64_ToImage_SniffsMime()
     {
         var b64 = new base64(System.Convert.ToBase64String(PngBytes), B64);
-        var img = image.Create(b64);
+        var img = image.Create(b64, Ctx);
         await Assert.That(((image)img!).Mime).IsEqualTo("image/png");
     }
 

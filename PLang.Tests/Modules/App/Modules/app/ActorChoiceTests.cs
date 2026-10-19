@@ -56,7 +56,7 @@ public class ActorChoiceTests
         var action = new global::app.module.goal.Call(Ctx)
         {
             Name = new Data("", new global::app.type.item.text.@this("TestGoal"), context: Ctx).As<global::app.goal.@this>(),
-            Actor = new global::app.type.item.choice.@this<global::app.actor.Name>(global::app.actor.Name.system),
+            Actor = Ctx.Choice(global::app.actor.Name.system),
             Parameter = new global::app.type.item.list.@this(
                 new List<Data> { new Data("onSystem", "yes", context: Ctx) }, Ctx.App.type.list["list"]),
         };
