@@ -19,6 +19,10 @@ public enum Kind
     /// a follow-up to a <see cref="Option"/> whose value is a kind-capable type. A choice over
     /// <see cref="@this.Values"/>, refining <see cref="@this.Property"/> of <see cref="@this.Action"/>.</summary>
     KindOf,
+    /// <summary>Whether the type a step coerced to is strict — a yes/no, once the type is picked: does the step say
+    /// the value must actually BE that type (so a mismatch is an error, not a hint). Asked for any
+    /// <see cref="@this.Property"/> that holds a type, independent of its kind; sets the type's strict flag.</summary>
+    Strict,
 }
 
 /// <summary>
