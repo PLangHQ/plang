@@ -2449,7 +2449,7 @@ class app.type.item.separator.serializer.Reader : app.type.reader.ITypeReader
 
 class app.type.item.separator.this : app.type.item.text.this, app.type.item.ICreate<app.type.item.separator.this>
   Characters : System.String { get; }
-  ctor(System.String characters)
+  ctor(System.String characters, app.type.this type)
   override Write(app.type.format.IWriter w) : System.Void
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.separator.this
   static Offer : System.Collections.Generic.IReadOnlyList<app.type.item.this> { get; }

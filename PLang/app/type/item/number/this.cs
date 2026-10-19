@@ -29,6 +29,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The storage kind — its type's kind (<c>{number, int}</c>'s <c>int</c>): stateless behavior the value
     /// asks, so <c>Write</c>/arithmetic never look it up.</summary>
+    // One narrowing, kept for the kind's arithmetic (precision, the climb) — it goes with the kinds item, where
+    // number's kinds become the app's registered kinds.
     public kind.@this Kind => (kind.@this)Type.kind;
 
     // The operator's birth (the 15 CLR lifts, Parse with no type in hand, a kind's Create/Read, a result whose kind

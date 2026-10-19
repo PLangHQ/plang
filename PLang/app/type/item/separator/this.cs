@@ -17,12 +17,12 @@ public sealed class @this : global::app.type.item.text.@this, global::app.type.i
     // the name a named separator goes by (comma), null for characters as written.
     private readonly string? _name;
 
-    /// <summary>Any characters as written.</summary>
-    public @this(string characters) : base(characters, new global::app.type.@this("text", typeof(@this), "separator")) { }
+    /// <summary>Any characters as written, born holding <paramref name="type"/> — the app's <c>{text, separator}</c>.</summary>
+    public @this(string characters, global::app.type.@this type) : base(characters, type) { }
 
-    /// <summary>A named separator — its name and the characters it stands for.</summary>
-    private @this(string name, string characters)
-        : base(characters, new global::app.type.@this("text", typeof(@this), "separator")) => _name = name;
+    /// <summary>A named separator — its name and the characters it stands for, born holding <paramref name="type"/>.</summary>
+    private @this(string name, string characters, global::app.type.@this type)
+        : base(characters, type) => _name = name;
 
     /// <summary>The characters it stands for — a named one's (<c>line</c> a new line), else its own.</summary>
     public string Characters => ToString();
@@ -31,9 +31,12 @@ public sealed class @this : global::app.type.item.text.@this, global::app.type.i
     public override void Write(global::app.type.format.IWriter w) => w.String(_name ?? ToString());
 
     /// <summary>What a separator can be in a step, as the decider is offered it: the named separators. Any
-    /// characters are allowed too, so the set is open (the formal reader never refuses a literal against it).</summary>
+    /// characters are allowed too, so the set is open (the formal reader never refuses a literal against it). A
+    /// class's own fact, read with no app: each holds {text, separator} built from the class — until the kinds
+    /// item.</summary>
     public static System.Collections.Generic.IReadOnlyList<global::app.type.item.@this> Offer
-        => Names.Select(n => (global::app.type.item.@this)new @this(n.Key, n.Value)).ToList();
+        => Names.Select(n => (global::app.type.item.@this)new @this(n.Key, n.Value,
+            new global::app.type.@this("text", typeof(@this), "separator"))).ToList();
 
     /// <summary>A separator holds the text a step quoted by its characters too: <c>by ","</c> written as
     /// <c>comma</c> keeps it.</summary>
@@ -46,6 +49,7 @@ public sealed class @this : global::app.type.item.text.@this, global::app.type.i
     {
         if (raw is @this separator) return separator;
         if (((raw as global::app.type.item.@this)?.ToString() ?? raw as string) is not { } text) return null;
-        return Names.TryGetValue(text, out var chars) ? new @this(text, chars) : new @this(text);
+        var type = declared is { kind.IsEmpty: false } ? declared : data.Context.App.type.list[typeof(@this)];
+        return Names.TryGetValue(text, out var chars) ? new @this(text, chars, type) : new @this(text, type);
     }
 }
