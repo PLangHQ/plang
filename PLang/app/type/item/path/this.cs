@@ -55,12 +55,13 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     private string? _stem;
 
     /// <summary>
-    /// Creates a Path from its location. The scheme factories resolve it with the creating
-    /// context (the running goal's folder, the root) and hand the resolved form here; nothing
-    /// of that context is kept.
+    /// Creates a Path from its location, born holding <paramref name="type"/> — the app's <c>{path, &lt;scheme&gt;}</c>,
+    /// handed in by its maker (a path made from another holds that one's). The scheme factories resolve it with the
+    /// creating context (the running goal's folder, the root) and hand the resolved form here; nothing of that
+    /// context is kept.
     /// </summary>
-    protected @this(string path, string scheme)
-        : base(new global::app.type.@this("path", typeof(@this), scheme))
+    protected @this(string path, global::app.type.@this type)
+        : base(type)
     {
         // Producers that resolved the path hand the resolved form here and
         // override the as-typed location via the Raw init; a verbatim

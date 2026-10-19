@@ -2241,7 +2241,7 @@ class app.type.item.path.file.filesystem.this
 
 class app.type.item.path.file.this : app.type.item.path.this [PathScheme]
   Size(app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.size.this>> [LlmBuilder]
-  ctor(System.String absolutePath)
+  ctor(System.String absolutePath, app.type.this type)
   override Absence(app.actor.context.this context) : System.Threading.Tasks.Task<app.error.this>
   override Add(app.actor.context.this context, app.type.item.path.this source = …) : System.Void
   override Append(System.String content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
@@ -2276,7 +2276,7 @@ class app.type.item.path.file.this : app.type.item.path.this [PathScheme]
 class app.type.item.path.http.this : app.type.item.path.this, app.type.item.ICreate<app.type.item.path.http.this> [PathScheme, PathScheme]
   Address(app.type.item.text.this url, app.actor.context.this context) : app.data.this<app.type.item.path.http.this>
   Uri : System.Uri { get; }
-  ctor(System.String raw)
+  ctor(System.String raw, app.type.this type)
   override Append(System.String content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   override AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   override Combine(System.String child) : app.type.item.path.this
@@ -2351,7 +2351,7 @@ abstract class app.type.item.path.this : app.type.item.this, app.type.item.ICrea
   abstract WithName(System.String name) : app.type.item.path.this
   abstract WriteBytes(System.Byte[] content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   abstract WriteText(System.String content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
-  ctor(System.String path, System.String scheme)
+  ctor(System.String path, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask

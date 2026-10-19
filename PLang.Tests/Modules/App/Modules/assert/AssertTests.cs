@@ -260,7 +260,7 @@ public class AssertTests
         var (app, root) = MakeAppRoot("istrue-yes");
         var filePath = System.IO.Path.Combine(root, "exists.txt");
         System.IO.File.WriteAllText(filePath, "x");
-        var fp = new global::app.type.item.path.file.@this(filePath);
+        var fp = app.actor.list.User.Context.File(filePath);
         var action = new AssertIsTrue(app.actor.list.User.Context) { Value = D(app.actor.list.User.Context, fp) };
         await action.Attach(null, app.actor.list.User.Context);
         var result = await action.Start();
@@ -273,7 +273,7 @@ public class AssertTests
     {
         var (app, root) = MakeAppRoot("istrue-no");
         var missing = System.IO.Path.Combine(root, "nope.txt");
-        var fp = new global::app.type.item.path.file.@this(missing);
+        var fp = app.actor.list.User.Context.File(missing);
         var action = new AssertIsTrue(app.actor.list.User.Context) { Value = D(app.actor.list.User.Context, fp) };
         await action.Attach(null, app.actor.list.User.Context);
         var result = await action.Start();
@@ -287,7 +287,7 @@ public class AssertTests
     {
         var (app, root) = MakeAppRoot("isfalse-yes");
         var missing = System.IO.Path.Combine(root, "still-nope.txt");
-        var fp = new global::app.type.item.path.file.@this(missing);
+        var fp = app.actor.list.User.Context.File(missing);
         var action = new AssertIsFalse(app.actor.list.User.Context) { Value = D(app.actor.list.User.Context, fp) };
         await action.Attach(null, app.actor.list.User.Context);
         var result = await action.Start();
@@ -301,7 +301,7 @@ public class AssertTests
         var (app, root) = MakeAppRoot("isfalse-no");
         var filePath = System.IO.Path.Combine(root, "really-here.txt");
         System.IO.File.WriteAllText(filePath, "x");
-        var fp = new global::app.type.item.path.file.@this(filePath);
+        var fp = app.actor.list.User.Context.File(filePath);
         var action = new AssertIsFalse(app.actor.list.User.Context) { Value = D(app.actor.list.User.Context, fp) };
         await action.Attach(null, app.actor.list.User.Context);
         var result = await action.Start();

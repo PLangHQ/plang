@@ -83,7 +83,7 @@ public sealed partial class @this
 
     // Where a file sent here lands: under this location when it is a folder, else here.
     private @this Into(@this source, filesystem.@this files)
-        => files.IsFolder(this) ? new @this(PathHelper.Combine(Absolute, source.Name.ToString())) : this;
+        => files.IsFolder(this) ? new @this(PathHelper.Combine(Absolute, source.Name.ToString()), Type) : this;
 
     // A location whose extension names a format — its kind carries extensions ({binary, xyz} for an unknown one carries none).
     private bool Known(actor.context.@this context) => Kind(context).kind.Extension.Count > 0;
@@ -277,7 +277,7 @@ public sealed partial class @this
             var part = parts.Pop();
             if (part == ".") continue;
             if (part == "..") { if (at.Count > 0) at.RemoveAt(at.Count - 1); continue; }
-            var here = new @this(root + "/" + string.Join('/', at.Append(part)));
+            var here = new @this(root + "/" + string.Join('/', at.Append(part)), Type);
             if ((parts.Count > 0 || last) && context.FileSystem.Link(here) is { } link)
             {
                 if (++hops > 40)
@@ -289,7 +289,7 @@ public sealed partial class @this
             }
             at.Add(part);
         }
-        return (at.Count == 0 ? this : new @this(root + "/" + string.Join('/', at)), null);
+        return (at.Count == 0 ? this : new @this(root + "/" + string.Join('/', at), Type), null);
     }
 
     public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)
@@ -431,7 +431,7 @@ public sealed partial class @this
             files.Create(to);
             foreach (var entry in files.List(from, "*", recursive: false).ToList())
             {
-                var into = new @this(PathHelper.Combine(to.Absolute, entry.Name.ToString()));
+                var into = new @this(PathHelper.Combine(to.Absolute, entry.Name.ToString()), to.Type);
                 if (files.IsFile(entry)) await files.Copy(entry, into, overwrite);
                 else if (subfolder) await Copy(entry, into);
             }
@@ -446,7 +446,7 @@ public sealed partial class @this
             {
                 if (isMove) await files.Move(this, destination, overwrite);
                 else await Copy(this, destination);
-                return context.Ok<global::app.type.item.path.@this>(new @this(destination.Absolute) { Raw = destination.Raw });
+                return context.Ok<global::app.type.item.path.@this>(new @this(destination.Absolute, destination.Type) { Raw = destination.Raw });
             }
 
             // File transfer: into the destination when it names a folder ---------
@@ -456,7 +456,7 @@ public sealed partial class @this
 
             // The destination as given — or, when it named a folder, the file under it.
             var destTyped = ReferenceEquals(target, destination) ? destination.Raw : destination.Combine(Name.ToString()).Raw;
-            return context.Ok<global::app.type.item.path.@this>(new @this(target.Absolute) { Raw = destTyped });
+            return context.Ok<global::app.type.item.path.@this>(new @this(target.Absolute, target.Type) { Raw = destTyped });
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

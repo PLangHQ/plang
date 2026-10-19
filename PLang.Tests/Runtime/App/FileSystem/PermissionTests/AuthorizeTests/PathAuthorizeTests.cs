@@ -56,7 +56,7 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var path = new Path("/p");
+        var path = app.actor.list.User.Context.File("/p");
 
         // Pre-seed a grant covering the request.
         var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
@@ -72,7 +72,7 @@ public class PathAuthorizeTests
         var app = NewApp();
         app.actor.list.User.Channel.Register(new CannedAnswerChannel(new[] { "a" }, app.actor.list.User.Context));
         var context = app.actor.list.User.Context;
-        var path = new Path("/p");
+        var path = app.actor.list.User.Context.File("/p");
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsSuccess();
@@ -83,7 +83,7 @@ public class PathAuthorizeTests
     [Test] public async Task Authorize_SamePath_ChecksTheCallersActor_NotTheCreators()
     {
         var app = NewApp();
-        var path = new Path("/p");
+        var path = app.actor.list.User.Context.File("/p");
         var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
         await app.actor.list.User.Permission.Add(new global::app.data.@this<PermissionRecord>("", grant, context: app.actor.list.User.Context), persist: false);
         app.actor.list.System.Channel.Register(new CannedAnswerChannel(new[] { "n" }, app.actor.list.System.Context));
@@ -101,7 +101,7 @@ public class PathAuthorizeTests
         var app = NewApp();
         app.actor.list.User.Channel.Register(new CannedAnswerChannel(new[] { "y" }, app.actor.list.User.Context));
         var context = app.actor.list.User.Context;
-        var path = new Path("/p");
+        var path = app.actor.list.User.Context.File("/p");
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsSuccess();
@@ -113,7 +113,7 @@ public class PathAuthorizeTests
         var app = NewApp();
         app.actor.list.User.Channel.Register(new CannedAnswerChannel(new[] { "n" }, app.actor.list.User.Context));
         var context = app.actor.list.User.Context;
-        var path = new Path("/p");
+        var path = app.actor.list.User.Context.File("/p");
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsFailure();
@@ -138,7 +138,7 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         app.actor.list.User.Channel.Register(new FailingAskChannel(new global::app.error.NoAnswer("Channel 'input' has no interactive answerer"), app.actor.list.User.Context) { Name = "input", Direction = global::app.channel.ChannelDirection.Bidirectional });
-        var path = new Path("/p");
+        var path = app.actor.list.User.Context.File("/p");
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
 
@@ -152,7 +152,7 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         app.actor.list.User.Channel.Register(new FailingAskChannel("ChannelBroken", app.actor.list.User.Context) { Name = "input", Direction = global::app.channel.ChannelDirection.Bidirectional });
-        var path = new Path("/p");
+        var path = app.actor.list.User.Context.File("/p");
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
 
@@ -166,7 +166,7 @@ public class PathAuthorizeTests
         // Garbage first, then "a" — pin recursion fires and second call accepts.
         app.actor.list.User.Channel.Register(new CannedAnswerChannel(new[] { "garbage", "a" }, app.actor.list.User.Context));
         var context = app.actor.list.User.Context;
-        var path = new Path("/p");
+        var path = app.actor.list.User.Context.File("/p");
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsSuccess();
@@ -177,7 +177,7 @@ public class PathAuthorizeTests
         var app = NewApp();
         app.actor.list.User.Channel.Register(new StatelessChannel(app.actor.list.User.Context));
         var context = app.actor.list.User.Context;
-        var path = new Path("/p");
+        var path = app.actor.list.User.Context.File("/p");
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         // Stateless: bubble the Exit-typed Data up so the step loop short-circuits.
@@ -190,7 +190,7 @@ public class PathAuthorizeTests
         var app = NewApp();
         app.actor.list.User.Channel.Register(new CannedAnswerChannel(new[] { "a" }, app.actor.list.User.Context));
         var context = app.actor.list.User.Context;
-        var path = new Path("/apps/Email/file.txt");
+        var path = app.actor.list.User.Context.File("/apps/Email/file.txt");
         var verb = global::app.type.item.permission.Verb.read;
 
         await path.Authorize(verb, app.actor.list.User.Context);
@@ -206,7 +206,7 @@ public class PathAuthorizeTests
         var app = NewApp();
         app.actor.list.User.Channel.Register(new CannedAnswerChannel(new[] { "n" }, app.actor.list.User.Context));
         var context = app.actor.list.User.Context;
-        var path = new Path("/secret");
+        var path = app.actor.list.User.Context.File("/secret");
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         var denied = (global::app.error.PermissionDenied)result.Error!;
@@ -229,7 +229,7 @@ public class PathAuthorizeTests
         app.actor.list.User.Channel.Register(new CannedAnswerChannel(new[] { "n" }, app.actor.list.User.Context));
         var context = app.actor.list.User.Context;
         var uppered = app.AbsolutePath.ToUpperInvariant() + "/file.txt";
-        var path = new Path(uppered);
+        var path = app.actor.list.User.Context.File(uppered);
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsFailure();
@@ -247,7 +247,7 @@ public class PathAuthorizeTests
         var context = app.actor.list.User.Context;
         var osDir = app.OsAbsolutePath;
         var osPath = System.IO.Path.Combine(osDir, "system", "test", "fixture.goal");
-        var path = new Path(osPath);
+        var path = app.actor.list.User.Context.File(osPath);
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsSuccess();

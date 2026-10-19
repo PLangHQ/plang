@@ -132,7 +132,7 @@ public sealed class @this : browser.@this
     private async Task Codecs(string[] codecs, global::app.actor.context.@this context)
     {
         if (codecs.Length == 0) return;
-        var hook = await new FilePath(_os.Absolute + "/system/browser/video.js").Read(context);
+        var hook = await new FilePath(_os.Absolute + "/system/browser/video.js", _os.Type).Read(context);
         if (!hook.Success || (await hook.Value())?.ToString() is not { Length: > 0 } source)
         {
             // said, never quietly: the videos stay Chromium's (pixels) and nothing else would tell why
@@ -149,7 +149,7 @@ public sealed class @this : browser.@this
     /// os folder.</summary>
     internal bool Own(string address)
         => Uri.TryCreate(address, UriKind.Absolute, out var url) && url.IsFile
-           && new FilePath(url.LocalPath) is var page && (page.IsUnder(_app).Value || page.IsUnder(_os).Value);
+           && new FilePath(url.LocalPath, _app.Type) is var page && (page.IsUnder(_app).Value || page.IsUnder(_os).Value);
 
     /// <summary>The address as a person reads it: one of plang's own pages as its plang path (<c>/Desktop/notes.txt</c>
     /// in the app, <c>/system/…</c> for the system's) — never <c>file://</c>; a website as it is.</summary>
@@ -169,8 +169,9 @@ public sealed class @this : browser.@this
         var (program, failed) = await Started("Screen", context);
         if (program == null) return global::app.data.@this<browser.@this>.From(failed!);
         var cdp = new cdp.@this(program.pipe!);
+        var file = context.App.type.list[new global::app.type.@this("path", "file"), context];
         var browser = new @this(url, display, program, cdp,
-            new FilePath(context.App.AbsolutePath), new FilePath(context.App.OsAbsolutePath),
+            new FilePath(context.App.AbsolutePath, file), new FilePath(context.App.OsAbsolutePath, file),
             error => context.Actor.Channel.Report(context.Error(error)));
         // Chromium stopping by itself is said, with what it said last — never a black screen without a word
         browser.Watched();

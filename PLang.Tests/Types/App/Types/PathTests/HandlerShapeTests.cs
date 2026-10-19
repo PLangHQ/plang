@@ -126,7 +126,7 @@ public class HandlerShapeTests
         var target = System.IO.Path.Combine(outOfRoot, "secret.txt");
         System.IO.File.WriteAllText(target, "secret");
 
-        var fp = new global::app.type.item.path.file.@this(target);
+        var fp = app.actor.list.User.Context.File(target);
         var handler = new global::app.module.file.Read(app.actor.list.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp, context: app.actor.list.User.Context),
         };
         var result = await handler.Start();
@@ -148,7 +148,7 @@ public class HandlerShapeTests
         var target = System.IO.Path.Combine(outOfRoot, "exists.txt");
         System.IO.File.WriteAllText(target, "i exist");
 
-        var fp = new global::app.type.item.path.file.@this(target);
+        var fp = app.actor.list.User.Context.File(target);
         // The file is really on disk — but permission is denied, so truthiness
         // is false. If the gate were skipped this would be true.
         await Assert.That(await fp.AsBooleanAsync(app.actor.list.User.Context)).IsFalse();

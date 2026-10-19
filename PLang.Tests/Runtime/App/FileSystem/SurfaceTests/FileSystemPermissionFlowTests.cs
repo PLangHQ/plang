@@ -98,7 +98,7 @@ public class FileSystemPermissionFlowTests
             "List"  => System.IO.Path.Combine(root, "fixture"),
             _       => System.IO.Path.Combine(root, "fixture"),
         };
-        var path = new Path(targetPath);
+        var path = app.actor.list.User.Context.File(targetPath);
 
         var result = await Dispatch(method, path, app.actor.list.User.Context);
         await result.IsSuccess();
@@ -122,7 +122,7 @@ public class FileSystemPermissionFlowTests
             "List"  => outOfRoot,
             _       => System.IO.Path.Combine(outOfRoot, "fixture"),
         };
-        var path = new Path(targetPath);
+        var path = app.actor.list.User.Context.File(targetPath);
 
         var result = await Dispatch(method, path, app.actor.list.User.Context);
         await result.IsSuccess();
@@ -153,7 +153,7 @@ public class FileSystemPermissionFlowTests
             "List"  => outOfRoot,
             _       => System.IO.Path.Combine(outOfRoot, "fixture"),
         };
-        var path = new Path(targetPath);
+        var path = app.actor.list.User.Context.File(targetPath);
 
         var result = await Dispatch(method, path, app.actor.list.User.Context);
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
@@ -172,7 +172,7 @@ public class FileSystemPermissionFlowTests
         System.IO.File.WriteAllText(outside, "there");
         try
         {
-            context.Variable.Set("p", new Path(outside));
+            context.Variable.Set("p", context.File(outside));
             var exists = await new global::app.type.item.variable.@this("p.Exists").Start(context);
             await Assert.That(exists.Success).IsFalse();
             await Assert.That(exists.Error).IsTypeOf<global::app.error.PermissionDenied>();

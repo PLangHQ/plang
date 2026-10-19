@@ -30,7 +30,7 @@ public sealed class HttpPathFixture : IPathSchemeFixture, IDisposable
     public Task<Path> CreateFresh()
     {
         var url = _server.NewResourceUrl();
-        return Task.FromResult<Path>(new HttpPath(url));
+        return Task.FromResult<Path>(Context.Url(url));
     }
 
     public Task Cleanup(Path p) => Task.CompletedTask;   // server entries die with the server

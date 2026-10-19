@@ -36,7 +36,7 @@ public class AbsoluteDisciplineTests
         app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
-        var p = new FilePath(outOfRoot);
+        var p = app.actor.list.User.Context.File(outOfRoot);
         var auth = await p.Authorize(global::app.type.item.permission.Verb.write, app.actor.list.User.Context);
         await auth.IsFailure();
     }
@@ -44,7 +44,7 @@ public class AbsoluteDisciplineTests
     [Test] public async Task TakeOverApi_AuthorizeFirst_InRootGrant_AllowsAbsoluteUse()
     {
         var app = NewApp(out var root);
-        var p = new FilePath(System.IO.Path.Combine(root, "db.sqlite"));
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "db.sqlite"));
         var auth = await p.Authorize(global::app.type.item.permission.Verb.write, app.actor.list.User.Context);
         await auth.IsSuccess();
         // .Absolute is now safe to read.
@@ -59,7 +59,7 @@ public class AbsoluteDisciplineTests
         app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
-        var dbPath = new FilePath(outOfRoot);
+        var dbPath = app.actor.list.User.Context.File(outOfRoot);
         using var store = new global::app.store.sqlite.@this(dbPath, () => null, app.actor.list.User.Context);
         var read = await store.Get<global::app.type.item.@this>("t", "k");
         await Assert.That(read.Error?.Key).IsEqualTo("PermissionDenied");
@@ -69,7 +69,7 @@ public class AbsoluteDisciplineTests
     [Test] public async Task PathInternals_ReachForAbsolute_IsAllowed_NoDiagnostic()
     {
         var app = NewApp(out var root);
-        var p = new FilePath(System.IO.Path.Combine(root, "x.txt"));
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "x.txt"));
         // Path verbs internally use .Absolute — confirm a verb call succeeds
         // on an in-root Path (the .Absolute reach inside the verb is allowed).
         await p.WriteText("hi", app.actor.list.User.Context);
@@ -80,7 +80,7 @@ public class AbsoluteDisciplineTests
     [Test] public async Task DiagnosticString_UsesAbsolute_InErrorMessage_IsAllowed()
     {
         var app = NewApp(out var root);
-        var p = new FilePath(System.IO.Path.Combine(root, "diag.txt"));
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "diag.txt"));
         // ToString and string interpolation embed .Absolute — confirm no
         // gate fires (these are pure string ops, not IO).
         var msg = $"path: {p}";

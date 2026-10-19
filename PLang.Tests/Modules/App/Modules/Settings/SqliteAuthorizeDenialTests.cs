@@ -40,7 +40,7 @@ public class SqliteAuthorizeDenialTests
         app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "external.sqlite");
-        var dbPath = new FilePath(outOfRoot);
+        var dbPath = app.actor.list.User.Context.File(outOfRoot);
         using var store = new global::app.store.sqlite.@this(dbPath, () => null, app.actor.list.User.Context);
         // the first verb opens the store: an out-of-root path the actor denies fails it, and sqlite never sees it
         var read = await store.Get<global::app.type.item.@this>("t", "k");
@@ -54,7 +54,7 @@ public class SqliteAuthorizeDenialTests
         var app = NewApp(out var root);
         var ch = new CannedChannel("UNEXPECTED", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
-        var dbPath = new FilePath(System.IO.Path.Combine(root, "data.sqlite"));
+        var dbPath = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "data.sqlite"));
         using var store = new global::app.store.sqlite.@this(dbPath, () => null, app.actor.list.User.Context);
         await (await store.Get<global::app.type.item.@this>("t", "k")).IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);

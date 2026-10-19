@@ -18,7 +18,7 @@ public class UrlDecodesByContentTypeJsonTests : System.IAsyncDisposable
     {
         using var server = new HttpTestServer();
         var address = server.MapStoredBody(System.Text.Encoding.UTF8.GetBytes("{\"a\":1}"), "application/json");
-        var grant = new global::app.type.item.permission.@this("User", new global::app.type.item.path.http.@this(address).Absolute,
+        var grant = new global::app.type.item.permission.@this("User", Ctx.Url(address).Absolute,
             global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact);
         await Ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: Ctx), persist: false);
 

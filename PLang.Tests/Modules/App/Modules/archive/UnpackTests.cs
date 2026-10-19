@@ -50,7 +50,7 @@ public class UnpackTests : IDisposable
         global::app.module.archive.type.archive.kind.bundle.@this bundle = layer
             ? new global::app.module.archive.type.archive.kind.oci.layer.@this()
             : new global::app.module.archive.type.archive.kind.tar.@this();
-        return await bundle.Unpack(archive, null, new File(Path.Combine(_root, folder)), new global::app.type.item.size.@this(max, Context), Context);
+        return await bundle.Unpack(archive, null, Context.File(Path.Combine(_root, folder)), new global::app.type.item.size.@this(max, Context), Context);
     }
 
     [Test]

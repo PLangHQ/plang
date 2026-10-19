@@ -73,7 +73,7 @@ public class TakesTests : System.IAsyncDisposable
         var body = System.Text.Encoding.UTF8.GetBytes("Hello %name%!");
         await System.IO.File.WriteAllBytesAsync(System.IO.Path.Combine(root, "t.txt"), body);
         var address = server.MapStoredBody(body, "text/plain");
-        var grant = new global::app.type.item.permission.@this("User", new global::app.type.item.path.http.@this(address).Absolute,
+        var grant = new global::app.type.item.permission.@this("User", Ctx.Url(address).Absolute,
             global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact);
         await Ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: Ctx), persist: false);
         await Ctx.Variable.Set("name", "World");

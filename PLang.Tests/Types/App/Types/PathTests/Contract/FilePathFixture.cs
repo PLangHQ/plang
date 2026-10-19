@@ -31,7 +31,7 @@ public sealed class FilePathFixture : IPathSchemeFixture, IDisposable
     public Task<Path> CreateFresh()
     {
         var file = System.IO.Path.Combine(_resourceDir, Guid.NewGuid().ToString("N") + ".txt");
-        return Task.FromResult<Path>(new FilePath(file));
+        return Task.FromResult<Path>(Context.File(file));
     }
 
     public Task Cleanup(Path p)

@@ -43,7 +43,7 @@ public class Stage4_RankTests
         await using var app = NewApp();
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-rank-" + System.Guid.NewGuid().ToString("N")[..8]);
         await using var app2 = new global::app.@this(root);
-        var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "cfg.json"));
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "cfg.json"));
         await (await p.WriteText("5", app2.actor.list.User.Context)).IsSuccess();
         var pending = await p.Decoded(app2.actor.list.User.Context);   // raw-backed, unparsed
         var other = D(app2, 5, "number");

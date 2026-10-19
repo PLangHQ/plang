@@ -45,7 +45,7 @@ public class DotDotTraversalRegressionTests
         // Pre-canonicalization, this would be stored verbatim. Post-fix the
         // ctor resolves the .. so _absolutePath is the truthful target.
         var raw = System.IO.Path.Combine(root, "subdir", "..", "leaf.txt");
-        var p = new FilePath(raw);
+        var p = context.File(raw);
         await Assert.That(p.Absolute).DoesNotContain("..");
         await Assert.That(p.Absolute).EndsWith("leaf.txt");
     }

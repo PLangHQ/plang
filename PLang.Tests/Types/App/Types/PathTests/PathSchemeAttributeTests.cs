@@ -57,17 +57,14 @@ public class PathSchemeAttributeTests
         await Assert.That(attrs).Contains("file");
     }
 
-    [Test] public async Task SchemeHandler_Exposes_PublicSingleStringConstructor()
+    // a scheme handler is made through its static Resolve(raw, context) — the factory the registry calls, which
+    // resolves and normalizes the raw and hands the path the app's type; never a bare constructor
+    [Test] public async Task SchemeHandler_Exposes_PublicStaticResolve()
     {
-        var ctor = typeof(FilePath).GetConstructors(BindingFlags.Public | BindingFlags.Instance)
-            .FirstOrDefault(c =>
-            {
-                var ps = c.GetParameters();
-                return ps.Length >= 1
-                    && ps[0].ParameterType == typeof(string)
-                    && ps.Skip(1).All(p => p.IsOptional);
-            });
-        await Assert.That(ctor).IsNotNull();
+        var resolve = typeof(FilePath).GetMethod("Resolve", BindingFlags.Public | BindingFlags.Static,
+            [typeof(string), typeof(global::app.actor.context.@this)]);
+        await Assert.That(resolve).IsNotNull();
+        await Assert.That(typeof(global::app.type.item.path.@this).IsAssignableFrom(resolve!.ReturnType)).IsTrue();
     }
 
     [PathScheme("alpha"), PathScheme("beta")]

@@ -25,7 +25,7 @@ public class TypeIsTests
         var ctx = app.actor.list.User.Context;
         // Composition is the VALUE's type history: an image born from a path carries a "path"
         // entry, so the value answers `is path`. (A bare type entity does NOT — no history.)
-        var path = new global::app.type.item.path.file.@this("/test/photo.png");
+        var path = app.actor.list.User.Context.File("/test/photo.png");
         var img = ctx.Image(path, new byte[] { 1, 2, 3 });
         await Assert.That(img.Is(app.type.list["path"])).IsTrue();
         await Assert.That(app.type.list["image"].Is(app.type.list["path"])).IsFalse();   // bare type: no history

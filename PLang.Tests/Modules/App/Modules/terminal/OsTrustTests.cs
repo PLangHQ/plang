@@ -82,7 +82,7 @@ public class OsTrustTests : IDisposable
     {
         var questions = new Questions(Context);
         Context.Actor!.Channel.Register(questions);
-        var file = new global::app.type.item.path.file.@this(Os("Changed.goal"));
+        var file = Context.File(Os("Changed.goal"));
         var asked = await file.Authorize(verb, Context);
         await asked.IsFailure();
         await Assert.That(questions.Asked.Count).IsEqualTo(1).Because("asked, not refused");
@@ -94,8 +94,8 @@ public class OsTrustTests : IDisposable
     {
         var questions = new Questions(Context);
         Context.Actor!.Channel.Register(questions);
-        await (await new global::app.type.item.path.file.@this(Path.Combine(_root, "own.txt")).Authorize(global::app.type.item.permission.Verb.write, Context)).IsSuccess();
-        await new global::app.type.item.path.file.@this(Os("Read.goal")).Authorize(global::app.type.item.permission.Verb.read, Context);
+        await (await Context.File(Path.Combine(_root, "own.txt")).Authorize(global::app.type.item.permission.Verb.write, Context)).IsSuccess();
+        await Context.File(Os("Read.goal")).Authorize(global::app.type.item.permission.Verb.read, Context);
         await Assert.That(questions.Asked.Any(q => q.Contains("ship with plang"))).IsFalse();
     }
 

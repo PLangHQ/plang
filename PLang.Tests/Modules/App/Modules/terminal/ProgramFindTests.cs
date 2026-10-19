@@ -23,7 +23,7 @@ public class ProgramFindTests : IDisposable
         public FilePath? Find(string name, global::app.actor.context.@this context)
         {
             Asked.Add(name);
-            return name == "tool" && Has != null ? new FilePath(Has) : null;
+            return name == "tool" && Has != null ? context.File(Has) : null;
         }
 
         public Task<global::app.data.@this<global::app.module.terminal.type.process.@this>> Start(
@@ -62,7 +62,7 @@ public class ProgramFindTests : IDisposable
 
         await Assert.That(_terminal.Asked).Contains("tool");
         await Assert.That(started.Error!.Key).IsEqualTo("FakeStarted");
-        await Assert.That(_terminal.Started!.Absolute).IsEqualTo(new FilePath(Path.Combine(_root, "tool")).Absolute);
+        await Assert.That(_terminal.Started!.Absolute).IsEqualTo(Context.File(Path.Combine(_root, "tool")).Absolute);
     }
 
     [Test] public async Task ABareNameTheTerminalDoesntFind_IsNotFound()

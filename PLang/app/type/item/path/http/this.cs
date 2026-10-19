@@ -63,8 +63,10 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     private readonly Uri _uri;
 
-    public @this(string raw)
-        : base(raw, raw.StartsWith("https:", StringComparison.OrdinalIgnoreCase) ? "https" : "http")
+    /// <summary>The url <paramref name="raw"/>, born holding <paramref name="type"/> — the app's
+    /// <c>{path, http}</c> or <c>{path, https}</c>, as its scheme is.</summary>
+    public @this(string raw, global::app.type.@this type)
+        : base(raw, type)
     {
         if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))
             throw new ArgumentException($"Not a valid http(s) URL: '{raw}'", nameof(raw));
@@ -90,8 +92,13 @@ public sealed partial class @this : global::app.type.item.path.@this
     {
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
-        return new @this(rawPath) { Raw = rawPath };
+        return new @this(rawPath, Typed(rawPath, context)) { Raw = rawPath };
     }
+
+    // The app's type for a url — {path, http} or {path, https}, as its scheme is.
+    private static global::app.type.@this Typed(string url, actor.context.@this context)
+        => context.App.type.list[new global::app.type.@this("path",
+            global::app.type.item.path.scheme.@this.ParseScheme(url).ToLowerInvariant()), context];
 
     [Out, Store] public override string Scheme => _uri.Scheme.ToLowerInvariant();
 
@@ -432,7 +439,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             nextContent = rebuilt;
         }
 
-        var nextPath = new @this(target.ToString());
+        var nextPath = new @this(target.ToString(), Typed(target.ToString(), context));
 
         // The consent prompt for the new host. AuthGate returns null on grant.
         if (await nextPath.AuthGate(verb, context) is { } denial) return denial;

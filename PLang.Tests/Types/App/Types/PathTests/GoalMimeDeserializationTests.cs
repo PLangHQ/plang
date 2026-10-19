@@ -33,7 +33,7 @@ public class GoalMimeDeserializationTests
         var (app, root) = MakeApp();
         var abs = System.IO.Path.Combine(root, "Start.goal");
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
-        var p = new FilePath(abs);
+        var p = app.actor.list.User.Context.File(abs);
         var read = await p.Touch(app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value())?.ToString()).IsEqualTo(SimpleGoalText);
@@ -44,7 +44,7 @@ public class GoalMimeDeserializationTests
         var (app, root) = MakeApp();
         var abs = System.IO.Path.Combine(root, "Start.test.goal");
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
-        var p = new FilePath(abs);
+        var p = app.actor.list.User.Context.File(abs);
         var read = await p.Touch(app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value())?.ToString()).IsEqualTo(SimpleGoalText);
@@ -56,7 +56,7 @@ public class GoalMimeDeserializationTests
         var prAbs = System.IO.Path.Combine(root, "Start.pr");
         var json = "{\"path\":\"Start.goal\",\"name\":\"Start\"}";
         await System.IO.File.WriteAllTextAsync(prAbs, json);
-        var p = new FilePath(prAbs);
+        var p = app.actor.list.User.Context.File(prAbs);
         var read = await p.Touch(app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value()) is Goal).IsTrue();
@@ -68,7 +68,7 @@ public class GoalMimeDeserializationTests
         var (app, root) = MakeApp();
         var abs = System.IO.Path.Combine(root, "Start.goal");
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
-        var p = new FilePath(abs);
+        var p = app.actor.list.User.Context.File(abs);
         var read = await p.Touch(app.actor.list.User.Context);
         var text = (await read.Value())?.ToString() ?? "";
         var goal = Goal.Parse(text, p, app.actor.list.User.Context);
@@ -81,7 +81,7 @@ public class GoalMimeDeserializationTests
         var (app, root) = MakeApp();
         var abs = System.IO.Path.Combine(root, "Bad.goal");
         await System.IO.File.WriteAllTextAsync(abs, "");
-        var p = new FilePath(abs);
+        var p = app.actor.list.User.Context.File(abs);
         var read = await p.Touch(app.actor.list.User.Context);
         var text = (await read.Value())?.ToString() ?? "";
         await Assert.That(Goal.Parse(text, p, app.actor.list.User.Context)).IsNull();

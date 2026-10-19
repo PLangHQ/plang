@@ -70,7 +70,7 @@ public class ExecuteVerbTests
         System.IO.Directory.CreateDirectory(outOfRoot);
         var dllPath = System.IO.Path.Combine(outOfRoot, "stub.dll");
         System.IO.File.WriteAllText(dllPath, "not-a-real-dll");
-        var p = new FilePath(dllPath);
+        var p = app.actor.list.User.Context.File(dllPath);
         await p.LoadAssemblyAsync(app.actor.list.User.Context);
         await Assert.That(canned.Prompts.Count).IsGreaterThanOrEqualTo(1);
         await Assert.That(canned.Prompts[0]).Contains("execute");
@@ -79,7 +79,7 @@ public class ExecuteVerbTests
     [Test] public async Task ReadGrant_DoesNotAllowExecute()
     {
         var app = NewApp(out var root);
-        var p = new FilePath(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "lib.dll"));
         // Grant Read only.
         var permission = new global::app.type.item.permission.@this(
@@ -105,7 +105,7 @@ public class ExecuteVerbTests
         var srcAssembly = typeof(ExecuteVerbTests).Assembly.Location;
         var copyAt = System.IO.Path.Combine(root, "test.dll");
         System.IO.File.Copy(srcAssembly, copyAt, overwrite: true);
-        var p = new FilePath(copyAt);
+        var p = app.actor.list.User.Context.File(copyAt);
         var result = await p.LoadAssemblyAsync(app.actor.list.User.Context);
         await result.IsSuccess();
         await Assert.That(canned.Prompts.Count).IsEqualTo(0);
@@ -119,7 +119,7 @@ public class ExecuteVerbTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "stub.dll");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllText(outOfRoot, "stub");
-        var p = new FilePath(outOfRoot);
+        var p = app.actor.list.User.Context.File(outOfRoot);
         var result = await p.LoadAssemblyAsync(app.actor.list.User.Context);
         // Stateless channels surface "ask" as a Data type signal, not a stored grant.
         await Assert.That(result.Type?.Name == "ask" || !result.Success).IsTrue();
@@ -133,7 +133,7 @@ public class ExecuteVerbTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "stub.dll");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllText(outOfRoot, "stub");
-        var p = new FilePath(outOfRoot);
+        var p = app.actor.list.User.Context.File(outOfRoot);
         var result = await p.LoadAssemblyAsync(app.actor.list.User.Context);
         await result.IsFailure();
         // The fail must be a permission decision — not file-not-found or a

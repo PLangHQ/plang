@@ -271,7 +271,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
         System.IO.Directory.CreateDirectory(_app.AbsolutePath);
         var file = System.IO.Path.Combine(_app.AbsolutePath, "present-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt");
         System.IO.File.WriteAllText(file, "x");
-        var fp = new global::app.type.item.path.file.@this(file);
+        var fp = _app.actor.list.User.Context.File(file);
         await Assert.That(IsTrue(await EvalIf(fp, "==", true))).IsTrue();
         System.IO.File.Delete(file);
     }
@@ -279,7 +279,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     [Test] public async Task IfExists_PathToMissingFile_IsFalse()
     {
         var missing = System.IO.Path.Combine(_app.AbsolutePath, "not-here.txt");
-        var fp = new global::app.type.item.path.file.@this(missing);
+        var fp = _app.actor.list.User.Context.File(missing);
         await Assert.That(IsFalse(await EvalIf(fp, "==", true))).IsTrue();
     }
 
@@ -296,12 +296,12 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
         System.IO.Directory.CreateDirectory(_app.AbsolutePath);
         var file = System.IO.Path.Combine(_app.AbsolutePath, "present-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt");
         System.IO.File.WriteAllText(file, "x");
-        await Assert.That(IsTrue(await Truth(new global::app.type.item.path.file.@this(file)))).IsTrue();
+        await Assert.That(IsTrue(await Truth(_app.actor.list.User.Context.File(file)))).IsTrue();
         System.IO.File.Delete(file);
     }
 
     [Test] public async Task BareIf_MissingPath_IsFalse()
-        => await Assert.That(IsFalse(await Truth(new global::app.type.item.path.file.@this(
+        => await Assert.That(IsFalse(await Truth(_app.actor.list.User.Context.File(
             System.IO.Path.Combine(_app.AbsolutePath, "not-here.txt"))))).IsTrue();
 
     // --- Operands, judged at build ---

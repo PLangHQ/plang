@@ -38,9 +38,9 @@ public class AppRootTests
             var ch = new AskCountingChannel(app.actor.list.User.Context);
             app.actor.list.User.Channel.Register(ch);
 
-            await (await new FilePath(System.IO.Path.Combine(root, "in.txt")).Touch(app.actor.list.User.Context)).IsSuccess();
+            await (await app.actor.list.User.Context.File(System.IO.Path.Combine(root, "in.txt")).Touch(app.actor.list.User.Context)).IsSuccess();
             await Assert.That(ch.AskCount).IsEqualTo(0);
-            await new FilePath(System.IO.Path.Combine(outside, "out.txt")).Touch(app.actor.list.User.Context);
+            await app.actor.list.User.Context.File(System.IO.Path.Combine(outside, "out.txt")).Touch(app.actor.list.User.Context);
             await Assert.That(ch.AskCount).IsGreaterThan(0);
         }
         finally

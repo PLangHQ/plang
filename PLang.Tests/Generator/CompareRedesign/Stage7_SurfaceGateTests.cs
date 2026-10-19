@@ -161,7 +161,7 @@ public class Stage7_SurfaceGateTests
         File.WriteAllText(tmp, "12345");
         try
         {
-            var fp = new global::app.type.item.path.file.@this(tmp);
+            var fp = context.File(tmp);
             object? size = await (await fp.Size(context)).Value();
             await Assert.That(size).IsTypeOf<global::app.type.item.size.@this>();
             await Assert.That(size!.ToString()).IsEqualTo("5 B");

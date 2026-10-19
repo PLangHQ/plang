@@ -126,7 +126,7 @@ public sealed class @this : filesystem.@this
         if (!hidden && _under.IsFolder(folder))
             foreach (var entry in _under.List(folder, pattern, recursive))
                 lock (_lock) if (!Gone(entry.Absolute)) entries.Add(entry.Absolute);
-        return entries.Select(entry => new file.@this(entry)).ToList();
+        return entries.Select(entry => new file.@this(entry, folder.Type)).ToList();
     }
 
     public override async Task Move(file.@this from, file.@this to, bool overwrite)
@@ -136,7 +136,7 @@ public sealed class @this : filesystem.@this
             if (overwrite && IsFolder(to)) Delete(to, recursive: true);
             Create(to);
             foreach (var entry in List(from, "*", recursive: true).Where(IsFile).ToList())
-                await Copy(entry, new file.@this(to.Absolute + entry.Absolute[from.Absolute.Length..]), overwrite);
+                await Copy(entry, new file.@this(to.Absolute + entry.Absolute[from.Absolute.Length..], to.Type), overwrite);
         }
         else await Copy(from, to, overwrite);
         Delete(from, recursive: true);

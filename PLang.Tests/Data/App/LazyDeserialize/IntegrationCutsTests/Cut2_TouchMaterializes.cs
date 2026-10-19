@@ -30,7 +30,7 @@ public class Cut2_TouchMaterializes
     [Test] public async Task Cut2_ConfigJson_UntouchedIsRawBytes_NavigatedReturnsField()
     {
         await using var app = NewApp(out var root);
-        var p = new filepath(System.IO.Path.Combine(root, "config.json"));
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "config.json"));
         await (await p.WriteText("{\"port\":8080}", app.actor.list.User.Context)).IsSuccess();
 
         var d = await p.Decoded(app.actor.list.User.Context);
@@ -43,7 +43,7 @@ public class Cut2_TouchMaterializes
     [Test] public async Task Cut2_ReportCsv_UntouchedIsRawBytes_NavigatedReturnsRowColumn()
     {
         await using var app = NewApp(out var root);
-        var p = new filepath(System.IO.Path.Combine(root, "report.csv"));
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "report.csv"));
         await (await p.WriteText("name,age\nAda,36\n", app.actor.list.User.Context)).IsSuccess();
 
         var d = await p.Decoded(app.actor.list.User.Context);

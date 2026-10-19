@@ -19,7 +19,7 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
     // A raw-backed Data (source form pending) straight off the file channel.
     private static async Task<Data> RawBackedJson(global::app.@this app, string root)
     {
-        var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "cfg.json"));
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "cfg.json"));
         await (await p.WriteText("{\"port\":8080}", app.actor.list.User.Context)).IsSuccess();
         return await p.Decoded(app.actor.list.User.Context);
     }

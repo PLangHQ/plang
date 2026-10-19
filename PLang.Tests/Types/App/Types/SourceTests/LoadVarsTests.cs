@@ -100,7 +100,7 @@ public class LoadVarsTests
         var (app, root, ctx) = await NewApp();
         await using var _ = app;
         var address = server.MapStoredBody(System.Text.Encoding.UTF8.GetBytes("Hi %name% n=%!app.type.list.count%"), "text/plain");
-        var grant = new global::app.type.item.permission.@this("User", new global::app.type.item.path.http.@this(address).Absolute,
+        var grant = new global::app.type.item.permission.@this("User", ctx.Url(address).Absolute,
             global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact);
         await ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: ctx), persist: false);
 

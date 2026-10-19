@@ -61,8 +61,8 @@ public class MoveCopyBundledConsentTests
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
         System.IO.File.WriteAllText(srcFile, "data");
-        var src = new Path(srcFile);
-        var dst = new Path(System.IO.Path.Combine(root, "y"));
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "y"));
 
         var result = await src.MoveTo(dst, overwrite: true, app.actor.list.User.Context);
         await result.IsSuccess();
@@ -87,8 +87,8 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
 
         var result = await src.MoveTo(dst, overwrite: true, app.actor.list.User.Context);
         await result.IsSuccess();
@@ -113,8 +113,8 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
 
         var result = await src.CopyTo(dst, overwrite: true, subfolder: true, app.actor.list.User.Context);
         await result.IsSuccess();
@@ -135,8 +135,8 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
         await src.MoveTo(dst, overwrite: true, app.actor.list.User.Context);
 
         // Both grants landed.
@@ -177,7 +177,7 @@ public class MoveCopyBundledConsentTests
         System.IO.File.WriteAllText(srcFile, "data");
         var dstFile = System.IO.Path.Combine(ForeignDir(), "y");
 
-        var result = await new Path(srcFile).MoveTo(new Path(dstFile), overwrite: true, app.actor.list.User.Context);
+        var result = await app.actor.list.User.Context.File(srcFile).MoveTo(app.actor.list.User.Context.File(dstFile), overwrite: true, app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
@@ -194,7 +194,7 @@ public class MoveCopyBundledConsentTests
         System.IO.File.WriteAllText(srcFile, "data");
         var dstFile = System.IO.Path.Combine(ForeignDir(), "y");
 
-        var result = await new Path(srcFile).MoveTo(new Path(dstFile), overwrite: true, app.actor.list.User.Context);
+        var result = await app.actor.list.User.Context.File(srcFile).MoveTo(app.actor.list.User.Context.File(dstFile), overwrite: true, app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
@@ -214,8 +214,8 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
 
         var result = await src.MoveTo(dst, overwrite: true, app.actor.list.User.Context);
         await result.IsFailure();
@@ -239,8 +239,8 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
 
         var result = await src.CopyTo(dst, overwrite: true, subfolder: true, app.actor.list.User.Context);
         await result.IsFailure();
@@ -260,8 +260,8 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
 
         var result = await src.MoveTo(dst, overwrite: true, app.actor.list.User.Context);
         // Stateless: ask result is Exit-typed — Move bubbles it unchanged.
@@ -285,7 +285,7 @@ public class MoveCopyBundledConsentTests
         var roundTripped = await System.IO.File.ReadAllTextAsync(abs);
         await Assert.That(roundTripped).IsEqualTo("v1-still-here");
         // And the v2 surface sees the same bytes.
-        var v2 = new Path(abs);
+        var v2 = app.actor.list.User.Context.File(abs);
         var v2Read = await v2.Touch(app.actor.list.User.Context);
         await v2Read.IsSuccess();
         await Assert.That((await v2Read.Value())?.ToString()).IsEqualTo("v1-still-here");

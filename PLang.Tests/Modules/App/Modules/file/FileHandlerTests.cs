@@ -30,10 +30,10 @@ public class FileHandlerTests : IDisposable
         System.IO.Path.Combine(_tempDir, relativePath);
 
     private global::app.data.@this<PLangPath> MakePath(string relativePath) =>
-        new("", new PLangFilePath(TempPath(relativePath)) {}, context: _app.actor.list.User.Context);
+        new("", _app.actor.list.User.Context.File(TempPath(relativePath)), context: _app.actor.list.User.Context);
 
     private global::app.data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
-        new("", new PLangFilePath(absolutePath) {}, context: _app.actor.list.User.Context);
+        new("", _app.actor.list.User.Context.File(absolutePath), context: _app.actor.list.User.Context);
 
     // --- Save ---
 

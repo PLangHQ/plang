@@ -28,7 +28,7 @@ public sealed partial class @this : global::app.type.item.ICreate<@this>
             data.Fail(new global::app.error.@this($"Only http:// and https:// URLs are allowed, got '{written}'", "InvalidUrlScheme", 400));
             return null;
         }
-        return new @this(url);
+        return new @this(url, Typed(url, data.Context));
     }
 
     /// <summary>The url <paramref name="url"/> names, with this as its base: a relative one (a leading <c>/</c>) is

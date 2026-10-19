@@ -17,10 +17,10 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// canonicalized via <see cref="Canonicalize"/> before being stored, so
     /// every code path that produces a FilePath (Resolve, derivation verbs,
     /// scheme registry, implicit <c>string→path</c>) gets the canonical
-    /// invariant for free.
+    /// invariant for free. Born holding <paramref name="type"/>, the app's <c>{path, file}</c>.
     /// </summary>
-    public @this(string absolutePath)
-        : base(Canonicalize(absolutePath), "file")
+    public @this(string absolutePath, global::app.type.@this type)
+        : base(Canonicalize(absolutePath), type)
     {
     }
 
@@ -72,6 +72,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         if (global::app.type.item.path.scheme.@this.ParseScheme(rawPath).Equals("file", StringComparison.OrdinalIgnoreCase)
             && Uri.TryCreate(rawPath, UriKind.Absolute, out var url) && url.IsFile)
             return new @this(Canonicalize(url.LocalPath), context);
+        var type = context.App.type.list[new global::app.type.@this("path", "file"), context];
 
         var resolved = rawPath;
 
@@ -85,7 +86,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         // a location the developer typed is shown as typed.
         var isOsLocation = PathHelper.IsPathRooted(rawPath)
             && string.Equals(Canonicalize(rawPath), absolute, RootComparison);
-        return isOsLocation ? new @this(absolute, context) : new @this(absolute) { Raw = rawPath };
+        return isOsLocation ? new @this(absolute, context) : new @this(absolute, type) { Raw = rawPath };
     }
 
     /// <summary>This file written from the root of the asker's app: <c>/data/a.json</c> under it, <c>/</c> for the root
@@ -105,13 +106,14 @@ public sealed partial class @this : global::app.type.item.path.@this
             : (Absolute + PathHelper.DirectorySeparatorChar).StartsWith(system + PathHelper.DirectorySeparatorChar, RootComparison)
                 ? "/system" + Absolute[system.Length..].Replace('\\', '/')
             : Absolute;
-        return new @this(Absolute) { Raw = written };
+        return new @this(Absolute, Type) { Raw = written };
     }
 
     /// <summary>An OS location, shown as a plang form under <paramref name="context"/>'s root —
     /// never the install root: "/x" under the app root, "/system/x" in the runtime's system
     /// folder, "//x" (or "c:/x") anywhere else. The context is not kept.</summary>
-    private @this(string absolute, actor.context.@this context) : this(absolute)
+    private @this(string absolute, actor.context.@this context)
+        : this(absolute, context.App.type.list[new global::app.type.@this("path", "file"), context])
     {
         var relative = Relative(context).Raw;
         if (!string.Equals(relative, Absolute, StringComparison.Ordinal)) Raw = relative;

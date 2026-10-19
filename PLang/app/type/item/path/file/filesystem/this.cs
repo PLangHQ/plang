@@ -68,11 +68,11 @@ public class @this
     public virtual void Create(file.@this p) => System.IO.Directory.CreateDirectory(p.Absolute);
 
     /// <summary>The files and folders in <paramref name="folder"/> whose name matches <paramref name="pattern"/>;
-    /// those under its folders too when <paramref name="recursive"/>.</summary>
+    /// those under its folders too when <paramref name="recursive"/>. Each holds the folder's type.</summary>
     public virtual IEnumerable<file.@this> List(file.@this folder, string pattern, bool recursive)
         => System.IO.Directory.EnumerateFileSystemEntries(folder.Absolute, pattern,
                 recursive ? System.IO.SearchOption.AllDirectories : System.IO.SearchOption.TopDirectoryOnly)
-            .Select(entry => new file.@this(entry));
+            .Select(entry => new file.@this(entry, folder.Type));
 
     /// <summary>Moves the file, or the folder whole — over what is at <paramref name="to"/> when
     /// <paramref name="overwrite"/>.</summary>
@@ -123,6 +123,6 @@ public class @this
     private void Parent(file.@this p)
     {
         var folder = PathHelper.GetDirectoryName(p.Absolute);
-        if (!string.IsNullOrEmpty(folder)) Create(new file.@this(folder));
+        if (!string.IsNullOrEmpty(folder)) Create(new file.@this(folder, p.Type));
     }
 }

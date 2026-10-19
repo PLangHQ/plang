@@ -39,6 +39,11 @@ public static class Make
     /// differs from the value's natural one — a write-target <c>variable</c>, a date
     /// written as a string, etc. — use <see cref="Param"/>: <c>Make.Param("Name",
     /// "relative", "variable")</c>.
+    /// <para>The action knows no step (<c>Step</c> is null — it is made through <c>catalog.Program(null)</c>), even inside
+    /// <see cref="Goal(global::app.actor.context.@this, string, string, StepDef[])"/>: its call frame has no goal, so
+    /// what reads the running goal from that frame (<c>%!app.goal%</c>, a relative path's folder) finds none. A
+    /// <c>.pr</c>'s reader gives each action its step; a test that needs the running goal pushes the goal's frame
+    /// itself (<c>context.call.Push(goal)</c>).</para>
     /// </summary>
     public static global::app.goal.step.action.@this Action(global::app.actor.context.@this context,
         string module, string actionName, params (string name, object? value)[] parameters)

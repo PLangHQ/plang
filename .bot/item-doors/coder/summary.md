@@ -50,6 +50,12 @@ in turn, smallest first. Decisions are numbered per branch (item-doors 1–47, `
   and a set's offers keep a class-built type until the implicit-operator branch (50). `choice.Member(symbol)` for
   the sites that want only the member. Mouse and navigate hold their choices from birth. An enum that declares no
   plang name is a bare choice.
+- **path born whole**: the base ctor takes the app's `{path, <scheme>}`; `Resolve` asks the app's list (file, and
+  http by the url's scheme); a path made from another (parent, child, extension, a listing's entries, a transfer's
+  target) holds its source's type. A scheme handler's contract is its static `Resolve`, never a bare ctor.
+- **A failure report keeps the test's reading (68)**: an assertion keeps Expected/Actual as it showed them in the
+  test's context; the runner's report writes those. `choice.Member` went (70): a hash kind by name is the hash
+  type's own kind; the template kind is the template set's member (no template type; stage 6).
 - **A dict's `!key` on an unread dict (39)**: a fact read with `!` is a use — a resting source (a `.pr` literal, a
   json read) opens and its value answers (`source.Fact`; `Fact` is async).
 - **An error's exception (60's red)**: `error.Exception` is C#-only (internal); plang and the 500 templates read
@@ -86,4 +92,4 @@ new global::app.type.item.datetime.@this(reader.DateTimeOffset(), ctx.Context.Ap
   `test/plan/item-doors/app/type/input/modifier/ModifierIsTheFirstKeyHeld.test.goal` — the test-designer builds them.
 
 ## Next
-On in the order: path, dict, text, number; then setting, content, source, separator; last, number's static kinds and `KindOfClass` go.
+On in the order: dict, text, number; then setting, content, source, separator; last, number's static kinds and `KindOfClass` go.

@@ -25,7 +25,7 @@ public class SchemeRegistryTests
     [Test] public async Task Register_ThenFrom_ReturnsRegisteredSubclass()
     {
         var (app, context) = MakeApp();
-        app.type.list.Add(new SchemeKind("test", (raw, c) => new FilePath(raw) { Raw = raw }));
+        app.type.list.Add(new SchemeKind("test", (raw, c) => new FilePath(raw, c.App.type.list[new global::app.type.@this("path", "file"), c]) { Raw = raw }));
         var p = PLangPath.Resolve("test://hello", context);
         await Assert.That(p).IsNotNull();
         await Assert.That(p is FilePath).IsTrue();
@@ -34,8 +34,8 @@ public class SchemeRegistryTests
     [Test] public async Task Register_SameSchemeTwice_SecondRegistrationReplacesFirst()
     {
         var (app, context) = MakeApp();
-        var first = new FilePath("/first");
-        var second = new FilePath("/second");
+        var first = context.File("/first");
+        var second = context.File("/second");
         app.type.list.Add(new SchemeKind("dup", (raw, c) => first));
         app.type.list.Add(new SchemeKind("dup", (raw, c) => second));
         var p = PLangPath.Resolve("dup://x", context);
@@ -92,7 +92,7 @@ public class SchemeRegistryTests
     {
         var (a, _) = MakeApp();
         var (b, ctxB) = MakeApp();
-        a.type.list.Add(new SchemeKind("zzz", (raw, c) => new FilePath(raw)));
+        a.type.list.Add(new SchemeKind("zzz", (raw, c) => c.File(raw)));
         await Assert.That(a.type.list["path"].kind["zzz"] is SchemeKind).IsTrue();
         await Assert.That(b.type.list["path"].kind["zzz"] is SchemeKind).IsFalse();
         await Assert.That(() => PLangPath.Resolve("zzz://x", ctxB)).Throws<SchemeNotRegistered>();
