@@ -199,10 +199,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         sb.AppendLine("    FAIL: " + Goal.Path);
         if (Error is AssertionError assert)
         {
-            var expected = await global::app.type.item.@this.Create(assert.Expected, context).Debug(context);
-            var actual = await global::app.type.item.@this.Create(assert.Actual, context).Debug(context);
-            sb.AppendLine($"      Expected: {expected}");
-            sb.AppendLine($"      Actual:   {actual}");
+            // as the assertion showed them in the test's own context — never filled again in this, the runner's
+            sb.AppendLine($"      Expected: {assert.Expected}");
+            sb.AppendLine($"      Actual:   {assert.Actual}");
             if (assert.Variables is { CountRaw: > 0 } variables)
             {
                 sb.AppendLine("      Variables:");

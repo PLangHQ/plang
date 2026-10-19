@@ -119,7 +119,7 @@ public class EdgeCaseTests
     {
         var run = new global::app.test.@this(_app.type.list) { Goal = new Goal(_app.type.list) { Name = "X", Path = global::app.type.item.path.@this.Resolve("/test/X.test.goal", _app.actor.list.User.Context) } };
         run.Stdout = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
-        run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError("Expected: 1, Actual: 2", 1, 2, null));
+        run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError("Expected: 1, Actual: 2", "1", "2", null));
         _app.test.list.Add(run);
 
         var action = new global::app.module.test.report(_app.actor.list.User.Context);

@@ -83,13 +83,11 @@ public sealed class signature : ISchemaReader
         if (string.IsNullOrEmpty(hashAlgo))
             throw new global::app.error.DeclinedException(new global::app.error.@this(
                 "a signature's hash names no kind (its hash.type) — it can't be checked", "SignatureInvalid", 400));
-        global::app.module.crypto.type.hash.kind.@this hashKind;
-        try { hashKind = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Member(hashAlgo); }
-        catch (System.FormatException unknown)
-        {
+        // the hash type names its own kind
+        if (context.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind[hashAlgo]
+            is not global::app.module.crypto.type.hash.kind.@this hashKind)
             throw new global::app.error.DeclinedException(new global::app.error.@this(
-                $"a signature's hash is of a kind there is none of: {unknown.Message}", "SignatureInvalid", 400));
-        }
+                $"a signature's hash is of a kind there is none of: '{hashAlgo}'", "SignatureInvalid", 400));
 
         // A signature read live off the wire is good for the signing setting's window after it was made; one read
         // from plang's own store keeps only what its signer signed, and covers the value's stored form.

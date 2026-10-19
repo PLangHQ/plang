@@ -1315,7 +1315,6 @@ class app.type.item.choice.this<T> : app.type.item.this, app.type.item.ICreate<a
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.choice.this<T>
   static Create(System.Object raw, app.type.this type) : app.type.item.choice.this<T>
-  static Member(System.String symbol) : T
   static Parse(System.String symbol, app.type.this type) : app.type.item.choice.this<T>
   static Read<TReader>(TReader& reader, app.type.this type) : app.type.item.choice.this<T>
 

@@ -81,14 +81,12 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
             ? reader.Number().ToString() ?? ""
             : reader.String(), type);
 
-    /// <summary>The option <paramref name="symbol"/> names, born holding <paramref name="type"/>.</summary>
-    public static @this<T> Parse(string symbol, global::app.type.@this type) => new(Member(symbol), type);
-
-    /// <summary>The member <paramref name="symbol"/> names in the set — an enum's, a family's kind, a named set's.
-    /// THROWS FormatException naming the options when it names none.</summary>
-    public static T Member(string symbol)
+    /// <summary>The option <paramref name="symbol"/> names, born holding <paramref name="type"/>. THROWS
+    /// FormatException naming the options when it names none.</summary>
+    public static @this<T> Parse(string symbol, global::app.type.@this type)
     {
-        try { return (T)_set.Member(symbol); }
+        // the set answers the member its symbol names — an enum's, a family's kind, a named set's
+        try { return new((T)_set.Member(symbol), type); }
         catch (System.ArgumentException ex)
         {
             throw new System.FormatException(

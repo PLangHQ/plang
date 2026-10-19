@@ -49,11 +49,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.item.template.kind.@this? marked = null;
         if (template != null)
         {
-            try { marked = global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>.Member(template); }
-            catch (System.FormatException refused)
-            {
-                throw new global::app.error.DeclinedException(new global::app.error.@this(refused.Message, "TemplateInvalid", 400));
-            }
+            // the template kinds are a closed set, a kind of choice: the set names its member
+            var set = ctx.Context.App.type.list[typeof(global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>)].kind
+                as global::app.type.item.choice.set.@this;
+            if (set?.Values is not { } kinds || !kinds.Contains(template, System.StringComparer.OrdinalIgnoreCase))
+                throw new global::app.error.DeclinedException(new global::app.error.@this(
+                    $"'{template}' is no kind of template. Valid: {string.Join(", ", set?.Values ?? [])}", "TemplateInvalid", 400));
+            marked = (global::app.type.item.template.kind.@this)set.Member(template);
         }
         // a nested kind: the outer holds the inner type as its element kind ({list, kind: {list, kind: path}})
         if (nested != null)

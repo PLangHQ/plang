@@ -83,17 +83,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// digest (above text 100, base64 200, binary 250).</summary>
     public override int Rank => 260;
 
-    /// <summary>
-    /// THE PURE CORE — a digest passes through; a text is read as a digest's text: hex (two characters a byte),
-    /// else base64. The algorithm is not in the text, so a digest read from one has none — a comparison asks by
-    /// bytes. Anything else declines.
-    /// </summary>
-    public static @this? Create(object? raw)
-    {
-        try { return Digest(raw, length: null); }
-        catch (System.FormatException) { return null; }
-    }
-
     /// <summary>Equality only — a digest has no order: the other side read into a digest (its text as hex when it
     /// is hex of this digest's length, else as base64), then the bytes compared. A text that is neither, or any
     /// other value, is <c>Incomparable</c>.</summary>
@@ -101,7 +90,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         global::app.type.item.@this other, global::app.actor.context.@this context)
     {
         @this? digest;
-        try { digest = Digest(other, Bytes.Length); }
+        try { digest = Digest(other, Bytes.Length, context); }
         catch (System.FormatException) { digest = null; }   // an algorithm that is no kind of hash compares to nothing
         return new(digest is { } read
             ? DigestEquals(read) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual
@@ -110,9 +99,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     // The digest a value stands for: a digest is itself; a text is its hex when it is hex (of `length` bytes, when the
     // length is known), else its base64 — written `<algorithm>:<digest>` (sha256:<hex>), the algorithm is the prefix's,
-    // read as a kind of hash (an unknown name is a FormatException naming the kinds); null when it is neither, or no
-    // text.
-    private static @this? Digest(object? raw, int? length)
+    // read as a kind the asker's hash type names (an unknown name is a FormatException naming the kinds); null when it
+    // is neither, or no text.
+    private static @this? Digest(object? raw, int? length, global::app.actor.context.@this context)
     {
         if (raw is @this digest) return digest;
         if (raw is not global::app.type.item.text.@this text) return null;
@@ -120,7 +109,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         kind.@this? algorithm = null;
         if (characters.IndexOf(':') is > 0 and var colon && characters[..colon].All(char.IsLetterOrDigit))
         {
-            algorithm = global::app.type.item.choice.@this<kind.@this>.Member(characters[..colon]);
+            var type = context.App.type.list[typeof(@this)];
+            algorithm = type.kind[characters[..colon]] as kind.@this
+                ?? throw new System.FormatException($"'{characters[..colon]}' is no kind of hash. Valid: "
+                    + string.Join(", ", type.kind.list(context).Items().Select(t => t.kind.Name).Where(n => n.Length > 0)));
             characters = characters[(colon + 1)..];
         }
         if (characters.Length > 0 && characters.Length % 2 == 0 && (length is null || characters.Length == length * 2)
@@ -131,12 +123,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             : null;
     }
 
-    /// <summary>The birth: a digest as <see cref="Create(object?)"/> reads it — and one whose written algorithm
-    /// (<c>md5:…</c>) is no kind of hash is refused, naming the kinds.</summary>
+    /// <summary>The birth: a digest passes through; a text is read as a digest's text — hex (two characters a byte),
+    /// else base64, an algorithm it names a kind of hash (one that names no kind, <c>md5:…</c>, is refused, naming the
+    /// kinds); a digest whose text names no algorithm has none, and a comparison asks by bytes.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         @this? digest;
-        try { digest = Digest(raw, length: null); }
+        try { digest = Digest(raw, length: null, data.Context); }
         catch (System.FormatException unknown)
         {
             data.Fail(new global::app.error.@this(unknown.Message, "HashInvalid", 400));
