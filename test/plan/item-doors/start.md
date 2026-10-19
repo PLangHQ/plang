@@ -277,6 +277,36 @@ Plural action parameters (`test.start`'s `Tests`, …) are their own sweep later
 
 Not in this branch's files, a later sweep (collections plang reaches; each checked for that when the sweep starts): `call.Errors`, `Diffs`, `Tags` (`call/this.cs:120–164`); `call.list.Variables` (`call/list/this.cs:81`); `error.Params`, `CallFrames`, `Variables` (`error/this.cs:77–168`); `app.Services` (`app/this.cs:247`); `service.Channels`, `channel.Channels`; `goal.setup.Goals`; `signature.Contracts`; `snapshot.Entries`. llm's message `Images` and `ToolCalls` go with llm-provider, which rewrites the message.
 
+### 8. The app's nodes are the concepts' own lists; `Replace` goes (62)
+
+**Why.** With 61 (a type written alone is its face), `%!app.goal%` and `%g!type%` turned out to be one object: the app's goal node is made as a type, and `Replace` (`type/list/Registry.cs:217–237`, called at `app/this.cs:278`, `:299–302`) swaps the type list's own `goal` entry for it. So asking a goal "what type are you?" answered with the node. Ingi: each node decides what it gives when written alone ("%!app.goal% I would like to see the current running goal, if we did %!app.type% I would like to see a lot about the type system"); "I like removeing Replace … fellt wrong, so good riddens"; the node lives in the concept's own list ("(a) is better").
+
+**What plang sees** (the app has goals Start and Build, Start running):
+```
+- write out %!app.goal%                → Start               the app's goal node: the running goal
+- write out %!app.goal.name%           → Start               a dot reads the running goal
+- write out %!app.goal.type.name%      → goal
+- write out %!app.goal.list%           → [Start, Build]
+- set %g% = %!app.goal["Build"]%
+- write out %g!type%                   → goal                the goal type, its face (61)
+- write out %!app.type%                → the type system: every type with its full facts, a structured value its writer lays out
+- write out %!app.type["text"]%        → text
+module page:  | Item | variable |
+```
+
+**The shape.**
+- The type list keeps the entry it builds for each class; `Replace` goes. `app.type.list["goal"]` is a plain type.
+- The app's node for a concept is that concept's own list, as `CLAUDE.md` already says (`app.X` is type `X.list.@this`, folder `X/list/this.cs`): `app.goal` is the app's `goal.list`, `app.test` the `test.list`, `app.error` the `error.list`, `app.actor` the `actor.list`, `app.variable` its list, `app.type` the `type.list`. Each holds its `type`, and its `current` where execution is inside one (`T.Current(context)`).
+- Read alone, each list answers its own default: `goal.list` the running goal; `type.list` a structured value of every type with its full facts (Ingi: "some sort of list/dict is returned about the type system, not formatted, that is the responsiity of output").
+- The node classes `type/this.Generic.cs`, `type/current/this.cs` and `type/root/this.cs` go; what they did that isn't a type's moves onto the lists (by-name lookup, `Load`, `current`, a concept's settings, `format` on `app.type`). If those repeat across the lists, one base under `list` holds them.
+
+**Traced at the group's start** (the coder, before building):
+- every place that uses `app.X` as a type (the type facts read through the node, `this.Generic.cs:117–123`);
+- `Offers` (`this.Generic.cs:80–81`): a slot typed `goal` is offered the app's goals; the plain goal type reaches them through goal's own class door (`IList<T, L>`), never through a node;
+- the by-name lookups that return the node today (`app.type.list[name]` for a concept).
+
+**Checks:** every `.pr` byte-equal; the TypePage, ModulePage and PickList goldens re-pinned and read (a property's type reads `variable`, the type list's entries plain types); the plang tests above, built by the test-designer.
+
 ## What the developer gets
 
 The same plang, the same output: every `.pr`, wire and json write stays byte-equal. Three things change for a developer:
