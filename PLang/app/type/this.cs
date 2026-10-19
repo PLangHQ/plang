@@ -51,39 +51,17 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     }
 
     /// <summary>
-    /// A type held as a value: its face in the Out view — what a program sees when it writes
-    /// <c>%!app.type.text%</c>: its name (the namespace), the word it goes by when it declares one, its
-    /// description, example and aliases, and its kinds' names (a kinded type shows its own kind). Every other
-    /// view writes the identity (<see cref="Write"/>).
+    /// A type held as a value, written alone in the Out view, is its face, as a kind is: the word it goes by
+    /// with its kind (<c>text</c>, <c>list&lt;path&gt;</c>) — what a program sees when it writes <c>%!app.type.text%</c>.
+    /// Its facts (name, description, example, alias, kind) are reached by navigation
+    /// (<c>%!app.type.text.description%</c>). Every other view writes the identity (<see cref="Write"/>).
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        if (mode != global::app.View.Out || context == null) { Write(writer); return; }
-        var full = context.App.type.list[this, context];
-        writer.BeginObject();
-        writer.Name("name"); writer.String(full.Namespace ?? full.Name);
-        if (full.Namespace != null && full.Namespace != full.Name) { writer.Name("word"); writer.String(full.Name); }
-        if (await full.Description(context).Text(context) is { Length: > 0 } description) { writer.Name("description"); writer.String(description); }
-        if (await full.Example(context).Text(context) is { Length: > 0 } example) { writer.Name("example"); writer.String(example); }
-        if (full.Alias.Count > 0)
-        {
-            writer.Name("alias");
-            writer.BeginArray(full.Alias.Count);
-            foreach (var alias in full.Alias) writer.String(alias);
-            writer.EndArray();
-        }
-        writer.Name("kind");
-        if (!kind.IsEmpty) writer.String(kind.Name);
-        else
-        {
-            var names = full.kind.list(context).Items().Select(t => t.kind.Name).ToList();
-            writer.BeginArray(names.Count);
-            foreach (var name in names) writer.String(name);
-            writer.EndArray();
-        }
-        writer.EndObject();
-        await System.Threading.Tasks.ValueTask.CompletedTask;
+        if (mode != global::app.View.Out) Write(writer);
+        else writer.String(kind.IsEmpty ? Name : $"{Name}<{kind.Name}>");
+        return default;
     }
 
     /// <summary>The name the type goes by — the word its class declares (<c>text</c>), else its
