@@ -1,14 +1,14 @@
 namespace PLang.Tests.App.Types;
 
-// The collected type: type<T> over T's list — Get(key) answers the one Match names or a 404,
-// current answers the one in play, and its class names "type".
+// The app's node for a collected concept: node<T> over T's list — Get(key) answers the one Match names or a 404,
+// current answers the one in play, type the concept's own type, and its class names "node".
 public class CollectedTypeTests
 {
     // A concept for the test: named by its namespace tail ("probe"), answering for its own Name.
     [Test] public async Task Get_AnswersTheMatchingElement_Or404()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var probes = new global::app.type.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
+        var probes = new global::app.type.node.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
         probes.list.Add(new Probe.@this("a"));
         probes.list.Add(new Probe.@this("b"));
 
@@ -21,18 +21,18 @@ public class CollectedTypeTests
         await Assert.That(missing.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
-    [Test] public async Task TheCollectedType_IsNamedByItsElement_AndItsClassIsAType()
+    [Test] public async Task TheNode_HoldsItsElementsType_AndItsClassIsANode()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var probes = new global::app.type.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
-        await Assert.That(probes.Name).IsEqualTo("probe");
-        await Assert.That(app.type.list[probes.GetType()].Name).IsEqualTo("type");
+        await Assert.That(app.goal.type.Name).IsEqualTo("goal");
+        await Assert.That(app.type.list[app.goal.GetType()].Name).IsEqualTo("node");
+        await Assert.That(app.goal.Type.Name).IsEqualTo("node");
     }
 
-    [Test] public async Task AppType_IsTheTypeNamedType_ItsGetAnswersByNameOrAlias()
+    [Test] public async Task AppType_HoldsTheTypeNamedType_ItsGetAnswersByNameOrAlias()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await Assert.That(app.type.Name).IsEqualTo("type");
+        await Assert.That(app.type.type.Name).IsEqualTo("type");
 
         var text = await app.type.Get("string", app.actor.list.User.Context);
         await Assert.That(text.Success).IsTrue();
@@ -42,7 +42,7 @@ public class CollectedTypeTests
         await Assert.That(missing.Error!.Status.Code.ToInt32()).IsEqualTo(404);
 
         await Assert.That(await app.type.Get("type", app.actor.list.User.Context) is var self && (await self.Value()) is { } entry
-            && ReferenceEquals(entry, app.type)).IsTrue();
+            && ReferenceEquals(entry, app.type.type)).IsTrue();
     }
 
     [Test] public async Task AppType_Navigation_AMemberFirst_ThenAType()
@@ -71,14 +71,26 @@ public class CollectedTypeTests
         return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
     }
 
-    [Test] public async Task Face_OfAppType_IsTheTypeNames_WithoutInternalOnes()
+    // %!app.type% is the type system: every type plang doesn't keep for itself, each with its facts
+    [Test] public async Task Face_OfAppType_IsTheTypeSystem_EveryTypeWithItsFacts()
     {
         await using var app = new global::app.@this("/test").Testing();
         var face = await Out(app, app.type);
-        await Assert.That(face).Contains("\"list\"");
+        await Assert.That(face).StartsWith("[");
+        await Assert.That(face).Contains("\"word\":\"text\"");
+        await Assert.That(face).Contains("\"description\"");
+        await Assert.That(face).DoesNotContain("\"word\":\"wire\"");
+        await Assert.That(face).DoesNotContain("\"word\":\"clr\"");
+    }
+
+    // %!app.type.list% is the list: written alone, its items, each a type's face
+    [Test] public async Task Face_OfAppTypeList_IsItsTypes()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        var face = await Out(app, app.type.list);
+        await Assert.That(face).StartsWith("[");
         await Assert.That(face).Contains("\"text\"");
-        await Assert.That(face).DoesNotContain("\"wire\"");
-        await Assert.That(face).DoesNotContain("\"clr\"");
+        await Assert.That(face).DoesNotContain("\"description\"");
     }
 
     // a type written alone is its face — the word it goes by, with its kind — as a kind is; its facts are navigated

@@ -1,12 +1,21 @@
-namespace app.type;
+namespace app.type.node;
+
+/// <summary>What every node is — the type <c>node</c>, plang's own: no step names it as a type.</summary>
+[global::app.Attributes.PlangType("node")]
+public abstract class @this : global::app.type.item.@this
+{
+    public static bool Internal => true;
+
+    private protected @this(global::app.type.@this type) : base(type) { }
+}
 
 /// <summary>
-/// The type of a collected concept — <c>app.type</c>, <c>app.variable</c>: the type named X, defined by X's
-/// class, over the list that holds the X's. Its members: <see cref="list"/> (the X's) and
-/// <see cref="Get(string)"/> (the one by key). The node is its type — the type list's entry of its name — so a dot
-/// reads its own members, then the type's facts (<c>name</c>, <c>on</c>), then one X by name, for a concept nothing is
-/// ever inside. Brackets always pick one by name (<c>%!app.type["goal"]%</c>). A concept execution is inside has a
-/// node with a current (<see cref="current.@this{T, L}"/>), where the dot's last step reads the current's member.
+/// The app's node for a collected concept — <c>app.variable</c>, <c>app.shortcut</c>: the concept's
+/// <see cref="type"/> (the type list's own entry for its class), its <see cref="list"/> (the X's) and
+/// <see cref="Get(string, actor.context.@this)"/> (the one by key). Not a type: <c>%!app.goal.type%</c> is the type,
+/// and the node is what the app holds for the concept. A dot reads the node's own members, then one X by name;
+/// brackets always pick one by name (<c>%!app.actor["user"]%</c>). Written alone, it is its list as the asker sees it.
+/// A concept execution is inside has a node with a current (<see cref="current.@this{T, L}"/>).
 /// </summary>
 public class @this<T, L> : @this
     where T : item.@this, item.ICreate<T>, item.IMatch<T>, item.ILoad<T>, item.IList<T, L>
@@ -19,17 +28,25 @@ public class @this<T, L> : @this
     // The class of the concept's own settings, when its element names one (test: IConcept<test.setting>).
     private readonly System.Type? _setting;
 
-    /// <summary>The concept's type, its facts read from its class through the app's types — so it can
-    /// stand as the type list's entry of its name. <c>app.type</c> itself is born before there is a list
-    /// to read through, and is its identity alone.</summary>
-    public @this(global::app.@this app) : base(item.@this.NameOf(typeof(T)), typeof(T), app.type?.list)
+    /// <summary>The app's node for <typeparamref name="T"/>, its list made from the class on first read.</summary>
+    public @this(global::app.@this app) : this(app, app.type.list, () => T.List(app)) { }
+
+    /// <summary>A node over the types <paramref name="types"/> and the list <paramref name="list"/> makes — the
+    /// types' own node is born before the app holds them.</summary>
+    private protected @this(global::app.@this app, global::app.type.list.@this types, System.Func<L> list)
+        : base(types[typeof(global::app.type.node.@this)])
     {
         _app = app;
-        _list = new(() => T.List(_app), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
+        _list = new(list, System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
         _setting = typeof(T).GetInterfaces()
             .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(item.setting.IConcept<>))
             ?.GetGenericArguments()[0];
+        type = types[typeof(T)];
     }
+
+    /// <summary>The concept's type — the type list's entry for its class (<c>%!app.goal.type.name%</c> is <c>goal</c>):
+    /// its facts, its events (<c>.on</c>).</summary>
+    public global::app.type.@this type { get; }
 
     /// <summary>The X's loaded so far — the list class T names, with its own work. Made on first
     /// read; a concept whose list belongs to the asker has none here (its <c>List</c> says so).</summary>
@@ -39,24 +56,11 @@ public class @this<T, L> : @this
     // Navigation always asks through here: one path for every concept.
     private protected L Of(actor.context.@this context) => T.Of(context) ?? list;
 
-    /// <summary>
-    /// A collected type's face in the Out view is a summary — the names of its list (a type plang
-    /// keeps for itself stays out); detail comes by navigating to one. Every other view writes the
-    /// type's identity.
-    /// </summary>
+    /// <summary>Written alone, the node is its list as the asker sees it (<c>%!app.variable%</c> the asker's variables);
+    /// with no asker, the app's.</summary>
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
-    {
-        if (mode != global::app.View.Out) return base.Output(writer, mode, context);
-        var names = (context != null ? Of(context) : list).Items().Where(p => p is not @this { Internal: true }).Select(p => p.ToString()!).ToList();
-        writer.BeginObject();
-        writer.Name("list");
-        writer.BeginArray(names.Count);
-        foreach (var name in names) writer.String(name);
-        writer.EndArray();
-        writer.EndObject();
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
+        => (context != null ? Of(context) : list).Output(writer, mode, context);
 
     /// <summary>
     /// The one <paramref name="key"/> names — the first of <see cref="list"/> whose own
@@ -73,17 +77,8 @@ public class @this<T, L> : @this
     {
         await foreach (var p in every)
             if (await p.Match(key) is { } found) return context.Ok<T>(found);
-        return data.@this<T>.FromError(new global::app.error.@this($"no {Name} '{key}'", "NotFound", 404), context);
+        return data.@this<T>.FromError(new global::app.error.@this($"no {type.Name} '{key}'", "NotFound", 404), context);
     }
-
-    /// <summary>What a value of this concept can be in <paramref name="step"/>: the members its collection offers from
-    /// there (a goal the step can call by name), then what any value can be — the step's own variables. The build asks
-    /// as the app itself.</summary>
-    public override async System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step)
-        => [.. await Of(_app.actor.list.System.Context).Offers(step), .. await base.Offers(step)];
-
-    /// <summary>The members offered are those the collection holds from the step, never all a name can find.</summary>
-    public override bool IsClosed => false;
 
     /// <summary>The one <paramref name="location"/> holds (<c>app.goal.Load("/system/error/Show.goal")</c>),
     /// resolved and read as the app itself; the element says how it loads.</summary>
@@ -95,14 +90,14 @@ public class @this<T, L> : @this
     /// The answer takes its context from the parent.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<data.@this> Get(data.@this parent, string key)
-        => await Own(parent, key) ?? await Fact(parent, key) ?? await Named(parent, key);
+        => await Own(parent, key) ?? await Named(parent, key);
 
     /// <summary>Brackets pick one X by name, on every node (<c>%!app.actor["user"]%</c>, <c>%!goal["Show"]%</c>).</summary>
     public override async System.Threading.Tasks.ValueTask<data.@this> Get(data.@this parent, string key, bool isIndex)
         => isIndex ? await Named(parent, key) : await Get(parent, key);
 
-    /// <summary>The collection's own members for <paramref name="key"/> — <c>list</c> as the asker sees it, the
-    /// concept's <c>setting</c>; null when the key is neither.</summary>
+    /// <summary>The node's own members for <paramref name="key"/> — <c>list</c> as the asker sees it, the concept's
+    /// <c>setting</c>, its <c>type</c>; null when the key is none of them.</summary>
     private protected async System.Threading.Tasks.ValueTask<data.@this?> Own(data.@this parent, string key)
     {
         if (string.Equals(key, "list", System.StringComparison.OrdinalIgnoreCase))
@@ -110,17 +105,8 @@ public class @this<T, L> : @this
         // the concept's own settings (%!app.test.setting%), as the asker's settings build them
         if (_setting is { } @class && string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase))
             return await parent.Context.Setting.Of(@class);
-        return null;
-    }
-
-    /// <summary>The type's own facts for <paramref name="key"/> — its name, its events (<c>on</c>), its kind; null when
-    /// the key is none of them. The node and its type are one object, and the type's facts answer before the
-    /// concept's elements (<c>%!goal.Name%</c> is <c>goal</c>).</summary>
-    private protected async System.Threading.Tasks.ValueTask<data.@this?> Fact(data.@this parent, string key)
-    {
-        // a miss is NotFound — a Data that holds nothing (not initialized), so the next door asks
-        if (await new clr.@this(this, parent.Context).Get(parent, key) is { Success: true, IsInitialized: true } member) return member;
-        if (await base.Get(parent, key) is { Success: true, IsInitialized: true } fact) return fact;
+        if (string.Equals(key, "type", System.StringComparison.OrdinalIgnoreCase))
+            return new data.@this(key, type, parent: parent);
         return null;
     }
 

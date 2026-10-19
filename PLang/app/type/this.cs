@@ -668,10 +668,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — what its
     /// class declares it is offered (a permission: that the step gives one), else the kind's answer: a closed set its
-    /// options, any other the step's own variables. A collected concept's type offers its collection's members first.</summary>
-    public virtual System.Threading.Tasks.ValueTask<IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step)
-        => Family._offer is { } declared ? new(declared) : kind.Offers(step);
+    /// options, any other the step's own variables. The type <c>type</c> offers the types it is born among first.</summary>
+    public virtual async System.Threading.Tasks.ValueTask<IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step)
+        => Family._offer is { } declared ? declared
+            : Family._types is { } types ? [.. await types.Offers(step), .. await kind.Offers(step)]
+            : await kind.Offers(step);
     private IReadOnlyList<item.@this>? _offer;
+    // The types the type `type` is born among — its values, what a type slot is offered. Null for any other type.
+    private list.@this? _types;
 
     /// <summary>Whether what this type offers is all a value of it can be — its kind says (a choice's options, a bool's
     /// pair); offers its class declares are a convenience, never closed.</summary>
@@ -797,7 +801,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // declared by the class itself: a base that is internal (reference) leaves its subclasses (file, url) named
         Internal = clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
                                                | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(null) is true;
-        // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
+        // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts; a type's
+        // values are the types it is born among, so those are what it offers.
+        if (clr == typeof(@this)) _types = types;
         if (types == null || clr == typeof(@this)) return;
 
         _offer = Declared<IReadOnlyList<item.@this>>("Offer");

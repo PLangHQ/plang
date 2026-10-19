@@ -43,41 +43,17 @@ public class PickOptionTests : System.IAsyncDisposable
         await Assert.That(Formal(await item.Offers(step))).IsEquivalentTo(new[] { "%person%", "%value%", "%field%" });
     }
 
-    // a goal is offered by the goals the step can call by name — its own goal and the goals in its file — then the
-    // step's variables
+    // a goal is offered what any open type is — the step's variables; never the goals it could call, which goal.call
+    // finds itself
     [Test]
-    public async Task AGoalOffersTheGoalsTheStepCanCall()
+    public async Task AGoal_IsOfferedTheStepsVariables_NeverTheGoals()
     {
         var goal = Make.Goal(Ctx, "Modules", "/docs/Modules.goal", Make.Step("call goal Page module=%m%", 0));
         goal.Child.Add(Make.Goal(Ctx, "Page", "/docs/Modules.goal"));
 
         var offers = await _app.Module("goal")["call"]!["Name"]!.Type.Offers(goal.Step[0]);
 
-        await Assert.That(Formal(offers)).IsEquivalentTo(new[] { "\"Modules\"", "\"Page\"", "%m%" });
-    }
-
-    // a goal one folder down is offered by the slash name a step writes (`call voice/Key`); a hidden folder's are not
-    [Test]
-    public async Task AGoalOneFolderDown_IsOfferedByItsSlashName()
-    {
-        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_offer_" + System.Guid.NewGuid().ToString("N")[..8]);
-        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(root, "voice"));
-        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(root, ".build"));
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(root, "Start.goal"), "Start\n- call voice/Key\n");
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(root, "voice", "Key.goal"), "Key\n- write out \"k\"\n");
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(root, ".build", "Hidden.goal"), "Hidden\n- write out \"h\"\n");
-        try
-        {
-            await using var app = new global::app.@this(root).Testing();
-            var ctx = app.actor.list.User.Context;
-            var goal = Make.Goal(ctx, "Start", "/Start.goal", Make.Step("call voice/Key", 0));
-
-            var offers = Formal(await app.Module("goal")["call"]!["Name"]!.Type.Offers(goal.Step[0]));
-
-            await Assert.That(offers).Contains("\"voice/Key\"");
-            await Assert.That(offers.Any(offer => offer.Contains("Hidden"))).IsFalse();
-        }
-        finally { System.IO.Directory.Delete(root, true); }
+        await Assert.That(Formal(offers)).IsEquivalentTo(new[] { "%m%" });
     }
 
     // a conversation is offered only what can continue one: a variable the build's walk knows as a list is left out (no
@@ -136,22 +112,15 @@ public class PickOptionTests : System.IAsyncDisposable
         await Assert.That(offers).DoesNotContain("\"wire\"");
     }
 
-    // a goal and a type the decider picked ride the starting line in quotes, the goal's slot filled — and it reads
+    // a type the decider picked rides the starting line in quotes — and it reads
     [Test]
-    public async Task APickedGoalAndType_RideTheStartingLine_AndRead()
+    public async Task APickedType_RidesTheStartingLine_AndReads()
     {
-        var goal = Make.Goal(Ctx, "Modules", "/docs/Modules.goal", Make.Step("call goal Page module=%m%", 0));
-        goal.Child.Add(Make.Goal(Ctx, "Page", "/docs/Modules.goal"));
-        var call = goal.Step[0];
-        await call.Pick.Take(Answer(
-            ("s0_goal.call", Yes(0.99)),
-            ("s0_@option.goal.call.Name", Choice("Page"))), [], Ctx);
         var set = Step("set %p% = \"a.txt\" as path");
         await set.Pick.Take(Answer(
             ("s0_variable.set", Yes(0.99)),
             ("s0_@option.variable.set.Type", Choice("path"))), [], Ctx);
 
-        await Assert.That(call.Pick.Formal!).Contains("goal.call(Name=\"Page\")");
         await Assert.That(set.Pick.Formal!).Contains("Type=\"path\"");
         var read = new global::app.goal.step.action.formal.Reader(set, _app.module.list)
             .Read(set.Pick.Formal!.Replace("Name, Value", "Name=%p%, Value=\"a.txt\""), Ctx);
@@ -159,8 +128,7 @@ public class PickOptionTests : System.IAsyncDisposable
     }
 
     // whether a type's offers are all it can be is the type's own answer: a choice's options and a bool's pair are; a
-    // goal's names (a convenience over every goal Find reaches), the step's variables and a separator's named kinds
-    // beside variables are not
+    // goal's, the step's variables and a separator's named kinds beside variables are not
     [Test]
     public async Task AChoiceAndABoolAreClosed_AGoalAVariableAndASeparatorAreNot()
     {

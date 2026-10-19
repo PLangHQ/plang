@@ -248,12 +248,12 @@ public sealed partial class @this
         // the item classes, which would answer a plain "list" with no element.
         if (typeof(app.type.item.list.@this).IsAssignableFrom(type) && ContainerFamily(type) is { } node)
             return (node.Family, Face(PlangName(node.Element)));
-        // A collected type (type<goal>, type<type>) is a type.
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.@this<,>)) return ("type", null);
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
             return ("choice", global::app.type.item.choice.set.@this.For(type.GetGenericArguments()[0])?.Name ?? type.GetGenericArguments()[0].Name);
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && Array.Find(types, t => t.ClrType == type) is { } own)
             return (own.Name, null);
+        // the app's node for a concept (node<goal>, its current node) is a node
+        if (typeof(app.type.node.@this).IsAssignableFrom(type)) return ("node", null);
         // a kind of a family: the family, with the kind whose values are this class (a setting class)
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && FamilyName(type) is { } family)
             return (family, Array.Find(types, t => t.Names(family))?.kind[type]?.Name);

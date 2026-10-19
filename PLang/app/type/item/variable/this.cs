@@ -27,7 +27,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A variable is set and removed through the variable type's events, then its own.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, global::app.actor.context.@this context) => depth switch
     {
-        0 => context.App.variable,
+        0 => context.App.variable.type,
         1 => this,
         _ => null,
     };

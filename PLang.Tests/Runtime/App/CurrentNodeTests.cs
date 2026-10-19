@@ -17,9 +17,9 @@ public class CurrentNodeTests
         await Assert.That(user.Peek()).IsSameReferenceAs(app.actor.list.User);
     }
 
-    // A dot: the type's facts first (%!goal.Name% is the type's name), then the current's member; .current reads the
-    // running one.
-    [Test] public async Task Dot_TheTypesFacts_ThenTheCurrentsMember()
+    // A dot reads the current's member (%!app.goal.Name% is the running goal's); .type is the concept's type, .current
+    // the running one.
+    [Test] public async Task Dot_TheCurrentsMember_ItsTypeByType()
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
@@ -27,7 +27,8 @@ public class CurrentNodeTests
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
         await using var frame = ctx.call.Push(goal);
 
-        await Assert.That((await (await Read("%!app.goal.Name%", ctx)).Value())?.ToString()).IsEqualTo("goal");
+        await Assert.That((await (await Read("%!app.goal.Name%", ctx)).Value())?.ToString()).IsEqualTo("Checkout");
+        await Assert.That((await (await Read("%!app.goal.type.name%", ctx)).Value())?.ToString()).IsEqualTo("goal");
         await Assert.That((await (await Read("%!app.goal.current.Name%", ctx)).Value())?.ToString()).IsEqualTo("Checkout");
         await Assert.That((await Read("%!app.goal.Path%", ctx)).Peek()).IsSameReferenceAs(goal.Path);
         // a name is not a member of the current actor: the dot never picks by name
@@ -92,7 +93,7 @@ public class CurrentNodeTests
         var ctx = app.actor.list.User.Context;
         var dot = await Read("%!app.type.goal%", ctx);
         var bracket = await Read("%!app.type[\"goal\"]%", ctx);
-        await Assert.That(dot.Peek()).IsSameReferenceAs(app.goal);
-        await Assert.That(bracket.Peek()).IsSameReferenceAs(app.goal);
+        await Assert.That(dot.Peek()).IsSameReferenceAs(app.goal.type);
+        await Assert.That(bracket.Peek()).IsSameReferenceAs(app.goal.type);
     }
 }

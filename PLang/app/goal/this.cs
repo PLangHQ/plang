@@ -336,7 +336,7 @@ public sealed partial class @this
     private static async Task<data.@this> Read(global::app.type.item.path.@this pr, global::app.@this app)
     {
         var context = app.actor.list.System.Context;
-        var before = app.goal.on.load.before;
+        var before = app.goal.type.on.load.before;
         if (before.Count > 0 && await before.Start(pr, context.Ok(), context) is { } answer
             && (!answer.Success || answer.Handled))
             return answer;
@@ -364,7 +364,7 @@ public sealed partial class @this
     /// <summary>A goal starts through the goal type's events, then its own.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
     {
-        0 => context.App.goal,
+        0 => context.App.goal.type,
         1 => this,
         _ => null,
     };
