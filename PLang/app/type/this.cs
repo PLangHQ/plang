@@ -748,26 +748,31 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public bool Internal { get => OwnInternal ?? kind.OwnInternal ?? Family._internal; init => _internal = value; }
     private bool _internal;
 
-    /// <summary>A type born knowing its C# class — the registry's entries and the full types it
-    /// builds for an identity.</summary>
+    /// <summary>A type built from a C# class where no app is in reach — the class-built fallbacks (the C# operator
+    /// births, error, event): its kind carries its class's [Format] facts, read from the class, so the value's own
+    /// type answers its MIME / extension / text without asking an app. A class that declares no such format keeps the
+    /// bare by-name kind. Goes with the implicit-conversion branch, when every value is born from its app's list.</summary>
     internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
+        : this(name, clrType, kind, strict, template, known: true)
+    {
+        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType) && KindOfClass(clrType, kind) is { } declared)
+            _kind = declared;
+    }
+
+    // A type born knowing its C# class — its identity: the class, and its namespace for an item class. The registry's
+    // entries are born here; their own format and kinds are the app's, held at enlist.
+    private @this(string name, System.Type? clrType, string? kind, bool strict, global::app.type.item.template.kind.@this? template, bool known)
         : this(name, kind, strict, template)
     {
         _clrType = clrType;
         if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType))
-        {
             Namespace = item.@this.NamespaceOf(clrType);
-            // The kind carries its class's [Format] facts, read from the class — so a value's own type answers
-            // its MIME / extension / text without asking the app. A class that declares no such format keeps
-            // the bare by-name kind the base ctor built.
-            if (KindOfClass(clrType, kind) is { } declared) _kind = declared;
-        }
     }
 
     /// <summary>A kinded type of <paramref name="family"/> ({text, md}, {choice, operator}): born holding the family
     /// entry, whose facts it reads; its class is the one <paramref name="kind"/> makes of the family's.</summary>
     internal @this(@this family, global::app.type.kind.@this? kind, bool strict, global::app.type.item.template.kind.@this? template)
-        : this(family.Name, kind != null ? kind.Of(family.ClrType) : family.ClrType, kind?.Name, strict, template)
+        : this(family.Name, kind != null ? kind.Of(family.ClrType) : family.ClrType, kind?.Name, strict, template, known: true)
     {
         _family = family;
         _kind = kind ?? new global::app.type.kind.empty.@this(Name);
@@ -794,7 +799,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <paramref name="types"/>, so they are read once every type's name is known; without it the
     /// type is its identity alone.
     /// </summary>
-    internal @this(string name, System.Type clr, list.@this? types) : this(name, clr)
+    internal @this(string name, System.Type clr, list.@this? types) : this(name, clr, null, false, null, known: true)
     {
         Alias = Declared<IReadOnlyList<string>>("Alias") ?? [];
         Owned = Declared<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];

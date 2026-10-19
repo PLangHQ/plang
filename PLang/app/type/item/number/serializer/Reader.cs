@@ -22,7 +22,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         // A declared kind reads through the kind; a bare token with no declared kind (a literal a .pr row
         // holds as `number`) reads at its natural precision — the format reads its token by number's one rule
         // (an integer long, or biginteger past it; any other a double); a string parses through the family.
-        var read = kind is not null && num.Kinds.TryGetValue(kind, out var k) ? k.Read(ref reader)
+        var read = kind is not null && types[typeof(num)].kind[kind] is global::app.type.item.number.kind.@this k ? k.Read(ref reader)
             : reader.Peek() == global::app.type.format.TokenKind.String
                 ? num.Create(new global::app.type.item.text.@this(reader.String(), types[typeof(global::app.type.item.text.@this)]))
                 : num.Create(reader.Number());

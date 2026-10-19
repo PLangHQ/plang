@@ -111,7 +111,10 @@ public sealed partial class @this
     protected internal override bool IsKind(string name)
     {
         if (base.IsKind(name)) return true;
-        var named = System.Linq.Enumerable.FirstOrDefault(Kinds.Values, kind => kind.Names(name));
+        // the kinds its family names — the app's number entry's; an operator-born number (a type built from the class,
+        // no app) names them by the class's own until the implicit-conversion branch
+        var named = Type.Family.kind[name] as kind.@this
+                    ?? System.Linq.Enumerable.FirstOrDefault(Kinds.Values, kind => kind.Names(name));
         if (named == null) return false;
         if (CategoryOf(named.Name) != Category.Integer) return true;
         BigInteger? whole = Cat switch

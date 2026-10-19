@@ -57,7 +57,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Catalog shape — number's wire form is a string-shaped scalar.</summary>
     public static string Shape => "string";
 
-    // ── the 15 kind singletons — private immutable data (the sanctioned clause). Verbatim-lowercase
+    // ── the 15 kind singletons — the operator births' kinds only (a CLR lift has no app; every number born with an
+    //    app holds its app's registered kind). They go with the implicit-conversion branch. Verbatim-lowercase
     //    names (@int, @long, …) = the kind tokens; PascalCase would shadow the CLR type names
     //    (Int128.MinValue, BigInteger.Pow) used across number/Ladder. ──
     private static readonly kind.@this @sbyte = new kind.@sbyte.@this();
@@ -76,8 +77,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private static readonly kind.@this @decimal = new kind.@decimal.@this();
     private static readonly kind.@this biginteger = new kind.biginteger.@this();
 
-    /// <summary>The 15 kind singletons by name — the declared-kind lookup (a sanctioned private data
-    /// table); also the advertised vocabulary via <c>Kinds.Keys</c>.</summary>
+    /// <summary>The 15 kind singletons by name — what an operator-born number (no app) names its kinds by; a number
+    /// with an app asks its family. Goes with the implicit-conversion branch.</summary>
     internal static readonly System.Collections.Generic.IReadOnlyDictionary<string, kind.@this> Kinds =
         new System.Collections.Generic.Dictionary<string, kind.@this>(System.StringComparer.OrdinalIgnoreCase)
         {
@@ -131,13 +132,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     //    (a thrown reason → data.Fail, PRESERVED, never swallowed). ──
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
-        var named = (declared ?? data.Type).kind is { IsEmpty: false } k ? k.Name : null;
+        var asked = (declared ?? data.Type).kind;
+        var named = asked is { IsEmpty: false } k ? k.Name : null;
         // Pass-through — a number already of the declared kind (or with none declared) rides out as it is.
         if (raw is @this same && (named is null || string.Equals(same.Kind.Name, named, System.StringComparison.OrdinalIgnoreCase)))
             return same;
         if (named is not null)
         {
-            if (!Kinds.TryGetValue(named, out var kind))
+            // the kind declared is the app's (its type's own kind), else the app's number entry names it
+            if ((asked as kind.@this ?? data.Context?.App.type.list[typeof(@this)].kind[named] as kind.@this) is not { } kind)
             {
                 data.Fail(new global::app.error.@this($"Unknown number kind '{named}'.", "UnknownKind", 400));
                 return null;
