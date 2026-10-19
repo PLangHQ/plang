@@ -1,0 +1,6 @@
+/ item-doors 63: %!app.goal.list% is the app's goals, from the goal concept's own list. A guard: green before and after, it
+/ must stay green through the node moving to app/type/node.
+AppGoalListIsTheGoals
+- set %goals% = %!app.goal.list%
+- any %goals% where "name" == "AppGoalListIsTheGoals", write to %hasMe%
+- assert %hasMe% is true, "the running goal is one of the app's goals"

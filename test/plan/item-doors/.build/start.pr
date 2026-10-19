@@ -123,7 +123,7 @@
           "line": {
             "number": 18
           },
-          "comment": "a type is born whole (decision 867): the registered type hands itself to the value\nan image value's kind knows its mime: a {image, kind: png} carries image/png from the registered kind, not an inline copy",
+          "comment": "a type is born whole (decision 1): the registered type hands itself to the value\nan image value's kind knows its mime: a {image, kind: png} carries image/png from the registered kind, not an inline copy",
           "code": [
             {
               "module": "goal",
@@ -190,9 +190,9 @@
           "index": 3,
           "text": "call /app/type/kind/strict/SetAsImageGifStrictMatching",
           "line": {
-            "number": 26
+            "number": 30
           },
-          "comment": "\"is this an action slot?\" by type, not by name — C# test at PLang.Tests/Runtime/App/Goals/ActionSlotIsByTypeTests.cs\n(a fresh type.@this(\"action\") has no ClrType; the registered one does — today the Name compare can't tell them apart)\nthe four kind/strict tests are this stage's proof: adopted from test/app/type/kind/strict/",
+          "comment": "\"is this an action slot?\" by type, not by name — C# test at PLang.Tests/Runtime/App/Goals/ActionSlotIsByTypeTests.cs\n(a fresh type.@this(\"action\") has no ClrType; the registered one does — today the Name compare can't tell them apart)\nan image made from bytes holds its registered kind — C# test at PLang.Tests/Types/App/Types/ImageKindKnowsItsMimeTests.cs\n(today image/this.cs:189 makes its kind from a name, so Type.kind.Mime is empty — the registered image.kind.png's image/png never reaches it)\na plain text's own kind answers it's characters — C# test at PLang.Tests/Types/App/Types/TextKindIsTextByItselfTests.cs\n(today text's own format has no Text=true, so Type.kind.IsText is false and source.cs:115 patches it with _type.Name is \"text\")\nthe four kind/strict tests are this stage's proof: adopted from test/app/type/kind/strict/",
           "code": [
             {
               "module": "goal",
@@ -213,7 +213,7 @@
           "index": 4,
           "text": "call /app/type/kind/strict/SetAsImageGifStrictMismatch",
           "line": {
-            "number": 27
+            "number": 31
           },
           "code": [
             {
@@ -235,7 +235,7 @@
           "index": 5,
           "text": "call /app/type/kind/strict/SetAsImageStrictNoKind",
           "line": {
-            "number": 28
+            "number": 32
           },
           "code": [
             {
@@ -251,13 +251,19 @@
                 }
               ]
             }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 5 uses goal.call, which the decider was not sure of (0.88)"
+            }
           ]
         },
         {
           "index": 6,
           "text": "call /app/type/kind/strict/SetAsTextSlashMarkdownStrictUnverifiable",
           "line": {
-            "number": 29
+            "number": 33
           },
           "code": [
             {
@@ -274,11 +280,149 @@
               ]
             }
           ]
+        },
+        {
+          "index": 7,
+          "text": "call /plan/item-doors/app/type/dict/key/KeyIsTheFirstKey",
+          "line": {
+            "number": 35
+          },
+          "comment": "a plural plang reaches is a singular node (item-doors 39): a dict's key read alone is its first key, .list every key",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/item-doors/app/type/dict/key/KeyIsTheFirstKey"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "text": "call /plan/item-doors/app/goal/RunningGoalIsAppGoal",
+          "line": {
+            "number": 40
+          },
+          "comment": "a click's modifier read alone is the first key held, .list every one (item-doors 41) — C# test at\nPLang.Tests/Types/App/Types/InputTypeTests.cs (AClicksModifier_IsTheFirstKeyHeld_AndItsListIsEvery): plang has no door\nthat makes an input from its line (only a screen does), so the plang goal can't set a click up\nthe app's goal node is the running goal (item-doors 62/63): written alone and its .name, the one in play",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/item-doors/app/goal/RunningGoalIsAppGoal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "text": "call /plan/item-doors/app/goal/GoalIsOfTypeGoal",
+          "line": {
+            "number": 42
+          },
+          "comment": "a goal's type is the plain goal type, not the app's node (item-doors 62/63)",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/item-doors/app/goal/GoalIsOfTypeGoal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 10,
+          "text": "call /plan/item-doors/app/goal/AppGoalListIsTheGoals",
+          "line": {
+            "number": 44
+          },
+          "comment": "%!app.goal.list% is the app's goals, from the concept's own list (item-doors 62/63)",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/item-doors/app/goal/AppGoalListIsTheGoals"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 11,
+          "text": "call /plan/item-doors/app/type/AppTypeIsTheTypeSystem",
+          "line": {
+            "number": 46
+          },
+          "comment": "%!app.type[\"text\"]% is the text type: the type system's root node indexes by name (item-doors 62/63)",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/item-doors/app/type/AppTypeIsTheTypeSystem"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 12,
+          "text": "call /plan/app-systems/type/duration/KeepsItsKind",
+          "line": {
+            "number": 48
+          },
+          "comment": "a duration keeps its kind and its written form: 30s stays 30s (short), PT5M stays PT5M (iso) (item-doors 57)",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/type/duration/KeepsItsKind"
+                }
+              ]
+            }
+          ]
         }
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "57eb68ace837af7c5afc120980814faf61b3b4c4b10f05f1bd3c854d11dc7563"
+      "hash": "a614dd1c1c474897c720d6a70227763afbaf03e614a7e356f9c024b7f94010e2"
     },
     {
       "name": "Stage2",

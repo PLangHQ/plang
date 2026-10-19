@@ -1,0 +1,127 @@
+{
+  "name": "AppTypeIndexesByName",
+  "comment": "item-doors 63: %!app.type[\"text\"]% is the text type: the type system's root node indexes by name. A guard: green before and\nafter (the lookup answered the same through the old root), it must stay green through the node moving to app/type/node.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %t% = %!app.type[\"text\"]%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%t%",
+              "variable": [
+                {
+                  "text": "%t%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.type[\"text\"]%",
+              "variable": [
+                {
+                  "text": "%!app.type[\"text\"]%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "index": {
+                        "text": "text"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=\"text\", Actual=%t.name%, Message=\"a type picked by name is that type\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%t.name%",
+              "variable": [
+                {
+                  "text": "%t.name%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a type picked by name is that type"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "AppTypeIndexesByName.test.goal",
+  "hash": "4b50923610d3b248ffe7dcda2458bd2d58f01284f649ec55970b9655aee6d234"
+}

@@ -1,0 +1,242 @@
+{
+  "name": "GoalIsOfTypeGoal",
+  "comment": "item-doors 62/63: a goal's type is the plain goal type, not the app's node. %!app.goal.type.name% is goal, and a goal's\n%g!type% written is the goal type's face (goal). Red before: Replace swapped the type list's own goal entry for the app's\nnode, so asking a goal what type it is answered the node (the dump of every goal), not goal.",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert.equals(Expected=\"goal\", Actual=%!app.goal.type.name%, Message=\"the running goal is of type goal\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "goal"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.goal.type.name%",
+              "variable": [
+                {
+                  "text": "%!app.goal.type.name%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the running goal is of type goal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %g% = %!app.goal[\"GoalIsOfTypeGoal\"]%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%g%",
+              "variable": [
+                {
+                  "text": "%g%",
+                  "code": [
+                    {
+                      "variable": "g"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.goal[\"GoalIsOfTypeGoal\"]%",
+              "variable": [
+                {
+                  "text": "%!app.goal[\"GoalIsOfTypeGoal\"]%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "index": {
+                        "text": "GoalIsOfTypeGoal"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %shown% = \"type: %g!type%\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%shown%",
+              "variable": [
+                {
+                  "text": "%shown%",
+                  "code": [
+                    {
+                      "variable": "shown"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "type: %g!type%",
+              "variable": [
+                {
+                  "text": "%g!type%",
+                  "code": [
+                    {
+                      "variable": "g"
+                    },
+                    {
+                      "property": "!type"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"type: goal\", Actual=%shown%, Message=\"a goal's type, written, is goal\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "type: goal"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%shown%",
+              "variable": [
+                {
+                  "text": "%shown%",
+                  "code": [
+                    {
+                      "variable": "shown"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a goal's type, written, is goal"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "GoalIsOfTypeGoal.test.goal",
+  "hash": "7724796cde86e3e5bd5bb156e840afae8ef00146adfb04128bfe5fe5c81a0d36"
+}

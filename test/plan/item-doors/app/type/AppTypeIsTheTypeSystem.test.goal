@@ -1,0 +1,5 @@
+/ item-doors 61/63: %!app.type% written alone is the type system: every type with its full facts (a name, its words, its
+/ description, its kinds), a structured value its writer lays out. Red before: it wrote only the list of type names.
+AppTypeIsTheTypeSystem
+- set %system% = "system: %!app.type%"
+- assert.contains(Value="description", Container=%system%, Message="the type system carries each type's facts, not only its name")

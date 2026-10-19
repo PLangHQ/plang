@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "A duration is born with the standard its text is written in, and stays in it: 30s is short, PT5M is iso.\n(A type's kind reads as its name, decision 707.)",
+  "comment": "A duration is born with the standard its text is written in, and stays in it: 30s is short, PT5M is iso.\n(item-doors 57: a value becomes text only through Output, so the written form is read by interpolating the duration, not by a .text member.\nA type's kind is a type, so its name is %short!type.kind.name%.)",
   "step": [
     {
       "index": 0,
       "text": "variable.set(Name=%short%, Value=\"30s\", Type=\"duration\")",
       "line": {
-        "number": 4
+        "number": 5
       },
       "code": [
         {
@@ -61,7 +61,7 @@
       "index": 1,
       "text": "variable.set(Name=%iso%, Value=\"PT5M\", Type=\"duration\")",
       "line": {
-        "number": 5
+        "number": 6
       },
       "code": [
         {
@@ -114,9 +114,9 @@
     },
     {
       "index": 2,
-      "text": "assert.equals(Expected=\"30s\", Actual=%short.text%, Message=\"30s stays 30s\")",
+      "text": "assert.equals(Expected=\"took 30s\", Actual=\"took %short%\", Message=\"30s stays 30s\")",
       "line": {
-        "number": 6
+        "number": 7
       },
       "code": [
         {
@@ -128,24 +128,21 @@
               "type": {
                 "name": "text"
               },
-              "value": "30s"
+              "value": "took 30s"
             },
             {
               "name": "Actual",
               "type": {
-                "name": "item",
+                "name": "text",
                 "template": "plang"
               },
-              "value": "%short.text%",
+              "value": "took %short%",
               "variable": [
                 {
-                  "text": "%short.text%",
+                  "text": "%short%",
                   "code": [
                     {
                       "variable": "short"
-                    },
-                    {
-                      "property": "text"
                     }
                   ]
                 }
@@ -164,9 +161,9 @@
     },
     {
       "index": 3,
-      "text": "assert.equals(Expected=\"short\", Actual=%short!type.kind%, Message=\"its kind is short\")",
+      "text": "assert.equals(Expected=\"short\", Actual=%short!type.kind.name%, Message=\"its kind is short\")",
       "line": {
-        "number": 7
+        "number": 8
       },
       "code": [
         {
@@ -186,10 +183,10 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%short!type.kind%",
+              "value": "%short!type.kind.name%",
               "variable": [
                 {
-                  "text": "%short!type.kind%",
+                  "text": "%short!type.kind.name%",
                   "code": [
                     {
                       "variable": "short"
@@ -199,6 +196,9 @@
                     },
                     {
                       "property": "kind"
+                    },
+                    {
+                      "property": "name"
                     }
                   ]
                 }
@@ -217,9 +217,9 @@
     },
     {
       "index": 4,
-      "text": "assert.equals(Expected=\"PT5M\", Actual=%iso.text%, Message=\"PT5M stays PT5M\")",
+      "text": "assert.equals(Expected=\"took PT5M\", Actual=\"took %iso%\", Message=\"PT5M stays PT5M\")",
       "line": {
-        "number": 8
+        "number": 9
       },
       "code": [
         {
@@ -231,24 +231,21 @@
               "type": {
                 "name": "text"
               },
-              "value": "PT5M"
+              "value": "took PT5M"
             },
             {
               "name": "Actual",
               "type": {
-                "name": "item",
+                "name": "text",
                 "template": "plang"
               },
-              "value": "%iso.text%",
+              "value": "took %iso%",
               "variable": [
                 {
-                  "text": "%iso.text%",
+                  "text": "%iso%",
                   "code": [
                     {
                       "variable": "iso"
-                    },
-                    {
-                      "property": "text"
                     }
                   ]
                 }
@@ -267,9 +264,9 @@
     },
     {
       "index": 5,
-      "text": "assert.equals(Expected=\"iso\", Actual=%iso!type.kind%, Message=\"its kind is iso\")",
+      "text": "assert.equals(Expected=\"iso\", Actual=%iso!type.kind.name%, Message=\"its kind is iso\")",
       "line": {
-        "number": 9
+        "number": 10
       },
       "code": [
         {
@@ -289,10 +286,10 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%iso!type.kind%",
+              "value": "%iso!type.kind.name%",
               "variable": [
                 {
-                  "text": "%iso!type.kind%",
+                  "text": "%iso!type.kind.name%",
                   "code": [
                     {
                       "variable": "iso"
@@ -302,6 +299,9 @@
                     },
                     {
                       "property": "kind"
+                    },
+                    {
+                      "property": "name"
                     }
                   ]
                 }
@@ -321,7 +321,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/plan/app-systems/type/duration/KeepsItsKind.test.goal",
-  "prPath": "/plan/app-systems/type/duration/.build/keepsitskind.test.pr",
-  "hash": "9973280ea20ce05180e7f116220534f5b420f714d595ad93796c11132486f191"
+  "file": "KeepsItsKind.test.goal",
+  "hash": "de25d8228d40033b162b222720f868dda29ba2b984b19b8438c3b7e29a9db84e"
 }

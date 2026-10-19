@@ -1,0 +1,6 @@
+/ item-doors 62/63: %!app.goal% read alone is the goal that is running, and %!app.goal.name% its name. The app's goal node is its
+/ own class and gives the one in play. Red before: the node was the goal TYPE swapped in by Replace, so a dot read the type.
+RunningGoalIsAppGoal
+- assert.equals(Expected="RunningGoalIsAppGoal", Actual=%!app.goal.name%, Message="a dot reads the running goal")
+- set %running% = %!app.goal%
+- assert.equals(Expected="RunningGoalIsAppGoal", Actual=%running.name%, Message="alone it is the running goal")

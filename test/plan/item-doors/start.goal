@@ -13,7 +13,7 @@ Start
 - call Stage5
 
 Stage1
-/ a type is born whole (decision 867): the registered type hands itself to the value
+/ a type is born whole (decision 1): the registered type hands itself to the value
 / an image value's kind knows its mime: a {image, kind: png} carries image/png from the registered kind, not an inline copy
 - call /plan/item-doors/app/type/image/BytesKnowItsMime
 / a type named in a step is the registered one: its kind knows its mime and its extension
@@ -33,30 +33,41 @@ Stage1
 - call /app/type/kind/strict/SetAsTextSlashMarkdownStrictUnverifiable
 / a plural plang reaches is a singular node (item-doors 39): a dict's key read alone is its first key, .list every key
 - call /plan/item-doors/app/type/dict/key/KeyIsTheFirstKey
-/ a click's modifier read alone is the first key held, .list every one (item-doors 41)
-- call /plan/item-doors/app/type/input/modifier/ModifierIsTheFirstKeyHeld
+/ a click's modifier read alone is the first key held, .list every one (item-doors 41) — C# test at
+/ PLang.Tests/Types/App/Types/InputTypeTests.cs (AClicksModifier_IsTheFirstKeyHeld_AndItsListIsEvery): plang has no door
+/ that makes an input from its line (only a screen does), so the plang goal can't set a click up
+/ the app's goal node is the running goal (item-doors 62/63): written alone and its .name, the one in play
+- call /plan/item-doors/app/goal/RunningGoalIsAppGoal
+/ a goal's type is the plain goal type, not the app's node (item-doors 62/63)
+- call /plan/item-doors/app/goal/GoalIsOfTypeGoal
+/ %!app.goal.list% is the app's goals, from the concept's own list (item-doors 62/63)
+- call /plan/item-doors/app/goal/AppGoalListIsTheGoals
+/ %!app.type["text"]% is the text type: the type system's root node indexes by name (item-doors 62/63)
+- call /plan/item-doors/app/type/AppTypeIsTheTypeSystem
+/ a duration keeps its kind and its written form: 30s stays 30s (short), PT5M stays PT5M (iso) (item-doors 57)
+- call /plan/app-systems/type/duration/KeepsItsKind
 
 Stage2
-/ one door for writing (decision 868): Output only; the sync Write and the IsLeaf branch go;
+/ one door for writing (decision 2): Output only; the sync Write and the IsLeaf branch go;
 / the writer carries its output kind (an object, not a string); Owns and its 5 checks go;
 / the byte door Bytes(byte[], kind) replaces Bytes(byte[]) and Raw(byte[]) (844);
 / a pair registry (846) looks up how an input kind looks in an output kind, in one place (data.Output)
 
 Stage3
-/ a type speaks for itself to a writer (decision 869): Data always calls BeginRecord/EndRecord,
+/ a type speaks for itself to a writer (decision 3): Data always calls BeginRecord/EndRecord,
 / each writer decides what to show; bare json shows only the value; plang's own writer is its own
 / output kind with {type, value, signature} on the wire, name only in Store; the llm table learns
 / a column's type from the record (815); EmitsSchema and Data's two ifs on it go (813); the first
 / pair-registry entries are each type's JSON Schema for llm-provider's tools
 
 Stage4
-/ reading a plang value as tokens (decision 871): a structural IReader over a value in hand
+/ reading a plang value as tokens (decision 5): a structural IReader over a value in hand
 / (type/format/item/reader.cs, NEW): a dict as an object, a list as an array, a leaf as its token;
 / Step.Set reads every row one way, FromJson and the is-dict-or-list branches go;
 / item.Set's C# lowering fallback goes
 
 Stage5
-/ a type's members through its own list (decision 870, 872): item.Get/Set go through type.Property
+/ a type's members through its own list (decision 4, 6): item.Get/Set go through type.Property
 / (property.Read/Write, NEW); IsDefault compares the value with the default made as the property's
 / type; reflection only where property is built; a key the type has no member for is ADDED
 / (not refused), the only refusal is writing over an own member that can't be written

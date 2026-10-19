@@ -1,0 +1,225 @@
+{
+  "name": "AppGoalListIsTheGoals",
+  "comment": "item-doors 63: %!app.goal.list% is the app's goals, from the goal concept's own list. A guard: green before and after, it\nmust stay green through the node moving to app/type/node.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %goals% = %!app.goal.list%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%goals%",
+              "variable": [
+                {
+                  "text": "%goals%",
+                  "code": [
+                    {
+                      "variable": "goals"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.goal.list%",
+              "variable": [
+                {
+                  "text": "%!app.goal.list%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "list"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "any %goals% where \"name\" == \"AppGoalListIsTheGoals\", write to %hasMe%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "any",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%goals%",
+              "variable": [
+                {
+                  "text": "%goals%",
+                  "code": [
+                    {
+                      "variable": "goals"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "name"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "AppGoalListIsTheGoals"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%hasMe%",
+              "variable": [
+                {
+                  "text": "%hasMe%",
+                  "code": [
+                    {
+                      "variable": "hasMe"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 1 uses list.any, which the decider was not sure of (0.96)"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %hasMe% is true, \"the running goal is one of the app's goals\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%hasMe%",
+              "variable": [
+                {
+                  "text": "%hasMe%",
+                  "code": [
+                    {
+                      "variable": "hasMe"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the running goal is one of the app's goals"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "AppGoalListIsTheGoals.test.goal",
+  "hash": "69b7d4238cb1343b1bed42ec2b35b03d869c4b5b78bb803308f23741b87084e6"
+}

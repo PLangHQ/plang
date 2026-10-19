@@ -1,0 +1,175 @@
+{
+  "name": "RunningGoalIsAppGoal",
+  "comment": "item-doors 62/63: %!app.goal% read alone is the goal that is running, and %!app.goal.name% its name. The app's goal node is its\nown class and gives the one in play. Red before: the node was the goal TYPE swapped in by Replace, so a dot read the type.",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert.equals(Expected=\"RunningGoalIsAppGoal\", Actual=%!app.goal.name%, Message=\"a dot reads the running goal\")",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "RunningGoalIsAppGoal"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.goal.name%",
+              "variable": [
+                {
+                  "text": "%!app.goal.name%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a dot reads the running goal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %running% = %!app.goal%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%running%",
+              "variable": [
+                {
+                  "text": "%running%",
+                  "code": [
+                    {
+                      "variable": "running"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.goal%",
+              "variable": [
+                {
+                  "text": "%!app.goal%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "goal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"RunningGoalIsAppGoal\", Actual=%running.name%, Message=\"alone it is the running goal\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "RunningGoalIsAppGoal"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%running.name%",
+              "variable": [
+                {
+                  "text": "%running.name%",
+                  "code": [
+                    {
+                      "variable": "running"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "alone it is the running goal"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "RunningGoalIsAppGoal.test.goal",
+  "hash": "2fdf5cba4c2277b55a7b3ece0a06c9a28c759edc593091b820763c560635a4b5"
+}
