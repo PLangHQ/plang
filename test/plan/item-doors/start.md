@@ -294,11 +294,13 @@ Not in this branch's files, a later sweep (collections plang reaches; each check
 module page:  | Item | variable |
 ```
 
-**The shape.**
+**The shape** (63: the node is its own small class, not a type and not the list; Ingi: "Ok let's try this"):
 - The type list keeps the entry it builds for each class; `Replace` goes. `app.type.list["goal"]` is a plain type.
-- The app's node for a concept is that concept's own list, as `CLAUDE.md` already says (`app.X` is type `X.list.@this`, folder `X/list/this.cs`): `app.goal` is the app's `goal.list`, `app.test` the `test.list`, `app.error` the `error.list`, `app.actor` the `actor.list`, `app.variable` its list, `app.type` the `type.list`. Each holds its `type`, and its `current` where execution is inside one (`T.Current(context)`).
-- Read alone, each list answers its own default: `goal.list` the running goal; `type.list` a structured value of every type with its full facts (Ingi: "some sort of list/dict is returned about the type system, not formatted, that is the responsiity of output").
-- The node classes `type/this.Generic.cs`, `type/current/this.cs` and `type/root/this.cs` go; what they did that isn't a type's moves onto the lists (by-name lookup, `Load`, `current`, a concept's settings, `format` on `app.type`). If those repeat across the lists, one base under `list` holds them.
+- The app's node for a concept moves to `app/type/node/` and stops deriving from `type.@this`: `node/this.cs` (today's `type/this.Generic.cs`), `node/current/this.cs` (today's `type/current/this.cs`: goal, test, error, actor), `node/root/this.cs` (today's `type/root/this.cs`: `app.type`, its `format`). Each holds its `type` (the plain entry), its `list` and, where execution is inside one, `current`; by-name lookup, `Load` and a concept's settings stay its own.
+- Read alone, each node answers its own default: the plain node its list as the asker sees it (`%!app.variable%` the asker's variables, `%!app.error%` the call's), the current node the one in play (`%!app.goal%` the running goal), the root node a structured value of every type with its full facts (Ingi: "some sort of list/dict is returned about the type system, not formatted, that is the responsiity of output").
+- The lists stay plain lists: `goal.list`, `type.list` written alone write their items. The C# reads of `app.X.list` (about 5,900 with the tests) don't change.
+
+(a), the node being the concept's own list, was chosen first and dropped after the coder's trace: a list read alone would answer something other than its items (every goal list the running goal, `.list` on a list itself), and variable and error have no app-wide list.
 
 **Traced at the group's start** (the coder, before building):
 - every place that uses `app.X` as a type (the type facts read through the node, `this.Generic.cs:117–123`);
