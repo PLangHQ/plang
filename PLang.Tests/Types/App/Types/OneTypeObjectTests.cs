@@ -7,15 +7,16 @@ public class OneTypeObjectTests : System.IAsyncDisposable
     private readonly global::app.@this app = new global::app.@this("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    // Each concept's entry is the concept node itself once the app has started (the list's Replace).
-    [Test] public async Task AConceptsEntry_IsTheConceptNode()
+    // Each concept's entry is its plain type, the one its node holds; the node is no type.
+    [Test] public async Task AConceptsEntry_IsThePlainType_ItsNodeHolds()
     {
-        await Assert.That(ReferenceEquals(app.type.list[typeof(global::app.goal.@this)], app.goal)).IsTrue();
-        await Assert.That(ReferenceEquals(app.type.list[typeof(global::app.test.@this)], app.test)).IsTrue();
-        await Assert.That(ReferenceEquals(app.type.list["type"], app.type)).IsTrue();
+        await Assert.That(ReferenceEquals(app.type.list[typeof(global::app.goal.@this)], app.goal.type)).IsTrue();
+        await Assert.That(ReferenceEquals(app.type.list[typeof(global::app.test.@this)], app.test.type)).IsTrue();
+        await Assert.That(ReferenceEquals(app.type.list["type"], app.type.type)).IsTrue();
+        await Assert.That(app.type.list["goal"].GetType()).IsEqualTo(typeof(global::app.type.@this));
     }
 
-    // A value born after the start holds the list's current entry — never one Replace swapped out.
+    // A value born after the start holds the list's entry for its class.
     [Test] public async Task AValueBornAfterStart_HoldsTheCurrentEntry()
     {
         var types = app.type.list;

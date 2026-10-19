@@ -183,7 +183,7 @@ public partial class @this
     }
 
     // The variable type's events — once the app has it: the actors' stores are born before the app's types.
-    private global::app.@event.on.@this? Events => _context.App.variable?.on;
+    private global::app.@event.on.@this? Events => _context.App.variable?.type.on;
 
     // What is bound before `name` changes to `value`: null to go on — nothing bound, or nothing refused — else a
     // failure or a Handled answer, which is the write's answer. The variable is made only when something is bound.

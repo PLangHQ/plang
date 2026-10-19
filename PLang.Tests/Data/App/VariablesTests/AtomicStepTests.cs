@@ -35,7 +35,7 @@ public class AtomicStepTests : System.IAsyncDisposable
         var store = _app.actor.list.User.Context.Variable;
         await store.Set("l", new List(_app.type.list["list"]));
         var held = await store.Get("l");
-        _app.variable.Own().Bind("set", global::app.@event.When.before,
+        _app.variable.type.Own().Bind("set", global::app.@event.When.before,
             (_, _, c) => System.Threading.Tasks.Task.FromResult(c.Error(new global::app.error.@this("not today", "Refused", 403))),
             _app.actor.list.User, global::app.@event.binding.Scope.actor);
 

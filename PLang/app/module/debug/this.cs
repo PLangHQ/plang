@@ -70,7 +70,7 @@ public sealed class @this
         if (Setting.Variables.CountRaw > 0)
         {
             var watched = Watched;
-            var variables = _context.App.variable.Own();
+            var variables = _context.App.variable.type.Own();
             bool Watches(global::app.type.item.@this item, actor.context.@this _)
                 => item is global::app.type.item.variable.@this variable && watched.Contains(variable.Name);
             variables.Bind("set", When.after, (item, result, context) => Watch((global::app.type.item.variable.@this)item, "SET", result, context),

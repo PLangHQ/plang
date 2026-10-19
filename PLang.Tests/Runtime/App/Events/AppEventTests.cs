@@ -15,7 +15,7 @@ public class AppEventTests
         var ctx = app.actor.list.User.Context;
         var goal = new global::app.goal.@this(app.type.list) { Name = "Checkout",
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
-        var fired = app.goal.on.start;
+        var fired = app.goal.type.on.start;
         // as the binding scopes it: the event, what it fired for, the result so far — on the frame it fired in
         var running = new global::app.data.@this("!event", fired, context: ctx);
         running.Properties.Set("item", goal);

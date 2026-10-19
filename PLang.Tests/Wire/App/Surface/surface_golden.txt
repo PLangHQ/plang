@@ -988,25 +988,25 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Updated : app.type.item.datetime.this { get; } [Store]
   Uptime : app.type.item.duration.this { get; }
   Version : System.String { get; } [Store]
-  actor : app.type.current.this<app.actor.this, app.actor.list.this> { get; }
+  actor : app.type.node.current.this<app.actor.this, app.actor.list.this> { get; }
   call(app.actor.context.this context) : app.call.list.this [LlmBuilder]
   ctor(System.String absolutePath, System.String environment = …, System.Boolean autoWireConsoleChannels = …)
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
-  error : app.type.current.this<app.error.this, app.error.list.this> { get; }
+  error : app.type.node.current.this<app.error.this, app.error.list.this> { get; }
   event(app.actor.context.this context) : app.data.this [LlmBuilder]
-  goal : app.type.current.this<app.goal.this, app.goal.list.this> { get; }
+  goal : app.type.node.current.this<app.goal.this, app.goal.list.this> { get; }
   module : app.module.this { get; }
   override IsLeaf : System.Boolean { get; }
   parent : app.parent.this { get; }
   protected override Clone() : app.type.item.this
-  shortcut : app.type.this<app.shortcut.this, app.shortcut.list.this> { get; }
+  shortcut : app.type.node.this<app.shortcut.this, app.shortcut.list.this> { get; }
   static WireConsoleChannels(app.actor.this actor, System.Boolean interactiveInput) : System.Void
   static WireDefaultConsoleChannels(app.actor.this actor) : System.Void
   store : app.store.this { get; }
-  test : app.type.current.this<app.test.this, app.test.list.this> { get; }
+  test : app.type.node.current.this<app.test.this, app.test.list.this> { get; }
   trace(app.actor.context.this context) : app.actor.context.trace.this [LlmBuilder]
-  type : app.type.root.this { get; }
-  variable : app.type.this<app.type.item.variable.this, app.type.item.list.this<app.type.item.variable.this>> { get; }
+  type : app.type.node.root.this { get; }
+  variable : app.type.node.this<app.type.item.variable.this, app.type.item.list.this<app.type.item.variable.this>> { get; }
 
 class app.type.clr.this : app.type.item.this, app.type.item.ICreate<app.type.clr.this> [PlangType]
   Enumerate(app.actor.context.this context) : System.Collections.Generic.IEnumerable<app.data.this>
@@ -1061,11 +1061,6 @@ class app.type.convert.OwnedClr : System.IEquatable<app.type.convert.OwnedClr>
   Clr : System.Type { get; init; }
   Kind : System.String { get; init; }
   ctor(System.Type Clr, System.String Kind = …, System.Boolean Assignable = …)
-
-class app.type.current.this<T, L> : app.type.this<T, L>
-  ctor(app.this app)
-  current(app.actor.context.this context) : app.data.this<T>
-  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
 
 interface app.type.format.IOutput
   abstract Output(app.type.item.this value, app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
@@ -3129,6 +3124,34 @@ class app.type.list.this : app.type.item.list.this<app.type.this>
   protected override Admit(app.type.item.list.this other) : System.Void
   protected override Type : app.type.this { get; }
 
+class app.type.node.current.this<T, L> : app.type.node.this<T, L>
+  ctor(app.this app)
+  current(app.actor.context.this context) : app.data.this<T>
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+
+class app.type.node.root.this : app.type.node.this<app.type.this, app.type.list.this>
+  Format : app.type.kind.this { get; set; }
+  FormatOf(app.actor.context.this context) : app.type.kind.this
+  Named(System.String named) : app.type.kind.this
+  ctor(app.this app)
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  override Set(System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.this>
+
+abstract class app.type.node.this : app.type.item.this [PlangType]
+  static Internal : System.Boolean { get; }
+
+class app.type.node.this<T, L> : app.type.node.this
+  Get(System.String key, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this<T>>
+  Load(System.String location) : System.Threading.Tasks.Task<app.data.this>
+  ctor(app.this app)
+  list : L { get; }
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  override Get(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  type : app.type.this { get; }
+
 class app.type.property.list.this : System.Collections.Generic.IEnumerable<app.type.property.this>, System.Collections.Generic.IReadOnlyCollection<app.type.property.this>, System.Collections.Generic.IReadOnlyList<app.type.property.this>, System.Collections.IEnumerable
   Add(app.type.property.this property) : System.Void
   Count : System.Int32 { get; }
@@ -3196,14 +3219,6 @@ class app.type.reader.this+Read : System.MulticastDelegate
   virtual BeginInvoke(System.Object raw, System.String kind, app.type.reader.ReadContext ctx, System.AsyncCallback callback, System.Object object) : System.IAsyncResult
   virtual EndInvoke(System.IAsyncResult result) : System.Object
   virtual Invoke(System.Object raw, System.String kind, app.type.reader.ReadContext ctx) : System.Object
-
-class app.type.root.this : app.type.this<app.type.this, app.type.list.this>
-  Format : app.type.kind.this { get; set; }
-  FormatOf(app.actor.context.this context) : app.type.kind.this
-  Named(System.String named) : app.type.kind.this
-  ctor(app.this app)
-  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
-  override Set(System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.this>
 
 class app.type.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
@@ -3277,17 +3292,6 @@ class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, 
   static Null : app.type.this { get; }
   virtual IsClosed : System.Boolean { get; }
   virtual Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
-
-class app.type.this<T, L> : app.type.this
-  Get(System.String key, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this<T>>
-  Load(System.String location) : System.Threading.Tasks.Task<app.data.this>
-  ctor(app.this app)
-  list : L { get; }
-  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
-  override Get(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
-  override IsClosed : System.Boolean { get; }
-  override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
-  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
 
 # What a plang program sees
 
@@ -3409,11 +3413,7 @@ type app.type.item.setting.module
 
 type app.type.item.size.setting
 
-type app.type.root
-  .description : app.type.item.prose
-  .example : app.type.item.prose
-  .notes : file
-  .guide : file
+type app.type.node.root
 
 type archive
 
@@ -3547,6 +3547,8 @@ type message
 type modifier
 
 type module
+
+type node
 
 type null
 
