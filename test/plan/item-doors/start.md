@@ -335,6 +335,8 @@ The verdicts are the contract; the order inside a stage is the coder's. If a ver
 - [ ] `item.Set`'s reflection, `Activator.CreateInstance`, `SetValue`, its C# lowering fallback and its throw (`:209–245`)
 - [ ] `property.IsDefault`'s decision by type names and text (`type/property/this.cs:118–138`)
 
+**Not this branch, its own branch right after item-doors (50):** removing the C# → plang implicit operators, 1,726 production lines (int 1,451, string 83, bool 76, …) plus the tests, the errors' literal statuses among them (1,330). Until then a value born through an operator rebuilds its type from its class (the parameterless item constructor's fallback), and bool's True/False stay.
+
 **Not this branch, its own item:** the formal reader's lexing, for the builder's parser, with its own trace:
 - the chain switching on type names (`goal/step/action/formal/reader.cs:317`: text, duration, number arms). The direction: each type answers how a bare word reads as it (11).
 - `LiteralType` (`:415`), a static helper switching on a literal's shape to return a type name. I ruled it "stays"; Ingi flagged it to the coder ("LiteralType obpv if it's on code base not a test"). The literal answers its own type (12).
