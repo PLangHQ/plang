@@ -37,6 +37,28 @@ Start
 - foreach %log.grep("ERROR")%, call ReportLine line=%item%
 ```
 
+## Separators (a kind of text)
+
+A `separator` is a kind of text — what `split` cuts a text into pieces on, and what `join` puts between them. Five are named, each standing for its characters:
+
+- `line` — a line break (also `lines`, `newline`).
+- `comma` — `,`
+- `tab` — a tab.
+- `space` — a single space.
+- `semicolon` — `;`
+
+```plang
+Start
+- split %text% into lines, write to %lines%
+- join %names% with comma, write to %csv%
+- split %row% by tab, write to %cells%
+- join %parts% with " | ", write to %shown%
+```
+
+Anything else is taken as the literal characters to use — `join %parts% with " | "`.
+
+A text that is *exactly* a separator's name means that separator, whether written in the step or held in a variable (`%sep%` holding `comma` splits on `,`). To split or join on the word "comma" itself, write it some other way. A named separator writes its name back (`line`), any other its characters — a built program reads back the same.
+
 ## length
 How many characters the text holds.
 

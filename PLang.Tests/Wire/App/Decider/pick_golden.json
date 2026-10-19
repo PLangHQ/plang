@@ -7289,7 +7289,7 @@
       },
       "s12_@option.list.split.Separator": {
         "type": "choice",
-        "instructions": "Step 12 is `add %goal.Name% to %traceGoals%`. what does the step split on — a named separator (line, comma, tab, space, semicolon) or one of the step's variables?",
+        "instructions": "Step 12 is `add %goal.Name% to %traceGoals%`. what does the step split on — a named separator (line — also `lines`/`newline` —, comma, tab, space, semicolon) or one of the step's variables?",
         "criteria": {
           "line": null,
           "comma": null,
@@ -12274,7 +12274,7 @@
       },
       "s1_@option.list.split.Separator": {
         "type": "choice",
-        "instructions": "Step 1 is `count %order.items%, write to %itemCount%`. what does the step split on — a named separator (line, comma, tab, space, semicolon) or one of the step's variables?",
+        "instructions": "Step 1 is `count %order.items%, write to %itemCount%`. what does the step split on — a named separator (line — also `lines`/`newline` —, comma, tab, space, semicolon) or one of the step's variables?",
         "criteria": {
           "line": null,
           "comma": null,
@@ -12536,7 +12536,7 @@
       },
       "s8_@option.list.split.Separator": {
         "type": "choice",
-        "instructions": "Step 8 is `if %order.note% does not start with \"#\", add %order.note% to %notes%`. what does the step split on — a named separator (line, comma, tab, space, semicolon) or one of the step's variables?",
+        "instructions": "Step 8 is `if %order.note% does not start with \"#\", add %order.note% to %notes%`. what does the step split on — a named separator (line — also `lines`/`newline` —, comma, tab, space, semicolon) or one of the step's variables?",
         "criteria": {
           "line": null,
           "comma": null,
