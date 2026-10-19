@@ -22,7 +22,7 @@ public class VariableCodeTests
     private static string[] Hops(Variable v) => v.Code.Items().Select(h => $"{h.Kind}:{h.Text}").ToArray();
 
     private global::app.type.item.list.@this List(params string[] values)
-        => new(values.Select(v => (global::app.type.item.@this)new global::app.type.item.text.@this(v)), _app.type.list["list"]);
+        => new(values.Select(v => (global::app.type.item.@this)Context.Text(v)), _app.type.list["list"]);
 
     // ---- a write through a node that holds nothing ----
 

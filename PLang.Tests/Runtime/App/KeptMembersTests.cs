@@ -25,7 +25,7 @@ public class KeptMembersTests
     {
         await using var app = new global::app.@this("/app").Testing();
 
-        await (await Set(app.actor.list.User.Context, "%!app.home%", new global::app.type.item.text.@this("lights"))).IsSuccess();
+        await (await Set(app.actor.list.User.Context, "%!app.home%", app.actor.list.User.Context.Text("lights"))).IsSuccess();
 
         await Assert.That(await Read(app.actor.list.User.Context, "%!app.home%")).IsEqualTo("lights");
         await Assert.That(await Read(app.actor.list.System.Context, "%!app.home%")).IsEqualTo("lights");
@@ -51,7 +51,7 @@ public class KeptMembersTests
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("name", new global::app.data.@this("name", "Ingi", context: ctx));
 
-        await (await Set(ctx, "%name.lang%", new global::app.type.item.text.@this("is"))).IsSuccess();
+        await (await Set(ctx, "%name.lang%", ctx.Text("is"))).IsSuccess();
 
         await Assert.That(await Read(ctx, "%name.lang%")).IsEqualTo("is");
         await Assert.That(await Read(ctx, "%name!lang%")).IsEqualTo("is");
@@ -65,7 +65,7 @@ public class KeptMembersTests
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("d", new global::app.data.@this("d", new Dictionary<string, object?> { ["note"] = "x" }, context: ctx));
 
-        var set = await Set(ctx, "%d.note.lang%", new global::app.type.item.text.@this("is"));
+        var set = await Set(ctx, "%d.note.lang%", ctx.Text("is"));
 
         await set.IsFailure();
         await Assert.That(set.Error!.Key).IsEqualTo("CannotSetChild");
@@ -78,7 +78,7 @@ public class KeptMembersTests
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
 
-        var set = await Set(ctx, "%!app.module%", new global::app.type.item.text.@this("mine"));
+        var set = await Set(ctx, "%!app.module%", ctx.Text("mine"));
 
         await set.IsFailure();
         await Assert.That(set.Error!.Key).IsEqualTo("OwnMember");
@@ -99,7 +99,7 @@ public class KeptMembersTests
     public async Task TheAppsMembers_RideItsSnapshot()
     {
         var src = new global::app.@this("/src").Testing();
-        await (await Set(src.actor.list.User.Context, "%!app.home%", new global::app.type.item.text.@this("lights"))).IsSuccess();
+        await (await Set(src.actor.list.User.Context, "%!app.home%", src.actor.list.User.Context.Text("lights"))).IsSuccess();
 
         var snap = src.Snapshot(src.actor.list.User.Context);
         await using var dst = new global::app.@this("/dst").Testing();

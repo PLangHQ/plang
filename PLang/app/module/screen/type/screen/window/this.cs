@@ -55,7 +55,7 @@ public sealed class @this : screen.@this
             var said = await json.Decode(sent, context, "error");
             var error = await said.Get("error");
             var where = await said.Get("where");
-            var record = new global::app.type.item.dict.@this()
+            var record = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)])
                 .Set("at", (Text)DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture))
                 .Set("where", where.Success ? await where.Value() : null)
                 .Set("error", error.Success && await error.Value() is { IsNull: false } what ? what : (Text)System.Text.Encoding.UTF8.GetString(sent));

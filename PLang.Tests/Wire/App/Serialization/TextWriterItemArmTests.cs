@@ -25,7 +25,7 @@ public class TextWriterItemArmTests : System.IAsyncDisposable
 
     [Test]
     public async Task TopLevelTextItem_RendersBare_NotQuoted()
-        => await Assert.That(Render(new global::app.type.item.text.@this("hello"))).IsEqualTo("hello");
+        => await Assert.That(Render(C.Text("hello"))).IsEqualTo("hello");
 
     [Test]
     public async Task TopLevelNumberItem_RendersBareLiteral()
@@ -34,7 +34,7 @@ public class TextWriterItemArmTests : System.IAsyncDisposable
     [Test]
     public async Task TopLevelDictItem_RendersJson()
     {
-        var d = new global::app.type.item.dict.@this();
+        var d = C.Dict();
         d.Set("a", 1);
         await Assert.That(Render(d)).IsEqualTo("{\"a\":1}");
     }

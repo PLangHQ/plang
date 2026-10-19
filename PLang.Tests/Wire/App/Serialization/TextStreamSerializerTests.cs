@@ -246,7 +246,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
         // A container has no bare-text form, so the text writer renders it AS json — it owns
         // BeginObject/BeginArray (no per-type override, no shape selector). A leaf writes bare
         // (see above); a container writes json content. Underpins file-save + http/llm egress.
-        var dict = new global::app.type.item.dict.@this().Set("name", "test");
+        var dict = Ctx.Dict().Set("name", "test");
         using var stream = new MemoryStream();
 
         await Text.Encode(stream, app.Ok(dict), Ctx);

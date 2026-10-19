@@ -191,7 +191,7 @@ public sealed class @this : global::app.channel.type.session.@this
         // in plang's own format the answer is Data, read in that format; a line typed is text — the user's data itself
         if (whole)
             return await format.Decode(ResolveEncoding().GetBytes(line), action.Context, Name, ct: ct);
-        return action.Context.Ok(new global::app.type.item.text.@this(line));
+        return action.Context.Ok(new global::app.type.item.text.@this(line, action.Context.App.type.list[typeof(global::app.type.item.text.@this)]));
     }
 
     // what was read past the last message's end: the start of the next one

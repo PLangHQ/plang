@@ -9,7 +9,7 @@ public class CreateRefusalTests
             "plang-refuse-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var ctx = app.actor.list.User.Context;
 
-        var refused = await app.type.list["dict"].Create(new global::app.type.item.text.@this("hello"), ctx);
+        var refused = await app.type.list["dict"].Create(ctx.Text("hello"), ctx);
 
         await refused.IsFailure();
         await Assert.That(refused.Error!.Key).IsEqualTo("TypeConversionFailed");
@@ -21,7 +21,7 @@ public class CreateRefusalTests
             "plang-refuse-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var ctx = app.actor.list.User.Context;
 
-        var refused = await app.type.list["number"].Create(new global::app.type.item.text.@this("abc"), ctx);
+        var refused = await app.type.list["number"].Create(ctx.Text("abc"), ctx);
 
         await refused.IsFailure();
         await Assert.That(refused.Error!.Key).IsEqualTo("NumberConversionFailed");

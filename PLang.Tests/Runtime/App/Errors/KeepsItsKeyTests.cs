@@ -37,7 +37,7 @@ public class KeepsItsKeyTests : System.IAsyncDisposable
     // A value a type declines to make is the birth's answer, with the reason the type gave — never thrown.
     [Test] public async Task ATypeThatDeclines_AnswersItsOwnReason()
     {
-        var born = await Ctx.App.type.list["number"].Create(new global::app.type.item.text.@this("abc"), Ctx);
+        var born = await Ctx.App.type.list["number"].Create(Ctx.Text("abc"), Ctx);
 
         await born.IsFailure();
         await Assert.That(born.Error!.Key).IsEqualTo("NumberConversionFailed");
@@ -50,7 +50,7 @@ public class KeepsItsKeyTests : System.IAsyncDisposable
         app.goal.list.Add(await RealGoalLoad.ViaChannel(app, Make.Goal(Ctx, "AskAgain", "/AskAgain.goal",
             Make.Step("ask \"again?\"", Make.Action(Ctx, "output", "ask", ("Question", "again?"))))));
         await (await new global::app.module.channel.Set(Ctx)
-            { Name = new global::app.type.item.text.@this("input"), Goal = Make.Call(Ctx, "AskAgain") }.Start()).IsSuccess();
+            { Name = Ctx.Text("input"), Goal = Make.Call(Ctx, "AskAgain") }.Start()).IsSuccess();
 
         var asked = await Make.Action(Ctx, "output", "ask", ("Question", "hi?")).Start(Ctx);
 
@@ -94,7 +94,7 @@ public class KeepsItsKeyTests : System.IAsyncDisposable
     // The wire marker can't be a dict key: the write answers ReservedKey.
     [Test] public async Task TheWireMarkerAsADictKey_IsReservedKey()
     {
-        var d = new global::app.data.@this("d", new global::app.type.item.dict.@this(), context: Ctx);
+        var d = new global::app.data.@this("d", Ctx.Dict(), context: Ctx);
 
         var written = await d.Set("@schema", false, 1);
 

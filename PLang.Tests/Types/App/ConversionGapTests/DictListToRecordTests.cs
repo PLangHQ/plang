@@ -17,9 +17,9 @@ public class DictListToRecordTests : System.IAsyncDisposable
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
-    private static Dict D(params (string Key, object? Value)[] entries)
+    private Dict D(params (string Key, object? Value)[] entries)
     {
-        var d = new Dict();
+        var d = Ctx.Dict();
         foreach (var (k, v) in entries) d.Set(k, v);
         return d;
     }

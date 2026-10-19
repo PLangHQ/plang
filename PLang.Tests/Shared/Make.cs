@@ -303,7 +303,7 @@ public static class Make
     public static global::app.type.item.dict.@this Dict(
         System.Collections.IDictionary raw, global::app.actor.context.@this context)
     {
-        var d = new global::app.type.item.dict.@this();
+        var d = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
         foreach (System.Collections.DictionaryEntry e in raw)
             d.Set(e.Key.ToString()!, e.Value);
         return d;

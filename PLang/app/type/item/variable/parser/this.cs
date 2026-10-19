@@ -247,7 +247,7 @@ public sealed class @this
     {
         if (_pos >= _end) return null;
         var c = _text[_pos];
-        if (c is '"' or '\'') return Quoted() is { } s ? new global::app.type.item.text.@this(s) : null;
+        if (c is '"' or '\'') return Quoted() is { } s ? (global::app.type.item.text.@this)s : null;
         if (char.IsDigit(c) || (c == '-' && _pos + 1 < _end && char.IsDigit(_text[_pos + 1]))) return Number();
         if (c == '%') return Nested(_pos);
         if (bare) return Bare();

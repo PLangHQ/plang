@@ -34,7 +34,7 @@ public sealed class @this : global::app.type.item.@this
     public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
         => new(First is not { } name ? data.Empty
             : data.Context is { } context ? context.App.type.list["text"].Make(name, context)
-            : new global::app.type.item.text.@this(name));
+            : (global::app.type.item.text.@this)name);
 
     /// <summary><c>.list</c> is every key; any other step walks the first key.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)

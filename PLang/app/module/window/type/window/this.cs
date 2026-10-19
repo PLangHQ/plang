@@ -26,10 +26,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     [LlmBuilder, Out] public global::app.type.item.number.@this Id => Number;
 
     /// <summary>The page it shows.</summary>
-    [LlmBuilder, Out] public global::app.type.item.text.@this Url => new(Address);
+    [LlmBuilder, Out] public global::app.type.item.text.@this Url => Address;
 
     /// <summary>Its title.</summary>
-    [LlmBuilder, Out] public global::app.type.item.text.@this Title => new(Named);
+    [LlmBuilder, Out] public global::app.type.item.text.@this Title => Named;
 
     internal long Number { get; private set; } = -1;
     /// <summary>DevTools' id for its page, once shown.</summary>
@@ -136,7 +136,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         // the arguments as one object: a dict writes itself as json. They leave for the page here, so each is opened
         // to what it holds (a file reference to its content), as a channel does
-        var arguments = new global::app.type.item.dict.@this();
+        var arguments = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
         if (parameter != null && await parameter.Value() is global::app.type.item.list.@this list)
             foreach (var argument in list.Items(context))
                 if (argument.Peek() is { IsNull: false })

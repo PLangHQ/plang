@@ -32,7 +32,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(global::app.actor.context.@this context)
     {
         Context = context;
-        Entries = new global::app.type.item.dict.@this();
+        Entries = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
     }
 
     /// <summary>

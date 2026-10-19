@@ -114,7 +114,8 @@ public class @this<T, L> : @this
     // asker sees.
     private async System.Threading.Tasks.ValueTask<data.@this> Named(data.@this parent, string key)
     {
-        if (await T.Select(new global::app.type.item.text.@this(key), parent.Context) is { IsInitialized: true } selected)
+        if (await T.Select(new global::app.type.item.text.@this(key, _app.type.list[typeof(global::app.type.item.text.@this)]), parent.Context)
+            is { IsInitialized: true } selected)
             return selected.Success ? new data.@this(key, selected.Peek(), parent: parent) : selected;
         var found = await Find(Of(parent.Context).Walk(null, parent.Context), key, parent.Context);
         if (!found.Success) return found;

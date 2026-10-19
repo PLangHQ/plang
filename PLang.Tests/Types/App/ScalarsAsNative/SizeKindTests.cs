@@ -63,7 +63,7 @@ public class SizeKindTests : System.IAsyncDisposable
         var context = app.actor.list.User.Context;
 
         var set = await new global::app.type.item.variable.parser.@this("%!app.type.size.setting.standard%").Variable.Single()
-            .Set(context.Ok(new global::app.type.item.text.@this("si")), context);
+            .Set(context.Ok(context.Text("si")), context);
         var standard = await Read(context, "%!app.type.size.setting.standard%");
 
         await set.IsSuccess();

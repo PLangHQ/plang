@@ -40,7 +40,7 @@ public sealed class @this : global::app.type.item.@this
     /// <c>{% if t.Description %}</c> is false for a type that says nothing.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
         => await Text(data.Context!) is { Length: > 0 } words
-            ? new global::app.type.item.text.@this(words)
+            ? new global::app.type.item.text.@this(words, data.Context!.App.type.list[typeof(global::app.type.item.text.@this)])
             : data.Empty;
 
     /// <summary>The words it reads as now, for <paramref name="context"/>.</summary>

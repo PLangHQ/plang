@@ -44,7 +44,8 @@ public sealed class @this
         {
             var read = await _field.Settle();
             if (!read.Success) return read;
-            by = (await read.Value())?.ToString() is { Length: > 0 } name ? new global::app.type.item.text.@this(name) : null;
+            by = (await read.Value())?.ToString() is { Length: > 0 } name
+                ? new global::app.type.item.text.@this(name, context.App.type.list[typeof(global::app.type.item.text.@this)]) : null;
         }
         return await rows.Sort(by, _desc, context);
     }

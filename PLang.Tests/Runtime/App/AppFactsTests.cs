@@ -67,7 +67,7 @@ public class AppFactsTests
         var user = app.actor.list.User.Context;
 
         var set = await new global::app.type.item.variable.parser.@this("%!app.setting.name%").Variable.Single()
-            .Set(user.Ok(new global::app.type.item.text.@this("Shop")), user);
+            .Set(user.Ok(user.Text("Shop")), user);
         var name = await Read(app, "%!app.name%");
 
         await set.IsSuccess();

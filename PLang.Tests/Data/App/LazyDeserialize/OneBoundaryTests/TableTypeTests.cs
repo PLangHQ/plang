@@ -57,8 +57,9 @@ public class TableTypeTests
     // columns, headers). The csv reader produces that surface.
     [Test] public async Task Table_AdvertisesGridShape_RowsColumnsHeaders()
     {
+        await using var app = NewApp();
         var t = (table)global::app.type.table.serializer.csv.Read(Csv, "csv",
-            new global::app.type.reader.ReadContext(null))!;
+            new global::app.type.reader.ReadContext(app.actor.list.User.Context))!;
         await Assert.That(t.Headers.Count).IsEqualTo(2);
         await Assert.That(t.Rows.Count).IsEqualTo(2);
         await Assert.That(t.Headers[0]).IsEqualTo("name");
@@ -108,8 +109,9 @@ public class TableTypeTests
     // surface exposes Rows (each keyed by header) and Headers.
     [Test] public async Task TableNavigation_IsByRowAndColumn_NotByKey()
     {
+        await using var app = NewApp();
         var t = (table)global::app.type.table.serializer.csv.Read(Csv, "csv",
-            new global::app.type.reader.ReadContext(null))!;
+            new global::app.type.reader.ReadContext(app.actor.list.User.Context))!;
         await Assert.That(t.Rows[0]["name"]).IsEqualTo((object?)"Ada");
         await Assert.That(t.Rows[1]["age"]).IsEqualTo((object?)"40");
     }

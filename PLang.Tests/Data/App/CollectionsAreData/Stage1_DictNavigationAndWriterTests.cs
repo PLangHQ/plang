@@ -24,7 +24,7 @@ public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
         // variable/navigator/Dictionary collapses: when data.Value is dict, navigation
         // is `d.Get(key)`. The three-arm shape dispatch (IDictionary / generic IDictionary<,>
         // / JsonObject) and the reflection fallback are gone for the dict case (C).
-        var u = new Dict();
+        var u = app.actor.list.User.Context.Dict();
         u.Set(app.Data("name", "a"));
         u.Set(app.Data("age", 30L));
         var data = app.Data("u", u);

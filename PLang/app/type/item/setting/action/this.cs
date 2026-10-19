@@ -16,11 +16,16 @@ public sealed class @this : global::app.type.item.setting.@this
     /// <summary>The settings of the action's module — where an option the action's own don't set is read next.</summary>
     internal global::app.type.item.setting.module.@this Module { get; }
 
-    /// <param name="action">The action as the catalog has it.</param>
-    public @this(global::app.goal.step.action.@this action) : this(action, new global::app.type.item.setting.module.@this(action.Module.Name)) { }
+    /// <param name="action">The action as the catalog has it; it and its module's settings are born holding the app's
+    /// types, the app its module is in.</param>
+    public @this(global::app.goal.step.action.@this action) : this(action, action.Module.App.type.list) { }
 
-    private @this(global::app.goal.step.action.@this action, global::app.type.item.setting.module.@this module)
-        : base($"{action.Module.Name}.{action.Name}.setting")
+    private @this(global::app.goal.step.action.@this action, global::app.type.list.@this types)
+        : this(action, new global::app.type.item.setting.module.@this(action.Module.Name, types[typeof(global::app.type.item.setting.module.@this)]),
+            types[typeof(@this)]) { }
+
+    private @this(global::app.goal.step.action.@this action, global::app.type.item.setting.module.@this module, global::app.type.@this type)
+        : base($"{action.Module.Name}.{action.Name}.setting", type)
     {
         _action = action;
         Module = module;

@@ -122,7 +122,7 @@ public class VerifyActionTests
     public async Task Verify_TamperedAlgorithm_Error()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        var tampered = Tampered(signed, algorithm: new global::app.type.item.text.@this("unknown-algo"));
+        var tampered = Tampered(signed, algorithm: Ctx.Text("unknown-algo"));
 
         var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" });
         await result.IsFailure();

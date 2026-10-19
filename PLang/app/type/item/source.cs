@@ -186,7 +186,7 @@ public class source : @this
             // A partial template is a text's to render, as Output hands it to one: the text fills the
             // variables this source holds, and this type makes itself from the text it renders to (a path
             // from its text, as from any text). What a variable held is filled once, never read as a template.
-            if (Text is { } template)
+            if (Text(asking) is { } template)
             {
                 var made = Type.Make(await template.Value(data), asking);
                 made.history.Add(this);
@@ -280,10 +280,11 @@ public class source : @this
 
     /// <summary>The text a partial template is, off its text face (a byte raw declared text is its UTF-8) —
     /// the one renderer fills it. Null for a plain source and a whole <c>%ref%</c> (a reference, resolved
-    /// through the variable's own door); a wire's slice is no text (it overrides).</summary>
-    private protected virtual global::app.type.item.text.@this? Text
+    /// through the variable's own door); a wire's slice is no text (it overrides). Born holding the app's template
+    /// text type, as <paramref name="context"/>'s types hold it.</summary>
+    private protected virtual global::app.type.item.text.@this? Text(actor.context.@this context)
         => HasVariable && !IsVariable && Peek() is string template
-            ? new(template, new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, Type.Template), _variable)
+            ? new(template, context.App.type.list[new global::app.type.@this("text", template: Type.Template), context], _variable)
             : null;
 
     /// <summary>The type reads its own raw form — the declaration is the whole selector. One
@@ -408,7 +409,8 @@ public class source : @this
             throw new global::app.error.VariableNotFoundException(resolved?.Name ?? template.Trim('%'));
         }
         // a partial template is a text's to render: hand over to one
-        await new global::app.type.item.text.@this(template, new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, Type.Template), _variable).Output(writer, mode, context);
+        await new global::app.type.item.text.@this(template,
+            context.App.type.list[new global::app.type.@this("text", template: Type.Template), context], _variable).Output(writer, mode, context);
     }
 
 

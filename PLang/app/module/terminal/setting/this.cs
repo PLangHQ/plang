@@ -14,7 +14,7 @@ public sealed class @this : global::app.type.item.setting.module.@this
 
     /// <summary>Environment variables set for every program, e.g. <c>{"WSL_UTF8":"1"}</c>. A step's own
     /// <c>Environment</c> is merged over these.</summary>
-    [Out, Store] public global::app.type.item.dict.@this Environment { get; set; } = new();
+    [Out, Store] public global::app.type.item.dict.@this Environment { get; set; }
 
     /// <summary>Text encoding of the program's output. Default utf-8.</summary>
     [Out, Store] public global::app.type.item.text.@this Encoding { get; set; } = "utf-8";

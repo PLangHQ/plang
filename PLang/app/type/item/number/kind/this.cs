@@ -25,6 +25,10 @@ public abstract class @this : global::app.type.kind.@this<global::app.type.item.
     /// <summary>Write a number of this kind to the wire — the kind emits its own token.</summary>
     public abstract void Write(global::app.type.item.number.@this value, global::app.type.format.IWriter writer);
 
+    /// <summary>A value of this kind written through its type's kind (<c>Type.kind.Write</c>): a number's token.</summary>
+    public override void Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        => Write((global::app.type.item.number.@this)value, writer);
+
     /// <summary>Read a number of this kind off the wire — the inverse of <see cref="Write"/>.</summary>
     public abstract global::app.type.item.@this Read<TReader>(ref TReader reader)
         where TReader : global::app.type.format.IReader, allows ref struct;

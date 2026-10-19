@@ -41,7 +41,7 @@ public class @this : global::app.type.item.source
         : base.RawText;
 
     // A slice is no text: decoded, its parts render themselves (a %ref% leaf is the value it names).
-    private protected override global::app.type.item.text.@this? Text => null;
+    private protected override global::app.type.item.text.@this? Text(global::app.actor.context.@this context) => null;
 
     // The slice's own read keeps whose bytes they are: a row nested in the build's slice (a goal call's
     // parameters) is the build's too.

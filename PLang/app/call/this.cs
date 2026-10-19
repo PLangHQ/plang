@@ -166,7 +166,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// Free-form tags written through <see cref="Tag"/> — a plang dict, read as any dict
     /// (<c>%!callStack.Current.Caller.Tags.foo%</c>). Always allocated, so no lazy-init race.
     /// </summary>
-    public global::app.type.item.dict.@this Tags { get; } = new();
+    public global::app.type.item.dict.@this Tags { get; }
 
     // Parallel branches tag one caller's frame; the frame serializes the merge into its dict.
     private readonly object _tagging = new();
@@ -202,6 +202,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         global::app.call.list.@this stack,
         global::app.type.@this datetime,
         global::app.type.@this duration,
+        global::app.type.@this dict,
         @this? previousCurrent,
         Variables? diffSource,
         IEnumerable<global::app.data.@this>? names = null,
@@ -219,7 +220,8 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         _for = held;
         _datetime = datetime;
         _duration = duration;
-        Errors = new global::app.error.list.@this(stack.Audit.Type);
+        Tags = new global::app.type.item.dict.@this(dict);
+        Errors =new global::app.error.list.@this(stack.Audit.Type);
         Children = new child.list.@this(stack);
         foreach (var name in names ?? [])
         {

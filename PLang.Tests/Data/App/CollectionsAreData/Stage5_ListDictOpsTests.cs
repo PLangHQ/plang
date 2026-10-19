@@ -17,8 +17,8 @@ public class Stage5_ListDictOpsTests
     [After(Test)] public async Task TearDown() { await _app.DisposeAsync(); }
     private global::app.actor.context.@this Ctx() => _app.actor.list.User.Context;
     private Data D(object? v) => _app.Data("", v);
-    private DictV Person(string field, object? val) { var d = new DictV(); d.Set(_app.Data(field, val)); return d; }
-    private global::app.type.item.text.@this Text(string s) => new(s);
+    private DictV Person(string field, object? val) { var d = Ctx().Dict(); d.Set(_app.Data(field, val)); return d; }
+    private global::app.type.item.text.@this Text(string s) => Ctx().Text(s);
     private global::app.type.item.@bool.@this Desc(bool b) => Ctx().Bool(b);
 
     [Test]

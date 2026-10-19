@@ -33,8 +33,9 @@ public sealed partial class @this(IProgram asked)
     /// <summary>It gets a pipe pair beside its standard streams (fd 3 in, fd 4 out).</summary>
     internal bool Pipe { get; private set; }
 
-    /// <summary>The terminal's settings it runs by: the actor's, or the defaults for a start trusted by its origin.</summary>
-    internal setting.@this Setting { get; private set; } = new(new global::app.type.@this(typeof(setting.@this)));
+    /// <summary>The terminal's settings it runs by: the actor's, or the defaults for a start trusted by its origin —
+    /// read by <see cref="Prepare"/>, before it runs.</summary>
+    internal setting.@this Setting { get; private set; } = null!;
 
     /// <summary>The program found and permitted, with its arguments, environment and folder, held when the step gives
     /// it permissions; or why not (null when ready).</summary>

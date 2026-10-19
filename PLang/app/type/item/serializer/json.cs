@@ -64,9 +64,9 @@ public partial class json
     // template survives the container's fresh-per-read); a literal slot stays a raw scalar
     // (flagging it would change its canonicalization/signing). A runtime-ingest slot is
     // never a template (injection-safe). The text takes the row's variables it holds.
-    private static object? StringSlot(string s, global::app.type.reader.ReadContext? ctx)
+    private object? StringSlot(string s, global::app.type.reader.ReadContext? ctx)
         => ctx?.Template is { } template
-           && new text.@this(s, new global::app.type.@this("text", typeof(text.@this), null, false, template), ctx.Variable) is { HasVariable: true } held
+           && new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable) is { HasVariable: true } held
             ? held
             : s;
 
@@ -163,7 +163,7 @@ public partial class json
     {
         // An authored container is born with its template mode so its `%ref%` leaves re-resolve
         // on read (dict.@this.Value → Resolve); a runtime-ingest read (ctx null) stays literal.
-        var d = new dict.@this(new global::app.type.@this("dict", typeof(dict.@this), null, false, ctx?.Template));
+        var d = new dict.@this(_context.App.type.list[new global::app.type.@this("dict", template: ctx?.Template), _context]);
         foreach (var prop in element.EnumerateObject())
             d.Set(prop.Name, RawSlot(prop.Value, ctx, depth + 1));
         return d;
@@ -205,17 +205,17 @@ public partial class json
     // container (ctx.Template set) it rides as a STAMPED text template so it re-resolves on
     // read; a runtime-ingest slot (ctx null) stays a raw string (injection-safe, and a bare
     // literal keeps its canonicalization). Only a plain literal with no %ref% is born native text.
-    private static object TextLeaf(string s, global::app.type.reader.ReadContext? ctx)
+    private object TextLeaf(string s, global::app.type.reader.ReadContext? ctx)
     {
         // if/return, NOT a ternary: the common type of (string, text.@this)
         // would silently convert the wrapper back via text's implicit operator.
         if (ctx?.Template is { } template)
         {
-            var held = new text.@this(s, new global::app.type.@this("text", typeof(text.@this), null, false, template), ctx.Variable);
+            var held = new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable);
             if (held.HasVariable) return held;
         }
         else if (s.Contains('%') && new global::app.type.item.variable.parser.@this(s).Variable.Count > 0)
             return s;
-        return new text.@this(s);
+        return new text.@this(s, _context.App.type.list[typeof(text.@this)]);
     }
 }

@@ -59,7 +59,7 @@ public class TakesTests : System.IAsyncDisposable
 
     [Test] public async Task ADict_DeclaredATypedList_IsHeld()
     {
-        var dict = new global::app.type.item.dict.@this();
+        var dict = Ctx.Dict();
 
         var made = Declared("list", "path").Make(dict, Ctx);
 

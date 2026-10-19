@@ -21,19 +21,28 @@ public sealed partial class @this
     // precision settings ride as whole plang values (choice). The op unwraps them at the leaf
     // (the internal DoOp takes the enum; choice → enum is implicit) — no decompose at the call.
     public @this Add(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Wrap(() => DoOp(this, b, ArithOp.Add, overflow, precision));
+        => Derived(Wrap(() => DoOp(this, b, ArithOp.Add, overflow, precision)), b);
     public @this Subtract(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Wrap(() => DoOp(this, b, ArithOp.Sub, overflow, precision));
+        => Derived(Wrap(() => DoOp(this, b, ArithOp.Sub, overflow, precision)), b);
     public @this Multiply(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Wrap(() => DoOp(this, b, ArithOp.Mul, overflow, precision));
+        => Derived(Wrap(() => DoOp(this, b, ArithOp.Mul, overflow, precision)), b);
     public @this Modulo(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Wrap(() => DoOp(this, b, ArithOp.Mod, overflow, precision));
+        => Derived(Wrap(() => DoOp(this, b, ArithOp.Mod, overflow, precision)), b);
     public @this Divide(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Wrap(() => DoDivide(this, b, precision));
+        => Derived(Wrap(() => DoDivide(this, b, precision)), b);
     public @this IntDivide(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Wrap(() => DoIntDivide(this, b, overflow));
+        => Derived(Wrap(() => DoIntDivide(this, b, overflow)), b);
     public @this Power(@this exponent, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Wrap(() => DoPower(this, exponent, overflow, precision));
+        => Derived(Wrap(() => DoPower(this, exponent, overflow, precision)), exponent);
+
+    // A result of this number's kind (or the other operand's) is a derived birth: it holds that one's type, the
+    // app's. A result whose kind climbed (int → long) keeps the operator's birth — its {number, <kind>} built from
+    // the class — until the kinds item finds the app's through its operand's family.
+    private @this Derived(@this made, @this? other = null)
+        => ReferenceEquals(made, this) || ReferenceEquals(made, other) ? made
+         : string.Equals(made.Kind.Name, Kind.Name, System.StringComparison.OrdinalIgnoreCase) ? new(Type, made)
+         : other != null && string.Equals(made.Kind.Name, other.Kind.Name, System.StringComparison.OrdinalIgnoreCase) ? new(other.Type, made)
+         : made;
 
     // A pure numeric op returns its VALUE and THROWS a keyed AppException on error. It has no
     // context, so it cannot born an error Data — the context-ful boundary (the math.* handler /

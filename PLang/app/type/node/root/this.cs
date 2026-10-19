@@ -64,7 +64,7 @@ public sealed class @this : global::app.type.node.@this<global::app.type.@this, 
     /// <summary>One step by dot: <c>format</c> is the format in play for the asker; any other key as every node's.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
         => string.Equals(key, "format", System.StringComparison.OrdinalIgnoreCase)
-            ? new global::app.data.@this(key, new global::app.type.item.text.@this(Spelled(FormatOf(parent.Context))), parent: parent)
+            ? new global::app.data.@this(key, new global::app.type.item.text.@this(Spelled(FormatOf(parent.Context)), list["text"]), parent: parent)
             : await base.Get(parent, key);
 
     /// <summary><c>format</c> written: the writing goal's format from now until it returns — its call frame's. A

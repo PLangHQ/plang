@@ -316,7 +316,7 @@ public class ArchiveActionTests : IDisposable
     {
         var archive = (Archive)(await (await Pack(Text("big", new string('x', 10_000)))).Value())!;
         await (await new global::app.type.item.variable.parser.@this("%!archive.setting.max%").Variable.Single()
-            .Set(Ctx.Ok(new global::app.type.item.text.@this("1 kB")), Ctx)).IsSuccess();
+            .Set(Ctx.Ok(Ctx.Text("1 kB")), Ctx)).IsSuccess();
 
         var restored = await Unpack(archive);
 

@@ -73,7 +73,7 @@ public sealed class @this : global::app.type.kind.@this
     public override global::app.type.item.@this? Parse(object raw, global::app.actor.context.@this ctx)
     {
         if (raw is not (string or byte[])) return null;                        // decline — not a raw json payload
-        var s = new global::app.type.item.text.@this(raw).ToString();
+        var s = new global::app.type.item.text.@this(raw, ctx.App.type.list[typeof(global::app.type.item.text.@this)]).ToString();
         if (string.IsNullOrEmpty(s)) return global::app.type.item.@this.Create(null, ctx);    // empty → the null value (NOT a decline)
         // json parses itself into a plang value (decision 774, ruling 9): an object into a dict, an array into
         // a list, each read through its own type's reader over the json token stream — no JsonElement carrier,

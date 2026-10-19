@@ -25,7 +25,8 @@ public sealed class signature : ISchemaReader
         // Stream the layer's fields off the reader (no FromWire/DOM). The inner `value` IS a
         // Data — it reads through the data reader (recurse), so the verify re-hashes the same
         // reconstruction the writer produced.
-        global::app.type.item.text.@this algorithm = new("ed25519"), nonce = new(""), identity = new("");
+        var text = context.App.type.list[typeof(global::app.type.item.text.@this)];
+        global::app.type.item.text.@this algorithm = new("ed25519", text), nonce = new("", text), identity = new("", text);
         System.DateTimeOffset created = default;
         System.DateTimeOffset? expires = null;
         // the hash's kind is what the layer says — none said, the signature is refused below, never a kind guessed
@@ -44,17 +45,17 @@ public sealed class signature : ISchemaReader
             switch (key.ToLowerInvariant())
             {
                 case "@schema": reader.Skip(); break;
-                case "type": algorithm = new(reader.String()); break;
-                case "nonce": nonce = new(reader.String()); break;
+                case "type": algorithm = new(reader.String(), text); break;
+                case "nonce": nonce = new(reader.String(), text); break;
                 case "created": created = reader.DateTimeOffset(); break;
                 case "expires": expires = reader.Null() ? null : reader.DateTimeOffset(); break;
-                case "identity": identity = new(reader.String()); break;
+                case "identity": identity = new(reader.String(), text); break;
                 case "contracts":
                 {
                     reader.BeginArray();
                     var items = new System.Collections.Generic.List<Data>();
                     while (reader.NextElement())
-                        items.Add(context.Ok(new global::app.type.item.text.@this(reader.String())));
+                        items.Add(context.Ok(new global::app.type.item.text.@this(reader.String(), text)));
                     reader.EndArray();
                     contracts = new global::app.type.item.list.@this(items, context.App.type.list["list"]);
                     break;

@@ -24,7 +24,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("goal", kind), ctx.Context]);
         // a goal written by its name is that name
         if (reader.Peek() == global::app.type.format.TokenKind.String)
-            return new global::app.type.item.text.@this(reader.String());
+            return new global::app.type.item.text.@this(reader.String(), ctx.Context.App.type.list[typeof(global::app.type.item.text.@this)]);
         return Walk(ref reader, ctx);
     }
 

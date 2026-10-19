@@ -141,7 +141,7 @@ public class VariablesTests : System.IAsyncDisposable
         await using var app = new global::app.@this("/test").Testing();
         var stack = app.actor.list.User.Context.Variable;
 
-        var person = new global::app.type.item.dict.@this();
+        var person = stack.Context.Dict();
         person.Set("Name", "John");
         person.Set("Age", 30L);
         await stack.Set("person", person);
@@ -174,10 +174,10 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_SetsNestedProperty()
     {
         var stack = _app.actor.list.User.Context.Variable;
-        var address = new global::app.type.item.dict.@this();
+        var address = stack.Context.Dict();
         address.Set("Street", "Main St");
         address.Set("City", "Springfield");
-        var person = new global::app.type.item.dict.@this();
+        var person = stack.Context.Dict();
         person.Set("Name", "John");
         person.Set("Address", address);
         await stack.Set("person", person);
@@ -192,7 +192,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_CaseInsensitive()
     {
         var stack = _app.actor.list.User.Context.Variable;
-        var person = new global::app.type.item.dict.@this();
+        var person = stack.Context.Dict();
         person.Set("Name", "John");
         await stack.Set("person", person);
 
@@ -207,7 +207,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_DictionaryValue()
     {
         var stack = _app.actor.list.User.Context.Variable;
-        var user = new global::app.type.item.dict.@this();
+        var user = stack.Context.Dict();
         user.Set("name", "John");
         user.Set("age", 30L);
         await stack.Set("user", user);
@@ -238,7 +238,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_NewProperty_AddsKey()
     {
         var stack = _app.actor.list.User.Context.Variable;
-        var person = new global::app.type.item.dict.@this();
+        var person = stack.Context.Dict();
         person.Set("Name", "John");
         await stack.Set("person", person);
 
@@ -256,7 +256,7 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_NewProperty_CaseInsensitive()
     {
         var stack = _app.actor.list.User.Context.Variable;
-        var person = new global::app.type.item.dict.@this();
+        var person = stack.Context.Dict();
         person.Set("Name", "John");
         await stack.Set("person", person);
 
@@ -271,8 +271,8 @@ public class VariablesTests : System.IAsyncDisposable
     public async Task Set_DotPath_WithBracketIndex()
     {
         var stack = _app.actor.list.User.Context.Variable;
-        var alice = new global::app.type.item.dict.@this(); alice.Set("Name", "Alice");
-        var bob = new global::app.type.item.dict.@this(); bob.Set("Name", "Bob");
+        var alice = stack.Context.Dict(); alice.Set("Name", "Alice");
+        var bob = stack.Context.Dict(); bob.Set("Name", "Bob");
         var people = new global::app.type.item.list.@this(_app.type.list["list"]);
         people.Add(_app.Data("", alice));
         people.Add(_app.Data("", bob));
@@ -291,8 +291,8 @@ public class VariablesTests : System.IAsyncDisposable
         // lives in — its context.Variable. Use the real store (not a detached `new Variables`,
         // whose context.Variable points elsewhere) so idx and people share one scope, as in production.
         var stack = _app.actor.list.User.Context.Variable;
-        var alice = new global::app.type.item.dict.@this(); alice.Set("Name", "Alice");
-        var bob = new global::app.type.item.dict.@this(); bob.Set("Name", "Bob");
+        var alice = stack.Context.Dict(); alice.Set("Name", "Alice");
+        var bob = stack.Context.Dict(); bob.Set("Name", "Bob");
         var people = new global::app.type.item.list.@this(_app.type.list["list"]);
         people.Add(_app.Data("", alice));
         people.Add(_app.Data("", bob));

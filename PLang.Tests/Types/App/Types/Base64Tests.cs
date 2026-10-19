@@ -45,8 +45,8 @@ public class Base64Tests : System.IAsyncDisposable
 
     [Test] public async Task AsBase64_EncodesText_Lazily()
     {
-        var given = app.actor.list.User.Context.Ok(new text("hello"));
-        var b64 = base64.Create(new text("hello"), B64, given);
+        var given = app.actor.list.User.Context.Ok(app.actor.list.User.Context.Text("hello"));
+        var b64 = base64.Create(app.actor.list.User.Context.Text("hello"), B64, given);
         var ready = await b64!.Value(app.actor.list.User.Context.Ok(b64));
         await Assert.That(ready.ToString()).IsEqualTo("aGVsbG8=");     // base64("hello"), NOT validate
     }
@@ -66,8 +66,8 @@ public class Base64Tests : System.IAsyncDisposable
     [Test] public async Task AsBase64_InATemplate_WritesItsPayload()
     {
         var ctx = app.actor.list.User.Context;
-        var given = ctx.Ok(new text("hello"));
-        await ctx.Variable.Set("b64", base64.Create(new text("hello"), B64, given));
+        var given = ctx.Ok(ctx.Text("hello"));
+        await ctx.Variable.Set("b64", base64.Create(ctx.Text("hello"), B64, given));
         var line = new global::app.data.@this("line", new text("pcm:%b64%", new global::app.type.@this("text", typeof(text), null, false, new global::app.type.item.template.kind.plang.@this())), context: ctx);
         await Assert.That((await line.Value())?.ToString()).IsEqualTo("pcm:aGVsbG8=");
     }

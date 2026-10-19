@@ -174,7 +174,7 @@ public class RequestActionTests
     {
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/speech",
             Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
-            Body = new global::app.data.@this("", new global::app.type.item.text.@this("a note"), context: Ctx),
+            Body = new global::app.data.@this("", Ctx.Text("a note"), context: Ctx),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);

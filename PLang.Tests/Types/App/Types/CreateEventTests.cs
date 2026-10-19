@@ -71,7 +71,7 @@ public class CreateEventTests : System.IAsyncDisposable
         var fired = 0;
         On("number", global::app.@event.When.before, (data, _) => { fired++; return data; });
 
-        var born = await app.type.list["number"].Create(new global::app.type.item.text.@this("42"), Ctx);
+        var born = await app.type.list["number"].Create(Ctx.Text("42"), Ctx);
 
         await born.IsSuccess();
         await Assert.That((await born.Value())?.ToString()).IsEqualTo("42");

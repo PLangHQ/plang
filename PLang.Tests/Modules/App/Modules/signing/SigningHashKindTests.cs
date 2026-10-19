@@ -32,7 +32,7 @@ public class SigningHashKindTests
         {
             var ctx = app.actor.list.User.Context;
             await (await new global::app.type.item.variable.parser.@this("%!signing.setting.hash%").Variable.Single()
-                .Set(ctx.Ok(new global::app.type.item.text.@this("sha256")), ctx)).IsSuccess();
+                .Set(ctx.Ok(ctx.Text("sha256")), ctx)).IsSuccess();
 
             var wire = await Written(app, ctx, "signed with sha256");
             var back = await app.type.list["wire"].kind["plang"]!.Decode(wire, ctx);

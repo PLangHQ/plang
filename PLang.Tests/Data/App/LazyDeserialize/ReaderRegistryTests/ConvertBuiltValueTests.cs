@@ -24,7 +24,7 @@ public class ConvertBuiltValueTests
     {
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var built = new global::app.type.item.text.@this("5");
+        var built = ctx.Text("5");
         // Create re-types a built leaf directly (leaf branch) — eager, no Data wrapper.
         var result = ctx.App.type.list["number"].Make(built, ctx);
         await Assert.That(result).IsTypeOf<global::app.type.item.number.@this>();
@@ -35,7 +35,7 @@ public class ConvertBuiltValueTests
     {
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var built = new global::app.type.item.text.@this("abc");
+        var built = ctx.Text("abc");
         // The build-time safety net: a bad literal must THROW (the throw boundary),
         // never be silently held as the original text (which would pass validation).
         // A throw rides MaterializeFailed at the source boundary; validateResponse

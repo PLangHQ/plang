@@ -18,17 +18,17 @@ public class TextWrapperTests : System.IAsyncDisposable
     public async Task Text_Length_ReturnsCodepointCount()
     {
         // Length via a method on the wrapper, not via raw string fallback.
-        await Assert.That(new Text("hello").Length).IsEqualTo(5);
-        await Assert.That(new Text("").Length).IsEqualTo(0);
+        await Assert.That(app.actor.list.User.Context.Text("hello").Length).IsEqualTo(5);
+        await Assert.That(app.actor.list.User.Context.Text("").Length).IsEqualTo(0);
     }
 
     [Test]
     public async Task Text_CaseAndTrim_ReturnTextNotRawString()
     {
         // upper/lower/trim return text.@this, not raw string — flow stays native.
-        Text upper = new Text("abc").ToUpper();
-        Text lower = new Text("ABC").ToLower();
-        Text trimmed = new Text("  x  ").Trim();
+        Text upper = app.actor.list.User.Context.Text("abc").ToUpper();
+        Text lower = app.actor.list.User.Context.Text("ABC").ToLower();
+        Text trimmed = app.actor.list.User.Context.Text("  x  ").Trim();
         await Assert.That(upper.ToString()).IsEqualTo("ABC");
         await Assert.That(lower.ToString()).IsEqualTo("abc");
         await Assert.That(trimmed.ToString()).IsEqualTo("x");
@@ -38,7 +38,7 @@ public class TextWrapperTests : System.IAsyncDisposable
     public async Task Text_ContainsStartsEndsWith_BehavioralOps()
     {
         // contains/startsWith/endsWith on the wrapper; case-insensitive policy.
-        var s = new Text("Hello World");
+        var s = app.actor.list.User.Context.Text("Hello World");
         await Assert.That(s.Contains("world")).IsTrue();
         await Assert.That(s.StartsWith("hello")).IsTrue();
         await Assert.That(s.EndsWith("WORLD")).IsTrue();
@@ -49,16 +49,16 @@ public class TextWrapperTests : System.IAsyncDisposable
     public async Task Text_Substring_BehavioralOp()
     {
         // substring(start, len) returns text.
-        await Assert.That(new Text("hello").Substring(1, 3).ToString()).IsEqualTo("ell");
+        await Assert.That(app.actor.list.User.Context.Text("hello").Substring(1, 3).ToString()).IsEqualTo("ell");
     }
 
     [Test]
     public async Task Text_Order_OrdinalCompare()
     {
         // text orders ordinally through its Compare hook; "a" < "b".
-        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, new Text("a"), new Text("b"))).IsLessThan(0);
-        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, new Text("b"), new Text("a"))).IsGreaterThan(0);
-        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, new Text("a"), new Text("A"))).IsEqualTo(0); // case-insensitive
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, app.actor.list.User.Context.Text("a"), app.actor.list.User.Context.Text("b"))).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, app.actor.list.User.Context.Text("b"), app.actor.list.User.Context.Text("a"))).IsGreaterThan(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, app.actor.list.User.Context.Text("a"), app.actor.list.User.Context.Text("A"))).IsEqualTo(0); // case-insensitive
     }
 
     [Test]
@@ -66,8 +66,8 @@ public class TextWrapperTests : System.IAsyncDisposable
     {
         // text("a") and text("a") are Equal AND share GetHashCode — usable as a
         // dict key and inside a HashSet without surprise.
-        var a1 = new Text("a");
-        var a2 = new Text("a");
+        var a1 = app.actor.list.User.Context.Text("a");
+        var a2 = app.actor.list.User.Context.Text("a");
         await Assert.That(a1.Equals(a2)).IsTrue();
         await Assert.That(a1.GetHashCode()).IsEqualTo(a2.GetHashCode());
         var set = new HashSet<Text> { a1 };
@@ -81,17 +81,17 @@ public class TextWrapperTests : System.IAsyncDisposable
         // but does NOT make a raw string "a" hash-equal to a text.@this("a").
         // A HashSet<object> populated across a not-yet-swept window must not
         // silently treat the two as the same member.
-        var set = new HashSet<object> { new Text("a") };
+        var set = new HashSet<object> { app.actor.list.User.Context.Text("a") };
         await Assert.That(set.Contains("a")).IsFalse();          // raw string ≠ text member
-        await Assert.That(set.Contains(new Text("a"))).IsTrue(); // text ≡ text member
+        await Assert.That(set.Contains(app.actor.list.User.Context.Text("a"))).IsTrue(); // text ≡ text member
     }
 
     [Test]
     public async Task Text_Truthiness_EmptyFalsyNonEmptyTruthy()
     {
         // text("") falsy via item truthiness; text("x") truthy. Sync path.
-        Item empty = new Text("");
-        Item nonEmpty = new Text("x");
+        Item empty = app.actor.list.User.Context.Text("");
+        Item nonEmpty = app.actor.list.User.Context.Text("x");
         await Assert.That(empty.IsTruthy()).IsFalse();
         await Assert.That(nonEmpty.IsTruthy()).IsTrue();
         await Assert.That(await empty.AsBooleanAsync(app.actor.list.User.Context)).IsFalse();

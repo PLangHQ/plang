@@ -22,7 +22,7 @@ public class GoalCallTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    private static global::app.type.item.text.@this Text(string s) => new(s);
+    private static global::app.type.item.text.@this Text(string s) => (global::app.type.item.text.@this)s;
 
     // A goal named as a call names it: its name, selected when the call starts.
     private global::app.data.@this<global::app.goal.@this> Named(string s)

@@ -57,7 +57,7 @@ public class GoalAccessorTests
         app.goal.list.Add(Goal(app, "Public"));
         app.goal.list.Add(Goal(app, "Setup"));
 
-        var appOnly = new global::app.type.item.dict.@this();
+        var appOnly = app.actor.list.User.Context.Dict();
         appOnly.Set("os", false);
         var all = (global::app.type.item.list.@this<global::app.goal.@this>)await app.goal.list.All(app.actor.list.System.Context!, appOnly);
 

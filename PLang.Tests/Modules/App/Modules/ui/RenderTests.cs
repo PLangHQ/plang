@@ -96,7 +96,7 @@ public class RenderTests : IDisposable
     {
         var context = _app.actor.list.User.Context;
         await context.Variable.Set("d", new Dictionary<string, object?> { ["a"] = 1, ["b"] = "Þór" });
-        await context.Variable.Set("s", new global::app.type.item.text.@this("50% of %x%"));
+        await context.Variable.Set("s", context.Text("50% of %x%"));
         var action = new Render(context)
         {
             Template = (global::app.type.item.text.@this)"{{ d | json }}|{{ s | json }}|{{ d.b | json }}|{{ d | json: true }}",
@@ -745,7 +745,7 @@ public class RenderTests : IDisposable
 
         public Task<global::app.data.@this> Render(Render action)
         {
-            return Task.FromResult<global::app.data.@this>(action.Context.Ok(new global::app.type.item.text.@this("stub-rendered")));
+            return Task.FromResult<global::app.data.@this>(action.Context.Ok(action.Context.Text("stub-rendered")));
         }
     }
 }

@@ -40,12 +40,13 @@ public class Ed25519 : ISigning
         // Build the unsigned signature wrapping the data, compute its signing bytes,
         // sign with the identity's private key, stamp the signature in.
         var datetime = action.Context.App.type.list[typeof(global::app.type.item.datetime.@this)];
+        var text = action.Context.App.type.list[typeof(global::app.type.item.text.@this)];
         var unsigned = new global::app.type.item.signature.@this(
             value: action.Data!,
-            algorithm: new global::app.type.item.text.@this(Name),
-            nonce: new global::app.type.item.text.@this(nonce),
+            algorithm: new global::app.type.item.text.@this(Name, text),
+            nonce: new global::app.type.item.text.@this(nonce, text),
             created: new global::app.type.item.datetime.@this(now, datetime),
-            identity: new global::app.type.item.text.@this(identity.PublicKey),
+            identity: new global::app.type.item.text.@this(identity.PublicKey, text),
             hash: hash,
             signature: new global::app.type.item.binary.@this(Array.Empty<byte>(), action.Context.App.type.list[typeof(global::app.type.item.binary.@this)]),
             expires: expires is { } e ? new global::app.type.item.datetime.@this(e, datetime) : null,
@@ -53,7 +54,7 @@ public class Ed25519 : ISigning
 
         try
         {
-            var signed = unsigned.Signed(Sign(unsigned, new global::app.type.item.text.@this(identity.PrivateKey)));
+            var signed = unsigned.Signed(Sign(unsigned, new global::app.type.item.text.@this(identity.PrivateKey, text)));
             return action.Context.Ok(signed);
         }
         catch (Exception ex)

@@ -78,7 +78,7 @@ public partial class @this
     public async System.Threading.Tasks.Task Warn(global::app.error.@this problem, global::app.actor.context.@this context)
     {
         if (context.Actor.Channel.Get("builder") is { } builder)
-            await builder.WriteAsync(context.Ok(new global::app.type.item.dict.@this()
+            await builder.WriteAsync(context.Ok(new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)])
                 .Set("action", $"{Module}.{Name}")
                 .Set("key", problem.Key)
                 .Set("message", problem.Message)));

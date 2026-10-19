@@ -50,6 +50,14 @@ in turn, smallest first. Decisions are numbered per branch (item-doors 1–47, `
   and a set's offers keep a class-built type until the implicit-operator branch (50). `choice.Member(symbol)` for
   the sites that want only the member. Mouse and navigate hold their choices from birth. An enum that declares no
   plang name is a bare choice.
+- **dict, text, number, setting born whole**: each takes the app's type (dict's parameterless ctor gone; a call
+  frame's Tags from the stack's dict type, as 51; a setting fills an empty dict member like a list). text: the
+  readers ask the list for `{text, kind, template}`; a derived text holds `Type.Family` (the app's plain text);
+  source's template Text is born from the list. number: `Kind` is `Type.kind` (no copy), Write through
+  `Type.kind.Write`; the courier and the reader re-birth what they make holding the app's `{number, <kind>}`; an
+  arithmetic result of an operand's kind holds that operand's type, a climbed one keeps the class-built fallback
+  until the kinds item (21). The operator births (`string → text`, the 15 number lifts, Parse) keep the class-built
+  fallback (50). setting: path/module/action nodes take the type; the `.Path`-only makers ask the list.
 - **path born whole**: the base ctor takes the app's `{path, <scheme>}`; `Resolve` asks the app's list (file, and
   http by the url's scheme); a path made from another (parent, child, extension, a listing's entries, a transfer's
   target) holds its source's type. A scheme handler's contract is its static `Resolve`, never a bare ctor.
@@ -92,4 +100,4 @@ new global::app.type.item.datetime.@this(reader.DateTimeOffset(), ctx.Context.Ap
   `test/plan/item-doors/app/type/input/modifier/ModifierIsTheFirstKeyHeld.test.goal` — the test-designer builds them.
 
 ## Next
-On in the order: dict, text, number; then setting, content, source, separator; last, number's static kinds and `KindOfClass` go.
+On in the order (dict, text, number and setting done — see What was done): then setting, content, source, separator; last, number's static kinds and `KindOfClass` go.

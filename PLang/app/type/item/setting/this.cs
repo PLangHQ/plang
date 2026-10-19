@@ -12,9 +12,10 @@ namespace app.type.item.setting;
 [global::app.Attributes.PlangType("setting")]
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    /// <summary>A node: the path it stands for, born holding its type (the base setting when none is given).</summary>
-    public @this(string path, global::app.type.@this? type = null)
-        : base(type ?? new global::app.type.@this(typeof(@this))) => Path = path;
+    /// <summary>A node: the path it stands for, born holding <paramref name="type"/> — the app's, handed in by its
+    /// maker.</summary>
+    public @this(string path, global::app.type.@this type)
+        : base(type) => Path = path;
 
     /// <summary>A class of options, born holding its type (the app's list hands it its own class's type). Its path is
     /// its namespace — a module's read from the module, so <c>app.module.llm.setting</c> is <c>llm.setting</c>; a
@@ -102,7 +103,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     {
         // a setting answers its own identity and teaching — its address and its option rows — beside its options
         if (key.Equals(nameof(Path), System.StringComparison.OrdinalIgnoreCase))
-            return new global::app.data.@this(key, new global::app.type.item.text.@this(Path), parent: parent);
+            return new global::app.data.@this(key, new global::app.type.item.text.@this(Path,
+                parent.Context.App.type.list[typeof(global::app.type.item.text.@this)]), parent: parent);
         if (key.Equals(nameof(Rows), System.StringComparison.OrdinalIgnoreCase))
             return new global::app.data.@this(key, Rows(parent.Context), parent: parent);
         if ((Option(key) ?? Switch(key)) is { } option)
@@ -222,9 +224,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 prop.SetValue(node, val);
             }
         }
-        // a list member the values leave out holds an empty list of its own class, born holding the app's type for it
+        // a list or dict member the values leave out holds an empty one of its own class, born holding the app's type for it
         foreach (var member in node.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-            if (member.SetMethod?.IsPublic == true && typeof(global::app.type.item.list.@this).IsAssignableFrom(member.PropertyType)
+            if (member.SetMethod?.IsPublic == true
+                && (typeof(global::app.type.item.list.@this).IsAssignableFrom(member.PropertyType)
+                    || typeof(global::app.type.item.dict.@this).IsAssignableFrom(member.PropertyType))
                 && member.GetValue(node) == null)
                 member.SetValue(node, System.Activator.CreateInstance(member.PropertyType, context.App.type.list[member.PropertyType]));
         return context.Ok();

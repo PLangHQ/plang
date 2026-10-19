@@ -50,11 +50,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     // A dict stores no context: an entry is handed out with the context of whoever asks for it
     // (Slot, Entries, Get). A stored Data keeps its own.
-    public @this()
-        : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase)) { }
-
-    /// <summary>An empty dict born holding <paramref name="type"/> — the reader hands it the row's type (its
-    /// template mode); the dict itself never checks its content.</summary>
+    /// <summary>An empty dict born holding <paramref name="type"/> — the app's dict, or the row's (its template mode),
+    /// handed in by its maker; the dict itself never checks its content.</summary>
     public @this(global::app.type.@this type)
         : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase), type) { }
 
@@ -73,7 +70,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (value is @this self) return self;
         var text = ((value as global::app.type.item.@this)?.Clr<object>() ?? value) as string;
-        if (text != null && string.IsNullOrWhiteSpace(text)) return new @this();
+        if (text != null && string.IsNullOrWhiteSpace(text)) return new @this(data.Context.App.type.list[typeof(@this)]);
         // A text holding a json object (a rendered template, an LLM's answer) is that object, read
         // through the same DOM narrower; any other text is not a dict.
         if (text != null)
@@ -98,10 +95,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// hands the same instance back; the first write diverges it (<see cref="_hasWrapped"/>).
     /// The comparer is the source's own — PLang's own dicts are built case-insensitive
     /// via the default ctor.</summary>
-    internal @this(Dictionary<string, object?> backing, global::app.type.@this? type = null)
-        : base(type ?? new global::app.type.@this("dict", typeof(@this))) => _value = backing;
+    internal @this(Dictionary<string, object?> backing, global::app.type.@this type)
+        : base(type) => _value = backing;
 
-    private @this(Dictionary<string, object?> backing, bool wrapped, global::app.type.@this? type = null)
+    private @this(Dictionary<string, object?> backing, bool wrapped, global::app.type.@this type)
         : this(backing, type) => _hasWrapped = wrapped;
 
     /// <summary>A dict no other holder's change reaches: its entries copied (a nested container copied, every other
@@ -375,7 +372,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         if (Type.Template == null) return this;
-        var result = new @this();
+        // what its entries read is plain: the app's dict, no template
+        var result = new @this(data.Context.App.type.list[typeof(@this)]);
         foreach (var key in _value.Keys)
         {
             var entry = Slot(key, data.Context);

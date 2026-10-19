@@ -114,7 +114,7 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task TextLength_ReturnsNumber_NotInt()
     {
-        var t = new global::app.type.item.text.@this("héllo");
+        global::app.type.item.text.@this t = (global::app.type.item.text.@this)"héllo";
         object length = t.Length;
         await Assert.That(length).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(length.ToString()).IsEqualTo("5");
@@ -125,7 +125,7 @@ public class Stage7_SurfaceGateTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var d = new global::app.type.item.dict.@this();
+        var d = ctx.Dict();
         d.Set(new Data("name", "a", context: ctx));
         d.Set(new Data("age", 30L, context: ctx));
         object keys = d.Key(ctx).list(ctx);
@@ -146,7 +146,7 @@ public class Stage7_SurfaceGateTests
         object count = l.Count;
         await Assert.That(count).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(count.ToString()).IsEqualTo("2");
-        object dictCount = new global::app.type.item.dict.@this().Count;
+        object dictCount = ctx.Dict().Count;
         await Assert.That(dictCount).IsTypeOf<global::app.type.item.number.@this>();
     }
 

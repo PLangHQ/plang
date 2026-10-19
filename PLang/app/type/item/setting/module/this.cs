@@ -12,8 +12,8 @@ public class @this : global::app.type.item.setting.@this
 
     private const string Own = ".setting";
 
-    /// <summary>A module with no setting class of its own.</summary>
-    public @this(string module) : base(module + Own, new global::app.type.@this(typeof(@this))) { }
+    /// <summary>A module with no setting class of its own, born holding <paramref name="type"/> — the app's.</summary>
+    public @this(string module, global::app.type.@this type) : base(module + Own, type) { }
 
     /// <summary>A module's own class — its path is the module's, then <c>.setting</c>; born holding its type.</summary>
     protected @this(global::app.type.@this type) : base(type) { }

@@ -67,7 +67,7 @@ public sealed class @this
             }
             // the app's own goals under test — each file's public goal and its private ones; test files test them
             var goals = new List<global::app.goal.@this>();
-            await foreach (var file in context.App.goal.list.Walk(new global::app.type.item.dict.@this().Set("os", false), context))
+            await foreach (var file in context.App.goal.list.Walk(new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]).Set("os", false), context))
                 if (!file.IsTest) goals.AddRange([file, .. file.Child.Items()]);
             console.Append(Coverage.Text(context.App.module.list, goals));
             // the channel ends the line

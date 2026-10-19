@@ -69,7 +69,7 @@ public class SettingsDataTests
     public async Task Save_ANodeThatIsNoClass_IsRefused()
     {
         var ctx = _app.actor.list.System.Context;
-        var node = new global::app.type.item.setting.module.@this("http");
+        var node = new global::app.type.item.setting.module.@this("http", ctx.App.type.list[typeof(global::app.type.item.setting.module.@this)]);
 
         var result = await new global::app.module.setting.Save(ctx) { Setting = Given(node, ctx) }.Start();
         await result.IsFailure();

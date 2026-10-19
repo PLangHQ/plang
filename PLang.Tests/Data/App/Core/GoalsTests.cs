@@ -261,16 +261,16 @@ public class GoalsTests : System.IAsyncDisposable
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".bot", "Old.goal"), "Old\n");
             var context = engine.actor.list.User.Context;
 
-            var appOnly = new global::app.type.item.dict.@this();
+            var appOnly = context.Dict();
             appOnly.Set("os", false);
             var every = await engine.goal.list.All(context, appOnly);
             await Assert.That(((global::app.type.item.list.@this<Goal>)every).Items().Select(g => g.Name).ToList())
                 .IsEquivalentTo(new[] { "Start" });
 
-            var both = new global::app.type.item.dict.@this();
+            var both = context.Dict();
             both.Set("os", false);
             both.Set("visibility", new global::app.type.item.list.@this(new global::app.type.item.@this[]
-                { new global::app.type.item.text.@this("public"), new global::app.type.item.text.@this("private") }, engine.type.list["list"]));
+                { context.Text("public"), context.Text("private") }, engine.type.list["list"]));
             var all = await engine.goal.list.All(context, both);
             await Assert.That(((global::app.type.item.list.@this<Goal>)all).Items().Select(g => g.Name).ToList())
                 .IsEquivalentTo(new[] { "Start", "Show" });

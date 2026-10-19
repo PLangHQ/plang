@@ -11,7 +11,7 @@ public partial class unreached : IContext
 {
     public async Task<data.@this> Start()
     {
-        var own = new global::app.type.item.dict.@this().Set("os", false);
+        var own = new global::app.type.item.dict.@this(Context.App.type.list[typeof(global::app.type.item.dict.@this)]).Set("os", false);
         await foreach (var file in Context.App.goal.list.Walk(own, Context))
         {
             foreach (var (goal, from) in await file.Unreached(Context))

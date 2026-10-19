@@ -29,7 +29,7 @@ public partial class @this : global::app.type.item.note.IAbout
     [JsonIgnore]
     public IEnumerable<global::app.type.item.text.@this> Requirement
         => Handler?.GetCustomAttribute<global::app.Attributes.RequiresCapabilityAttribute>()
-               ?.Capabilities.Select(c => new global::app.type.item.text.@this(c))
+               ?.Capabilities.Select(c => new global::app.type.item.text.@this(c, _module!.App.type.list[typeof(global::app.type.item.text.@this)]))
            ?? Enumerable.Empty<global::app.type.item.text.@this>();
 
     /// <summary>This action is a question — its answer is the verdict an if tests (<c>file.exists</c>,

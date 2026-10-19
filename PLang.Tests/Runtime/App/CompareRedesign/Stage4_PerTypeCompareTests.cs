@@ -144,7 +144,7 @@ public class Stage4_PerTypeCompareTests : System.IAsyncDisposable
         var c = app.actor.list.User.Context.Choice(global::app.goal.step.ErrorOrder.GoalFirst);
         await Assert.That(await a.Compare(b, app.actor.list.User.Context)).IsEqualTo(Comparison.Equal);
         await Assert.That(await a.Compare(c, app.actor.list.User.Context)).IsEqualTo(Comparison.NotEqual);
-        await Assert.That(await a.Compare(new global::app.type.item.text.@this("RetryFirst"), app.actor.list.User.Context)).IsEqualTo(Comparison.Equal); // by name
+        await Assert.That(await a.Compare(app.actor.list.User.Context.Text("RetryFirst"),app.actor.list.User.Context)).IsEqualTo(Comparison.Equal); // by name
     }
 
     [Test]

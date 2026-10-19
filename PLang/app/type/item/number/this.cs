@@ -27,21 +27,28 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // The exact boxed CLR numeric — the single source of truth.
     private readonly object _value;
 
-    /// <summary>The storage kind — CARRIED, set at birth by whoever mints (an implicit operator,
-    /// <see cref="Parse"/>, the climb, the courier); never derived. Context-free stateless behavior;
-    /// the value owns its kind, so <c>Write</c>/arithmetic never look it up.</summary>
-    public kind.@this Kind { get; }
+    /// <summary>The storage kind — its type's kind (<c>{number, int}</c>'s <c>int</c>): stateless behavior the value
+    /// asks, so <c>Write</c>/arithmetic never look it up.</summary>
+    public kind.@this Kind => (kind.@this)Type.kind;
 
+    // The operator's birth (the 15 CLR lifts, Parse with no type in hand, a kind's Create/Read, a result whose kind
+    // climbed): no app to ask, so it holds {number, <kind>} built from the class, carrying the kind — until the
+    // implicit-operator branch and the kinds item.
     private @this(object value, kind.@this kind)
-        : base(new global::app.type.@this("number", typeof(@this), kind.Name)) { _value = value; Kind = kind; }
+        : base(new global::app.type.@this("number", typeof(@this)) { kind = kind }) => _value = value;
 
-    /// <summary>The empty number, 0 — what a number holds before anything is in it (type.Empty).</summary>
+    /// <summary>The number <paramref name="source"/> is, born holding <paramref name="type"/> — the app's
+    /// <c>{number, &lt;its kind&gt;}</c>, handed in by its maker (the courier, a reader, a derived result).</summary>
+    internal @this(global::app.type.@this type, @this source) : base(type) => _value = source._value;
+
+    /// <summary>The empty number, 0 as a long — what a number holds before anything is in it (type.Empty). Its kind is
+    /// long, which the plain number type type.Empty holds is not, so it is born as the operator births one.</summary>
     internal @this() : this(0L, @long) { }
 
     /// <summary>The exact boxed CLR numeric value (int, uint, BigInteger, Half, decimal, …).</summary>
     public object BoxedValue => _value;
     public override bool IsLeaf => true;
-    public override void Write(global::app.type.format.IWriter w) => Kind.Write(this, w);
+    public override void Write(global::app.type.format.IWriter w) => Type.kind.Write(this, w);
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
 
@@ -148,7 +155,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                     $"Cannot convert {raw?.GetType().Name} to number.", "NumberConversionFailed", 400));
                 return null;
             }
-            try { return kind.Create(value); }
+            try { return Typed(kind.Create(value)); }
             // a value the kind can't hold (a fraction as an integer kind, NaN) says why under its own key
             catch (global::app.error.AppException e)
             {
@@ -161,11 +168,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 return null;
             }
         }
-        if (Create(raw) is { } n) return n;
+        if (Create(raw) is { } n) return ReferenceEquals(n, raw) ? n : Typed(n);
         data.Fail(new global::app.error.@this(
             $"Cannot convert {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} to number.",
             "NumberConversionFailed", 400));
         return null;
+
+        // a number made here is born holding the app's {number, <its kind>}, as the binding's asker names the app (a
+        // binding with no context, the operator's, keeps the operator's birth)
+        @this Typed(@this made) => data.Context is { } context
+            ? new(context.App.type.list[new global::app.type.@this("number", made.Kind.Name), context], made)
+            : made;
     }
 
     /// <summary>The CLR exit door — number hands its own boxed backing; the

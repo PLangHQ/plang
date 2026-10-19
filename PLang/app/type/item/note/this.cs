@@ -67,10 +67,11 @@ public sealed class @this : global::app.type.item.@this
             var sample = await _file.Content(data.Context);
             if (!sample.Success) { data.Fail(sample.Error!); return data.Empty; }
             var fenced = false;
+            var type = data.Context.App.type.list[typeof(global::app.type.item.text.@this)];
             foreach (var text in _file.ContentText().Split('\n').Select(text => text.TrimEnd('\r')))
             {
                 var fence = text.TrimStart().StartsWith(Fence, System.StringComparison.Ordinal);
-                read.Add(fenced || fence ? new line.@this(new global::app.type.item.text.@this(text)) : Read(text));
+                read.Add(fenced || fence ? new line.@this(new global::app.type.item.text.@this(text, type)) : Read(text, type));
                 if (fence) fenced = !fenced;
             }
         }
@@ -100,20 +101,20 @@ public sealed class @this : global::app.type.item.@this
 
     // A line outside a fence: `Name — …` is a named line, its prose running to the first tag; `say:`, `builder:` and
     // `ask:` tags follow, each after " · ". A part after " · " that is no tag stays in the prose. Anything else is a
-    // free line.
-    private line.@this Read(string text)
+    // free line. Each text is born holding the app's text type.
+    private line.@this Read(string text, global::app.type.@this type)
     {
-        if (Named.Match(text) is not { Success: true } named) return new line.@this(new global::app.type.item.text.@this(text));
+        if (Named.Match(text) is not { Success: true } named) return new line.@this(new global::app.type.item.text.@this(text, type));
         var part = named.Groups[2].Value.Split(Tag);
         var prose = part[0];
         global::app.type.item.text.@this? say = null, builder = null, ask = null;
         foreach (var tag in part.Skip(1))
         {
-            if (tag.StartsWith("say:", System.StringComparison.Ordinal)) say = new(tag["say:".Length..].Trim());
-            else if (tag.StartsWith("builder:", System.StringComparison.Ordinal)) builder = new(tag["builder:".Length..].Trim());
-            else if (tag.StartsWith("ask:", System.StringComparison.Ordinal)) ask = new(tag["ask:".Length..].Trim());
+            if (tag.StartsWith("say:", System.StringComparison.Ordinal)) say = new(tag["say:".Length..].Trim(), type);
+            else if (tag.StartsWith("builder:", System.StringComparison.Ordinal)) builder = new(tag["builder:".Length..].Trim(), type);
+            else if (tag.StartsWith("ask:", System.StringComparison.Ordinal)) ask = new(tag["ask:".Length..].Trim(), type);
             else prose += Tag + tag;
         }
-        return new line.@this(new global::app.type.item.text.@this(named.Groups[1].Value), new global::app.type.item.text.@this(prose), say, builder, ask);
+        return new line.@this(new global::app.type.item.text.@this(named.Groups[1].Value, type), new global::app.type.item.text.@this(prose, type), say, builder, ask);
     }
 }

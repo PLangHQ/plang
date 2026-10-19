@@ -108,7 +108,7 @@ public sealed class Entry
         global::app.type.item.@this key = kind switch
         {
             "number" => global::app.type.item.number.@this.Create(reader.Number())!,
-            "text" => new global::app.type.item.text.@this(reader.String()),
+            "text" => new global::app.type.item.text.@this(reader.String(), ctx.Context.App.type.list[typeof(global::app.type.item.text.@this)]),
             "variable" => Read(ref reader, ctx).Single(),
             _ => throw new global::app.error.PrFormatOutdatedException($"index key '{kind}' isn't in this .pr format", ctx.Origin),
         };

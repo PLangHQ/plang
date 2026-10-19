@@ -6,7 +6,8 @@ using num = global::app.type.item.number.@this;
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <see cref="app.type.item.number.@this"/>
 /// — the inverse of <see cref="Default.Write"/>. The declared kind always rides the wire for a number,
 /// so the reader hands the declared kind's own <c>Read</c> the token — the 15-arm switch dissolved onto
-/// the kind classes (<c>type/number/kind/&lt;k&gt;</c>).
+/// the kind classes (<c>type/number/kind/&lt;k&gt;</c>). What it reads is born holding the app's
+/// <c>{number, &lt;its kind&gt;}</c>.
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
@@ -16,15 +17,17 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("number", kind), ctx.Context]);
+        var types = ctx.Context.App.type.list;
+        if (reader.Null()) return new global::app.type.item.@null.@this(types[new global::app.type.@this("number", kind), ctx.Context]);
         // A declared kind reads through the kind; a bare token with no declared kind (a literal a .pr row
         // holds as `number`) reads at its natural precision — the format reads its token by number's one rule
         // (an integer long, or biginteger past it; any other a double); a string parses through the family.
-        if (kind is not null && num.Kinds.TryGetValue(kind, out var k))
-            return k.Read(ref reader);
-        if (reader.Peek() == global::app.type.format.TokenKind.String)
-            return num.Create(new global::app.type.item.text.@this(reader.String())) ?? (global::app.type.item.@this)
-                new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("number", kind), ctx.Context]);
-        return num.Create(reader.Number()) ?? (global::app.type.item.@this)new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("number", kind), ctx.Context]);
+        var read = kind is not null && num.Kinds.TryGetValue(kind, out var k) ? k.Read(ref reader)
+            : reader.Peek() == global::app.type.format.TokenKind.String
+                ? num.Create(new global::app.type.item.text.@this(reader.String(), types[typeof(global::app.type.item.text.@this)]))
+                : num.Create(reader.Number());
+        return read is num made
+            ? new num(types[new global::app.type.@this("number", made.Kind.Name), ctx.Context], made)
+            : read ?? new global::app.type.item.@null.@this(types[new global::app.type.@this("number", kind), ctx.Context]);
     }
 }

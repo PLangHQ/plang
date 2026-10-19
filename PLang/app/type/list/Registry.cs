@@ -61,7 +61,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     /// plang keeps for itself.</summary>
     internal override System.Threading.Tasks.ValueTask<IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
         => new(Types.Where(t => !t.Internal).Select(t => t.Name).Distinct(StringComparer.OrdinalIgnoreCase)
-            .Select(name => (global::app.type.item.@this)new global::app.type.item.text.@this(name)).ToList());
+            .Select(name => (global::app.type.item.@this)new global::app.type.item.text.@this(name, this["text"])).ToList());
 
     // Every name a type answers to — its word, its namespace, its aliases, case aside (type.Names) — to the type,
     // the first that answers, as the walk found it. The guard keeps a name to one class. Made on first ask and made

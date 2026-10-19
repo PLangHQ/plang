@@ -491,7 +491,7 @@ public partial class @this
     /// </summary>
     public global::app.type.item.dict.@this Snapshot()
     {
-        var vars = new global::app.type.item.dict.@this();
+        var vars = new global::app.type.item.dict.@this(_context.App.type.list[typeof(global::app.type.item.dict.@this)]);
         foreach (var kvp in _variables)
         {
             if (kvp.Key.StartsWith("!")) continue;

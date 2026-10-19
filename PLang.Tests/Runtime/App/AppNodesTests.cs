@@ -29,7 +29,7 @@ public class AppNodesTests
         var user = app.actor.list.User.Context;
         var goal = new global::app.goal.@this(app.type.list) { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
         await using var frame = user.call.Push(goal);
-        frame.Tag(new global::app.type.item.dict.@this(new System.Collections.Generic.Dictionary<string, object?> { ["owner"] = "ingi" }), user);
+        frame.Tag(new global::app.type.item.dict.@this(new System.Collections.Generic.Dictionary<string, object?> { ["owner"] = "ingi" }, user.App.type.list[typeof(global::app.type.item.dict.@this)]), user);
         frame.Record(new global::app.error.@this("seen", "Seen", 400), user);
 
         await Assert.That((await (await Read("%!call.Current.Depth%", user)).Value())?.ToString()).IsEqualTo("1");

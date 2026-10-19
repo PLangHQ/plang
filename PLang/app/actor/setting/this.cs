@@ -387,7 +387,8 @@ public sealed class @this : IDisposable
     public async ValueTask<data.@this> Of(global::app.module.@this module)
     {
         await Load();
-        var node = new global::app.type.item.setting.module.@this(module.Name);
+        var node = new global::app.type.item.setting.module.@this(module.Name,
+            _context.App.type.list[typeof(global::app.type.item.setting.module.@this)]);
         return Class(node.Path) != null ? Instance(node.Path) : new data.@this(node.Path, node, context: _context);
     }
 

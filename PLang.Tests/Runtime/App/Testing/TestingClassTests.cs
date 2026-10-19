@@ -226,7 +226,7 @@ public class TestingClassTests
         var context = _app.actor.list.User.Context;
         var setting = new global::app.test.setting.@this(_app.type.list[typeof(global::app.test.setting.@this)]);
         setting.Apply(new Dictionary<string, object?>(), context);
-        setting.Include.Add(new global::app.type.item.text.@this("fast"));
+        setting.Include.Add(context.Text("fast"));
         var slow = new global::app.test.@this(_app.type.list) { Goal = TaggedGoal("slow") };
         slow.Tags.Add(new global::app.type.item.tag.@this("slow", _app.type.list[typeof(global::app.type.item.tag.@this)]));
         var fast = new global::app.test.@this(_app.type.list) { Goal = TaggedGoal("fast") };

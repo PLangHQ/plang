@@ -123,10 +123,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 "LiveSignatureNeedsWindow", 500));
         Origin = origin;
         Value = value;
-        Algorithm = algorithm ?? new text("ed25519");
-        Nonce = nonce ?? new text("");
+        Algorithm = algorithm;
+        Nonce = nonce;
         Created = created;
-        Identity = identity ?? new text("");
+        Identity = identity;
         Hash = hash;
         Signature = signature ?? (binary)System.Array.Empty<byte>();
         _expires = expires;

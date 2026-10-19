@@ -193,7 +193,8 @@ public class Fluid : ITemplate
             // then refuses.
             return format is { Name: "item" }
                 ? await format.kind.Decode(System.Text.Encoding.UTF8.GetBytes(rendered), action.Context)
-                : action.Context.Ok(new global::app.type.item.text.@this(rendered));
+                : action.Context.Ok(new global::app.type.item.text.@this(rendered,
+                    action.Context.App.type.list[typeof(global::app.type.item.text.@this)]));
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {

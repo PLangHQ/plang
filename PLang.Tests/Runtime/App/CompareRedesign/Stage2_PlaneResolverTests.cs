@@ -29,7 +29,7 @@ public class Stage2_PlaneResolverTests : System.IAsyncDisposable
         // %text.length% — the value's own member, read with a dot, answered in a PLang value; a plain value has no
         // `!` facts
         await using var app = NewApp();
-        var t = new Data("s", new global::app.type.item.text.@this("hello"), context: app.actor.list.User.Context);
+        var t = new Data("s", app.actor.list.User.Context.Text("hello"), context: app.actor.list.User.Context);
         var length = await t.Get("length");
         await Assert.That(length.Peek()).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(length.Peek()!.ToString()).IsEqualTo("5");
@@ -77,7 +77,7 @@ public class Stage2_PlaneResolverTests : System.IAsyncDisposable
     public async Task AtSchemaBlocked_AsDictKey_WireMarkerOnly()
     {
         // @schema is the wire marker — the dict write seam rejects it as a key, under ReservedKey
-        var d = new global::app.type.item.dict.@this();
+        var d = app.actor.list.User.Context.Dict();
         await Assert.That(() => d.Set("@schema", "data")).Throws<global::app.error.AppException>();
         await Assert.That(() => d.Set(new Data("@schema", "data", context: app.actor.list.User.Context))).Throws<global::app.error.AppException>();
         // ordinary keys unaffected; envelope recognition reads the marker off

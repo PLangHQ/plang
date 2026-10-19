@@ -46,7 +46,7 @@ public partial class Call : IContext
             && (await Context.App.goal.list.Find(authored, __action.Step?.Goal)).Peek() is global::app.goal.@this target
             && target.Reference(__action.Step?.Goal) is { } address
             && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase))
-            __action.Property.Set(name.Holding(new global::app.type.item.text.@this(address)));
+            __action.Property.Set(name.Holding(new global::app.type.item.text.@this(address, Context.App.type.list[typeof(global::app.type.item.text.@this)])));
         return Context.Ok();
     }
 

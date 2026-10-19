@@ -73,7 +73,7 @@ public class GoalCallResolutionTests
             (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
             _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
-        var slot = new global::app.data.@this("", new global::app.type.item.text.@this("Target"), context: ctx).As<PLangGoal>();
+        var slot = new global::app.data.@this("", ctx.Text("Target"), context: ctx).As<PLangGoal>();
         var selected = await slot.Value();
         var byApp = await new global::app.type.item.variable.@this("!app.goal[\"Target\"]").Start(ctx);
 
@@ -211,7 +211,7 @@ public class GoalCallResolutionTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "Fresh.goal"), "Fresh\n- write out 1\n");
 
         var found = await _app.goal.list.Find("Fresh");
-        var slot = new global::app.data.@this("", new global::app.type.item.text.@this("Fresh"), context: _app.actor.list.User.Context)
+        var slot = new global::app.data.@this("", _app.actor.list.User.Context.Text("Fresh"), context: _app.actor.list.User.Context)
             .As<PLangGoal>();
         var selected = await slot.Value();
 

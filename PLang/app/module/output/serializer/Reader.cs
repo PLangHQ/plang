@@ -20,7 +20,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         while (reader.NextName(out var name))
         {
             if (string.Equals(name, "question", System.StringComparison.OrdinalIgnoreCase) && !reader.Null())
-                question = new global::app.type.item.text.@this(reader.String());
+                question = new global::app.type.item.text.@this(reader.String(), ctx.Context.App.type.list[typeof(global::app.type.item.text.@this)]);
             else reader.Skip();
         }
         reader.EndObject();

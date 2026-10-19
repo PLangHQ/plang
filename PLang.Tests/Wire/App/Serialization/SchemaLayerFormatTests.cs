@@ -30,10 +30,10 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
         var inner = new global::app.data.@this("user", "Ingi", app.actor.list.User.Context.App.type.list["text"], context: app.actor.list.User.Context);
         var sig = new global::app.type.item.signature.@this(
             value: inner,
-            algorithm: new global::app.type.item.text.@this("ed25519"),
-            nonce: new global::app.type.item.text.@this("9f"),
+            algorithm: app.actor.list.User.Context.Text("ed25519"),
+            nonce: app.actor.list.User.Context.Text("9f"),
             created: new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero), app.type.list[typeof(global::app.type.item.datetime.@this)]),
-            identity: new global::app.type.item.text.@this("alice"),
+            identity: app.actor.list.User.Context.Text("alice"),
             hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
             signature: new global::app.type.item.binary.@this(System.Convert.FromBase64String("c2ln"), app.type.list[typeof(global::app.type.item.binary.@this)]));
 
@@ -68,10 +68,10 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
         var inner = new global::app.data.@this("x", "y", app.actor.list.User.Context.App.type.list["text"], context: app.actor.list.User.Context);
         var sig = new global::app.type.item.signature.@this(
             value: inner,
-            algorithm: new global::app.type.item.text.@this("ed25519"),
-            nonce: new global::app.type.item.text.@this("n"),
+            algorithm: app.actor.list.User.Context.Text("ed25519"),
+            nonce: app.actor.list.User.Context.Text("n"),
             created: new global::app.type.item.datetime.@this(System.DateTimeOffset.UnixEpoch, app.type.list[typeof(global::app.type.item.datetime.@this)]),
-            identity: new global::app.type.item.text.@this("id"),
+            identity: app.actor.list.User.Context.Text("id"),
             hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, new global::app.module.crypto.type.hash.kind.keccak256.@this()),
             signature: new global::app.type.item.binary.@this(new byte[] { 0x01 }, app.type.list[typeof(global::app.type.item.binary.@this)]));
 

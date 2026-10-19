@@ -85,18 +85,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// THE PURE CORE — "text, make yourself from this value, or decline." A <c>text</c> passes
     /// through; a scalar stringifies invariantly. A structured value (dict/list) renders its own
     /// canonical text through ITS output, not here — <c>text</c> knows nothing of those types.
-    /// An opaque domain object has no honest textual form → <c>null</c> (decline). Shared by the
-    /// ICreate courier and comparison.
+    /// An opaque domain object has no honest textual form → <c>null</c> (decline). Born holding
+    /// <paramref name="type"/>. Shared by the ICreate courier and comparison.
     /// </summary>
-    public static @this? Create(object? raw)
+    public static @this? Create(object? raw, global::app.type.@this type)
     {
         if (raw is @this self) return self;
         // An item of another type unwraps to its clr (a read); a raw CLR value is already its clr.
         object? clr = raw is global::app.type.item.@this it ? it.Clr<object>() : raw;
         return clr switch
         {
-            string s => (@this)s,
-            System.IConvertible c => (@this)(System.Convert.ToString(c, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty),
+            string s => new(s, type),
+            System.IConvertible c => new(System.Convert.ToString(c, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty, type),
             _ => null,
         };
     }
@@ -108,7 +108,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         // a text is held as it is when it already is the declared type, else born again holding it
         if (value is @this self) return declared is null || self.Is(declared) ? self : new @this(self, declared);
-        if (Create(value) is { } built) return built;
+        if (Create(value, declared ?? data.Context.App.type.list[typeof(@this)]) is { } built) return built;
         data.Fail(new global::app.error.@this(
             $"Cannot bind a {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to text — it has no textual form.", "TypeConversionFailed", 400));
         return null;
@@ -144,8 +144,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             }
             return await resolved.Value();
         }
-        return new @this(await Rendered(context));
+        return new @this(await Rendered(context), Plain);
     }
+
+    // The plain text type this text's own is of — what a text derived from it holds (rendered, upper-cased, cut): its
+    // content, no template and no kind of this one's.
+    private global::app.type.@this Plain => Type.Family;
 
     // The template rendered: one pass in order — each literal written as it is, each variable written
     // in place through its value's own door (its Output into a text writer: a wire materializes to
@@ -318,15 +322,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>
-    /// Born holding <paramref name="type"/> — the row's type (<c>text&lt;md&gt;</c>, a template text), or plain
-    /// <c>text</c> when none is given (a runtime value, the operator). The build decided template-ness and the
-    /// .pr carries it on the type; the run never re-parses on load.
+    /// Born holding <paramref name="type"/> — the app's, handed in by its maker: the row's type (<c>text&lt;md&gt;</c>, a
+    /// template text) or plain <c>text</c>. The build decided template-ness and the .pr carries it on the type; the
+    /// run never re-parses on load.
     /// <para><paramref name="variable"/> is the row's own variable list (from the <c>.pr</c>); the text keeps the
     /// ones its content holds, matched by name. A template made without a .pr list (built, or at run) parses its
     /// content for them, as before. A non-template text holds none.</para>
     /// </summary>
-    public @this(string value, global::app.type.@this? type = null, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
-        : base(type ?? new global::app.type.@this("text", typeof(@this)))
+    public @this(string value, global::app.type.@this type, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+        : base(type)
     {
         _value = value ?? string.Empty;
         _variable = Type.Template == null ? []
@@ -334,8 +338,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             : new global::app.type.item.variable.parser.@this(_value).Variable;
     }
 
-    /// <summary>The empty text — what a text holds before anything is in it (type.Empty).</summary>
-    internal @this() : this(string.Empty) { }
+    /// <summary>The empty text — what a text holds before anything is in it (type.Empty hands its type).</summary>
+    internal @this(global::app.type.@this type) : this(string.Empty, type) { }
+
+    // The string → text operator's birth: no app to ask, so it holds a type built from the class — until the
+    // implicit-operator branch.
+    private @this(string value) : this(value, new global::app.type.@this("text", typeof(@this))) { }
 
     // The same content and variables, born holding the declared type.
     private @this(@this source, global::app.type.@this type) : base(type)
@@ -350,7 +358,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// the one place bytes become that string (a reader handed raw stream bytes
     /// reaches the text here). <paramref name="type"/> and <paramref name="variable"/> as above.
     /// </summary>
-    public @this(object raw, global::app.type.@this? type = null, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+    public @this(object raw, global::app.type.@this type, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
         : this(raw switch
         {
             byte[] b => System.Text.Encoding.UTF8.GetString(b),
@@ -402,19 +410,19 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     // ---- Methods a variable reaches: %name.toupper()%, %text.replace("-", " ")% ----
 
-    [LlmBuilder] public @this ToUpper() => new(_value.ToUpperInvariant());
-    [LlmBuilder] public @this ToLower() => new(_value.ToLowerInvariant());
-    [LlmBuilder] public @this Trim() => new(_value.Trim());
+    [LlmBuilder] public @this ToUpper() => new(_value.ToUpperInvariant(), Plain);
+    [LlmBuilder] public @this ToLower() => new(_value.ToLowerInvariant(), Plain);
+    [LlmBuilder] public @this Trim() => new(_value.Trim(), Plain);
 
     /// <summary>Every <paramref name="old"/> replaced by <paramref name="new"/>.</summary>
-    [LlmBuilder] public @this Replace(@this old, @this @new) => new(_value.Replace(old._value, @new._value));
+    [LlmBuilder] public @this Replace(@this old, @this @new) => new(_value.Replace(old._value, @new._value), Plain);
 
     /// <summary>At most <paramref name="max"/> characters, "..." marking a cut; 0 is no limit.</summary>
     [LlmBuilder]
     public @this MaxLength(global::app.type.item.number.@this max)
     {
         var limit = max.Clr<int>();
-        return limit <= 0 || _value.Length <= limit ? this : new(_value[..limit] + "...");
+        return limit <= 0 || _value.Length <= limit ? this : new(_value[..limit] + "...", Plain);
     }
 
     /// <summary>The lines matching <paramref name="pattern"/> — each <c>line number: line</c> — with <paramref name="lines"/>
@@ -429,7 +437,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (!found.Success) return global::app.data.@this<global::app.type.item.list.@this<@this>>.From(found);
         var text = (await found.Value())?.ToString() ?? "";
         return context.Ok(new global::app.type.item.list.@this<@this>(
-            text.Length == 0 ? [] : [.. text.Split('\n').Select(line => (global::app.type.item.@this)(@this)line.TrimEnd('\r'))],
+            text.Length == 0 ? [] : [.. text.Split('\n').Select(line => (global::app.type.item.@this)new @this(line.TrimEnd('\r'), Plain))],
             context.App.type.list[typeof(global::app.type.item.list.@this<@this>)]));
     }
 
@@ -464,9 +472,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public int IndexOf(string other) =>
         _value.IndexOf(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
 
-    public @this Substring(int start, int length) => new(_value.Substring(start, length));
+    public @this Substring(int start, int length) => new(_value.Substring(start, length), Plain);
     public @this Replace(string oldValue, string newValue) =>
-        new(_value.Replace(oldValue ?? string.Empty, newValue ?? string.Empty));
+        new(_value.Replace(oldValue ?? string.Empty, newValue ?? string.Empty), Plain);
 
     // ---- Truthiness (item) ----
 
@@ -487,7 +495,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// </summary>
     protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
-        var b = other as @this ?? Create(other);
+        var b = other as @this ?? Create(other, context.App.type.list[typeof(@this)]);
         if (b is null) return new(global::app.data.Comparison.Incomparable);
         var c = string.Compare(_value, b._value, System.StringComparison.OrdinalIgnoreCase);
         return new(c < 0 ? global::app.data.Comparison.Less

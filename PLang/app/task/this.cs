@@ -22,7 +22,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public global::app.goal.@this Goal => _run.Goal;
 
     /// <summary>Which task it is among its actor's — <c>%!app.actor.current.task[id]%</c>.</summary>
-    [Out] public global::app.type.item.text.@this Id => new(_run.Id);
+    [Out] public global::app.type.item.text.@this Id
+        => new(_run.Id, _run.Actor.App.type.list[typeof(global::app.type.item.text.@this)]);
 
     /// <summary>Whether its run has ended (it has left its actor's list by then).</summary>
     [Out] public global::app.type.item.@bool.@this Ended

@@ -23,7 +23,7 @@ public sealed class TypeSafe : IDecider
         // nothing asked (every step cached) — nothing to send: the answer is empty
         var questions = await action.Question.Value();
         if (questions == null || questions.CountRaw == 0)
-            return context.Ok(new global::app.type.item.dict.@this());
+            return context.Ok(new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]));
 
         // the decider's own settings: the saved row, else the environment's, else the service's endpoint
         var setting = context.Setting.Of<global::app.module.llm.decider.setting>();
@@ -58,10 +58,11 @@ public sealed class TypeSafe : IDecider
         // caller gets the answers under the ids it chose; usage rides as a property rather than
         // mixing accounting into the value.
         var answers = await result.Get("answers");
+        var dict = context.App.type.list[typeof(global::app.type.item.dict.@this)];
         var shaped = answers == null
-            ? new global::app.type.item.dict.@this()
+            ? new global::app.type.item.dict.@this(dict)
             : await answers.Value<global::app.type.item.dict.@this>()
-              ?? new global::app.type.item.dict.@this();
+              ?? new global::app.type.item.dict.@this(dict);
 
         var answer = context.Ok(shaped).As<global::app.type.item.dict.@this>();
         if (await result.Get("usage") is { } usage) answer.Properties.Set("usage", await usage.Value());

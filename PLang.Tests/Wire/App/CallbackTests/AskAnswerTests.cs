@@ -72,8 +72,8 @@ public class AskAnswerTests
 
         var equals = new global::app.data.Operator("==");
         var name = await ctx.Variable.Get("name");
-        await Assert.That((await equals.Evaluate(name, ctx.Ok(new global::app.type.item.text.@this("Ingi")), ctx)).ToBoolean()).IsTrue();
-        await Assert.That((await equals.Evaluate(name, ctx.Ok(new global::app.type.item.text.@this("Ada")), ctx)).ToBoolean()).IsFalse();
+        await Assert.That((await equals.Evaluate(name, ctx.Ok(ctx.Text("Ingi")), ctx)).ToBoolean()).IsTrue();
+        await Assert.That((await equals.Evaluate(name, ctx.Ok(ctx.Text("Ada")), ctx)).ToBoolean()).IsFalse();
     }
 
     // A message channel suspends on a pending Ask; resumed, the ask answers with the answer as it came.
@@ -88,7 +88,7 @@ public class AskAnswerTests
         await Assert.That(pending.ShouldExit()).IsTrue();
         await Assert.That(pending.Snapshot).IsNotNull();
 
-        await new global::app.type.item.variable.@this(ask.AnswerVariableName).Set(new global::app.type.item.text.@this("Ada"), ctx);
+        await new global::app.type.item.variable.@this(ask.AnswerVariableName).Set(ctx.Text("Ada"), ctx);
         var resumed = await Asked(ctx);
         await Assert.That(resumed.ShouldExit()).IsFalse();
         await Assert.That(resumed.Peek()).IsTypeOf<global::app.type.item.text.@this>();
@@ -101,7 +101,7 @@ public class AskAnswerTests
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
         var ctx = app.actor.list.User.Context;
         var input = Console(app, "never read\n");
-        var given = new global::app.type.item.text.@this("from the binding");
+        var given = ctx.Text("from the binding");
         input.Own().Bind("ask", global::app.@event.When.before, (_, _, c) =>
         {
             global::app.data.@this answered = c.Ok(given);
