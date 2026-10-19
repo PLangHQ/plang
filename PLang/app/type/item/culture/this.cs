@@ -14,9 +14,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     private @this(System.Globalization.CultureInfo info, global::app.type.@this type) : base(type) => _info = info;
 
-    /// <summary>The machine's culture — what the app reads numbers as text by when none is set. A setting's default,
-    /// made where no type list is in reach; it holds the app's type when settings make their defaults at birth.</summary>
-    public static @this Machine => new(System.Globalization.CultureInfo.CurrentCulture, new global::app.type.@this(typeof(@this)));
+    /// <summary>The empty culture is the machine's — what the app reads numbers as text by when none is set (a
+    /// setting's default, made at the setting's birth through type.Empty, holding the app's type).</summary>
+    internal @this(global::app.type.@this type) : this(System.Globalization.CultureInfo.CurrentCulture, type) { }
 
     /// <summary>Its name, <c>is-IS</c>.</summary>
     public string Name => _info.Name;

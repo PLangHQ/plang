@@ -355,7 +355,7 @@ public class IdentityErrorPathTests
     private class FailingSaveDataSource : global::app.store.@this
     {
         private readonly global::app.store.@this _inner;
-        public FailingSaveDataSource(global::app.store.@this inner) => _inner = inner;
+        public FailingSaveDataSource(global::app.store.@this inner) : base(inner.Type) => _inner = inner;
         protected override string Kind => "failing";
 
         public override Task<global::app.data.@this<T>> Get<T>(string table, string key) => _inner.Get<T>(table, key);
@@ -376,7 +376,8 @@ public class IdentityErrorPathTests
     private class FailingGetAllDataSource : global::app.store.@this
     {
         private readonly global::app.actor.context.@this _ctx;
-        public FailingGetAllDataSource(global::app.actor.context.@this ctx) => _ctx = ctx;
+        public FailingGetAllDataSource(global::app.actor.context.@this ctx)
+            : base(ctx.App.type.list[new global::app.type.@this("store", "failing"), ctx]) => _ctx = ctx;
         protected override string Kind => "failing";
         public override Task<global::app.data.@this<T>> Get<T>(string table, string key)
             => Task.FromResult(global::app.data.@this<T>.FromError(new SettingsError("Simulated failure"), _ctx));

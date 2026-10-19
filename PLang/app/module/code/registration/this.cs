@@ -12,7 +12,8 @@ namespace app.module.code.registration;
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    protected internal override global::app.type.@this Type => new(typeof(@this));
+    /// <summary>A captured registration, born holding <paramref name="type"/> — the app's.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
 
     /// <summary>A structure, not a single-token leaf.</summary>
     public override bool IsLeaf => false;

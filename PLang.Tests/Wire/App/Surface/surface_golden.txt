@@ -1026,7 +1026,6 @@ class app.type.clr.this : app.type.item.this, app.type.item.ICreate<app.type.clr
   override Write(app.type.format.IWriter writer) : System.Void
   protected override Clone() : app.type.item.this
   protected override Setting(app.data.this parent) : System.Threading.Tasks.ValueTask<app.data.this>
-  protected override Type : app.type.this { get; }
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.clr.this
   static Internal : System.Boolean { get; }
 
@@ -1340,7 +1339,7 @@ class app.type.item.clipboard.this : app.type.item.this, app.type.item.ICreate<a
   static Shape : System.String { get; }
 
 class app.type.item.computed : app.type.item.this
-  ctor(System.Func<app.actor.context.this, app.type.item.this> factory, System.String declaredTypeName = …, System.String declaredKind = …)
+  ctor(System.Func<app.actor.context.this, app.type.item.this> factory, app.type.this type)
   override Cacheable : System.Boolean { get; }
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsTruthy() : System.Boolean
@@ -1373,7 +1372,6 @@ class app.type.item.culture.this : app.type.item.this, app.type.item.ICreate<app
   override Write(app.type.format.IWriter w) : System.Void
   static Create(System.Object raw, app.type.this type) : app.type.item.culture.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.culture.this
-  static Machine : app.type.item.culture.this { get; }
   static Shape : System.String { get; }
 
 class app.type.item.date.serializer.Reader : app.type.reader.ITypeReader
@@ -1955,8 +1953,8 @@ class app.type.item.note.line.this : app.type.item.this
   Name : app.type.item.text.this { get; } [Out]
   Prose : app.type.item.text.this { get; } [Out]
   Say : app.type.item.text.this { get; } [Out]
-  ctor(app.type.item.text.this name, app.type.item.text.this prose, app.type.item.text.this say, app.type.item.text.this builder, app.type.item.text.this ask = …)
-  ctor(app.type.item.text.this prose)
+  ctor(app.type.item.text.this prose, app.type.this type)
+  ctor(app.type.this type, app.type.item.text.this name, app.type.item.text.this prose, app.type.item.text.this say, app.type.item.text.this builder, app.type.item.text.this ask = …)
   override IsLeaf : System.Boolean { get; }
   static Internal : System.Boolean { get; }
 
@@ -2516,14 +2514,13 @@ class app.type.item.signature.this : app.type.item.this, app.type.item.ICreate<a
   Signature : app.type.item.binary.this { get; }
   Signed(app.type.item.binary.this signature) : app.type.item.signature.this
   Value : app.data.this { get; }
-  ctor(app.data.this value, app.type.item.text.this algorithm, app.type.item.text.this nonce, app.type.item.datetime.this created, app.type.item.text.this identity, app.module.crypto.type.hash.this hash, app.type.item.binary.this signature, app.type.item.datetime.this expires = …, app.type.item.list.this contracts = …, app.type.item.signature.Origin origin = …, app.type.item.duration.this window = …)
+  ctor(app.type.this type, app.data.this value, app.type.item.text.this algorithm, app.type.item.text.this nonce, app.type.item.datetime.this created, app.type.item.text.this identity, app.module.crypto.type.hash.this hash, app.type.item.binary.this signature, app.type.item.datetime.this expires = …, app.type.item.list.this contracts = …, app.type.item.signature.Origin origin = …, app.type.item.duration.this window = …)
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
   override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
-  protected override Type : app.type.this { get; }
   static Shape : System.String { get; }
   static const WireSchemaSignature : System.String
 
@@ -2564,7 +2561,6 @@ class app.type.item.size.this : app.type.item.this, System.IEquatable<app.type.i
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  protected override Type : app.type.this { get; }
   static Create(System.Object raw) : app.type.item.size.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.size.this
   static Resolve(System.String raw, app.actor.context.this context) : app.type.item.size.this
@@ -2736,7 +2732,6 @@ abstract class app.type.item.this : app.data.IBooleanResolvable, app.type.item.I
   HasVariable : System.Boolean { get; }
   Is(System.String name, app.type.list.this types) : System.Boolean
   Is(app.type.this other) : System.Boolean
-  Template : app.type.item.template.kind.this { get; init; }
   ctor()
   ctor(app.type.this type)
   on : app.event.on.this { get; }
@@ -3237,12 +3232,11 @@ class app.type.table.this : app.type.item.this, app.type.item.IEncode<app.type.t
   Headers : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   Kind : System.String { get; }
   Rows : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyDictionary<System.String, System.Object>> { get; }
-  ctor(System.Collections.Generic.IReadOnlyList<System.String> headers, System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyDictionary<System.String, System.Object>> rows, System.String kind = …)
+  ctor(System.Collections.Generic.IReadOnlyList<System.String> headers, System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyDictionary<System.String, System.Object>> rows, app.type.this type)
   override EnumerateItems(app.actor.context.this context) : System.Collections.Generic.IEnumerable<System.ValueTuple<app.data.this, app.data.this>>
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsSequence : System.Boolean { get; }
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  protected override Type : app.type.this { get; }
   static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
 
 class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, app.type.item.IList<app.type.this, app.type.list.this>, app.type.item.ILoad<app.type.this>, app.type.item.IMatch<app.type.this> [PlangType]

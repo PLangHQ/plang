@@ -8,10 +8,8 @@ namespace app.module.output;
 [global::app.Attributes.PlangType("ask")]
 public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICreate<Ask>, global::app.IExitsGoal
 {
-    /// <summary>The entity is "ask" (the namespace-tail default would say
-    /// "output", the owning module, not this value's name).</summary>
-    protected internal override global::app.type.@this Type
-        => new("ask", typeof(Ask));
+    /// <summary>A pending ask, born holding <paramref name="type"/> — the app's <c>ask</c>.</summary>
+    public Ask(global::app.type.@this type) : base(type) { }
 
     /// <summary>What is asked, as the asker resolved it — what a program reading this plang shows the person.</summary>
     [global::app.Out] public global::app.type.item.text.@this? Question { get; init; }

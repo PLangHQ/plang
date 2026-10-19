@@ -135,8 +135,10 @@ public class ArchiveActionTests : IDisposable
     [Test]
     public async Task CorruptBytes_AreRefused()
     {
-        var archive = new Archive([0xFF, 0xFE, 0x00, 0x42], (Kind)_app.type.list["archive"].kind["gzip"]!,
-            new global::app.module.archive.type.archive.held.@this("data"));
+        var gzipKind = (Kind)_app.type.list["archive"].kind["gzip"]!;
+        var archive = new Archive([0xFF, 0xFE, 0x00, 0x42],
+            new global::app.module.archive.type.archive.held.@this("data"),
+            Ctx.App.type.list[new global::app.type.@this("archive", gzipKind.Name), Ctx]);
 
         var restored = await Unpack(archive);
 
@@ -197,8 +199,10 @@ public class ArchiveActionTests : IDisposable
         var gz = new MemoryStream();
         using (var zip = new System.IO.Compression.GZipStream(gz, System.IO.Compression.CompressionLevel.Optimal, leaveOpen: true))
             zip.Write("escaped?"u8);
-        var archive = new Archive(gz.ToArray(), (Kind)_app.type.list["archive"].kind["gzip"]!,
-            new global::app.module.archive.type.archive.held.@this("file", "../../escape.txt"));
+        var gzipKind = (Kind)_app.type.list["archive"].kind["gzip"]!;
+        var archive = new Archive(gz.ToArray(),
+            new global::app.module.archive.type.archive.held.@this("file", "../../escape.txt"),
+            Ctx.App.type.list[new global::app.type.@this("archive", gzipKind.Name), Ctx]);
 
         var unpacked = await Unpack(archive, into: "/out/deep");
 

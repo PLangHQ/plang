@@ -86,7 +86,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var snap = new Snapshot(app.actor.list.User.Context);
         snap.Section("Providers").Write("registrations", new List<global::app.module.code.registration.@this>
         {
-            new()
+            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.registration.@this)])
             {
                 TypeName = typeof(global::app.data.code.IGrep).AssemblyQualifiedName!,
                 ProviderName = "ghost",
@@ -112,7 +112,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         snap.Section("Providers").Write("registrations", new List<global::app.module.code.registration.@this>());
         snap.Section("Providers").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>
         {
-            new()
+            new(app.actor.list.User.Context.App.type.list[typeof(global::app.module.code.defaultoverride.@this)])
             {
                 TypeName = typeof(global::app.data.code.IGrep).AssemblyQualifiedName!,
                 ProviderName = "phantom",

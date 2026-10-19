@@ -24,6 +24,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             else reader.Skip();
         }
         reader.EndObject();
-        return new global::app.module.output.Ask { Question = question };
+        return new global::app.module.output.Ask(ctx.Context.App.type.list[typeof(global::app.module.output.Ask)]) { Question = question };
     }
 }

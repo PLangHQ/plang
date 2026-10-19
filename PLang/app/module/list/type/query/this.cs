@@ -32,8 +32,9 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     // a clause class's name: the last segment of its namespace (query/where/ → where)
     private static new string NameOf(System.Type clause) => clause.Namespace![(clause.Namespace!.LastIndexOf('.') + 1)..];
 
-    /// <summary>A query reads as <c>query</c>, a clause as its kind (<c>{query, kind: where}</c>).</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this), Name);
+    /// <summary>A query born holding <paramref name="type"/>: the app's <c>query</c>, a clause its kind
+    /// (<c>{query, kind: where}</c>).</summary>
+    protected @this(global::app.type.@this type) : base(type) { }
 
     /// <summary>How a clause is made from what the query's dict holds under its name: the clause, or null with why
     /// on <c>data</c>.</summary>

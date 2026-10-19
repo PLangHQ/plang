@@ -33,15 +33,18 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// text (a comparison's), whose algorithm isn't written.</summary>
     public kind.@this? Algorithm { get; }
 
-    public @this(byte[] bytes, kind.@this? algorithm)
+    /// <summary>A digest by <paramref name="algorithm"/>, born holding <paramref name="type"/> — the app's
+    /// <c>{hash, &lt;algorithm&gt;}</c>: the algorithm IS the kind.</summary>
+    public @this(byte[] bytes, kind.@this? algorithm, global::app.type.@this type) : base(type)
     {
         Bytes = bytes ?? System.Array.Empty<byte>();
         Algorithm = algorithm;
     }
 
-    /// <summary>A hash's entity: the algorithm IS the kind.</summary>
-    protected internal override global::app.type.@this Type
-        => new("hash", typeof(@this), Algorithm?.Name);
+    /// <summary>A digest its kind takes, where no app is in reach (a kind's own digest): it holds {hash, <algorithm>}
+    /// built from the class — until the kinds item finds the app's through the kind's family.</summary>
+    public @this(byte[] bytes, kind.@this? algorithm)
+        : this(bytes, algorithm, new global::app.type.@this("hash", typeof(@this), algorithm?.Name)) { }
 
     /// <summary>Canonical string form — base64. The type owns both directions.</summary>
     public string ToBase64() => System.Convert.ToBase64String(Bytes);
@@ -115,11 +118,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                     + string.Join(", ", type.kind.list(context).Items().Select(t => t.kind.Name).Where(n => n.Length > 0)));
             characters = characters[(colon + 1)..];
         }
+        // born holding the asker's {hash, <algorithm>}
+        var typed = context.App.type.list[new global::app.type.@this("hash", algorithm?.Name), context];
         if (characters.Length > 0 && characters.Length % 2 == 0 && (length is null || characters.Length == length * 2)
             && characters.All(System.Uri.IsHexDigit))
-            return new @this(System.Convert.FromHexString(characters), algorithm);
+            return new @this(System.Convert.FromHexString(characters), algorithm, typed);
         return System.Buffers.Text.Base64.IsValid(characters) && characters.Length > 0
-            ? new @this(System.Convert.FromBase64String(characters), algorithm)
+            ? new @this(System.Convert.FromBase64String(characters), algorithm, typed)
             : null;
     }
 

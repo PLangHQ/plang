@@ -12,12 +12,10 @@ public sealed class computed : @this
 {
     private readonly System.Func<actor.context.@this, @this?> _factory;
 
-    /// <summary>A value found at each read by <paramref name="factory"/>, handed the asker's context.</summary>
-    public computed(System.Func<actor.context.@this, @this?> factory,
-        string? declaredTypeName = null, string? declaredKind = null)
-        : base(declaredTypeName == null
-            ? new global::app.type.@this(typeof(@this), declaredKind)
-            : new global::app.type.@this(declaredTypeName, declaredKind))
+    /// <summary>A value found at each read by <paramref name="factory"/>, handed the asker's context; born holding
+    /// <paramref name="type"/> — the app's type it is declared as, else the app's <c>item</c> (it may be anything).</summary>
+    public computed(System.Func<actor.context.@this, @this?> factory, global::app.type.@this type)
+        : base(type)
     {
         _factory = factory ?? throw new System.ArgumentNullException(nameof(factory));
     }

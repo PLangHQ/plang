@@ -24,7 +24,7 @@ public sealed class @this : global::app.type.item.setting.@this
 
     /// <summary>How numbers read as text (<c>is-IS</c>: <c>7,47</c>) — the machine's when unset. Json and the
     /// wire never use it.</summary>
-    [Out, Store] public global::app.type.item.culture.@this Culture { get; set; } = global::app.type.item.culture.@this.Machine;
+    [Out, Store] public global::app.type.item.culture.@this Culture { get; set; }
 
     /// <summary>Past its options, the app's id — its identity's, kept in <c>app.pr</c>: the store needs it before
     /// any setting row can be read, so it is read here and never set.</summary>

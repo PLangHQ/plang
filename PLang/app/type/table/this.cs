@@ -38,19 +38,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Rows, each keyed by header — the navigation surface (<c>%t.rows[0]["amount"]%</c>).</summary>
     public IReadOnlyList<IReadOnlyDictionary<string, object?>> Rows { get; }
 
-    /// <summary>The encoding the grid was read from (<c>csv</c>, <c>xlsx</c>) —
-    /// the table's kind, carried so <c>%t!type%</c> reports <c>{table, csv}</c>.</summary>
-    public string? Kind { get; }
+    /// <summary>The encoding the grid was read from (<c>csv</c>, <c>xlsx</c>) — its type's kind, so
+    /// <c>%t!type%</c> reports <c>{table, csv}</c>; null for a table of no encoding.</summary>
+    public string? Kind => Type.kind.IsEmpty ? null : Type.kind.Name;
 
-    public @this(IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows, string? kind = null)
+    /// <summary>A grid, born holding <paramref name="type"/> — the app's <c>{table, &lt;encoding&gt;}</c>.</summary>
+    public @this(IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows, global::app.type.@this type)
+        : base(type)
     {
         Headers = headers;
         Rows = rows;
-        Kind = kind;
     }
-
-    /// <summary>type = <c>table</c>; kind = the encoding it was read from (csv/xlsx).</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this), Kind);
 
     /// <summary>
     /// Navigate <c>rows</c> (the row list), <c>headers</c> (the column names) and <c>count</c> (the

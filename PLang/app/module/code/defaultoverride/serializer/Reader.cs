@@ -28,7 +28,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         }
         reader.EndObject();
 
-        return new global::app.module.code.defaultoverride.@this
+        return new global::app.module.code.defaultoverride.@this(ctx.Context.App.type.list[typeof(global::app.module.code.defaultoverride.@this)])
         {
             TypeName = typeName,
             ProviderName = providerName,

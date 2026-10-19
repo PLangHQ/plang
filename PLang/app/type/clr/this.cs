@@ -43,29 +43,30 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// creator's <paramref name="context"/> — used there and not kept. Every later use (navigate,
     /// write, enumerate, lower) takes the caller's context.</summary>
     public @this(object value, global::app.actor.context.@this context, global::app.type.kind.@this? kind = null)
+        // Born kind: an explicit stamp, else the kind that CLAIMS this CLR form (json → its JsonElement, a list →
+        // IList, …), else the `*` reflection kind. The one door answers all three (exact → assignable → catch-all)
+        // and never null.
+        : this(value, context ?? throw new System.ArgumentNullException(nameof(context)),
+            kind ?? context.App.type.list.Kind((value ?? throw new System.ArgumentNullException(nameof(value))).GetType()), true) { }
+
+    /// <summary>
+    /// A foreign host is the apex of the value lattice — the un-narrowed <c>item</c> (≈ C# <c>object</c>) — so it is
+    /// born holding the app's <c>item</c> with its <see cref="Kind"/> as the specialization (<c>json</c> for a
+    /// JsonElement, <c>*</c> for an unrecognised POCO). Mirrors <c>number</c>/<c>int</c>: type = the lattice
+    /// position, kind = the format.
+    /// </summary>
+    private @this(object value, global::app.actor.context.@this context, global::app.type.kind.@this kind, bool _)
+        : base(context.App.type.list[new global::app.type.@this("item", kind.Name), context])
     {
-        Value = value ?? throw new System.ArgumentNullException(nameof(value));
-        if (context is null) throw new System.ArgumentNullException(nameof(context));
+        Value = value;
         // Nested Data is not a shape: a Data never rides as a value (Lift forbids it). The
         // carrier is for foreign host objects only — carrying a Data here is courier debt.
         if (value is global::app.data.@this)
             throw new System.InvalidOperationException(
                 "A Data may not be carried in a clr — nested Data is not a supported shape. "
                 + "Return the inner value via its own factory, never wrap a Data.");
-        // Born kind: an explicit stamp, else the kind that CLAIMS this CLR form (json → its
-        // JsonElement, a list → IList, …), else the `*` reflection kind. The one door answers
-        // all three (exact → assignable → catch-all) and never null.
-        Kind = kind ?? context.App.type.list.Kind(value.GetType());
+        Kind = kind;
     }
-
-    /// <summary>
-    /// A foreign host is the apex of the value lattice — the un-narrowed <c>item</c> (≈ C#
-    /// <c>object</c>) — so it reports <c>type=item</c> with its <see cref="Kind"/> as the
-    /// specialization (<c>json</c> for a JsonElement, <c>*</c> for an unrecognised POCO).
-    /// Mirrors <c>number</c>/<c>int</c>: type = the lattice position, kind = the format.
-    /// </summary>
-    protected internal override global::app.type.@this Type
-        => new global::app.type.@this("item", typeof(global::app.type.item.@this), Kind.Name);
 
     /// <summary>In memory now = the carrier itself (a closed box, like every other item whose
     /// <c>Peek</c> answers self). The carried host is reachable ONLY through the explicit

@@ -16,7 +16,7 @@ public sealed class @this : global::app.type.item.setting.@this
     [Out, Store] public global::app.type.item.@bool.@this Timing { get; set; } = global::app.type.item.@bool.@this.False;
 
     /// <summary>The variable changes a call makes — scalars only, unless <c>diff.deep</c>.</summary>
-    [Out, Store] public diff.@this Diff { get; set; } = new(new global::app.type.@this(typeof(diff.@this)));
+    [Out, Store] public diff.@this Diff { get; set; }
 
     /// <summary>A hint for exporters; a call's own tags are written either way.</summary>
     [Out, Store] public global::app.type.item.@bool.@this Tags { get; set; } = global::app.type.item.@bool.@this.False;
@@ -25,5 +25,5 @@ public sealed class @this : global::app.type.item.setting.@this
     [Out, Store] public global::app.type.item.@bool.@this History { get; set; } = global::app.type.item.@bool.@this.False;
 
     /// <summary>The frames kept — how many returned calls <see cref="History"/> keeps (<c>frame.max</c>).</summary>
-    [Out, Store] public frame.@this Frame { get; set; } = new(new global::app.type.@this(typeof(frame.@this)));
+    [Out, Store] public frame.@this Frame { get; set; }
 }

@@ -9,10 +9,6 @@ namespace app.snapshot;
 [global::app.Attributes.PlangType("snapshot")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    /// <summary>The snapshot names its own type by the word it declares — the name is what a reader
-    /// dispatches on when a section comes back.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this));
-
     /// <summary>
     /// The actor context this snapshot tree is born in. The snapshot renders its entries
     /// as self-describing Data (its leaf serializer builds them), so it must carry the
@@ -29,7 +25,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// entry's own typed ask.</summary>
     public global::app.type.item.dict.@this Entries { get; }
 
-    public @this(global::app.actor.context.@this context)
+    /// <summary>A snapshot born in <paramref name="context"/>, holding the app's snapshot type — the name a reader
+    /// dispatches on when a section comes back.</summary>
+    public @this(global::app.actor.context.@this context) : base(context.App.type.list[typeof(@this)])
     {
         Context = context;
         Entries = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);

@@ -22,7 +22,7 @@ public sealed class @this : global::app.type.item.setting.module.@this
     [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables { get; set; }
 
     /// <summary>How long a line runs before it is cut (<c>length.max</c>, default 500).</summary>
-    [Out, Store] public length.@this Length { get; set; } = new(new global::app.type.@this(typeof(length.@this)));
+    [Out, Store] public length.@this Length { get; set; }
 
     /// <summary>Regex string to filter debug output lines.</summary>
     [Out, Store] public global::app.type.item.text.@this? Grep { get; set; }

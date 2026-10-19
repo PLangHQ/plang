@@ -22,6 +22,7 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
     public Task<global::app.data.@this> SignAsync(global::app.module.signing.sign action)
     {
         var unsigned = new global::app.type.item.signature.@this(
+            type: action.Context.App.type.list[new global::app.type.@this("signature", Name), action.Context],
             value: action.Data!,
             algorithm: action.Context.Text(Name),
             nonce: action.Context.Text("test-nonce"),

@@ -15,23 +15,29 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The bytes.</summary>
     public long Value { get; }
 
-    // the standard it is written in (iec, si), born with it; and its type, {size, <kind>}, made once
+    // the standard it is written in (iec, si), born with it — the kind its type carries
     private readonly kind.@this _kind;
-    private readonly global::app.type.@this _type;
 
-    /// <summary>A count in <paramref name="kind"/>'s standard.</summary>
-    public @this(long bytes, kind.@this kind)
+    /// <summary>A count in <paramref name="kind"/>'s standard, born holding <paramref name="type"/> — the app's
+    /// <c>{size, &lt;standard&gt;}</c>.</summary>
+    private @this(long bytes, kind.@this kind, global::app.type.@this type) : base(type)
     {
         Value = bytes;
         _kind = kind;
-        _type = new global::app.type.@this("size", typeof(@this), kind.Name);
     }
 
-    /// <summary>A count, written in the standard its asker's setting names.</summary>
-    public @this(long bytes, actor.context.@this context)
-        : this(bytes, context.Setting.Of<setting.@this>().Standard.Value) { }
+    /// <summary>A count in <paramref name="kind"/>'s standard where no app is in reach (a kind's own parse, a setting's
+    /// default): it holds {size, <kind>} built from the class — until the kinds item.</summary>
+    public @this(long bytes, kind.@this kind) : this(bytes, kind, new global::app.type.@this("size", typeof(@this), kind.Name)) { }
 
-    // a count with no asker: the setting's own default
+    /// <summary>A count, written in the standard its asker's setting names, born holding the app's type for it.</summary>
+    public @this(long bytes, actor.context.@this context)
+        : this(bytes, context.Setting.Of<setting.@this>().Standard.Value, context) { }
+
+    private @this(long bytes, kind.@this kind, actor.context.@this context)
+        : this(bytes, kind, context.App.type.list[new global::app.type.@this("size", kind.Name), context]) { }
+
+    // a count with no asker: the setting's own default, as a kind's parse with no app is
     private @this(long bytes) : this(bytes, new setting.@this(new global::app.type.@this(typeof(setting.@this))).Standard.Value) { }
 
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
@@ -43,7 +49,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>A size writes its text in its own kind: <c>100 MB</c> stays <c>100 MB</c>.</summary>
     public override void Write(global::app.type.format.IWriter w) => w.Content(Text, _kind);
-    protected internal override global::app.type.@this Type => _type;
 
     /// <summary>THE PURE CORE — a <c>size</c> passes through; a whole number is a count of bytes; a string reads in the
     /// standard its suffix names (<see cref="Resolve"/>); anything else declines (<c>null</c>).</summary>

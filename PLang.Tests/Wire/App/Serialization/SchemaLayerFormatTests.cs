@@ -29,6 +29,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
     {
         var inner = new global::app.data.@this("user", "Ingi", app.actor.list.User.Context.App.type.list["text"], context: app.actor.list.User.Context);
         var sig = new global::app.type.item.signature.@this(
+            type: app.type.list[new global::app.type.@this("signature", "ed25519"), app.actor.list.User.Context],
             value: inner,
             algorithm: app.actor.list.User.Context.Text("ed25519"),
             nonce: app.actor.list.User.Context.Text("9f"),
@@ -67,6 +68,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
     {
         var inner = new global::app.data.@this("x", "y", app.actor.list.User.Context.App.type.list["text"], context: app.actor.list.User.Context);
         var sig = new global::app.type.item.signature.@this(
+            type: app.type.list[new global::app.type.@this("signature", "ed25519"), app.actor.list.User.Context],
             value: inner,
             algorithm: app.actor.list.User.Context.Text("ed25519"),
             nonce: app.actor.list.User.Context.Text("n"),

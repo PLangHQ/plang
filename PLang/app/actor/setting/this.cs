@@ -307,15 +307,8 @@ public sealed class @this : IDisposable
 
     /// <summary>The setting class <typeparamref name="T"/>, as this scope sees it — the class says its own
     /// path (<c>context.Setting.Of&lt;test.setting&gt;()</c>).</summary>
-    public T Of<T>() where T : global::app.type.item.setting.@this => (T)this[Path<T>.Of];
-
-    // A setting class's path, read once: a pure fact of T (derived from its namespace), memoized per class as
-    // choice<T> holds its set — so a read on every push is a lookup, never a throwaway instance.
-    private static class Path<T> where T : global::app.type.item.setting.@this
-    {
-        public static readonly string Of =
-            ((T)System.Activator.CreateInstance(typeof(T), new global::app.type.@this(typeof(T)))!).Path;
-    }
+    public T Of<T>() where T : global::app.type.item.setting.@this
+        => (T)this[((T)System.Activator.CreateInstance(typeof(T), _context.App.type.list[typeof(T)])!).Path];
 
     /// <summary>The settings <paramref name="owner"/> names with <c>ISetting&lt;T&gt;</c>, as this scope sees
     /// them — <c>%!app.goal.list.setting%</c>, <c>%!app.setting%</c>; null when it names none.</summary>

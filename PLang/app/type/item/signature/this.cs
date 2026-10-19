@@ -102,7 +102,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The signature bytes over the digest (renders base64).</summary>
     public binary Signature { get; }
 
+    /// <summary>A signature over <paramref name="value"/>, born holding <paramref name="type"/> — the app's
+    /// <c>{signature, &lt;algorithm&gt;}</c>.</summary>
     public @this(
+        global::app.type.@this type,
         global::app.data.@this value,
         text algorithm,
         text nonce,
@@ -114,6 +117,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         global::app.type.item.list.@this? contracts = null,
         global::app.type.item.signature.Origin origin = global::app.type.item.signature.Origin.Signed,
         global::app.type.item.duration.@this? window = null)
+        : base(type)
     {
         // a signature read live is good only for its window: without one it would never end, and verify could not
         // say how long its nonce is remembered
@@ -128,7 +132,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Created = created;
         Identity = identity;
         Hash = hash;
-        Signature = signature ?? (binary)System.Array.Empty<byte>();
+        Signature = signature;
         _expires = expires;
         Contracts = contracts;
         _window = window;
@@ -138,10 +142,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the signing module after it signs <see cref="ToSigningBytes"/> (the layer is
     /// immutable; build the unsigned form, sign, then stamp the bytes).</summary>
     public @this Signed(binary signature)
-        => new(Value, Algorithm, Nonce, Created, Identity, Hash, signature, _expires, Contracts, Origin.Value, _window);
-
-    protected internal override global::app.type.@this Type
-        => new("signature", typeof(@this), Algorithm.ToString());
+        => new(Type, Value, Algorithm, Nonce, Created, Identity, Hash, signature, _expires, Contracts, Origin.Value, _window);
 
     /// <summary>Structural — the inner value is a nested record, not a leaf.</summary>
     public override bool IsLeaf => false;

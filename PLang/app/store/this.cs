@@ -13,8 +13,8 @@ public abstract class @this : global::app.type.item.@this, System.IDisposable
     /// <summary>The kind of store — where its tables are kept (sqlite).</summary>
     protected abstract string Kind { get; }
 
-    /// <summary>A store's type: <c>store</c>, its kind the kind of store.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this), Kind);
+    /// <summary>A store born holding <paramref name="type"/>: the app's <c>store</c>, its kind the kind of store.</summary>
+    protected @this(global::app.type.@this type) : base(type) { }
 
     /// <summary>A store is written as what it is, its kind — never its tables.</summary>
     public override bool IsLeaf => true;

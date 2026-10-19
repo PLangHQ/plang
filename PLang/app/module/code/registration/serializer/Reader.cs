@@ -31,7 +31,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         }
         reader.EndObject();
 
-        return new global::app.module.code.registration.@this
+        return new global::app.module.code.registration.@this(ctx.Context.App.type.list[typeof(global::app.module.code.registration.@this)])
         {
             TypeName = typeName,
             ProviderName = providerName,

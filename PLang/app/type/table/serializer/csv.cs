@@ -18,12 +18,13 @@ public static class csv
         // the text type (it owns bytes→string), then parse.
         if (raw is not (string or byte[])) return raw;
         string text = new global::app.type.item.text.@this(raw, ctx.Context.App.type.list[typeof(global::app.type.item.text.@this)]).ToString();
+        var type = ctx.Context.App.type.list[new global::app.type.@this("table", kind), ctx.Context];
         if (string.IsNullOrEmpty(text)) return new global::app.type.table.@this(System.Array.Empty<string>(),
-            System.Array.Empty<IReadOnlyDictionary<string, object?>>(), kind);
+            System.Array.Empty<IReadOnlyDictionary<string, object?>>(), type);
 
         List<List<string>> records = Parse(text);
         if (records.Count == 0) return new global::app.type.table.@this(System.Array.Empty<string>(),
-            System.Array.Empty<IReadOnlyDictionary<string, object?>>(), kind);
+            System.Array.Empty<IReadOnlyDictionary<string, object?>>(), type);
 
         List<string> headers = records[0];
         var rows = new List<IReadOnlyDictionary<string, object?>>(records.Count - 1);
@@ -35,7 +36,7 @@ public static class csv
                 row[headers[c]] = c < cells.Count ? cells[c] : null;
             rows.Add(row);
         }
-        return new global::app.type.table.@this(headers, rows, kind);
+        return new global::app.type.table.@this(headers, rows, type);
     }
 
     // RFC-4180 record/field split. A field is quoted when it opens with '"';

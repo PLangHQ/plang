@@ -519,20 +519,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             ? won : made;
     }
 
-    /// <summary>
-    /// Language tag when this value is a builder-authored template — a value
-    /// whose text (or whose nested entries) contain live <c>%ref%</c> holes
-    /// that resolve against variables at every USE, never at set. An ordinary
-    /// init-only stamp, set at creation by the authored seams (.pr load,
-    /// action wire rebuild) — runtime INPUT is never stamped, so a user who
-    /// types <c>"%secret%"</c> gets it printed literally. The kind of template it is — <c>plang</c>, the
-    /// only one today. Null = not a template; a stamped value is
-    /// never cached by the holding Data (see <see cref="Cacheable"/> on the
-    /// types that honor the stamp).
-    /// </summary>
-    // A birth fact: the value is born a template (its reader or builder knows), never stamped after.
-    public global::app.type.item.template.kind.@this? Template { get; init; }
-
     /// <summary>The variables this value holds, each once: a template's <c>%…%</c>, a container's
     /// entries', a variable itself. Read-only, born with the value; empty when none.</summary>
     public virtual IReadOnlyList<global::app.type.item.variable.@this> Variable => [];
@@ -548,7 +534,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// may take a final value as-is; a non-final value must be read through its
     /// door, and a carrier must never stand between the Data and it.
     /// </summary>
-    internal virtual bool IsFinal => Template == null;
+    internal virtual bool IsFinal => Type.Template == null;
 
     // A C# class's plang identity — its namespace name, the family it is a kind of with the kind it is, when it is one,
     // and its marked surface by member name, each name found the first time it is asked: pure facts of the class.

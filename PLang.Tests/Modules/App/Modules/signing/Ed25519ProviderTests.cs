@@ -107,6 +107,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
     // [Code] boundary (SignAsync/VerifyAsync) maps throws → SignatureInvalid/SigningError.
     private global::app.type.item.signature.@this Unsigned(string identityPublicKey, string nonce = "nonce-1")
         => new(
+            type: app.type.list[new global::app.type.@this("signature", "ed25519"), app.actor.list.User.Context],
             value: app.actor.list.User.Context.Ok(app.actor.list.User.Context.Text("payload")),
             algorithm: app.actor.list.User.Context.Text("ed25519"),
             nonce: app.actor.list.User.Context.Text(nonce),
@@ -118,7 +119,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
     // A copy of a signed signature with one field swapped — for the mismatch tests.
     private global::app.type.item.signature.@this Rebuilt(global::app.type.item.signature.@this s,
         string? nonce = null, string? identity = null, global::app.type.item.binary.@this? signature = null)
-        => new(s.Value, s.Algorithm,
+        => new(s.Type, s.Value, s.Algorithm,
             nonce == null ? s.Nonce : app.actor.list.User.Context.Text(nonce), s.Created,
             identity == null ? s.Identity : app.actor.list.User.Context.Text(identity),
             s.Hash, signature ?? s.Signature, s.Expires, s.Contracts);

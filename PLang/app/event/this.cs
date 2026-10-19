@@ -102,7 +102,9 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         return result;
     }
 
-    /// <summary>Every event is of the event type (<c>event</c>), whichever its class.</summary>
+    /// <summary>Every event is of the event type (<c>event</c>), whichever its class. Events are made by the event
+    /// door's own table and the empty ones are shared across apps (on's static empties), so no one app's type is
+    /// theirs to hold: it is built from the class — until the event door is reshaped (a locked surface, Ingi's).</summary>
     protected internal override global::app.type.@this Type => new(typeof(@this));
 
     public override string ToString() => Name;

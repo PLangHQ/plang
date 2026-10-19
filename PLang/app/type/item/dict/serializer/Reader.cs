@@ -21,7 +21,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         var parser = new global::app.type.item.serializer.json(ctx.Context);
         // An authored dict (ctx carries "plang") is born a template and re-resolves its `%ref%` string
         // leaves on read — dict.@this.Value → Resolve. A runtime-ingest read (ctx.Template null) stays literal.
-        var dict = new global::app.type.item.dict.@this(ctx.Context.App.type.list[typeof(global::app.type.item.dict.@this)]) { Template = ctx.Template };
+        var dict = new global::app.type.item.dict.@this(ctx.Context.App.type.list[new global::app.type.@this("dict", template: ctx.Template), ctx.Context]);
         while (reader.NextName(out var name))
             dict.Set(name, parser.Entry(ref reader, ctx));
         reader.EndObject();

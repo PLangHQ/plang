@@ -160,7 +160,9 @@ public sealed class @this : global::app.channel.type.session.@this
         if (question?.IsTruthy() == true)
         {
             var output = action.Context?.Actor?.Channel.Get(global::app.channel.list.@this.Output);
-            global::app.data.@this asked = whole ? action.Context!.Ok(new module.output.Ask { Question = question }) : action.Context!.Ok(question);
+            global::app.data.@this asked = whole
+                ? action.Context!.Ok(new module.output.Ask(action.Context.App.type.list[typeof(module.output.Ask)]) { Question = question })
+                : action.Context!.Ok(question);
             if (output != null && output.CanWrite)
             {
                 var writeRes = await output.WriteAsync(asked, ct);

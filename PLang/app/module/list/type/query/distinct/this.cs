@@ -9,12 +9,13 @@ public sealed class @this : query.@this
 {
     private readonly global::app.type.item.@bool.@this _on;
 
-    private @this(global::app.type.item.@bool.@this on) => _on = on;
+    private @this(global::app.type.item.@bool.@this on, global::app.type.@this type) : base(type) => _on = on;
 
     /// <summary>The query's <paramref name="distinct"/>: whether repeats are dropped — a bool, as bool reads one;
-    /// what doesn't read as a bool is why on <c>data</c>.</summary>
+    /// what doesn't read as a bool is why on <c>data</c>. Born holding the app's <c>{query, distinct}</c>.</summary>
     internal static @this? Create(Data distinct, Data data, global::app.actor.context.@this context)
-        => global::app.type.item.@bool.@this.Create(distinct.Peek(), null, data) is { } on ? new(on) : null;
+        => global::app.type.item.@bool.@this.Create(distinct.Peek(), null, data) is { } on
+            ? new(on, context.App.type.list[typeof(@this)]) : null;
 
     internal override int Rank => 2;
 

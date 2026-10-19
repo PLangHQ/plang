@@ -11,10 +11,10 @@ public sealed class @this : query.@this
 {
     private readonly IReadOnlyList<key.@this> _key;
 
-    private @this(IReadOnlyList<key.@this> key) => _key = key;
+    private @this(IReadOnlyList<key.@this> key, global::app.type.@this type) : base(type) => _key = key;
 
     /// <summary>The query's <paramref name="order"/>: its keys, in the order they decide; a key that doesn't read
-    /// is why on <c>data</c>.</summary>
+    /// is why on <c>data</c>. Born holding the app's <c>{query, order}</c>.</summary>
     internal static @this? Create(Data order, Data data, global::app.actor.context.@this context)
     {
         IEnumerable<Data> each = order.Peek() is List listed ? listed.Items(context) : [order];
@@ -24,7 +24,7 @@ public sealed class @this : query.@this
             if (key.@this.Create(one, data, context) is not { } read) return null;
             keys.Add(read);
         }
-        return new(keys);
+        return new(keys, context.App.type.list[typeof(@this)]);
     }
 
     internal override int Rank => 3;

@@ -37,7 +37,9 @@ public class Default : IArchive
         {
             using var packed = new MemoryStream();
             var (result, held) = await format.Pack(packing, value!, packed, level, context);
-            return result.Success ? context.Ok(new Archive(packed.ToArray(), format, held!)) : result;
+            return result.Success
+                ? context.Ok(new Archive(packed.ToArray(), held!, context.App.type.list[new global::app.type.@this("archive", format.Name), context]))
+                : result;
         }
 
         // written to the path as it is packed, never held whole; a pack that fails leaves nothing there

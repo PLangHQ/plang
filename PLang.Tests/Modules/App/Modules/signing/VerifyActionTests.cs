@@ -80,7 +80,7 @@ public class VerifyActionTests
     {
         var l = Layer(signed);
         var rebuilt = new global::app.type.item.signature.@this(
-            l.Value, algorithm ?? l.Algorithm, l.Nonce, created ?? l.Created,
+            l.Type, l.Value, algorithm ?? l.Algorithm, l.Nonce, created ?? l.Created,
             l.Identity, hash ?? l.Hash, signature ?? l.Signature, l.Expires,
             contractsNull ? null : l.Contracts,
             window is null ? global::app.type.item.signature.Origin.Signed : global::app.type.item.signature.Origin.Live,
@@ -184,7 +184,7 @@ public class VerifyActionTests
         var l = Layer(await SignHelper("test"));
 
         var refused = Assert.Throws<global::app.error.AppException>(() => new global::app.type.item.signature.@this(
-            l.Value, l.Algorithm, l.Nonce, l.Created, l.Identity, l.Hash, l.Signature, null, l.Contracts,
+            l.Type, l.Value, l.Algorithm, l.Nonce, l.Created, l.Identity, l.Hash, l.Signature, null, l.Contracts,
             global::app.type.item.signature.Origin.Live, window: null));
 
         await Assert.That(refused!.Error.Key).IsEqualTo("LiveSignatureNeedsWindow");

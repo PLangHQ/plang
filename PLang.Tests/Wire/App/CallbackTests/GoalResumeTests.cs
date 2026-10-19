@@ -95,7 +95,7 @@ public class GoalResumeTests
         // The integration test in 2a.8 (StatelessCrossGoalResumes) pins the
         // end-to-end behavior.
         var app = NewApp();
-        var data = new global::app.data.@this<Ask>("", new Ask { Waiting = true }, context: app.actor.list.User.Context);
+        var data = new global::app.data.@this<Ask>("", new Ask(app.actor.list.User.Context.App.type.list[typeof(global::app.module.output.Ask)]) { Waiting = true }, context: app.actor.list.User.Context);
         await Assert.That(data.ShouldExit()).IsTrue();
     }
 

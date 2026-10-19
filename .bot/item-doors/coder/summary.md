@@ -58,6 +58,14 @@ in turn, smallest first. Decisions are numbered per branch (item-doors 1–47, `
   arithmetic result of an operand's kind holds that operand's type, a climbed one keeps the class-built fallback
   until the kinds item (21). The operator births (`string → text`, the 15 number lifts, Parse) keep the class-built
   fallback (50). setting: path/module/action nodes take the type; the `.Path`-only makers ask the list.
+- **content, separator, step 3 (the stand-ins)**: content composes the app's file/url entry with the app's format
+  kind (75). The `Type => new(...)` overrides went for snapshot, table, store, query (+ clauses), archive, hash,
+  signature, clr, ask, code registration and override, size; each is born holding the app's type. A setting's
+  birth fills every non-nullable member the values leave out with its class's empty value (culture's is the
+  machine's). item's own `Template` went (a template reads only `Type.Template`). Kept, marked: error (its makers
+  have no app — the implicit-conversion branch), event (shared across apps — the event door, Ingi's), the
+  operator births (50), the kinds-item markers (number's climb, hash's and size's kind-made births, separator's
+  offers).
 - **path born whole**: the base ctor takes the app's `{path, <scheme>}`; `Resolve` asks the app's list (file, and
   http by the url's scheme); a path made from another (parent, child, extension, a listing's entries, a transfer's
   target) holds its source's type. A scheme handler's contract is its static `Resolve`, never a bare ctor.

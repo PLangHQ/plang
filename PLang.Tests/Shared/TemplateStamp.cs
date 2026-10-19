@@ -79,13 +79,14 @@ public static class TemplateStamp
                     new global::app.type.@this("list", null, false, new global::app.type.item.template.kind.plang.@this()), context]) : null;
             }
 
-            case global::app.type.item.dict.@this d when d.Template == null:
+            case global::app.type.item.dict.@this d when d.Type.Template == null:
             {
                 var entries = d.Entries(context).ToList();
                 bool any = false;
                 foreach (var entry in entries) any |= StampEntry(entry, context);
                 if (!any) return null;
-                var stampedDict = new global::app.type.item.dict.@this(new global::app.type.@this("dict", typeof(global::app.type.item.dict.@this), null, false, new global::app.type.item.template.kind.plang.@this()));
+                var stampedDict = new global::app.type.item.dict.@this(context.App.type.list[
+                    new global::app.type.@this("dict", null, false, new global::app.type.item.template.kind.plang.@this()), context]);
                 foreach (var entry in entries) stampedDict.Set(entry);
                 return stampedDict;
             }

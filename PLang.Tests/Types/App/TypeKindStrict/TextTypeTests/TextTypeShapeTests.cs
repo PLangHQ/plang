@@ -43,7 +43,8 @@ public class TextTypeShapeTests
         await using var app = new global::app.@this("/tmp/text-miss-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         var ctx = app.actor.list.User.Context;
         var grid = new global::app.type.table.@this(new[] { "name" },
-            new IReadOnlyDictionary<string, object?>[] { new Dictionary<string, object?> { ["name"] = "Ada" } }, "csv");
+            new IReadOnlyDictionary<string, object?>[] { new Dictionary<string, object?> { ["name"] = "Ada" } },
+            ctx.App.type.list[new global::app.type.@this("table", "csv"), ctx]);
         await ctx.Variable.Set("t", new global::app.data.@this("t", grid, context: ctx));
 
         var ex = await Assert.That(async () => await ctx.Rendered("rows: %t.nope%"))

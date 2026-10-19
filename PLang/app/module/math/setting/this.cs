@@ -10,5 +10,5 @@ public sealed class @this : global::app.type.item.setting.module.@this
     public static bool Internal => true;
 
     /// <summary>When two numbers are the same — <c>%!math.setting.equal%</c>.</summary>
-    [Out, Store] public equal.@this Equal { get; set; } = new(new global::app.type.@this(typeof(equal.@this)));
+    [Out, Store] public equal.@this Equal { get; set; }
 }

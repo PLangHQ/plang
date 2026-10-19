@@ -36,13 +36,13 @@ public sealed class @this : global::app.type.item.@this
     [global::app.Out]
     public global::app.type.item.text.@this? Ask { get; }
 
-    /// <summary>A free line: its characters, as written.</summary>
-    public @this(global::app.type.item.text.@this prose) : base(new global::app.type.@this(typeof(@this))) { Prose = prose; }
+    /// <summary>A free line: its characters, as written, born holding <paramref name="type"/> — the app's.</summary>
+    public @this(global::app.type.item.text.@this prose, global::app.type.@this type) : base(type) { Prose = prose; }
 
-    /// <summary>A named line.</summary>
-    public @this(global::app.type.item.text.@this name, global::app.type.item.text.@this prose,
+    /// <summary>A named line, born holding <paramref name="type"/> — the app's.</summary>
+    public @this(global::app.type.@this type, global::app.type.item.text.@this name, global::app.type.item.text.@this prose,
         global::app.type.item.text.@this? say, global::app.type.item.text.@this? builder, global::app.type.item.text.@this? ask = null)
-        : base(new global::app.type.@this(typeof(@this)))
+        : base(type)
     {
         Name = name;
         Prose = prose;

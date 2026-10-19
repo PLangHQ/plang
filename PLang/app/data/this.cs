@@ -578,7 +578,8 @@ public partial class @this
             Fail(chosen.Error!);
             return null;
         }
-        // T is made by the app's type for it: this Data's asker names the app
+        // T is made by the app's type for it: this Data's asker names the app (a Data the C# operator made has no
+        // asker, so its refusal check holds a type built from T — until the implicit-operator branch)
         var type = Context?.App.type.list[typeof(T)];
         return value.Refuses(type ?? new global::app.type.@this(typeof(T)), this) ? null : T.Create(value, type, this);
     }
@@ -949,7 +950,7 @@ public class DynamicData : @this
     /// before it is read (<c>%Now%</c> is a datetime).</summary>
     public DynamicData(string name, Func<actor.context.@this, @this?> found, actor.context.@this context, type? declared = null)
         : this(name, new global::app.type.item.computed(asker => found(asker)?.Peek(),
-            declared?.IsNull == false ? declared.Name : null, declared?.kind is { IsEmpty: false } kind ? kind.Name : null),
+            declared?.IsNull == false ? context.App.type.list[declared, context] : context.App.type.list["item"]),
             found, context)
     {
     }

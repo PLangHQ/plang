@@ -67,11 +67,13 @@ public sealed class @this : global::app.type.item.@this
             var sample = await _file.Content(data.Context);
             if (!sample.Success) { data.Fail(sample.Error!); return data.Empty; }
             var fenced = false;
-            var type = data.Context.App.type.list[typeof(global::app.type.item.text.@this)];
+            var types = data.Context.App.type.list;
             foreach (var text in _file.ContentText().Split('\n').Select(text => text.TrimEnd('\r')))
             {
                 var fence = text.TrimStart().StartsWith(Fence, System.StringComparison.Ordinal);
-                read.Add(fenced || fence ? new line.@this(new global::app.type.item.text.@this(text, type)) : Read(text, type));
+                read.Add(fenced || fence
+                    ? new line.@this(new global::app.type.item.text.@this(text, types[typeof(global::app.type.item.text.@this)]), types[typeof(line.@this)])
+                    : Read(text, types));
                 if (fence) fenced = !fenced;
             }
         }
@@ -101,10 +103,11 @@ public sealed class @this : global::app.type.item.@this
 
     // A line outside a fence: `Name — …` is a named line, its prose running to the first tag; `say:`, `builder:` and
     // `ask:` tags follow, each after " · ". A part after " · " that is no tag stays in the prose. Anything else is a
-    // free line. Each text is born holding the app's text type.
-    private line.@this Read(string text, global::app.type.@this type)
+    // free line. Each line and each text is born holding the app's type for it, from <paramref name="types"/>.
+    private line.@this Read(string text, global::app.type.list.@this types)
     {
-        if (Named.Match(text) is not { Success: true } named) return new line.@this(new global::app.type.item.text.@this(text, type));
+        var type = types[typeof(global::app.type.item.text.@this)];
+        if (Named.Match(text) is not { Success: true } named) return new line.@this(new global::app.type.item.text.@this(text, type), types[typeof(line.@this)]);
         var part = named.Groups[2].Value.Split(Tag);
         var prose = part[0];
         global::app.type.item.text.@this? say = null, builder = null, ask = null;
@@ -115,6 +118,7 @@ public sealed class @this : global::app.type.item.@this
             else if (tag.StartsWith("ask:", System.StringComparison.Ordinal)) ask = new(tag["ask:".Length..].Trim(), type);
             else prose += Tag + tag;
         }
-        return new line.@this(new global::app.type.item.text.@this(named.Groups[1].Value, type), new global::app.type.item.text.@this(prose, type), say, builder, ask);
+        return new line.@this(types[typeof(line.@this)], new global::app.type.item.text.@this(named.Groups[1].Value, type),
+            new global::app.type.item.text.@this(prose, type), say, builder, ask);
     }
 }

@@ -42,6 +42,7 @@ public class Ed25519 : ISigning
         var datetime = action.Context.App.type.list[typeof(global::app.type.item.datetime.@this)];
         var text = action.Context.App.type.list[typeof(global::app.type.item.text.@this)];
         var unsigned = new global::app.type.item.signature.@this(
+            type: action.Context.App.type.list[new global::app.type.@this("signature", Name), action.Context],
             value: action.Data!,
             algorithm: new global::app.type.item.text.@this(Name, text),
             nonce: new global::app.type.item.text.@this(nonce, text),

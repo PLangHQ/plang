@@ -224,13 +224,17 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 prop.SetValue(node, val);
             }
         }
-        // a list or dict member the values leave out holds an empty one of its own class, born holding the app's type for it
+        // a member that can't be null and the values leave out holds the empty value its own class is born as, holding
+        // the app's type for it: an empty list or dict, a nested setting at its defaults, the machine's culture
+        const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
+            | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+        var nullability = new System.Reflection.NullabilityInfoContext();
         foreach (var member in node.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-            if (member.SetMethod?.IsPublic == true
-                && (typeof(global::app.type.item.list.@this).IsAssignableFrom(member.PropertyType)
-                    || typeof(global::app.type.item.dict.@this).IsAssignableFrom(member.PropertyType))
-                && member.GetValue(node) == null)
-                member.SetValue(node, System.Activator.CreateInstance(member.PropertyType, context.App.type.list[member.PropertyType]));
+            if (member.SetMethod?.IsPublic == true && typeof(global::app.type.item.@this).IsAssignableFrom(member.PropertyType)
+                && nullability.Create(member).WriteState != System.Reflection.NullabilityState.Nullable
+                && member.GetValue(node) == null
+                && member.PropertyType.GetConstructor(any, [typeof(global::app.type.@this)]) is { } empty)
+                member.SetValue(node, empty.Invoke([context.App.type.list[member.PropertyType]]));
         return context.Ok();
     }
 
