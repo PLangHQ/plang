@@ -106,6 +106,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// construction switch, so the core needs no kind.</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
+        // a text is held as it is when it already is the declared type, else born again holding it
+        if (value is @this self) return declared is null || self.Is(declared) ? self : new @this(self, declared);
         if (Create(value) is { } built) return built;
         data.Fail(new global::app.error.@this(
             $"Cannot bind a {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to text — it has no textual form.", "TypeConversionFailed", 400));
@@ -335,7 +337,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The empty text — what a text holds before anything is in it (type.Empty).</summary>
     internal @this() : this(string.Empty) { }
 
-    // A re-kinded copy: the same content and variables, born holding the kinded type.
+    // The same content and variables, born holding the declared type.
     private @this(@this source, global::app.type.@this type) : base(type)
     {
         _value = source._value;
@@ -446,11 +448,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// would then read "(null)", making every contains false.</summary>
     public override async System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)
         => Contains((await needle.Value())?.ToString());
-
-    /// <summary>A re-kinded copy — same content, the declared kind stamped
-    /// (values immutable, never restamped in place).</summary>
-    public override global::app.type.item.@this Kinded(string? kind)
-        => new @this(this, new global::app.type.@this("text", typeof(@this), kind, false, Type.Template));
 
     /// <summary>text's raw string face — its characters.</summary>
     public override string? RawText => _value;

@@ -378,7 +378,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             // The response Content-Type rides as a Property so the url door can stamp
             // by it (Content-Type rules over the URL extension); empty when the server
             // sent none.
-            var bytesData = context.Ok((object)new global::app.type.item.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
+            var bytesData = context.Ok((object)new global::app.type.item.binary.@this(await resp.Content.ReadAsByteArrayAsync(), context.App.type.list[typeof(global::app.type.item.binary.@this)]));
             bytesData.Properties.Set("contentType", resp.Content.Headers.ContentType?.MediaType ?? "");
             return bytesData;
         }

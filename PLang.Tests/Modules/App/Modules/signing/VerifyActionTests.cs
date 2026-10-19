@@ -244,7 +244,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         var sigBytes = (byte[])Layer(signed).Signature.Value.Clone();
         sigBytes[0] ^= 0xFF;
-        var tampered = Tampered(signed, signature: new global::app.type.item.binary.@this(sigBytes));
+        var tampered = Tampered(signed, signature: new global::app.type.item.binary.@this(sigBytes, _app.type.list[typeof(global::app.type.item.binary.@this)]));
 
         var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" });
         await result.IsFailure();

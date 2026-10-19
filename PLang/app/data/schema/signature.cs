@@ -31,7 +31,8 @@ public sealed class signature : ISchemaReader
         // the hash's kind is what the layer says — none said, the signature is refused below, never a kind guessed
         string? hashAlgo = null;
         byte[] hashValue = System.Array.Empty<byte>();
-        global::app.type.item.binary.@this sig = new(System.Array.Empty<byte>());
+        var binary = context.App.type.list[typeof(global::app.type.item.binary.@this)];
+        global::app.type.item.binary.@this sig = new(System.Array.Empty<byte>(), binary);
         global::app.type.item.list.@this? contracts = null;
         // The inner data is born with the read's context (the data reader does the same) — the
         // verify re-hashes it through the wire, which needs the actor context.
@@ -70,7 +71,7 @@ public sealed class signature : ISchemaReader
                     reader.EndObject();
                     break;
                 }
-                case "signature": sig = new(global::app.type.item.signature.@this.SafeBase64(reader.String())); break;
+                case "signature": sig = new(global::app.type.item.signature.@this.SafeBase64(reader.String()), binary); break;
                 case "value": inner = new global::app.data.reader.@this().Read(ref reader, ctx); break;
                 default: reader.Skip(); break;
             }

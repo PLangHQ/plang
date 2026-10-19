@@ -113,7 +113,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
             created: new global::app.type.item.datetime.@this(DateTimeOffset.UnixEpoch, app.type.list[typeof(global::app.type.item.datetime.@this)]),
             identity: new global::app.type.item.text.@this(identityPublicKey),
             hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
-            signature: new global::app.type.item.binary.@this(Array.Empty<byte>()));
+            signature: new global::app.type.item.binary.@this(Array.Empty<byte>(), app.type.list[typeof(global::app.type.item.binary.@this)]));
 
     // A copy of a signed signature with one field swapped — for the mismatch tests.
     private global::app.type.item.signature.@this Rebuilt(global::app.type.item.signature.@this s,
@@ -195,14 +195,14 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
         var signed = Signed(kp);
         var bytes = (byte[])signed.Signature.Value.Clone();
         bytes[0] ^= 0xFF;
-        var tampered = Rebuilt(signed, signature: new global::app.type.item.binary.@this(bytes));
+        var tampered = Rebuilt(signed, signature: new global::app.type.item.binary.@this(bytes, app.type.list[typeof(global::app.type.item.binary.@this)]));
         await Assert.That(_provider.Verify(tampered).Value).IsFalse();
     }
 
     [Test]
     public async Task Verify_InvalidBase64PublicKey_Throws()
     {
-        var signed = Unsigned("not-valid-base64!!!").Signed(new global::app.type.item.binary.@this(new byte[64]));
+        var signed = Unsigned("not-valid-base64!!!").Signed(new global::app.type.item.binary.@this(new byte[64], app.type.list[typeof(global::app.type.item.binary.@this)]));
         await Assert.That(() => _provider.Verify(signed)).Throws<FormatException>();
     }
 

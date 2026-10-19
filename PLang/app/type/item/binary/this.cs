@@ -155,27 +155,26 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public byte[] Value { get; }
 
-    /// <summary>The value's kind — the byte-format vocabulary. An ordinary
-    /// typed property stamped at creation, never after.</summary>
-    public string? Kind { get; init; }
+    /// <summary>Bytes, born holding <paramref name="type"/> — its kind the byte format.</summary>
+    public @this(byte[] value, global::app.type.@this type) : base(type) => Value = value ?? System.Array.Empty<byte>();
 
-    public @this(byte[] value, string? kind = null)
-        : base(new global::app.type.@this("binary", typeof(@this), kind))
-    { Value = value ?? System.Array.Empty<byte>(); Kind = kind; }
+    // Bytes through the implicit conversion, their type rebuilt from the class until that conversion goes.
+    private @this(byte[] value) => Value = value ?? System.Array.Empty<byte>();
 
     /// <summary>THE PURE CORE — a <c>binary</c> passes through; a raw <c>byte[]</c> passes; a text is its UTF-8
     /// bytes (text is bytes in an encoding); a raw base64 string (binary's wire form) decodes; anything else (or
-    /// non-base64) declines (<c>null</c>). Shared by the ICreate courier and comparison coercion.</summary>
-    public static @this? Create(object? raw)
+    /// non-base64) declines (<c>null</c>). What it makes is born holding <paramref name="type"/>. Shared by the
+    /// ICreate courier and comparison coercion.</summary>
+    public static @this? Create(object? raw, global::app.type.@this type)
     {
         if (raw is @this self) return self;
-        if (raw is global::app.type.item.text.@this text) return (@this)System.Text.Encoding.UTF8.GetBytes(text.Clr<string>() ?? "");
+        if (raw is global::app.type.item.text.@this text) return new @this(System.Text.Encoding.UTF8.GetBytes(text.Clr<string>() ?? ""), type);
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
         switch (value)
         {
-            case byte[] b: return (@this)b;
+            case byte[] b: return new @this(b, type);
             case string s:
-                try { return (@this)System.Convert.FromBase64String(s); }
+                try { return new @this(System.Convert.FromBase64String(s), type); }
                 catch (System.FormatException) { return null; }
             default: return null;
         }
@@ -185,16 +184,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// on <paramref name="data"/> (a non-base64 string vs a wrong type).</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Create(value) is { } built) return built;
+        // bytes are held as they are when they already are the declared type, else born again holding it
+        if (value is @this self) return declared is null || self.Is(declared) ? self : new @this(self.Value, declared);
+        if (declared is { } type && Create(value, type) is { } built) return built;
         object? clr = (value as global::app.type.item.@this)?.Clr<object>() ?? value;
         data.Fail(clr is string
             ? new global::app.error.@this("Cannot parse string as binary — expected base64.", "BinaryParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {(value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name} to binary.", "BinaryConversionFailed", 400));
         return null;
     }
-
-    /// <summary>A re-kinded copy — same bytes, the declared kind stamped.</summary>
-    public override global::app.type.item.@this Kinded(string? kind) => new @this(Value, kind);
 
     // INBOUND only — the entry lift (`.Ok(bytes)` constructs). The outbound
     // implicit (binary → byte[]) is gone: every site was a silent CLR exit;
@@ -234,7 +232,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// a side that can't become bytes → <c>Incomparable</c>. No order.</summary>
     protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
-        var b = other as @this ?? Create(other);
+        var b = other as @this ?? Create(other, context.App.type.list[typeof(@this)]);
         return new(b is null ? global::app.data.Comparison.Incomparable
                  : Value.AsSpan().SequenceEqual(b.Value) ? global::app.data.Comparison.Equal
                  : global::app.data.Comparison.NotEqual);

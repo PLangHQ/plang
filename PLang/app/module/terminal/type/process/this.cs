@@ -217,7 +217,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 screen?.Show(message);
                 if (onOutput != null)
                     await global::app.module.on.code.Gate.Call(onOutput,
-                        new Data("!data", new global::app.type.item.binary.@this(message), context.App.type.list["binary"], context: context), context);
+                        new Data("!data", new global::app.type.item.binary.@this(message, context.App.type.list["binary"]), context.App.type.list["binary"], context: context), context);
             }
             await said;   // its last stderr lines are delivered too
         });

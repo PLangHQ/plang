@@ -128,7 +128,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Created = created;
         Identity = identity ?? new text("");
         Hash = hash;
-        Signature = signature ?? new binary(System.Array.Empty<byte>());
+        Signature = signature ?? (binary)System.Array.Empty<byte>();
         _expires = expires;
         Contracts = contracts;
         _window = window;

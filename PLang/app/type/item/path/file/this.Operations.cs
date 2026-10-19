@@ -95,7 +95,7 @@ public sealed partial class @this
             return context.Error<global::app.type.item.binary.@this>(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
         try
         {
-            return context.Ok<global::app.type.item.binary.@this>(new global::app.type.item.binary.@this(await context.FileSystem.Read(this)));
+            return context.Ok<global::app.type.item.binary.@this>(new global::app.type.item.binary.@this(await context.FileSystem.Read(this), context.App.type.list[typeof(global::app.type.item.binary.@this)]));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

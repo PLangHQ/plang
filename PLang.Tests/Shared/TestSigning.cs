@@ -29,7 +29,7 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
                 action.Context.App.type.list[typeof(global::app.type.item.datetime.@this)]),
             identity: new global::app.type.item.text.@this("test-public-key"),
             hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
-            signature: new global::app.type.item.binary.@this(System.Array.Empty<byte>()));
+            signature: new global::app.type.item.binary.@this(System.Array.Empty<byte>(), action.Context.App.type.list[typeof(global::app.type.item.binary.@this)]));
         return Task.FromResult(action.Context.Ok((object?)unsigned));
     }
 
@@ -37,7 +37,7 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
         => Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(new global::app.type.item.@bool.@this(true)));
 
     public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey)
-        => new global::app.type.item.binary.@this(System.Array.Empty<byte>());
+        => new global::app.type.item.binary.@this(System.Array.Empty<byte>(), unsigned.Signature.Type);
 
     public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
         => new global::app.type.item.@bool.@this(true);

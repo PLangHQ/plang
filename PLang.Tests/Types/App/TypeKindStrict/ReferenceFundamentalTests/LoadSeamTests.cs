@@ -89,7 +89,7 @@ public class LoadSeamTests
 
     [Test] public async Task Birth_StrictKind_BytesInHand_MismatchDeclines_MatchIsBorn()
     {
-        var bytes = new global::app.type.item.binary.@this(Png1x1);
+        var bytes = new global::app.type.item.binary.@this(Png1x1, _app.type.list[typeof(global::app.type.item.binary.@this)]);
         var asGif = _app.type.list[new global::app.type.@this("image", "gif", true), Ctx];
         var asPng = _app.type.list[new global::app.type.@this("image", "png", true), Ctx];
 

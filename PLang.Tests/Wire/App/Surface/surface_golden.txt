@@ -1203,11 +1203,9 @@ class app.type.item.base64.serializer.Reader : app.type.reader.ITypeReader
   ctor()
 
 class app.type.item.base64.this : app.type.item.this, app.type.item.ICreate<app.type.item.base64.this> [PlangType]
-  Kind : System.String { get; init; }
-  ctor(System.String value, System.String kind = …)
+  ctor(System.String value, app.type.this type)
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
-  override Kinded(System.String kind) : app.type.item.this
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
   override RawBytes : System.Byte[] { get; }
@@ -1216,7 +1214,7 @@ class app.type.item.base64.this : app.type.item.this, app.type.item.ICreate<app.
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  static Create(System.Object raw) : app.type.item.base64.this
+  static Create(System.Object raw, app.type.this type, app.actor.context.this context) : app.type.item.base64.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.base64.this
   static Shape : System.String { get; }
 
@@ -1227,14 +1225,12 @@ class app.type.item.binary.serializer.Reader : app.type.reader.ITypeReader
 
 class app.type.item.binary.this : app.type.item.this, app.type.item.ICreate<app.type.item.binary.this>, app.type.item.IEncode<app.type.item.binary.this> [Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, PlangType]
   AreEqual(System.Object other) : System.Boolean
-  Kind : System.String { get; init; }
   Value : System.Byte[] { get; }
-  ctor(System.Byte[] value, System.String kind = …)
+  ctor(System.Byte[] value, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
-  override Kinded(System.String kind) : app.type.item.this
   override Pour(System.IO.Stream into, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   override Rank : System.Int32 { get; }
   override RawBytes : System.Byte[] { get; }
@@ -1242,7 +1238,7 @@ class app.type.item.binary.this : app.type.item.this, app.type.item.ICreate<app.
   override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
-  static Create(System.Object raw) : app.type.item.binary.this
+  static Create(System.Object raw, app.type.this type) : app.type.item.binary.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.binary.this
   static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
@@ -2730,7 +2726,6 @@ class app.type.item.text.this : app.type.item.this, System.IEquatable<app.type.i
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
   override IsVariable : System.Boolean { get; }
-  override Kinded(System.String kind) : app.type.item.this
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Pour(System.IO.Stream into, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   override Rank : System.Int32 { get; }
@@ -2784,7 +2779,6 @@ abstract class app.type.item.this : app.data.IBooleanResolvable, app.type.item.I
   virtual IsSequence : System.Boolean { get; }
   virtual IsTruthy() : System.Boolean
   virtual IsVariable : System.Boolean { get; }
-  virtual Kinded(System.String kind) : app.type.item.this
   virtual Narrow() : app.type.item.this
   virtual Open(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.error.this>
   virtual Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask

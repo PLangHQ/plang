@@ -428,8 +428,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     protected @this(global::app.type.@this type) => _type = type;
 
     /// <summary>A value born without a type: the root type (its own type) and the type list (which answers its own
-    /// type from itself) — the two makers of types, no other value. A value whose maker does not hand its type yet
-    /// reaches here too until every maker hands one.</summary>
+    /// type from itself) — the two makers of types. A value born through a C# implicit conversion reaches here too,
+    /// its type rebuilt from its class, until the implicit-conversion branch removes those conversions.</summary>
     protected @this() { }
 
     /// <summary>
@@ -790,14 +790,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <c>self</c>, so a typed value carries no un-narrowed state.
     /// </summary>
     public virtual @this Narrow() => this;
-
-    /// <summary>
-    /// Applies a declared <paramref name="kind"/> to a kindless leaf, answering the
-    /// type's own way (text re-mints with the kind, binary rebuilds). The default is a
-    /// no-op — a value whose kind doesn't apply (or that already carries one) returns
-    /// self. Owns the "how do I take a kind" knowledge on the leaf, not in a caller switch.
-    /// </summary>
-    public virtual @this Kinded(string? kind) => this;
 
     /// <summary>
     /// The raw string form this leaf carries, if any (text's characters, a source's

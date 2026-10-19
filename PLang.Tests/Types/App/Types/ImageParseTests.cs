@@ -7,8 +7,12 @@ namespace PLang.Tests.App.Types;
 // The string forms moved off image: a data-url / bare base64 is a `base64` value whose
 // decoded bytes reach image via the Create base64 arm; a file path loads through the path verbs.
 
-public class ImageParseTests
+public class ImageParseTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+    private global::app.type.@this B64 => app.type.list[typeof(base64)];
+
     private static readonly byte[] PngBytes = new byte[]
     {
         0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
@@ -21,14 +25,14 @@ public class ImageParseTests
         // A data-url is a base64 value (kind off the mime header); its decoded bytes build the
         // image through Create's base64 arm — mime sniffed off the magic bytes (content truth).
         var dataUrl = "data:image/png;base64," + System.Convert.ToBase64String(PngBytes);
-        var img = image.Create(base64.Parse(dataUrl));
+        var img = image.Create(base64.Parse(dataUrl, B64, app.actor.list.User.Context));
         await Assert.That(img).IsNotNull();
         await Assert.That(((image)img!).Mime).IsEqualTo("image/png");
     }
 
     [Test] public async Task RawBase64_AsBase64_ThenImage_DetectsAsImage()
     {
-        var b64 = new base64(System.Convert.ToBase64String(PngBytes));
+        var b64 = new base64(System.Convert.ToBase64String(PngBytes), B64);
         var img = image.Create(b64);
         await Assert.That(img).IsNotNull();
         await Assert.That(((image)img!).Mime).IsEqualTo("image/png");

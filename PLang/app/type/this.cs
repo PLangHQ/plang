@@ -395,12 +395,16 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // A built leaf (text/number/… carrying its raw):
         if (raw is item.@this leaf)
         {
-            // Already this type → hold; refine a matching leaf to the declared kind.
+            // Already this type → hold; a kindless leaf declared a kind is made into this type by its own Create,
+            // handed this declaration (its courier re-births a value of its class holding it).
             var minted = leaf.Type;
             if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
             {
-                var refined = !kind.IsEmpty && minted.kind.IsEmpty ? leaf.Kinded(kind.Name) : leaf;
-                return refined;
+                if (kind.IsEmpty || !minted.kind.IsEmpty) return leaf;
+                var data = new global::app.data.@this("", context: context);
+                if (Make(leaf, data) is { } value) return value;
+                if (data.Error != null) throw Failed(data.Error);
+                return leaf;
             }
             // The value's type history already contains this type (an image born from a path
             // satisfies a path slot) → hold it, don't downgrade.

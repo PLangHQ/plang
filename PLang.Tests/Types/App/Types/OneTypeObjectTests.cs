@@ -55,6 +55,16 @@ public class OneTypeObjectTests : System.IAsyncDisposable
         await Assert.That(ReferenceEquals(read.Type, app.type.list["guid"])).IsTrue();
     }
 
+    // a kindless text declared text<md> is born again holding the app's {text, md}, made by that type's own door
+    [Test] public async Task AKindlessTextDeclaredAKind_HoldsTheAppsKindedType()
+    {
+        var context = app.actor.list.User.Context;
+        var md = app.type.list[new global::app.type.@this("text", "md"), context];
+        var made = md.Make(app.type.list["text"].Make("a", context), context);
+        await Assert.That(ReferenceEquals(made.Type, md)).IsTrue();
+        await Assert.That(made.ToString()).IsEqualTo("a");
+    }
+
     [Test] public async Task AKindedType_IsOneObject()
         => await Assert.That(ReferenceEquals(
             app.type.list[typeof(global::app.goal.step.list.@this)],

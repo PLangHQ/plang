@@ -99,7 +99,7 @@ public abstract class @this : global::app.type.item.@this
     /// from memory.</summary>
     public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.binary.@this>> Content(global::app.actor.context.@this context)
     {
-        if (_bytes != null) return context.Ok<global::app.type.item.binary.@this>(new global::app.type.item.binary.@this(_bytes));
+        if (_bytes != null) return context.Ok<global::app.type.item.binary.@this>(new global::app.type.item.binary.@this(_bytes, context.App.type.list[typeof(global::app.type.item.binary.@this)]));
         var read = await Path.Bytes(context);
         if (!read.Success || read.Exits) return read;
         _format = await Format(read, context);

@@ -47,7 +47,7 @@ public class Ed25519 : ISigning
             created: new global::app.type.item.datetime.@this(now, datetime),
             identity: new global::app.type.item.text.@this(identity.PublicKey),
             hash: hash,
-            signature: new global::app.type.item.binary.@this(Array.Empty<byte>()),
+            signature: new global::app.type.item.binary.@this(Array.Empty<byte>(), action.Context.App.type.list[typeof(global::app.type.item.binary.@this)]),
             expires: expires is { } e ? new global::app.type.item.datetime.@this(e, datetime) : null,
             contracts: contracts);
 
@@ -183,7 +183,7 @@ public class Ed25519 : ISigning
         var privateKeyBytes = Convert.FromBase64String(privateKey.ToString());
         using var key = Key.Import(algorithm, privateKeyBytes, KeyBlobFormat.RawPrivateKey,
             new KeyCreationParameters { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
-        return new global::app.type.item.binary.@this(algorithm.Sign(key, unsigned.ToSigningBytes()));
+        return new global::app.type.item.binary.@this(algorithm.Sign(key, unsigned.ToSigningBytes()), unsigned.Signature.Type);
     }
 
     public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
