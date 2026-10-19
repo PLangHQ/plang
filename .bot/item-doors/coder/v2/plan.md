@@ -36,7 +36,11 @@ while a value builds its own type.
 - the C# implicit operators (50): their own branch after item-doors; the operator births (data<T>(T), binary,
   duration) keep a context-less / class-built fallback until then. Error status (A) goes there too.
 
-## Done since (49–56)
+## Done since (49–64)
+- 60/61: one Fluid value over any plang item (its Output, truthiness, Compare); a type written alone is its face.
+- 62–64 (group 8): the app's nodes are their own class at `app/type/node/` (not types); `Replace` gone; events
+  through the plain type's `.on`; the goal offer gone; the type `type` holds its list (its values) and offers it.
+- Show_A500 (a): the error's C# `Exception` is internal; plang reads `%!error.trace%`.
 - 49: `Kinded` gone; a kindless leaf declared a kind is made through the type's Make; base64 and binary born with
   the app's type.
 - 52: every Data born with its context (birth guard), the app's null one value per app (its type's), FromError /

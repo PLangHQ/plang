@@ -96,7 +96,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             foreach (var assembly in Assemblies)
                 foreach (var clr in assembly.GetTypes())
                     if (NameOf(clr) is { } name) base.Add(new global::app.type.@this(name, clr, null));
-            var faceted = Items().Select(t => new global::app.type.@this(t.Name, t.ClrType!, this)).ToArray();
+            // the type `type` is made holding this list: its values are these types
+            var faceted = Items().Select(t => t.ClrType == typeof(global::app.type.@this)
+                ? new global::app.type.@this(this)
+                : new global::app.type.@this(t.Name, t.ClrType!, this)).ToArray();
             while (CountRaw > 0) RemoveAt(0);
             foreach (var type in faceted) base.Add(type);
             // plang's own assemblies: a refusal here is plang broken

@@ -124,6 +124,20 @@
           "category": "code",
           "confidence": "high",
           "context": "item-doors 51/56/57: the call stack is handed the app's datetime and {duration, short}; duration born (TimeSpan, type) and written by its type's kind (kind.Write, Ingi's locked addition); duration.Text and its ToString go — a duration shown as text is its Output (Fluid's span converter writes it through a text writer)."
+        },
+        {
+          "paths": ["PLang/app/module/ui/code/Fluid.cs", "PLang/app/type/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 60/61: one Fluid value over any plang item (Output, IsTruthy, Compare; ordering operators registered); the span-only converter goes. A type written alone in the Out view is its face."
+        },
+        {
+          "paths": ["PLang/app/type/node", "PLang/app/type/list/Registry.cs", "PLang/app/this.cs", "PLang/app/goal/list/this.cs", "PLang/app/type/this.cs", "PLang/app/error/this.cs", "os/system/error"],
+          "type": "move",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 62-64 (group 8): the app's nodes move to app/type/node as items of the internal type node; Replace goes; events through the plain type; the goal offer goes (64); the type `type` is made by its list holding it. Trace sent first; the Offers gap (no app reachable) went to the architect, answered by 64. error.Exception made internal, plang reads %!error.trace% (Show_A500, 60's red)."
         }
       ],
       "after": null

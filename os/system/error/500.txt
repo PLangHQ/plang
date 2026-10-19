@@ -75,10 +75,10 @@ Parameters at dispatch:
         final:      {% if parameter.WasAccessed %}{{ parameter.FinalValue }}{% else %}(not accessed){% endif %}
 {%- endfor %}
 {%- endif %}
-{%- if error.Exception %}
+{%- if error.Trace %}
 
 For C# developers:
-    {{ error.Exception }}
+    {{ error.Trace }}
 {%- endif %}
 {%- for cause in error.list %}
 

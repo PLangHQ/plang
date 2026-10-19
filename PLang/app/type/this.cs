@@ -674,7 +674,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             : Family._types is { } types ? [.. await types.Offers(step), .. await kind.Offers(step)]
             : await kind.Offers(step);
     private IReadOnlyList<item.@this>? _offer;
-    // The types the type `type` is born among — its values, what a type slot is offered. Null for any other type.
+    // The types the type `type` is born among — its values, what a type slot is offered; null for any other type.
     private list.@this? _types;
 
     /// <summary>Whether what this type offers is all a value of it can be — its kind says (a choice's options, a bool's
@@ -801,9 +801,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // declared by the class itself: a base that is internal (reference) leaves its subclasses (file, url) named
         Internal = clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
                                                | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(null) is true;
-        // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts; a type's
-        // values are the types it is born among, so those are what it offers.
-        if (clr == typeof(@this)) _types = types;
+        // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         if (types == null || clr == typeof(@this)) return;
 
         _offer = Declared<IReadOnlyList<item.@this>>("Offer");
@@ -877,6 +875,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             return p?.GetValue(null) as T;
         }
     }
+
+    /// <summary>
+    /// The type <c>type</c>, made by the list of <paramref name="types"/> for its own entry. A type's values are the
+    /// types, so this one type holds the list they are in — as a choice holds its set — and offers them; every other
+    /// type knows no list.
+    /// </summary>
+    internal @this(list.@this types) : this(item.@this.NameOf(typeof(@this)), typeof(@this), (list.@this?)null) => _types = types;
 
     /// <summary>This type answers for its name or one of its aliases, case-insensitive.</summary>
     public System.Threading.Tasks.ValueTask<@this?> Match(string key) => new(Names(key) ? this : null);

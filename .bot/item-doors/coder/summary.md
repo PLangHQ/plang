@@ -1,7 +1,7 @@
 # coder — item-doors — summary
 
 ## Version
-v2 (stage 1: a value is born whole — lists, singular nodes, and the per-type required ctor; item-doors 32–57)
+v2 (stage 1: a value is born whole — lists, singular nodes, and the per-type required ctor; item-doors 32–64)
 
 ## What this is
 Every plang value holds the one type object its app made for it (item-doors 33): the maker hands it in, and a value
@@ -35,6 +35,17 @@ in turn, smallest first. Decisions are numbered per branch (item-doors 1–47, `
   types, the stack hands them to each frame. duration is born `(TimeSpan, type)`, written by its type's kind
   (`kind.Write(item, IWriter)`, Ingi's locked addition); `Resolve` asks each of the app's duration kinds to parse.
   `duration.Text` and its `ToString` are gone: a duration shown as text is its Output (Fluid renders a span that way).
+- **Fluid and a type's face (60, 61)**: one Fluid value over any plang item (`ui/code/Fluid.cs`): text is its Output,
+  truthiness its own, `> <` and equality its Compare, a leaf's raw backing for Liquid's sort. A type written alone in
+  the Out view is its face (`text`, `list<path>`); its facts are navigated.
+- **The app's nodes (62–64, group 8)**: `app/type/node/{this,current,root}` are items of the internal type `node`,
+  not types. Each holds `type` (the type list's plain entry), `list`, `current` where in play. Written alone:
+  the asker's list, the one in play (`%!app.goal%` the running goal), every type's facts (`%!app.type%`).
+  `Registry.Replace` is gone; events bind on the plain type (`%!app.type.goal.on.start%`, `app.goal.type.on`).
+  The goal offer is gone (64): a goal slot is offered the step's variables; the type `type` is made by its list
+  holding it (its values, as a choice holds its set) and offers the type names.
+- **An error's exception (60's red)**: `error.Exception` is C#-only (internal); plang and the 500 templates read
+  `%!error.trace%` (its C# type, message and stack as text).
 
 ## Interims (each flagged in code, each has its turn)
 - `culture.Machine` (the app setting's default) makes its own type — setting defaults move to birth in group 6 (17).

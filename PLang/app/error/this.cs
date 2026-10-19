@@ -60,7 +60,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public string? FixSuggestion { get; internal set; }
     public string? HelpfulLinks { get; init; }
     public DateTime CreatedUtc { get; }
-    public Exception? Exception { get; init; }
+    /// <summary>The C# exception behind the error, when one is: C#'s alone — plang reads it as <see cref="Trace"/>.</summary>
+    internal Exception? Exception { get; init; }
+    /// <summary>The C# exception behind the error as text — its C# type, its message and where it was thrown
+    /// (<c>%!error.trace%</c>); null when no exception is behind it.</summary>
+    public string? Trace => Exception is { } ex ? $"{ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace}" : null;
     /// <summary>
     /// Arbitrary structured context about the failure. Providers attach things
     /// like raw LLM responses, HTTP status bodies, parse positions, etc. Exposed
