@@ -93,6 +93,7 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - Templates — only what is marked renders: a value renders `%var%` only when its type carries `template`; the marker is born at build (the formal reader), never guessed from content at read; "holds a variable?" is asked of the marker → `wire-serialization.md`
 - Born-typed variable decline — `Variable.Create` fails if input is not already a `variable.@this` → `variables.md`
 - `datetime` navigable members — `.Date`, `.TimeOfDay`, `.Offset`, `.Ticks`, `.DayOfYear`, `.DayOfWeek` navigate to typed PLang values → `type-system.md`
+- A value becomes text only through Output — no `Text` member, no `ToString()` for display; the debugger writes through Output → `type-system.md`
 - `Data.Clr<T>(fallback)` — async typed CLR extraction with a default for absent/null slots → `type-system.md`
 - Construction door — the Data ctor + `Declare` delegate to `type.Build(value, context)`; the type forks (raw → lazy `source` at its `RawFormat`, built-same-type → hold, built-different → `Convert`, null → typed absence). Born-with-context via param, no `type.Context ??=`. → `value-type-method-map.md`
 - `type.Convert(value, ctx)` is the throw boundary — returns `item.@this` (not `Data`) and THROWS on a bad conversion, so it rides the same `MaterializeFailed` path as a bad reader parse (`source.Value` catches it). The per-type leaf hooks + `Conversions.Of` hub still answer `Data` internally. → `value-type-method-map.md`
