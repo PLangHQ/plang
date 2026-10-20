@@ -146,9 +146,9 @@
         }
       ],
       "after": {
-        "status": "sections 16-18 committed on test-speed",
+        "status": "done for now (sections up to 24 committed on test-speed); the architect decides what to take",
         "health": "C# green but Wire's six carried (baseline); plang same 11 names on every step",
-        "notes": "Birth ~18 KB. Small app end to end ~1.5 ms / ~290 KB (was 6.1 ms / ~780 KB): goals shared across apps, class facts once per process, list reads lock-free. test-speed.md sections 12-18."
+        "notes": "Small app ~0.9 ms / ~100 KB (Release, server GC, shared types); bare request-app birth 5.8 KB; C# sweep 137-215 s -> 29-31 s, plang --test 24-31 s -> 5 s vs the parent commit. Shared goals, shared type list (shareTypes), app-held bindings on shared objects. Open: surface re-pins, shared apps can't load code, throughput needs a quiet machine. test-speed.md sections 6-24; summary.md."
       }
     }
   ]
