@@ -183,10 +183,10 @@ public class SetTypeInferenceTests
         await Assert.That((await lst.At(2, _app.actor.list.User.Context)!.Value())).IsTypeOf<global::app.type.item.number.@this>();
     }
 
-    // A Dictionary<string,object?> is aliased the same way — the CLR exit door
-    // returns the same instance after a pure read.
+    // A Dictionary<string,object?> is aliased the same way; the CLR exit door hands back a
+    // C# dictionary of its own, its entries as they were read.
     [Test]
-    public async Task Set_DictValue_AliasesSourceInstance()
+    public async Task Set_DictValue_LowersToADictOfItsOwn()
     {
         var context = _app.actor.list.User.Context;
         var src = new Dictionary<string, object?> { ["k"] = "v" };
@@ -196,9 +196,10 @@ public class SetTypeInferenceTests
         var stored = await context.Variable.Get("d");
         var d = (await stored.Value()) as global::app.type.item.dict.@this;
         await Assert.That(d).IsNotNull();
-        // A read of a key must not knock the dict off the same-ref fast path.
         await Assert.That((await d!.Get("k", _app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("v");
-        await Assert.That(ReferenceEquals(d.Clr<Dictionary<string, object?>>(), src)).IsTrue();
+        var lowered = d.Clr<Dictionary<string, object?>>()!;
+        await Assert.That(ReferenceEquals(lowered, src)).IsFalse();
+        await Assert.That(lowered["k"]).IsEqualTo("v");
     }
 
     [Test]

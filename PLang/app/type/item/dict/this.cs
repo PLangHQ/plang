@@ -306,23 +306,31 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>
-    /// The CLR exit door. A <b>compatible</b> target
-    /// (<c>Dictionary&lt;string,object?&gt;</c>, <c>object</c>, <c>IDictionary</c>) gets
-    /// the backing itself — same instance, O(1), and a Data / item slot (a signed
-    /// <c>signature</c>, a number wrapper) rides intact: the dict's CLR IS its backing.
-    /// A <b>different</b> typed target (a record, <c>Dictionary&lt;string,T&gt;</c>) is a
-    /// real conversion — peel each entry to its raw form, then convert. A signed value
-    /// never rides a typed record/map, so a value with no raw form can't be wrong-unwrapped.
+    /// The CLR exit door: a C# dictionary of its own, never this dict's backing. A map target (<c>object</c>,
+    /// <c>IDictionary</c>, <c>Dictionary&lt;string,T&gt;</c>) gets each entry lowered as C# reads it — a raw slot as it
+    /// is, a Data or an item through its own lowering — in the dict's order, keyed by the dict's own comparer (a
+    /// plang dict's keys stay case-insensitive). A record target is a real conversion — each entry peeled to its raw
+    /// form, then converted. A signed value never rides a typed record/map, so a value with no raw form can't be
+    /// wrong-unwrapped.
     /// </summary>
+    // The empty C# map a target names, keyed by this dict's comparer: object or a dictionary interface is a
+    // Dictionary<string, T>; a map class is itself (with the comparer when it takes one). Null for any other target.
+    private System.Collections.IDictionary? Map(System.Type target)
+    {
+        if (target == typeof(object)) return new Dictionary<string, object?>(_value.Comparer);
+        if (target.IsInterface && target.IsGenericType && target.GetGenericArguments() is [var k, var v] && k == typeof(string)
+            && target.IsAssignableFrom(typeof(Dictionary<,>).MakeGenericType(k, v)))
+            return (System.Collections.IDictionary)System.Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(k, v), _value.Comparer)!;
+        if (!typeof(System.Collections.IDictionary).IsAssignableFrom(target) || target.IsAbstract) return null;
+        return (System.Collections.IDictionary?)(target.GetConstructor([typeof(IEqualityComparer<string>)]) is { } compared
+            ? compared.Invoke([_value.Comparer])
+            : System.Activator.CreateInstance(target));
+    }
+
     internal override object? Clr(System.Type target)
     {
-        // All-raw backing IS the raw map the caller wants → hand it back (O(1)).
-        if (!_hasWrapped && target.IsInstanceOfType(_value)) return _value;
-
-        // A Dictionary<string,T> target — lower each entry to T STRUCTURALLY: each value lowers
-        // ITSELF via Clr, recursive, no json round-trip (the internal-serialize smell dies here).
-        if (typeof(System.Collections.IDictionary).IsAssignableFrom(target)
-            && System.Activator.CreateInstance(target) is System.Collections.IDictionary map)
+        // A map target — each entry lowers ITSELF via Clr to the element type, recursive, no json round-trip.
+        if (Map(target) is { } map)
         {
             var elementType = target.IsGenericType ? target.GetGenericArguments()[^1] : typeof(object);
             foreach (var key in _value.Keys)
