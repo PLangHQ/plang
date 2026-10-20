@@ -155,6 +155,27 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 14. Speed and memory, round on round: a birth at ~95 µs, ~34 KB
+
+Each cut found by allocation sampling with call stacks over 4,000 shared births:
+
+| change | per-birth effect |
+|---|---|
+| a lighter type object: the code's facts read through one reference (five copies gone — a flat copy); eight first-ask caches in one `Answers` object made when any is asked; `Spelled` without making the empty kind | ~60 → ~54 KB; every type object at run time is smaller |
+| an actor's task list and permission view made when first asked; a context's id and trace made when first read; `!app`/`!context` placed directly (`Born`), no async set | ~54 → ~44 KB |
+| a context's call list finds its frame types at the first push, makes its audit list at the first error | (in the above) |
+| console channels wired when an actor's channels are first used (`Standard()`) | ~44 → ~38 KB |
+| the store resolves its file when it opens; the system's standing grant is a verb list the permission view applies when made | ~38 → ~34 KB |
+
+**Birth now** (3 runs × 100, load ~8): shared **~95 µs** median (min ~72); fresh ~1,200 µs (min ~895).
+C# green but Wire's six (one load-sensitive timeout test, `ErrorInPlayTests`, failed once under the sweep and was green
+on its own and in two full Modules runs); plang 277 / 11, the same 11. Surface moves re-pinned on this playground:
+`type.Alias`/`Internal` lose `init`; the call list's ctor takes makers.
+
+Left in a birth (~34 KB): the actors' system variables (`Now`, `NowUtc`, `GUID`, `MyIdentity`, `Identity`, `!app`,
+`!context` — `DynamicData` with a computed cell each, ~12%), the ~20 type entries the app's own constructor asks for,
+the type list's own tables, each actor's channel table and context (cancellation source, stacks).
+
 ## 13. The generator carries the attribute data: cold start ~1,500 µs
 
 The generator now also writes, as code:

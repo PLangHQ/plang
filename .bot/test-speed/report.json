@@ -5,7 +5,7 @@
       "id": "c4e2a9f1-3b7d-4f60-8e15-2a9d6c0b7e43",
       "bot": "tester",
       "timestamp_start": "2026-10-20T09:30:00Z",
-      "timestamp_end": "2026-10-20T23:00:00Z",
+      "timestamp_end": "2026-10-21T03:00:00Z",
       "intent": "Carry decision 157 (format binds its own encode/decode) onto the test-speed playground branch and continue test-speed work there.",
       "before": {
         "assumptions": "157 was built and verified on item-doors (C# green but Wire's six; plang 277/11) but the hook refused the tester's source commit there.",
@@ -112,12 +112,30 @@
           "category": "code",
           "confidence": "medium",
           "context": "Locked core opened on the playground: assembly off app root; readers and pairs shared via facts; modules, channel settings, code tables, Data.Properties lazy; owner lookup via facts; leaner fresh facts. Shared birth ~175 us; fresh ~4.1 ms. C# green but Wire six; plang 277/11."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Emission/Written/this.cs",
+            "PLang/app/assembly/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/actor/this.cs",
+            "PLang/app/actor/context/this.cs",
+            "PLang/app/call/list/this.cs",
+            "PLang/app/channel/list/this.cs",
+            "PLang/app/store/sqlite/this.cs",
+            "PLang/app/actor/permission/this.cs",
+            "PLang.Tests/Types/App/Types/WrittenListsTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Generator lists classes and carries attribute data (formats, actions, statics) with guard tests (deletion-tested); lighter type object; actor/context/call list/channels/store/permission parts made on first use. Shared birth ~95 us / ~34 KB; fresh ~1,200 us. C# green but Wire six; plang 277/11."
         }
       ],
       "after": {
         "status": "157 committed on test-speed",
         "health": "C# green but Wire's six baseline; plang 277/11",
-        "notes": "Birth ~175 us shared, ~4.1 ms fresh. Next idea for cold start: generator emits the code facts."
+        "notes": "Birth ~95 us / ~34 KB shared; ~1,200 us fresh. test-speed.md sections 12-14."
       }
     }
   ]
