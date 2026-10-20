@@ -23,16 +23,25 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <c>app.type.size.setting</c>. A class declared inside what it configures (an action's:
     /// <c>app.module.llm.decider.setting</c>, the action being a class) is read the same way, through its owner:
     /// <c>llm.decider.setting</c>.</summary>
-    protected @this(global::app.type.@this type) : base(type)
+    protected @this(global::app.type.@this type) : base(type) => Path = PathOf(GetType());
+
+    /// <summary>The path a setting class is read by — its class alone says it, so it is read once for the process.</summary>
+    internal static string PathOf(System.Type clr) => Paths.GetOrAdd(clr, static clr =>
     {
-        var path = GetType() is { DeclaringType: { } owner } declared
+        var path = clr is { DeclaringType: { } owner } declared
             ? $"{declared.Namespace}.{owner.Name}.{declared.Name}"
-            : GetType().Namespace!;
+            : clr.Namespace!;
         const string module = "app.module.", at = "app.type.item.";
-        Path = path.StartsWith(module) ? path[module.Length..]
+        return path.StartsWith(module) ? path[module.Length..]
             : path.StartsWith(at) ? "app.type." + path[at.Length..]
             : path;
-    }
+    });
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, string> Paths = new();
+
+    /// <summary>Whether <paramref name="clr"/> is a setting class a scope makes — a concrete one born from its type.</summary>
+    internal static bool Is(System.Type clr)
+        => typeof(@this).IsAssignableFrom(clr) && clr != typeof(@this) && !clr.IsAbstract
+           && clr.GetConstructor(new[] { typeof(global::app.type.@this) }) != null;
 
     /// <summary>The path this setting is read by — <c>%!app.goal.list.setting%</c> is <c>app.goal.list.setting</c>,
     /// <c>%!llm.setting%</c> is <c>llm.setting</c>. Its identity, not one of its options: it is not written with them.</summary>
@@ -227,14 +236,10 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         // a member the values leave out holds its declared default, made by its type from the app ([Default("iec")] is
         // the app's iec); one that can't be null and declares none holds the empty value its own class is born as,
         // holding the app's type for it: an empty list or dict, a nested setting at its defaults, the machine's culture
-        const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
-            | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
-        var nullability = new System.Reflection.NullabilityInfoContext();
-        foreach (var member in node.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        foreach (var (member, declared, empty) in Members.GetOrAdd(node.GetType(), Member))
         {
-            if (member.SetMethod?.IsPublic != true || !typeof(global::app.type.item.@this).IsAssignableFrom(member.PropertyType)
-                || member.GetValue(node) != null) continue;
-            if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.DefaultAttribute>(member) is { } declared)
+            if (member.GetValue(node) != null) continue;
+            if (declared != null)
             {
                 var asked = new global::app.data.@this(member.Name, context: context);
                 if (context.App.type.list[member.PropertyType].Make(declared.Value, asked) is { } made
@@ -245,11 +250,34 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                         $"setting '{member.Name}' declares a default its {member.PropertyType.Name} cannot be made from: {declared.Value}",
                         "TypeConversionFailed", 400));
             }
-            else if (nullability.Create(member).WriteState != System.Reflection.NullabilityState.Nullable
-                && member.PropertyType.GetConstructor(any, [typeof(global::app.type.@this)]) is { } empty)
+            else if (empty != null)
                 member.SetValue(node, empty.Invoke([context.App.type.list[member.PropertyType]]));
         }
         return context.Ok();
+    }
+
+    // A class's members a value left out may be given: each public settable plang-valued member, its declared default,
+    // and — when it declares none and can't be null — the constructor its empty value is born by. The class says it,
+    // so it is read once for the process.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type,
+        (System.Reflection.PropertyInfo Member, global::app.module.DefaultAttribute? Declared, System.Reflection.ConstructorInfo? Empty)[]> Members = new();
+
+    private static (System.Reflection.PropertyInfo, global::app.module.DefaultAttribute?, System.Reflection.ConstructorInfo?)[] Member(System.Type clr)
+    {
+        const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
+            | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+        var nullability = new System.Reflection.NullabilityInfoContext();
+        var members = new List<(System.Reflection.PropertyInfo, global::app.module.DefaultAttribute?, System.Reflection.ConstructorInfo?)>();
+        foreach (var member in clr.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            if (member.SetMethod?.IsPublic != true || !typeof(global::app.type.item.@this).IsAssignableFrom(member.PropertyType)) continue;
+            var declared = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.DefaultAttribute>(member);
+            var empty = declared == null && nullability.Create(member).WriteState != System.Reflection.NullabilityState.Nullable
+                ? member.PropertyType.GetConstructor(any, [typeof(global::app.type.@this)])
+                : null;
+            if (declared != null || empty != null) members.Add((member, declared, empty));
+        }
+        return members.ToArray();
     }
 
     // A class with public setters that isn't a plang leaf (string/primitive/enum/collection) — the walk

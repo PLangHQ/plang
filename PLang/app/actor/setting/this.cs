@@ -308,7 +308,7 @@ public sealed class @this : IDisposable
     /// <summary>The setting class <typeparamref name="T"/>, as this scope sees it — the class says its own
     /// path (<c>context.Setting.Of&lt;test.setting&gt;()</c>).</summary>
     public T Of<T>() where T : global::app.type.item.setting.@this
-        => (T)this[((T)System.Activator.CreateInstance(typeof(T), _context.App.type.list[typeof(T)])!).Path];
+        => (T)this[global::app.type.item.setting.@this.PathOf(typeof(T))];
 
     /// <summary>The settings <paramref name="owner"/> names with <c>ISetting&lt;T&gt;</c>, as this scope sees
     /// them — <c>%!app.goal.list.setting%</c>, <c>%!app.setting%</c>; null when it names none.</summary>
@@ -332,7 +332,7 @@ public sealed class @this : IDisposable
     public async ValueTask<data.@this> Of(System.Type @class)
     {
         await Load();
-        return Instance(((global::app.type.item.setting.@this)Activator.CreateInstance(@class, _context.App.type.list[@class])!).Path);
+        return Instance(global::app.type.item.setting.@this.PathOf(@class));
     }
 
     // The settings class at path, from actor/setting's own path→class index over the settings types
@@ -341,14 +341,14 @@ public sealed class @this : IDisposable
     private System.Collections.Generic.Dictionary<string, System.Type>? _classes;
     private System.Type? Class(string path) => (_classes ??= Index()).GetValueOrDefault(path);
 
+    // The code's setting classes (read once for the process), then those of types added since.
     private System.Collections.Generic.Dictionary<string, System.Type> Index()
     {
-        var map = new System.Collections.Generic.Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase);
-        foreach (var type in _context.App.type.list.Items())
-            if (type.ClrType is { } clr && typeof(global::app.type.item.setting.@this).IsAssignableFrom(clr)
-                && clr != typeof(global::app.type.item.setting.@this) && !clr.IsAbstract
-                && clr.GetConstructor(new[] { typeof(global::app.type.@this) }) != null)
-                map[((global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])!).Path] = clr;
+        var types = _context.App.type.list;
+        var map = new System.Collections.Generic.Dictionary<string, System.Type>(types.Code.setting, System.StringComparer.OrdinalIgnoreCase);
+        foreach (var clr in types.Added)
+            if (global::app.type.item.setting.@this.Is(clr))
+                map[global::app.type.item.setting.@this.PathOf(clr)] = clr;
         return map;
     }
 

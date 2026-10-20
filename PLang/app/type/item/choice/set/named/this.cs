@@ -17,7 +17,10 @@ public sealed class @this : set.@this
 
     /// <summary>The <c>Choices(context?)</c> a class declares; null when it declares none.</summary>
     internal static MethodInfo? Choices(System.Type clr)
-        => clr.GetMethod("Choices", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+        => Declared.GetOrAdd(clr, static c => c.GetMethod("Choices", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy));
+
+    // The class's Choices, read once for the process.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, MethodInfo?> Declared = new();
 
     protected override System.Collections.Generic.IReadOnlyList<string>? OwnValues
     {

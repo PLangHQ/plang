@@ -118,6 +118,9 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private volatile System.Collections.Immutable.ImmutableDictionary<System.Type, global::app.type.@this> _classed
         = System.Collections.Immutable.ImmutableDictionary<System.Type, global::app.type.@this>.Empty;
 
+    /// <summary>The classes of the types added after the code's (a type a program loads, another assembly's).</summary>
+    internal IEnumerable<System.Type> Added => _classed.Keys;
+
     // The type a name names, the types loaded first; null for a name no type answers to.
     private global::app.type.@this? Find(string name)
     {

@@ -16,14 +16,18 @@ public abstract class @this : global::app.type.kind.@this
     /// <summary>A closed set named <paramref name="name"/> over <paramref name="clr"/>, a kind of
     /// <paramref name="owner"/> — the app's choice.</summary>
     protected @this(System.Type clr, string name, global::app.type.@this owner) : base(name, owner)
-        => _form = typeof(global::app.type.item.choice.@this<>).MakeGenericType(clr);
+        => _form = Forms.GetOrAdd(clr, static c => typeof(global::app.type.item.choice.@this<>).MakeGenericType(c));
+
+    // What a closed set's class says — the same for every app, so read once for the process.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Type> Forms = new();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, string?> Declares = new();
 
     /// <summary>The closed set <paramref name="clr"/> is, a kind of the choice <paramref name="types"/> holds — chosen
     /// once, here, by its shape; null when it is no closed set (no enum members, no <c>Choices(context?)</c>, no kind
     /// family).</summary>
     public static @this? For(System.Type clr, global::app.type.list.@this types)
     {
-        var choice = types.Items().First(type => type.Names("choice"));
+        var choice = types["choice"];
         return clr.IsEnum ? new member.@this(clr, choice)
              : family.@this.Is(clr) ? new family.@this(clr, choice, types)
              : named.@this.Choices(clr) is { } choices ? new named.@this(clr, choices, choice)
@@ -60,7 +64,7 @@ public abstract class @this : global::app.type.kind.@this
 
     /// <summary>The name a set declares (<c>[PlangType("operator")]</c>) — never derived from its CLR name.</summary>
     protected static string Declared(System.Type clr)
-        => clr.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false)?.Name
+        => Declares.GetOrAdd(clr, static c => c.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false)?.Name)
            ?? throw new System.InvalidOperationException(
                $"closed set {clr.FullName} declares no plang name — a closed set declares its name: [PlangType(\"…\")].");
 }

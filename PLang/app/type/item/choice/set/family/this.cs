@@ -13,11 +13,15 @@ public sealed class @this : set.@this
         => _kinds = new(() =>
             // template's kinds are held by no type — built from their classes until stage 6 gives template its type
             (typeof(global::app.type.item.template.kind.@this).IsAssignableFrom(clr)
-                ? clr.Assembly.GetTypes()
-                    .Where(t => clr.IsAssignableFrom(t) && !t.IsAbstract && t.GetConstructor(System.Type.EmptyTypes) != null)
+                ? Classes.GetOrAdd(clr, static c => c.Assembly.GetTypes()
+                        .Where(t => c.IsAssignableFrom(t) && !t.IsAbstract && t.GetConstructor(System.Type.EmptyTypes) != null)
+                        .ToArray())
                     .Select(t => (global::app.type.kind.@this)System.Activator.CreateInstance(t)!)
                 : (types[Family(clr)].kind as global::app.type.kind.empty.@this)?.Kinds.Where(clr.IsInstanceOfType) ?? [])
             .OrderBy(k => k.Name, System.StringComparer.Ordinal).ToList());
+
+    // A family built from its classes: the classes, found once for the process.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Type[]> Classes = new();
 
     /// <summary>Whether <paramref name="clr"/> is a kind family — an abstract kind its kinds are subclasses of.</summary>
     internal static bool Is(System.Type clr)

@@ -21,7 +21,7 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
 {
     // The execution-context slots the source generator wires (not user-supplied properties) —
     // filtered out so the catalog never teaches them to the LLM.
-    private readonly System.Type[] _capabilityInterfaces =
+    private static readonly System.Type[] CapabilityInterfaces =
     {
         typeof(global::app.module.IContext), typeof(global::app.module.IStep),
         typeof(global::app.module.IChannel),
@@ -60,15 +60,17 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
         }
     }
 
-    private void Reflect(System.Type? handler, global::app.type.list.@this types)
-    {
-        if (handler == null) return;
+    // A handler class's slots — the same for every app, so found once for the process.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, PropertyInfo[]> Slots = new();
 
+    private static PropertyInfo[] Slotted(System.Type handler)
+    {
         var capabilityProps = new System.Collections.Generic.HashSet<string>(
-            _capabilityInterfaces.Where(i => i.IsAssignableFrom(handler))
+            CapabilityInterfaces.Where(i => i.IsAssignableFrom(handler))
                 .SelectMany(i => i.GetProperties().Select(p => p.Name)),
             System.StringComparer.OrdinalIgnoreCase);
 
+        var slots = new System.Collections.Generic.List<PropertyInfo>();
         foreach (var prop in handler.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             // An action's properties are its slots — a Data or Data<T> (PLNG001) — never a member the class
@@ -77,7 +79,17 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
             if (prop.Name == "EqualityContract") continue;
             if (capabilityProps.Contains(prop.Name)) continue;
             if (prop.GetCustomAttribute<global::app.module.CodeAttribute>() != null) continue;
+            slots.Add(prop);
+        }
+        return slots.ToArray();
+    }
 
+    private void Reflect(System.Type? handler, global::app.type.list.@this types)
+    {
+        if (handler == null) return;
+
+        foreach (var prop in Slots.GetOrAdd(handler, Slotted))
+        {
             var property = new Property(prop, types);
 
             // A host property lowers to `clr` — naming one leaks the C# type, so it is never shown. Every

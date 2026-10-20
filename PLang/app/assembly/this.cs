@@ -157,6 +157,18 @@ public sealed class @this
         }
     }
 
+    private System.Collections.Generic.Dictionary<string, System.Type>? _setting;
+    /// <summary>The setting classes by the path each is read by, in the order the types are read (a later path wins).</summary>
+    internal System.Collections.Generic.IReadOnlyDictionary<string, System.Type> setting
+        => _setting ?? System.Threading.LazyInitializer.EnsureInitialized(ref _setting, ref _gate, () =>
+        {
+            var map = new System.Collections.Generic.Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (var made in type)
+                if (global::app.type.item.setting.@this.Is(made.Class))
+                    map[global::app.type.item.setting.@this.PathOf(made.Class)] = made.Class;
+            return map;
+        });
+
     private Index? _index;
     /// <summary>The code's types by name and by class.</summary>
     internal Index index => _index ?? System.Threading.LazyInitializer.EnsureInitialized(ref _index, ref _gate, () => new Index(type));

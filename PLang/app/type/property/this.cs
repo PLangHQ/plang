@@ -20,10 +20,29 @@ public sealed class @this : global::app.type.item.note.IAbout
     [System.Diagnostics.CodeAnalysis.SetsRequiredMembers]
     public @this(PropertyInfo prop, global::app.type.list.@this types)
     {
-        var propType = prop.PropertyType;
+        var read = Reads.GetOrAdd(prop, Read);
         Name = prop.Name;
         Member = prop;
+        Nullable = read.Nullable;
+        Type = read.Value == typeof(global::app.data.@this) ? types["item"] : types[read.Value];
 
+        // A closed-set default — an enum member or a name — is born as its choice through the door a written value
+        // takes (choice.Create), born holding this property's type, so it names itself (`Promote`, keccak256 the kind),
+        // never its number or a bare string. Without [Default], a type with a default of its own (IDefault<T>) gives it.
+        Default = read.Choice is { } create ? create.Invoke(null, new[] { read.Declared, Type }) : read.Declared ?? read.Own?.GetValue(null);
+        IsInput = read.IsInput;
+    }
+
+    // What a declared property's class says — the same for every app, so read once for the process: the value's class
+    // (Data<T>/Nullable<T> unwrapped to T; bare Data is itself), whether it is nullable, its [Default] and the default
+    // its type has of its own (its getter: each property is handed a default of its own), the choice door a
+    // closed-set default is born through, whether it is an input.
+    private sealed record Facts(System.Type Value, bool Nullable, object? Declared, PropertyInfo? Own, MethodInfo? Choice, bool IsInput);
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<PropertyInfo, Facts> Reads = new();
+
+    private static Facts Read(PropertyInfo prop)
+    {
+        var propType = prop.PropertyType;
         var bare = System.Nullable.GetUnderlyingType(propType) ?? propType;
         bool isDataGeneric = bare.IsGenericType
             && bare.GetGenericTypeDefinition() == typeof(global::app.data.@this<>);
@@ -31,24 +50,18 @@ public sealed class @this : global::app.type.item.note.IAbout
         bool isNullable = System.Nullable.GetUnderlyingType(propType) != null;
         if (!isNullable && !propType.IsValueType)
             isNullable = new NullabilityInfoContext().Create(prop).WriteState == NullabilityState.Nullable;
-        Nullable = isNullable;
 
         var value = isDataGeneric ? bare.GetGenericArguments()[0] : bare;
-        Type = value == typeof(global::app.data.@this) ? types["item"] : types[value];
-
-        // A closed-set default — an enum member or a name — is born as its choice through the door a written value
-        // takes (choice.Create), born holding this property's type, so it names itself (`Promote`, keccak256 the kind),
-        // never its number or a bare string. Without [Default], a type with a default of its own (IDefault<T>) gives it.
         var declaredDefault = prop.GetCustomAttribute<global::app.module.DefaultAttribute>()?.Value;
         var ownDefault = value.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.IDefault<>))
-            ? value.GetProperty("Default", BindingFlags.Public | BindingFlags.Static)?.GetValue(null)
+            ? value.GetProperty("Default", BindingFlags.Public | BindingFlags.Static)
             : null;
-        Default = declaredDefault != null && value.IsGenericType
-                  && value.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>)
+        var choice = declaredDefault != null && value.IsGenericType
+                     && value.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>)
             ? value.GetMethod("Create", BindingFlags.Public | BindingFlags.Static, new[] { typeof(object), typeof(global::app.type.@this) })!
-                .Invoke(null, new[] { declaredDefault, Type })
-            : declaredDefault ?? ownDefault;
-        IsInput = prop.GetCustomAttribute<global::app.Attributes.InputAttribute>() != null;
+            : null;
+        return new Facts(value, isNullable, declaredDefault, ownDefault, choice,
+            prop.GetCustomAttribute<global::app.Attributes.InputAttribute>() != null);
     }
 
     /// <summary>A property built by hand — a type's field, the synthetic channel property, a .pr row, a builder's.</summary>
