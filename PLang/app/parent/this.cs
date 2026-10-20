@@ -14,7 +14,10 @@ namespace app.parent;
 /// </summary>
 public sealed class @this : global::app.type.item.@this
 {
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<JsonElement>> waiting = new();
+    // The calls waiting on the parent's reply, made at the first call (most apps have no parent to call).
+    private ConcurrentDictionary<string, TaskCompletionSource<JsonElement>>? _waiting;
+    private ConcurrentDictionary<string, TaskCompletionSource<JsonElement>> waiting
+        => _waiting ?? System.Threading.Interlocked.CompareExchange(ref _waiting, new(), null) ?? _waiting;
 
     /// <summary>The parent, a value of the app's parent <paramref name="type"/> — linked to none until what started
     /// this plang links it.</summary>
@@ -86,7 +89,7 @@ public sealed class @this : global::app.type.item.@this
     /// <summary>The parent answered a call (<c>{"reply": {id, result | error}}</c>): the call waiting on it goes on.</summary>
     internal void Answered(JsonElement reply)
     {
-        if (reply.TryGetProperty("id", out var id) && id.GetString() is { } key && waiting.TryRemove(key, out var answer))
+        if (reply.TryGetProperty("id", out var id) && id.GetString() is { } key && _waiting?.TryRemove(key, out var answer) == true)
             answer.TrySetResult(reply.Clone());
     }
 

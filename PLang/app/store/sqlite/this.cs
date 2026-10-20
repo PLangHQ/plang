@@ -44,7 +44,7 @@ public sealed class @this : global::app.store.@this
 
     /// <summary>A store in the file <paramref name="file"/> finds when the store opens — or in memory, as above.</summary>
     internal @this(System.Func<global::app.type.item.path.@this?> file, System.Func<string?> memory, actor.context.@this context)
-        : base(context.App.type.list[new global::app.type.@this("store", "sqlite"), context])
+        : base(context.App.type.list.Of("store", "sqlite"))
     {
         _file = file;
         _memory = memory;

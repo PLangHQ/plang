@@ -184,14 +184,25 @@ public sealed partial class @this
     private app.type.@this Full(string typeName, string? name, bool strict, global::app.type.item.template.kind.@this? template)
     {
         var entry = Find(typeName);
-        var kind = name == null ? null
-            : entry?.kind[name] is { } held ? (held.IsEmpty ? null : held)
-            : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
-        if (entry != null && kind == null && !strict && template == null) return entry;
+        // the kind the type holds by that name (its own format is the type itself), else one it coins, else a kind of
+        // that name with no class — made only when this full type is first made, not at every ask
+        global::app.type.kind.@this? kind = null;
+        string? kindName = null;
+        if (name != null)
+        {
+            if (entry?.kind[name] is { } held) { if (!held.IsEmpty) { kind = held; kindName = held.Name; } }
+            else if (entry?.kind.Coin(name) is { } coined) { kind = coined; kindName = coined.Name; }
+            else kindName = name;
+        }
+        if (entry != null && kindName == null && !strict && template == null) return entry;
         // made from state handed in, not captured: a captured local makes its closure at every call, made or not
-        return _full.GetOrAdd((entry, typeName, kind?.Name, strict, template?.Name), static (_, made) => made.entry == null
-            ? new app.type.@this(made.typeName, made.kind?.Name, made.strict, made.template) { kind = made.kind }
-            : new app.type.@this(made.entry, made.kind, made.strict, made.template), (entry, typeName, kind, strict, template));
+        return _full.GetOrAdd((entry, typeName, kindName, strict, template?.Name), static (_, made) =>
+        {
+            var kind = made.kind ?? (made.kindName != null ? new global::app.type.kind.@this(made.kindName) : null);
+            return made.entry == null
+                ? new app.type.@this(made.typeName, kind?.Name, made.strict, made.template) { kind = kind }
+                : new app.type.@this(made.entry, kind, made.strict, made.template);
+        }, (entry, typeName, kind, kindName, strict, template));
     }
 
     // The full types made, one per entry, kind, strict and template: a kinded type is one object in this app.
