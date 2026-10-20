@@ -20,6 +20,11 @@ public sealed class @this : global::app.type.node.@this<global::app.type.@this, 
 
     private @this(global::app.@this app, global::app.type.list.@this types) : base(app, types, () => types) { }
 
+    /// <summary>A type by a name it answers to (its name, namespace or an alias) — the list's own index, not a walk of
+    /// every type.</summary>
+    private protected override global::app.type.@this? Indexed(string key)
+        => list.Contains(key) ? list[key] : null;
+
     /// <summary>The app's own format, under every goal's: plain text, unless the app was started with another.</summary>
     public global::app.type.kind.@this? Format { get; set; }
 

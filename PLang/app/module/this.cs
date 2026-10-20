@@ -126,7 +126,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The module a <c>.pr</c> row names — for the readers, which read a synchronous pass; null when the
     /// name isn't one of the app's modules.</summary>
     internal @this? Named(string name)
-        => list.Items().FirstOrDefault(m => string.Equals(m.Name, name, System.StringComparison.OrdinalIgnoreCase));
+    {
+        // walked by position: an action asks it at each of its event levels, so the walk allocates nothing
+        var modules = list;
+        for (int at = 0, count = modules.CountRaw; at < count; at++)
+            if (modules[at] is { } module && string.Equals(module.Name, name, System.StringComparison.OrdinalIgnoreCase))
+                return module;
+        return null;
+    }
 
     /// <summary>Registers an action class for per-call instantiation in the module named <paramref name="module"/>
     /// — the module is made the first time an action names it.</summary>

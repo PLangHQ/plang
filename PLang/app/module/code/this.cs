@@ -77,7 +77,7 @@ public sealed partial class @this : IAsyncDisposable
     // provider comes back directly beside a typed error.
     public (T? Provider, global::app.error.@this? Error) Get<T>(string? name = null) where T : class, ICode
     {
-        Ready();
+        Ready(typeof(T));
         if (!Held.Providers.TryGetValue(typeof(T), out var typeDict))
             return (null, new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
 
@@ -117,7 +117,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public IReadOnlyList<T> List<T>() where T : class, ICode
     {
-        Ready();
+        Ready(typeof(T));
         if (!Held.Providers.TryGetValue(typeof(T), out var typeDict))
             return Array.Empty<T>();
 
@@ -151,7 +151,7 @@ public sealed partial class @this : IAsyncDisposable
 
     public bool Has<T>() where T : class, ICode
     {
-        Ready();
+        Ready(typeof(T));
         return Held.Providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
     }
 
@@ -162,7 +162,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public data.@this Register(System.Type providerType, ICode provider)
     {
-        Ready();
+        Ready(providerType);
         var typeDict = Held.Providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
 
         if (!typeDict.TryAdd(provider.Name, provider))
@@ -181,7 +181,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public IReadOnlyList<ICode> List(System.Type providerType)
     {
-        Ready();
+        Ready(providerType);
         return Held.Providers.TryGetValue(providerType, out var typeDict)
             ? typeDict.Values.ToList()
             : Array.Empty<ICode>();
@@ -195,7 +195,7 @@ public sealed partial class @this : IAsyncDisposable
         if (string.IsNullOrEmpty(name))
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
-        Ready();
+        Ready(providerType);
         if (!Held.Providers.TryGetValue(providerType, out var typeDict))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
@@ -218,7 +218,7 @@ public sealed partial class @this : IAsyncDisposable
         if (string.IsNullOrEmpty(name))
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
-        Ready();
+        Ready(providerType);
         if (!Held.Providers.TryGetValue(providerType, out var typeDict))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
@@ -236,62 +236,73 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public void RegisterDefaults() => _armed = true;
 
-    // Whether this registry holds the built-ins (RegisterDefaults), and whether they are made: 0 not yet, 1 being
-    // registered (a registration on the same thread sees them so far), 2 made. They are made the first time the
-    // registry is asked anything: an app that asks for no provider never makes them.
+    // Whether this registry holds the built-ins (RegisterDefaults), and which are made, one bit each: an interface's
+    // built-in is made the first time the registry is asked about that interface, all of them when it is asked about
+    // every provider — an app that asks for one provider makes one.
     private bool _armed;
-    private int _built;
+    private int _made;
+    private static int Every => (1 << BuiltIn.Length) - 1;
 
+    // The built-in providers, each module's default, by the interface it serves. Stamped built-in so the snapshot
+    // capture skips them — a fresh App's RegisterDefaults reproduces the same set on Restore.
+    private static readonly (System.Type Type, System.Func<@this, ICode> Make)[] BuiltIn =
+    [
+        // one ed25519 serves both signing and keys
+        (typeof(ISigning), registry => registry.Signer),
+        (typeof(IKey), registry => registry.Signer),
+        (typeof(IIdentity), _ => new global::app.module.identity.code.Default()),
+        (typeof(ICrypto), _ => new global::app.module.crypto.code.Default()),
+        (typeof(global::app.module.math.code.IMath), _ => new global::app.module.math.code.Default()),
+        (typeof(global::app.module.http.code.IHttp), _ => new global::app.module.http.code.Default()),
+        (typeof(global::app.module.archive.code.IArchive), _ => new global::app.module.archive.code.Default()),
+        (typeof(global::app.module.terminal.code.ITerminal), _ => new global::app.module.terminal.code.Default()),
+        (typeof(global::app.module.browser.code.IBrowser), _ => new global::app.module.browser.code.Chromium()),
+        // the screen: on Windows a window that shows frames; on Linux (PlangOS) the display that makes them
+        (typeof(global::app.module.screen.code.IScreen), _ => OperatingSystem.IsWindows()
+            ? new global::app.module.screen.code.Default()
+            : new global::app.module.screen.code.Wayland()),
+        (typeof(global::app.module.condition.code.IEvaluator), _ => new global::app.module.condition.code.Default()),
+        (typeof(global::app.module.assert.code.IAssert), _ => new global::app.module.assert.code.Default()),
+        (typeof(ITemplate), _ => new global::app.module.ui.code.Fluid()),
+        (typeof(global::app.module.llm.code.ILlm), _ => new global::app.module.llm.code.OpenAi()),
+        (typeof(global::app.module.llm.code.IDecider), _ => new global::app.module.llm.code.TypeSafe()),
+        (typeof(global::app.module.build.code.IBuilder), _ => new global::app.module.build.code.Default()),
+        (typeof(global::app.data.code.IGrep), _ => new global::app.data.code.Default()),
+    ];
+
+    private Ed25519? _signer;
+    private Ed25519 Signer => _signer ??= new Ed25519();
+
+    // Every built-in made — what a walk over all the providers sees.
     private void Ready()
     {
-        if (!_armed || System.Threading.Volatile.Read(ref _built) == 2) return;
+        if (!_armed || System.Threading.Volatile.Read(ref _made) == Every) return;
         lock (Held.Providers)
-        {
-            if (_built != 0) return;
-            _built = 1;
-            Born();
-            System.Threading.Volatile.Write(ref _built, 2);
-        }
+            for (var at = 0; at < BuiltIn.Length; at++) Make(at);
     }
 
-    // The built-in providers, each module's default.
-    private void Born()
+    // The built-in of interface t made, when it has one.
+    private void Ready(System.Type t)
     {
-        // Stamp every built-in registration so the snapshot capture skips them —
-        // the fresh App's RegisterDefaults reproduces the same set on Restore, so
-        // they don't need to ride along in the payload.
-        var ed25519 = new Ed25519();
-        RegisterBuiltIn<ISigning>(ed25519);
-        RegisterBuiltIn<IKey>(ed25519);
-        RegisterBuiltIn<IIdentity>(new global::app.module.identity.code.Default());
-        RegisterBuiltIn<ICrypto>(new global::app.module.crypto.code.Default());
-        RegisterBuiltIn<global::app.module.math.code.IMath>(new global::app.module.math.code.Default());
-        RegisterBuiltIn<global::app.module.http.code.IHttp>(new global::app.module.http.code.Default());
-        RegisterBuiltIn<global::app.module.archive.code.IArchive>(new global::app.module.archive.code.Default());
-        RegisterBuiltIn<global::app.module.terminal.code.ITerminal>(new global::app.module.terminal.code.Default());
-        RegisterBuiltIn<global::app.module.browser.code.IBrowser>(new global::app.module.browser.code.Chromium());
-        // the screen: on Windows a window that shows frames; on Linux (PlangOS) the display that makes them
-        RegisterBuiltIn<global::app.module.screen.code.IScreen>(OperatingSystem.IsWindows()
-            ? new global::app.module.screen.code.Default()
-            : new global::app.module.screen.code.Wayland());
-        RegisterBuiltIn<global::app.module.condition.code.IEvaluator>(new global::app.module.condition.code.Default());
-        RegisterBuiltIn<global::app.module.assert.code.IAssert>(new global::app.module.assert.code.Default());
-        // global::app.module.file.code.IFile registration removed in Stage 3.
-        RegisterBuiltIn<ITemplate>(new global::app.module.ui.code.Fluid());
-        RegisterBuiltIn<global::app.module.llm.code.ILlm>(new global::app.module.llm.code.OpenAi());
-        RegisterBuiltIn<global::app.module.llm.code.IDecider>(new global::app.module.llm.code.TypeSafe());
-        RegisterBuiltIn<global::app.module.build.code.IBuilder>(new global::app.module.build.code.Default());
-        RegisterBuiltIn<global::app.data.code.IGrep>(new global::app.data.code.Default());
+        if (!_armed || System.Threading.Volatile.Read(ref _made) == Every) return;
+        for (var at = 0; at < BuiltIn.Length; at++)
+            if (BuiltIn[at].Type == t)
+                lock (Held.Providers) Make(at);
     }
 
-    private void RegisterBuiltIn<T>(T provider) where T : class, ICode
+    // Makes built-in `at` when it is not made (under the gate).
+    private void Make(int at)
     {
+        if ((_made & (1 << at)) != 0) return;
+        var (type, make) = BuiltIn[at];
+        var provider = make(this);
         provider.IsBuiltIn = true;
-        var typeDict = Held.Providers.GetOrAdd(typeof(T), _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
+        var typeDict = Held.Providers.GetOrAdd(type, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
         typeDict.TryAdd(provider.Name, provider);
-        Held.Defaults.TryAdd(typeof(T), provider.Name);
+        Held.Defaults.TryAdd(type, provider.Name);
         // Stamp the type's "natural" default name *once* — the first built-in for a type
         // becomes default by virtue of being first-registered, mirroring Register's contract.
-        Held.BuiltInDefaults.TryAdd(typeof(T), provider.Name);
+        Held.BuiltInDefaults.TryAdd(type, provider.Name);
+        System.Threading.Volatile.Write(ref _made, _made | (1 << at));
     }
 }

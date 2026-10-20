@@ -92,7 +92,21 @@ public sealed partial class @this
 
     /// <summary>The .pr this goal is built to (<see cref="Pr"/>); none without a Path.</summary>
     [Debug]
-    public global::app.type.item.path.@this? PrPath => Path is { Absolute.Length: > 0 } source ? Pr(source) : null;
+    public global::app.type.item.path.@this? PrPath
+    {
+        get
+        {
+            if (Path is not { Absolute.Length: > 0 } source) return null;
+            // kept with the path it was made from: a goal's .pr is asked at every list lookup, and made again only
+            // when the goal's path changes
+            if (_pr is { } held && ReferenceEquals(held.Source, source)) return held.Pr;
+            var made = new Built(source, Pr(source));
+            _pr = made;
+            return made.Pr;
+        }
+    }
+    private sealed record Built(global::app.type.item.path.@this Source, global::app.type.item.path.@this Pr);
+    private Built? _pr;
 
     /// <summary>The .pr a .goal is built to: <c>X.goal</c> → <c>.build/x.pr</c> beside it. A static on the goal type by
     /// exception — a rule about where a goal's build lands, read before there is a goal: by <see cref="PrPath"/>,

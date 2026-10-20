@@ -27,7 +27,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     public async System.Threading.Tasks.Task<data.@this> Start(actor.context.@this context)
     {
         data.@this result = context.Ok();
-        for (int i = 0; i < Count; i++)
+        for (int i = 0; i < CountRaw; i++)
         {
             if (context.CancellationToken.IsCancellationRequested)
                 return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));

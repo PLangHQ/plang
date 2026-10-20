@@ -78,7 +78,11 @@ public class @this<T, L> : @this
     /// NotFound result. C#'s door; plang's <c>["key"]</c> and <c>.key</c> reach it through navigation.
     /// </summary>
     public System.Threading.Tasks.ValueTask<data.@this<T>> Get(string key, actor.context.@this context)
-        => Find(list.Walk(), key, context);
+        => Indexed(key) is { } found ? new(context.Ok<T>(found)) : Find(list.Walk(), key, context);
+
+    /// <summary>The one <paramref name="key"/> names, when the list knows it without walking (its own index): the
+    /// same one the walk would find first; null to walk.</summary>
+    private protected virtual T? Indexed(string key) => null;
 
     // The one key names among the items given — walked as the list reaches them, so a list that
     // reads them (goal's) stops at the match. The answer is born with the asker's context.

@@ -33,7 +33,7 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
     public async System.Threading.Tasks.Task<data.@this> Start(actor.context.@this context)
     {
         data.@this result = context.Ok();
-        for (int i = 0; i < Count; i++)
+        for (int i = 0; i < CountRaw; i++)
         {
             var action = this[i];
             context.CancellationToken.ThrowIfCancellationRequested();
