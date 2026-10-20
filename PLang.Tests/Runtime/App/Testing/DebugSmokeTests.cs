@@ -108,6 +108,32 @@ public class DebugSmokeTests
         await Assert.That(debugOut).DoesNotContain("%!error% = (undefined)");
     }
 
+    // --debug={"llm":{"user":true,"response":true}} shows each step's variables: a step that reads the app (the
+    // builder's `build.load, write to %app%`) shows it, and the run completes — the app is held in the very memory
+    // the view lists, and is never walked back into.
+    [Test]
+    public async Task Debug_LlmView_AStepHoldingTheApp_IsShown()
+    {
+        _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
+        _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?>
+        {
+            ["llm"] = new Dictionary<string, object?> { ["user"] = true, ["response"] = true },
+        });
+        _app.Debug.Activate();
+        var ctx = _app.actor.list.User.Context;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Dbg",
+            Make.Step("set app", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "app", "variable"), ("Value", "%!app%"))),
+            Make.Step("set copy", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "copy", "variable"), ("Value", "%app%")))));
+        _app.goal.list.Add(goal);
+
+        var run = await _app.Start(goal, ctx);
+
+        await run.IsSuccess();
+        var debugOut = ReadCapture();
+        await Assert.That(debugOut).Contains("%app% = ");
+        await Assert.That(debugOut).DoesNotContain("cannot be shown");
+    }
+
     // --debug={"variables":["trace"]} binds through the setting walk as a list of names.
     [Test]
     public async Task Debug_Variables_BindAsNames()

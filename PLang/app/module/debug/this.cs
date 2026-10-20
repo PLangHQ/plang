@@ -372,10 +372,13 @@ public sealed class @this
 
     // Debug output can land in logs, terminals, CI artefacts — anywhere — so a value is shown through the one
     // diagnostic door: a structure written in full in the Debug view, a [Sensitive] member masked. Truncation
-    // happens at WriteFiltered via maxLength; a raw collection says how many it holds.
+    // happens at WriteFiltered via maxLength; a raw collection says how many it holds. A value that cannot be shown
+    // shows why — a debug view answers, never ends the program it watches.
     private static async System.Threading.Tasks.ValueTask<string> FormatValue(object? value, actor.context.@this context)
     {
-        var shown = await global::app.type.item.@this.Create(value, context).Debug(context);
+        string shown;
+        try { shown = await global::app.type.item.@this.Create(value, context).Debug(context); }
+        catch (global::app.error.AppException ex) { return $"(cannot be shown: {ex.Error.Message})"; }
         return value switch
         {
             System.Collections.IDictionary d => $"{shown} ({d.Count} keys)",
