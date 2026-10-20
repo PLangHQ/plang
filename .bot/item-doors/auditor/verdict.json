@@ -1,0 +1,6 @@
+{
+  "status": "fail",
+  "summary": "Keep the branch, don't start over. Stages 1, 2, 4 and 1b need a fix at the root; 3 and 5 stay (5 with two fixes before merge). 1 critical (a write through a read list row is silently lost), plus majors: a type looked up by building one from names (~100 sites), the door as a second method guarded by PLNG006, a nested record read that crashes, unmarked os members, a broken step's Error rebuilt from strings, Fluid hiding errors.",
+  "next_bot": "coder",
+  "next_scope": "Ingi decides per stage from .bot/item-doors/auditor/audit.md. Before merge: F4, F5, F7, F9, F11, F8 guard. At the root: F2 (a list lookup by names), F3 (the door as a template method; locked, Ingi), F6 (158 c2), F1/F10 (finish stage 1)."
+}
