@@ -81,14 +81,14 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
         };
     }
 
-    /// <summary>A raw slot is born a <typeparamref name="T"/> at its first read (<c>"a.txt"</c> in a <c>list&lt;path&gt;</c>
-    /// is a path then; a dict in a <c>list&lt;permission&gt;</c> a permission), through <typeparamref name="T"/>'s own birth.
+    /// <summary>A raw slot is made a <typeparamref name="T"/> at each read (<c>"a.txt"</c> in a <c>list&lt;path&gt;</c>
+    /// is a path; a dict in a <c>list&lt;permission&gt;</c> a permission), through <typeparamref name="T"/>'s own birth.
     /// Nothing fires: the list's birth is the event, its elements are part of it. A slot that is already a
-    /// <typeparamref name="T"/>, or a Data that carries its own type, is not born again; a value that makes no
-    /// <typeparamref name="T"/> fails where it is read. A list of any item births nothing.</summary>
-    private protected override global::app.data.@this? Born(object? slot, global::app.actor.context.@this context)
+    /// <typeparamref name="T"/>, or a Data that carries its own type, is the plain list's element; a value that makes no
+    /// <typeparamref name="T"/> fails where it is read. A list of any item makes nothing of its own.</summary>
+    private protected override global::app.data.@this Element(object? slot, global::app.actor.context.@this context)
     {
-        if (typeof(T) == typeof(global::app.type.item.@this) || slot is null or T or global::app.data.@this) return null;
+        if (typeof(T) == typeof(global::app.type.item.@this) || slot is null or T or global::app.data.@this) return base.Element(slot, context);
         // a raw value is its plang value first (a string is a text), which T is made from
         var value = slot as global::app.type.item.@this ?? global::app.type.item.@this.Create(slot, context);
         var born = new global::app.data.@this("", value, context: context);

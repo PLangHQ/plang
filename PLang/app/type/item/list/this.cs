@@ -30,9 +30,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     // Store raw, type on read. A slot holds EITHER a raw CLR value (a scalar
     // literal off the wire, or a native sub-container) OR a Data (dropped in by
-    // `add`/`set` carrying its own type/signature). A row borns a FRESH Data on
-    // read — never cached back, so the backing stays pristine (enumeration-safe,
-    // and an aliased source stays the same instance for the CLR exit door).
+    // `add`/`set` carrying its own type/signature). A row is made a FRESH Data on
+    // read — never written back, so the rows stay as they came (enumeration-safe).
     private readonly List<object?> _items;
 
     // The rows' one guard, private to the list: every mutation holds it and drops the rows' snapshot,
@@ -153,36 +152,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// renders them.</summary>
     protected @this(@this source, global::app.type.@this type) : this(new List<object?>(source.Now), type) { }
 
-    // Type-on-read: a row's slot as a FRESH Data wrapping the raw value, born with the asker's
-    // context — never cached back. Leaving the slot raw keeps the backing pristine (enumeration-safe,
-    // and it stays the same instance the source handed over). A stored Data goes by reference,
-    // with its own context.
-    private static Data Row(object? slot, actor.context.@this context)
+    /// <summary>The element a slot is, handed out with the asker's context: a stored Data as it is (its own context); any
+    /// other slot made its element type's value at this read — a plain list's the value the raw is, a typed list's
+    /// (<c>list&lt;path&gt;</c>) its element type's. Nothing is written back: the slot stays as it came, so a row read
+    /// twice is made twice. A failure is the element's answer, where it is read.</summary>
+    private protected virtual Data Element(object? slot, actor.context.@this context)
         => slot is Data d ? d
            : new Data("", global::app.type.item.@this.Create(slot, context), context: context);
-
-    /// <summary>The element a slot is born as at its first read, or null when the slot is handed out as it is (typed on
-    /// read, the slot left as it came). A plain list births nothing; a typed list (<c>list&lt;path&gt;</c>) makes a raw
-    /// slot its element type's value. A failure is the element's answer, where it is read.</summary>
-    private protected virtual Data? Born(object? slot, actor.context.@this context) => null;
-
-    // The element at row `row` (holding `slot`), handed out with the asker's context: born at its first read and kept in
-    // its slot, so it is born once; else typed on read.
-    private Data Element(int row, object? slot, actor.context.@this context)
-    {
-        if (Born(slot, context) is not { } born) return Row(slot, context);
-        if (born.Success) Keep(row, slot, born.Peek());
-        return born;
-    }
-
-    // An element born at its read replaces the slot it was born from — unless a change moved that slot meanwhile.
-    private void Keep(int row, object? was, object? born)
-        => Change((row, was, born), static (list, kept) =>
-        {
-            if (kept.row >= list._items.Count || !ReferenceEquals(list._items[kept.row], kept.was)) return;
-            list._items[kept.row] = kept.born;
-            list._hasWrapped = true;
-        });
 
     /// <summary>Appends a raw value (store raw, type on read) — the wire reader /
     /// literal-parse seam. A scalar rides verbatim; a native container holds its
@@ -274,7 +250,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         {
             if (rows[r] is Chunk chunk)
                 foreach (var e in chunk.List.Items(context)) yield return e;
-            else yield return Element(r, rows[r], context);
+            else yield return Element(rows[r], context);
         }
     }
 
@@ -313,7 +289,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         lock (_gate)
             return Locate(index, out int row, out int offset, out @this? inner)
-                ? (inner != null ? inner.At(offset, context) : Element(row, _items[row], context))
+                ? (inner != null ? inner.At(offset, context) : Element(_items[row], context))
                 : null;
     }
 
