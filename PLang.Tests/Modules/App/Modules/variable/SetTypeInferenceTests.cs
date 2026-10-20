@@ -134,6 +134,29 @@ public class SetTypeInferenceTests
         await Assert.That((await (await row.Start(context)).Value())?.ToString()).IsEqualTo("x");
     }
 
+    // A set binds the value under the variable's name: the action's own Value parameter (named "Value", as a .pr row
+    // names it) is never what the variable is called — with or without `as`.
+    [Test]
+    public async Task Set_BindsUnderTheVariablesName()
+    {
+        var context = _app.actor.list.User.Context;
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("Value", "v")).Start(context)).IsSuccess();
+
+        await Assert.That((await context.Variable.Get("x")).Name).IsEqualTo("x");
+    }
+
+    [Test]
+    public async Task Set_As_BindsUnderTheVariablesName()
+    {
+        var context = _app.actor.list.User.Context;
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%y%", "variable"), ("Value", "42"),
+            ("Type", _app.type.list["number"])).Start(context)).IsSuccess();
+
+        await Assert.That((await context.Variable.Get("y")).Name).IsEqualTo("y");
+    }
+
     // A dict entry written from another variable (`set %d.a% = %x%`) is held under its key; reading it never renames
     // x's own binding.
     [Test]

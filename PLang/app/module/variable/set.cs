@@ -29,8 +29,14 @@ public partial class Set : IContext, IScope, IKeep
         }
         // a text with variables inside is unknown; a literal is read as the value it is
         if (Value.HasVariable) return;
-        if (await Value.Value() is { IsNull: false }) await name.Set(Value, Context);
+        if (await Value.Value() is { IsNull: false }) await name.Set(Binding(name), Context);
     }
+
+    // What the variable binds: a root is bound to a copy of the Value under its own name (Value is named for this
+    // action's parameter, never what the variable is called); a write deeper in hands Value to its container, which
+    // holds it under its own key.
+    private data.@this Binding(global::app.type.item.variable.@this name)
+        => name.Code.Count == 1 ? Value.Copy(name.Code.Root.Name) : Value;
 
     /// <summary>Build-time judgement of my own properties, read as authored — Peek, never the
     /// value door: a %var% is unknown at build and defers to Run.</summary>
@@ -182,7 +188,7 @@ public partial class Set : IContext, IScope, IKeep
             var incoming = await Value.Follow(Context);
             if (!type.Strict && incoming.Peek() is { IsNull: false } held && held.Is(type)
                 && (type.kind.IsEmpty || string.Equals(held.Type.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase)))
-                return await name.Set(Value, Context);
+                return await name.Set(Binding(name), Context);
 
             // Kind-derivation and the strict probe read the IN-MEMORY value only: a
             // raw-backed (unparsed) value contributes null — deriving a kind from
@@ -234,8 +240,7 @@ public partial class Set : IContext, IScope, IKeep
                 && string.Equals(vt.Name, type.Name, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(vt.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase))
             {
-                Value.Name = name!;
-                return await Context.Variable.Set(Value);
+                return await Context.Variable.Set(Value.Copy(name!));
             }
 
             if (Value.RawUntouched) heldValue = await Value.Value();
@@ -307,12 +312,12 @@ public partial class Set : IContext, IScope, IKeep
         }
 
         // No forced type — just set the data. Data flows: bind the Value's Data under the target
-        // name as-is, without inspecting or computing it (no .Value). A reference
+        // name, without inspecting or computing it (no .Value). A reference
         // or template resolves/renders on its own door at read; a literal is itself. A self-write
         // (`set %a%=%a%`) is dropped at build, never handled here. The variable writes itself: a
         // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties, `%!llm.setting.cache%`
         // a setting's option for this run.
-        return await name.Set(Value, Context);
+        return await name.Set(Binding(name), Context);
     }
 
     /// <summary>
