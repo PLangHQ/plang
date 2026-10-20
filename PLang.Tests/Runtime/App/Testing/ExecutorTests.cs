@@ -41,7 +41,7 @@ public class ExecutorTests
     public async Task Configure_TestFlag_SetsTestingIsEnabled_RoutesToSystemTestPr()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "Start.goal", "--test" });
+        var (engine, error) = await executor.Configure(new[] { "Start.goal", "--test" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
@@ -58,7 +58,7 @@ public class ExecutorTests
     {
         var executor = NewExecutor();
         // Keys are property names — the setting walk maps them (no "timeout" alias).
-        var (engine, error) = executor.Configure(new[] { "--test={\"timeout\":\"5s\",\"parallel\":3}" });
+        var (engine, error) = await executor.Configure(new[] { "--test={\"timeout\":\"5s\",\"parallel\":3}" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
@@ -75,7 +75,7 @@ public class ExecutorTests
     public async Task Configure_TestFlagWithInvalidConfig_ReturnsApplyError()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "--test={\"format\":\"csv\"}" });
+        var (engine, error) = await executor.Configure(new[] { "--test={\"format\":\"csv\"}" });
 
         await Assert.That(error).IsNotNull();
         await error!.IsFailure();
@@ -88,7 +88,7 @@ public class ExecutorTests
     public async Task Configure_DebugFlag_InvokesDebugApply()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "Start.goal", "--debug=Start" });
+        var (engine, error) = await executor.Configure(new[] { "Start.goal", "--debug=Start" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
@@ -102,7 +102,7 @@ public class ExecutorTests
     public async Task Configure_BuildFlag_SetsBuildingIsEnabled_SyncsCacheVar()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "--build" });
+        var (engine, error) = await executor.Configure(new[] { "--build" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
@@ -118,7 +118,7 @@ public class ExecutorTests
     public async Task Configure_BuildCacheSkip_ReachesBuildCacheSetting()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "--build={\"cache\":\"skip\"}" });
+        var (engine, error) = await executor.Configure(new[] { "--build={\"cache\":\"skip\"}" });
 
         await Assert.That(error).IsNull();
         await using var _ = engine!;
@@ -131,7 +131,7 @@ public class ExecutorTests
     public async Task Configure_PositionalBuild_NormalizedToBuildFlag()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "build" });
+        var (engine, error) = await executor.Configure(new[] { "build" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
@@ -145,7 +145,7 @@ public class ExecutorTests
     public async Task Configure_CliParameters_InjectedIntoUserVariables()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "Start.goal", "count=42", "label=hello" });
+        var (engine, error) = await executor.Configure(new[] { "Start.goal", "count=42", "label=hello" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
@@ -161,7 +161,7 @@ public class ExecutorTests
     public async Task Configure_NoSpecialFlags_RoutesToGoalPrPath()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "Start.goal" });
+        var (engine, error) = await executor.Configure(new[] { "Start.goal" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
@@ -178,7 +178,7 @@ public class ExecutorTests
     public async Task Configure_ASubfolderGoal_IsThatGoal()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "sub/Run" });
+        var (engine, error) = await executor.Configure(new[] { "sub/Run" });
         await using var _ = engine;
 
         await Assert.That(error).IsNull();
@@ -193,7 +193,7 @@ public class ExecutorTests
     public async Task Configure_TestAndDebugFlags_BothApplied()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "--test", "--debug=Start" });
+        var (engine, error) = await executor.Configure(new[] { "--test", "--debug=Start" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();

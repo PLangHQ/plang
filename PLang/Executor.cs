@@ -14,7 +14,7 @@ namespace PLang
 
 		public async Task<global::app.data.@this> Start(string[] args, CancellationToken cancellationToken = default)
 		{
-			var (app, configError) = Configure(args);
+			var (app, configError) = await Configure(args);
 			if (configError != null) return configError;
 			// the run's cancellation cancels its actors: their tasks end Cancelled, as `cancel %task%` ends one
 			using var cancelled = cancellationToken.Register(() => { foreach (var actor in app!.actor.list.Items()) actor.Cancel(); });
@@ -28,7 +28,7 @@ namespace PLang
 		/// Returns (app, null) on success, (null, errorData) if --test= config is invalid.
 		/// Separated from Start() so tests can observe configuration without starting the app.
 		/// </summary>
-		internal (global::app.@this? Engine, global::app.data.@this? Error) Configure(string[] args)
+		internal async Task<(global::app.@this? Engine, global::app.data.@this? Error)> Configure(string[] args)
 		{
 			// The `plang build` subcommand is an ergonomic alias for the canonical `--build`
 			// flag. (The `--builder` flag spelling is gone — `--build` is the one form.)
@@ -51,8 +51,8 @@ namespace PLang
 			// the run's answer.
 			foreach (var (key, value) in parameters.Where(p => p.Key.StartsWith("!app.", StringComparison.OrdinalIgnoreCase)).ToList())
 			{
-				var written = new global::app.type.item.variable.@this(key)
-					.Set(value, app.actor.list.System.Context).AsTask().GetAwaiter().GetResult();
+				var written = await new global::app.type.item.variable.@this(key)
+					.Set(value, app.actor.list.System.Context);
 				if (!written.Success) return (null, written);
 			}
 
@@ -62,7 +62,7 @@ namespace PLang
 			foreach (var param in parameters)
 			{
 				if (param.Key.StartsWith("!")) continue; // app config, not variables
-				userVars.Set(param.Key, param.Value);
+				await userVars.Set(param.Key, param.Value);
 			}
 
 			// Each flag's dict is this run's values for its owner's setting class, on the system actor (the
@@ -91,7 +91,7 @@ namespace PLang
 			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
 			{
 				if (!parameters.ContainsKey("path"))
-					userVars.Set("path", startupDirectory);
+					await userVars.Set("path", startupDirectory);
 				if (Flag<global::app.test.setting.@this>("!test") is { } testError) return (null, testError);
 				app.test.list.Open();
 			}
@@ -115,7 +115,7 @@ namespace PLang
 			{
 				app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
 				if (!parameters.ContainsKey("path"))
-					userVars.Set("path", startupDirectory);
+					await userVars.Set("path", startupDirectory);
 				if (Flag<global::app.module.build.setting.@this>("!build") is { } buildError) return (null, buildError);
 
 				// A build that skips the cache flows DOWN to llm.query as llm's cache setting, so llm.query reads its
@@ -124,21 +124,20 @@ namespace PLang
 				// The run's value is in memory, so the sync Configure sets it at once.
 				var cache = app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Cache;
 				if (cache.Value == global::app.module.cache.type.cache.skip)
-					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this(app.type.list[typeof(global::app.module.llm.setting.@this)]).Path + ".cache", app.actor.list.System.Context.Ok(cache))
-						.GetAwaiter().GetResult();
+					await app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this(app.type.list[typeof(global::app.module.llm.setting.@this)]).Path + ".cache", app.actor.list.System.Context.Ok(cache));
 			}
 
 			// Set the goal file on system context — Start() reads it
 			// Tester mode routes to system test runner instead of Start.goal
 			if (app.Mode.Value == global::app.Mode.Test && goalFile == "Start.goal")
 			{
-				app.actor.list.System.Context.Variable.Set("goalFile", "/system/test.goal");
+				await app.actor.list.System.Context.Variable.Set("goalFile", "/system/test.goal");
 				return (app, null);
 			}
 
 			// the .goal to run; the goal finds its own .pr
 			var source = goalFile.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? goalFile : goalFile + ".goal";
-			app.actor.list.System.Context.Variable.Set("goalFile", "/" + source.TrimStart('/', '\\'));
+			await app.actor.list.System.Context.Variable.Set("goalFile", "/" + source.TrimStart('/', '\\'));
 
 			return (app, null);
 		}

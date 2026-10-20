@@ -78,6 +78,28 @@ public class CollectionEventsTests : System.IAsyncDisposable
         await Assert.That((await vars.Value("name")).ToString()).IsEqualTo("old");
     }
 
+    // A restore is its sets: while one is held by a before-event it has not finished, and says so — it answers when
+    // the last variable is written, never before.
+    [Test]
+    public async Task Restore_DoesNotAnswerUntilItsSetsHaveFinished()
+    {
+        await using var source = new global::app.@this("/tmp/CollectionEventsTests-src-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        await source.actor.list.User.Context.Variable.Set("x", 1L);
+        var snap = source.Snapshot(source.actor.list.User.Context);
+
+        var gate = new TaskCompletionSource();
+        On.Bind("set", When.before, async (_, _, ctx) => { await gate.Task; return ctx.Ok(); }, app.actor.list.User, Scope.app);
+        var vars = new Variables(app.actor.list.User.Context);
+
+        // the app hands each owner its own section of the snapshot (app/this.Snapshot.cs), as the test does
+        var restoring = vars.Restore(snap.Section(vars.Section), app.actor.list.User.Context);
+
+        await Assert.That(restoring.IsCompleted).IsFalse();
+        gate.SetResult();
+        await restoring;
+        await Assert.That((await vars.Value("x")).ToString()).IsEqualTo("1");
+    }
+
     [Test]
     public async Task ACancellingBeforeSet_IsTheAnswer_AndNothingIsWritten()
     {

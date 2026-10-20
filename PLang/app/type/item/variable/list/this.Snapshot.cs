@@ -37,13 +37,13 @@ public partial class @this : ISnapshot
     /// (Now, NowUtc, GUID) are left in place — the snapshot only carries user-visible state, so
     /// adding restored entries on top is the correct merge.
     /// </summary>
-    public System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
+    public async System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
     {
         // Every entry of the section IS a captured variable (edited in place or not) — cloned so the
-        // snapshot can be re-restored independently.
+        // snapshot can be re-restored independently. A set can wait (its before and after events, a value that binds
+        // others), so the restore answers when the last one has finished — not before.
         foreach (var entry in s.Entries.Entries(context))
-            Set(entry.Name, entry.Clone());
-        return System.Threading.Tasks.Task.CompletedTask;
+            await Set(entry.Name, entry.Clone());
     }
 
 }
