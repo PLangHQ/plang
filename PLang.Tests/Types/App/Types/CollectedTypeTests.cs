@@ -69,7 +69,7 @@ public class CollectedTypeTests
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(buffer))
         {
             var json = new global::app.type.item.kind.json.Writer(utf8, view ?? global::app.View.Out, app.actor.list.User.Context);
-            await json.Kind.pair.Output(value, json, json.View, json.Context);
+            await value.Output(json);
         }
         return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
     }
@@ -96,12 +96,14 @@ public class CollectedTypeTests
         await Assert.That(face).DoesNotContain("\"description\"");
     }
 
-    // a type written alone is its face — the word it goes by, with its kind — as a kind is; its facts are navigated
+    // a type in text is its face — the word it goes by, with its kind; in json its identity, whatever the view; its
+    // facts are navigated
     [Test] public async Task Face_OfOneType_IsItsWord_AndItsFactsAreNavigated()
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        await Assert.That(await Out(app, app.type.list["number"])).IsEqualTo("\"number\"");
+        await Assert.That(await context.Written(app.type.list["number"])).IsEqualTo("number");
+        await Assert.That(await Out(app, app.type.list["number"])).IsEqualTo("{\"name\":\"number\"}");
         await Assert.That(await context.Written(app.type.list[new global::app.type.@this("list", "path"), context])).IsEqualTo("list<path>");
         var type = new global::app.data.@this("", app.type.list["number"], context: context);
         await Assert.That((await (await type.Get("description")).Value())?.IsTruthy()).IsTrue();

@@ -29,8 +29,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>A duration is written by its type's kind, the standard it is in: <c>30s</c> stays <c>30s</c>,
     /// <c>PT5M</c> stays <c>PT5M</c>.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
-        global::app.actor.context.@this? context) { Type.kind.Write(this, w); return default; }
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { Type.kind.Write(this, w); return default; }
 
     /// <summary>A span born holding <paramref name="type"/> — the app's {duration, kind}, the standard it is written
     /// in its type's kind.</summary>

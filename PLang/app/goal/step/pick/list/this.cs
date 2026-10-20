@@ -223,7 +223,7 @@ public sealed class @this
             if (built.Count > 0 && !built.Any(IsCapture) && built.All(a => a[property.Name] == null) && !await property.IsDefault(value, context))
             {
                 var option = new global::app.goal.step.action.formal.Writer(context);
-                await option.Option(property.Name, value, context);
+                await option.Option(property.Name, value);
                 refused.Add($"step {i}'s {name} leaves out {property.Name}, which the decider says the step gives: write {option}");
             }
         }
@@ -388,7 +388,7 @@ public sealed class @this
             if (key.StartsWith(asked, StringComparison.Ordinal))
             {
                 var writer = new global::app.goal.step.action.formal.Writer(context);
-                await writer.Option(property.Name, value, context);
+                await writer.Option(property.Name, value);
                 chosen.Add((property, writer.ToString()));
             }
         return chosen;
@@ -435,7 +435,7 @@ public sealed class @this
         using var stream = new System.IO.MemoryStream();
         var writer = new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8,
             context.Setting.Of<global::app.setting.@this>().Culture, global::app.View.Out, context);
-        await writer.Kind.pair.Output(offer, writer, global::app.View.Out, context);
+        await offer.Output(writer);
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 

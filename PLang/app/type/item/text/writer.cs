@@ -44,6 +44,9 @@ public sealed class Writer : global::app.type.format.IWriter
     public global::app.View View { get; }
     public global::app.actor.context.@this Context { get; }
 
+    /// <summary>A value written as text: its text look (a type its word), else its own write.</summary>
+    public System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value) => value.Write(this);
+
     private void Bare(string text) => _stream.Write(_encoding.GetBytes(text));
 
     // Structural content becomes json — the writer knows how, no type switch. Started lazily so a

@@ -56,8 +56,7 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     public override string ToString() => Value.ToString() ?? "";
     public override bool IsTruthy() => true;
     public override bool IsLeaf => true;
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
-        global::app.actor.context.@this? context) { w.String(ToString()); return default; }
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.String(ToString()); return default; }
 
     string IChoice.Symbol => ToString();
 

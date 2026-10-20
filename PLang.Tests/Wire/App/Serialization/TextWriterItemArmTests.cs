@@ -19,7 +19,7 @@ public class TextWriterItemArmTests : System.IAsyncDisposable
     {
         using var ms = new System.IO.MemoryStream();
         var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US", C.App.type.list[typeof(global::app.type.item.culture.@this)])!, global::app.View.Out, C);
-        await w.Kind.pair.Output(item, w, global::app.View.Out, C);
+        await item.Output(w);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 

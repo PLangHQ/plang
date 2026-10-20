@@ -41,7 +41,7 @@ public class FormalWriterTests : System.IAsyncDisposable
     internal static async Task<string> Formal(global::app.goal.step.@this step, global::app.actor.context.@this context)
     {
         var writer = new global::app.goal.step.action.formal.Writer(context);
-        await writer.Kind.pair.Output(step.Code, writer, global::app.View.Store, context);
+        await step.Code.Output(writer);
         return writer.ToString();
     }
 

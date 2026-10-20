@@ -34,12 +34,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A clipboard is its content: a text when what was copied is one.</summary>
     public override string ToString() => _content.ToString() ?? "";
 
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("clipboard");
-        await writer.Kind.pair.Output(_content, writer, mode, context);
+        await _content.Output(writer);
         writer.EndObject();
     }
 

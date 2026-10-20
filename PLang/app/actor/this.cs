@@ -37,8 +37,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>An actor written alone, in every view, is its name — what a program reads an actor by; its context,
     /// channels and permissions are its own, never written with it.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.String(Name);
         return default;

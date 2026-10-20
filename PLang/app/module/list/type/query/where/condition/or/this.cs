@@ -36,13 +36,12 @@ public sealed class @this : condition.@this
         return await context.App.type.list["list"].Create(elements.Where(kept.Contains).ToList(), context);
     }
 
-    internal override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this context)
+    internal override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("or");
         writer.BeginArray(_condition.Count);
-        foreach (var condition in _condition) await condition.Output(writer, mode, context);
+        foreach (var condition in _condition) await condition.Output(writer);
         writer.EndArray();
         writer.EndObject();
     }

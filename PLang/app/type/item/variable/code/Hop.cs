@@ -92,18 +92,16 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>Its <c>.pr</c> form, in every view: one object under its kind — <c>{"property": "address"}</c>.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name(Kind);
-        await Piece(writer, mode, context);
+        await Piece(writer);
         writer.EndObject();
     }
 
     /// <summary>What it writes under its kind.</summary>
-    protected abstract System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context);
+    protected abstract System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer);
 
     public override string ToString() => Text;
 }

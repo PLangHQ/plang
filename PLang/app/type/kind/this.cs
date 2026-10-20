@@ -73,13 +73,6 @@ public class @this : global::app.type.@this
         _decode = decode;
     }
 
-    /// <summary>What values of other types look like written in this kind, when it isn't their own write (a list in
-    /// formal, a type in plang) — and the one door a value is written through in it: a value writing a member writes it
-    /// through <c>writer.Kind.pair.Output(member, …)</c>, never <c>member.Output(writer, …)</c>, or the member's pair is
-    /// skipped. Made when first asked.</summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public pair.list.@this pair => System.Threading.LazyInitializer.EnsureInitialized(ref _pair, () => new(this));
-    private pair.list.@this? _pair;
 
     /// <summary>The MIMEs content of this kind arrives as — each a bare media type.</summary>
     public virtual System.Collections.Generic.IReadOnlyList<string> Mime => _mime;
@@ -302,14 +295,18 @@ public class @this : global::app.type.@this
         => throw new System.NotSupportedException(
             $"cannot convert {source.Type?.Name} into kind '{Name}'");
 
-    /// <summary>A kind held AS A VALUE writes its own name — <c>%x!type.kind%</c> is "json", "decimal".
-    /// The kind is a type, but its bare face is the subtype word; navigation reaches the rest (.name).</summary>
-    public override global::System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode, global::app.actor.context.@this? context)
+    /// <summary>A kind held AS A VALUE writes its own name — <c>%x!type.kind%</c> is "json", "decimal" — in every
+    /// format. The kind is a type, but its face is the subtype word, never a type's identity or word; navigation reaches
+    /// the rest (.name).</summary>
+    protected internal override global::System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.String(Name);
         return default;
     }
+
+    /// <summary>In text too a kind is its name, not a type's word.</summary>
+    protected internal override global::System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
+        => Write((global::app.type.format.IWriter)writer);
 
     /// <summary>Writes <paramref name="value"/>, a value of this kind, in this kind's own form — a kind is a type, and
     /// writes the values of it (a duration's <c>short</c> writes <c>30s</c>, its <c>iso</c> <c>PT30S</c>). A kind
@@ -319,9 +316,7 @@ public class @this : global::app.type.@this
 
     /// <summary>Write a host value OF this kind to the wire — json emits raw json, <c>*</c>
     /// reflects a POCO's tagged fields. The carrier delegates its <c>Output</c> here.</summary>
-    public virtual global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? ctx)
+    public virtual global::System.Threading.Tasks.ValueTask Output(object obj, global::app.type.format.IWriter writer)
         => throw new System.NotSupportedException($"kind '{Name}' cannot write itself");
 
     /// <summary>A kind held AS A VALUE lowers to its name — its value IS the subtype word ("md",
@@ -351,21 +346,19 @@ public class @this : global::app.type.@this
     // writes itself via `new Data(name, value, ctx).Output(...)` — Data.Output already emits bare
     // vs its record by the writer's record door (BeginRecord), not by value type, so
     // the switch below should dissolve. (todos.md 2026-07-09)
-    protected async global::System.Threading.Tasks.ValueTask WriteReflected(
-        global::app.type.format.IWriter writer, object value, global::app.View mode,
-        global::app.actor.context.@this ctx)
+    protected async global::System.Threading.Tasks.ValueTask WriteReflected(global::app.type.format.IWriter writer, object value)
     {
         switch (value)
         {
-            case global::app.type.item.@this item: await writer.Kind.pair.Output(item, writer, mode, ctx); break;
-            case global::app.data.@this d: await d.Output(writer, mode, ctx); break;
+            case global::app.type.item.@this item: await item.Output(writer); break;
+            case global::app.data.@this d: await d.Output(writer); break;
             case string s: writer.String(s); break;
             // A raw C# scalar the writer renders (number/bool/date/enum/…). Everything else —
             // a collection OR an object — writes through ITS kind (IDictionary → object, IList /
             // any sequence → array, an object → the * kind's declared-face Output). One rule, no
-            // categories: the kind decides; an undeclared plang type throws there, loud.
+            // categories: the kind decides; an undeclared plang type is the view's to answer.
             default:
-                if (value.GetType().IsClass) await ctx.App.type.list.Kind(value.GetType()).Output(value, writer, mode, ctx);
+                if (value.GetType().IsClass) await writer.Context.App.type.list.Kind(value.GetType()).Output(value, writer);
                 else writer.Value(value);
                 break;
         }

@@ -164,19 +164,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// through <see cref="global::app.data.@this.Output"/> so the inner Data writes
     /// itself as a layer-level <c>@schema:"data"</c> record.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        IWriter w, global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(IWriter w)
     {
         w.BeginObject();
         w.Name(global::app.data.@this.WireSchema); w.String(WireSchemaSignature);
         // `type` = the algorithm within this layer — uniform with every layer
         // ({@schema:archive, type:gzip}, {@schema:encryption, type:aes-…}).
-        var pair = w.Kind.pair;
-        w.Name("type"); await pair.Output(Algorithm, w, mode, context);
-        w.Name("nonce"); await pair.Output(Nonce, w, mode, context);
-        w.Name("created"); await pair.Output(Created, w, mode, context);
-        if (_expires is { } exp) { w.Name("expires"); await pair.Output(exp, w, mode, context); }
-        w.Name("identity"); await pair.Output(Identity, w, mode, context);
+        w.Name("type"); await Algorithm.Output(w);
+        w.Name("nonce"); await Nonce.Output(w);
+        w.Name("created"); await Created.Output(w);
+        if (_expires is { } exp) { w.Name("expires"); await exp.Output(w); }
+        w.Name("identity"); await Identity.Output(w);
         // Contracts are bare strings on the wire (and in ToSigningBytes), not
         // data records — emit the strings directly.
         if (Contracts is not null)
@@ -192,9 +190,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         w.Name("type"); w.String(Hash.Algorithm?.Name ?? "");
         w.Name("value"); w.String(Hash.ToBase64());
         w.EndObject();
-        w.Name("signature"); await pair.Output(Signature, w, mode, context);
+        w.Name("signature"); await Signature.Output(w);
         // The inner Data is a full layer-level payload (its own @schema:data).
-        w.Name("value"); await Value.Output(w, mode, context, layer: true);
+        w.Name("value"); await Value.Output(w, layer: true);
         w.EndObject();
     }
 

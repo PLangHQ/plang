@@ -326,7 +326,7 @@ public class Fluid : ITemplate
             var text = Writer(written);
             // liquid asks for the text synchronously (ToStringValue has no async form), so the write is never awaited
             // here: one that hasn't completed at once is refused, and keeps the stream it is still writing into
-            var output = text.Kind.pair.Output(item, text, global::app.View.Out, context);
+            var output = item.Output(text);
             if (!output.IsCompleted) throw new AppException(new global::app.error.@this(
                 "a template shows a value whose output waits on I/O — read it first", "TemplateValueUnread", 400));
             using (written)
@@ -342,7 +342,7 @@ public class Fluid : ITemplate
         {
             using var written = new MemoryStream();
             var text = Writer(written);
-            await text.Kind.pair.Output(item, text, global::app.View.Out, context);
+            await item.Output(text);
             writer.Write(encoder.Encode(System.Text.Encoding.UTF8.GetString(written.ToArray())));
         }
 

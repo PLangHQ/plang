@@ -21,8 +21,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
-        global::app.actor.context.@this? context) { w.DateTimeOffset(Value); return default; }
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.DateTimeOffset(Value); return default; }
 
     public @this(System.DateTimeOffset value, global::app.type.@this type) : base(type) { Value = value; }
 

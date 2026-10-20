@@ -28,15 +28,13 @@ public sealed partial class @this : global::app.type.item.@this
     /// this run observed. Where it is, the error and event in play, the depth limit and the whole run's tree
     /// (<see cref="Root"/>) are one navigation away, never written.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        var pair = writer.Kind.pair;
         writer.BeginObject();
-        if (Current is { } current) { writer.Name("current"); await pair.Output(current, writer, mode, context); }
-        if (Scope is { } scope) { writer.Name("scope"); await pair.Output(scope, writer, mode, context); }
+        if (Current is { } current) { writer.Name("current"); await current.Output(writer); }
+        if (Scope is { } scope) { writer.Name("scope"); await scope.Output(writer); }
         writer.Name("audit");
-        await pair.Output(Audit, writer, mode, context);
+        await Audit.Output(writer);
         writer.EndObject();
     }
 

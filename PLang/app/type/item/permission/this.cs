@@ -145,8 +145,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// reflection — the writer never type-switches on it (OBP Rule 9). Symmetric
     /// with <see cref="Create"/>.
     /// </summary>
-    public override System.Threading.Tasks.ValueTask Output(IWriter w,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(IWriter w)
     {
         w.BeginObject();
         w.Name("actor"); w.String(Actor);

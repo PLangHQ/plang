@@ -50,27 +50,25 @@ public sealed class @this : input.@this
 
     private protected override void Applied(ITarget target) => target.Mouse(this);
 
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        var pair = writer.Kind.pair;
         writer.BeginObject();
-        writer.Name("mouse"); await pair.Output(Action, writer, mode, context);
-        writer.Name("x"); await pair.Output(X, writer, mode, context);
-        writer.Name("y"); await pair.Output(Y, writer, mode, context);
+        writer.Name("mouse"); await Action.Output(writer);
+        writer.Name("x"); await X.Output(writer);
+        writer.Name("y"); await Y.Output(writer);
         if (Action.Value == global::app.type.item.input.mouse.Gesture.wheel)
         {
-            writer.Name("dx"); await pair.Output(Dx, writer, mode, context);
-            writer.Name("dy"); await pair.Output(Dy, writer, mode, context);
+            writer.Name("dx"); await Dx.Output(writer);
+            writer.Name("dy"); await Dy.Output(writer);
         }
         else
         {
-            writer.Name("button"); await pair.Output(Button, writer, mode, context);
-            writer.Name("clicks"); await pair.Output(Clicks, writer, mode, context);
+            writer.Name("button"); await Button.Output(writer);
+            writer.Name("clicks"); await Clicks.Output(writer);
         }
         // the line carries the modifiers held as their code
         writer.Name("mods"); writer.Int(Modifier.Code);
-        await WriteStamp(writer, mode, context);
+        await WriteStamp(writer);
         writer.EndObject();
     }
 }

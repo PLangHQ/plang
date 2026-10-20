@@ -27,10 +27,8 @@ public sealed class Method : Hop
 
     /// <summary>Its name, then its values as rows: <c>"replace", "parameter": [{"type": {"name": "text"},
     /// "value": "-"}, …]</c>; a variable's row names it, as every stored row does.</summary>
-    protected override async System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected override async System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer)
     {
-        var pair = writer.Kind.pair;
         writer.String(Name);
         writer.Name("parameter");
         var values = Parameter.Slots().Cast<global::app.type.item.@this>().ToList();
@@ -39,13 +37,13 @@ public sealed class Method : Hop
         {
             writer.BeginObject();
             writer.Name("type");
-            await pair.Output(value.Type, writer, mode, context);
+            await value.Type.Output(writer);
             writer.Name("value");
-            await pair.Output(value, writer, mode, context);
+            await value.Output(writer);
             if (value.HasVariable)
             {
                 writer.Name("variable");
-                await new variable.serializer.Entry().Write(writer, value.Variable, mode, context);
+                await new variable.serializer.Entry().Write(writer, value.Variable);
             }
             writer.EndObject();
         }

@@ -260,6 +260,5 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override bool Cacheable => false;
 
     /// <summary>A variable writes itself as the variable it names; the writer shows it.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
-        global::app.actor.context.@this? context) { w.Variable(Name); return default; }
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.Variable(Name); return default; }
 }

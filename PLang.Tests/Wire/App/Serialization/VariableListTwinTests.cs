@@ -92,9 +92,7 @@ public class VariableListTwinTests
         using var ms = new System.IO.MemoryStream();
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms,
                    new System.Text.Json.JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
-            await new global::app.type.item.variable.serializer.Entry().Write(
-                new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, app.actor.list.System.Context), found.DistinctBy(v => v.Text).ToList(),
-                global::app.View.Store, app.actor.list.User.Context);
+            await new global::app.type.item.variable.serializer.Entry().Write(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, app.actor.list.System.Context), found.DistinctBy(v => v.Text).ToList());
         return JsonNode.Parse(ms.ToArray())!.ToJsonString();
     }
 

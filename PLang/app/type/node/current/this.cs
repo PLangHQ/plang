@@ -18,12 +18,11 @@ public sealed class @this<T, L> : global::app.type.node.@this<T, L>
         => T.Current(context) is { } one ? new data.@this<T>("current", one, context: context)
             : data.@this<T>.FromError(new global::app.error.@this($"no {type.Name} is current", "NotFound", 404), context);
 
-    /// <summary>Written alone, the node is the one in play (<c>%!app.goal%</c> the running goal); with nothing in play,
-    /// or no asker, nothing.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    /// <summary>Written alone, the node is the one in play for the writer's asker (<c>%!app.goal%</c> the running goal);
+    /// with nothing in play, nothing.</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        if (context != null && T.Current(context) is { } one) return writer.Kind.pair.Output(one, writer, mode, context);
+        if (T.Current(writer.Context) is { } one) return one.Output(writer);
         writer.Null();
         return default;
     }

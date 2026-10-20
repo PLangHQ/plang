@@ -132,7 +132,7 @@ public class IWriterContractTests : System.IAsyncDisposable
         var (jw, ms) = MakeWriter();
         var w = new global::app.type.item.wire.kind.plang.Writer(jw, global::app.View.Out, app.actor.list.System.Context);
         var record = new global::app.data.@this("hello", "world", context: context);
-        await record.Output(w, global::app.View.Out, context);
+        await record.Output(w);
         var s = Flush(jw, ms);
         // the binding label rides only on the Store view; Out omits it. (Check the ROOT
         // for a `name` binding — the structured `type:{name,…}` sub-object legitimately
@@ -143,7 +143,7 @@ public class IWriterContractTests : System.IAsyncDisposable
 
         var (jw2, ms2) = MakeWriter();
         var w2 = new global::app.type.item.wire.kind.plang.Writer(jw2, global::app.View.Store, app.actor.list.System.Context);
-        await record.Output(w2, global::app.View.Store, context);
+        await record.Output(w2);
         await Assert.That(Flush(jw2, ms2)).Contains("\"name\":\"hello\"");
     }
 
@@ -153,7 +153,7 @@ public class IWriterContractTests : System.IAsyncDisposable
         var (jw, ms) = MakeWriter();
         var w = new global::app.type.item.wire.kind.plang.Writer(jw, global::app.View.Out, app.actor.list.System.Context);
         var record = new global::app.data.@this("nums", new List<int> { 1, 2 }, context: context);
-        await record.Output(w, global::app.View.Out, context);
+        await record.Output(w);
         // each element writes itself as plang does: its type and its value
         using var d = System.Text.Json.JsonDocument.Parse(Flush(jw, ms));
         var items = d.RootElement.GetProperty("value").EnumerateArray().Select(e => e.GetProperty("value").GetInt32()).ToList();

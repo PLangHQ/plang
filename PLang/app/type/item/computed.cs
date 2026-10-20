@@ -40,10 +40,8 @@ public sealed class computed : @this
         => await Compute(parent.Context).Get(parent, key);
 
     /// <summary>Writes the current answer, lifted with the writer's context.</summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => writer.Kind.pair.Output(Compute(context ?? throw Contextless()), writer, mode, context);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => Compute(writer.Context).Output(writer);
 
     /// <summary>"In memory now" for a computed IS the current computation, which needs the
     /// asker's context to lift — its holder answers it (<c>DynamicData.Peek</c>).</summary>

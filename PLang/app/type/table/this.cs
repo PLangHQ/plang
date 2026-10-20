@@ -68,13 +68,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Writes itself as an array of rows, each row an object keyed by header that writes itself
     /// (<see cref="EnumerateItems"/> hands each out as its own Data); the writer decides how a list of
     /// objects looks — json on a json channel, json text on a text one.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginArray(Rows.Count);
-        foreach (var (_, row) in EnumerateItems(context))
-            await row.Output(writer, mode, context);
+        foreach (var (_, row) in EnumerateItems(writer.Context))
+            await row.Output(writer);
         writer.EndArray();
     }
 

@@ -34,8 +34,7 @@ public sealed class @this : query.@this
             items => rest.Count == 0 ? System.Threading.Tasks.Task.FromResult<Data>(context.Ok(items))
                 : rest[0].Apply(items, rest.Skip(1).ToList(), context), context);
 
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.String(_field.ToString());
         return System.Threading.Tasks.ValueTask.CompletedTask;

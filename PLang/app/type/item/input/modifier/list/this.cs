@@ -56,11 +56,10 @@ public sealed class @this : global::app.type.item.@this
 
     /// <summary>The line's form: its code.</summary>
     /// <summary>Shown, it is the whole list, by name. (An input's line carries its <see cref="Code"/>.)</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginArray(_held.Length);
-        foreach (var modifier in _held) await writer.Kind.pair.Output(modifier, writer, mode, context);
+        foreach (var modifier in _held) await modifier.Output(writer);
         writer.EndArray();
     }
 

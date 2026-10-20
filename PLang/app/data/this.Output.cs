@@ -35,27 +35,23 @@ public partial class @this
     {
         using var bytes = new System.IO.MemoryStream();
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(bytes))
-            await Output(new global::app.type.item.wire.kind.plang.Writer(utf8, view, context), view, context, layer: true);
+            await Output(new global::app.type.item.wire.kind.plang.Writer(utf8, view, context), layer: true);
         return global::app.module.crypto.type.hash.@this.Of(bytes.ToArray(), kind);
     }
 
     /// <summary>
     /// Data writes ITSELF to the wire — it owns its <c>@schema</c> layer (its identity), then its
     /// <c>type</c>, then the underlying <c>value</c> (delegated to the item), then <c>properties</c>.
-    /// One async pass, resolving lazily at each node — no pre-resolve walk, no Normalize tree. A Data
-    /// holding a <c>%ref%</c> resolves it and outputs the RESOLVED value's self-describing form (its
-    /// real type+value), not <c>type:variable</c>.
+    /// One async pass, resolving lazily at each node — no pre-resolve walk, no Normalize tree.
+    /// <paramref name="layer"/>: this Data begins a layer of plang's own format.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, View mode,
-        global::app.actor.context.@this? context = null, bool layer = false)
+    public async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, bool layer = false)
     {
-        context ??= _context;
-
         // A Data whose value holds variables (a template, a reference) is the view's to write: kept as written (Store),
-        // used (Out), or both (Debug). Using one can cycle (a=%b%, b=%a%) — guarded so it fails typed, not via stack
-        // overflow. The app is the other graph that holds itself (through its asker's memory) and guards its own
-        // write; every other value graph is a tree (the writer fail-closes on any non-plang value).
+        // used (Out), or both (Debug). It is decided here, before the record, because what crosses (Out) writes the
+        // record of the Data the value resolves to — its type, not the template's. Using one can cycle (a=%b%, b=%a%) —
+        // guarded so it fails typed, not via stack overflow. The app is the other graph that holds itself (through its
+        // asker's memory) and guards its own write; every other value graph is a tree.
         if (Error == null && HasVariable)
         {
             if (_outputDepth.Value++ > MaxResolveDepth)
@@ -73,9 +69,9 @@ public partial class @this
         global::app.type.item.@this value = Error ?? _item;
 
         // The Data tells the writer what it is; the writer decides how much to show (plang's writer its record, a
-        // bare format only the value). The value writes itself through the writer's kind.
-        await writer.BeginRecord(this, mode, context, layer);
-        await writer.Kind.pair.Output(value, writer, mode, context);
-        await writer.EndRecord(this, mode, context);
+        // bare format only the value). The value writes itself.
+        await writer.BeginRecord(this, layer);
+        await value.Output(writer);
+        await writer.EndRecord(this);
     }
 }

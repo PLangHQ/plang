@@ -48,9 +48,9 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
             await using var utf8 = new Utf8JsonWriter(stream);
             var writer = new Writer(utf8, view, context);
             if (data.Peek() is global::app.type.item.signature.@this sig)
-                await writer.Kind.pair.Output(sig, writer, view, context);
+                await sig.Output(writer);
             else
-                await data.Output(writer, view, context, layer: true);
+                await data.Output(writer, layer: true);
             await utf8.FlushAsync(ct);
             return context.Ok();
         }

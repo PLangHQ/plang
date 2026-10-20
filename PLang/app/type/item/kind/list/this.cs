@@ -74,11 +74,10 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
 
     // A collection writes as an array of self-writes — each element through its own kind.
     public override async global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? ctx)
+        object obj, global::app.type.format.IWriter writer)
     {
         writer.BeginArray(-1);
-        foreach (var el in (System.Collections.IEnumerable)obj) if (el != null) await WriteReflected(writer, el, mode, ctx!);
+        foreach (var el in (System.Collections.IEnumerable)obj) if (el != null) await WriteReflected(writer, el);
         writer.EndArray();
     }
 

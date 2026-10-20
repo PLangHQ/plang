@@ -206,29 +206,27 @@ public sealed class @this : global::app.type.item.note.IAbout
 
     /// <summary>Writes the property's row — <c>{name, type, value, properties?}</c>, the value as held
     /// (a wire relays its raw verbatim).</summary>
-    public async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    public async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("name");
         writer.String(Name);
         if (!Type.IsNull)
         {
-            // the slot is the type as the writer's kind shows it: its identity in plang, its face in bare json
+            // the slot is the type as the format writes one
             writer.Name("type");
-            await writer.Kind.pair.Output(Type, writer, mode, context);
+            await Type.Output(writer);
         }
         writer.Name("value");
-        // a value that holds variables is the view's to write: kept as written, used, or both in a dump
-        if (Value is { HasVariable: true } template) await writer.View.Write(template, writer);
-        else if (Value is { } value) await writer.Kind.pair.Output(value, writer, mode, context);
-        else writer.Null();
-        // A stored row names the variables its value holds, parsed once at build.
-        if (mode == global::app.View.Store && Value is { HasVariable: true } held)
+        // a value that holds variables is the view's to write: kept as written (with the variables it names), used, or
+        // both in a dump
+        if (Value is { HasVariable: true } template)
         {
-            writer.Name("variable");
-            await new global::app.type.item.variable.serializer.Entry().Write(writer, held.Variable, mode, context);
+            await writer.View.Write(template, writer);
+            await writer.View.Own(template, writer);
         }
+        else if (Value is { } value) await value.Output(writer);
+        else writer.Null();
         if (Properties.Count > 0)
         {
             writer.Name("properties");
@@ -236,7 +234,7 @@ public sealed class @this : global::app.type.item.note.IAbout
             foreach (var kvp in Properties)
             {
                 writer.Name(kvp.Key);
-                await writer.Kind.pair.Output(global::app.type.item.@this.Create(kvp.Value, context), writer, mode, context);
+                await global::app.type.item.@this.Create(kvp.Value, writer.Context).Output(writer);
             }
             writer.EndObject();
         }
@@ -246,11 +244,10 @@ public sealed class @this : global::app.type.item.note.IAbout
     /// <summary>The property's formal row — <c>Name: type = value</c>, or <c>Name: type ?= value</c> when
     /// it is a frozen default (an action's <c>Default</c> row). The type is written whole, its kind in
     /// angle brackets; the value writes itself.</summary>
-    public async System.Threading.Tasks.ValueTask Row(global::app.goal.step.action.formal.Writer writer,
-        bool frozen, global::app.View mode, global::app.actor.context.@this? context)
+    public async System.Threading.Tasks.ValueTask Row(global::app.goal.step.action.formal.Writer writer, bool frozen)
     {
         writer.Row(Name, Type.kind.IsEmpty ? Type.Name : $"{Type.Name}<{Type.kind.Name}>", frozen);
-        if (Value is { } value) await writer.Kind.pair.Output(value, writer, mode, context);
+        if (Value is { } value) await value.Output(writer);
         else writer.Null();
     }
 

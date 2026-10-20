@@ -25,7 +25,6 @@ public sealed class @this : query.@this
         global::app.actor.context.@this context)
         => await Next(await _condition.Keep(rows, context), rest, context);
 
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => _condition.Output(writer, mode, context!);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => _condition.Output(writer);
 }

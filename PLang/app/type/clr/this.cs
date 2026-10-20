@@ -189,8 +189,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// The carrier writes its HOST by asking its <see cref="Kind"/> — the json kind emits raw json
     /// (no <c>valueKind</c> BCL leak), the <c>*</c> kind reflects a POCO's <c>[Out]</c> fields.
     /// </summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => Kind.Output(Value, writer, mode, context);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => Kind.Output(Value, writer);
 }

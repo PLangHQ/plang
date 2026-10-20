@@ -59,14 +59,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Writes itself as its dict: what it continues as it holds it — the reference as written
     /// (<c>{"continue": "%answer%"}</c>), or the response already bound — never opening it at the writer.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         if (Continue != null)
         {
             writer.Name("continue");
-            await writer.Kind.pair.Output(Continue.Peek(), writer, mode, context);
+            await Continue.Peek().Output(writer);
         }
         writer.EndObject();
     }

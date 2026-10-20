@@ -58,12 +58,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>Writes itself as its dict.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("follow"); writer.Bool(Follow.Value);
-        writer.Name("max"); await writer.Kind.pair.Output(Max, writer, mode, context);
+        writer.Name("max"); await Max.Output(writer);
         writer.EndObject();
     }
 

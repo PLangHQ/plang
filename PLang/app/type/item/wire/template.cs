@@ -14,17 +14,15 @@ public sealed class template : @this
         : base(slice, type, reader, variable, built) { }
 
     // A template renders with the caller's context: there is no context-free write of it.
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         // The Store view keeps what was authored: a .pr holds the template's slice as written, a wire's own
         // relay. (The same check as source.Output's; where the face is chosen is the writer-rule sweep's.)
-        if (mode == global::app.View.Store)
+        if (writer.View == global::app.View.Store)
         {
-            await base.Output(writer, mode, context);
+            await base.Write(writer);
             return;
         }
-        await writer.Kind.pair.Output(Decoded(writer.Context), writer, mode, context);
+        await Decoded(writer.Context).Output(writer);
     }
 }

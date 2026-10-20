@@ -28,7 +28,7 @@ public class PickOptionTests : System.IAsyncDisposable
         foreach (var o in offers)
         {
             var writer = new global::app.goal.step.action.formal.Writer(_app.actor.list.System.Context);
-            await writer.Kind.pair.Output(o, writer, global::app.View.Store, Ctx);
+            await o.Output(writer);
             lines.Add(writer.ToString());
         }
         return lines;
@@ -281,10 +281,10 @@ public class PickOptionTests : System.IAsyncDisposable
         await Assert.That(one.Single()).IsSameReferenceAs(global::app.type.item.given.@this.Instance);
         await Assert.That(many.Single()).IsSameReferenceAs(global::app.type.item.given.@this.Instance);
         var line = new global::app.goal.step.action.formal.Writer(_app.actor.list.System.Context);
-        await line.Option("Permission", one.Single(), ctx);
+        await line.Option("Permission", one.Single());
         await Assert.That(line.ToString()).IsEqualTo("Permission");
         var valued = new global::app.goal.step.action.formal.Writer(_app.actor.list.System.Context);
-        await valued.Option("Template", (await _app.Module("file")["read"]!["Template"]!.Type.Offers(step)).First(), ctx);
+        await valued.Option("Template", (await _app.Module("file")["read"]!["Template"]!.Type.Offers(step)).First());
         await Assert.That(valued.ToString()).StartsWith("Template=\"");
     }
 

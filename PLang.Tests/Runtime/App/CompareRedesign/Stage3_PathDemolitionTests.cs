@@ -80,7 +80,7 @@ public class Stage3_PathDemolitionTests
             using var ms = new MemoryStream();
             using var jw = new Utf8JsonWriter(ms);
             var writer = new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, pathApp.actor.list.System.Context);
-            await writer.Kind.pair.Output(p, writer, global::app.View.Store, pathApp.actor.list.User.Context);
+            await p.Output(writer);
             jw.Flush();
             await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo($"\"{loc}\"").Because(loc);
         }
@@ -277,7 +277,7 @@ public class Stage3_PathDemolitionTests
         using var ms = new MemoryStream();
         using var jw = new Utf8JsonWriter(ms);
         var writer = new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, pathApp.actor.list.System.Context);
-        await writer.Kind.pair.Output(p, writer, global::app.View.Store, pathApp.actor.list.User.Context);
+        await p.Output(writer);
         jw.Flush();
         await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo("\"docs/readme.md\"");
     }

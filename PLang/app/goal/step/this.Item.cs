@@ -64,26 +64,19 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (!any) yield return incoming;
     }
 
-    /// <summary>The step writes ITSELF — its bare [Store] shape, singular keys, nulls omitted. Its
+    /// <summary>The step writes ITSELF — its bare [Store] shape, singular keys, nulls omitted, in every view. Its
     /// <c>code</c> is the action list's own JSON tree (each action writes itself); <c>line</c> writes
-    /// itself; <c>warning</c> is written when the build left any. The DEBUG view (the
-    /// live --debug channel, never the persisted wire) routes through the reflection (*) kind.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    /// itself; <c>warning</c> is written when the build left any. Before it closes, the view adds what only it shows (a
+    /// dump its diagnostics).</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        if (mode == global::app.View.Debug)
-        {
-            await base.Output(writer, mode, context);
-            return;
-        }
         writer.BeginObject();
         writer.Name("index"); writer.Int(Index);
         writer.Name("text"); writer.String(Text);
         writer.Name("line"); Line.Output(writer);
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
         writer.Name("code");
-        await writer.Kind.pair.Output(Code, writer, mode, context);   // the action.list writes its own bare array
+        await Code.Output(writer);   // the action.list writes its own bare array
         if (Intent != null) { writer.Name("intent"); writer.String(Intent); }
         if (Source != null) { writer.Name("source"); writer.String(Source); }
         if (Warning.Count > 0)
@@ -101,7 +94,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
         // a step the build could not fix: its error writes itself, as it does everywhere — the goal it belongs to does
         // not start
-        if (Error != null) { writer.Name("error"); await writer.Kind.pair.Output(Error, writer, mode, context); }
+        if (Error != null) { writer.Name("error"); await Error.Output(writer); }
+        await writer.View.Own(this, writer);
         writer.EndObject();
     }
 }

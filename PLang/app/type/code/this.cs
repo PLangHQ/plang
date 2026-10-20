@@ -56,8 +56,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The code renders itself as its source text — uniform across formats.</summary>
     /// <summary>Code writes its own form — its source — in every view.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.String(Source);
         return default;

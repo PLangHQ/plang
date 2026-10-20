@@ -57,12 +57,10 @@ public class @this : global::app.type.item.source
     // hold) — until the identity pair relays a value's written form. Any other writer is a USE: the slice
     // decodes with the caller's context, and the decoded value is written through the writer's kind (a
     // structure structurally).
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         if (_reader.Owns(writer)) { writer.Raw((string)Raw); return; }
-        await writer.Kind.pair.Output(Decoded(writer.Context), writer, mode, context);
+        await Decoded(writer.Context).Output(writer);
     }
 
     // Lowering an undecoded wire to CLR is a USE: graduate to the decoded value first (never hand

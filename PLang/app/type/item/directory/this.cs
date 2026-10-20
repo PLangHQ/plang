@@ -99,8 +99,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>A directory writes itself, in every view, as a flat listing of its children's locations — never their
     /// contents; an unlisted directory writes its location. It never lists while it writes.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         var listed = Listed;
         if (listed == null) { writer.String(ToString()); return; }
@@ -108,7 +107,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         foreach (var slot in listed.Slots())
         {
             var entry = slot is global::app.data.@this d ? d.Peek() : slot;
-            if (entry is global::app.type.item.path.@this p) await writer.Kind.pair.Output(p, writer, mode, context);
+            if (entry is global::app.type.item.path.@this p) await p.Output(writer);
             else writer.String(entry?.ToString() ?? "");
         }
         writer.EndArray();

@@ -30,6 +30,9 @@ public sealed class Writer : IWriter
 
     public global::app.actor.context.@this Context { get; }
 
+    /// <summary>A value written in formal: its formal look (an action its call), else its own write.</summary>
+    public System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value) => value.Write(this);
+
     private readonly StringBuilder _out = new();
 
     // What the next value sits in: its separator, and whether one was written yet.
@@ -103,11 +106,10 @@ public sealed class Writer : IWriter
 
     /// <summary>An option as a starting line writes it: <c>Template="plang"</c>, or its bare name — a slot still to
     /// fill — when its value writes nothing (<c>Permission</c>: the step gives it, the writer fills it).</summary>
-    public async System.Threading.Tasks.ValueTask Option(string name, global::app.type.item.@this value,
-        global::app.actor.context.@this? context)
+    public async System.Threading.Tasks.ValueTask Option(string name, global::app.type.item.@this value)
     {
         var written = new Writer(Kind, Context);
-        await Kind.pair.Output(value, written, global::app.View.Store, context);
+        await value.Output(written);
         Element();
         _out.Append(name);
         if (written._out.Length > 0) _out.Append('=').Append(written._out);

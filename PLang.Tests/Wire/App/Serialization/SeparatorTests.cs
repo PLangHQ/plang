@@ -23,12 +23,12 @@ public class SeparatorTests
         foreach (var offer in offers)
         {
             var writer = new global::app.goal.step.action.formal.Writer(context);
-            await writer.Kind.pair.Output(offer, writer, global::app.View.Store, context);
+            await offer.Output(writer);
             written.Add(writer.ToString());
 
             using var stream = new System.IO.MemoryStream();
             var text = new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture, global::app.View.Out, context);
-            await text.Kind.pair.Output(offer, text, global::app.View.Out, context);
+            await offer.Output(text);
             shown.Add(System.Text.Encoding.UTF8.GetString(stream.ToArray()));
         }
         return (written, shown);
@@ -88,7 +88,7 @@ public class SeparatorTests
     {
         using var stream = new System.IO.MemoryStream();
         var writer = new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture, global::app.View.Out, context);
-        await writer.Kind.pair.Output(separator, writer, global::app.View.Store, context);
+        await separator.Output(writer);
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 

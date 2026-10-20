@@ -33,6 +33,11 @@ public interface IWriter
     /// null: a write no one asks for is the app's system actor's.</summary>
     global::app.actor.context.@this Context { get; }
 
+    /// <summary><paramref name="value"/> written into this writer: the writer hands it back to the value's own write for
+    /// the writer's own class. A writer whose format some value looks different in (text, formal) answers with its
+    /// typed self; any other writer gets the value's own write.</summary>
+    System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value) => value.Write(this);
+
     void Null();
     void Bool(bool value);
     void Int(int value);
@@ -116,13 +121,11 @@ public interface IWriter
     /// the door. The writer decides how much of it to show — plang's writer its record (<c>@schema</c> when it is a
     /// <paramref name="layer"/>, the name in the Store view, the type); a bare format nothing (only the value).
     /// </summary>
-    System.Threading.Tasks.ValueTask BeginRecord(app.data.@this record, app.View mode,
-        global::app.actor.context.@this? context, bool layer) => default;
+    System.Threading.Tasks.ValueTask BeginRecord(app.data.@this record, bool layer) => default;
 
     /// <summary>The Data's value is written: what the writer shows after it (plang's writer the stored variables and
     /// the properties), and the record closes. A bare format writes nothing.</summary>
-    System.Threading.Tasks.ValueTask EndRecord(app.data.@this record, app.View mode,
-        global::app.actor.context.@this? context) => default;
+    System.Threading.Tasks.ValueTask EndRecord(app.data.@this record) => default;
 
     /// <summary>
     /// Write a C# primitive (or a byte[], as plain bytes) in the current slot; a plang

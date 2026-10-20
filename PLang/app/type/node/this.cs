@@ -58,9 +58,8 @@ public class @this<T, L> : @this
 
     /// <summary>Written alone, the node is its list as the writer's asker sees it (<c>%!app.variable%</c> the asker's
     /// variables).</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-        => writer.Kind.pair.Output(Of(writer.Context), writer, mode, context);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => Of(writer.Context).Output(writer);
 
     /// <summary>
     /// The one <paramref name="key"/> names — the first of <see cref="list"/> whose own

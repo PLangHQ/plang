@@ -356,9 +356,7 @@ public class source : @this
     /// written or used is the writer's view's, where its Data is written. (A <see cref="wire.@this"/> writes its slice
     /// its own way.)
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         // The raw is content of its declared kind, as bytes or as characters: the writer decides how it looks
         // (into a writer of the kind's own format, verbatim).
@@ -367,7 +365,7 @@ public class source : @this
         // text it stays the text it is (`"Total: %x%"`).
         if (Type.Template != null && IsVariable && !Type.Is("text"))
         {
-            await writer.Kind.pair.Output(_variable[0], writer, mode, context);
+            await _variable[0].Output(writer);
             return;
         }
         writer.Content(_value.ToString() ?? "", Type.kind);

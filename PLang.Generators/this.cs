@@ -61,7 +61,6 @@ public class @this : IIncrementalGenerator
         Plng003.Register(context);
         Plng004.Register(context);
         Plng005.Register(context);
-        Plng006.Register(context);
     }
 
     private static string SanitizeHintName(string hintName) => hintName.Replace("@", "");

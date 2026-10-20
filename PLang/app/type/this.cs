@@ -35,32 +35,34 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>
     public static list.@this List(global::app.@this app) => new();
 
-    /// <summary>The type's identity — <c>{name, kind?, strict?, template?}</c>: what a type is in plang's own output kind
-    /// (its pair writes it: a Data's and a property row's type slot), and a type held as a value in every view but Out
-    /// (a <c>.pr</c> row holding a type stays its identity).</summary>
-    internal void Write(global::app.type.format.IWriter writer)
+    /// <summary>The type's identity — <c>{name, kind?, strict?, template?}</c>: what a type is written as in json and
+    /// plang (a Data's and a property row's type slot, a type held as a value). A nested kind is written as its own
+    /// identity, not as a kind held as a value (its name).</summary>
+    private protected void Identity(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
         // a kind nests (774): a kind that is itself kinded writes as the object it is ({list, kind: {list, kind:
         // path}}), so read and write are symmetric; a plain kind writes its name.
-        if (!kind.IsEmpty) { writer.Name("kind"); if (kind.kind.IsEmpty) writer.String(kind.Name); else kind.Write(writer); }
+        if (!kind.IsEmpty) { writer.Name("kind"); if (kind.kind.IsEmpty) writer.String(kind.Name); else kind.Identity(writer); }
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
         if (Template != null) { writer.Name("template"); writer.String(Template.Name); }
         writer.EndObject();
     }
 
-    /// <summary>
-    /// A type held as a value, written alone in the Out view, is its face, as a kind is: the word it goes by
-    /// with its kind (<c>text</c>, <c>list&lt;path&gt;</c>) — what a program sees when it writes <c>%!app.type.text%</c>.
-    /// Its facts (name, description, example, alias, kind) are reached by navigation
-    /// (<c>%!app.type.text.description%</c>). Every other view writes the identity (<see cref="Write"/>).
-    /// </summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    /// <summary>A type is its identity, in every format it has no look of its own for.</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        if (mode != global::app.View.Out) Write(writer);
-        else writer.String(kind.IsEmpty ? Name : $"{Name}<{kind.Name}>");
+        Identity(writer);
+        return default;
+    }
+
+    /// <summary>A type in text is the word it goes by with its kind (<c>text</c>, <c>list&lt;path&gt;</c>), as a
+    /// <c>.goal</c> writes it — what a program sees when it writes <c>%!app.type.text%</c>. Its facts (name, description,
+    /// example, alias, kind) are reached by navigation (<c>%!app.type.text.description%</c>).</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
+    {
+        writer.String(kind.IsEmpty ? Name : $"{Name}<{kind.Name}>");
         return default;
     }
 

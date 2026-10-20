@@ -39,8 +39,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Its wire form, read back by its reader as itself: <c>false</c> when it is off, else <c>{cpu: n}</c> with
     /// the count the program said, or <c>{}</c> when it said none — so a built program takes the cores of the machine
     /// it runs on, not the one it was built on.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         if (!_on) { writer.Bool(false); return default; }
         writer.BeginObject();

@@ -27,8 +27,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// changes it saw by name and time. Never a value: not its variables, not the event it runs. Everything else
     /// is one navigation away.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("id"); writer.String(_id);
@@ -39,8 +38,8 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         if (_startedAt is { } started) { writer.Name("startedAt"); writer.DateTimeOffset(started); }
         if (_stopwatch is { } watch) { writer.Name("duration"); writer.TimeSpan(watch.Elapsed); }
         writer.Name("handled"); writer.Bool(_handled);
-        if (Tags.CountRaw > 0) { writer.Name("tags"); await writer.Kind.pair.Output(Tags, writer, mode, context); }
-        if (Errors.Newest != null) { writer.Name("errors"); await writer.Kind.pair.Output(Errors, writer, mode, context); }
+        if (Tags.CountRaw > 0) { writer.Name("tags"); await Tags.Output(writer); }
+        if (Errors.Newest != null) { writer.Name("errors"); await Errors.Output(writer); }
         if (Caller != null) { writer.Name("caller"); writer.String(Caller._id); }
         if (Children.Count > 0)
         {

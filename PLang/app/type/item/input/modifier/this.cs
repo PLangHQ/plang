@@ -24,8 +24,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override bool IsLeaf => true;
 
     /// <summary>A modifier writes its name.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context) { writer.String(_name); return default; }
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer) { writer.String(_name); return default; }
 
     /// <summary>A modifier passes; anything else declines — a modifier is made with the input it was held for.</summary>
     public static @this? Create(object? raw) => raw as @this;

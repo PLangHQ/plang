@@ -139,8 +139,7 @@ public abstract class @this : global::app.type.item.@this
 
     /// <summary>A reference writes its content once sampled, as the bytes of its format — the writer decides how
     /// they look; unsampled, its location.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         if (!IsLoaded) { writer.String(ToString()); return default; }
         writer.Bytes(Bytes, _format ?? Type.kind);

@@ -14,8 +14,7 @@ public class FluidWriteErrorTests
     // a value whose write fails with a program's error
     private sealed class Refusing : global::app.type.item.@this
     {
-        public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-            global::app.View mode, global::app.actor.context.@this? context)
+        protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
         {
             await System.Threading.Tasks.Task.CompletedTask;
             throw new global::app.error.AppException(new global::app.error.@this("this value refuses its write", "WriteRefused", 400));
@@ -25,8 +24,7 @@ public class FluidWriteErrorTests
     // a value whose write waits on what hasn't arrived yet
     private sealed class Waiting(System.Threading.Tasks.Task arrives) : global::app.type.item.@this
     {
-        public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-            global::app.View mode, global::app.actor.context.@this? context)
+        protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
         {
             await arrives;
             writer.String("arrived");

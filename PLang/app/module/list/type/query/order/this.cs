@@ -42,11 +42,10 @@ public sealed class @this : query.@this
         return await Next(sorted, rest, context);
     }
 
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginArray(_key.Count);
-        foreach (var by in _key) await by.Output(writer, mode, context);
+        foreach (var by in _key) await by.Output(writer);
         writer.EndArray();
     }
 }

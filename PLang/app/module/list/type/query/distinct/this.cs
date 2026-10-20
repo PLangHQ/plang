@@ -23,7 +23,6 @@ public sealed class @this : query.@this
         global::app.actor.context.@this context)
         => await Next(_on.Value ? await rows.Unique(context) : context.Ok(rows), rest, context);
 
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => writer.Kind.pair.Output(_on, writer, mode, context);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => _on.Output(writer);
 }

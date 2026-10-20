@@ -96,7 +96,7 @@ public class PathSerializerMigrationTests
         using (var utf = new Utf8JsonWriter(ms))
         {
             var w = new global::app.type.item.kind.json.Writer(utf, global::app.View.Out, app.actor.list.System.Context);
-            await w.Kind.pair.Output(p, w, global::app.View.Out, context);
+            await p.Output(w);
         }
         var fromRenderer = System.Text.Encoding.UTF8.GetString(ms.ToArray());
 

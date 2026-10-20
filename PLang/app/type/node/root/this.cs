@@ -31,10 +31,8 @@ public sealed class @this : global::app.type.node.@this<global::app.type.@this, 
     /// <summary>Written alone, the type system: every type plang doesn't keep for itself, each with its facts — its
     /// name (the namespace), the word it goes by when it declares one, its description, example and aliases, and its
     /// kinds' names.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        if (context == null) { await writer.Kind.pair.Output(list, writer, mode, context); return; }
         var types = list.Items().Where(t => !t.Internal).ToList();
         writer.BeginArray(types.Count);
         foreach (var type in types)
@@ -42,8 +40,8 @@ public sealed class @this : global::app.type.node.@this<global::app.type.@this, 
             writer.BeginObject();
             writer.Name("name"); writer.String(type.Namespace ?? type.Name);
             if (type.Namespace != null && type.Namespace != type.Name) { writer.Name("word"); writer.String(type.Name); }
-            if (await type.Description(context).Text(context) is { Length: > 0 } description) { writer.Name("description"); writer.String(description); }
-            if (await type.Example(context).Text(context) is { Length: > 0 } example) { writer.Name("example"); writer.String(example); }
+            if (await type.Description(writer.Context).Text(writer.Context) is { Length: > 0 } description) { writer.Name("description"); writer.String(description); }
+            if (await type.Example(writer.Context).Text(writer.Context) is { Length: > 0 } example) { writer.Name("example"); writer.String(example); }
             if (type.Alias.Count > 0)
             {
                 writer.Name("alias");
@@ -51,7 +49,7 @@ public sealed class @this : global::app.type.node.@this<global::app.type.@this, 
                 foreach (var alias in type.Alias) writer.String(alias);
                 writer.EndArray();
             }
-            var kinds = type.kind.list(context).Items().Select(t => t.kind.Name).ToList();
+            var kinds = type.kind.list(writer.Context).Items().Select(t => t.kind.Name).ToList();
             writer.Name("kind");
             writer.BeginArray(kinds.Count);
             foreach (var kind in kinds) writer.String(kind);

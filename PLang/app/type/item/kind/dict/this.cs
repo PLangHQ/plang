@@ -35,14 +35,13 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     }
 
     public override async global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? ctx)
+        object obj, global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         foreach (System.Collections.DictionaryEntry e in (System.Collections.IDictionary)obj)
         {
             writer.Name(e.Key.ToString() ?? "");
-            if (e.Value is { } v) await WriteReflected(writer, v, mode, ctx!);
+            if (e.Value is { } v) await WriteReflected(writer, v);
             else writer.Value(null);
         }
         writer.EndObject();

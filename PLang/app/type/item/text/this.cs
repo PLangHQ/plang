@@ -60,7 +60,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             await stream.WriteAsync(characters.GetBytes(text.ToString()), ct);
         else
             await data.Output(new global::app.type.item.text.Writer(stream, characters,
-                context.Setting.Of<global::app.setting.@this>().Culture, view ?? global::app.View.Out, context), view ?? global::app.View.Out, context);
+                context.Setting.Of<global::app.setting.@this>().Culture, view ?? global::app.View.Out, context));
         await stream.FlushAsync(ct);
         return context.Ok();
     }
@@ -185,7 +185,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             if (outer.Contains(value))
                 throw new global::app.error.AppException($"variable resolve cycle: {found.Text} holds a template that renders {found.Text}", "VarResolveCycle", 400);
             rendering.Value = outer.Add(value);
-            try { await bound.Output(w, global::app.View.Out, context); }
+            try { await bound.Output(w); }
             finally { rendering.Value = outer; }
             at = pos - 1;
         }
@@ -224,9 +224,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <c>%ref%</c> as the step gave it). Whether a template is kept as written or used (resolved, rendered)
     /// is the writer's view's to decide, where its Data is written; using it is its <see cref="Value"/>.
     /// </summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.Content(_value, Format(writer.Context));
         return default;

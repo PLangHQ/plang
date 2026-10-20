@@ -32,7 +32,8 @@ public class ViewWriteTests : System.IAsyncDisposable
 
         await Assert.That(dump).Contains("\"written\":\"%user%\"");
         await Assert.That(dump).Contains("\"name\":\"Ada\"");
-        await Assert.That(dump).Contains("\"type\":\"dict\"");
+        // the type as json writes one: its identity
+        await Assert.That(dump).Contains("\"type\":{\"name\":\"dict\"}");
     }
 
     [Test] public async Task ADump_ShowsAValueThatDoesntResolve_AsNotSet()

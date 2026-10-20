@@ -26,49 +26,20 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     private readonly System.Threading.AsyncLocal<bool> _writing = new();
 
     /// <summary>
-    /// The app writes what it holds, in every view: its goals, types, actors, errors, tests, shortcuts, modules, store
-    /// and parent, and its identity (id, created, updated, version), each through its own write; in the Debug view also
-    /// the asker's memory (<c>variable</c>), which never leaves on the wire. Met again inside its own write it is a
-    /// back-reference, written by its name. The Store view writes its [Store] record. The C# plumbing is never written.
+    /// The app writes what it holds, as its tags say: on the wire ([Out]) its goals, types, actors, errors, tests,
+    /// shortcuts, modules, store and parent, and its identity (id, created, updated, version); at rest ([Store]) its
+    /// identity; in a dump also the asker's memory (<c>variable</c>, [Debug]). Met again inside its own write it is a
+    /// back-reference, written by its name. The C# plumbing carries no tag and is never written.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        if (mode == global::app.View.Store)
-        {
-            await base.Output(writer, mode, context);
-            return;
-        }
-        // the writer's asker: whose memory a dump shows, and who every member is written for
-        var asker = writer.Context;
-        var pair = writer.Kind.pair;
         if (_writing.Value)
         {
-            await pair.Output(Name(asker), writer, mode, asker);
+            await Name(writer.Context).Output(writer);
             return;
         }
         _writing.Value = true;
-        try
-        {
-            writer.BeginObject();
-            writer.Name("goal"); await pair.Output(goal, writer, mode, asker);
-            writer.Name("type"); await pair.Output(type, writer, mode, asker);
-            writer.Name("actor"); await pair.Output(actor, writer, mode, asker);
-            writer.Name("error"); await pair.Output(error, writer, mode, asker);
-            writer.Name("test"); await pair.Output(test, writer, mode, asker);
-            writer.Name("shortcut"); await pair.Output(shortcut, writer, mode, asker);
-            writer.Name("module"); await pair.Output(module, writer, mode, asker);
-            writer.Name("store"); await pair.Output(store, writer, mode, asker);
-            writer.Name("parent"); await pair.Output(parent, writer, mode, asker);
-            writer.Name("id"); writer.String(Id);
-            writer.Name("created"); await pair.Output(Created, writer, mode, asker);
-            writer.Name("updated"); await pair.Output(Updated, writer, mode, asker);
-            if (Version != null) { writer.Name("version"); writer.String(Version); }
-            // the asker's memory, as its node writes it: its variables' values, not yet their names — those come when the
-            // memory writes itself
-            if (mode == global::app.View.Debug) { writer.Name("variable"); await pair.Output(variable, writer, mode, asker); }
-            writer.EndObject();
-        }
+        try { await base.Write(writer); }
         finally { _writing.Value = false; }
     }
 
@@ -87,7 +58,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
     /// </summary>
-    [global::app.Store]
+    [global::app.Store, global::app.Out]
     public string Id { get; internal set; }
 
     /// <summary>
@@ -105,19 +76,19 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// When the app was first created — its identity's, else this run's start (an app with no identity yet is
     /// being created now).
     /// </summary>
-    [global::app.Store, global::app.LlmBuilder]
+    [global::app.Store, global::app.Out, global::app.LlmBuilder]
     public global::app.type.item.datetime.@this Created { get; internal set; }
 
     /// <summary>
     /// When the app's identity last changed — read from app.pr, else this run's start (an identity created now).
     /// </summary>
-    [global::app.Store, global::app.LlmBuilder]
+    [global::app.Store, global::app.Out, global::app.LlmBuilder]
     public global::app.type.item.datetime.@this Updated { get; internal set; }
 
     /// <summary>
     /// Version of the builder used.
     /// </summary>
-    [global::app.Store]
+    [global::app.Store, global::app.Out]
     public string? Version { get; internal set; }
 
     /// <summary>
@@ -190,7 +161,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// The app's module — <c>%!app.module%</c>: an empty module whose <c>list</c> is every module the app loads,
     /// registering their actions; <c>Get(name)</c> is one module as a result.
     /// </summary>
-    [global::app.LlmBuilder]
+    [global::app.LlmBuilder, global::app.Out]
     public global::app.module.@this module { get; }
 
     /// <summary>
@@ -204,7 +175,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// reading: every goal through <c>All()</c>, the goal a call names through <c>Find</c>),
     /// <c>Get(address)</c> is one goal as a result, <c>current</c> the running one, <c>type</c> the goal type.
     /// </summary>
-    [global::app.LlmBuilder]
+    [global::app.LlmBuilder, global::app.Out]
     public global::app.type.node.current.@this<Goal, global::app.goal.list.@this> goal { get; }
 
     /// <summary>
@@ -224,7 +195,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// app — actors share it; its owners keep their tables (<c>settings</c>, setup's steps, the LLM cache, …).
     /// Born with the app and opened at its first verb, so an app that never touches it pays for no SQLite file.
     /// </summary>
-    [global::app.LlmBuilder]
+    [global::app.LlmBuilder, global::app.Out]
     public global::app.store.@this store { get; }
 
     /// <summary>
@@ -238,21 +209,21 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// the run's setting, report and session), <c>Get(address)</c> is one test as a result, <c>current</c> the test
     /// the asker is running. The app is testing while the list's session is open.
     /// </summary>
-    [global::app.LlmBuilder]
+    [global::app.LlmBuilder, global::app.Out]
     public global::app.type.node.current.@this<global::app.test.@this, global::app.test.list.@this> test { get; }
 
     /// <summary>
     /// The app's errors — <c>%!app.error%</c>, the one in play: <c>current</c> is the error in play (the asker's call
     /// stack's, not yet handled), <c>list</c> every error on the asker's call stack, handled or not.
     /// </summary>
-    [global::app.LlmBuilder]
+    [global::app.LlmBuilder, global::app.Out]
     public global::app.type.node.current.@this<global::app.error.@this, global::app.error.list.@this> error { get; }
 
     /// <summary>
     /// The app's variables — <c>%!app.variable%</c>, the asker's memory (navigation's context): <c>.user</c> one
     /// variable in it. C# has no asker here: it uses <c>context.Variable</c>, and <c>app.variable.list</c> says so.
     /// </summary>
-    [global::app.LlmBuilder]
+    [global::app.LlmBuilder, global::app.DebugAttribute]
     public global::app.type.node.@this<global::app.type.item.variable.@this, global::app.type.item.list.@this<global::app.type.item.variable.@this>> variable{ get; }
 
     /// <summary>
@@ -260,6 +231,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <c>shortcut/</c> folder named by its file, read once at the first ask. <c>%!goal%</c> reads the shortcut named
     /// <c>goal</c> when there is one, before the app's member of that name.
     /// </summary>
+    [global::app.Out]
     public global::app.type.node.@this<global::app.shortcut.@this, global::app.shortcut.list.@this> shortcut { get; }
 
     /// <summary>
@@ -282,19 +254,19 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// identity, MIME and extension, and the kinds), <c>Get(name)</c> is one type as a result. A file format is a
     /// kind of the type that reads it.
     /// </summary>
-    [global::app.LlmBuilder]
+    [global::app.LlmBuilder, global::app.Out]
     public global::app.type.node.root.@this type { get; }
 
     /// <summary>The app that started this plang — <c>%!app.parent%</c>: its goals are called like this app's
     /// (<c>call goal Claude in %!app.parent%</c>), and run there.</summary>
-    [global::app.LlmBuilder]
+    [global::app.LlmBuilder, global::app.Out]
     public global::app.parent.@this parent { get; }
 
     /// <summary>
     /// The app's actors — <c>%!app.actor%</c>, the one the asker acts as: its <c>list</c> is the app's two actors,
     /// System and User; <c>Get(name)</c> is one as a result, <c>current</c> the one the asker acts as.
     /// </summary>
-    [global::app.LlmBuilder]
+    [global::app.LlmBuilder, global::app.Out]
     public global::app.type.node.current.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
 
     // The types a step and an action start through, and a channel writes, reads and asks through — the type

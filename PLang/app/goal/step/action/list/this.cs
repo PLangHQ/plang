@@ -188,13 +188,19 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
     /// <summary>Writes itself to the wire as the bare <c>.pr</c> action array — each element writes its
     /// own action shape (NOT the base list's self-describing Data-envelope value face). The holder just
     /// says <c>Action.Output(...)</c>; the node is the iterator of itself, like <see cref="Start"/>.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginArray((int)Count);
-        for (int i = 0; i < Count; i++) await writer.Kind.pair.Output(this[i], writer, mode, context);
+        for (int i = 0; i < Count; i++) await this[i].Output(writer);
         writer.EndArray();
+    }
+
+    /// <summary>A step's actions in formal: one line, each action's own call, <c>a; b</c>.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.goal.step.action.formal.Writer writer)
+    {
+        writer.BeginActions();
+        for (int i = 0; i < Count; i++) await this[i].Output(writer);
+        writer.EndActions();
     }
 
     /// <summary>The actions after <paramref name="a"/> in this chain — what a loop that leads its step runs

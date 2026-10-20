@@ -45,7 +45,7 @@ public class CodeSerializerTests
     {
         var c = new code("hello", "text", app.type.list[typeof(code)]);
         var w = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
-        await w.Kind.pair.Output(c, w, global::app.View.Store, app.actor.list.User.Context);
+        await c.Output(w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(w.Last).IsEqualTo("hello");
     }
@@ -57,7 +57,7 @@ public class CodeSerializerTests
         using (var utf = new Utf8JsonWriter(ms))
         {
             var w = new global::app.type.item.kind.json.Writer(utf, global::app.View.Out, app.actor.list.System.Context);
-            await w.Kind.pair.Output(new code("Console.WriteLine();", "csharp", app.type.list[typeof(code)]), w, global::app.View.Out, app.actor.list.User.Context);
+            await (new code("Console.WriteLine();", "csharp", app.type.list[typeof(code)])).Output(w);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json.Contains("Console.WriteLine")).IsTrue();
@@ -66,7 +66,7 @@ public class CodeSerializerTests
     [Test] public async Task Code_PlangFormat_WritesSource()
     {
         var w = new CaptureWriter(app.type.list["wire"].kind["plang"]!, app.actor.list.System.Context);
-        await w.Kind.pair.Output(new code("print(1)", "python", app.type.list[typeof(code)]), w, global::app.View.Store, app.actor.list.User.Context);
+        await (new code("print(1)", "python", app.type.list[typeof(code)])).Output(w);
         await Assert.That(w.Last).IsEqualTo("print(1)");
     }
 
@@ -75,7 +75,7 @@ public class CodeSerializerTests
         // text Format writes the plain source — no HTML wrap (the HTML
         // writer is a follow-up).
         var w = new CaptureWriter(app.type.list["text"].kind, app.actor.list.System.Context);
-        await w.Kind.pair.Output(new code("body", "text", app.type.list[typeof(code)]), w, global::app.View.Store, app.actor.list.User.Context);
+        await (new code("body", "text", app.type.list[typeof(code)])).Output(w);
         await Assert.That(w.Last).IsEqualTo("body");
         await Assert.That(((string)w.Last!).Contains("<pre>") || ((string)w.Last!).Contains("<code>")).IsFalse();
     }

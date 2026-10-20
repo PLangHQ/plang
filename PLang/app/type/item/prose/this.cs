@@ -64,8 +64,7 @@ public sealed class @this : global::app.type.item.@this
         return words.ToString().Trim();
     }
 
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
         => writer.String(await Text(writer.Context));
 
     public override bool IsTruthy() => _pieces.Count > 0;

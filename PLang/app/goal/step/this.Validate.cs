@@ -40,7 +40,7 @@ public sealed partial class @this
     public async System.Threading.Tasks.Task<List<string>> Cover(global::app.actor.context.@this context)
     {
         var writer = new global::app.goal.step.action.formal.Writer(context);
-        await writer.Kind.pair.Output(Code, writer, global::app.View.Store, context);
+        await Code.Output(writer);
         var written = writer.ToString();
         var problems = new List<string>();
         // a variable is the same one whatever its case, as the variable list compares names
@@ -129,7 +129,7 @@ public sealed partial class @this
                 {
                     if (p.Value is null || p.Value is global::app.goal.step.action.@this or global::app.goal.step.action.list.@this) continue;
                     var writer = new global::app.goal.step.action.formal.Writer(context);
-                    await writer.Kind.pair.Output(p.Value, writer, global::app.View.Store, context);
+                    await p.Value.Output(writer);
                     foreach (var n in Number.Matches(Quoted.Replace(writer.ToString(), "")).Select(m => m.Value))
                         if (!said.Contains(double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
                             found.Add(new unwritten.@this(Index, $"{a.Module.Name}.{a.Name}", p.Name, n, Text));
@@ -173,7 +173,7 @@ public sealed partial class @this
             {
                 if (p.Type?.Name != "text" || p.Value is null) continue;
                 var writer = new global::app.goal.step.action.formal.Writer(context);
-                await writer.Kind.pair.Output(p.Value, writer, global::app.View.Store, context);
+                await p.Value.Output(writer);
                 if (await Meant(writer.ToString(), context) is { } s) texts.Add(s);
             }
             foreach (var child in a.Child.Items()) texts.AddRange(await Texts(child.Code.Items(), context));

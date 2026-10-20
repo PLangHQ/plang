@@ -65,14 +65,13 @@ public sealed class @this : query.@this
         => _clause[0].Apply(rows, _clause.Skip(1).Concat(rest).ToList(), context);
 
     /// <summary>Writes itself as its dict: each clause under its name, in the order written.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         foreach (var clause in _clause)
         {
             writer.Name(clause.Name);
-            await writer.Kind.pair.Output(clause, writer, mode, context);
+            await clause.Output(writer);
         }
         writer.EndObject();
     }

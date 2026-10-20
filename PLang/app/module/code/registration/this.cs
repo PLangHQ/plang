@@ -19,10 +19,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override bool IsLeaf => false;
 
     /// <summary>Self-write: the tagged fields, the View selecting the set.</summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => OutputTagged(writer, mode, context);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => OutputTagged(writer);
 
     /// <summary>AssemblyQualifiedName of the provider interface — the identity that has to survive
     /// across processes.</summary>

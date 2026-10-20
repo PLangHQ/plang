@@ -88,17 +88,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Writes itself as its code when its text is the code's standard reason (it says nothing more —
     /// <c>404</c>), else as its dict (<c>{code, text}</c>, a server's own reason).</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         if (Text.ToString() == Microsoft.AspNetCore.WebUtilities.ReasonPhrases.GetReasonPhrase(Code.ToInt32()))
         {
-            await writer.Kind.pair.Output(Code, writer, mode, context);
+            await Code.Output(writer);
             return;
         }
         writer.BeginObject();
-        writer.Name("code"); await writer.Kind.pair.Output(Code, writer, mode, context);
-        writer.Name("text"); await writer.Kind.pair.Output(Text, writer, mode, context);
+        writer.Name("code"); await Code.Output(writer);
+        writer.Name("text"); await Text.Output(writer);
         writer.EndObject();
     }
 

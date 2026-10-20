@@ -38,7 +38,7 @@ public class NumberTextTests
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
         {
             var writer = new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, _app.actor.list.System.Context);
-            await writer.Kind.pair.Output(value, writer, global::app.View.Store, Ctx);
+            await value.Output(writer);
         }
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }

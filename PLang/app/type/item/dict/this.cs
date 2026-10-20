@@ -151,15 +151,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>Writes itself as an object whose entries each write themselves, resolved lazily as they're
     /// reached; the writer decides how an object looks (json on a json channel, json text on a text one).</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        foreach (var entry in Entries(context!))
+        foreach (var entry in Entries(writer.Context))
         {
             writer.Name(entry.Name);
-            await entry.Output(writer, mode, context);
+            await entry.Output(writer);
         }
         writer.EndObject();
     }

@@ -40,27 +40,43 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <c>{module, name, property, default?, child?}</c>. Its module is a reference, written by name,
     /// never walked. Each property writes its own row (<c>{name, type, value, properties?}</c>);
     /// a child step writes itself.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("module"); writer.String(Module.Name);
         writer.Name("name"); writer.String(Name);
         writer.Name("property");
-        await Property.Output(writer, mode, context);
+        await Property.Output(writer);
         if (Default.Count > 0)
         {
             writer.Name("default");
-            await Default.Output(writer, mode, context);
+            await Default.Output(writer);
         }
         // The branch body of a control-flow action — omitted on ordinary actions (empty Child).
         // Each child step writes itself; the tree serializes recursively.
         if (Child.Count > 0)
         {
             writer.Name("child");
-            await writer.Kind.pair.Output(Child, writer, mode, context);   // step.list writes its own bare array
+            await Child.Output(writer);   // step.list writes its own bare array
         }
         writer.EndObject();
+    }
+
+    /// <summary>An action in formal is its call — <c>module.name(rows)</c>, its properties then its frozen defaults
+    /// (<c>?=</c>) — then a condition's body inline after it (<c>{ a; b }</c>). A clause (<c>on.error</c>, …) is its
+    /// step's next call, written by the step like any action.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.goal.step.action.formal.Writer writer)
+    {
+        writer.BeginCall(Module.Name, Name);
+        foreach (var p in Property) await p.Row(writer, frozen: false);
+        foreach (var p in Default) await p.Row(writer, frozen: true);
+        writer.EndCall();
+        if (Child.Count > 0)
+        {
+            writer.BeginBody();
+            foreach (var step in Child.Items())
+                foreach (var held in step.Code.Items()) await held.Output(writer);
+            writer.EndBody();
+        }
     }
 }

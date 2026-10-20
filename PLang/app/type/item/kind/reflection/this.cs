@@ -302,8 +302,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     // Serves hosts and foreign POCOs alike — the one object-Output path (a collection host writes
     // through the list kind's array-Output).
     public override async global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? ctx)
+        object obj, global::app.type.format.IWriter writer)
     {
         var type = obj.GetType();
         // The DECLARED-face rule. A tagged type renders exactly its face for the view (cycles
@@ -331,7 +330,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
             }
             if (value == null) continue;   // nulls omitted (WhenWritingNull)
             writer.Name(entry.WireName);
-            await WriteReflected(writer, value, mode, ctx);
+            await WriteReflected(writer, value);
         }
         writer.EndObject();
     }

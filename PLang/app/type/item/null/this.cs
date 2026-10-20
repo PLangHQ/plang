@@ -55,8 +55,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override bool IsTruthy() => false;
 
     public override bool IsLeaf => true;
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
-        global::app.actor.context.@this? context) { w.Null(); return default; }
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.Null(); return default; }
 
     /// <summary>The raw form of null is C# null.</summary>
 

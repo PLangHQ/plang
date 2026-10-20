@@ -26,8 +26,7 @@ public sealed class @this : global::app.type.item.@this
 
     /// <summary>A parent written alone, in every view, says what it knows: null when nothing links this plang to one,
     /// <c>linked</c> when something does — it holds no location.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         if (Link is null) writer.Null();
         else writer.String("linked");

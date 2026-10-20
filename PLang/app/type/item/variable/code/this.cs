@@ -11,12 +11,11 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
     internal @this(Hop first, global::app.type.@this type) : base(first.Chain, type) { }
 
     /// <summary>Its <c>.pr</c> form: the hops in order, each under its kind.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         var hops = Items().ToList();
         writer.BeginArray(hops.Count);
-        foreach (var hop in hops) await writer.Kind.pair.Output(hop, writer, mode, context);
+        foreach (var hop in hops) await hop.Output(writer);
         writer.EndArray();
     }
 

@@ -83,11 +83,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>An image writes its own form in every view; it never loads while it
     /// writes.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         // An image not read writes where it is — never empty bytes.
-        if (_bytes == null && Path != null) { await writer.Kind.pair.Output(Path, writer, mode, context); return; }
+        if (_bytes == null && Path != null) { await Path.Output(writer); return; }
         writer.Bytes(Bytes, Type.kind);
     }
 

@@ -34,7 +34,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                      }))
         {
             var writer = new global::app.type.item.wire.kind.plang.Writer(utf8, view, context);
-            await writer.Kind.pair.Output(item, writer, view, context);
+            await item.Output(writer);
             await utf8.FlushAsync(ct);
         }
         stream.WriteByte((byte)'\n');
@@ -120,34 +120,27 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override bool IsLeaf => false;
 
     /// <summary>The goal writes ITSELF — its bare [Store] shape in declaration order, singular keys,
-    /// nulls omitted. Each rich field writes itself: the goal file's name, visibility (the choice
-    /// symbol), the step/sub-goal children (each an item). The DEBUG view routes through the reflection
-    /// (*) kind so diagnostic props (Errors/Warnings) ride.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    /// nulls omitted, in every view. Each rich field writes itself: the goal file's name, visibility (the choice
+    /// symbol), the step/sub-goal children (each an item). Before it closes, the view adds what only it shows (a dump
+    /// its diagnostics).</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        if (mode == global::app.View.Debug)
-        {
-            await base.Output(writer, mode, context);
-            return;
-        }
-        var pair = writer.Kind.pair;
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
         writer.Name("step");
-        await pair.Output(Step, writer, mode, context);   // the step.list writes its own bare array
+        await Step.Output(writer);   // the step.list writes its own bare array
         writer.Name("child");
         writer.BeginArray(Child.CountRaw);
-        foreach (var g in Child.Items()) await pair.Output(g, writer, mode, context);
+        foreach (var g in Child.Items()) await g.Output(writer);
         writer.EndArray();
-        writer.Name("visibility"); await pair.Output(Visibility, writer, mode, context);
+        writer.Name("visibility"); await Visibility.Output(writer);
         // only the goal file's name: where its .pr is found is where it is (a sub-goal is in its parent's file)
         if (Parent == null && Path != null) { writer.Name("file"); writer.String(Path.Name.ToString()); }
         if (Hash != null) { writer.Name("hash"); writer.String(Hash); }
         if (BuilderVersion != null) { writer.Name("builderVersion"); writer.String(BuilderVersion); }
-        if (Tag.CountRaw > 0) { writer.Name("tag"); await pair.Output(Tag, writer, mode, context); }
+        if (Tag.CountRaw > 0) { writer.Name("tag"); await Tag.Output(writer); }
+        await writer.View.Own(this, writer);
         writer.EndObject();
     }
 }

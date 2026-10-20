@@ -19,7 +19,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     private async Task<string> Written(global::app.data.@this read)
     {
         var writer = new global::app.goal.step.action.formal.Writer(app.actor.list.System.Context);
-        await writer.Kind.pair.Output((global::app.goal.step.action.list.@this)read.Peek()!, writer, global::app.View.Store, app.actor.list.User.Context);
+        await ((global::app.goal.step.action.list.@this)read.Peek()!).Output(writer);
         return writer.ToString();
     }
 
@@ -178,7 +178,7 @@ public class FormalReaderTests : System.IAsyncDisposable
         await query.IsSuccess();
         await Assert.That(opened).IsAssignableTo<global::app.module.list.type.query.@this>();
         var writer = new global::app.goal.step.action.formal.Writer(app.actor.list.System.Context);
-        await writer.Kind.pair.Output(opened!, writer, global::app.View.Store, app.actor.list.User.Context);
+        await opened!.Output(writer);
         await Assert.That(writer.ToString()).Contains("group").And.Contains("name");
     }
 

@@ -16,12 +16,11 @@ public sealed class @this : input.@this
 
     private protected override void Applied(ITarget target) => target.Navigate(this);
 
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        writer.Name("nav"); await writer.Kind.pair.Output(To, writer, mode, context);
-        await WriteStamp(writer, mode, context);
+        writer.Name("nav"); await To.Output(writer);
+        await WriteStamp(writer);
         writer.EndObject();
     }
 }

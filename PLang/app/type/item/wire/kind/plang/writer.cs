@@ -26,8 +26,7 @@ public sealed class Writer : global::app.type.format.IWriter
     public global::app.View View { get; }
     public global::app.actor.context.@this Context { get; }
 
-    public async System.Threading.Tasks.ValueTask BeginRecord(global::app.data.@this record, global::app.View mode,
-        global::app.actor.context.@this? context, bool layer)
+    public async System.Threading.Tasks.ValueTask BeginRecord(global::app.data.@this record, bool layer)
     {
         _json.BeginObject();
         // the layer marker (data, beside signature/encryption/compression) — only where a layer begins
@@ -36,7 +35,8 @@ public sealed class Writer : global::app.type.format.IWriter
             _json.Name(global::app.data.@this.WireSchema);
             _json.String(global::app.data.@this.WireSchemaData);
         }
-        if (mode == global::app.View.Store)
+        // a Data's name is plang's own store's (a server's binding label is not API surface)
+        if (View == global::app.View.Store)
         {
             _json.Name("name");
             _json.String(record.Name);
@@ -44,20 +44,15 @@ public sealed class Writer : global::app.type.format.IWriter
         if ((record.Error?.Type ?? record.Type) is { IsNull: false } type)
         {
             _json.Name("type");
-            await Kind.pair.Output(type, this, mode, context);
+            await type.Output(this);
         }
         _json.Name("value");
     }
 
-    public async System.Threading.Tasks.ValueTask EndRecord(global::app.data.@this record, global::app.View mode,
-        global::app.actor.context.@this? context)
+    public async System.Threading.Tasks.ValueTask EndRecord(global::app.data.@this record)
     {
-        // a stored row names the variables its value holds, each as its text and code, parsed once at build
-        if (mode == global::app.View.Store && record.Peek() is { HasVariable: true } value)
-        {
-            _json.Name("variable");
-            await new global::app.type.item.variable.serializer.Entry().Write(this, value.Variable, mode, context);
-        }
+        // a value kept as written names its variables beside it, as the view keeps them
+        if (record.Peek() is { HasVariable: true } value) await View.Own(value, this);
         if (record.Properties.Count > 0)
         {
             _json.Name("properties");
@@ -66,9 +61,9 @@ public sealed class Writer : global::app.type.format.IWriter
             {
                 _json.Name(kvp.Key);
                 if (kvp.Value is global::app.data.@this property)
-                    await property.Output(this, mode, context);
+                    await property.Output(this);
                 else
-                    await Kind.pair.Output(global::app.type.item.@this.Create(kvp.Value, context), this, mode, context);
+                    await global::app.type.item.@this.Create(kvp.Value, Context).Output(this);
             }
             _json.EndObject();
         }

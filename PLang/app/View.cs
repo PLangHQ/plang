@@ -48,18 +48,25 @@ public abstract class View
     /// its value, kept as written or used. <paramref name="layer"/>: the Data begins a layer of plang's own format.</summary>
     internal virtual async System.Threading.Tasks.ValueTask Write(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
     {
-        await writer.BeginRecord(data, this, writer.Context, layer);
+        await writer.BeginRecord(data, layer);
         await Write(data.Peek(), writer);
-        await writer.EndRecord(data, this, writer.Context);
+        await writer.EndRecord(data);
     }
 
     /// <summary>A value that holds variables, written in this view, with no Data around it (a property row's value):
     /// kept as written, or used.</summary>
     internal abstract System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer);
 
+    /// <summary>What only this view shows beside <paramref name="value"/>, as members of the object the value's own write
+    /// is closing: plang's own store the variables a value kept as written names (a <c>.pr</c> row's <c>variable</c>,
+    /// parsed once at build); a dump the value's diagnostics (its <c>[Debug]</c>-only members). What crosses shows
+    /// nothing more.</summary>
+    internal virtual System.Threading.Tasks.ValueTask Own(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        => default;
+
     // The value as written: its own write — a template's text, a reference's name, as the step gave them.
     private protected System.Threading.Tasks.ValueTask Written(global::app.type.item.@this value, global::app.type.format.IWriter writer)
-        => writer.Kind.pair.Output(value, writer, this, writer.Context);
+        => value.Output(writer);
 
     // What a Data settles to — a reference the Data it names, a template its render; not initialized when a name it
     // names holds nothing.
@@ -98,6 +105,14 @@ public abstract class View
         internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => Written(value, writer);
 
+        // a value kept as written names its variables beside it, so reading it back never parses
+        internal override async System.Threading.Tasks.ValueTask Own(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        {
+            if (!value.HasVariable) return;
+            writer.Name("variable");
+            await new global::app.type.item.variable.serializer.Entry().Write(writer, value.Variable);
+        }
+
         public override string ToString() => "Store";
     }
 
@@ -114,9 +129,9 @@ public abstract class View
         internal override async System.Threading.Tasks.ValueTask Write(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
         {
             var used = await Used(data);
-            await writer.BeginRecord(used, this, writer.Context, layer);
+            await writer.BeginRecord(used, layer);
             await Written(await Opened(used), writer);
-            await writer.EndRecord(used, this, writer.Context);
+            await writer.EndRecord(used);
         }
 
         internal override async System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
@@ -135,7 +150,11 @@ public abstract class View
 
     private sealed class debug : View
     {
-        internal override bool Shows(System.Reflection.PropertyInfo property, bool tagged) => !Ignored(property);
+        // a tagged type shows its tagged members (what crosses, what is kept, what only a dump shows); an untagged one
+        // is transparent
+        internal override bool Shows(System.Reflection.PropertyInfo property, bool tagged)
+            => !Ignored(property) && (!tagged || Is<OutAttribute>(property) || Is<StoreAttribute>(property)
+                || Is<DebugAttribute>(property) || Is<SensitiveAttribute>(property) || Is<MaskedAttribute>(property));
 
         // a dump tells "not set" from "set but hidden": it never unmasks
         internal override bool Masks(System.Reflection.PropertyInfo property)
@@ -148,6 +167,20 @@ public abstract class View
         // a dump never throws: what declares nothing is written by its name, never walked
         internal override void Undeclared(object value, global::app.type.format.IWriter writer)
             => writer.String(value.ToString() ?? value.GetType().Name);
+
+        // a value's diagnostics: the members only a dump shows ([Debug], neither crossing nor kept), each written itself
+        internal override async System.Threading.Tasks.ValueTask Own(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        {
+            foreach (var property in value.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+            {
+                if (!Is<DebugAttribute>(property) || Is<OutAttribute>(property) || Is<StoreAttribute>(property)
+                    || property.GetIndexParameters().Length > 0 || property.GetValue(value) is not { } member) continue;
+                writer.Name(System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Text.Json.Serialization.JsonPropertyNameAttribute>(property)?.Name
+                    ?? System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(property.Name));
+                // a plang value is itself; a C# value is the plang value it makes
+                await global::app.type.item.@this.Create(member, writer.Context).Output(writer);
+            }
+        }
 
         // as written, and beside it what it resolves to with its type, or that it is not set
         internal override async System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
@@ -165,8 +198,9 @@ public abstract class View
             {
                 var resolved = await used.Value();
                 await Written(resolved, writer);
+                // the type as the format writes one (text its word, json and plang its identity)
                 writer.Name("type");
-                writer.String(resolved.Type.kind.IsEmpty ? resolved.Type.Name : $"{resolved.Type.Name}<{resolved.Type.kind.Name}>");
+                await resolved.Type.Output(writer);
             }
             writer.EndObject();
         }

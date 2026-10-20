@@ -48,6 +48,5 @@ public abstract class @this
     internal abstract System.Threading.Tasks.Task<Data> Keep(List rows, global::app.actor.context.@this context);
 
     /// <summary>Writes the condition as the query's dict holds it.</summary>
-    internal abstract System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this context);
+    internal abstract System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer);
 }

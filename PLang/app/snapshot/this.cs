@@ -74,15 +74,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// one kind of member — a subtree is an entry whose value is a snapshot, so it writes itself
     /// like every other value. This node shape is the only structural thing the snapshot owns;
     /// below it, composition.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         foreach (var entry in Entries.Entries(Context))
         {
             writer.Name(entry.Name);
-            await entry.Output(writer, mode, context);
+            await entry.Output(writer);
         }
         writer.EndObject();
     }

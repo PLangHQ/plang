@@ -115,14 +115,13 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// error it is, its key says. The live back-references that can't round-trip (Exception, Step, Goal, CallFrames)
     /// are dropped — the snapshot's CallStack section carries the chain. Its reader (<c>error/serializer/Reader</c>)
     /// reads it back.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("id");          writer.String(Id);
         writer.Name("message");     writer.String(Message);
         writer.Name("key");         writer.String(Key);
-        writer.Name("status");      await writer.Kind.pair.Output(Status, writer, mode, context);
+        writer.Name("status");      await Status.Output(writer);
         writer.Name("createdUtc");  writer.DateTime(CreatedUtc);
         if (FixSuggestion != null) { writer.Name("fixSuggestion"); writer.String(FixSuggestion); }
         if (HelpfulLinks != null)  { writer.Name("helpfulLinks");  writer.String(HelpfulLinks); }
@@ -131,7 +130,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         {
             writer.Name("list");
             writer.BeginArray(list.Count);
-            foreach (var c in list) await writer.Kind.pair.Output(c, writer, mode, context);
+            foreach (var c in list) await c.Output(writer);
             writer.EndArray();
         }
         writer.EndObject();

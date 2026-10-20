@@ -63,14 +63,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>Writes itself as its dict.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        var pair = writer.Kind.pair;
         writer.BeginObject();
-        writer.Name("token"); await pair.Output(Token, writer, mode, context);
-        writer.Name("tool"); await pair.Output(Tool, writer, mode, context);
-        writer.Name("retry"); await pair.Output(Retry, writer, mode, context);
+        writer.Name("token"); await Token.Output(writer);
+        writer.Name("tool"); await Tool.Output(writer);
+        writer.Name("retry"); await Retry.Output(writer);
         writer.EndObject();
     }
 }

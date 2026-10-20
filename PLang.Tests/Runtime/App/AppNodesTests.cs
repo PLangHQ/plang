@@ -86,7 +86,7 @@ public class AppNodesTests
             await using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
             {
                 var json = new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, user);
-                await json.Kind.pair.Output(user.call, json, view, user);
+                await user.call.Output(json);
             }
             return System.Text.Encoding.UTF8.GetString(ms.ToArray());
         }
@@ -238,6 +238,6 @@ public class AppNodesTests
         var memory = System.Text.Json.JsonDocument.Parse(dumped).RootElement.GetProperty("variable");
         await Assert.That(memory.EnumerateArray().Any(v => v.GetProperty("written").GetString() == "%app%"
             && v.GetProperty("value").GetString() == app.Name(user).ToString()
-            && v.GetProperty("type").GetString() == "app")).IsTrue();
+            && v.GetProperty("type").GetProperty("name").GetString() == "app")).IsTrue();
     }
 }

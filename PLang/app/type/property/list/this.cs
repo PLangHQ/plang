@@ -135,11 +135,10 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>Writes the list as an array of property rows.</summary>
-    public async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    public async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer)
     {
         writer.BeginArray(Count);
-        foreach (var property in Rows) await property.Output(writer, mode, context);
+        foreach (var property in Rows) await property.Output(writer);
         writer.EndArray();
     }
 }

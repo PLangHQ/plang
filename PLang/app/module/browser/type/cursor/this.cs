@@ -15,8 +15,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Its CSS name.</summary>
     [Out] public global::app.type.item.text.@this Css => _css;
 
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("cursor"); writer.String(_css);

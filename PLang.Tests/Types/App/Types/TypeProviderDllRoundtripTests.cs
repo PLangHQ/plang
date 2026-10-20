@@ -33,7 +33,7 @@ public class TypeProviderDllRoundtripTests : System.IAsyncDisposable
         var money = (global::app.type.item.@this)System.Activator.CreateInstance(moneyType, 10m, "USD")!;
 
         var captured = new CapturingWriter(app.type.list["item"].kind["json"]!, global::app.View.Store, app.actor.list.User.Context);
-        await captured.Kind.pair.Output(money, captured, captured.View, captured.Context);
+        await money.Output(captured);
         await Assert.That(captured.Captured).IsEqualTo("USD 10");
     }
 

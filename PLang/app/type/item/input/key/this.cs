@@ -48,20 +48,18 @@ public sealed class @this : input.@this
 
     private protected override void Applied(ITarget target) => target.Key(this);
 
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        var pair = writer.Kind.pair;
         writer.BeginObject();
         writer.Name("key"); writer.String(Down.Value ? "down" : "up");
-        writer.Name("sc"); await pair.Output(Scancode, writer, mode, context);
-        writer.Name("ext"); await pair.Output(Extended, writer, mode, context);
-        writer.Name("vk"); await pair.Output(Vk, writer, mode, context);
+        writer.Name("sc"); await Scancode.Output(writer);
+        writer.Name("ext"); await Extended.Output(writer);
+        writer.Name("vk"); await Vk.Output(writer);
         writer.Name("name");
-        if (Name is { } name) await pair.Output(name, writer, mode, context); else writer.Null();
+        if (Name is { } name) await name.Output(writer); else writer.Null();
         // the line carries the modifiers held as their code
         writer.Name("mods"); writer.Int(Modifier.Code);
-        await WriteStamp(writer, mode, context);
+        await WriteStamp(writer);
         writer.EndObject();
     }
 }

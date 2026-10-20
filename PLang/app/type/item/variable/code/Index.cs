@@ -18,19 +18,18 @@ public sealed class Index : Hop
     internal override bool IsOwn => Key.Variable.All(v => v.IsOwn);
 
     /// <summary><c>{"number": 0}</c>, <c>{"text": "k"}</c>, or <c>{"variable": [the key]}</c>.</summary>
-    protected override async System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected override async System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         if (Key is variable.@this named)
         {
             writer.Name("variable");
-            await new variable.serializer.Entry().Write(writer, [named], mode, context);
+            await new variable.serializer.Entry().Write(writer, [named]);
         }
         else
         {
             writer.Name(Key.Type.Name);
-            await writer.Kind.pair.Output(Key, writer, mode, context);
+            await Key.Output(writer);
         }
         writer.EndObject();
     }

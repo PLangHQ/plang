@@ -420,7 +420,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(string quoted, global::app.actor.context.@this context)
     {
         var writer = new global::app.goal.step.action.formal.Writer(context);
-        await writer.Kind.pair.Output(this, writer, global::app.View.Store, context);
+        await Output(writer);
         if (writer.ToString().Contains(quoted)) return true;
         foreach (var row in Rows(context) ?? [])
             if (await row.Value() is { } held && !ReferenceEquals(held, this) && await held.Holds(quoted, context)) return true;
@@ -434,7 +434,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(global::app.type.item.number.@this number, global::app.actor.context.@this context)
     {
         var writer = new global::app.goal.step.action.formal.Writer(context);
-        await writer.Kind.pair.Output(this, writer, global::app.View.Store, context);
+        await Output(writer);
         if (System.Text.RegularExpressions.Regex.IsMatch(writer.ToString(),
                 $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(number.ToString())}(?![\d.]|\.\d)")) return true;
         foreach (var row in Rows(context) ?? [])
@@ -800,7 +800,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual async System.Threading.Tasks.Task<global::app.data.@this> Pour(System.IO.Stream into, actor.context.@this context)
     {
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(into))
-            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, context), global::app.View.Out, context);
+            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, context));
         return context.Ok();
     }
 
@@ -830,24 +830,38 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                      {
                          Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                      }))
-            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Debug, context), global::app.View.Debug, context);
+            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Debug, context));
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 
     /// <summary>
-    /// The item writes ITSELF — the one door for writing: a value writes what it is through the writer's primitives
-    /// (String, Number, Bytes, …), and the writer decides how each looks in its kind. Every value with a form of its
-    /// own (a leaf's one token, a structure's flat shape: error, path, permission, …) overrides this; a member is
-    /// written through the writer's kind (<c>writer.Kind.pair.Output(member, …)</c>). The default is a structure's
-    /// face for the view, through the reflection kind (its tagged members; a type that declares none is refused on the
-    /// wire and named in a dump). Resolved lazily as it reaches each node; <c>await</c>s happen here, between the
-    /// writer's synchronous buffer writes.
+    /// The item writes ITSELF into <paramref name="writer"/>: the writer hands it back its own write for the writer's
+    /// own class (a text writer the text look, a formal writer the formal look, any other the value's own write). A
+    /// value writing a member writes <c>member.Output(writer)</c>.
     /// </summary>
-    public virtual System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    public System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer) => writer.Write(this);
+
+    /// <summary>
+    /// The value's own write, in every format it has no look of its own for: what it is, through the writer's
+    /// primitives (String, Number, Bytes, …); the writer decides how each looks. Every value with a form of its own (a
+    /// leaf's one token, a structure's flat shape: error, path, permission, …) overrides this. The default is a
+    /// structure's face for the writer's view, through the reflection kind (its tagged members; a type that declares none
+    /// is the view's to answer). Resolved lazily as it reaches each node; <c>await</c>s happen here, between the writer's
+    /// synchronous buffer writes.
+    /// </summary>
+    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
         => (writer.Context.App.type.list["item"].kind["*"] as global::app.type.item.kind.reflection.@this
-            ?? global::app.type.item.kind.reflection.@this.Fallback).Output(this, writer, mode, context);
+            ?? global::app.type.item.kind.reflection.@this.Fallback).Output(this, writer);
+
+    /// <summary>How this value looks in text, where it looks different there (a type is its word); by default its own
+    /// write.</summary>
+    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
+        => Write((global::app.type.format.IWriter)writer);
+
+    /// <summary>How this value looks in formal, where it looks different there (an action is its call); by default its
+    /// own write.</summary>
+    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.goal.step.action.formal.Writer writer)
+        => Write((global::app.type.format.IWriter)writer);
 
     /// <summary>
     /// Reflective Output for a STRUCTURAL item — writes its tagged property bag, the View selecting
@@ -858,18 +872,16 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// (dict/list/clr/…) override <see cref="Output"/> directly. Replaces <c>NormalizeObject</c>.
     /// </summary>
     [System.Obsolete("Superseded by the reflection (*) kind's Output — do not add new callers.")]
-    protected async System.Threading.Tasks.ValueTask OutputTagged(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected async System.Threading.Tasks.ValueTask OutputTagged(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        foreach (var entry in global::app.type.item.kind.reflection.Tagged.PropertiesFor(GetType(), mode))
+        foreach (var entry in global::app.type.item.kind.reflection.Tagged.PropertiesFor(GetType(), writer.View))
         {
             if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
             var value = entry.Property.GetValue(this);
             if (value == null) continue;   // nulls omitted (WhenWritingNull)
             writer.Name(entry.WireName);
-            await WriteReflected(writer, value, mode, context);
+            await WriteReflected(writer, value);
         }
         writer.EndObject();
     }
@@ -877,33 +889,31 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     // Writes a value reflected off a property: a plang value writes itself (Output), a sequence
     // becomes an array of self-writes, a raw C# scalar goes through the writer. This is the
     // reflection→wire boundary — C# primitives can't write themselves, so the writer renders them.
-    private static async System.Threading.Tasks.ValueTask WriteReflected(
-        global::app.type.format.IWriter writer, object value, global::app.View mode,
-        global::app.actor.context.@this? context)
+    private static async System.Threading.Tasks.ValueTask WriteReflected(global::app.type.format.IWriter writer, object value)
     {
         switch (value)
         {
-            // A plang value writes itself — through the writer's kind, which has its pair for it when it has one.
-            case @this item: await writer.Kind.pair.Output(item, writer, mode, context); break;
+            // A plang value writes itself.
+            case @this item: await item.Output(writer); break;
             // A Data-typed property (action.parameters) self-writes too — async, so it routes here,
             // NOT through writer.Value (sync, peels to the OLD Peek().Write path).
-            case global::app.data.@this d: await d.Output(writer, mode, context); break;
+            case global::app.data.@this d: await d.Output(writer); break;
             // BRIDGE: a raw C# collection (goal.steps / action.modifiers / action.parameters, until
             // those become item.@this lists) writes as an array of self-writes. Deleted once they are items.
             case System.Collections.IEnumerable seq when value is not (string or byte[]):
                 writer.BeginArray(-1);
-                foreach (var el in seq) if (el != null) await WriteReflected(writer, el, mode, context);
+                foreach (var el in seq) if (el != null) await WriteReflected(writer, el);
                 writer.EndArray();
                 break;
             // A domain HOST riding an [Out] property (test.Goal) — not writer vocabulary. This is the
-            // reflection→wire boundary, so it lifts the host through the door; clr(host).Output renders
-            // its own tagged face ([Out]/[Sensitive] discipline intact). Writer-vocabulary scalars
-            // (string/int/date/…) keep the writer's rendering.
+            // reflection→wire boundary, so it lifts the host to its plang value, which renders its own tagged face
+            // ([Out]/[Sensitive] discipline intact). Writer-vocabulary scalars (string/int/date/…) keep the writer's
+            // rendering.
             default:
-                if (context != null && value is not System.IConvertible
-                    && context.App.type.list[value.GetType()].ClrType == typeof(global::app.type.clr.@this))
+                if (value is not System.IConvertible
+                    && writer.Context.App.type.list[value.GetType()].ClrType == typeof(global::app.type.clr.@this))
                 {
-                    await writer.Kind.pair.Output(global::app.type.item.@this.Create(value, context), writer, mode, context);
+                    await global::app.type.item.@this.Create(value, writer.Context).Output(writer);
                     break;
                 }
                 writer.Value(value); break;

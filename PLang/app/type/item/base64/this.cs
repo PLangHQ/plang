@@ -142,13 +142,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A base64 still holding its source encodes it through its own door (<see cref="Value"/>) before it
     /// writes: a template writes <c>%b64%</c> in place through here, never through the Value door. The encode
     /// needs the caller's context; an encode that fails is refused, not written as an empty payload.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         if (_source != null)
         {
-            var encoding = new global::app.data.@this("", this, context: context ?? throw new System.InvalidOperationException(
-                "a base64 still holding its source writes only with the caller's context — the encode needs it."));
+            var encoding = new global::app.data.@this("", this, context: writer.Context);
             await Value(encoding);
             if (encoding.Error is { } failed) throw new global::app.error.AppException(failed);
         }

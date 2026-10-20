@@ -23,8 +23,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [Out] public required global::app.type.item.duration.@this Elapsed { get; init; }
 
     /// <summary>Self-write: a structural item — its tagged [Out] fields ride the wire.</summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => OutputTagged(writer, mode, context);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => OutputTagged(writer);
 }

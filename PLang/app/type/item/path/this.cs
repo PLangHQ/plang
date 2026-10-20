@@ -122,8 +122,9 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>
     /// The as-typed location. Init-setting it (the scheme factories do, with the
     /// string the user wrote) makes the verbatim form the value's identity while
-    /// the resolved form stays a cached derivation.
+    /// the resolved form stays a cached derivation. A dump shows it.
     /// </summary>
+    [global::app.Debug]
     public string Raw { get => _location; init { if (!string.IsNullOrEmpty(value)) _location = value; } }
 
     // The resolved host form — INTERNAL: the raw string is the interop inch
@@ -229,8 +230,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// is gated behind Authorize).
     /// </summary>
     /// <summary>A path writes its own form — its location — in every view.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.String(ToString());
         return default;
