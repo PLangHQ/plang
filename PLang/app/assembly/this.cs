@@ -12,12 +12,48 @@ public sealed class @this
     /// <summary>The assembly read.</summary>
     public System.Reflection.Assembly Clr { get; }
 
-    public @this(System.Reflection.Assembly clr) => Clr = clr;
+    public @this(System.Reflection.Assembly clr)
+    {
+        Clr = clr;
+        _written = new(() => clr.GetType("PLang.Generated.Written") is { } written ? new Listed(written) : null);
+    }
 
     // Each fact is read once: the first to ask reads it, and anyone asking meanwhile (a server's first requests, a test
     // run's first tests, all at once) waits for that answer instead of reading it again. One gate for them all — a fact
     // reads others while it is read.
     private object? _gate;
+
+    /// <summary>The classes the generator listed for this assembly at compile time (<c>PLang.Generated.Written</c>):
+    /// each fact reads its list instead of every class. Each list is a superset of what the fact keeps — the fact's own
+    /// rules still decide.</summary>
+    private sealed class Listed
+    {
+        public System.Type[] Item { get; }
+        public System.Type[] Format { get; }
+        public System.Type[] Choice { get; }
+        public System.Type[] Action { get; }
+        public System.Type[] Serializer { get; }
+        public System.Type[] Pair { get; }
+
+        public Listed(System.Type written)
+        {
+            System.Type[] Of(string name)
+                => (System.Type[])written.GetField(name, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!.GetValue(null)!;
+            Item = Of(nameof(Item));
+            Format = Of(nameof(Format));
+            Choice = Of(nameof(Choice));
+            Action = Of(nameof(Action));
+            Serializer = Of(nameof(Serializer));
+            Pair = Of(nameof(Pair));
+        }
+    }
+
+    // the generator's lists for this assembly, read once; null for an assembly built without them (every class is walked)
+    private readonly System.Lazy<Listed?> _written;
+    private Listed? Written => _written.Value;
+
+    // the item classes: the types, the kind classes, the family subclasses are among them
+    private System.Collections.Generic.IReadOnlyList<System.Type> Items => Written?.Item ?? Classes;
 
     private System.Type[]? _classes;
     // every class the assembly holds that its code wrote, read once for every fact below — not the ones the compiler
@@ -62,7 +98,7 @@ public sealed class @this
     private Type[]? _type;
     /// <summary>The classes that are types of their own, by the name each goes by.</summary>
     internal System.Collections.Generic.IReadOnlyList<Type> type
-        => _type ?? System.Threading.LazyInitializer.EnsureInitialized(ref _type, ref _gate, () => Classes
+        => _type ?? System.Threading.LazyInitializer.EnsureInitialized(ref _type, ref _gate, () => Items
             .Select(clr => global::app.type.list.@this.NameOf(clr) is { } name ? new Type(name, clr) : null)
             .OfType<Type>().ToArray());
 
@@ -109,7 +145,7 @@ public sealed class @this
 
     private System.Collections.Generic.IEnumerable<Kind> KindClasses()
     {
-        foreach (var clr in Classes)
+        foreach (var clr in Items)
             if (typeof(global::app.type.kind.@this).IsAssignableFrom(clr) && clr is { IsAbstract: false, ContainsGenericParameters: false }
                 && clr.GetConstructor([typeof(global::app.type.@this)]) is { } made)
                 for (var parent = clr.BaseType; parent != null; parent = parent.BaseType)
@@ -127,7 +163,7 @@ public sealed class @this
     private Format[]? _format;
     /// <summary>The classes that declare formats (<c>[Format]</c>), each with its declarations.</summary>
     internal System.Collections.Generic.IReadOnlyList<Format> format
-        => _format ?? System.Threading.LazyInitializer.EnsureInitialized(ref _format, ref _gate, () => Classes
+        => _format ?? System.Threading.LazyInitializer.EnsureInitialized(ref _format, ref _gate, () => (Written?.Format ?? Classes)
             .Where(clr => clr.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false))
             .Select(clr => new Format(clr, global::app.type.item.@this.NameOf(clr),
                 System.Reflection.CustomAttributeExtensions.GetCustomAttributes<global::app.Attributes.FormatAttribute>(clr, inherit: false).ToArray(),
@@ -141,7 +177,7 @@ public sealed class @this
     private Choice[]? _choice;
     /// <summary>The classes marked a choice (<c>[Choice]</c>): each a closed set a <c>choice&lt;T&gt;</c> draws on.</summary>
     internal System.Collections.Generic.IReadOnlyList<Choice> choice
-        => _choice ?? System.Threading.LazyInitializer.EnsureInitialized(ref _choice, ref _gate, () => Classes
+        => _choice ?? System.Threading.LazyInitializer.EnsureInitialized(ref _choice, ref _gate, () => (Written?.Choice ?? Classes)
             .Where(clr => clr.IsDefined(typeof(global::app.Attributes.ChoiceAttribute), inherit: false))
             .Select(clr => new Choice(clr, typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(clr)
                 .GetConstructor([typeof(string)])!))
@@ -159,11 +195,11 @@ public sealed class @this
 
     private System.Collections.Generic.IEnumerable<Subclass> Subclasses()
     {
-        var readers = Classes.Where(r => r.Namespace is { } ns && ns.EndsWith(".serializer", System.StringComparison.Ordinal)
+        var readers = (Written?.Serializer ?? Classes).Where(r => r.Namespace is { } ns && ns.EndsWith(".serializer", System.StringComparison.Ordinal)
                 && typeof(global::app.type.reader.ITypeReader).IsAssignableFrom(r)
                 && r is { IsAbstract: false } && r.GetConstructor(System.Type.EmptyTypes) != null)
             .GroupBy(r => r.Namespace!).ToDictionary(group => group.Key, group => group.First());
-        foreach (var clr in Classes)
+        foreach (var clr in Items)
             if (clr is { IsAbstract: false, ContainsGenericParameters: false } && global::app.type.item.@this.FamilyOf(clr) is { } member
                 && global::app.type.item.@this.NameOf(member.Family) is { } family && member.Kind != family)
                 yield return new Subclass(clr, family, member.Kind,
@@ -192,7 +228,7 @@ public sealed class @this
     private Pair[]? _pair;
     /// <summary>The pairs the code ships, each type's from its format folder.</summary>
     internal System.Collections.Generic.IReadOnlyList<Pair> pair
-        => _pair ?? System.Threading.LazyInitializer.EnsureInitialized(ref _pair, ref _gate, () => Classes
+        => _pair ?? System.Threading.LazyInitializer.EnsureInitialized(ref _pair, ref _gate, () => (Written?.Pair ?? Classes)
             .Where(clr => clr is { IsAbstract: false, Namespace: { } ns } && ns.EndsWith(".format", System.StringComparison.Ordinal)
                 && typeof(global::app.type.format.IOutput).IsAssignableFrom(clr))
             .Select(clr => (clr, owner: Clr.GetType(clr.Namespace![..^".format".Length] + ".this"), made: clr.GetConstructor(System.Type.EmptyTypes)))
@@ -244,7 +280,7 @@ public sealed class @this
         string? Word(string @namespace)
         {
             string? only = null;
-            foreach (var clr in Classes)
+            foreach (var clr in Items)
                 if (clr.Namespace == @namespace && typeof(global::app.type.item.@this).IsAssignableFrom(clr)
                     && global::app.type.item.@this.WordOf(clr) is { Length: > 0 } word && word != only)
                 {
@@ -253,7 +289,7 @@ public sealed class @this
                 }
             return only;
         }
-        foreach (var clr in Classes)
+        foreach (var clr in Written?.Serializer ?? Classes)
         {
             if (!clr.IsClass || clr.Namespace is not { } ns || !ns.EndsWith(".serializer", System.StringComparison.Ordinal)) continue;
             var head = ns[..ns.LastIndexOf(".serializer", System.StringComparison.Ordinal)];
@@ -429,7 +465,7 @@ public sealed class @this
     internal System.Collections.Generic.IEnumerable<Module> Under(string baseNamespace)
     {
         var action = new System.Collections.Generic.List<Action>();
-        foreach (var clr in Classes)
+        foreach (var clr in Written?.Action ?? Classes)
         {
             if (clr.IsAbstract || !typeof(global::app.module.ICodeGenerated).IsAssignableFrom(clr)) continue;
             if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.ActionAttribute>(clr) is not { } attr) continue;

@@ -29,7 +29,7 @@ public sealed partial class @this
     /// it is found as <see cref="Kind(string, string?)"/> finds a name under its type.
     /// </summary>
     public global::app.type.kind.@this Kind(app.type.@this type, actor.context.@this context)
-        => Kind(type.Name, type.kind is { IsEmpty: false } spelled ? spelled.Name : null);
+        => Kind(type.Name, type.Spelled);
 
     /// <summary>
     /// The kind the type named <paramref name="type"/> has by the name <paramref name="kind"/>: one it holds, or one
@@ -151,7 +151,7 @@ public sealed partial class @this
     /// its bare identity.
     /// </summary>
     public app.type.@this this[app.type.@this type, actor.context.@this context]
-        => Full(type, type.kind is { IsEmpty: false } k ? k.Name : null);
+        => Full(type, type.Spelled);
 
     /// <summary>
     /// Index by CLR type — the type entity for a live CLR type's plang identity, or null when

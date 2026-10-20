@@ -57,6 +57,8 @@ public class @this : IIncrementalGenerator
             spc.AddSource(SanitizeHintName($"{info.FullName}.Action.g.cs"), source);
         });
 
+        Emission.Written.@this.Register(context);
+
         Plng002.Register(context);
         Plng003.Register(context);
         Plng004.Register(context);

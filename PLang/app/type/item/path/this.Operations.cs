@@ -88,7 +88,7 @@ public abstract partial class @this
 
     // The type a reference of this location is: the reference type named, of this location's content kind.
     protected global::app.type.@this Reference(string type, actor.context.@this context)
-        => context.App.type.list[new global::app.type.@this(type, Kind(context).kind is { IsEmpty: false } k ? k.Name : null), context];
+        => context.App.type.list[new global::app.type.@this(type, Kind(context).Spelled), context];
 
     /// <summary>The raw bytes at this location, through the gate — asked in C# by whatever needs the bytes
     /// themselves (a reference sampling its content, a request body, an attachment). A program reads a location

@@ -96,6 +96,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // kinds never makes one) — then made once, the first made kept: the empty kind is held and compared by reference
     private global::app.type.kind.@this? _kind;
 
+    /// <summary>The name of the kind this type spells (<c>md</c> of <c>{text, md}</c>); null for a type with no kind of
+    /// its own — asked without making its empty kind.</summary>
+    internal string? Spelled => _kind is { IsEmpty: false } spelled ? spelled.Name : null;
+
     /// <summary>This type's empty kind — a plain type mints one for its name. A kind is itself a type
     /// (<c>kind : type</c>); the empty kind answers itself here (never a new one), ending the ctor's
     /// kind-minting chain. Serializers are kept off <see cref="kind"/> (JsonIgnore), so the self-kind
