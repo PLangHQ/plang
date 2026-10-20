@@ -129,6 +129,20 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private global::app.type.@this? Found(string name)
         => _index is { } index && index.Name.TryGetValue(name, out var at) ? Born(at) : _named.GetValueOrDefault(name);
 
+    // The type that owns a raw C# shape (int → number), the first that does — the code's types as their facts declare
+    // them (only the owner is made), then the ones added; null when none does.
+    private global::app.type.@this? Owner(System.Type clr)
+    {
+        Load();
+        if (_bornCode is { } code)
+            for (var at = 0; at < _born.Length; at++)
+                foreach (var owned in code.type[at].Owned)
+                    if (owned.Takes(clr)) return Born(at);
+        foreach (var added in _classed.Values)
+            if (added.Owns(clr)) return added;
+        return null;
+    }
+
     // The type a C# class is, as the set stands: the code's, else one added.
     private global::app.type.@this? Found(System.Type clr)
         => _index is { } index && index.Class.TryGetValue(clr, out var at) ? Born(at) : _classed.GetValueOrDefault(clr);

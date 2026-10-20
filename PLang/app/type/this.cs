@@ -729,7 +729,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>Whether a raw C# value of <paramref name="clr"/> is a value of this type — one of its
     /// <see cref="Owned"/> shapes, an assignable one owning every subclass too.</summary>
     internal bool Owns(System.Type clr)
-        => Owned.Any(o => o.Assignable ? o.Clr.IsAssignableFrom(clr) : o.Clr == clr);
+    {
+        foreach (var owned in Owned)
+            if (owned.Takes(clr)) return true;
+        return false;
+    }
 
     /// <summary>True for a type plang's own machinery uses but a program never names (a wire slice,
     /// a C# host carrier), declared by its class as a static <c>Internal</c>. A kinded type answers it

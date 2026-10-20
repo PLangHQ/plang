@@ -238,13 +238,21 @@ public sealed class @this
 
     private System.Collections.Generic.IEnumerable<Reader> Shipped()
     {
-        // the words the item classes of each namespace declare ([PlangType]) — a folder whose @this is no type reads
-        // the one type its classes declare by word (a module's: [PlangType("ask")] in app.module.output)
-        var words = Classes.Where(clr => clr.Namespace != null && typeof(global::app.type.item.@this).IsAssignableFrom(clr))
-            .GroupBy(clr => clr.Namespace!)
-            .ToDictionary(group => group.Key, group => group
-                .Select(clr => System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(clr, inherit: false)?.Name)
-                .Where(word => !string.IsNullOrEmpty(word)).Distinct().ToList());
+        // the word the item classes of a namespace declare ([PlangType], the class identity cache's) — a folder whose
+        // @this is no type reads the one type its classes declare by word (a module's: [PlangType("ask")] in
+        // app.module.output); asked only for a namespace a serializer folder sits in
+        string? Word(string @namespace)
+        {
+            string? only = null;
+            foreach (var clr in Classes)
+                if (clr.Namespace == @namespace && typeof(global::app.type.item.@this).IsAssignableFrom(clr)
+                    && global::app.type.item.@this.WordOf(clr) is { Length: > 0 } word && word != only)
+                {
+                    if (only != null) return null;
+                    only = word;
+                }
+            return only;
+        }
         foreach (var clr in Classes)
         {
             if (!clr.IsClass || clr.Namespace is not { } ns || !ns.EndsWith(".serializer", System.StringComparison.Ordinal)) continue;
@@ -252,7 +260,7 @@ public sealed class @this
             var lastDot = head.LastIndexOf('.');
             if (lastDot < 0) continue;
             var type = global::app.type.item.@this.NameOf(Clr, head)
-                       ?? (words.GetValueOrDefault(head) is [var word] ? word : null)
+                       ?? Word(head)
                        ?? head[(lastDot + 1)..].TrimStart('@');
             if (!clr.IsAbstract && !clr.IsGenericTypeDefinition && typeof(global::app.type.reader.ITypeReader).IsAssignableFrom(clr)
                 && clr.GetConstructor(System.Type.EmptyTypes) is { } made)
@@ -320,7 +328,13 @@ public sealed class @this
                 foreach (var alias in type.Alias) named.TryAdd(alias, type);
             }
             var owned = new System.Collections.Generic.Dictionary<string, Owned>(System.StringComparer.OrdinalIgnoreCase);
-            var key = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.HashSet<string>>(System.StringComparer.OrdinalIgnoreCase);
+            var key = new System.Collections.Generic.Dictionary<string, string[]>(System.StringComparer.OrdinalIgnoreCase);
+            // a key's owners, one each almost always: a second owner grows the key's array
+            void Owns(string each, string owner)
+            {
+                if (!key.TryGetValue(each, out var owners)) key[each] = [owner];
+                else if (!owners.Contains(owner, System.StringComparer.OrdinalIgnoreCase)) key[each] = [.. owners, owner];
+            }
             var format = new System.Collections.Generic.Dictionary<string, (string Owner, string Kind)>(System.StringComparer.OrdinalIgnoreCase);
             Owned Of(string owner) => owned.TryGetValue(owner, out var held) ? held : owned[owner] = new Owned();
             // what a kind answers to — its name and aliases, its MIMEs, its extensions with and without the dot —
@@ -329,7 +343,7 @@ public sealed class @this
                 System.Collections.Generic.IReadOnlyList<string> mime, System.Collections.Generic.IReadOnlyList<string> extension)
             {
                 foreach (var each in keys.Concat(extension).Concat(extension.Select(e => e.TrimStart('.'))))
-                    (key.TryGetValue(each, out var owners) ? owners : key[each] = new(System.StringComparer.OrdinalIgnoreCase)).Add(owner);
+                    Owns(each, owner);
                 foreach (var each in mime.Concat(extension))
                     if (format.TryGetValue(each, out var taken) && !(taken.Owner == owner && taken.Kind == name))
                         throw new System.InvalidOperationException($"'{each}' is already the format '{taken.Owner}{(taken.Kind.Length == 0 ? "" : "/" + taken.Kind)}' — "
@@ -377,19 +391,19 @@ public sealed class @this
                         throw new System.InvalidOperationException($"choice set name '{name}' is claimed by both {taken.FullName} and {marked.Class.FullName} — one name, one set.");
                     sets[name] = marked.Class;
                     Of(choice.Name).Choice.Add((marked, name));
-                    (key.TryGetValue(name, out var owners) ? owners : key[name] = new(System.StringComparer.OrdinalIgnoreCase)).Add(choice.Name);
+                    Owns(name, choice.Name);
                 }
             }
             // a family subclass is one of its family's kinds unless the family already holds a kind by its name
             foreach (var subclass in code.subclass)
                 if (named.GetValueOrDefault(subclass.Family) is { } family)
                 {
-                    if (key.TryGetValue(subclass.Kind, out var holders) && holders.Contains(family.Name)) continue;
+                    if (key.TryGetValue(subclass.Kind, out var holders) && holders.Contains(family.Name, System.StringComparer.OrdinalIgnoreCase)) continue;
                     Of(family.Name).Subclass.Add(subclass);
                     Made(family.Name, (global::app.type.kind.@this)subclass.Made.Invoke([subclass.Kind, subclass.Class, Bare(family.Name)]));
                 }
             Owned = owned;
-            Key = key.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray(), System.StringComparer.OrdinalIgnoreCase);
+            Key = key;
         }
     }
 

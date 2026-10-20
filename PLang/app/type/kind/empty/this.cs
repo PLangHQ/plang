@@ -165,7 +165,14 @@ public sealed class @this : global::app.type.kind.@this
             if (kind.IsEmpty) { _format = kind; return; }
             // a kind of the same name replaced: its keys go with it, so every held kind is keyed again; else the new
             // kind's keys join the ones already held (the first that answers keeps a key)
-            if (_kinds.RemoveAll(k => string.Equals(k.Name, kind.Name, System.StringComparison.OrdinalIgnoreCase)) > 0 || _keys == null)
+            var replaced = false;
+            for (var at = _kinds.Count - 1; at >= 0; at--)
+                if (string.Equals(_kinds[at].Name, kind.Name, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    _kinds.RemoveAt(at);
+                    replaced = true;
+                }
+            if (replaced || _keys == null)
             {
                 _keys = new(System.StringComparer.OrdinalIgnoreCase);
                 _extensions = new(System.StringComparer.OrdinalIgnoreCase);

@@ -14,4 +14,9 @@ namespace app.type.convert;
 /// When true, the family owns <see cref="Clr"/> <em>and every subclass of it</em>
 /// (path owns all its scheme subclasses). When false, only the exact type matches.
 /// </param>
-public sealed record OwnedClr(System.Type Clr, string? Kind = null, bool Assignable = false);
+public sealed record OwnedClr(System.Type Clr, string? Kind = null, bool Assignable = false)
+{
+    /// <summary>Whether <paramref name="clr"/> is this owned shape — the class itself, or one under it when the
+    /// family owns its subclasses too.</summary>
+    internal bool Takes(System.Type clr) => Assignable ? Clr.IsAssignableFrom(clr) : Clr == clr;
+}

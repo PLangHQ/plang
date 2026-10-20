@@ -267,7 +267,7 @@ public sealed partial class @this
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && FamilyName(type) is { } family)
             return (family, Found(family)?.kind[type]?.Name);
         // An item class is named by its own class above; a raw C# shape by the type that owns it.
-        if (Items().FirstOrDefault(t => t.Owns(type)) is { } owner)
+        if (Owner(type) is { } owner)
             return (owner.Name, null);
         if (ContainerFamily(type) is { } fam) return (fam.Family, Face(PlangName(fam.Element)));
         return ("clr", null);
