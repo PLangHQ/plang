@@ -14,9 +14,17 @@ public sealed class @this
 
     public @this(System.Reflection.Assembly clr) => Clr = clr;
 
+    // Each fact is read once: the first to ask reads it, and anyone asking meanwhile (a server's first requests, a test
+    // run's first tests, all at once) waits for that answer instead of reading it again. One gate for them all — a fact
+    // reads others while it is read.
+    private object? _gate;
+
     private System.Type[]? _classes;
-    // every class the assembly holds, read once for every fact below
-    private System.Type[] Classes => _classes ??= Clr.GetTypes();
+    // every class the assembly holds that its code wrote, read once for every fact below — not the ones the compiler
+    // makes (a lambda's closure, an async method's state machine: `<…>` in the name), which are never a type, a kind,
+    // a format or an action
+    private System.Type[] Classes => System.Threading.LazyInitializer.EnsureInitialized(ref _classes, ref _gate,
+        () => Clr.GetTypes().Where(clr => !clr.Name.Contains('<')).ToArray());
 
     /// <summary>A class that is a plang type of its own: the name it goes by, and what the class declares of itself —
     /// its aliases, the C# shapes it owns, whether plang keeps it for itself, what it is offered. Read from the class
@@ -50,8 +58,9 @@ public sealed class @this
     private Type[]? _type;
     /// <summary>The classes that are types of their own, by the name each goes by.</summary>
     internal System.Collections.Generic.IReadOnlyList<Type> type
-        => _type ??= Classes.Select(clr => global::app.type.list.@this.NameOf(clr) is { } name ? new Type(name, clr) : null)
-            .OfType<Type>().ToArray();
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _type, ref _gate, () => Classes
+            .Select(clr => global::app.type.list.@this.NameOf(clr) is { } name ? new Type(name, clr) : null)
+            .OfType<Type>().ToArray());
 
     /// <summary>A kind class, the name of the type it is a kind of (the T of its kind&lt;T&gt;), and how it is made
     /// from that type's entry.</summary>
@@ -59,7 +68,8 @@ public sealed class @this
 
     private Kind[]? _kind;
     /// <summary>The kind classes: each born from nothing but the entry of the type it is a kind of.</summary>
-    internal System.Collections.Generic.IReadOnlyList<Kind> kind => _kind ??= KindClasses().ToArray();
+    internal System.Collections.Generic.IReadOnlyList<Kind> kind
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _kind, ref _gate, () => KindClasses().ToArray());
 
     private System.Collections.Generic.IEnumerable<Kind> KindClasses()
     {
@@ -81,12 +91,13 @@ public sealed class @this
     private Format[]? _format;
     /// <summary>The classes that declare formats (<c>[Format]</c>), each with its declarations.</summary>
     internal System.Collections.Generic.IReadOnlyList<Format> format
-        => _format ??= Classes.Where(clr => clr.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false))
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _format, ref _gate, () => Classes
+            .Where(clr => clr.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false))
             .Select(clr => new Format(clr, global::app.type.item.@this.NameOf(clr),
                 System.Reflection.CustomAttributeExtensions.GetCustomAttributes<global::app.Attributes.FormatAttribute>(clr, inherit: false).ToArray(),
                 typeof(global::app.type.kind.format.@this<>).MakeGenericType(clr)
                     .GetConstructor([typeof(global::app.Attributes.FormatAttribute), typeof(global::app.type.@this)])!))
-            .ToArray();
+            .ToArray());
 
     /// <summary>A class marked a choice, and how its closed reader is made from the set's name.</summary>
     internal readonly record struct Choice(System.Type Class, System.Reflection.ConstructorInfo Reader);
@@ -94,10 +105,11 @@ public sealed class @this
     private Choice[]? _choice;
     /// <summary>The classes marked a choice (<c>[Choice]</c>): each a closed set a <c>choice&lt;T&gt;</c> draws on.</summary>
     internal System.Collections.Generic.IReadOnlyList<Choice> choice
-        => _choice ??= Classes.Where(clr => clr.IsDefined(typeof(global::app.Attributes.ChoiceAttribute), inherit: false))
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _choice, ref _gate, () => Classes
+            .Where(clr => clr.IsDefined(typeof(global::app.Attributes.ChoiceAttribute), inherit: false))
             .Select(clr => new Choice(clr, typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(clr)
                 .GetConstructor([typeof(string)])!))
-            .ToArray();
+            .ToArray());
 
     /// <summary>A class under a family that has kinds: the family's name, its kind's name, how the kind is made, and
     /// how the reader it ships (in its serializer namespace) is made; null when it ships none.</summary>
@@ -106,7 +118,8 @@ public sealed class @this
 
     private Subclass[]? _subclass;
     /// <summary>The classes that are a kind of their family, by their own name — not one named as its family.</summary>
-    internal System.Collections.Generic.IReadOnlyList<Subclass> subclass => _subclass ??= Subclasses().ToArray();
+    internal System.Collections.Generic.IReadOnlyList<Subclass> subclass
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _subclass, ref _gate, () => Subclasses().ToArray());
 
     private System.Collections.Generic.IEnumerable<Subclass> Subclasses()
     {
@@ -157,17 +170,21 @@ public sealed class @this
             var key = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.HashSet<string>>(System.StringComparer.OrdinalIgnoreCase);
             var format = new System.Collections.Generic.Dictionary<string, (string Owner, string Kind)>(System.StringComparer.OrdinalIgnoreCase);
             Owned Of(string owner) => owned.TryGetValue(owner, out var held) ? held : owned[owner] = new Owned();
-            // what a kind answers to, recorded for its owner; a MIME or extension is one format's
-            void Keyed(string owner, global::app.type.kind.@this kind)
+            // what a kind answers to — its name and aliases, its MIMEs, its extensions with and without the dot —
+            // recorded for its owner; a MIME or extension is one format's
+            void Keyed(string owner, string name, System.Collections.Generic.IEnumerable<string> keys,
+                System.Collections.Generic.IReadOnlyList<string> mime, System.Collections.Generic.IReadOnlyList<string> extension)
             {
-                foreach (var each in kind.Keys.Concat(kind.Extension).Concat(kind.Extension.Select(e => e.TrimStart('.'))))
+                foreach (var each in keys.Concat(extension).Concat(extension.Select(e => e.TrimStart('.'))))
                     (key.TryGetValue(each, out var owners) ? owners : key[each] = new(System.StringComparer.OrdinalIgnoreCase)).Add(owner);
-                foreach (var each in kind.Mime.Concat(kind.Extension))
-                    if (format.TryGetValue(each, out var taken) && !(taken.Owner == owner && taken.Kind == kind.Name))
+                foreach (var each in mime.Concat(extension))
+                    if (format.TryGetValue(each, out var taken) && !(taken.Owner == owner && taken.Kind == name))
                         throw new System.InvalidOperationException($"'{each}' is already the format '{taken.Owner}{(taken.Kind.Length == 0 ? "" : "/" + taken.Kind)}' — "
-                            + $"'{owner}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.");
-                    else format[each] = (owner, kind.Name);
+                            + $"'{owner}{(name.Length == 0 ? "" : "/" + name)}' cannot answer to it too.");
+                    else format[each] = (owner, name);
             }
+            // a kind class or subclass kind says its keys itself (its aliases, MIMEs and extensions are its own members)
+            void Made(string owner, global::app.type.kind.@this kind) => Keyed(owner, kind.Name, kind.Keys, kind.Mime, kind.Extension);
             // each kind's facts read once, from a kind made over a type by its name alone
             static global::app.type.@this Bare(string name) => new(name);
 
@@ -175,7 +192,7 @@ public sealed class @this
                 if (named.GetValueOrDefault(kind.Owner) is { } owner)
                 {
                     Of(owner.Name).Kind.Add(kind);
-                    Keyed(owner.Name, (global::app.type.kind.@this)kind.Made.Invoke([Bare(owner.Name)]));
+                    Made(owner.Name, (global::app.type.kind.@this)kind.Made.Invoke([Bare(owner.Name)]));
                 }
             foreach (var declared in code.format)
             {
@@ -187,7 +204,9 @@ public sealed class @this
                 foreach (var attribute in declared.Attribute)
                 {
                     Of(owner.Name).Format.Add((declared, attribute));
-                    Keyed(owner.Name, (global::app.type.kind.@this)declared.Made.Invoke([attribute, Bare(owner.Name)]));
+                    // a format's keys are its declaration's: its name, its MIME, its extensions
+                    string[] mime = attribute.Mime is { } one ? [one] : [];
+                    Keyed(owner.Name, attribute.Name, mime.Prepend(attribute.Name), mime, attribute.Extension);
                 }
             }
             if (code.Clr == typeof(global::app.type.item.list.@this).Assembly
@@ -214,7 +233,7 @@ public sealed class @this
                 {
                     if (key.TryGetValue(subclass.Kind, out var holders) && holders.Contains(family.Name)) continue;
                     Of(family.Name).Subclass.Add(subclass);
-                    Keyed(family.Name, (global::app.type.kind.@this)subclass.Made.Invoke([subclass.Kind, subclass.Class, Bare(family.Name)]));
+                    Made(family.Name, (global::app.type.kind.@this)subclass.Made.Invoke([subclass.Kind, subclass.Class, Bare(family.Name)]));
                 }
             Owned = owned;
             Key = key.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray(), System.StringComparer.OrdinalIgnoreCase);
@@ -223,7 +242,7 @@ public sealed class @this
 
     private Kinds? _kinds;
     /// <summary>The code's kinds: each type's own, and the types a key may name one of.</summary>
-    internal Kinds kinds => _kinds ??= new Kinds(this);
+    internal Kinds kinds => System.Threading.LazyInitializer.EnsureInitialized(ref _kinds, ref _gate, () => new Kinds(this));
 
     /// <summary>An action class: its module (the namespace segment after the base), its name, and whether its result
     /// may be cached.</summary>
@@ -235,7 +254,8 @@ public sealed class @this
     private Module[]? _module;
     /// <summary>The modules of plang's built-in actions (the classes under <c>app.module</c>), in the order their
     /// first action comes.</summary>
-    internal System.Collections.Generic.IReadOnlyList<Module> module => _module ??= Under("app.module").ToArray();
+    internal System.Collections.Generic.IReadOnlyList<Module> module
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _module, ref _gate, () => Under("app.module").ToArray());
 
     /// <summary>The modules under <paramref name="baseNamespace"/>: each the namespace segment after it, holding the
     /// action classes there, in the order their first action comes.</summary>

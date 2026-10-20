@@ -68,7 +68,7 @@ public class PlangTypesCut3_CompositionNavigationTests
 
     [Test] public async Task RoutingKey_StaysImage_NoPathImageUnion_AnywhereInRegistry()
     {
-        var types = new global::app.type.list.@this();
+        var types = new global::app.type.list.@this(global::PLang.Tests.Session.Code);
         // image and path are distinct registered types.
         await Assert.That(types.Clr("image")).IsEqualTo(typeof(image));
         await Assert.That(types.Clr("path")).IsNotEqualTo(typeof(image));
@@ -81,7 +81,7 @@ public class PlangTypesCut3_CompositionNavigationTests
 
     [Test] public async Task CatalogRendering_ImagePathProperty_HasTypePathAnnotation()
     {
-        var types = new global::app.type.list.@this();
+        var types = new global::app.type.list.@this(global::PLang.Tests.Session.Code);
         var imageEntry = types["image"];
         await Assert.That(imageEntry).IsNotNull();
         await Assert.That(imageEntry!.Property).IsNotNull();

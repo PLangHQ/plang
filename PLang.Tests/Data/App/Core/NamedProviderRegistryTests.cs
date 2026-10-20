@@ -25,7 +25,7 @@ public class NamedProviderRegistryTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_registry_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = global::PLang.Tests.Session.App(_tempDir);
     }
 
     [After(Test)]

@@ -40,7 +40,7 @@ public class TypedPropertyCatalogTests
     [Before(Test)]
     public void Setup()
     {
-        _types = new global::app.type.list.@this();
+        _types = new global::app.type.list.@this(global::PLang.Tests.Session.Code);
         _types.Assemblies.Add(typeof(TypedPropertyCatalogTests).Assembly);
     }
 

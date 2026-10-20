@@ -24,7 +24,7 @@ public class SignActionTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_sign_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = global::PLang.Tests.Session.App(_tempDir);
         (_app).TestIdentity();
     }
 
@@ -243,7 +243,7 @@ public class SignActionTests
         // An app with no identity yet — signing must create one, and its key generation fails
         var root = System.IO.Path.Combine(_tempDir, "no-identity");
         System.IO.Directory.CreateDirectory(root);
-        await using var bare = new PLangEngine(root);
+        await using var bare = global::PLang.Tests.Session.App(root);
         bare.Code.Register<IKey>(new ThrowingKeyProvider());
         bare.Code.SetDefault<IKey>("throwing-key");
 

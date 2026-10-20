@@ -22,7 +22,7 @@ public class UploadResponseParsedPlangDictTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_upload_json_dict_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir).Testing();
+        _app = global::PLang.Tests.Session.App(_tempDir).Testing();
 
         _handler = new MockHandler();
         var provider = new Default(_handler) { Name = "test" };

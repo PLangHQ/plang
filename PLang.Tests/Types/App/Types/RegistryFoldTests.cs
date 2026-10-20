@@ -15,7 +15,7 @@ public class RegistryFoldTests
     public void Setup()
     {
         _app = global::PLang.Tests.Session.App("/tmp/regfold-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
-        _types = new global::app.type.list.@this();
+        _types = new global::app.type.list.@this(global::PLang.Tests.Session.Code);
     }
 
     [After(Test)]

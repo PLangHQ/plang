@@ -13,7 +13,7 @@ namespace PLang.Tests.App.Types
         public async Task AFamilysSubclass_IsOneOfItsKinds_AndItsValueReadsAsIt()
         {
             await using var app = global::PLang.Tests.Session.App("/app").Testing();
-            var types = new global::app.type.list.@this();
+            var types = new global::app.type.list.@this(global::PLang.Tests.Session.Code);
             await types.Add(typeof(Gadget.Gadget).Assembly, Ctx(app)).IsSuccess();
             var mouse = new Gadget.Mouse();
 

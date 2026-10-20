@@ -7,7 +7,7 @@ public class EngineTypesTests
     [Before(Test)]
     public void Setup()
     {
-        _types = new global::app.type.list.@this();
+        _types = new global::app.type.list.@this(global::PLang.Tests.Session.Code);
     }
 
     // --- Clr: PLang name → CLR type ---

@@ -121,7 +121,7 @@ public class NumberValueTests : System.IAsyncDisposable
     [Test]
     public async Task PlangTypeAttribute_Number_IsRegistered()
     {
-        var types = new global::app.type.list.@this();
+        var types = new global::app.type.list.@this(global::PLang.Tests.Session.Code);
         await Assert.That(types.Clr("number")).IsEqualTo(typeof(number));
         await Assert.That(types[typeof(number)]?.Name).IsEqualTo("number");
     }

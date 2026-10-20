@@ -7,7 +7,7 @@ namespace app.Utils;
 
 internal static class TypeMapping
 {
-    private static readonly global::app.@this _app = new(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-tests-typemapping"));
+    private static readonly global::app.@this _app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-tests-typemapping"));
 
     /// <summary>For tests that need the live App backing this facade (e.g. Register that must persist across calls).</summary>
     internal static global::app.@this App => _app;
