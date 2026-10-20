@@ -47,7 +47,7 @@ public class FormatKindTests
         // One format per MIME — the answer can't depend on the order the types came in.
         await using var app = NewApp();
         await Assert.That(() => app.type.list.Add(new global::app.type.kind.@this(
-                new global::app.Attributes.FormatAttribute("plaintext", "text/plain", ".plaintext"), "binary")))
+                new global::app.Attributes.FormatAttribute("plaintext", "text/plain", ".plaintext"), app.type.list["binary"])))
             .Throws<InvalidOperationException>();
     }
 

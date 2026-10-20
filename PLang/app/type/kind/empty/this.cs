@@ -8,7 +8,7 @@ namespace app.type.kind.empty;
 /// </summary>
 public sealed class @this : global::app.type.kind.@this
 {
-    private readonly string _owner;
+    private readonly global::app.type.@this _owner;
     private readonly System.Collections.Generic.List<global::app.type.kind.@this> _kinds = new();
     // The held kinds by every key each answers to (Names): its name, its aliases, its MIMEs — and apart, by its
     // extensions without the dot — the first kind that answers, in the order they came. Made as a kind comes in
@@ -20,7 +20,8 @@ public sealed class @this : global::app.type.kind.@this
     // The type's own format — its class's [Format("", …)]: plain text is {text}, opaque bytes {binary}.
     private global::app.type.kind.@this? _format;
 
-    public @this(string owner, global::app.type.kind.@this? format = null) : base("")
+    /// <summary>The empty kind of <paramref name="owner"/>, the type it is born by.</summary>
+    public @this(global::app.type.@this owner, global::app.type.kind.@this? format = null) : base("")
     {
         _owner = owner;
         _format = format;
@@ -31,7 +32,7 @@ public sealed class @this : global::app.type.kind.@this
     /// never loops a walk.)</summary>
     protected override global::app.type.kind.@this BornKind() => this;
 
-    protected internal override string Owner => _owner;
+    protected internal override global::app.type.@this Owner => _owner;
 
     public override System.Collections.Generic.IReadOnlyList<string> Mime => _format?.Mime ?? [];
     public override System.Collections.Generic.IReadOnlyList<string> Extension => _format?.Extension ?? [];
@@ -118,7 +119,7 @@ public sealed class @this : global::app.type.kind.@this
 
     /// <summary>This type's kinds, each as the full type it makes.</summary>
     public override global::app.type.kind.list.@this list(global::app.actor.context.@this context)
-        => new(Held.Select(k => context.App.type.list[new global::app.type.@this(_owner, k.Name), context]),
+        => new(Held.Select(k => context.App.type.list[new global::app.type.@this(_owner.Name, k.Name), context]),
             context.App.type.list[typeof(global::app.type.kind.list.@this)]);
 
     /// <summary>Adds a kind of this type; a kind of the same name replaces the one before it. The type's own
@@ -134,7 +135,7 @@ public sealed class @this : global::app.type.kind.@this
             var extensions = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
             foreach (var held in _kinds)
             {
-                foreach (var key in held.Alias.Prepend(held.Name).Concat(held.Mime)) keys.TryAdd(key, held);
+                foreach (var key in held.Keys) keys.TryAdd(key, held);
                 foreach (var extension in held.Extension) extensions.TryAdd(extension.TrimStart('.'), held);
             }
             _keys = keys;

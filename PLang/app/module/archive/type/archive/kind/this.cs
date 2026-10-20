@@ -7,7 +7,7 @@ namespace app.module.archive.type.archive.kind;
 /// </summary>
 public abstract class @this : global::app.type.kind.@this<global::app.module.archive.type.archive.@this>
 {
-    protected @this(string name) : base(name) { }
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     /// <summary>What a file in this format is named with at its end (<c>.tar.gz</c>) — how a file says its format; null
     /// when none says it.</summary>

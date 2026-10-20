@@ -36,9 +36,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(System.TimeSpan value, global::app.type.@this type) : base(type) => Value = value;
 
     // A span through the C# implicit conversion, written short: its type is built here, from its class and the short
-    // standard, until the implicit-conversion branch removes that conversion.
+    // standard (a kind of the one class-built duration type), until the implicit-conversion branch removes that conversion.
+    private static readonly global::app.type.@this family = new("duration", typeof(@this));
+    private static readonly kind.@this @short = new kind.@short.@this(family);
     private @this(System.TimeSpan value)
-        : base(new global::app.type.@this("duration", typeof(@this)) { kind = new kind.@short.@this() }) => Value = value;
+        : base(new global::app.type.@this("duration", typeof(@this)) { kind = @short }) => Value = value;
 
     /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan is born short; a string (30s, ISO-8601
     /// <c>PT30S</c> or .NET <c>00:00:30</c>, via <see cref="Resolve"/>) parses in its own standard — each made with

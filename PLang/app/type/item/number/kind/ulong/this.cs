@@ -4,7 +4,7 @@ namespace app.type.item.number.kind.@ulong;
 /// <c>long.MaxValue</c>, else as its lossless invariant string.</summary>
 public sealed class @this : global::app.type.item.number.kind.@this
 {
-    public @this() : base("ulong") { }
+    public @this(global::app.type.@this owner) : base("ulong", owner) { }
     public override global::app.type.item.number.@this Create(global::app.type.item.@this value) => value.Clr<ulong>();
 
     public override void Write(global::app.type.item.number.@this v, global::app.type.format.IWriter w)

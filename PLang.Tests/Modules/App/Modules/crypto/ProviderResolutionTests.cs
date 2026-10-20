@@ -89,7 +89,7 @@ public class ProviderResolutionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.module.crypto.type.hash.@this>(new global::app.module.crypto.type.hash.@this(new byte[32], new global::app.module.crypto.type.hash.kind.keccak256.@this()), new global::app.type.@this("hash", "keccak256"))); // all zeros
+        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.module.crypto.type.hash.@this>(new global::app.module.crypto.type.hash.@this(new byte[32], (global::app.module.crypto.type.hash.kind.keccak256.@this)action.Context.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!), new global::app.type.@this("hash", "keccak256"))); // all zeros
         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(false));     }
 
     private class AlwaysTrueVerifier : ICrypto
@@ -99,5 +99,5 @@ public class ProviderResolutionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.module.crypto.type.hash.@this>(new global::app.module.crypto.type.hash.@this(new byte[32], new global::app.module.crypto.type.hash.kind.keccak256.@this()), new global::app.type.@this("hash", "keccak256")));         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(true));     }
+        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.module.crypto.type.hash.@this>(new global::app.module.crypto.type.hash.@this(new byte[32], (global::app.module.crypto.type.hash.kind.keccak256.@this)action.Context.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!), new global::app.type.@this("hash", "keccak256")));         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(true));     }
 }

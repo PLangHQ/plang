@@ -12,7 +12,7 @@ public sealed class @this : tar.@this
 {
     private const string Whiteout = ".wh.", Opaque = ".wh..wh..opq";
 
-    public @this() : base("oci.layer") { }
+    public @this(global::app.type.@this owner) : base("oci.layer", owner) { }
 
     /// <summary>A layer has no suffix of its own: it is named (<c>as oci.layer</c>).</summary>
     public override string? Suffix => null;

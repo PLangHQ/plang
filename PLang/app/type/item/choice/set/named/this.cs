@@ -9,7 +9,7 @@ public sealed class @this : set.@this
     private readonly System.Type _clr;
     private readonly MethodInfo _choices;
 
-    internal @this(System.Type clr, MethodInfo choices) : base(clr, Declared(clr))
+    internal @this(System.Type clr, MethodInfo choices, global::app.type.@this owner) : base(clr, Declared(clr), owner)
     {
         _clr = clr;
         _choices = choices;

@@ -48,8 +48,8 @@ public class UnpackTests : IDisposable
     private async Task<global::app.data.@this> Into(Stream archive, string folder, bool layer = false, long max = 100 * 1024 * 1024)
     {
         global::app.module.archive.type.archive.kind.bundle.@this bundle = layer
-            ? new global::app.module.archive.type.archive.kind.oci.layer.@this()
-            : new global::app.module.archive.type.archive.kind.tar.@this();
+            ? (global::app.module.archive.type.archive.kind.oci.layer.@this)Context.App.type.list[typeof(global::app.module.archive.type.archive.@this)].kind["oci.layer"]!
+            : (global::app.module.archive.type.archive.kind.tar.@this)Context.App.type.list[typeof(global::app.module.archive.type.archive.@this)].kind["tar"]!;
         return await bundle.Unpack(archive, null, Context.File(Path.Combine(_root, folder)), new global::app.type.item.size.@this(max, Context), Context);
     }
 

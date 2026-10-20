@@ -29,7 +29,8 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
             created: new global::app.type.item.datetime.@this(System.DateTimeOffset.FromUnixTimeSeconds(0),
                 action.Context.App.type.list[typeof(global::app.type.item.datetime.@this)]),
             identity: action.Context.Text("test-public-key"),
-            hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
+            hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(),
+                (global::app.module.crypto.type.hash.kind.@this)action.Context.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
             signature: new global::app.type.item.binary.@this(System.Array.Empty<byte>(), action.Context.App.type.list[typeof(global::app.type.item.binary.@this)]));
         return Task.FromResult(action.Context.Ok((object?)unsigned));
     }

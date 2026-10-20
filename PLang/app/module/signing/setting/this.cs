@@ -17,6 +17,6 @@ public sealed class @this : global::app.type.item.setting.module.@this
 
     /// <summary>The kind of hash a signature binds its value with — <c>%!signing.setting.hash%</c>; keccak256. A
     /// signature carries its own, so one is checked with the kind it was made with, whatever this says now.</summary>
-    [Out, Store] public global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this> Hash { get; set; }
-        = new global::app.module.crypto.type.hash.kind.keccak256.@this();
+    [Out, Store, global::app.module.Default("keccak256")]
+    public global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this> Hash { get; set; } = null!;
 }

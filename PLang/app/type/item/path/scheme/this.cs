@@ -10,8 +10,10 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.pa
 {
     private readonly Func<string, actor.context.@this, global::app.type.item.path.@this> _factory;
 
-    public @this(string scheme, Func<string, actor.context.@this, global::app.type.item.path.@this> factory)
-        : base(scheme.ToLowerInvariant())
+    /// <summary>The scheme <paramref name="scheme"/> of <paramref name="owner"/> (the app's path), whose paths
+    /// <paramref name="factory"/> makes.</summary>
+    public @this(string scheme, global::app.type.@this owner, Func<string, actor.context.@this, global::app.type.item.path.@this> factory)
+        : base(scheme.ToLowerInvariant(), owner)
     {
         ArgumentException.ThrowIfNullOrEmpty(scheme);
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));

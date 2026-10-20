@@ -7,14 +7,12 @@ namespace app.type.item.kind.list;
 /// by assignable match, so any concrete list resolves here (exact ClrForm wins first, so
 /// <c>JsonElement</c> stays json).
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.type.item.@this>
 {
-    public @this() : base("list") { }
+    public @this(global::app.type.@this owner) : base("list", owner) { }
 
     // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out (814).
     protected override bool? OwnInternal => true;
-
-    protected internal override string Owner => "item";
 
     // Claims IEnumerable (not just IList) so ANY sequence — HashSet, a LINQ enumerable — resolves
     // here and enumerates, instead of falling to the * kind and reflecting its C# properties. The

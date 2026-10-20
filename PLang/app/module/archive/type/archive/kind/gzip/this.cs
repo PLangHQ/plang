@@ -5,7 +5,7 @@ namespace app.module.archive.type.archive.kind.gzip;
 /// <summary>gzip — <c>a.txt.gz</c>.</summary>
 public sealed class @this : compression.@this
 {
-    public @this() : base("gzip") { }
+    public @this(global::app.type.@this owner) : base("gzip", owner) { }
 
     public override string? Suffix => ".gz";
 

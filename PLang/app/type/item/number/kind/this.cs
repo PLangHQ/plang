@@ -15,7 +15,7 @@ namespace app.type.item.number.kind;
 /// </summary>
 public abstract class @this : global::app.type.kind.@this<global::app.type.item.number.@this>
 {
-    protected @this(string name) : base(name) { }
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     /// <summary>Build a number of this storage size from a plang value — plang in, plang out. The value
     /// lowers itself through its own <c>Clr</c> door; a value that can't be this kind throws loud there

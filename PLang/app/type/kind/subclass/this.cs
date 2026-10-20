@@ -13,8 +13,9 @@ public sealed class @this<T> : global::app.type.kind.@this<T> where T : global::
     // The subclass's own static Offer, read once at construction (as a type reads a declared fact), never per Offers call.
     private readonly System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>? _offer;
 
-    /// <summary>The kind <paramref name="name"/> of <typeparamref name="T"/>, whose values are <paramref name="class"/>.</summary>
-    public @this(string name, System.Type @class) : base(name)
+    /// <summary>The kind <paramref name="name"/> of <paramref name="owner"/> (the app's <typeparamref name="T"/>), whose
+    /// values are <paramref name="class"/>.</summary>
+    public @this(string name, System.Type @class, global::app.type.@this owner) : base(name, owner)
     {
         _class = @class;
         _offer = @class.GetProperty("Offer", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static

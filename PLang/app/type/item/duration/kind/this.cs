@@ -7,7 +7,7 @@ namespace app.type.item.duration.kind;
 /// </summary>
 public abstract class @this : global::app.type.kind.@this<global::app.type.item.duration.@this>
 {
-    protected @this(string name) : base(name) { }
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     /// <summary>The span <paramref name="text"/> is in this standard; null when it isn't written in it.</summary>
     internal abstract System.TimeSpan? Span(string text);

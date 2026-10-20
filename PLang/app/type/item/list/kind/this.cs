@@ -11,13 +11,14 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.li
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, element.@this> _coined
         = new(System.StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Coins the element kinds of the types <paramref name="types"/> holds.</summary>
-    public @this(global::app.type.list.@this types) : base("*element") => _types = types;
+    /// <summary>Coins the element kinds of the types <paramref name="types"/> holds, as kinds of
+    /// <paramref name="owner"/> (the app's list).</summary>
+    public @this(global::app.type.@this owner, global::app.type.list.@this types) : base("*element", owner) => _types = types;
 
     /// <summary>The kind of list whose element is the type <paramref name="name"/>, asked of the type list's own
     /// name door; null when no type has that name.</summary>
     public override global::app.type.kind.@this? Coin(string name)
         => _types.Contains(name)
-            ? _coined.GetOrAdd(_types[name].Name, n => new element.@this(_types[n]))
+            ? _coined.GetOrAdd(_types[name].Name, n => new element.@this(Family, _types[n]))
             : null;
 }

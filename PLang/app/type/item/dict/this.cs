@@ -341,7 +341,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // A settable-prop CLR record target — the reflection kind builds it from THIS dict's slots
         // (each value lowers itself via its own Clr). No STJ, no self-serialize round-trip — the
         // firing site for dict.Json dies here.
-        return new global::app.type.item.kind.reflection.@this().Read(this, target);
+        return global::app.type.item.kind.reflection.@this.Fallback.Read(this, target);
     }
 
     // A plang value read from this dict's slots that is born holding its type is handed the app's — the asker's
@@ -349,7 +349,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target, global::app.actor.context.@this? context)
         => context != null && typeof(global::app.type.item.@this).IsAssignableFrom(target)
            && target.GetConstructor([typeof(global::app.type.@this)]) is { } typed
-            ? new global::app.type.item.kind.reflection.@this().Read(this, typed.Invoke([context.App.type.list[target]]), context)
+            ? ((global::app.type.item.kind.reflection.@this)context.App.type.list["item"].kind["*"]!)
+                .Read(this, typed.Invoke([context.App.type.list[target]]), context)
             : Clr(target);
 
     /// <summary>The entry under <paramref name="key"/> lowered to <paramref name="target"/> at the

@@ -20,9 +20,11 @@ public class HashTypeTests
 
     [Test] public async Task HashType_OwnsBase64RoundTrip()
     {
+        await using var app = new global::app.@this("/test").Testing();
+        var sha256 = (global::app.module.crypto.type.hash.kind.sha256.@this)app.type.list[typeof(hash)].kind["sha256"]!;
         var bytes = new byte[] { 1, 2, 3, 4, 5 };
-        var h = new hash(bytes, new global::app.module.crypto.type.hash.kind.sha256.@this());
-        var roundTripped = hash.FromBase64(h.ToBase64(), new global::app.module.crypto.type.hash.kind.sha256.@this());
+        var h = new hash(bytes, sha256);
+        var roundTripped = hash.FromBase64(h.ToBase64(), sha256);
         await Assert.That(roundTripped.DigestEquals(h)).IsTrue();
         await Assert.That(roundTripped.Algorithm!.Name).IsEqualTo("sha256");
     }
@@ -35,14 +37,15 @@ public class HashTypeTests
         var ctx = app.actor.list.User.Context;
         var bytes = System.Security.Cryptography.SHA256.HashData("abc"u8.ToArray());
         var other = System.Security.Cryptography.SHA256.HashData("abd"u8.ToArray());
-        var digest = new global::app.data.@this("d", new hash(bytes, new global::app.module.crypto.type.hash.kind.sha256.@this()), context: ctx);
+        var sha256 = (global::app.module.crypto.type.hash.kind.sha256.@this)app.type.list[typeof(hash)].kind["sha256"]!;
+        var digest = new global::app.data.@this("d", new hash(bytes, sha256), context: ctx);
         global::app.data.@this Text(string s) => new("t", s, context: ctx);
 
         await Assert.That(await digest.Compare(Text(System.Convert.ToHexString(bytes)))).IsEqualTo(global::app.data.Comparison.Equal);
         await Assert.That(await digest.Compare(Text(System.Convert.ToHexString(bytes).ToLowerInvariant()))).IsEqualTo(global::app.data.Comparison.Equal);
         await Assert.That(await digest.Compare(Text(System.Convert.ToBase64String(bytes)))).IsEqualTo(global::app.data.Comparison.Equal);
         await Assert.That(await Text(System.Convert.ToHexString(bytes)).Compare(digest)).IsEqualTo(global::app.data.Comparison.Equal);
-        await Assert.That(await digest.Compare(new global::app.data.@this("o", new hash(other, new global::app.module.crypto.type.hash.kind.sha256.@this()), context: ctx))).IsEqualTo(global::app.data.Comparison.NotEqual);
+        await Assert.That(await digest.Compare(new global::app.data.@this("o", new hash(other, sha256), context: ctx))).IsEqualTo(global::app.data.Comparison.NotEqual);
         await Assert.That(await digest.Compare(Text(System.Convert.ToHexString(other)))).IsEqualTo(global::app.data.Comparison.NotEqual);
         await Assert.That(await digest.Compare(Text("hello"))).IsEqualTo(global::app.data.Comparison.Incomparable);
     }

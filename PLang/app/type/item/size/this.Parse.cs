@@ -15,7 +15,10 @@ public sealed partial class @this
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         if (count.Success && long.TryParse(count.Groups[1].Value, out var bytes))
             return context != null ? new @this(bytes, context) : new @this(bytes);
-        foreach (kind.@this standard in new kind.@this[] { new kind.iec.@this(), new kind.si.@this() })
+        // the app's standards when there is an asker, else the class-built ones
+        var standards = context?.App.type.list[typeof(@this)].kind is global::app.type.kind.empty.@this root
+            ? root.Kinds.OfType<kind.@this>() : Standards;
+        foreach (var standard in standards)
             if (standard.Bytes(raw) is { } inIt) return new @this(inIt, standard);
         return null;
     }

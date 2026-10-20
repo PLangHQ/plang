@@ -7,14 +7,16 @@ namespace app.type.item.kind.reflection;
 /// reader. Also owns <see cref="Read"/> — the reflection deserializer that builds ANY host CLR
 /// type from a reader (object or collection target), which json's <c>Clr</c> drives.
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.type.item.@this>
 {
-    public @this() : base("*") { }
+    public @this(global::app.type.@this owner) : base("*", owner) { }
+
+    /// <summary>The reflection kind of a class-built item type — for a write or a C# lowering with no context to name
+    /// the app (a value born without one). Goes with the implicit-conversion branch, when no value is.</summary>
+    internal static readonly @this Fallback = new(new global::app.type.@this("item", typeof(global::app.type.item.@this)));
 
     // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out (814).
     protected override bool? OwnInternal => true;
-
-    protected internal override string Owner => "item";
 
     // Descend one property. A name is read ignoring its case; a derived type's property shadows a base one (bottom-up,
     // each type's own). Two members of one type that the name matches is the program's error, naming both — never one

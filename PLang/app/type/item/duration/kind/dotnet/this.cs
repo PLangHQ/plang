@@ -4,7 +4,7 @@ namespace app.type.item.duration.kind.dotnet;
 /// duration in any standard.</summary>
 public sealed class @this : kind.@this
 {
-    public @this() : base("dotnet") { }
+    public @this(global::app.type.@this owner) : base("dotnet", owner) { }
 
     internal override System.TimeSpan? Span(string text)
         => text.Contains(':') && System.TimeSpan.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, out var span)

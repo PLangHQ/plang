@@ -140,7 +140,7 @@ public class FileHandlerTests : IDisposable
         var before = await new Read(_app.actor.list.User.Context) { Path = MakePath("before.abcdata") }.Start();
 
         _app.type.list.Add(new global::app.type.kind.@this(
-            new global::app.Attributes.FormatAttribute("abc", "application/abcdata", ".abc", ".abcdata"), "binary"));
+            new global::app.Attributes.FormatAttribute("abc", "application/abcdata", ".abc", ".abcdata"), _app.type.list["binary"]));
         System.IO.File.WriteAllText(TempPath("after.abcdata"), "x");
         var after = await new Read(_app.actor.list.User.Context) { Path = MakePath("after.abcdata") }.Start();
 

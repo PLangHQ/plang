@@ -12,7 +12,8 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.li
     /// <summary>The kind for lists of <paramref name="element"/> — named by the element's type. When the element is
     /// itself kinded (a list of lists: <c>{list, kind: {list, kind: path}}</c>), that kind rides as this kind's own,
     /// so the nesting is kept, not flattened.</summary>
-    public @this(global::app.type.@this element) : base(element.Name, element.kind.IsEmpty ? null : element.kind) => _element = element;
+    public @this(global::app.type.@this owner, global::app.type.@this element)
+        : base(element.Name, element.kind.IsEmpty ? null : element.kind, owner) => _element = element;
 
     /// <summary>The kind's class is its element's — a <c>list&lt;action&gt;</c> kind IS the registered action
     /// type at its kind, so it carries action's ClrType, not null.</summary>

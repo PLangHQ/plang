@@ -18,7 +18,7 @@ namespace app.type.item.wire.kind.plang;
 /// </summary>
 public sealed class @this : global::app.type.kind.@this<global::app.type.item.wire.@this>
 {
-    public @this() : base("plang") { }
+    public @this(global::app.type.@this owner) : base("plang", owner) { }
 
     public override System.Collections.Generic.IReadOnlyList<string> Mime => ["application/plang", "application/plang+json"];
     public override System.Collections.Generic.IReadOnlyList<string> Extension => [".plang"];

@@ -13,19 +13,22 @@ public abstract class @this : global::app.type.kind.@this
 {
     private readonly System.Type _form;
 
-    protected @this(System.Type clr, string name) : base(name)
+    /// <summary>A closed set named <paramref name="name"/> over <paramref name="clr"/>, a kind of
+    /// <paramref name="owner"/> — the app's choice.</summary>
+    protected @this(System.Type clr, string name, global::app.type.@this owner) : base(name, owner)
         => _form = typeof(global::app.type.item.choice.@this<>).MakeGenericType(clr);
 
-    /// <summary>The closed set <paramref name="clr"/> is — chosen once, here, by its shape; null when it is no closed
-    /// set (no enum members, no <c>Choices(context?)</c>, no kinds of its own).</summary>
-    public static @this? For(System.Type clr)
-        => clr.IsEnum ? new member.@this(clr)
-         : family.@this.Kinds(clr) is { Count: > 0 } kinds ? new family.@this(clr, kinds)
-         : named.@this.Choices(clr) is { } choices ? new named.@this(clr, choices)
-         : null;
-
-    /// <summary>A closed set is a kind of choice.</summary>
-    protected internal override string Owner => "choice";
+    /// <summary>The closed set <paramref name="clr"/> is, a kind of the choice <paramref name="types"/> holds — chosen
+    /// once, here, by its shape; null when it is no closed set (no enum members, no <c>Choices(context?)</c>, no kind
+    /// family).</summary>
+    public static @this? For(System.Type clr, global::app.type.list.@this types)
+    {
+        var choice = types.Items().First(type => type.Names("choice"));
+        return clr.IsEnum ? new member.@this(clr, choice)
+             : family.@this.Is(clr) ? new family.@this(clr, choice, types)
+             : named.@this.Choices(clr) is { } choices ? new named.@this(clr, choices, choice)
+             : null;
+    }
 
     /// <summary>A choice from this set is <c>choice&lt;T&gt;</c> closed over the set.</summary>
     public override System.Type? Of(System.Type? type) => _form;

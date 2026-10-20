@@ -10,7 +10,7 @@ namespace app.module.archive.type.archive.kind.compression;
 /// </summary>
 public abstract class @this : kind.@this
 {
-    protected @this(string name) : base(name) { }
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     /// <summary>A stream that compresses what is written to it into <paramref name="into"/> (left open).</summary>
     protected abstract System.IO.Stream Writer(System.IO.Stream into, CompressionLevel level);

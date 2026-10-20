@@ -60,22 +60,23 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // ── the 15 kind singletons — the operator births' kinds only (a CLR lift has no app; every number born with an
     //    app holds its app's registered kind). They go with the implicit-conversion branch. Verbatim-lowercase
     //    names (@int, @long, …) = the kind tokens; PascalCase would shadow the CLR type names
-    //    (Int128.MinValue, BigInteger.Pow) used across number/Ladder. ──
-    private static readonly kind.@this @sbyte = new kind.@sbyte.@this();
-    private static readonly kind.@this @byte = new kind.@byte.@this();
-    private static readonly kind.@this @short = new kind.@short.@this();
-    private static readonly kind.@this @ushort = new kind.@ushort.@this();
-    private static readonly kind.@this @int = new kind.@int.@this();
-    private static readonly kind.@this @uint = new kind.@uint.@this();
-    private static readonly kind.@this @long = new kind.@long.@this();
-    private static readonly kind.@this @ulong = new kind.@ulong.@this();
-    private static readonly kind.@this int128 = new kind.int128.@this();
-    private static readonly kind.@this uint128 = new kind.uint128.@this();
-    private static readonly kind.@this half = new kind.half.@this();
-    private static readonly kind.@this @float = new kind.@float.@this();
-    private static readonly kind.@this @double = new kind.@double.@this();
-    private static readonly kind.@this @decimal = new kind.@decimal.@this();
-    private static readonly kind.@this biginteger = new kind.biginteger.@this();
+    //    (Int128.MinValue, BigInteger.Pow) used across number/Ladder. Each a kind of the one class-built number type. ──
+    private static readonly global::app.type.@this family = new("number", typeof(@this));
+    private static readonly kind.@this @sbyte = new kind.@sbyte.@this(family);
+    private static readonly kind.@this @byte = new kind.@byte.@this(family);
+    private static readonly kind.@this @short = new kind.@short.@this(family);
+    private static readonly kind.@this @ushort = new kind.@ushort.@this(family);
+    private static readonly kind.@this @int = new kind.@int.@this(family);
+    private static readonly kind.@this @uint = new kind.@uint.@this(family);
+    private static readonly kind.@this @long = new kind.@long.@this(family);
+    private static readonly kind.@this @ulong = new kind.@ulong.@this(family);
+    private static readonly kind.@this int128 = new kind.int128.@this(family);
+    private static readonly kind.@this uint128 = new kind.uint128.@this(family);
+    private static readonly kind.@this half = new kind.half.@this(family);
+    private static readonly kind.@this @float = new kind.@float.@this(family);
+    private static readonly kind.@this @double = new kind.@double.@this(family);
+    private static readonly kind.@this @decimal = new kind.@decimal.@this(family);
+    private static readonly kind.@this biginteger = new kind.biginteger.@this(family);
 
     /// <summary>The 15 kind singletons by name — what an operator-born number (no app) names its kinds by; a number
     /// with an app asks its family. Goes with the implicit-conversion branch.</summary>

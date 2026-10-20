@@ -11,7 +11,7 @@ public abstract class @this : global::app.type.kind.@this<global::app.type.item.
     private readonly string[] _units;
     private readonly long _step;
 
-    protected @this(string name, long step, params string[] units) : base(name)
+    protected @this(string name, global::app.type.@this owner, long step, params string[] units) : base(name, owner)
     {
         _step = step;
         _units = units;

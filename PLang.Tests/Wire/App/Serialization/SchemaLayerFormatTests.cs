@@ -35,7 +35,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
             nonce: app.actor.list.User.Context.Text("9f"),
             created: new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero), app.type.list[typeof(global::app.type.item.datetime.@this)]),
             identity: app.actor.list.User.Context.Text("alice"),
-            hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
+            hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), (global::app.module.crypto.type.hash.kind.keccak256.@this)app.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
             signature: new global::app.type.item.binary.@this(System.Convert.FromBase64String("c2ln"), app.type.list[typeof(global::app.type.item.binary.@this)]));
 
         var json = Render(sig);
@@ -74,7 +74,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
             nonce: app.actor.list.User.Context.Text("n"),
             created: new global::app.type.item.datetime.@this(System.DateTimeOffset.UnixEpoch, app.type.list[typeof(global::app.type.item.datetime.@this)]),
             identity: app.actor.list.User.Context.Text("id"),
-            hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, new global::app.module.crypto.type.hash.kind.keccak256.@this()),
+            hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, (global::app.module.crypto.type.hash.kind.keccak256.@this)app.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
             signature: new global::app.type.item.binary.@this(new byte[] { 0x01 }, app.type.list[typeof(global::app.type.item.binary.@this)]));
 
         using var doc = JsonDocument.Parse(Render(sig));

@@ -5,7 +5,7 @@ namespace app.module.archive.type.archive.kind.brotli;
 /// <summary>brotli — <c>a.txt.br</c>; named or known by its suffix (it has no first bytes of its own).</summary>
 public sealed class @this : compression.@this
 {
-    public @this() : base("brotli") { }
+    public @this(global::app.type.@this owner) : base("brotli", owner) { }
 
     public override string? Suffix => ".br";
 

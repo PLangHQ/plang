@@ -98,13 +98,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// (<c>kind : type</c>); the empty kind answers itself here (never a new one), ending the ctor's
     /// kind-minting chain. Serializers are kept off <see cref="kind"/> (JsonIgnore), so the self-kind
     /// never loops a walk.</summary>
-    protected virtual global::app.type.kind.@this BornKind() => new global::app.type.kind.empty.@this(Name);
+    protected virtual global::app.type.kind.@this BornKind() => new global::app.type.kind.empty.@this(this);
 
     /// <summary>The kind a value class declares for <paramref name="name"/> — or its own format for the empty
     /// name — read from the class's <c>[Format]</c>: the facts (MIME, extension, whether it is characters) a
-    /// value carries without asking the app. Null when the class declares no such format, so the caller keeps
-    /// the bare by-name kind.</summary>
-    private static global::app.type.kind.@this? KindOfClass(System.Type clr, string? name)
+    /// value carries without asking the app, a kind of <paramref name="owner"/>, the class-built type asking. Null
+    /// when the class declares no such format, so the caller keeps the bare by-name kind. Only a class-built type
+    /// asks; it goes with the implicit-conversion branch.</summary>
+    private static global::app.type.kind.@this? KindOfClass(System.Type clr, string? name, @this owner)
     {
         var wanted = name ?? "";
         global::app.Attributes.FormatAttribute? format = null;
@@ -112,9 +113,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             if (attribute is global::app.Attributes.FormatAttribute fmt
                 && string.Equals(fmt.Name, wanted, System.StringComparison.OrdinalIgnoreCase)) { format = fmt; break; }
         if (format == null) return null;
-        var owner = global::app.type.item.@this.NameOf(clr);
         var facts = (global::app.type.kind.@this)System.Activator.CreateInstance(
-            typeof(global::app.type.kind.format.@this<>).MakeGenericType(clr), format, null, null)!;
+            typeof(global::app.type.kind.format.@this<>).MakeGenericType(clr), format, owner, null, null)!;
         return wanted.Length == 0 ? new global::app.type.kind.empty.@this(owner, facts) : facts;
     }
 
@@ -642,7 +642,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The family entry this type's facts are — the registry's entry for its class; a family
     /// entry (or a type with none) is its own.</summary>
     internal @this Family => _family ?? this;
-    private readonly @this? _family;
+    private protected readonly @this? _family;
 
     /// <summary>The type's properties — a record's fields, a scalar's navigable members; each a
     /// named slot carrying its type. Null when the type declares none. A record is a type with
@@ -755,7 +755,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
         : this(name, clrType, kind, strict, template, known: true)
     {
-        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType) && KindOfClass(clrType, kind) is { } declared)
+        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType) && KindOfClass(clrType, kind, this) is { } declared)
             _kind = declared;
     }
 
@@ -775,7 +775,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         : this(family.Name, kind != null ? kind.Of(family.ClrType) : family.ClrType, kind?.Name, strict, template, known: true)
     {
         _family = family;
-        _kind = kind ?? new global::app.type.kind.empty.@this(Name);
+        _kind = kind ?? new global::app.type.kind.empty.@this(this);
     }
 
     /// <summary>A type whose own kind is a given <paramref name="ownKind"/> — the seam a nested kind rides
@@ -810,7 +810,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (types == null || clr == typeof(@this)) return;
 
         _offer = Declared<IReadOnlyList<item.@this>>("Offer");
-        if (global::app.type.item.choice.set.@this.For(clr) is { } set)
+        if (global::app.type.item.choice.set.@this.For(clr, types) is { } set)
         {
             Values = set.Values;
             return;

@@ -26,9 +26,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         _kind = kind;
     }
 
-    /// <summary>A count in <paramref name="kind"/>'s standard where no app is in reach (a kind's own parse, a setting's
-    /// default): it holds {size, <kind>} built from the class — until the kinds item.</summary>
-    public @this(long bytes, kind.@this kind) : this(bytes, kind, new global::app.type.@this("size", typeof(@this), kind.Name)) { }
+    /// <summary>A count in <paramref name="kind"/>'s standard, born holding <c>{size, &lt;kind&gt;}</c> of the type the kind
+    /// is a kind of — the app's, for a kind the app holds.</summary>
+    public @this(long bytes, kind.@this kind) : this(bytes, kind, new global::app.type.@this(kind.Owner!, kind, false, null)) { }
 
     /// <summary>A count, written in the standard its asker's setting names, born holding the app's type for it.</summary>
     public @this(long bytes, actor.context.@this context)
@@ -37,8 +37,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private @this(long bytes, kind.@this kind, actor.context.@this context)
         : this(bytes, kind, context.App.type.list[new global::app.type.@this("size", kind.Name), context]) { }
 
-    // a count with no asker: the setting's own default, as a kind's parse with no app is
-    private @this(long bytes) : this(bytes, new setting.@this(new global::app.type.@this(typeof(setting.@this))).Standard.Value) { }
+    // a count with no asker: in iec, the setting's own default
+    private @this(long bytes) : this(bytes, Standards[0]) { }
+
+    // The standards a size with no asker (no context, so no app) reads and writes in — kinds of one class-built size
+    // type. They go with the implicit-conversion branch, when no value is born without a context.
+    private static readonly global::app.type.@this family = new("size", typeof(@this));
+    internal static readonly kind.@this[] Standards = [new kind.iec.@this(family), new kind.si.@this(family)];
 
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
