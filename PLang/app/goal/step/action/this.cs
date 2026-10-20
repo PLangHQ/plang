@@ -350,8 +350,12 @@ public partial class @this
 
     // This action's module as the asker's app holds it — the one it was read with when that app read it, else the
     // asker's own of that name (a program read once runs in every app made from the same code), else the one it holds.
+    // An app that hasn't made its modules has bound nothing on them: the one it holds answers the same, and the asker's
+    // are never made for it.
     private global::app.module.@this Seen(actor.context.@this context)
-        => ReferenceEquals(Module.App, context.App) ? Module : context.App.module.Named(Module.Name) ?? Module;
+        => ReferenceEquals(Module.App, context.App) || !context.App.module.HasList
+            ? Module
+            : context.App.module.Named(Module.Name) ?? Module;
 
     /// <summary>This action, instantiated — the live object carrying its typed parameters and
     /// Run. The action asks the module element it HOLDS for its own name; no registry re-resolves

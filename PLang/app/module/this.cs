@@ -114,6 +114,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [global::app.LlmBuilder]
     public global::app.type.item.list.@this<@this> list => Root.Modules;
 
+    /// <summary>Whether the app's modules are made — until they are, nothing is bound on any of them (binding names one,
+    /// which makes them).</summary>
+    internal bool HasList => Root._modules != null;
+
     /// <summary>The module <paramref name="name"/> names, by its own <see cref="Match"/>; NotFound when none does. The
     /// answer is born with the asker's <paramref name="context"/>.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this<@this>> Get(string name, global::app.actor.context.@this context)

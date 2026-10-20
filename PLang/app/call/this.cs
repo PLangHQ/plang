@@ -31,7 +31,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         global::app.View mode, global::app.actor.context.@this? context)
     {
         writer.BeginObject();
-        writer.Name("id"); writer.String(_id);
+        writer.Name("id"); writer.String(Ident);
         writer.Name("depth"); writer.Long(_depth);
         if (Goal?.Address is { } address) { writer.Name("goal"); writer.String(address); }
         if (Step != null) { writer.Name("step"); writer.String(Step.Text); }
@@ -39,14 +39,14 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         if (_startedAt is { } started) { writer.Name("startedAt"); writer.DateTimeOffset(started); }
         if (_stopwatch is { } watch) { writer.Name("duration"); writer.TimeSpan(watch.Elapsed); }
         writer.Name("handled"); writer.Bool(_handled);
-        if (Tags.CountRaw > 0) { writer.Name("tags"); await writer.Kind.pair.Output(Tags, writer, mode, context); }
-        if (Errors.Newest != null) { writer.Name("errors"); await writer.Kind.pair.Output(Errors, writer, mode, context); }
-        if (Caller != null) { writer.Name("caller"); writer.String(Caller._id); }
-        if (Children.Count > 0)
+        if (_tags is { CountRaw: > 0 } tags) { writer.Name("tags"); await writer.Kind.pair.Output(tags, writer, mode, context); }
+        if (_errors?.Newest != null) { writer.Name("errors"); await writer.Kind.pair.Output(_errors, writer, mode, context); }
+        if (Caller != null) { writer.Name("caller"); writer.String(Caller.Ident); }
+        if (_children is { Count: > 0 } children)
         {
             writer.Name("children");
-            writer.BeginArray(Children.Count);
-            foreach (var child in Children) writer.String(child._id);
+            writer.BeginArray(children.Count);
+            foreach (var child in children) writer.String(child.Ident);
             writer.EndArray();
         }
         if (Diffs is { Count: > 0 } diffs)
@@ -75,7 +75,9 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
 
     // The frame's facts as it holds them — a frame is pushed per action, so its plang faces below are made
     // when read, never at push.
-    private readonly string _id;
+    // its id, made when first read (a log line, a snapshot, an error's position)
+    private string? _id;
+    private string Ident => _id ?? System.Threading.Interlocked.CompareExchange(ref _id, Guid.NewGuid().ToString("N")[..8], null) ?? _id;
     internal readonly int _depth;
     private bool _handled;
     private readonly DateTimeOffset? _startedAt;
@@ -84,7 +86,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// <summary>
     /// Unique identifier for this Call. 8 hex chars — short enough for log lines.
     /// </summary>
-    public global::app.type.item.text.@this Id => _id;
+    public global::app.type.item.text.@this Id => Ident;
 
     /// <summary>The goal in play at this frame — the goal a goal's frame runs, or the one its step or action is in.
     /// Null for an action composed in C#, which holds no step.</summary>
@@ -122,7 +124,10 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// for thread-safety semantics.
     /// </summary>
     [global::app.LlmBuilder]
-    public global::app.error.list.@this Errors { get; }
+    public global::app.error.list.@this Errors
+        => _errors ?? System.Threading.Interlocked.CompareExchange(ref _errors, new(_stack.Audit.Type), null) ?? _errors;
+    // made at the first error observed here (or the first read); held by reference, the first made kept
+    private global::app.error.list.@this? _errors;
 
     /// <summary>
     /// Flipped <c>true</c> by on.error's Wrap on recovery success. Renderers use this to
@@ -134,14 +139,17 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// already succeeded here. <see cref="Handled"/> is what stops it: "recovered, stop being
     /// <c>%!error%</c>". Null when this frame never failed, or failed and was recovered.
     /// <see cref="global::app.call.list.@this.Error"/> walks <see cref="Caller"/> asking each frame this.</summary>
-    public global::app.error.@this? Error => _handled ? null : Errors.Newest;
+    public global::app.error.@this? Error => _handled ? null : _errors?.Newest;
 
     /// <summary>
     /// Live siblings under this Call. Owns its own lock + FIFO eviction policy — see
     /// <see cref="child.list.@this"/>. Allocated lazily via the constructor below so the
     /// back-reference to the parent CallStack is set before any Add can land.
     /// </summary>
-    public child.list.@this Children { get; }
+    public child.list.@this Children
+        => _children ?? System.Threading.Interlocked.CompareExchange(ref _children, new(_stack), null) ?? _children;
+    // made at the first frame pushed under this one; held by reference, the first made kept
+    private child.list.@this? _children;
 
     // --- Timing tier (null when Flags.Timing off) ---
     // The app's types its push handed: its times are values of them — when it ran (datetime), and how long
@@ -170,18 +178,19 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     // --- Tag tier ---
     /// <summary>
     /// Free-form tags written through <see cref="Tag"/> — a plang dict, read as any dict
-    /// (<c>%!callStack.Current.Caller.Tags.foo%</c>). Always allocated, so no lazy-init race.
+    /// (<c>%!callStack.Current.Caller.Tags.foo%</c>). Made when first read or written; held by reference, the first
+    /// made kept.
     /// </summary>
     [global::app.LlmBuilder]
-    public global::app.type.item.dict.@this Tags { get; }
-
-    // Parallel branches tag one caller's frame; the frame serializes the merge into its dict.
-    private readonly object _tagging = new();
+    public global::app.type.item.dict.@this Tags
+        => _tags ?? System.Threading.Interlocked.CompareExchange(ref _tags, new(_dict), null) ?? _tags;
+    private global::app.type.item.dict.@this? _tags;
+    private readonly global::app.type.@this _dict;
 
     // This frame's own variables: every name it binds (born with or written into it), and which of them it was born
-    // with — what its runner supplied (a goal call's parameters, a tool's arguments).
-    private readonly Dictionary<string, global::app.data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _born = new(StringComparer.OrdinalIgnoreCase);
+    // with — what its runner supplied (a goal call's parameters, a tool's arguments). Made at the first name.
+    private Dictionary<string, global::app.data.@this>? _variables;
+    private HashSet<string>? _born;
     // The held action this frame was pushed to run (a tool invocation) — the one call its supplied names are FOR.
     private readonly global::app.goal.step.action.@this? _for;
 
@@ -216,7 +225,6 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         IEnumerable<global::app.data.@this>? names = null,
         global::app.goal.step.action.@this? held = null) : base(type)
     {
-        _id = Guid.NewGuid().ToString("N")[..8];
         Goal = goal;
         Step = step;
         Action = action;
@@ -228,14 +236,12 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         _for = held;
         _datetime = datetime;
         _duration = duration;
-        Tags = new global::app.type.item.dict.@this(dict);
-        Errors =new global::app.error.list.@this(stack.Audit.Type);
-        Children = new child.list.@this(stack);
+        _dict = dict;
         foreach (var name in names ?? [])
         {
             if (name == null || string.IsNullOrEmpty(name.Name)) continue;
-            _variables[name.Name] = name;   // last wins on duplicate names
-            _born.Add(name.Name);
+            (_variables ??= new(StringComparer.OrdinalIgnoreCase))[name.Name] = name;   // last wins on duplicate names
+            (_born ??= new(StringComparer.OrdinalIgnoreCase)).Add(name.Name);
         }
 
         if (!Measured) return;
@@ -257,25 +263,25 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
 
     /// <summary>The frame a write to <paramref name="name"/> lands in: this one when it was born with the name, else
     /// the nearest caller that was; null when none was — the write goes to its context's memory.</summary>
-    internal virtual @this? Keeper(string name) => _born.Contains(name) ? this : Caller?.Keeper(name);
+    internal virtual @this? Keeper(string name) => _born?.Contains(name) == true ? this : Caller?.Keeper(name);
 
     /// <summary>True when this frame was pushed FOR <paramref name="call"/> and born with <paramref name="name"/> — its
     /// runner supplied it (a tool's argument), so the supplied value wins over the call's own row.</summary>
     public bool Supplies(global::app.goal.step.action.@this call, string name)
-        => ReferenceEquals(_for, call) && _born.Contains(name);
+        => ReferenceEquals(_for, call) && _born?.Contains(name) == true;
 
     /// <summary>What <paramref name="name"/> holds, read from this frame outward — an inner frame's shadows an outer's.
     /// Case-insensitive.</summary>
     public bool TryGet(string name, out global::app.data.@this value)
     {
         for (var frame = this; frame != null; frame = frame.Caller)
-            if (frame._variables.TryGetValue(name, out var held)) { value = held; return true; }
+            if (frame._variables is { } held && held.TryGetValue(name, out var found)) { value = found; return true; }
         value = null!;
         return false;
     }
 
     /// <summary>The names this frame was born with — a goal call's own arguments, not its callers'.</summary>
-    internal IEnumerable<string> Arguments => _born;
+    internal IEnumerable<string> Arguments => (IEnumerable<string>?)_born ?? [];
 
     /// <summary>The names this frame and its callers hold, the inner frame's first.</summary>
     internal IEnumerable<string> Names
@@ -283,16 +289,17 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         get
         {
             for (var frame = this; frame != null; frame = frame.Caller)
-                foreach (var name in frame._variables.Keys) yield return name;
+                if (frame._variables is { } held)
+                    foreach (var name in held.Keys) yield return name;
         }
     }
 
     /// <summary>Writes <paramref name="value"/> into this frame under <paramref name="name"/> (the frame
     /// <see cref="Keeper"/> chose).</summary>
-    public void Set(string name, global::app.data.@this value) => _variables[name] = value;
+    public void Set(string name, global::app.data.@this value) => (_variables ??= new(StringComparer.OrdinalIgnoreCase))[name] = value;
 
     /// <summary>True if this frame itself (not its callers) holds <paramref name="name"/>.</summary>
-    public bool Holds(string name) => _variables.ContainsKey(name);
+    public bool Holds(string name) => _variables?.ContainsKey(name) == true;
 
     /// <summary>
     /// A change of <paramref name="store"/>: when it is the store this frame captures, the diff lands here —
@@ -311,9 +318,11 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// </summary>
     public void Tag(global::app.type.item.dict.@this tags, global::app.actor.context.@this context)
     {
-        lock (_tagging)
+        // parallel branches tag one caller's frame; the frame's own dict serializes the merge
+        var held = Tags;
+        lock (held)
             foreach (var entry in tags.Entries(context))
-                Tags.Set(entry);
+                held.Set(entry);
     }
 
     /// <summary>
@@ -391,7 +400,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// <summary>This frame's action where it stands, with this frame's Id — the snapshot surrogate; null in a
     /// goal's or a step's frame.</summary>
     public Position? Position => Action is { } action
-        ? new Position(action, Goal!, Step?.Index ?? -1, Place, _id)
+        ? new Position(action, Goal!, Step?.Index ?? -1, Place, Ident)
         : null;
 
     /// <summary>Its line in a stack trace: <c>Start.set (step 3) in /Start.goal</c>.</summary>

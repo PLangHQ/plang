@@ -32,7 +32,7 @@ public partial class @this
         // back to their Module. Restore checks the live action at the position against these.
         s.Write("actionModule", Action!.Module.Name);
         s.Write("actionName",   Action.Name);
-        s.Write("id",           _id);
+        s.Write("id",           Ident);
         return true;
     }
 }
