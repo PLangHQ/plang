@@ -304,9 +304,8 @@ public class @this : global::app.type.@this
         return default;
     }
 
-    /// <summary>In text too a kind is its name, not a type's word.</summary>
-    protected internal override global::System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
-        => Write((global::app.type.format.IWriter)writer);
+    /// <summary>The word a kind goes by is its name ("json", "decimal"), never a type's word: text writes it.</summary>
+    internal override string Face => Name;
 
     /// <summary>A kind held AS A VALUE lowers to its name — its value IS the subtype word ("md",
     /// "decimal"), so a text coercion and <c>%x!type.kind% equals "md"</c> read it as that name.

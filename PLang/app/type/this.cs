@@ -68,7 +68,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>The word a type goes by with its kind (<c>text</c>, <c>list&lt;path&gt;</c>): what text writes, and what a
     /// formal row names its type by (<c>Path: path = …</c>).</summary>
-    internal string Face => kind.IsEmpty ? Name : $"{Name}<{kind.Name}>";
+    internal virtual string Face => kind.IsEmpty ? Name : $"{Name}<{kind.Name}>";
 
     /// <summary>The name the type goes by — the word its class declares (<c>text</c>), else its
     /// <see cref="Namespace"/>. What the wire, a <c>.pr</c> slot and the prompts write.</summary>
