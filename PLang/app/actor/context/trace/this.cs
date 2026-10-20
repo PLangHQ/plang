@@ -27,9 +27,11 @@ public sealed class @this : global::app.type.item.@this
     public global::app.type.item.datetime.@this Started { get; }
 
     /// <summary>A trace starting now, of the app's <paramref name="types"/>: its own, and its time's datetime.</summary>
-    public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
+    public @this(global::app.type.list.@this types) : this(types, DateTimeOffset.UtcNow) { }
+
+    /// <summary>A trace that started at <paramref name="started"/> — its context's birth, made when first read.</summary>
+    internal @this(global::app.type.list.@this types, DateTimeOffset started) : base(types[typeof(@this)])
     {
-        var started = DateTimeOffset.UtcNow;
         Started = new(started, types[typeof(global::app.type.item.datetime.@this)]);
         Id = $"{started.Ticks}_{Guid.NewGuid().ToString("N")[..8]}";
     }

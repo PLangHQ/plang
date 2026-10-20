@@ -50,28 +50,28 @@ public sealed partial class @this : global::app.type.item.@this
     private readonly Func<global::app.actor.setting.@this> _settings;
 
     // The app's types, handed to each frame at its push: the frame's own (a call, a binding, an isolated call), its
-    // start and end (datetime), how long it ran (duration, in the standard that type holds), and its tags (dict).
-    private readonly global::app.type.@this _call;
-    private readonly global::app.type.@this _binding;
-    private readonly global::app.type.@this _isolated;
-    private readonly global::app.type.@this _datetime;
-    private readonly global::app.type.@this _duration;
-    private readonly global::app.type.@this _dict;
+    // start and end (datetime), how long it ran (duration, in the standard that type holds), and its tags (dict) — each
+    // found the first time a frame is pushed (a context that calls nothing finds none).
+    private readonly global::app.type.list.@this _types;
+    private readonly Func<global::app.type.@this> _durationOf;
+    private global::app.type.@this? _callType, _bindingType, _isolatedType, _datetimeType, _durationType, _dictType;
+    private global::app.type.@this _call => _callType ??= _types[typeof(call.@this)];
+    private global::app.type.@this _binding => _bindingType ??= _types[typeof(call.binding.@this)];
+    private global::app.type.@this _isolated => _isolatedType ??= _types[typeof(call.isolated.@this)];
+    private global::app.type.@this _datetime => _datetimeType ??= _types[typeof(global::app.type.item.datetime.@this)];
+    private global::app.type.@this _duration => _durationType ??= _durationOf();
+    private global::app.type.@this _dict => _dictType ??= _types[typeof(global::app.type.item.dict.@this)];
 
     /// <summary>A context's calls, of the app's <paramref name="types"/>, reading what they capture through its
-    /// <paramref name="settings"/>; <paramref name="audit"/> is where every error they observe is kept. How long a
-    /// frame ran is a value of the <paramref name="duration"/> type.</summary>
-    public @this(global::app.type.list.@this types, global::app.type.@this duration,
-        Func<global::app.actor.setting.@this> settings, global::app.error.list.@this audit) : base(types[typeof(@this)])
+    /// <paramref name="settings"/>; <paramref name="audit"/> makes where every error they observe is kept, when the
+    /// first is. How long a frame ran is a value of the <paramref name="duration"/> type, found at the first push.</summary>
+    public @this(global::app.type.list.@this types, Func<global::app.type.@this> duration,
+        Func<global::app.actor.setting.@this> settings, Func<global::app.error.list.@this> audit) : base(types[typeof(@this)])
     {
-        _call = types[typeof(call.@this)];
-        _binding = types[typeof(call.binding.@this)];
-        _isolated = types[typeof(call.isolated.@this)];
-        _datetime = types[typeof(global::app.type.item.datetime.@this)];
-        _duration = duration;
-        _dict = types[typeof(global::app.type.item.dict.@this)];
+        _types = types;
+        _durationOf = duration;
         _settings = settings;
-        Audit = audit;
+        _audit = audit;
     }
 
     /// <summary>What this stack captures (<c>%!app.call.setting%</c>), as its settings have it now — a read is
@@ -96,7 +96,11 @@ public sealed partial class @this : global::app.type.item.@this
     /// See <see cref="global::app.error.list.@this"/> for thread-safety + lifecycle.
     /// </summary>
     [global::app.LlmBuilder]
-    public global::app.error.list.@this Audit { get; }
+    public global::app.error.list.@this Audit
+        => _audited ?? System.Threading.Interlocked.CompareExchange(ref _audited, _audit(), null) ?? _audited;
+    // the errors, made when the first is observed or the list is asked; held by reference, the first made kept
+    private global::app.error.list.@this? _audited;
+    private readonly Func<global::app.error.list.@this> _audit;
 
     /// <summary>
     /// Optional Variables source for diff capture — the store a Call captures when pushed with none of its own

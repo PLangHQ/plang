@@ -24,7 +24,7 @@ public static class TestCalls
     public static Calls Stack(global::app.@this app, System.Func<global::app.actor.setting.@this> settings, int maxDepth = 1500)
     {
         var context = app.actor.list.User.Context;
-        return new Calls(app.type.list, app.type.list[new global::app.type.@this("duration", "short"), context], settings,
-            new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)])) { MaxDepth = maxDepth };
+        return new Calls(app.type.list, () => app.type.list[new global::app.type.@this("duration", "short"), context], settings,
+            () => new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)])) { MaxDepth = maxDepth };
     }
 }

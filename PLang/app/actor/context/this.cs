@@ -21,14 +21,20 @@ public sealed class @this : IDisposable
     /// <summary>
     /// Unique identifier for this execution context.
     /// </summary>
-    public string Id { get; }
+    public string Id => _id ?? System.Threading.Interlocked.CompareExchange(ref _id, Guid.NewGuid().ToString("N")[..12], null) ?? _id;
+    // made when first read; one id however many read it first at once
+    private string? _id;
 
     /// <summary>
     /// Per-context trace identity. Born with the Context. Used to group diagnostic
     /// output (trace JSON, LLM debug files) under a single id for one execution.
     /// Accessible from PLang as <c>%!trace.id%</c>.
     /// </summary>
-    public TraceContext Trace { get; }
+    public TraceContext Trace
+        => _trace ?? System.Threading.Interlocked.CompareExchange(ref _trace, new TraceContext(App.type.list, _born), null) ?? _trace;
+    // the trace, made when first read, starting at this context's birth; held by reference, the first made kept
+    private TraceContext? _trace;
+    private readonly DateTimeOffset _born = DateTimeOffset.UtcNow;
 
     /// <summary>
     /// Reference to the app.
@@ -125,9 +131,7 @@ public sealed class @this : IDisposable
     public @this(app.@this app, ActorType owner, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null,
         global::app.type.item.path.file.filesystem.@this? fileSystem = null)
     {
-        Id = Guid.NewGuid().ToString("N")[..12];
         App = app;
-        Trace = new(app.type.list);
         Actor = owner;
         FileSystem = fileSystem ?? parent?.FileSystem ?? app.FileSystem;
         Variable = variables ?? new Variables(this);
@@ -139,8 +143,8 @@ public sealed class @this : IDisposable
         // Stamp context on Variables (propagates to all existing Data)
         Variable.Context = this;
         // a frame's values are the app's types; how long it ran is written short
-        call = new(app.type.list, app.type.list[new global::app.type.@this("duration", "short"), this],
-            () => Setting, new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
+        call = new(app.type.list, () => app.type.list[new global::app.type.@this("duration", "short"), this],
+            () => Setting, () => new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
 
         // Register context variables on the Variables
         RegisterContextVariables();
@@ -156,8 +160,8 @@ public sealed class @this : IDisposable
         // All context variables are lazy — context has app, fetch at request time. The goal, step, error, test and
         // channels in play are the app's shortcuts (/system/shortcut/: %!goal%, %!step%, %!error%, %!test%,
         // %!channel%), each reading its asker's place through the app.
-        vars.Set(new data.DynamicData("!app", asker => asker.Ok(App), this));
-        vars.Set(new data.DynamicData("!context", asker => asker.Ok(this), this));
+        vars.Born(new data.DynamicData("!app", asker => asker.Ok(App), this));
+        vars.Born(new data.DynamicData("!context", asker => asker.Ok(this), this));
     }
 
     // --- Value births ---

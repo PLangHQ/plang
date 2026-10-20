@@ -73,6 +73,10 @@ public partial class @this
             asker => asker.Ok((asker.Actor.Identity ?? asker.Actor.DefaultIdentity)?.PublicKey), context);
     }
 
+    /// <summary>A variable a context is born holding (<c>%!app%</c>, <c>%!context%</c>) — placed as the memory's own are,
+    /// before anything runs in it: no frame holds a name yet and nothing is bound to a set, so it is no set.</summary>
+    internal void Born(data.@this value) => _variables[value.Name] = value;
+
     /// <summary>
     /// Stores a Data under its own Data.Name.
     /// Convenience wrapper — the name comes from value.Name.

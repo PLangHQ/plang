@@ -54,9 +54,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// Per-actor permission view — signed grants on paths, keyed by verb
     /// + sub-options. <c>Find/Add/Revoke</c>. Routes "y" grants to an
     /// in-memory list (live for the App's lifetime) and "a" grants to the
-    /// actor's permission setting, saved in the settings' store.
+    /// actor's permission setting, saved in the settings' store. Made when first asked (an actor that is asked for no
+    /// permission holds none); held by reference, the first made kept.
     /// </summary>
-    public permission.@this Permission { get; private set; } = null!;
+    public permission.@this Permission
+        => _permission ?? System.Threading.Interlocked.CompareExchange(ref _permission, new permission.@this(this), null) ?? _permission;
+    private permission.@this? _permission;
 
     private readonly global::app.channel.list.@this _channels;
 
@@ -68,11 +71,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [global::app.LlmBuilder]
     public global::app.channel.list.@this Channel => _channels;
 
-    private readonly global::app.task.list.@this _tasks;
+    // the tasks, made when the actor first runs or lists one; held by reference, the first made kept
+    private global::app.task.list.@this? _tasks;
 
     /// <summary>The tasks this actor runs — the goal calls made in parallel on it, each listed while it runs.</summary>
     [global::app.LlmBuilder]
-    public global::app.task.list.@this Task => _tasks;
+    public global::app.task.list.@this Task
+        => _tasks ?? System.Threading.Interlocked.CompareExchange(ref _tasks, new global::app.task.list.@this(this), null) ?? _tasks;
 
     /// <summary>
     /// Back-reference to the app.
@@ -110,9 +115,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
         Context = new context.@this(app, this, parentToken: _cts.Token);
-        Permission = new permission.@this(this);
         _channels = new global::app.channel.list.@this(app, this);
-        _tasks = new global::app.task.list.@this(this);
         // %MyIdentity% and %Identity% are not set here: the memory is born holding them (variable.list), computed from
         // whoever asks, so an actor born at any time has them at once and no set — nor anything bound to one — runs.
     }
