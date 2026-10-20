@@ -155,6 +155,31 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 21. What it does for the suites, and where the time goes now
+
+**The suites**, parent commit (`b2354e747`, item-doors when test-speed was cut) vs test-speed, back to back, `./dev.sh
+test --force` and `plang --test`, two rounds (load 12 – 26 throughout):
+
+| suite | parent | test-speed |
+|---|---|---|
+| Modules (1,295) | 1m 37s – 3m 03s | **18 – 20 s** |
+| Types | 45 s – 1m 12s | **7 s** |
+| Wire | 1m 00s – 1m 42s | **15 – 16 s** |
+| Data | 30 s – 1m 31s | **6 s** |
+| Generator | 10 – 32 s | **4 s** |
+| Runtime | 37 s – 1m 11s | **8 s** |
+| **C# sweep, wall** | **137 – 215 s** | **29 – 31 s** |
+| **`plang --test`** | **24 – 31 s** | **5.0 – 5.4 s** |
+
+Same reds on both (Wire's six carried). Roughly 5 – 7× on the C# sweep and 5× on plang.
+
+**Where the time goes now** (CPU samples, Condition looped): ~41% at GC safepoints, and the "lock slow path" (~36%) is
+uncontended locks (a ConcurrentDictionary write, the call's children) taken while the thread is parked for a GC — so
+three quarters of the samples wait on the collector. Allocation is the lever. Two measurements:
+- **Release** (the harness was Debug): run allocations −35% (Condition 147 → 96 KB, File 290 → 196 KB) — Debug makes
+  async state machines classes. Times too noisy at this load to call.
+- **GC mode**: server GC ~10 – 15% faster on the same loop; a larger gen0 (64 MB) slower; non-concurrent no change.
+
 ## 20. The opportunities list, worked: a small app at ~1.1 ms and ~195 KB
 
 3 runs × 300 per app, load 10 – 12 (steadier than the rounds before). Memory = allocated over the app's life.
