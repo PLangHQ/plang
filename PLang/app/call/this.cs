@@ -66,6 +66,8 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     }
 
     private readonly Stopwatch? _stopwatch;
+    // whether the stack keeps history, as read at this frame's push (a frame that measures nothing reads it at its end)
+    private readonly bool? _history;
     private readonly global::app.call.list.@this _stack;
     private readonly @this? _previousCurrent;
     private readonly Variables? _diffSource;
@@ -245,8 +247,9 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         }
 
         if (!Measured) return;
-        // what the stack captures, read once for this push
+        // what the stack captures, read once for this push — its history too, which the frame's end reads
         var setting = stack.Setting;
+        _history = setting.History.Value;
         if (setting.Timing.Value)
         {
             _startedAt = DateTimeOffset.UtcNow;
@@ -427,7 +430,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
 
         if (Diffs != null) _stack.Close(this);
 
-        if (!_stack.History.Value && Caller != null)
+        if (!(_history ?? _stack.History.Value) && Caller != null)
             Caller.Children.Remove(this);
 
         // AsyncLocal restore: only flip back if we're still the Current. If a parallel branch
