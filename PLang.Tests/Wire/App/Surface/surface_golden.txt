@@ -3431,6 +3431,8 @@ type app.event.binding.action
 
 type app.event.binding.clause
 
+type app.event.held
+
 type app.event.on
 
 type app.goal.list.setting

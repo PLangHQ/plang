@@ -300,6 +300,15 @@ public sealed class @this : IDisposable
 
     // --- Data wrapper cache for structural types (Goal, Step, Action) ---
     // Per-execution: same domain object → same Data wrapper within this context.
+    /// <summary>What this context binds on shared program objects (a goal, step or action every app made from the same
+    /// code runs) — none until a program binds on one: a fresh app's contexts hold nothing.</summary>
+    internal global::app.@event.held.@this.list? Held => _held;
+
+    /// <summary>The holds of this context, made at the first; held by reference, the first made kept.</summary>
+    internal global::app.@event.held.@this.list Holding
+        => _held ?? Interlocked.CompareExchange(ref _held, new(), null) ?? _held;
+    private global::app.@event.held.@this.list? _held;
+
     // Made at the first wrapper asked for; held by reference, the first made kept.
     private ConcurrentDictionary<object, data.@this>? _wrapperCache;
     private ConcurrentDictionary<object, data.@this> Wrappers

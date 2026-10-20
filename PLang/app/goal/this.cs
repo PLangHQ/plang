@@ -388,7 +388,8 @@ public sealed partial class @this
     {
         0 => context.App.goal.type,
         1 => this,
-        _ => null,
+        // what the asker's app bound on this goal, which every app made from the code shares
+        _ => global::app.@event.held.@this.Level(this, depth - 2, context),
     };
 
     /// <summary>

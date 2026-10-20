@@ -155,6 +155,36 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 19. Fewer allocations per action; a run's bindings on a shared goal are its context's
+
+Small app, Condition: run 224 → **186 KB** (≈ 251 KB end to end, was ~290). Times not comparable this round (load 10 –
+13, the same code measured 1.85 and 3.15 ms in two runs).
+
+| change | why it cost |
+|---|---|
+| `Data` passes a value through the json parser only when it is a json DOM value (`JsonElement`/`JsonNode`) | a parser object per Data built — every carrier |
+| `type.Empty` answers its kept maker without a closure (the slow path is its own method) | C# allocates the closure of captured locals on entry to the declaring method, even on the fast path |
+| the call stack checks depth as the frame's int | `caller.Depth >= MaxDepth` made two plang numbers per push |
+| `OsAbsolutePath` worked out once per process; the root check compares in place | two path strings per file gate |
+| settings: an action's option asked when nothing is set this run and no row is saved anywhere answers none at once | the settings object, two keys, an array and two NotFound carriers per unset option, per action |
+
+**Events bound on the context** (Ingi's idea, via the architect). A binding a program makes while it runs (`on.event`)
+on a shared program object — a goal, a step, a program's action — is kept on the binding actor's context (the system's
+for an app-wide one) in a `held` hold, not on the object. The object's levels end with the hold (goal/step after
+`this`, action after its own), so the event code is unchanged and nothing is asked when nothing is bound. A module's
+catalog action is the app's own and keeps its bindings; a program's clauses (attached when it is read) stay on the object.
+- *What it changes:* an app-wide binding no longer fires in another app running the same goal; and no binding outlives
+  its app — before, every request app binding on a shared goal added to that object for the life of the process. An
+  actor-scope binding never fired in another app already (`binding.For` compares the actor), so that part was only the leak.
+- *What it costs:* per event, one or two null checks per shared object's level (the context's hold table is made only
+  at the first such binding); per binding, a weak-table entry and one holder item.
+- *Test:* `OnEventTests.ABindingOnASharedGoal_IsTheBindingAppsOwn` — app-scope binding; the shared goal holds no binding,
+  another app runs it without firing it, the binding app still fires it. Red with the change reverted (`Holder` → the item;
+  mutation run, then restored). A first version bound at actor scope and stayed green under the mutation — the actor
+  check already kept it out — so the test binds app-wide.
+- The holder is an item, so the type scan listed it: `Internal` keeps it out of the decider's prompt (the decider pins
+  moved until it was), and the surface golden is re-pinned on the playground for `type app.event.held`.
+
 ## 18. A small app end to end: birth → load goal → run → dispose, ~1.5 ms and ~290 KB
 
 Measured by looping a real plang test as an app per run (`new app` + `Testing()`, `app.goal.Load`, `goal.Start`, dispose),

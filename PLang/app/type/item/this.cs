@@ -468,6 +468,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     [System.Text.Json.Serialization.JsonIgnore]
     public global::app.@event.on.@this on => _on ??= global::app.@event.on.@this.Of(GetType());
 
+    /// <summary>Starts this value with the events <paramref name="clr"/>'s values have — a value that holds another's
+    /// events in its stead (a context's hold on a shared program object) binds the same events it does.</summary>
+    private protected void EventsOf(System.Type clr) => _on = global::app.@event.on.@this.Of(clr);
+
     /// <summary>The item whose events this one's fire through at <paramref name="depth"/>, outermost first — the
     /// general wrapping the specific, the last being the item itself; null past the last. An item on its own has
     /// one level, itself.</summary>

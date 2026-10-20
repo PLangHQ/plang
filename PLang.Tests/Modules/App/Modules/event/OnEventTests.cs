@@ -184,6 +184,34 @@ public class OnEventTests
     }
 
     [Test]
+    public async Task ABindingOnASharedGoal_IsTheBindingAppsOwn()
+    {
+        // a goal read once is run by every app made from the same code (the program cache shares the object): what
+        // one app binds on it while it runs is that app's — app-wide here, so the actor alone would not keep it from
+        // another app
+        Goal("Watch", Keep("seen", "%!event!item%"));
+        var target = Goal("Target");
+        var bound = await Make.Action(Ctx, "on", "event", ("Event", "%!app.goal[\"/Target\"].on.start%"), ("When", "before"),
+            ("Action", Make.Call(Ctx, "Watch")), ("Scope", "app")).Start(Ctx);
+        await bound.IsSuccess();
+
+        // the shared object itself holds nothing: a binding never outlives the app that made it
+        await Assert.That(target.on.start.before.Count).IsEqualTo(0);
+
+        await using var other = global::PLang.Tests.Session.App("/test").Testing();
+        other.goal.list.Add(target);
+        var there = other.actor.list.User.Context;
+        var ran = await target.Start(there);
+
+        await ran.IsSuccess();
+        await Assert.That((await there.Variable.Get("seen")).IsInitialized).IsFalse();
+
+        // and in the app that bound it, it still fires
+        await Make.Call(Ctx, "Target").Start(Ctx);
+        await Assert.That(await Value("seen")).IsSameReferenceAs(target);
+    }
+
+    [Test]
     public async Task AfterAnAction_TheCallReadsItsResult()
     {
         Goal("Watch", Keep("seenResult", "%!event!result%"));
