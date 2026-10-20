@@ -131,4 +131,20 @@ public class AppNodesTests
 
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("answered");
     }
+
+    // The app is a plang value a debug view dumps (the builder's `build.load` answers it into %app%, and --debug
+    // shows each step's variables). Its nodes are navigated, never walked: the asker's memory holds the app, and a
+    // dump that walked app.variable would walk the app again, without end.
+    [Test]
+    public async Task App_HeldInTheAskersMemory_IsDumped()
+    {
+        await using var app = NewApp();
+        var user = app.actor.list.User.Context;
+        await user.Variable.Set("app", user.Ok(app));
+
+        var dumped = await app.Debug(user);
+
+        await Assert.That(dumped).Contains(app.Id);
+        await Assert.That((await Read("%!app.variable%", user)).IsInitialized).IsTrue();
+    }
 }

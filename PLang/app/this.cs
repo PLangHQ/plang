@@ -147,7 +147,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// The app's goals — <c>%!app.goal%</c>, the running one: its <c>list</c> is the goals read so far (and the
     /// reading: every goal through <c>All()</c>, the goal a call names through <c>Find</c>),
     /// <c>Get(address)</c> is one goal as a result, <c>current</c> the running one, <c>type</c> the goal type.
+    /// A node is navigated, never walked by a dump: written alone it is the asker's list, and the asker's
+    /// memory can hold the app (JsonIgnore keeps it out of the app's Debug view, as for every node below).
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.node.current.@this<Goal, global::app.goal.list.@this> goal { get; }
 
     /// <summary>
@@ -180,18 +183,21 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// the run's setting, report and session), <c>Get(address)</c> is one test as a result, <c>current</c> the test
     /// the asker is running. The app is testing while the list's session is open.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.node.current.@this<global::app.test.@this, global::app.test.list.@this> test { get; }
 
     /// <summary>
     /// The app's errors — <c>%!app.error%</c>, the one in play: <c>current</c> is the error in play (the asker's call
     /// stack's, not yet handled), <c>list</c> every error on the asker's call stack, handled or not.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.node.current.@this<global::app.error.@this, global::app.error.list.@this> error { get; }
 
     /// <summary>
     /// The app's variables — <c>%!app.variable%</c>, the asker's memory (navigation's context): <c>.user</c> one
     /// variable in it. C# has no asker here: it uses <c>context.Variable</c>, and <c>app.variable.list</c> says so.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.node.@this<global::app.type.item.variable.@this, global::app.type.item.list.@this<global::app.type.item.variable.@this>> variable { get; }
 
     /// <summary>
@@ -199,6 +205,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <c>shortcut/</c> folder named by its file, read once at the first ask. <c>%!goal%</c> reads the shortcut named
     /// <c>goal</c> when there is one, before the app's member of that name.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.node.@this<global::app.shortcut.@this, global::app.shortcut.list.@this> shortcut { get; }
 
     /// <summary>
@@ -220,6 +227,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// identity, MIME and extension, and the kinds), <c>Get(name)</c> is one type as a result. A file format is a
     /// kind of the type that reads it.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.node.root.@this type { get; }
 
     /// <summary>The app that started this plang — <c>%!app.parent%</c>: its goals are called like this app's
@@ -230,6 +238,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// The app's actors — <c>%!app.actor%</c>, the one the asker acts as: its <c>list</c> is the app's two actors,
     /// System and User; <c>Get(name)</c> is one as a result, <c>current</c> the one the asker acts as.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.node.current.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
 
     // The types a step and an action start through, and a channel writes, reads and asks through — the type
