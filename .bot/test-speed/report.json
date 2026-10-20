@@ -1,0 +1,31 @@
+{
+  "branch": "test-speed",
+  "sessions": [
+    {
+      "id": "c4e2a9f1-3b7d-4f60-8e15-2a9d6c0b7e43",
+      "bot": "tester",
+      "timestamp_start": "2026-10-20T09:30:00Z",
+      "timestamp_end": "2026-10-20T10:00:00Z",
+      "intent": "Carry decision 157 (format binds its own encode/decode) onto the test-speed playground branch and continue test-speed work there.",
+      "before": {
+        "assumptions": "157 was built and verified on item-doors (C# green but Wire's six; plang 277/11) but the hook refused the tester's source commit there.",
+        "risk": "Static per-T fields are a process-wide cache, against 'no statics'; kept here by the architect's word (159)."
+      },
+      "plan": ".bot/test-speed/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/type/kind/format/this.cs", "PLang/app/type/kind/this.cs", "PLang/app/type/kind/this.Generic.cs", "PLang/app/type/list/Registry.cs", "PLang/app/type/this.cs", "PLang/app/type/item/IEncode.cs", "PLang/app/type/item/IDecode.cs", "PLang.Tests/Types/App/Types/FormatWritesItselfTests.cs", "PLang.Tests/Wire/App/Serialization/FormatEncodeContractTests.cs", "PLang.Tests/Wire/App/Surface/surface_golden.txt"],
+          "type": "move",
+          "category": "code",
+          "confidence": "high",
+          "context": "157 moved from item-doors' staged tree to test-speed (decision 159). Birth median 28-31 -> 26-29 ms."
+        }
+      ],
+      "after": {
+        "status": "157 committed on test-speed",
+        "health": "C# green but Wire's six baseline; plang 277/11",
+        "notes": "Next: section 6, the code's facts read once per process."
+      }
+    }
+  ]
+}
