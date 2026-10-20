@@ -181,15 +181,19 @@
       "id": "6b1f3c2e-8a4d-4e7b-9c21-5d0e7f3a9b14",
       "bot": "tester",
       "timestamp_start": "2026-10-20T01:44:00Z",
-      "timestamp_end": "2026-10-20T02:45:00Z",
-      "intent": "Measure why the C# tests are slow (app birth cost, TUnit parallelism, app changes) and weigh designs with Ingi",
+      "timestamp_end": "2026-10-20T05:30:00Z",
+      "intent": "Measure why the C# tests are slow (app birth cost, TUnit parallelism, app changes), weigh designs with Ingi, then build the ones he chose",
       "before": { "assumptions": "a birth is ~150 ms, dominated by Registry.Enlist (coder's numbers)", "risk": "timings distorted by the other bots' load" },
       "plan": ".bot/item-doors/tester/v1/plan.md",
       "actions": [
         { "paths": ["PLang/app/type/list/Registry.cs", "PLang/app/this.cs", "PLang/app/module/this.cs"], "type": "review", "category": "code", "confidence": "high", "context": "temporary stopwatch instrumentation to split a birth; reverted, never committed" },
-        { "paths": [".bot/item-doors/tester/test-speed.md"], "type": "create", "category": "doc", "confidence": "high", "context": "birth split by part, TUnit parallelism per mode with load, app changes per kind, design table" }
+        { "paths": [".bot/item-doors/tester/test-speed.md"], "type": "create", "category": "doc", "confidence": "high", "context": "birth split by part, TUnit parallelism per mode with load, app changes per kind, design table" },
+        { "paths": ["PLang/app/Attributes/ChoiceAttribute.cs", "PLang/app/type/list/Registry.cs", "PLang.Generators/Diagnostics/Plng005.cs", "PLang.Tests/Wire/App/Surface/surface_golden.txt"], "type": "create", "category": "code", "confidence": "high", "context": "e92111cc4: [Choice] on the 29 set classes; Enlist reads the marked classes, the property walk gone; PLNG005 at build; surface re-pinned (101)" },
+        { "paths": ["PLang/app/type/this.cs", "PLang/app/type/list/Registry.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "dd899b865: a type's facts answer themselves on first ask (108's shape); one pass of entries. First attempt (a Lazy<bool> bundle) rejected by Ingi as not OBP and rolled back" },
+        { "paths": ["PLang/app/type/list/this.cs", "PLang/app/type/list/Registry.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "328799fb1: types by class through an index; 81159279d: the guard keeps the name and class indexes as snapshots, a clash is a lookup" },
+        { "paths": ["PLang/app/module/this.cs"], "type": "decision", "category": "code", "confidence": "high", "context": "(4) module actions on first ask dropped (~2 ms after the index, would hold actions twice; decision 118); subclass kinds on first ask not built (0.6 of 3.6 ms)" }
       ],
-      "after": { "status": "table written; design under discussion with Ingi", "health": "no production change", "notes": "choice walk ~40 ms and faceted entries ~25-30 ms dominate; reading the classes ~2 ms; 15 MB allocated per birth" }
+      "after": { "status": "4 commits pushed; (3) formats and the shared code facts (§6) wait on Ingi", "health": "sweep green except 6 Wire snapshot/resume tests that fail on the tip too", "notes": "birth 90-113 → 28-30 ms median; 15.5 → 5.1 MB per birth; Types suite 39 → 14.6 s wall (quiet machine); serial CPU per test 94 → 33 ms" }
     }
   ]
 }
