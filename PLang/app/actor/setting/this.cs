@@ -16,18 +16,23 @@ public sealed class @this : IDisposable
     internal const string Table = "settings";                       // the store's table: one row per actor per setting
     private readonly @this? _parent;
     private readonly actor.context.@this _context;                  // born-with-context (not-found Data, the store's reach)
-    private readonly ConcurrentDictionary<string, data.@this> _values = new(StringComparer.OrdinalIgnoreCase);
+    // This run's values in this scope, made at the first written (most scopes — one per context — never are).
+    private ConcurrentDictionary<string, data.@this>? _values;
+    private ConcurrentDictionary<string, data.@this> Values
+        => _values ?? Interlocked.CompareExchange(ref _values, new(StringComparer.OrdinalIgnoreCase), null) ?? _values;
     private readonly global::app.actor.@this? _actor;               // an actor's own: the actor whose rows it holds
     private readonly Lazy<Task<ConcurrentDictionary<string, data.@this>>>? _rows;
     private ConcurrentDictionary<string, data.@this>? _held;        // the rows, once read
     private global::app.error.@this? _unread;                       // why the rows could not be read, when they couldn't
     // While the rows are being read, a setting read inside that (the store reading a row back) builds
     // without them — it can't wait on the read it is part of.
-    private readonly AsyncLocal<bool> _reading = new();
+    // An actor's scope only (the one that reads rows).
+    private readonly AsyncLocal<bool>? _reading;
     // What this scope built, per setting path, with the version it was built at — read-only by contract (a caller
-    // that changes a setting changes its Copy). Read from parallel branches, so concurrent.
-    private readonly ConcurrentDictionary<string, (long Version, global::app.type.item.setting.@this Built)> _built =
-        new(StringComparer.OrdinalIgnoreCase);
+    // that changes a setting changes its Copy). Read from parallel branches, so concurrent; made at the first build.
+    private ConcurrentDictionary<string, (long Version, global::app.type.item.setting.@this Built)>? _built;
+    private ConcurrentDictionary<string, (long Version, global::app.type.item.setting.@this Built)> Built
+        => _built ?? Interlocked.CompareExchange(ref _built, new(StringComparer.OrdinalIgnoreCase), null) ?? _built;
     // The settings' version — held by the root of every chain (the system's): any write anywhere moves it, so a
     // built setting knows it is stale whichever scope was written.
     private long _version;
@@ -74,6 +79,7 @@ public sealed class @this : IDisposable
     {
         _actor = actor;
         _rows = new(Read);
+        _reading = new();
     }
 
     /// <summary>Reads the saved rows of every actor up the chain, once — the app does it when it starts.
@@ -82,7 +88,7 @@ public sealed class @this : IDisposable
     public async Task<data.@this> Load()
     {
         for (@this? s = this; s != null; s = s._parent)
-            if (s._rows != null && !s._reading.Value && s._held == null)
+            if (s._rows != null && s._reading?.Value != true && s._held == null)
             {
                 s._held = await s._rows.Value;
                 // a setting built before the rows were read was built without them
@@ -133,7 +139,7 @@ public sealed class @this : IDisposable
         get
         {
             for (@this? s = this; s != null; s = s._parent)
-                if (!s._values.IsEmpty || s._held is { IsEmpty: false }) return false;
+                if (s._values is { IsEmpty: false } || s._held is { IsEmpty: false }) return false;
             return true;
         }
     }
@@ -143,15 +149,15 @@ public sealed class @this : IDisposable
     {
         for (@this? s = this; s != null; s = s._parent)
             foreach (var key in keys)
-                if (s._values.TryGetValue(key, out var hit)) return hit;
+                if (s._values is { } values && values.TryGetValue(key, out var hit)) return hit;
         return _context.NotFound(keys.Length > 0 ? keys[0] : "setting");
     }
 
     /// <summary>This run's value for <paramref name="key"/> in this scope; null clears it.</summary>
     public ValueTask<data.@this> Set(string key, data.@this? value)
     {
-        if (value is null) _values.TryRemove(key, out _);
-        else _values[key] = value;
+        if (value is null) _values?.TryRemove(key, out _);
+        else Values[key] = value;
         Move();
         return new(value ?? _context.Ok());
     }
@@ -178,7 +184,7 @@ public sealed class @this : IDisposable
         foreach (var (key, value) in values)
         {
             if (value is IDictionary<string, object?> nested) Flatten($"{path}.{key}", nested);
-            else _values[$"{path}.{key}"] = new data.@this(key, value, context: _context);
+            else Values[$"{path}.{key}"] = new data.@this(key, value, context: _context);
         }
     }
 
@@ -261,7 +267,7 @@ public sealed class @this : IDisposable
     {
         var rows = new ConcurrentDictionary<string, data.@this>(StringComparer.OrdinalIgnoreCase);
         var prefix = _actor!.Name.ToLowerInvariant() + "!";
-        _reading.Value = true;
+        _reading!.Value = true;
         // A store that can't open (an unwritable root) answers why, as any unreadable rows do: they are unread,
         // not empty — a save or remove, which needs them, answers why (Load too), and nothing writes over rows
         // that may be there.
@@ -304,9 +310,9 @@ public sealed class @this : IDisposable
             // built once per version: a read is a lookup until a setting is written somewhere (read-only by
             // contract — a caller that changes one changes its Copy)
             var version = System.Threading.Interlocked.Read(ref Root._version);
-            if (_built.TryGetValue(path, out var held) && held.Version == version) return held.Built;
+            if (_built is { } kept && kept.TryGetValue(path, out var held) && held.Version == version) return held.Built;
             var built = Build(path);
-            _built[path] = (version, built);
+            Built[path] = (version, built);
             return built;
         }
     }
@@ -364,7 +370,12 @@ public sealed class @this : IDisposable
     // (774 A: actor/setting owns the path keys, the type list owns the names — a settings class's name is
     // its namespace, its path its address, and they differ). Built once from the app's types.
     private System.Collections.Generic.Dictionary<string, System.Type>? _classes;
-    private System.Type? Class(string path) => (_classes ??= Index()).GetValueOrDefault(path);
+    // Kept by the chain's root (one per app): every scope — each context is one — reads the same index, never its own copy.
+    private System.Type? Class(string path)
+    {
+        var root = Root;
+        return (root._classes ??= root.Index()).GetValueOrDefault(path);
+    }
 
     // The code's setting classes (read once for the process), then those of types added since.
     private System.Collections.Generic.Dictionary<string, System.Type> Index()
@@ -433,7 +444,7 @@ public sealed class @this : IDisposable
         var own = Own(path);
         const string enabled = "enabled";
         for (@this? s = this; s != null; s = own && s._actor != null ? null : s._parent)
-            foreach (var (key, value) in s._values)
+            foreach (var (key, value) in (IEnumerable<KeyValuePair<string, data.@this>>?)s._values ?? [])
             {
                 if (!key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || !seen.Add(key)) continue;
                 var at = under;
@@ -459,7 +470,7 @@ public sealed class @this : IDisposable
     public @this Clone()
     {
         var clone = new @this(_context, _parent);
-        foreach (var kvp in _values) clone._values[kvp.Key] = kvp.Value;
+        foreach (var kvp in (IEnumerable<KeyValuePair<string, data.@this>>?)_values ?? []) clone.Values[kvp.Key] = kvp.Value;
         return clone;
     }
 }
