@@ -1,7 +1,7 @@
 # coder — item-doors — summary
 
 ## Version
-v3 (stage 2: one door for writing; item-doors 107–122, kind-is-type 844)
+v5 (stage 6 shaped, #1b built; earlier: v3 stage 2, v4 stage 5)
 
 ## What this is
 A value writes itself in one place, its `Output`, and writes each member through the writer's output kind:
@@ -48,9 +48,24 @@ Decisions are numbered per branch in `.bot/item-doors/architect/summary.md`.
   added member — Ingi's open question). Identity's PrivateKey is no longer navigable (a security finding the architect
   logged).
 
+- **Values born holding their type (145, 147, 148)**: families (4) values, (5) module types (f5b17dd35) and (2) runtime
+  structure (21aabdef7: actor, trace, call + binding/isolated, call.list — it takes the app's type list and hands each
+  frame its class's type — channel.list, task, task.list, module, shortcut, parent). Left: the channel types (a
+  protected `(type)` ctor on the locked channel base, Ingi's), family (1) the type circle (Ingi's; checked that a
+  self-typed "type" makes no walk loop), family (3) errors stay marked.
+
+- **Stage 6 traced and shaped (v5/plan.md; 149)**: #6 settings. Rulings so far: `Get<T>` is async (signature's Expiry and
+  size's Standard handed in by their async makers), and the node classes go. Waiting on Ingi: 2 (keep the made T as the
+  layer's value), 3 (where the address lives), 5 (a CLI typo going quiet).
+- **#1b, a list row made at its read (0af5a0aef, 49fd9084e, 8a9e1e1da, d2415292e; 149, 150)**: one door `Element(slot,
+  context)`, nothing written back; Clr hands back a C# list of its own (the same-object exit gone); `_hasWrapped` gone;
+  a write through a read row reaches the list (by sharing a raw dict; a future mutable `list<T>` would need the written
+  path to put made containers back, which is backlogged).
+
 ## Next
-- The values born with item's no-type constructor (stage 1's leftover): listed by family with a fix each, waiting on
-  the architect's order and his call on the app's Type and the "type is its own type" break.
+- dict's `_hasWrapped` (the architect asked for the same rule as list): four differences raised before changing it —
+  the built map's comparer, the `object` target, no caller edits the result, and the name stamp on read (:127).
+- #6 builds once Ingi rules 3.
 - JSON Schema as pairs (129 #2) waits on Ingi: `pair.list[System.Type]`, `json.Writer(utf8, kind)`,
   `[Format("schema")]` on type. The llm table (#3) waits on the llm-writer merge.
 - **(c2) the identity pair** — waits on Ingi's yes to the `Written` virtual on item. With it: wire's two Owns sites
@@ -71,4 +86,8 @@ public override async ValueTask Output(IWriter writer, View mode, context? conte
 
 // bytes say what they are; the writer decides how they look
 writer.Bytes(Bytes, Type.kind);
+
+// a list row is made at its read, nothing written back (list<T> overrides with T's birth)
+private protected virtual Data Element(object? slot, actor.context.@this context)
+    => slot is Data d ? d : new Data("", item.Create(slot, context), context: context);
 ```

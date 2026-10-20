@@ -117,16 +117,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private Data Slot(string key, actor.context.@this context)
     {
         var raw = _value[key];
-        if (raw is Data d)
-        {
-            // The dict key is authoritative — a nested entry value carries no name of
-            // its own on the wire (only the key rides, as the JSON property name), so a
-            // reconstructed entry borns Name="". Re-stamp the key, matching the raw-slot
-            // path below (new Data(key, …)). Without this the round-tripped entry serialises
-            // under "" — breaking both signature canonicalisation and key navigation.
-            if (d.Name != key) d.Name = key;
-            return d;
-        }
+        // The dict key is authoritative: an entry is read under its key. A stored Data is held under its key already
+        // (Put); one in a handed-in backing named otherwise (a C# dictionary's value) is answered as a copy under the
+        // key — the slot, and whoever else holds that Data, unchanged.
+        if (raw is Data d) return d.Name == key ? d : d.Copy(key);
         // Born a FRESH Data each read — never cached back. Leaving the slot raw keeps
         // the aliased backing pristine, so the CLR exit door stays same-ref.
         return new Data(key, global::app.type.item.@this.Create(raw, context), context: context);
@@ -302,6 +296,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (string.Equals(key, "@schema", System.StringComparison.OrdinalIgnoreCase))
             throw new global::app.error.AppException(
                 "'@schema' is the wire marker and cannot be a dict key.", "ReservedKey", 400);
+        // A Data is held under its key: one named otherwise (a variable's binding handed in) is held as a copy under
+        // the key, so the one who handed it keeps its own name.
+        if (slot is Data d && d.Name != key) slot = d.Copy(key);
         // A wrapped slot diverges the dict — the CLR exit door must peel. A raw scalar
         // leaves it clean (the .Clr fast path still hands the backing back).
         if (IsWrapped(slot)) _hasWrapped = true;

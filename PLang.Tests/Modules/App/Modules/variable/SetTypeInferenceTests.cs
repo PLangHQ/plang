@@ -134,6 +134,25 @@ public class SetTypeInferenceTests
         await Assert.That((await (await row.Start(context)).Value())?.ToString()).IsEqualTo("x");
     }
 
+    // A dict entry written from another variable (`set %d.a% = %x%`) is held under its key; reading it never renames
+    // x's own binding.
+    [Test]
+    public async Task Set_DictEntryFromAVariable_LeavesThatVariablesNameAlone()
+    {
+        var context = _app.actor.list.User.Context;
+        Task<global::app.data.@this> Set(string name, object? value) => global::PLang.Tests.Shared.Make.Action(context,
+            "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", name, "variable"), ("value", value)).Start(context);
+        await (await Set("%x%", "v")).IsSuccess();
+        var named = (await context.Variable.Get("x")).Name;
+        await (await Set("%d%", new Dictionary<string, object?>())).IsSuccess();
+        await (await Set("%d.a%", "%x%")).IsSuccess();
+
+        var a = await new global::app.type.item.variable.parser.@this("%d.a%", _app.type.list).Variable[0].Start(context);
+        await Assert.That((await a.Value())?.ToString()).IsEqualTo("v");
+
+        await Assert.That((await context.Variable.Get("x")).Name).IsEqualTo(named);
+    }
+
     // No copy at set: a later in-place edit of the SOURCE list is visible through
     // the plang variable (proof the backing was aliased, never walked/copied).
     [Test]
