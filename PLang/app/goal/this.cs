@@ -343,6 +343,13 @@ public sealed partial class @this
             return answer;
         try
         {
+            // the program read once for every app made from this code over this folder
+            if (await global::app.goal.program.@this.Read(pr, app) is { } shared && await shared.Value() is @this held)
+            {
+                app.goal.list.Add(held);
+                return await held.on.load.After(held, shared, context);
+            }
+
             // The .pr lands as a file reference; its value is the content its format decodes — a goal.
             var read = await pr.Read(context);
             var content = read.Success ? await read.Value() : null;

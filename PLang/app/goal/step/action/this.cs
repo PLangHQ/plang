@@ -168,11 +168,14 @@ public partial class @this
     /// events, its module's, its catalog action's (when it is another object than this one), its own.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context)
     {
-        var catalog = Module[Name] is { } found && !ReferenceEquals(found, this) ? found : null;
+        // the module as the asker's app holds it: a program is shared by every app run from it, and what a program
+        // binds on a module (%!app.module["file"].on%) is its own app's
+        var module = Seen(context);
+        var catalog = module[Name] is { } found && !ReferenceEquals(found, this) ? found : null;
         return depth switch
         {
             0 => context.App.action,
-            1 => Module,
+            1 => module,
             2 => catalog ?? this,
             3 => catalog != null ? this : null,
             _ => null,
@@ -345,6 +348,11 @@ public partial class @this
         return result;
     }
 
+    // This action's module as the asker's app holds it — the one it was read with when that app read it, else the
+    // asker's own of that name (a program read once runs in every app made from the same code), else the one it holds.
+    private global::app.module.@this Seen(actor.context.@this context)
+        => ReferenceEquals(Module.App, context.App) ? Module : context.App.module.Named(Module.Name) ?? Module;
+
     /// <summary>This action, instantiated — the live object carrying its typed parameters and
     /// Run. The action asks the module element it HOLDS for its own name; no registry re-resolves
     /// strings. A name the module doesn't carry, a property its element doesn't have (a .pr built
@@ -353,13 +361,14 @@ public partial class @this
     public (module.ICodeGenerated? Code, global::app.error.@this? Error) Instance(
         actor.context.@this context)
     {
-        if (Module[Name] is not { } element)
+        var module = Seen(context);
+        if (module[Name] is not { } element)
             return (null, global::app.error.ActionError.NotFound($"Action '{Module}.{Name}'"));
         if (Property.FirstOrDefault(p => element.Property[p.Name] == null) is { } unknown)
             return (null, new global::app.error.ActionError(
                 $"{Module}.{Name} has no property {unknown.Name}; rebuild the goal", "UnknownProperty", 400));
 
-        var code = Module.Create(Name, context);
+        var code = module.Create(Name, context);
         return code == null
             ? (null, new global::app.error.ActionError(
                 $"Action '{Module}.{Name}' does not implement ICodeGenerated", "ActionError", 500))
