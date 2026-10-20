@@ -28,7 +28,8 @@ public partial class @this : ISnapshot
             // the Data subtype (a store re-wrap loses the subtype).
             if (kvp.Value is data.DynamicData
                 || kvp.Value.Item is global::app.type.item.computed) continue;
-            s.Entries.Set(kvp.Value.Clone());
+            // under the store's key, the truth: one Data held under two names is captured under both
+            s.Entries.Set(kvp.Key, kvp.Value.Clone());
         }
     }
 
