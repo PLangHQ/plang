@@ -37,12 +37,16 @@ public sealed class @this
         public System.Collections.Generic.IReadOnlyList<global::app.type.convert.OwnedClr> Owned { get; }
         public bool Internal { get; }
         public System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>? Offer { get; }
+        /// <summary>Every name the type answers to — its name, its namespace, its aliases: what no other type may claim.</summary>
+        public string[] Claims { get; }
 
         public Type(string name, System.Type clr)
         {
             Name = name;
             Class = clr;
             Alias = Declared<System.Collections.Generic.IReadOnlyList<string>>("Alias") ?? [];
+            var space = typeof(global::app.type.item.@this).IsAssignableFrom(clr) ? global::app.type.item.@this.NamespaceOf(clr) : null;
+            Claims = [name.ToLowerInvariant(), .. space != null && !string.Equals(space, name, System.StringComparison.OrdinalIgnoreCase) ? [space] : System.Array.Empty<string>(), .. Alias];
             Owned = Declared<System.Collections.Generic.IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
             // declared by the class itself: a base that is internal (reference) leaves its subclasses (file, url) named
             Internal = clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
@@ -61,6 +65,38 @@ public sealed class @this
         => System.Threading.LazyInitializer.EnsureInitialized(ref _type, ref _gate, () => Classes
             .Select(clr => global::app.type.list.@this.NameOf(clr) is { } name ? new Type(name, clr) : null)
             .OfType<Type>().ToArray());
+
+    /// <summary>The code's types by every name they answer to and by their class — each the type's place in
+    /// <see cref="type"/>, the first that answers keeping a name. A name two classes claim is plang broken, thrown.</summary>
+    internal sealed class Index
+    {
+        public System.Collections.Generic.IReadOnlyDictionary<string, int> Name { get; }
+        public System.Collections.Generic.IReadOnlyDictionary<System.Type, int> Class { get; }
+
+        public Index(System.Collections.Generic.IReadOnlyList<Type> types)
+        {
+            var name = new System.Collections.Generic.Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase);
+            var @class = new System.Collections.Generic.Dictionary<System.Type, int>();
+            for (var at = 0; at < types.Count; at++)
+            {
+                foreach (var claim in types[at].Claims)
+                    if (name.TryGetValue(claim, out var held))
+                    {
+                        if (types[held].Class != types[at].Class)
+                            throw new System.InvalidOperationException(
+                                $"type name '{claim}' is claimed by both {types[held].Class.FullName} and {types[at].Class.FullName} — one name, one class.");
+                    }
+                    else name[claim] = at;
+                @class.TryAdd(types[at].Class, at);
+            }
+            Name = name;
+            Class = @class;
+        }
+    }
+
+    private Index? _index;
+    /// <summary>The code's types by name and by class.</summary>
+    internal Index index => System.Threading.LazyInitializer.EnsureInitialized(ref _index, ref _gate, () => new Index(type));
 
     /// <summary>A kind class, the name of the type it is a kind of (the T of its kind&lt;T&gt;), and how it is made
     /// from that type's entry.</summary>

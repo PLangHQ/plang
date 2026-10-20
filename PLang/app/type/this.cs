@@ -89,10 +89,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     [System.Diagnostics.CodeAnalysis.AllowNull]
     public global::app.type.kind.@this kind
     {
-        get => _kind;
-        init => _kind = value ?? BornKind();
+        get => _kind ?? System.Threading.Interlocked.CompareExchange(ref _kind, BornKind(), null) ?? _kind;
+        init => _kind = value;
     }
-    private readonly global::app.type.kind.@this _kind;
+    // the kind this type was born with; null until its empty kind is first asked (a type entry nothing asks of its
+    // kinds never makes one) — then made once, the first made kept: the empty kind is held and compared by reference
+    private global::app.type.kind.@this? _kind;
 
     /// <summary>This type's empty kind — a plain type mints one for its name. A kind is itself a type
     /// (<c>kind : type</c>); the empty kind answers itself here (never a new one), ending the ctor's
@@ -139,14 +141,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public @this(string name, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
     {
         Name = name.ToLowerInvariant();
-        _kind = string.IsNullOrEmpty(kind) ? BornKind() : new global::app.type.kind.@this(kind);
+        // a named kind now; the empty kind when it is first asked
+        if (!string.IsNullOrEmpty(kind)) _kind = new global::app.type.kind.@this(kind);
         Strict = strict;
         Template = template;
-        // The birth door starts pointing at the one-shot binder, which swaps itself for the closed thunk (or
-        // the decline) on first use — every later call is a bare delegate invocation, no null check. Field
-        // initializers can't reference `this`, so bind here. The "made from" answer binds the same way.
-        _lift = Bind;
-        _takes = Bind;
     }
 
     /// <summary>A type named <paramref name="name"/> whose facts fall back to <paramref name="family"/>'s
@@ -223,10 +221,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// as the <c>item</c> apex. A TYPE-SYSTEM concern, not serialization — json
     /// converts its own tokens then calls here for the leaves.
     /// </summary>
-    // The bound birth thunk. It starts as the one-shot `Bind` (set in the ctor) and self-replaces with the
-    // closed generic (or the decline) on first use — a non-ICreate entity (primitive/host name) binds a
-    // null-thunk so the collection perimeter falls to the next rung.
-    private System.Func<object?, @this, global::app.data.@this, item.@this?> _lift;
+    // The bound birth thunk: the closed generic (or the decline), bound on first use (Make) — a non-ICreate entity
+    // (primitive/host name) binds a null-thunk so the collection perimeter falls to the next rung.
+    private System.Func<object?, @this, global::app.data.@this, item.@this?>? _lift;
 
     /// <summary>
     /// A program value of this type is born: <paramref name="raw"/> made into it, through this type's
@@ -462,18 +459,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     }
 
     // The birth build — THIS type makes itself from a value, as it declares (its kind, its template), for the
-    // binding data (a decline lands on data.Fail).
-    internal item.@this? Make(object? raw, global::app.data.@this data) => _lift(raw, this, data);
-
-    // The one-shot binder: on first use it swaps the field for the closed thunk (or the decline) and forwards,
-    // so every later door call is a bare invocation.
-    private item.@this? Bind(object? raw, @this declared, global::app.data.@this data)
-    {
-        _lift = Creatable is { } clr
+    // binding data (a decline lands on data.Fail). The closed thunk (or the decline) is bound on first use: a type
+    // nothing is made of never binds one.
+    internal item.@this? Make(object? raw, global::app.data.@this data)
+        => (_lift ??= Creatable is { } clr
             ? _open.MakeGenericMethod(clr).CreateDelegate<System.Func<object?, @this, global::app.data.@this, item.@this?>>()
-            : static (_, _, _) => null;
-        return _lift(raw, declared, data);
-    }
+            : static (_, _, _) => null)(raw, this, data);
 
     // Construct a value of this type from <paramref name="raw"/> THROUGH the ICreate&lt;T&gt; family its class
     // belongs to, even when the class is a subtype of that family (a settings class : setting is
@@ -494,17 +485,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>Is a value of <paramref name="other"/>, declared this type, made into it — this type's class's own
     /// answer, asked without making (a path declared a file is; a dict declared a list is not).</summary>
-    internal bool Takes(@this other) => _takes(other);
-
-    private System.Func<@this, bool> _takes;
-
-    private bool Bind(@this other)
-    {
-        _takes = Creatable is { } clr
+    internal bool Takes(@this other)
+        => (_takes ??= Creatable is { } clr
             ? _taking.MakeGenericMethod(clr).CreateDelegate<System.Func<@this, bool>>()
-            : static _ => false;
-        return _takes(other);
-    }
+            : static _ => false)(other);
+
+    // the class's answer, bound on first ask
+    private System.Func<@this, bool>? _takes;
 
     private static bool Takes<T>(@this other)
         where T : item.@this, global::app.type.item.ICreate<T>
@@ -782,7 +769,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         : this(family.Name, kind != null ? kind.Of(family.ClrType) : family.ClrType, kind?.Name, strict, template, known: true)
     {
         _family = family;
-        _kind = kind ?? new global::app.type.kind.empty.@this(this);
+        _kind = kind;
     }
 
     /// <summary>A type whose own kind is a given <paramref name="ownKind"/> — the seam a nested kind rides
@@ -815,6 +802,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         Alias = code.Alias;
         Owned = code.Owned;
         Internal = code.Internal;
+        _claims = code.Claims;
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         if (types == null || code.Class == typeof(@this)) return;
         _offer = code.Offer;
@@ -870,14 +858,16 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>Every name this type answers to — its name, its namespace, its aliases; what no other type
     /// may claim.</summary>
-    internal IEnumerable<string> Claims
+    internal string[] Claims => _claims ??= Claiming().ToArray();
+
+    // the names this type answers to — as the code's facts read them for a type made from them, else read on first ask
+    private string[]? _claims;
+
+    private IEnumerable<string> Claiming()
     {
-        get
-        {
-            yield return Name;
-            if (Namespace != null && !string.Equals(Namespace, Name, System.StringComparison.OrdinalIgnoreCase)) yield return Namespace;
-            foreach (var alias in Alias) yield return alias;
-        }
+        yield return Name;
+        if (Namespace != null && !string.Equals(Namespace, Name, System.StringComparison.OrdinalIgnoreCase)) yield return Namespace;
+        foreach (var alias in Alias) yield return alias;
     }
 
     /// <summary>A type answers navigation as its full type — the registry's, found with the

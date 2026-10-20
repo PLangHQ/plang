@@ -8,10 +8,16 @@ namespace app.module.cache;
 /// </summary>
 public sealed class Memory : ICache
 {
-    private readonly MemoryCache _cache = new MemoryCache("StepCache_" + Guid.NewGuid().ToString("N")[..8]);
+    // The cache, opened when something is first cached: an app that caches nothing never opens one (its expiry
+    // buckets and timers), and a lookup in a cache never opened finds nothing. Opened once — a second would run
+    // timers for nothing.
+    private MemoryCache? _opened;
+    private object? _gate;
+    private MemoryCache Cache => System.Threading.LazyInitializer.EnsureInitialized(ref _opened, ref _gate,
+        () => new MemoryCache("StepCache_" + Guid.NewGuid().ToString("N")[..8]));
 
     public Task<data.@this?> GetAsync(string key, CancellationToken ct = default)
-        => Task.FromResult(_cache.Get(key) as data.@this);
+        => Task.FromResult(System.Threading.Volatile.Read(ref _opened)?.Get(key) as data.@this);
 
     public Task SetAsync(string key, data.@this value, CacheSettings settings, CancellationToken ct = default)
     {
@@ -21,13 +27,13 @@ public sealed class Memory : ICache
         else
             policy.AbsoluteExpiration = DateTimeOffset.UtcNow.AddMilliseconds(settings.DurationMs);
 
-        _cache.Set(key, value, policy);
+        Cache.Set(key, value, policy);
         return Task.CompletedTask;
     }
 
     public Task RemoveAsync(string key, CancellationToken ct = default)
     {
-        _cache.Remove(key);
+        System.Threading.Volatile.Read(ref _opened)?.Remove(key);
         return Task.CompletedTask;
     }
 
@@ -40,7 +46,7 @@ public sealed class Memory : ICache
             policy.AbsoluteExpiration = DateTimeOffset.UtcNow.AddMilliseconds(settings.DurationMs);
 
         // AddOrGetExisting returns null if the key didn't exist (meaning it was added)
-        var existing = _cache.AddOrGetExisting(key, value, policy);
+        var existing = Cache.AddOrGetExisting(key, value, policy);
         return Task.FromResult(existing == null);
     }
 }

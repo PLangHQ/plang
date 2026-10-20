@@ -40,7 +40,7 @@ public sealed partial class @this
     /// </summary>
     public global::app.type.kind.@this Kind(string type, string? kind)
     {
-        var root = Named.GetValueOrDefault(type)?.kind;
+        var root = Find(type)?.kind;
         var had = string.IsNullOrEmpty(kind) ? root : root?[kind] ?? root?.Coin(kind);
         return had is { Owner: not null } ? had
             : string.IsNullOrEmpty(kind) ? new app.type.@this(type).kind : new global::app.type.kind.@this(kind!);
@@ -90,12 +90,12 @@ public sealed partial class @this
     /// C# class. A spelled kind is not a name: <c>{text, md}</c> is asked by identity. Throws on a miss.
     /// </summary>
     public app.type.@this this[string name]
-        => name is not null && Named.TryGetValue(name, out var type) ? type
+        => name is not null && Find(name) is { } type ? type
             : throw new KeyNotFoundException($"No PLang type registered under name '{name}'.");
 
     /// <summary>True when <paramref name="name"/> names a plang type — the presence question
     /// beside the indexer, which selects and throws on a miss. No name names none.</summary>
-    public bool Contains(string name) => name is not null && Named.ContainsKey(name);
+    public bool Contains(string name) => name is not null && Find(name) != null;
 
     /// <summary>True when some type holds a kind <paramref name="name"/> names (by name, alias, MIME or extension).</summary>
     public bool HasKind(string name)
@@ -176,7 +176,7 @@ public sealed partial class @this
     // answering to the name (`{text, txt}`) is the type itself, no kind.
     private app.type.@this Full(app.type.@this type, string? name)
     {
-        var entry = Named.GetValueOrDefault(type.Name);
+        var entry = Find(type.Name);
         var kind = name == null ? null
             : entry?.kind[name] is { } held ? (held.IsEmpty ? null : held)
             : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
@@ -259,13 +259,13 @@ public sealed partial class @this
             return ("choice", options.IsEnum && options.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false) is null
                 ? null
                 : global::app.type.item.choice.set.@this.For(options, this)?.Name ?? options.Name);
-        if (typeof(app.type.item.@this).IsAssignableFrom(type) && _classed.GetValueOrDefault(type) is { } own)
+        if (typeof(app.type.item.@this).IsAssignableFrom(type) && Found(type) is { } own)
             return (own.Name, null);
         // the app's node for a concept (node<goal>, its current node) is a node
         if (typeof(app.type.node.@this).IsAssignableFrom(type)) return ("node", null);
         // a kind of a family: the family, with the kind whose values are this class (a setting class)
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && FamilyName(type) is { } family)
-            return (family, Items().FirstOrDefault(t => t.Names(family))?.kind[type]?.Name);
+            return (family, Found(family)?.kind[type]?.Name);
         // An item class is named by its own class above; a raw C# shape by the type that owns it.
         if (Items().FirstOrDefault(t => t.Owns(type)) is { } owner)
             return (owner.Name, null);
@@ -293,7 +293,7 @@ public sealed partial class @this
     /// (<c>%x.replace("a", "b")%</c>).</summary>
     internal property.list.@this Member(System.Type clr) => _member.GetOrAdd(clr, @class =>
     {
-        var owner = _classed.GetValueOrDefault(@class)?.Name ?? app.type.item.@this.NameOf(@class);
+        var owner = Found(@class)?.Name ?? app.type.item.@this.NameOf(@class);
         var made = new property.list.@this();
         var methods = new Queue<System.Reflection.MethodInfo>(@class.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void))
@@ -339,7 +339,7 @@ public sealed partial class @this
         return new property.@this
         {
             Name = char.ToLower(name[0]) + name[1..],
-            Type = new app.type.@this(typeName, Items().FirstOrDefault(t => t.Names(typeName))?.ClrType, kind),
+            Type = new app.type.@this(typeName, Found(typeName)?.ClrType, kind),
             Arguments = arguments,
             Nullable = optional,
             Owner = owner,
