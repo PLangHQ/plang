@@ -488,6 +488,38 @@
         "health": "C# green except Wire's six known snapshot reds; plang 277 pass, the same 11 reds, 12 stale.",
         "notes": "Open: channel types (Ingi), family 1 (Ingi), x's binding named 'value' via Make.Action (asked)."
       }
+    },
+    {
+      "id": "d9328458-c759-4b58-804a-e85d82818a4e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-20T11:55:36Z",
+      "timestamp_end": "2026-10-20T11:59:57Z",
+      "intent": "Audit item-doors' production diff (base 1adfb9555..b91e019b5) for OBP shape, stage by stage, with why-chains (decision 160).",
+      "before": {
+        "assumptions": "The architect's log is claims to check, not truth; read only.",
+        "risk": "84 commits and ~380 files; the shape is spread across the door, the pairs, the wire and born-whole."
+      },
+      "plan": ".bot/item-doors/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/kind/pair/list/this.cs",
+            "PLang.Generators/Diagnostics/Plng006.cs",
+            "PLang/app/type/item/wire/this.cs",
+            "PLang/app/type/item/this.cs",
+            "PLang/app/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Audit of the production diff by stage, each finding traced to its cause. Read only. Three helper agents covered born-whole, members/tokens/fixes and the pair-site count; key claims spot-checked."
+        }
+      ],
+      "after": {
+        "status": "audit written: .bot/item-doors/codeanalyzer/audit.md",
+        "health": "keep the branch; fix at the root in stages 1, 2 pairs, 2 wire, 5 and two patches",
+        "notes": "verdict fail"
+      }
     }
   ]
 }
