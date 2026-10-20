@@ -55,4 +55,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Replace(
         System.Func<System.Threading.Tasks.ValueTask<global::app.type.item.@this?>> previous)
         => await previous() is @this before && !ReferenceEquals(before._run, _run) ? new @this(_run, before) : this;
+
+    /// <summary>A task keeps the task it replaces.</summary>
+    internal override bool Keeps => true;
 }

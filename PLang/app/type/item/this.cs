@@ -347,6 +347,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual System.Threading.Tasks.ValueTask<@this> Replace(System.Func<System.Threading.Tasks.ValueTask<@this?>> previous)
         => new(this);
 
+    /// <summary>Whether this value keeps what it replaces (<see cref="Replace"/> answers otherwise than itself) — a
+    /// write asks first, so a value that doesn't is written without the previous one being offered.</summary>
+    internal virtual bool Keeps => false;
+
     /// <summary>This value as named rows — each a Data under its name: a list its rows (a goal call's written
     /// parameters), a dict its entries (parameters given as one value at run); either may hold none. A single value is
     /// no rows at all: null.</summary>

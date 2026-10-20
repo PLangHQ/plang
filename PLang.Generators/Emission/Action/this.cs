@@ -193,7 +193,8 @@ public static class @this
                 {
                     var app = context.App!;
                     var __step = action?.Step;
-                    var __callFrames = context.call?.Current?.Chain ?? (System.Collections.Generic.IReadOnlyList<global::app.call.@this>)System.Array.Empty<global::app.call.@this>();
+                    // the frame the run is in: its chain is made only when an error carries it
+                    var __at = context.call?.Current;
 
             """);
 
@@ -215,7 +216,7 @@ public static class @this
                                 if (__seed?.{{name}} is not { IsInitialized: true } &&
                                     (action["{{lower}}"]?.Value?.IsNull ?? true))
                                     return (null, new global::app.error.ServiceError(
-                                        "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
+                                        "'{{lower}}' must have a value", __step, __at?.Chain ?? (System.Collections.Generic.IReadOnlyList<global::app.call.@this>)System.Array.Empty<global::app.call.@this>(), "ValueRequired", 400));
 
                     """);
             }
@@ -238,7 +239,7 @@ public static class @this
                                 if (__seed?.{{prop.Name}} is not { IsInitialized: true } &&
                                     action["{{lower}}"]?.Value == null)
                                     return (null, new global::app.error.ServiceError(
-                                        "Required property '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredProperty", 400));
+                                        "Required property '{{lower}}' is missing or null", __step, __at?.Chain ?? (System.Collections.Generic.IReadOnlyList<global::app.call.@this>)System.Array.Empty<global::app.call.@this>(), "MissingRequiredProperty", 400));
 
                     """);
             }
@@ -333,7 +334,6 @@ public static class @this
                     var app = context.App!;
                     __action = action;
                     var __step = action?.Step;
-                    var __callFrames = context.call?.Current?.Chain ?? (System.Collections.Generic.IReadOnlyList<global::app.call.@this>)System.Array.Empty<global::app.call.@this>();
 
             """);
 
@@ -374,7 +374,7 @@ public static class @this
                     var action = __action;
                     var app = context.App!;
                     var __step = action?.Step;
-                    var __callFrames = context.call?.Current?.Chain ?? (System.Collections.Generic.IReadOnlyList<global::app.call.@this>)System.Array.Empty<global::app.call.@this>();
+                    var __at = context.call?.Current;
 
             """);
         if (info.ImplementsIChannel)
@@ -392,7 +392,7 @@ public static class @this
                             Channel = (context.Actor ?? app.actor.list.User).Channel.Get(string.IsNullOrEmpty(__channelName) ? global::app.channel.list.@this.Output : __channelName);
                             if (Channel == null)
                                 return new global::app.error.ServiceError(
-                                    $"Channel '{__channelName ?? "output"}' not found", __step, __callFrames, "ChannelNotFound", 404);
+                                    $"Channel '{__channelName ?? "output"}' not found", __step, __at?.Chain ?? (System.Collections.Generic.IReadOnlyList<global::app.call.@this>)System.Array.Empty<global::app.call.@this>(), "ChannelNotFound", 404);
                         }
 
                 """);

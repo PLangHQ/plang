@@ -192,7 +192,8 @@ public partial class @this
             value = bound.IsInitialized ? bound.Copy(name) : _context.NotFound(name);
         }
         // what the value becomes where the name's value was (a task keeps the task written before it)
-        if (value is data.@this written)
+        // (asked only of a value that keeps what it replaces: the previous value is offered through a closure)
+        if (value is data.@this { Item.Keeps: true } written)
             value = await written.Replace(async () => (await Get(name)).Peek());
 
         // The name is a variable's root; a write deeper in is the variable's own (variable.Set).
