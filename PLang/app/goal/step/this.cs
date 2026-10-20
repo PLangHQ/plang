@@ -93,6 +93,12 @@ public sealed partial class @this
     [Debug]
     public global::app.warning.list.@this Warning { get; init; } = new();
 
+    /// <summary>Why the build could not write this step: the reasons that still refuse it after the step-fixer's
+    /// retry, one cause each in its <c>list</c>. Null for a step that built. A goal holding a step with an Error
+    /// does not start.</summary>
+    [Debug]
+    public global::app.error.@this? Error { get; internal set; }
+
     /// <summary>The goal this step belongs to — a BIRTH FACT. The reader constructs the goal shell
     /// first and hands it to each step at construction, so this is set once and never reassigned.
     /// <c>init</c> is the enforcement: there is no stamping it in afterwards, and no repair getter.</summary>

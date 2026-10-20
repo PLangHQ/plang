@@ -282,7 +282,7 @@
     },
     {
       "index": 4,
-      "text": "call Compile, on error call HandleBuildFailure",
+      "text": "goal.call(Name=\"Compile\"); on.error(Key=\"StepsRefused\", Recovery=[goal.call(Name=\"LeaveBroken\")]); on.error(Recovery=[goal.call(Name=\"HandleBuildFailure\")])",
       "line": {
         "number": 11
       },
@@ -298,10 +298,45 @@
               },
               "value": "Compile"
             }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "StepsRefused"
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "LeaveBroken"
+                    }
+                  ]
+                }
+              ]
+            }
           ],
           "default": [
             {
-              "name": "parallel",
+              "name": "ignore",
               "type": {
                 "name": "bool"
               },
@@ -330,15 +365,6 @@
                         "name": "goal"
                       },
                       "value": "HandleBuildFailure"
-                    }
-                  ],
-                  "default": [
-                    {
-                      "name": "parallel",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": false
                     }
                   ]
                 }
@@ -1526,8 +1552,6 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/system/builder/BuildGoal/Start.goal",
-      "prPath": "/system/builder/BuildGoal/.build/start.pr",
       "hash": "00f17ac1a74715655db1ce9f1fe9ebd980b19e50098a297e61d0b016e27c65a3"
     },
     {
@@ -1909,8 +1933,6 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/system/builder/BuildGoal/Start.goal",
-      "prPath": "/system/builder/BuildGoal/.build/start.pr",
       "hash": "2b98366c0db2a16a1c4cbb3d75aafbd92c6dbad620c4be38c16e9bc23fb8ab48"
     },
     {
@@ -2308,8 +2330,6 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/system/builder/BuildGoal/Start.goal",
-      "prPath": "/system/builder/BuildGoal/.build/start.pr",
       "hash": "9433f48c6abe6f31837b58ab778286a8382c50291bf8f8714b96f5d7365c23ee"
     },
     {
@@ -2477,7 +2497,7 @@
         },
         {
           "index": 3,
-          "text": "call Compile, on error call HandleBuildFailure",
+          "text": "goal.call(Name=\"Compile\"); on.error(Key=\"StepsRefused\", Recovery=[goal.call(Name=\"LeaveBroken\")]); on.error(Recovery=[goal.call(Name=\"HandleBuildFailure\")])",
           "line": {
             "number": 68
           },
@@ -2493,10 +2513,45 @@
                   },
                   "value": "Compile"
                 }
+              ]
+            },
+            {
+              "module": "on",
+              "name": "error",
+              "property": [
+                {
+                  "name": "Key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "StepsRefused"
+                },
+                {
+                  "name": "Recovery",
+                  "type": {
+                    "name": "list",
+                    "kind": "action"
+                  },
+                  "value": [
+                    {
+                      "module": "goal",
+                      "name": "call",
+                      "property": [
+                        {
+                          "name": "Name",
+                          "type": {
+                            "name": "goal"
+                          },
+                          "value": "LeaveBroken"
+                        }
+                      ]
+                    }
+                  ]
+                }
               ],
               "default": [
                 {
-                  "name": "parallel",
+                  "name": "ignore",
                   "type": {
                     "name": "bool"
                   },
@@ -2525,15 +2580,6 @@
                             "name": "goal"
                           },
                           "value": "HandleBuildFailure"
-                        }
-                      ],
-                      "default": [
-                        {
-                          "name": "parallel",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": false
                         }
                       ]
                     }
@@ -2895,9 +2941,7 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/system/builder/BuildGoal/Start.goal",
-      "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "7fe72a52c2a0099e0061db12f1d753dfe16fdf2efce639212dd1787625581187"
+      "hash": "330882f4fc67b23907129602f41b4374ef25cd9289876d75c0e888cd70b9ffe8"
     },
     {
       "name": "SourceError",
@@ -3277,8 +3321,6 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/system/builder/BuildGoal/Start.goal",
-      "prPath": "/system/builder/BuildGoal/.build/start.pr",
       "hash": "c157fda8132a8c4c73a150e0ceab486e4a19b8c804b649d66b0e04ab9da633f1"
     },
     {
@@ -3527,13 +3569,109 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/system/builder/BuildGoal/Start.goal",
-      "prPath": "/system/builder/BuildGoal/.build/start.pr",
       "hash": "7cc7495e97295315ff0409e4eeee37a6d2d113ef7eb2cf6e0efa88d1bdd95201"
+    },
+    {
+      "name": "LeaveBroken",
+      "comment": "Steps still refused after the retry: each holds why (its Error), and the goal is saved with them broken — its\n.pr writes them, and the goal will not start. The build goes on to the goal's other steps and other goals, and\nends failed (Build) naming this goal. Nothing is thrown here: the steps that built keep their code.",
+      "step": [
+        {
+          "index": 0,
+          "text": "list.add(ListName=%brokenGoals%, Value=\"%goal.Path%: %!error.Details.count% step(s) broken: %!error.Details.steps%; fix the words and build again\")",
+          "line": {
+            "number": 96
+          },
+          "code": [
+            {
+              "module": "list",
+              "name": "add",
+              "property": [
+                {
+                  "name": "ListName",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%brokenGoals%",
+                  "variable": [
+                    {
+                      "text": "%brokenGoals%",
+                      "code": [
+                        {
+                          "variable": "brokenGoals"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text",
+                    "template": "plang"
+                  },
+                  "value": "%goal.Path%: %!error.Details.count% step(s) broken: %!error.Details.steps%; fix the words and build again",
+                  "variable": [
+                    {
+                      "text": "%goal.Path%",
+                      "code": [
+                        {
+                          "variable": "goal"
+                        },
+                        {
+                          "property": "Path"
+                        }
+                      ]
+                    },
+                    {
+                      "text": "%!error.Details.count%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Details"
+                        },
+                        {
+                          "property": "count"
+                        }
+                      ]
+                    },
+                    {
+                      "text": "%!error.Details.steps%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Details"
+                        },
+                        {
+                          "property": "steps"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "at",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": -1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "hash": "ca9fdcb5c7ba8c9a29f7ff0c3e8291eb2dff02bd2396f429d34d945c6651f368"
     }
   ],
   "visibility": "Public",
-  "path": "/system/builder/BuildGoal/Start.goal",
-  "prPath": "/system/builder/BuildGoal/.build/start.pr",
-  "hash": "0ef6dcc3a38143e7caa19b914d893dfaf16a406285128aad466cdb08019ab14e"
+  "file": "Start.goal",
+  "hash": "cba1c94e62c6f472883f9c1f4d992ee5bc9f6dc20c649cd1a8f63dbbdf05518b"
 }

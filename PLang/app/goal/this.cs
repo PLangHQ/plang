@@ -383,6 +383,10 @@ public sealed partial class @this
         if (context.CancellationToken.IsCancellationRequested)
             return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));
 
+        // A goal holding a step the build could not fix does not start: it answers why, before its frame and before
+        // anything bound to its start, so nothing of it ran.
+        if (Broken() is { } broken) return context.Error(broken);
+
         // The goal's own frame spans its whole run — what is bound before and after it, and its steps — so the
         // goal in play is this one throughout. The frame outlives any single step, so things like `debug.tag`
         // can attach metadata to a scope later steps still read (up via Current.Caller). A goal may call
@@ -398,6 +402,19 @@ public sealed partial class @this
         var answer = await on.start.Before(this, context);
         var result = answer is { Success: false } or { Handled: true } ? answer : await Enter(context);
         return await on.start.After(this, result, context);
+    }
+
+    // Why this goal cannot start: it holds steps the build could not fix. Its own message names the goal's path and
+    // the steps' indexes; each broken step's error rides whole as a cause — its text and its reasons are there.
+    // Null when every step built.
+    private global::app.error.@this? Broken()
+    {
+        var steps = Step.Items().Where(s => s.Error != null).ToList();
+        if (steps.Count == 0) return null;
+        return new global::app.error.@this(
+            $"goal '{Path}' has {steps.Count} broken step(s): {string.Join(", ", steps.Select(s => s.Index))}; fix the words and build again",
+            "GoalBroken", 400)
+        { Goal = this, list = steps.Select(s => s.Error!).ToList() };
     }
 
     // Starts the steps, and folds a return that ends here — or, for a goal of another app, runs it there.

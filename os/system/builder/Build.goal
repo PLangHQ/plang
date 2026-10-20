@@ -4,13 +4,18 @@
 Build
 
 - set default %path% = "/"
-- set %traceGoals% = []
+/ The goals saved with steps the build could not fix are collected in %brokenGoals% (BuildGoal's LeaveBroken adds
+/ each) and named at the end. Started here, in an existing step: a step is matched to its earlier build by its
+/ position, so a step inserted among the others would make every one after it build again.
+- variable.set(Name=%traceGoals%, Value=[]); variable.set(Name=%brokenGoals%, Value=[])
 - set channel "builder" call BuilderChannel
 - call EmitBuildEvent kind="build-path", path=%path%
 - build.load, write to %app%
 - build.goals path=%path%, write to %goals%
 - call EmitBuildEvent kind="goals-found", goals=%goals%
-- foreach %goals%, call BuildGoal goal=%item%
+- loop.foreach(Collection=%goals%); goal.call(Name="/system/builder/BuildGoal", Parameter={goal: %item%})
 - build.unreached
 - save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'
 - build.appSave
+/ A goal was saved with broken steps: the build ends failed, and its last lines name each such goal.
+- condition.if(Left=%brokenGoals.count%, Operator=">", Right=0) { list.join(ListName=%brokenGoals%, Separator="\n"); variable.set(Name=%brokenLines%, Value=%!data%); error.throw(Message="%brokenLines%", Key="StepsBroken", Status=400) }

@@ -105,6 +105,7 @@ WriteOut
 | `code` | Code[] | the step's actions (note: **`code`**, not `actions`) |
 | `child` | Step[]? | the step's body steps — present only on a step whose code is an unclosed condition (see below) |
 | `warning` | Warning[]? | build-time notes, e.g. a `Reopened` warning when the step was rebuilt because the catalog changed under it |
+| `error` | `{key, message, list: [{key, message}]}`? | the step the build could not fix (still refused after the step-fixer's retry): it has no `code`, and `list` holds the reasons. The goal holding it does not start (`GoalBroken`); the next build reads the step again |
 | `waitForExecution` | bool | whether to await completion (default true) |
 
 ### Code (an action)

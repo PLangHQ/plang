@@ -13,6 +13,9 @@ public sealed partial class @this
     public async System.Threading.Tasks.Task<global::app.error.@this?> Validate(
         global::app.actor.context.@this context)
     {
+        // A step the build could not fix has no actions and says why (Error): that is its verdict. It is saved so
+        // — the goal that holds it does not start — rather than the whole goal refused at save.
+        if (Error != null) return null;
         var invalid = await Code.Validate(context);
         if (invalid == null) return null;
         var causes = new List<global::app.error.@this> { invalid };
