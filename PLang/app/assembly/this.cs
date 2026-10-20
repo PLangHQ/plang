@@ -123,6 +123,108 @@ public sealed class @this
                     readers.GetValueOrDefault($"{clr.Namespace}.serializer")?.GetConstructor(System.Type.EmptyTypes));
     }
 
+    /// <summary>What the code gives one type as its kinds, in the order the type holds them: its kind classes, the
+    /// formats its class declares, its element kinds (a list's), the closed sets (choice's), its family subclasses.</summary>
+    internal sealed class Owned
+    {
+        public System.Collections.Generic.List<Kind> Kind { get; } = new();
+        public System.Collections.Generic.List<(Format Class, global::app.Attributes.FormatAttribute Attribute)> Format { get; } = new();
+        public bool Element { get; set; }
+        public System.Collections.Generic.List<(Choice Class, string Name)> Choice { get; } = new();
+        public System.Collections.Generic.List<Subclass> Subclass { get; } = new();
+    }
+
+    /// <summary>The code's kinds, read once: each type's own (by the name the type goes by), and every key a kind
+    /// answers to — its name, aliases, MIMEs and extensions, its type's own format's too — to the types that may hold
+    /// one by it. A lookup by key asks only those types. Reading them checks what the code may not say: a format no
+    /// type reads, a choice that is no closed set, a set name two classes claim, a MIME or extension two formats
+    /// answer to — plang broken, thrown.</summary>
+    internal sealed class Kinds
+    {
+        public System.Collections.Generic.IReadOnlyDictionary<string, Owned> Owned { get; }
+        public System.Collections.Generic.IReadOnlyDictionary<string, string[]> Key { get; }
+
+        public Kinds(@this code)
+        {
+            var named = new System.Collections.Generic.Dictionary<string, Type>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (var type in code.type)
+            {
+                named.TryAdd(type.Name, type);
+                named.TryAdd(global::app.type.item.@this.NamespaceOf(type.Class), type);
+                foreach (var alias in type.Alias) named.TryAdd(alias, type);
+            }
+            var owned = new System.Collections.Generic.Dictionary<string, Owned>(System.StringComparer.OrdinalIgnoreCase);
+            var key = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.HashSet<string>>(System.StringComparer.OrdinalIgnoreCase);
+            var format = new System.Collections.Generic.Dictionary<string, (string Owner, string Kind)>(System.StringComparer.OrdinalIgnoreCase);
+            Owned Of(string owner) => owned.TryGetValue(owner, out var held) ? held : owned[owner] = new Owned();
+            // what a kind answers to, recorded for its owner; a MIME or extension is one format's
+            void Keyed(string owner, global::app.type.kind.@this kind)
+            {
+                foreach (var each in kind.Keys.Concat(kind.Extension).Concat(kind.Extension.Select(e => e.TrimStart('.'))))
+                    (key.TryGetValue(each, out var owners) ? owners : key[each] = new(System.StringComparer.OrdinalIgnoreCase)).Add(owner);
+                foreach (var each in kind.Mime.Concat(kind.Extension))
+                    if (format.TryGetValue(each, out var taken) && !(taken.Owner == owner && taken.Kind == kind.Name))
+                        throw new System.InvalidOperationException($"'{each}' is already the format '{taken.Owner}{(taken.Kind.Length == 0 ? "" : "/" + taken.Kind)}' — "
+                            + $"'{owner}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.");
+                    else format[each] = (owner, kind.Name);
+            }
+            // each kind's facts read once, from a kind made over a type by its name alone
+            static global::app.type.@this Bare(string name) => new(name);
+
+            foreach (var kind in code.kind)
+                if (named.GetValueOrDefault(kind.Owner) is { } owner)
+                {
+                    Of(owner.Name).Kind.Add(kind);
+                    Keyed(owner.Name, (global::app.type.kind.@this)kind.Made.Invoke([Bare(owner.Name)]));
+                }
+            foreach (var declared in code.format)
+            {
+                // the type that reads a format: its class's, else the list's for a list of things (a list of actions)
+                if ((named.GetValueOrDefault(declared.Name)
+                     ?? (typeof(global::app.type.item.list.@this).IsAssignableFrom(declared.Class) ? named.GetValueOrDefault("list") : null)) is not { } owner)
+                    throw new System.InvalidOperationException($"{declared.Class.FullName} declares a format, but no type reads it — it is no type of its own "
+                        + "and the list names none for it.");
+                foreach (var attribute in declared.Attribute)
+                {
+                    Of(owner.Name).Format.Add((declared, attribute));
+                    Keyed(owner.Name, (global::app.type.kind.@this)declared.Made.Invoke([attribute, Bare(owner.Name)]));
+                }
+            }
+            if (code.Clr == typeof(global::app.type.item.list.@this).Assembly
+                && named.GetValueOrDefault(global::app.type.item.@this.NameOf(typeof(global::app.type.item.list.@this))) is { } list)
+                Of(list.Name).Element = true;
+            if (code.choice.Count > 0 && named.GetValueOrDefault("choice") is { } choice)
+            {
+                var sets = new System.Collections.Generic.Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var marked in code.choice)
+                {
+                    if (global::app.type.item.choice.set.@this.NameOf(marked.Class) is not { } name)
+                        throw new System.InvalidOperationException($"{marked.Class.FullName} is marked a choice but is no closed set — no enum members, no Choices(context?), no kinds of its own.");
+                    // one name, one set: a second class named as a set is (two enums both `level`) would take its reader
+                    if (sets.TryGetValue(name, out var taken) && taken != marked.Class)
+                        throw new System.InvalidOperationException($"choice set name '{name}' is claimed by both {taken.FullName} and {marked.Class.FullName} — one name, one set.");
+                    sets[name] = marked.Class;
+                    Of(choice.Name).Choice.Add((marked, name));
+                    (key.TryGetValue(name, out var owners) ? owners : key[name] = new(System.StringComparer.OrdinalIgnoreCase)).Add(choice.Name);
+                }
+            }
+            // a family subclass is one of its family's kinds unless the family already holds a kind by its name
+            foreach (var subclass in code.subclass)
+                if (named.GetValueOrDefault(subclass.Family) is { } family)
+                {
+                    if (key.TryGetValue(subclass.Kind, out var holders) && holders.Contains(family.Name)) continue;
+                    Of(family.Name).Subclass.Add(subclass);
+                    Keyed(family.Name, (global::app.type.kind.@this)subclass.Made.Invoke([subclass.Kind, subclass.Class, Bare(family.Name)]));
+                }
+            Owned = owned;
+            Key = key.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray(), System.StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    private Kinds? _kinds;
+    /// <summary>The code's kinds: each type's own, and the types a key may name one of.</summary>
+    internal Kinds kinds => _kinds ??= new Kinds(this);
+
     /// <summary>An action class: its module (the namespace segment after the base), its name, and whether its result
     /// may be cached.</summary>
     internal readonly record struct Action(string Module, string Name, System.Type Class, bool Cacheable);

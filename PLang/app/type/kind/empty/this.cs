@@ -19,12 +19,39 @@ public sealed class @this : global::app.type.kind.@this
     private readonly object _gate = new();
     // The type's own format — its class's [Format("", …)]: plain text is {text}, opaque bytes {binary}.
     private global::app.type.kind.@this? _format;
+    // Whether the kinds the code gives the type are held: 0 not yet, 1 being held (a kind read while they are — the
+    // same thread — sees those held so far), 2 held.
+    private int _ready;
 
     /// <summary>The empty kind of <paramref name="owner"/>, the type it is born by.</summary>
     public @this(global::app.type.@this owner, global::app.type.kind.@this? format = null) : base("")
     {
         _owner = owner;
         _format = format;
+    }
+
+    // The kinds the code gives the type, held the first time any of its kinds is asked: a type nothing asks for its
+    // kinds never makes them. The list the type is an entry of holds them; any other type holds what it was given.
+    private void Ready()
+    {
+        if (System.Threading.Volatile.Read(ref _ready) == 2) return;
+        lock (_gate)
+        {
+            if (_ready != 0) return;
+            _ready = 1;
+            _owner.Types?.Enlist(_owner);
+            System.Threading.Volatile.Write(ref _ready, 2);
+        }
+    }
+
+    // The type's own format, once its kinds are held.
+    private global::app.type.kind.@this? Format
+    {
+        get
+        {
+            Ready();
+            return _format;
+        }
     }
 
     /// <summary>The empty kind is its own kind — ends the <c>kind : type</c> ctor's kind-minting chain
@@ -34,43 +61,47 @@ public sealed class @this : global::app.type.kind.@this
 
     protected internal override global::app.type.@this Owner => _owner;
 
-    public override System.Collections.Generic.IReadOnlyList<string> Mime => _format?.Mime ?? [];
-    public override System.Collections.Generic.IReadOnlyList<string> Extension => _format?.Extension ?? [];
-    public override bool Compressible => _format?.Compressible ?? false;
-    public override bool IsText => _format?.IsText ?? false;
+    public override System.Collections.Generic.IReadOnlyList<string> Mime => Format?.Mime ?? [];
+    public override System.Collections.Generic.IReadOnlyList<string> Extension => Format?.Extension ?? [];
+    public override bool Compressible => Format?.Compressible ?? false;
+    public override bool IsText => Format?.IsText ?? false;
 
     /// <summary>The type's own format writes it (<c>.pr</c> for goal); a type with none writes nothing.</summary>
     public override System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
         global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
-        => _format != null ? _format.Encode(stream, data, context, view, encoding, ct)
+        => Format is { } format ? format.Encode(stream, data, context, view, encoding, ct)
             : base.Encode(stream, data, context, view, encoding, ct);
 
     /// <summary>The type's own format reads it (<c>.pr</c> for goal); a type with none has its content born lazily.</summary>
     public override System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
         global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
         System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
-        => _format != null ? _format.Decode(raw, context, name, view, ct, template, origin)
+        => Format is { } format ? format.Decode(raw, context, name, view, ct, template, origin)
             : base.Decode(raw, context, name, view, ct, template, origin);
 
     /// <summary>What a value of the type can be in <paramref name="step"/>: its own kind's answer when it has one (a
     /// conversation offers only what can continue one), else the step's variables.</summary>
     public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
-        => _format?.Offers(step) ?? base.Offers(step);
+        => Format?.Offers(step) ?? base.Offers(step);
 
     /// <summary>Closed as the type's own kind is (a bool's); a type with none offers an open set.</summary>
-    public override bool IsClosed => _format?.IsClosed ?? false;
+    public override bool IsClosed => Format?.IsClosed ?? false;
 
     // The kinds this type holds, in the order they came.
     private global::app.type.kind.@this[] Held
     {
-        get { lock (_gate) return _kinds.ToArray(); }
+        get
+        {
+            Ready();
+            lock (_gate) return _kinds.ToArray();
+        }
     }
 
     /// <summary>Everything this type holds: its own format, if it has one, then its kinds — what a type
     /// object that replaces this one's type takes over.</summary>
     internal System.Collections.Generic.IEnumerable<global::app.type.kind.@this> Kinds
-        => _format is { } format ? Held.Prepend(format) : Held;
+        => Format is { } format ? Held.Prepend(format) : Held;
 
     /// <summary>The type itself when it answers to <paramref name="name"/> (its own MIME or extension), else one
     /// of its kinds that does — by name, alias, MIME or extension; null when none does.</summary>
@@ -78,6 +109,7 @@ public sealed class @this : global::app.type.kind.@this
     {
         get
         {
+            Ready();
             if (Names(name)) return this;
             // as Names reads a key: a key written with its dot is an extension, and only an extension answers it
             // (`.template` is a file's, never a kind named template); any other as it is, as a MIME without its

@@ -155,6 +155,52 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 8. Made when asked: a birth at ~1.8 ms, 0.5 MB
+
+What a shared birth made, with time and memory per section (load ~6, 100 births):
+
+| section | before | after |
+|---|---|---|
+| type entries, made + indexed + added | 0.86 ms / 291 KB | 0.60 ms / 151 KB |
+| kind classes, formats, choices, subclasses, guard | 1.7 ms / 360 KB | none; readers 0.03 ms / 6 KB |
+| module (142 actions) | 1.16 ms / 363 KB | 0.08 ms / 34 KB |
+| channels (6 stream channels) | 0.92 ms / 450 KB | 0.27 ms / 66 KB |
+| Code, store, nodes, schemes | ~0.4 ms / ~90 KB | same |
+
+What changed:
+- **Channels:** a stream channel's 64 KB read-ahead buffer is made on its first read. An output channel never
+  reads.
+- **Modules:** a module is born holding its action classes and makes its actions when first asked.
+  `module.Action` is the one `list<action>` (Ingi). `ActionNames`, `Contains`, `Count` and the dictionary are gone.
+  Selecting by name walks the list by position, allocating nothing (the allocation test holds).
+- **Entries:** the name and class index is built in one pass, so each entry's admit finds itself already recorded.
+  Before, each entry rebuilt the immutable index four times.
+- **Kinds:** a type's kinds (kind classes, formats, element kinds, choice sets, family subclasses) are held the
+  first time any of them is asked. The empty kind asks its list (`Enlist(owner)`).
+  - A lookup by key (MIME, extension, name) asks only the types the code's facts name for it, plus the types holding
+    kinds the facts don't list (schemes, loaded assemblies), each through its own `kind[key]`. The index is a
+    superset, so the answer is the type's own.
+  - The guard (one MIME or extension per format), "no type reads this format", "not a closed set" and "one set name,
+    one class" are checked once, when the facts are read.
+  - Readers for choice sets and subclasses are still registered at birth, from the set names the classes declare.
+  - A family set (`hash.kind`) reads its family type's kinds, not every type's.
+- **Order:** actions now come in code order. The old order was the dictionary's hash order. Re-pinned, with the same
+  lines reordered: `pick_golden.json` and the condition/file/screen pages.
+
+Birth, `new app` alone (3 runs × 100, load 5–7):
+
+| | median | alloc |
+|---|---|---|
+| shared facts | **1.7 – 1.8 ms** (min 1.5) | **0.5 MB** |
+| fresh (reads its own facts) | 18 – 20 ms | 1.7 MB |
+
+**Regression to fix next:** a fresh birth went from ~15 to ~18 ms. The facts now make one instance of each kind
+class, format and subclass kind to learn its keys and check the guard, and every app that reads its own facts pays
+that. That includes the CLI's one app. A format's keys are in its attribute, so formats need no instance. Kind
+classes could declare theirs, or be read once per process.
+
+C#: green except Wire's six. plang: 277 / 11, the same 11.
+
 ## 7. §6 built on test-speed (option 1): a birth at ~3.5 ms
 
 **What was built.**

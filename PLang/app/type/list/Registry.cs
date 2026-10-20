@@ -24,6 +24,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private volatile bool _loaded;
     // the facts of plang's own assembly this list was born holding (read once by whoever makes apps); null reads them here
     private readonly global::app.assembly.@this? _code;
+    // the facts of every assembly the startup scan read, kept for the kinds each type is given when first asked
+    private IReadOnlyList<global::app.assembly.@this> _codes = [];
+    // the types that hold kinds no assembly's facts list (a scheme, a loaded assembly's): a lookup by key asks them too
+    private volatile System.Collections.Immutable.ImmutableHashSet<global::app.type.@this> _extra =
+        System.Collections.Immutable.ImmutableHashSet.Create<global::app.type.@this>(ReferenceEqualityComparer.Instance);
 
     /// <summary>A list born holding <paramref name="code"/>, the facts of plang's assembly read once for every app made from it.</summary>
     internal @this(global::app.assembly.@this? code) : this() => _code = code;
@@ -89,9 +94,9 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private volatile System.Collections.Immutable.ImmutableDictionary<System.Type, global::app.type.@this> _classed
         = System.Collections.Immutable.ImmutableDictionary<System.Type, global::app.type.@this>.Empty;
 
-    // The startup scan: every item class in Assemblies comes in under its name, then each type takes its kinds; a
-    // type's facts are read when first asked, once every name is known (a fact names its property types). A clash
-    // here is plang's own.
+    // The startup scan: every item class in Assemblies comes in under its name, read from the code's facts; a type's
+    // facts are read when first asked, once every name is known (a fact names its property types), and so are its
+    // kinds (Enlist). A clash here is plang's own.
     private void Load()
     {
         if (_loaded) return;
@@ -101,16 +106,44 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             // each type is made holding this list, its facts read when asked; the type `type` is made holding this
             // list as its values
             var codes = Assemblies.Select(Code).ToList();
+            var entries = codes.SelectMany(code => code.type).Select(type => type.Class == typeof(global::app.type.@this)
+                ? new global::app.type.@this(this)
+                : new global::app.type.@this(type, this)).ToList();
+            // every name and class the entries answer to, recorded in one pass (a name two classes claim is plang
+            // broken), so the guard finds each entry already recorded as it comes in
+            var named = _named.ToBuilder();
+            var classed = _classed.ToBuilder();
+            foreach (var entry in entries)
+            {
+                foreach (var claim in entry.Claims)
+                    if (named.TryGetValue(claim, out var owner))
+                    {
+                        if (owner.ClrType != entry.ClrType)
+                            throw new InvalidOperationException(
+                                $"type name '{claim}' is claimed by both {owner.ClrType?.FullName} and {entry.ClrType?.FullName} — one name, one class.");
+                    }
+                    else named.Add(claim, entry);
+                if (entry.ClrType is { } clr) classed.TryAdd(clr, entry);
+            }
+            _named = named.ToImmutable();
+            _classed = classed.ToImmutable();
+            foreach (var entry in entries) base.Add(entry);
+            // each type's kinds are held when it is first asked for them (Enlist); what the code says of its kinds is
+            // read once, and a refusal there is plang broken. The readers a set or a subclass ships are this list's
+            // now: a read never waits on a kind being asked first.
+            _codes = codes;
             foreach (var code in codes)
-                foreach (var type in code.type)
-                    base.Add(type.Class == typeof(global::app.type.@this)
-                        ? new global::app.type.@this(this)
-                        : new global::app.type.@this(type, this));
-            // plang's own assemblies: a refusal here is plang broken
-            foreach (var code in codes)
-                if (Enlist(code) is { } refused) throw new InvalidOperationException(refused.Message);
-            if (Guard() is { } clash) throw new InvalidOperationException(clash.Message);
+                foreach (var owned in code.kinds.Owned.Values)
+                {
+                    foreach (var (choice, name) in owned.Choice)
+                        Reader.Register("choice", name, (global::app.type.reader.ITypeReader)choice.Reader.Invoke([name]));
+                    foreach (var subclass in owned.Subclass)
+                        if (subclass.Reader is { } reader)
+                            Reader.Register(subclass.Family, subclass.Kind, (global::app.type.reader.ITypeReader)reader.Invoke(null));
+                }
             _loaded = true;
+            // kinds from more than one assembly are checked against each other here, every kind held
+            if (codes.Count > 1 && Guard() is { } clash) throw new InvalidOperationException(clash.Message);
         }
     }
 
@@ -226,19 +259,64 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     {
         Load();
         foreach (var key in kind.Mime.Concat(kind.Extension))
-            foreach (var type in Items())
+            foreach (var type in Candidates(key).Append(kind.Owner).OfType<global::app.type.@this>())
                 if (type.kind[key] is { } taken
                     && !(ReferenceEquals(taken.Owner, kind.Owner) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
                     throw new InvalidOperationException(Taken(key, taken, kind).Message);
         Hold(kind);
     }
 
-    // Puts a kind on the empty kind of the type it was born holding (the startup scan calls it while loading).
+    // Puts a kind the startup code does not list (a scheme, a loaded assembly's) on its type — after the type's own
+    // kinds, which it may replace by name — and records the type among those a lookup by key asks.
     private void Hold(global::app.type.kind.@this kind)
     {
         if (kind.Owner?.kind is not global::app.type.kind.empty.@this root)
             throw new InvalidOperationException($"kind '{kind.Name}' names no type it is a kind of.");
+        _ = root.Kinds.Any();
         root.Add(kind);
+        _extra = _extra.Add(kind.Owner);
+    }
+
+    // Puts one of the code's kinds on the empty kind of the type it was born holding.
+    private static void Place(global::app.type.kind.@this kind)
+    {
+        if (kind.Owner?.kind is not global::app.type.kind.empty.@this root)
+            throw new InvalidOperationException($"kind '{kind.Name}' names no type it is a kind of.");
+        root.Add(kind);
+    }
+
+    /// <summary>Holds on <paramref name="owner"/> the kinds the code gives it — its kind classes, the formats its class
+    /// declares, a list's element kinds, choice's closed sets, its family subclasses — in that order. Its empty kind
+    /// asks this the first time any of its kinds is asked; a type that is no entry of this list is given none.</summary>
+    internal void Enlist(global::app.type.@this owner)
+    {
+        if (!ReferenceEquals(Named.GetValueOrDefault(owner.Name), owner)) return;
+        foreach (var code in _codes)
+            if (code.kinds.Owned.TryGetValue(owner.Name, out var owned))
+            {
+                foreach (var kind in owned.Kind) Place((global::app.type.kind.@this)kind.Made.Invoke([owner]));
+                foreach (var (format, attribute) in owned.Format) Place((global::app.type.kind.@this)format.Made.Invoke([attribute, owner]));
+                if (owned.Element) Place(new global::app.type.item.list.kind.@this(owner, this));
+                foreach (var (choice, _) in owned.Choice)
+                    if (global::app.type.item.choice.set.@this.For(choice.Class, this) is { } set) Place(set);
+                foreach (var subclass in owned.Subclass)
+                    Place((global::app.type.kind.@this)subclass.Made.Invoke([subclass.Kind, subclass.Class, owner]));
+            }
+    }
+
+    // The types that may hold a kind answering to key: those the code's facts name for it (its media type too, for a
+    // MIME with parameters), and those holding kinds the facts don't list. Each is asked itself — only these make
+    // their kinds.
+    private IEnumerable<global::app.type.@this> Candidates(string key)
+    {
+        var semicolon = key.IndexOf(';');
+        var media = semicolon >= 0 ? key[..semicolon].Trim() : null;
+        var seen = new HashSet<global::app.type.@this>(ReferenceEqualityComparer.Instance);
+        foreach (var code in _codes)
+            foreach (var owner in (code.kinds.Key.GetValueOrDefault(key) ?? []).Concat(media != null ? code.kinds.Key.GetValueOrDefault(media) ?? [] : []))
+                if (Named.GetValueOrDefault(owner) is { } type && seen.Add(type)) yield return type;
+        foreach (var type in _extra)
+            if (seen.Add(type)) yield return type;
     }
 
     // The facts of an assembly this list reads: the ones it was born holding when they are that assembly's, else read here.
@@ -264,9 +342,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         => new($"'{key}' is already the format '{taken.Owner?.Name}{(taken.IsEmpty ? "" : "/" + taken.Name)}' — "
                + $"'{kind.Owner?.Name}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.", "TypeLoadCollision", 400);
 
-    // The kinds an assembly brings onto their types: every kind class (born from nothing), and every closed set its
-    // classes mark a choice ([Choice]), each with its reader. Answers what it refuses (a class marked a choice that is
-    // no closed set); null when every kind is held.
+    // The kinds an assembly loaded at run time brings onto their types — its own or ones the app already has: every
+    // kind class (born from nothing), every format, and every closed set its classes mark a choice ([Choice]), each with
+    // its reader. Held now, each after its type's own. Answers what it refuses (a class marked a choice that is no
+    // closed set); null when every kind is held.
     private error.@this? Enlist(global::app.assembly.@this code)
     {
         // the types by every name they answer to, as the guard keeps them (the types don't change while their kinds
@@ -288,10 +367,6 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             foreach (var attribute in format.Attribute)
                 Hold((global::app.type.kind.@this)format.Made.Invoke([attribute, declaring]));
         }
-        // a list's element kinds, made as a list names its element (list<path>)
-        if (code.Clr == typeof(global::app.type.item.list.@this).Assembly
-            && named.GetValueOrDefault(global::app.type.item.@this.NameOf(typeof(global::app.type.item.list.@this))) is { } list)
-            Hold(new global::app.type.item.list.kind.@this(list, this));
         // each class marked a choice ([Choice]) is the closed set a choice<T> draws on, a kind of choice, with its reader
         foreach (var choice in code.choice)
         {

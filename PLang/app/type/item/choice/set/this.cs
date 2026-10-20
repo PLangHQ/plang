@@ -30,6 +30,14 @@ public abstract class @this : global::app.type.kind.@this
              : null;
     }
 
+    /// <summary>The name the closed set <paramref name="clr"/> goes by, read from its class alone — the word it
+    /// declares, a kind family's type; null when it is no closed set (as <see cref="For"/> makes none).</summary>
+    internal static string? NameOf(System.Type clr)
+        => clr.IsEnum ? Declared(clr)
+           : family.@this.Is(clr) ? family.@this.Family(clr)
+           : named.@this.Choices(clr) is not null ? Declared(clr)
+           : null;
+
     /// <summary>A choice from this set is <c>choice&lt;T&gt;</c> closed over the set.</summary>
     public override System.Type? Of(System.Type? type) => _form;
 

@@ -16,8 +16,7 @@ public sealed class @this : set.@this
                 ? clr.Assembly.GetTypes()
                     .Where(t => clr.IsAssignableFrom(t) && !t.IsAbstract && t.GetConstructor(System.Type.EmptyTypes) != null)
                     .Select(t => (global::app.type.kind.@this)System.Activator.CreateInstance(t)!)
-                : types.Items().Select(type => type.kind).OfType<global::app.type.kind.empty.@this>()
-                    .SelectMany(root => root.Kinds).Where(clr.IsInstanceOfType))
+                : (types[Family(clr)].kind as global::app.type.kind.empty.@this)?.Kinds.Where(clr.IsInstanceOfType) ?? [])
             .OrderBy(k => k.Name, System.StringComparer.Ordinal).ToList());
 
     /// <summary>Whether <paramref name="clr"/> is a kind family — an abstract kind its kinds are subclasses of.</summary>
@@ -26,7 +25,7 @@ public sealed class @this : set.@this
 
     // The type a family's kinds are kinds of — the T its abstract kind is a kind<T> of; template's kinds have no type
     // to be T, and name their facet until stage 6.
-    private static string Family(System.Type clr)
+    internal static string Family(System.Type clr)
         => clr.BaseType is { IsGenericType: true } parent && parent.GetGenericTypeDefinition() == typeof(global::app.type.kind.@this<>)
             ? global::app.type.item.@this.NameOf(parent.GetGenericArguments()[0])!
             : global::app.type.item.template.kind.@this.Facet;

@@ -48,11 +48,12 @@ public sealed partial class @this
 
     // The kind a type holds that answers to the key — by name, alias, MIME or extension; a type's own
     // format answers as its empty kind. Null when no type holds one. Registration keeps a MIME or an
-    // extension to one kind; a name two types hold is refused here.
+    // extension to one kind; a name two types hold is refused here. Only the types that may hold one are asked.
     private global::app.type.kind.@this? Held(string key)
     {
+        Load();
         global::app.type.kind.@this? found = null;
-        foreach (var type in Types)
+        foreach (var type in Candidates(key))
         {
             if (type.kind[key] is not { } kind) continue;
             if (found != null)
@@ -97,7 +98,12 @@ public sealed partial class @this
     public bool Contains(string name) => name is not null && Named.ContainsKey(name);
 
     /// <summary>True when some type holds a kind <paramref name="name"/> names (by name, alias, MIME or extension).</summary>
-    public bool HasKind(string name) => !string.IsNullOrEmpty(name) && Types.Any(type => type.kind[name] != null);
+    public bool HasKind(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return false;
+        Load();
+        return Candidates(name).Any(type => type.kind[name] != null);
+    }
 
     /// <summary>
     /// The format content of this MIME is — a kind of the type that reads it: <c>image/png</c> → image's png,
