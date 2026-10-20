@@ -40,9 +40,17 @@ Decisions are numbered per branch in `.bot/item-doors/architect/summary.md`.
   other value: `NotAnAction`); the json round trip (`FromJson`) is gone. `IReader.Format` removed. The json helper and
   the list's elements stay json-bound on purpose (lazy children, 135).
 
+- **Stage 5, a type's members through its own list (b233e0b66, 963b65b5a, 5a1d7f35c; 138, 139, 143)**: every member
+  plang reaches (a %path%, a list query's field, a liquid template in os/ or docs/) carries `[LlmBuilder]`, found by a
+  probe in item.Get; the type list keeps one marked-member list per class (`Member(Type)`), which a value reads its
+  members from and a type's offer is made of; `property` holds its C# member and reads/writes itself (Write through
+  `Reader.Reader`), `IsDefault` asks the value (async). `item.Set` answers a Data (NoAddedMember for a plain value's
+  added member — Ingi's open question). Identity's PrivateKey is no longer navigable (a security finding the architect
+  logged).
+
 ## Next
-- #4 (a type's members through `type.Property`): `property.Write` reads the value through `Reader.Reader` — the
-  item.Set lowering's first real user.
+- The values born with item's no-type constructor (stage 1's leftover): listed by family with a fix each, waiting on
+  the architect's order and his call on the app's Type and the "type is its own type" break.
 - JSON Schema as pairs (129 #2) waits on Ingi: `pair.list[System.Type]`, `json.Writer(utf8, kind)`,
   `[Format("schema")]` on type. The llm table (#3) waits on the llm-writer merge.
 - **(c2) the identity pair** — waits on Ingi's yes to the `Written` virtual on item. With it: wire's two Owns sites
