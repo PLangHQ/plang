@@ -64,6 +64,13 @@ public sealed class @this : global::app.store.@this
         lock (_gate) return _opened ??= Open();
     }
 
+    // The in-memory databases written in this process, by name: one never written holds no rows, so a read of it
+    // answers none without opening it (a test app's store, which most never write).
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> Written = new();
+
+    // Whether a read here can only find nothing: the database is in memory and nothing has written to it.
+    private bool IsBlank => _opened == null && _memory() is { } name && !Written.ContainsKey(name);
+
     private async Task<string> Open()
     {
         if (_memory() is { } name)
@@ -119,6 +126,7 @@ public sealed class @this : global::app.store.@this
 
     public override async Task<data.@this<T>> Get<T>(string table, string key)
     {
+        if (IsBlank) return Context.Ok<T>(default!);
         try
         {
             var connectionString = await Opened();
@@ -143,6 +151,8 @@ public sealed class @this : global::app.store.@this
 
     public override async Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table)
     {
+        if (IsBlank)
+            return Context.Ok<global::app.type.item.list.@this>(new global::app.type.item.list.@this(Context.App.type.list["list"]));
         try
         {
             var connectionString = await Opened();
@@ -178,6 +188,7 @@ public sealed class @this : global::app.store.@this
     {
         try
         {
+            if (_memory() is { } name) Written.TryAdd(name, 0);
             var connectionString = await Opened();
             EnsureTable(connectionString, table);
             using var connection = new SqliteConnection(connectionString);
@@ -231,6 +242,7 @@ public sealed class @this : global::app.store.@this
 
     public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key)
     {
+        if (IsBlank) return Context.Ok<global::app.type.item.@bool.@this>(false);
         try
         {
             var connectionString = await Opened();

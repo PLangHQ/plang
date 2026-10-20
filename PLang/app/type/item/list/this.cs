@@ -187,11 +187,20 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // faces read them without a context.
     private protected object? Stored(int index)
     {
-        Fill();
-        lock (_gate)
-            return Locate(index, out int row, out int offset, out @this? inner)
-                ? (inner != null ? inner.Stored(offset) : _items[row])
-                : null;
+        // read from the rows' snapshot, as every reader does: no lock, nothing copied
+        var rows = Now;
+        if (index < 0) return null;
+        for (int r = 0; r < rows.Length; r++)
+        {
+            if (rows[r] is Chunk { List: var list })
+            {
+                int w = list.CountRaw;
+                if (index < w) return list.Stored(index);
+                index -= w;
+            }
+            else if (index-- == 0) return rows[r];
+        }
+        return null;
     }
 
     // The stored value at a flattened index — a stored Data's value, or the raw slot itself.
@@ -214,10 +223,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         get
         {
+            // the rows' snapshot, as every reader reads them: no lock
             int n = 0;
-            Fill();
-            lock (_gate)
-                foreach (var row in _items) n += LeafCount(row);
+            foreach (var row in Now) n += LeafCount(row);
             return n;
         }
     }
