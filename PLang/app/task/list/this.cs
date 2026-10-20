@@ -13,7 +13,7 @@ public sealed class @this : global::app.type.item.@this
     private readonly ConcurrentDictionary<string, task.@this> _running = new(StringComparer.Ordinal);
     private readonly global::app.actor.@this _actor;
 
-    internal @this(global::app.actor.@this actor) => _actor = actor;
+    internal @this(global::app.actor.@this actor) : base(actor.App.type.list[typeof(@this)]) => _actor = actor;
 
     /// <summary>The tasks running now — each as it was started.</summary>
     [global::app.LlmBuilder]

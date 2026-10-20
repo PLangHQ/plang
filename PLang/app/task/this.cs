@@ -12,7 +12,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly run.@this _run;
     private readonly @this? _replaced;
 
-    internal @this(run.@this run, @this? replaced = null)
+    internal @this(run.@this run, @this? replaced = null) : base(run.Actor.App.type.list[typeof(@this)])
     {
         _run = run;
         _replaced = replaced;

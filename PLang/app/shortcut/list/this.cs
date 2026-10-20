@@ -36,11 +36,11 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
         var system = (await Names("/system/shortcut"))
             .Union(await Names(_app.OsAbsolutePath + "/system/shortcut"), global::app.type.item.variable.list.@this.Comparer);
         foreach (var name in system)
-            if (await Goal("/system/shortcut/" + name) is { } goal) Add(new global::app.shortcut.@this(goal));
+            if (await Goal("/system/shortcut/" + name) is { } goal) Add(new global::app.shortcut.@this(goal, Shortcut));
         foreach (var name in await Names("/shortcut"))
         {
             if (await Goal("/shortcut/" + name) is not { } goal) continue;
-            var shortcut = new global::app.shortcut.@this(goal);
+            var shortcut = new global::app.shortcut.@this(goal, Shortcut);
             if (Items().FirstOrDefault(s => s.IsSystem && global::app.type.item.variable.list.@this.Comparer.Equals(s.Name, shortcut.Name)) is { } taken)
                 return context.Error(new global::app.error.@this(
                     $"{goal.Path} names %!{shortcut.Name}%, a system shortcut ({taken.Goal.Path}) — to change it, write " +
@@ -50,6 +50,9 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
         }
         return context.Ok(this);
     }
+
+    // The type each shortcut is born holding: the app's shortcut.
+    private global::app.type.@this Shortcut => _app.type.list[typeof(global::app.shortcut.@this)];
 
     // The goal names (.goal files, no extension) in `folder`; none when the folder isn't there.
     private async System.Threading.Tasks.Task<List<string>> Names(string folder)

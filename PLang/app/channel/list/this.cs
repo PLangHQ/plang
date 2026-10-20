@@ -47,7 +47,7 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     public static readonly string[] Defaults = [Output, Error, Input];
 
     /// <summary>The channels of <paramref name="actor"/> — or of a Service, which is no actor (null).</summary>
-    public @this(app.@this app, global::app.actor.@this? actor)
+    public @this(app.@this app, global::app.actor.@this? actor) : base(app.type.list[typeof(@this)])
     {
         _app = app;
         Actor = actor;

@@ -202,6 +202,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// remove self from Children when history is off. <paramref name="names"/> are the variables it is born with.
     /// </summary>
     internal @this(
+        global::app.type.@this type,
         global::app.goal.@this? goal,
         global::app.goal.step.@this? step,
         global::app.goal.step.action.@this? action,
@@ -213,7 +214,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         @this? previousCurrent,
         Variables? diffSource,
         IEnumerable<global::app.data.@this>? names = null,
-        global::app.goal.step.action.@this? held = null)
+        global::app.goal.step.action.@this? held = null) : base(type)
     {
         _id = Guid.NewGuid().ToString("N")[..8];
         Goal = goal;

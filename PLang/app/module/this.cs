@@ -58,7 +58,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         = new(System.StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The app's module — empty, holding every module the app loads.</summary>
-    internal @this(global::app.@this app)
+    internal @this(global::app.@this app) : base(app.type.list[typeof(@this)])
     {
         Name = "";
         _app = app;
@@ -67,7 +67,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Discover(typeof(@this).Assembly);
     }
 
-    internal @this(string name, @this root)
+    internal @this(string name, @this root) : base(root.Type)
     {
         Name = name;
         _root = root;

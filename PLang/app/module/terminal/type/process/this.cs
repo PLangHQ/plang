@@ -18,7 +18,8 @@ namespace app.module.terminal.type.process;
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A started program, born holding <paramref name="type"/> — the app's process.</summary>
-    public @this(global::app.type.@this type) : base(type) { }
+    public @this(global::app.type.@this type) : base(type)
+        => Remote = new(type.Types![typeof(global::app.parent.@this)]);
 
     /// <summary>The program's full path.</summary>
     [LlmBuilder, Out] public string Program { get; set; } = "";
@@ -318,7 +319,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// called like this app's — <c>call goal Question in %container%</c>, <c>%container.goal["Question"]%</c> — the call
     /// going down its input, the answer coming back beside its frames. The same link as <c>%!app.parent%</c>, the
     /// other way.</summary>
-    internal global::app.parent.@this Remote { get; } = new();
+    internal global::app.parent.@this Remote { get; }
 
     /// <summary>One step by dot: <c>goal</c> — the goals of the app it runs; any other member as every item's.</summary>
     public override ValueTask<Data> Get(Data parent, string key)

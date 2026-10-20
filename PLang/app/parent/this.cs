@@ -16,6 +16,10 @@ public sealed class @this : global::app.type.item.@this
 {
     private readonly ConcurrentDictionary<string, TaskCompletionSource<JsonElement>> waiting = new();
 
+    /// <summary>The parent, a value of the app's parent <paramref name="type"/> — linked to none until what started
+    /// this plang links it.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
     /// <summary>How a message reaches the parent — set by what links them (PlangOS's screen sends it up beside its
     /// frames, and the parent's answer comes back down its input: <see cref="Answered"/>).</summary>
     internal Func<string, Task>? Link { get; set; }
@@ -36,7 +40,8 @@ public sealed class @this : global::app.type.item.@this
     /// <summary>One step by dot: <c>goal</c> — the parent's goals, picked by name.</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
         => string.Equals(key, "goal", StringComparison.OrdinalIgnoreCase)
-            ? System.Threading.Tasks.ValueTask.FromResult(new global::app.data.@this(key, new goals(this), parent: parent))
+            ? System.Threading.Tasks.ValueTask.FromResult(new global::app.data.@this(key,
+                new goals(this, parent.Context.App.type.list[typeof(goals)]), parent: parent))
             : base.Get(parent, key);
 
     /// <summary>Runs the parent's goal <paramref name="goal"/> with the call's own arguments (not its callers'): up to the parent,
@@ -99,7 +104,7 @@ public sealed class @this : global::app.type.item.@this
     private static string Text(JsonElement e) => e.ValueKind == JsonValueKind.String ? e.GetString() ?? "" : e.ToString();
 
     /// <summary>The parent's goals: one picked by name is a goal that runs in the parent.</summary>
-    private sealed class goals(@this parent) : global::app.type.item.@this
+    private sealed class goals(@this parent, global::app.type.@this type) : global::app.type.item.@this(type)
     {
         public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this data, string key, bool isIndex)
             => Get(data, key);

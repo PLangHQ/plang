@@ -26,8 +26,8 @@ public sealed class @this : global::app.type.item.@this
     [global::app.Out, global::app.Debug]
     public global::app.type.item.datetime.@this Started { get; }
 
-    /// <summary>A trace starting now, its time born holding the app's datetime type from <paramref name="types"/>.</summary>
-    public @this(global::app.type.list.@this types)
+    /// <summary>A trace starting now, of the app's <paramref name="types"/>: its own, and its time's datetime.</summary>
+    public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
     {
         var started = DateTimeOffset.UtcNow;
         Started = new(started, types[typeof(global::app.type.item.datetime.@this)]);

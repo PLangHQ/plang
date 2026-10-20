@@ -101,6 +101,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
     public @this(string name, app.@this app, CancellationToken parentToken = default, @this? fallback = null)
+        : base(app.type.list[typeof(@this)])
     {
         Name = name;
         App = app;

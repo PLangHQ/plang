@@ -18,15 +18,13 @@ public static class TestCalls
         return () => settings;
     }
 
-    /// <summary>A call stack of <paramref name="app"/>'s, as its context makes one: its frames' times the app's
-    /// datetime and short duration and its tags the app's dict, its errors kept in a list of the app's, its settings
-    /// <paramref name="settings"/>, at most <paramref name="maxDepth"/> frames deep.</summary>
+    /// <summary>A call stack of <paramref name="app"/>'s, as its context makes one: of the app's types, how long a
+    /// frame ran written short, its errors kept in a list of the app's, its settings <paramref name="settings"/>, at
+    /// most <paramref name="maxDepth"/> frames deep.</summary>
     public static Calls Stack(global::app.@this app, System.Func<global::app.actor.setting.@this> settings, int maxDepth = 1500)
     {
         var context = app.actor.list.User.Context;
-        return new Calls(app.type.list[typeof(global::app.type.item.datetime.@this)],
-            app.type.list[new global::app.type.@this("duration", "short"), context],
-            app.type.list[typeof(global::app.type.item.dict.@this)], settings,
+        return new Calls(app.type.list, app.type.list[new global::app.type.@this("duration", "short"), context], settings,
             new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)])) { MaxDepth = maxDepth };
     }
 }

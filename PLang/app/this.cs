@@ -287,7 +287,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>The app that started this plang — <c>%!app.parent%</c>: its goals are called like this app's
     /// (<c>call goal Claude in %!app.parent%</c>), and run there.</summary>
     [global::app.LlmBuilder]
-    public global::app.parent.@this parent { get; } = new();
+    public global::app.parent.@this parent { get; }
 
     /// <summary>
     /// The app's actors — <c>%!app.actor%</c>, the one the asker acts as: its <c>list</c> is the app's two actors,
@@ -338,6 +338,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         // The types come first: every value is born holding its type from this list, the actors' contexts too.
         type = new(this);
+        parent = new(type.list[typeof(global::app.parent.@this)]);
 
         StartedAt = new(DateTimeOffset.UtcNow, type.list[typeof(global::app.type.item.datetime.@this)]);
         Created = StartedAt;
