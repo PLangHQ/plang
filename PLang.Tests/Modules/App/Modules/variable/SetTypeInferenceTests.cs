@@ -134,6 +134,34 @@ public class SetTypeInferenceTests
         await Assert.That((await (await row.Start(context)).Value())?.ToString()).IsEqualTo("x");
     }
 
+    // A write through a read row reaches the list whatever C# container the row came in: one plang can't share (a
+    // Dictionary<string, string>, a string[]) is made into its plang value at the read, and the write must still land.
+    [Test, Skip("red: the write lands in the row made at the read and is lost; waits on its fix")]
+    public async Task Set_ThroughARowOfAStringDictionary_ReachesTheList()
+        => await WrittenThrough(new List<object?> { new Dictionary<string, string> { ["name"] = "a" } }, "%rows[0].name%");
+
+    [Test, Skip("red: the write lands in the row made at the read and is lost; waits on its fix")]
+    public async Task Set_ThroughARowOfAStringArray_ReachesTheList()
+        => await WrittenThrough(new List<object?> { new[] { "a", "b" } }, "%rows[0][0]%");
+
+    [Test, Skip("red: the write lands in the entry made at the read and is lost; waits on its fix")]
+    public async Task Set_ThroughADictEntryOfAStringDictionary_ReachesTheDict()
+        => await WrittenThrough(new Dictionary<string, object?> { ["headers"] = new Dictionary<string, string> { ["name"] = "a" } }, "%rows.headers.name%");
+
+    private async Task WrittenThrough(object rows, string path)
+    {
+        var context = _app.actor.list.User.Context;
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%rows%", "variable"), ("value", rows)).Start(context)).IsSuccess();
+        var row = new global::app.type.item.variable.parser.@this(path, _app.type.list).Variable[0];
+        await Assert.That((await (await row.Start(context)).Value())?.ToString()).IsEqualTo("a");
+
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", path, "variable"), ("value", "x")).Start(context)).IsSuccess();
+
+        await Assert.That((await (await row.Start(context)).Value())?.ToString()).IsEqualTo("x");
+    }
+
     // A set binds the value under the variable's name: the action's own Value parameter (named "Value", as a .pr row
     // names it) is never what the variable is called — with or without `as`.
     [Test]

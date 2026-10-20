@@ -44,6 +44,33 @@ public class ItemReaderTests : System.IAsyncDisposable
         await Assert.That(size.Error?.Key).IsNotEqualTo("NotFound");
     }
 
+    // a dict read into a record reads as tokens all the way down: a value nested in it is read, never a crash
+    [Test, Skip("red: the dict reader asks a plang value for raw bytes and a NotSupportedException escapes; waits on its fix")]
+    public async Task ADictHoldingADict_IntoARecordMember_IsRead()
+    {
+        var owner = Box();
+        var nested = global::app.type.item.@this.Create(new Dictionary<string, object?>
+            { ["token"] = 500L, ["extra"] = new Dictionary<string, object?> { ["inner"] = 1L } }, Ctx);
+
+        await (await owner.Set("limit", false, nested, Ctx)).IsSuccess();
+
+        await Assert.That(owner.Limit!.Token.ToString()).IsEqualTo("500");
+    }
+
+    // an entry still encoded (a .pr's lazy slice) is read by what it decodes to, never refused as a leaf with no raw face
+    [Test, Skip("red: the walk asks an unread slice for its raw face and an InvalidOperationException escapes; waits on its fix")]
+    public async Task ADictHoldingAnUnreadSlice_IntoARecordMember_IsRead()
+    {
+        var owner = Box();
+        var slice = Ctx.App.type.list[new global::app.type.@this("dict"), Ctx].Make("{\"inner\": 1}",
+            (global::app.type.item.wire.kind.plang.@this)Ctx.App.type.list["wire"].kind["plang"]!);
+        var nested = global::app.type.item.@this.Create(new Dictionary<string, object?> { ["token"] = 500L, ["extra"] = slice }, Ctx);
+
+        await (await owner.Set("limit", false, nested, Ctx)).IsSuccess();
+
+        await Assert.That(owner.Limit!.Token.ToString()).IsEqualTo("500");
+    }
+
     // a member that can't be written answers why, never a throw
     [Test] public async Task AReadOnlyMember_RefusesTheWriteWithWhy()
     {
