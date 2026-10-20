@@ -10,7 +10,7 @@ namespace app.goal;
 /// <summary>
 /// Visibility of a goal.
 /// </summary>
-[global::app.Attributes.PlangType("visibility")]
+[global::app.Attributes.PlangType("visibility"), global::app.Attributes.Choice]
 public enum Visibility
 {
     Private = 0,

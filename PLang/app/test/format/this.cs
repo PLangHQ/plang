@@ -5,7 +5,7 @@ namespace app.test.format;
 /// answer (<see cref="global::app.type.kind.@this.Report"/>), never a list of names here. An unknown name is the
 /// choice's own error, and the builder sees the options.
 /// </summary>
-[global::app.Attributes.PlangType("format")]
+[global::app.Attributes.PlangType("format"), global::app.Attributes.Choice]
 public sealed class @this
 {
     // the format kinds plang declares, the ones that write a report — a format is named by its text, with no app to

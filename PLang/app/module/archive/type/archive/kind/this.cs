@@ -5,6 +5,7 @@ namespace app.module.archive.type.archive.kind;
 /// holds one value or file, or a bundle (<c>tar</c>, <c>tar.gz</c>, <c>zip</c>, <c>oci.layer</c>) that holds a folder.
 /// Each packs and unpacks itself; a new format is one new folder.
 /// </summary>
+[global::app.Attributes.Choice]
 public abstract class @this : global::app.type.kind.@this<global::app.module.archive.type.archive.@this>
 {
     protected @this(string name, global::app.type.@this owner) : base(name, owner) { }

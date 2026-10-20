@@ -20,5 +20,5 @@ public sealed class @this : global::app.type.item.setting.module.@this
 }
 
 /// <summary>How hard a pack compresses.</summary>
-[global::app.Attributes.PlangType("compression")]
+[global::app.Attributes.PlangType("compression"), global::app.Attributes.Choice]
 public enum Level { fastest, optimal, smallest, none }

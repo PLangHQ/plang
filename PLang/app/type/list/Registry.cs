@@ -291,13 +291,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private global::app.type.kind.@this.Decoder Reading<T>() where T : global::app.type.item.@this, global::app.type.item.IDecode<T>
         => T.Decode;
 
-    // The kinds an assembly brings onto their types: every kind class (born from nothing), and the
-    // closed set every choice<T> in it draws on, each with its reader. A set is only identifiable
-    // by its usage, so this reflects the assembly's property types. Answers what it refuses (a choice over a
-    // set that isn't closed); null when every kind is held.
+    // The kinds an assembly brings onto their types: every kind class (born from nothing), and every closed set its
+    // classes mark a choice ([Choice]), each with its reader. Answers what it refuses (a class marked a choice that is
+    // no closed set); null when every kind is held.
     private error.@this? Enlist(Assembly assembly)
     {
-        var seen = new HashSet<System.Type>();
         // the assembly's classes, read once for every pass below; the types by every name they answer to, the first
         // that answers, as the walk finds them (the types don't change while their kinds are enlisted)
         var classes = assembly.GetTypes();
@@ -328,30 +326,22 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             if (t == typeof(global::app.type.item.list.@this)
                 && named.GetValueOrDefault(global::app.type.item.@this.NameOf(t)!) is { } list)
                 Hold(new global::app.type.item.list.kind.@this(list, this));
-            // settings are settings, not kinds (decision 774): each settings class is its own top-level
-            // type, discovered like any other by its name (@this folder, or the owner word a nested one
-            // declares). The registry knows nothing about settings.
-            foreach (var prop in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            // each class marked a choice ([Choice]) is the closed set a choice<T> draws on, a kind of choice, with its reader
+            if (t.IsDefined(typeof(global::app.Attributes.ChoiceAttribute), inherit: false))
             {
-                var held = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-                if (held.IsGenericType && held.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
-                    held = held.GetGenericArguments()[0];
-                if (!held.IsGenericType || held.GetGenericTypeDefinition() != typeof(global::app.type.item.choice.@this<>)
-                    || !seen.Add(held)) continue;
-                var inner = held.GetGenericArguments()[0];
-                if (global::app.type.item.choice.set.@this.For(inner, this) is not { } set)
-                    return new error.@this($"{inner.FullName} is not a closed set — no enum members, no Choices(context?), no kinds of its own.", "TypeLoadOpenSet", 400);
+                if (global::app.type.item.choice.set.@this.For(t, this) is not { } set)
+                    return new error.@this($"{t.FullName} is marked a choice but is no closed set — no enum members, no Choices(context?), no kinds of its own.", "TypeLoadOpenSet", 400);
                 // one name, one set: a second class named as a set is (two enums both `level`) would take its reader
                 if (set.Owner?.kind[set.Name] is global::app.type.item.choice.set.@this taken
                     && taken.Of(null) != set.Of(null))
                     return new error.@this(
-                        $"choice set name '{set.Name}' is claimed by both {taken.Of(null)?.GetGenericArguments()[0].FullName} and {inner.FullName} — one name, one set.",
+                        $"choice set name '{set.Name}' is claimed by both {taken.Of(null)?.GetGenericArguments()[0].FullName} and {t.FullName} — one name, one set.",
                         "TypeLoadCollision", 400);
                 Hold(set);
                 // the closed reader for this set — one reflective instantiation, then typed reads.
                 Reader.Register("choice", set.Name,
                     (global::app.type.reader.ITypeReader)Activator.CreateInstance(
-                        typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(inner), set.Name)!);
+                        typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(t), set.Name)!);
             }
         }
         // each class under a family that has kinds ([Kinds]) is one of its kinds, by its own name — but a class named as

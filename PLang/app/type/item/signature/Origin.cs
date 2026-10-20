@@ -1,7 +1,7 @@
 namespace app.type.item.signature;
 
 /// <summary>Where a signature came from — born with it, deciding how it is judged.</summary>
-[global::app.Attributes.PlangType("origin")]
+[global::app.Attributes.PlangType("origin"), global::app.Attributes.Choice]
 public enum Origin
 {
     /// <summary>Just signed, here: never read. Its hash is the view it was signed in (Out); no window, no nonce check.</summary>

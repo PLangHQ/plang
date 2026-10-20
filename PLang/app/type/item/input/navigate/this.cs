@@ -1,7 +1,7 @@
 namespace app.type.item.input.navigate;
 
 /// <summary>Where to go.</summary>
-[global::app.Attributes.PlangType("navigation")]
+[global::app.Attributes.PlangType("navigation"), global::app.Attributes.Choice]
 public enum Direction { back, forward, reload }
 
 /// <summary>Back, forward or reload — asked by a key (Alt+←, Alt+→, F5) or a mouse's side buttons.</summary>

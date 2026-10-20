@@ -1,11 +1,11 @@
 namespace app.type.item.input.mouse;
 
 /// <summary>What the mouse did: moved, a button down or up, the wheel turned.</summary>
-[global::app.Attributes.PlangType("gesture")]
+[global::app.Attributes.PlangType("gesture"), global::app.Attributes.Choice]
 public enum Gesture { move, down, up, wheel }
 
 /// <summary>Which button — none while only moving.</summary>
-[global::app.Attributes.PlangType("button")]
+[global::app.Attributes.PlangType("button"), global::app.Attributes.Choice]
 public enum Button { left, right, middle, back, forward, none }
 
 /// <summary>

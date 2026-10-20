@@ -5,7 +5,7 @@ namespace app.module.code.kind;
 /// serve. The kinds are the provider interfaces the runtime declares, each named by its interface
 /// (<c>ISigning</c> is <c>signing</c>); an unknown name is the choice's own error.
 /// </summary>
-[global::app.Attributes.PlangType("provider")]
+[global::app.Attributes.PlangType("provider"), global::app.Attributes.Choice]
 public sealed class @this
 {
     private static readonly System.Type[] Interfaces = typeof(ICode).Assembly.GetTypes()

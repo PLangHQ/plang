@@ -5,6 +5,7 @@ namespace app.module.crypto.type.hash.kind;
 /// (<see cref="Digest()"/>), so a hash is made from bytes as they come — a file or a download is never held whole —
 /// with no switch over algorithm names.
 /// </summary>
+[global::app.Attributes.Choice]
 public abstract class @this : global::app.type.kind.@this<global::app.module.crypto.type.hash.@this>
 {
     protected @this(string name, global::app.type.@this owner) : base(name, owner) { }

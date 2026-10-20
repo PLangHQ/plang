@@ -5,7 +5,7 @@ namespace app.actor;
 /// names WHO; the live actor is selected at use through <c>app.actor.Get(name)</c>. Service is not an
 /// actor since the per-call service scopes (<c>app.Services</c>), so it is not in the set.
 /// </summary>
-[global::app.Attributes.PlangType("actor")]
+[global::app.Attributes.PlangType("actor"), global::app.Attributes.Choice]
 public enum Name
 {
     system,

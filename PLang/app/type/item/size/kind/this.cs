@@ -5,6 +5,7 @@ namespace app.type.item.size.kind;
 /// directions of its form: the bytes a text in it is, and a count's text in it. The suffixes don't overlap, so a text
 /// names its own kind; a unit is never guessed.
 /// </summary>
+[global::app.Attributes.Choice]
 public abstract class @this : global::app.type.kind.@this<global::app.type.item.size.@this>
 {
     // the units above a byte, smallest first, and how many bytes one of the smallest is

@@ -13,7 +13,7 @@ namespace app.data;
 /// Every operator answers a plang bool — true, false, or the developer's error
 /// (<c>is foo</c>, ordering values that have no order) — never a thrown exception.
 /// </summary>
-[global::app.Attributes.PlangType("operator")]
+[global::app.Attributes.PlangType("operator"), global::app.Attributes.Choice]
 public sealed class Operator
 {
     // Evaluators are async: a Data value may be IBooleanResolvable (a path,

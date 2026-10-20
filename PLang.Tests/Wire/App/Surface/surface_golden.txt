@@ -18,7 +18,7 @@ class app.LlmBuilderAttribute : System.Attribute
 class app.MaskedAttribute : System.Attribute
   ctor()
 
-enum app.Mode [PlangType]
+enum app.Mode [Choice, PlangType]
   static const Build : app.Mode
   static const Run : app.Mode
   static const Test : app.Mode
@@ -164,7 +164,7 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable
   virtual Goal : app.goal.this { get; }
   virtual Step : app.goal.step.this { get; }
 
-enum app.channel.ChannelDirection [PlangType]
+enum app.channel.ChannelDirection [Choice, PlangType]
   static const Bidirectional : app.channel.ChannelDirection
   static const Input : app.channel.ChannelDirection
   static const Output : app.channel.ChannelDirection
@@ -320,7 +320,7 @@ static class app.data.JsonString
 class app.data.NormalizeException : app.error.AppException
   ctor(System.String message, System.String key, System.Exception inner = …)
 
-class app.data.Operator [PlangType]
+class app.data.Operator [Choice, PlangType]
   Evaluate : System.Func<app.data.this, app.data.this, app.actor.context.this, System.Threading.Tasks.Task<app.data.this<app.type.item.bool.this>>> { get; }
   IsUnary : System.Boolean { get; }
   Operands(System.Boolean right) : app.error.this
@@ -471,11 +471,11 @@ class app.data.this<T> : app.data.this
   static FromError(app.error.this error, app.actor.context.this context) : app.data.this<T>
   static Uninitialized(System.String name, app.actor.context.this context) : app.data.this<T>
 
-enum app.event.When [PlangType]
+enum app.event.When [Choice, PlangType]
   static const after : app.event.When
   static const before : app.event.When
 
-enum app.event.binding.Scope [PlangType]
+enum app.event.binding.Scope [Choice, PlangType]
   static const actor : app.event.binding.Scope
   static const app : app.event.binding.Scope
 
@@ -1663,7 +1663,7 @@ class app.type.item.input.modifier.this : app.type.item.this, app.type.item.ICre
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.input.modifier.this
   static Internal : System.Boolean { get; }
 
-enum app.type.item.input.mouse.Button [PlangType]
+enum app.type.item.input.mouse.Button [Choice, PlangType]
   static const back : app.type.item.input.mouse.Button
   static const forward : app.type.item.input.mouse.Button
   static const left : app.type.item.input.mouse.Button
@@ -1671,7 +1671,7 @@ enum app.type.item.input.mouse.Button [PlangType]
   static const none : app.type.item.input.mouse.Button
   static const right : app.type.item.input.mouse.Button
 
-enum app.type.item.input.mouse.Gesture [PlangType]
+enum app.type.item.input.mouse.Gesture [Choice, PlangType]
   static const down : app.type.item.input.mouse.Gesture
   static const move : app.type.item.input.mouse.Gesture
   static const up : app.type.item.input.mouse.Gesture
@@ -1690,7 +1690,7 @@ class app.type.item.input.mouse.this : app.type.item.input.this
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Write(app.type.format.IWriter writer) : System.Void
 
-enum app.type.item.input.navigate.Direction [PlangType]
+enum app.type.item.input.navigate.Direction [Choice, PlangType]
   static const back : app.type.item.input.navigate.Direction
   static const forward : app.type.item.input.navigate.Direction
   static const reload : app.type.item.input.navigate.Direction
@@ -2159,11 +2159,11 @@ class app.type.item.number.this : app.type.item.this, System.IComparable, System
   static TryParse(System.String s, app.type.item.number.this& n) : System.Boolean
   static const MaxPowerExponent : System.Int64
 
-enum app.type.item.number.this+Overflow [PlangType]
+enum app.type.item.number.this+Overflow [Choice, PlangType]
   static const Promote : app.type.item.number.this+Overflow
   static const Throw : app.type.item.number.this+Overflow
 
-enum app.type.item.number.this+Precision [PlangType]
+enum app.type.item.number.this+Precision [Choice, PlangType]
   static const Decimal : app.type.item.number.this+Precision
   static const Double : app.type.item.number.this+Precision
   static const Error : app.type.item.number.this+Precision
@@ -2310,7 +2310,7 @@ class app.type.item.path.serializer.Reader : app.type.reader.ITypeReader
   Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
   ctor()
 
-enum app.type.item.path.subfolder [PlangType]
+enum app.type.item.path.subfolder [Choice, PlangType]
   static const include : app.type.item.path.subfolder
   static const skip : app.type.item.path.subfolder
 
@@ -2489,7 +2489,7 @@ class app.type.item.setting.this : app.type.item.this, app.type.item.ICreate<app
   protected virtual Next(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.setting.this
 
-enum app.type.item.signature.Origin [PlangType]
+enum app.type.item.signature.Origin [Choice, PlangType]
   static const Live : app.type.item.signature.Origin
   static const Signed : app.type.item.signature.Origin
   static const Stored : app.type.item.signature.Origin
@@ -2524,7 +2524,7 @@ class app.type.item.size.kind.iec.this : app.type.item.size.kind.this
 class app.type.item.size.kind.si.this : app.type.item.size.kind.this
   ctor(app.type.this owner)
 
-abstract class app.type.item.size.kind.this : app.type.kind.this<app.type.item.size.this>
+abstract class app.type.item.size.kind.this : app.type.kind.this<app.type.item.size.this> [Choice]
   ctor(System.String name, app.type.this owner, System.Int64 step, System.String[] units)
   override Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
 
@@ -2629,7 +2629,7 @@ class app.type.item.tag.this : app.type.item.this, System.IEquatable<app.type.it
 class app.type.item.template.kind.plang.this : app.type.item.template.kind.this
   ctor()
 
-abstract class app.type.item.template.kind.this : app.type.kind.this
+abstract class app.type.item.template.kind.this : app.type.kind.this [Choice]
   ctor(System.String name)
 
 class app.type.item.text.Writer : app.type.format.IWriter
@@ -2659,7 +2659,7 @@ class app.type.item.text.Writer : app.type.format.IWriter
   Value(System.Object normalized) : System.Void
   ctor(System.IO.Stream stream, System.Text.Encoding encoding, app.type.item.culture.this culture)
 
-enum app.type.item.text.empty [PlangType]
+enum app.type.item.text.empty [Choice, PlangType]
   static const drop : app.type.item.text.empty
   static const keep : app.type.item.text.empty
 

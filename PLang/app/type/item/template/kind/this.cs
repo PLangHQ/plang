@@ -10,6 +10,7 @@ namespace app.type.item.template.kind;
 /// of that facet. Left on the non-generic base with no owner entry — no type holds it, so it is built where it is used
 /// and its facet named by <see cref="Facet"/>; the facet itself is revisited in stage 6.</para>
 /// </summary>
+[global::app.Attributes.Choice]
 public abstract class @this : global::app.type.kind.@this
 {
     protected @this(string name) : base(name) { }
