@@ -154,18 +154,14 @@ public sealed class @this : global::app.type.item.note.IAbout
     public async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        if (writer is global::app.goal.step.action.formal.Writer formal)
-        {
-            await Row(formal, frozen: false, mode, context);
-            return;
-        }
         writer.BeginObject();
         writer.Name("name");
         writer.String(Name);
         if (!Type.IsNull)
         {
+            // the slot is the type as the writer's kind shows it: its identity in plang, its face in bare json
             writer.Name("type");
-            Type.Write(writer);   // the slot is the type's identity in every view
+            await writer.Kind.pair.Output(Type, writer, mode, context);
         }
         writer.Name("value");
         // A template is program text: a diagnostic shows it as written, never run against live
@@ -200,7 +196,7 @@ public sealed class @this : global::app.type.item.note.IAbout
         bool frozen, global::app.View mode, global::app.actor.context.@this? context)
     {
         writer.Row(Name, Type.kind.IsEmpty ? Type.Name : $"{Type.Name}<{Type.kind.Name}>", frozen);
-        if (Value is { } value) await value.Output(writer, mode, context);
+        if (Value is { } value) await writer.Kind.pair.Output(value, writer, mode, context);
         else writer.Null();
     }
 

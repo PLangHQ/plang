@@ -74,7 +74,7 @@ public class @this : global::app.type.item.source
         if (_reader.Owns(writer)) { writer.Raw((string)Raw); return; }
         if (context is null) throw new System.InvalidOperationException(
             "an undecoded wire writes into a foreign format only with the caller's context.");
-        await Decoded(context).Output(writer, mode, context);
+        await writer.Kind.pair.Output(Decoded(context), writer, mode, context);
     }
 
     // Lowering an undecoded wire to CLR is a USE: graduate to the decoded value first (never hand

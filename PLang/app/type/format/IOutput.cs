@@ -1,11 +1,11 @@
 namespace app.type.format;
 
 /// <summary>
-/// A value's serializer for ONE channel format — the per-format exception a type owns when
-/// its neutral tokens don't fit a format (a container/object on the <c>text</c> channel has
-/// no plain-text form, so it renders as json). A type holds its own small map of these,
-/// instantiated DIRECTLY (no reflection, no central registry), keyed by format; the type's
-/// own <c>Output</c> picks from it and otherwise writes its default token form inline.
+/// A pair: what a value of one type looks like in an output kind, when it isn't the value's own write — a list in
+/// formal is a list of arguments, a type in plang its identity. The output kind holds its pairs
+/// (<see cref="global::app.type.kind.@this.pair"/>) and writes every value through them; a pair lives in its input type's
+/// folder, <c>&lt;type folder&gt;/format/&lt;output kind&gt;.cs</c>, found when the kind is first asked. A value never asks what
+/// its writer is.
 /// </summary>
 public interface IOutput
 {

@@ -105,11 +105,11 @@ public partial class @this
             var type = Error?.Type ?? Type;
             if (!type.IsNull)
             {
-                // The type slot is the type's identity — {name, kind?, strict?, template?}, written by
-                // the type itself (app.type.@this.Write) in every view; its face is for a type held
-                // as a value.
+                // The type slot is the type as the writer's kind shows it: in plang its identity
+                // {name, kind?, strict?, template?} (plang's pair for a type) — through the one door
+                // every value is written by.
                 writer.Name("type");
-                type.Write(writer);
+                await writer.Kind.pair.Output(type, writer, mode, context);
             }
             writer.Name("value");
         }
@@ -123,8 +123,9 @@ public partial class @this
         // sync leaf reads the now-loaded bytes).
         // The value writes ITSELF (OBP: each item owns its render) — no pre-materialise through
         // Value. An untouched source relays its raw verbatim; a materialised template renders
-        // itself; a leaf writes itself. Store vs Out rides in `mode`, honoured by each item.
-        await held.Output(writer, mode, context);
+        // itself; a leaf writes itself. Store vs Out rides in `mode`, honoured by each item. It is written
+        // through the writer's kind: the kind's pair for it when it has one (a list in formal), else itself.
+        await writer.Kind.pair.Output(held, writer, mode, context);
 
         if (writer.EmitsSchema)
         {

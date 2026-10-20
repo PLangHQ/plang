@@ -73,6 +73,12 @@ public class @this : global::app.type.@this
         _decode = decode;
     }
 
+    /// <summary>What values of other types look like written in this kind, when it isn't their own write (a list in
+    /// formal, a type in plang) — and the one door a value is written through in it. Made when first asked.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public pair.list.@this pair => System.Threading.LazyInitializer.EnsureInitialized(ref _pair, () => new(this));
+    private pair.list.@this? _pair;
+
     /// <summary>The MIMEs content of this kind arrives as — each a bare media type.</summary>
     public virtual System.Collections.Generic.IReadOnlyList<string> Mime => _mime;
 
@@ -348,7 +354,7 @@ public class @this : global::app.type.@this
     {
         switch (value)
         {
-            case global::app.type.item.@this item: await item.Output(writer, mode, ctx); break;
+            case global::app.type.item.@this item: await writer.Kind.pair.Output(item, writer, mode, ctx); break;
             case global::app.data.@this d: await d.Output(writer, mode, ctx); break;
             case string s: writer.String(s); break;
             // A raw C# scalar the writer renders (number/bool/date/enum/…). Everything else —

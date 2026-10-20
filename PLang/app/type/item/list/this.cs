@@ -279,23 +279,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>Writes itself to the wire as a JSON array — each element self-describes
-    /// (rides its own Data envelope, so a signed/typed element keeps it), resolved lazily.</summary>
-    // The list owns its per-format serializers — instantiated directly (no reflection, no
-    // registry), keyed by format. Only formats that DIVERGE from the default token form are
-    // listed.
-    private static readonly System.Collections.Generic.Dictionary<string, global::app.type.format.IOutput> _formats
-        = new() { [global::app.goal.step.action.formal.Writer.Token] = new format.formal() };
-
+    /// (rides its own Data envelope, so a signed/typed element keeps it), resolved lazily. A kind that writes a list
+    /// its own way (formal: a list of arguments) says so with its pair.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
-        if (_formats.TryGetValue(writer.Kind.Name, out var serializer))
-        {
-            await serializer.Output(this, writer, mode, context);
-            return;
-        }
-        // default (json/plang): an array whose elements each self-describe (@schema).
+        // an array whose elements each self-describe (@schema).
         writer.BeginArray(CountRaw);
         foreach (var element in Items(context!))
             await element.Output(writer, mode, context);

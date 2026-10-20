@@ -1131,6 +1131,10 @@ enum app.type.format.TokenKind
   static const Object : app.type.format.TokenKind
   static const String : app.type.format.TokenKind
 
+class app.type.format.plang : app.type.format.IOutput
+  Output(app.type.item.this value, app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  ctor()
+
 struct app.type.format.value.Reader : app.type.format.IReader
   BeginArray() : System.Void
   BeginObject() : System.Void
@@ -3022,6 +3026,11 @@ class app.type.kind.format.this<T> : app.type.kind.this<T>
 class app.type.kind.list.this : app.type.item.list.this<app.type.this>
   ctor(System.Collections.Generic.IEnumerable<app.type.this> types, app.type.this type)
 
+class app.type.kind.pair.list.this
+  Add(System.Type clr, app.type.format.IOutput pair) : System.Void
+  Output(app.type.item.this value, app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  ctor(app.type.kind.this kind)
+
 class app.type.kind.subclass.this<T> : app.type.kind.this<T>
   ctor(System.String name, System.Type class, app.type.this owner)
   override ClrForm : System.Type { get; }
@@ -3040,6 +3049,7 @@ class app.type.kind.this : app.type.this
   override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
+  pair : app.type.kind.pair.list.this { get; }
   protected WriteReflected(app.type.format.IWriter writer, System.Object value, app.View mode, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask
   protected virtual Owner : app.type.this { get; }
   type(app.actor.context.this context) : app.type.this

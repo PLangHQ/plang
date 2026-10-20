@@ -44,11 +44,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
-        if (writer is global::app.goal.step.action.formal.Writer formal)
-        {
-            await Formal(formal, mode, context);
-            return;
-        }
         writer.BeginObject();
         writer.Name("module"); writer.String(Module.Name);
         writer.Name("name"); writer.String(Name);
@@ -67,31 +62,5 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             await Child.Output(writer, mode, context);   // step.list writes its own bare array
         }
         writer.EndObject();
-    }
-
-    /// <summary>The action in formal: its own call, then a condition's body inline after it (<c>{ a; b }</c>).
-    /// A clause (<c>on.error</c>, …) is its step's next call, written by the step like any action.</summary>
-    private async System.Threading.Tasks.ValueTask Formal(global::app.goal.step.action.formal.Writer writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-    {
-        await Call(writer, mode, context);
-        if (Child.Count > 0)
-        {
-            writer.BeginBody();
-            foreach (var step in Child.Items())
-                foreach (var action in step.Code.Items()) await action.Output(writer, mode, context);
-            writer.EndBody();
-        }
-    }
-
-    /// <summary>The action's call alone: <c>module.name(rows)</c> — its properties and its frozen defaults
-    /// (<c>?=</c>).</summary>
-    private async System.Threading.Tasks.ValueTask Call(global::app.goal.step.action.formal.Writer writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-    {
-        writer.BeginCall(Module.Name, Name);
-        foreach (var p in Property) await p.Row(writer, frozen: false, mode, context);
-        foreach (var p in Default) await p.Row(writer, frozen: true, mode, context);
-        writer.EndCall();
     }
 }

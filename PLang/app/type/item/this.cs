@@ -449,7 +449,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(string quoted, global::app.actor.context.@this context)
     {
         var writer = new global::app.goal.step.action.formal.Writer(context.App.type.list);
-        await Output(writer, global::app.View.Store, context);
+        await writer.Kind.pair.Output(this, writer, global::app.View.Store, context);
         if (writer.ToString().Contains(quoted)) return true;
         foreach (var row in Rows(context) ?? [])
             if (await row.Value() is { } held && !ReferenceEquals(held, this) && await held.Holds(quoted, context)) return true;
@@ -463,7 +463,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(global::app.type.item.number.@this number, global::app.actor.context.@this context)
     {
         var writer = new global::app.goal.step.action.formal.Writer(context.App.type.list);
-        await Output(writer, global::app.View.Store, context);
+        await writer.Kind.pair.Output(this, writer, global::app.View.Store, context);
         if (System.Text.RegularExpressions.Regex.IsMatch(writer.ToString(),
                 $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(number.ToString())}(?![\d.]|\.\d)")) return true;
         foreach (var row in Rows(context) ?? [])
@@ -931,8 +931,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     {
         switch (value)
         {
-            // A plang value writes ITSELF.
-            case @this item: await item.Output(writer, mode, context); break;
+            // A plang value writes itself — through the writer's kind, which has its pair for it when it has one.
+            case @this item: await writer.Kind.pair.Output(item, writer, mode, context); break;
             // A Data-typed property (action.parameters) self-writes too — async, so it routes here,
             // NOT through writer.Value (sync, peels to the OLD Peek().Write path).
             case global::app.data.@this d: await d.Output(writer, mode, context); break;

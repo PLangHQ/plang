@@ -403,7 +403,7 @@ public class source : @this
             {
                 var bound = await resolved.Value();
                 if (!resolved.Success) throw new global::app.error.AppException(resolved.Error!);
-                await bound.Output(writer, mode, context);
+                await writer.Kind.pair.Output(bound, writer, mode, context);
                 return;
             }
             throw new global::app.error.VariableNotFoundException(resolved?.Name ?? template.Trim('%'));

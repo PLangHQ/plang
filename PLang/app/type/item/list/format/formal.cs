@@ -1,10 +1,9 @@
 namespace app.type.item.list.format;
 
 /// <summary>
-/// A list's formal form. A list whose every element is a NAMED Data is a list of arguments (goal.call's
-/// and ui.render's <c>Parameter</c>): each is a row, written like a property —
-/// <c>{kind: text = "x", path: item = %path%}</c>. Any other list is its elements: <c>[a, b]</c>. An
-/// instance, held directly by <see cref="app.type.item.list.@this"/>'s own format map.
+/// A list in formal. A list whose every element is a NAMED Data is a list of arguments (goal.call's and ui.render's
+/// <c>Parameter</c>): each is a row, written like a property — <c>{kind: text = "x", path: item = %path%}</c>. Any other
+/// list is its elements: <c>[a, b]</c>.
 /// </summary>
 public sealed class formal : global::app.type.format.IOutput
 {
