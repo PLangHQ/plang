@@ -86,5 +86,10 @@ For C# developers:
     {{ cause.Key }} ({{ cause.status.code }}): {{ cause.Message }}
 {%- if cause.Step %}
     at {{ cause.Step.Goal.Path }}:{{ cause.Step.Line.Number }} - {{ cause.Step.Text }}
+{%- elsif cause.Goal %}
+    in {{ cause.Goal.Path }}
 {%- endif %}
+{%- for reason in cause.list %}
+        - {{ reason.Message }}{% if reason.Goal %} (in {{ reason.Goal.Path }}){% endif %}
+{%- endfor %}
 {%- endfor %}

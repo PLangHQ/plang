@@ -6,3 +6,6 @@ Properties: `{"Message": "checkout failed"}`
 
 Step text: `throw "not found", status 404`
 Properties: `{"Message": "not found", "Status": 404}`
+
+Step text: `throw "the build has broken goals", cause %broken%`
+Properties: `{"Message": "the build has broken goals", "Cause": "%broken%"}` — the list of errors after `cause` goes in Cause, not Data.

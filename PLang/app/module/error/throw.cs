@@ -27,6 +27,11 @@ public partial class Throw : IContext
     [Default("error")]
     public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
 
+    /// <summary>The errors that caused this one — <c>- throw "x", cause %errors%</c>. The thrown error holds them whole
+    /// as its causes (its <c>list</c>): the same errors, not copies. An item that is not an error is refused. A
+    /// re-raise (<c>throw %!error%</c>) keeps its own causes.</summary>
+    public partial data.@this<global::app.type.item.list.@this<global::app.error.@this>>? Cause { get; init; }
+
     /// <summary>How the programmer fixes it — <c>- throw %!error%, fix suggestion %fix%</c>. A re-raised
     /// error keeps its identity and gains the suggestion; a new error is born with it.</summary>
     public partial data.@this<global::app.type.item.text.@this>? FixSuggestion { get; init; }
@@ -74,6 +79,22 @@ public partial class Throw : IContext
             attached = Context.Ok<List>(list);
         }
 
-        return Error(new ServiceError(message, key, status) { Data = attached, FixSuggestion = fix });
+        // The errors that caused this one are held whole as its causes — the same errors, never rebuilt from their
+        // messages. A cause list holds errors only: anything else is refused, naming what it is.
+        var causes = new List<global::app.error.@this>();
+        if (Cause != null && await Cause.Value() is { } held)
+        {
+            var at = 0;
+            foreach (var (_, row) in held.EnumerateItems(Context))
+            {
+                if (row.Peek() is not global::app.error.@this cause)
+                    return Error(new global::app.error.ActionError(
+                        $"a cause is an error: item {at} is a {row.Peek()?.Type.Name ?? "null"}, not an error", "CauseNotAnError", 400));
+                causes.Add(cause);
+                at++;
+            }
+        }
+
+        return Error(new ServiceError(message, key, status) { Data = attached, FixSuggestion = fix, list = causes });
     }
 }

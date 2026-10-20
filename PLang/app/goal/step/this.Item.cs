@@ -124,28 +124,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             }
             writer.EndArray();
         }
-        // a step the build could not fix: why, as the build said it — the goal it belongs to does not start
-        if (Error != null)
-        {
-            writer.Name("error");
-            writer.BeginObject();
-            writer.Name("key"); writer.String(Error.Key);
-            writer.Name("message"); writer.String(Error.Message);
-            if (Error.list.Count > 0)
-            {
-                writer.Name("list");
-                writer.BeginArray(Error.list.Count);
-                foreach (var cause in Error.list)
-                {
-                    writer.BeginObject();
-                    writer.Name("key"); writer.String(cause.Key);
-                    writer.Name("message"); writer.String(cause.Message);
-                    writer.EndObject();
-                }
-                writer.EndArray();
-            }
-            writer.EndObject();
-        }
+        // a step the build could not fix: its error writes itself, as it does everywhere — the goal it belongs to does
+        // not start
+        if (Error != null) { writer.Name("error"); Error.Write(writer); }
         writer.EndObject();
     }
 }

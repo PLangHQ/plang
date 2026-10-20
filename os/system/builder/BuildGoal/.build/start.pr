@@ -3573,11 +3573,11 @@
     },
     {
       "name": "LeaveBroken",
-      "comment": "Steps still refused after the retry: each holds why (its Error), and the goal is saved with them broken — its\n.pr writes them, and the goal will not start. The build goes on to the goal's other steps and other goals, and\nends failed (Build) naming this goal. Nothing is thrown here: the steps that built keep their code.",
+      "comment": "Steps still refused after the retry: each holds why (its Error), and the goal is saved with them broken — its\n.pr writes them, and the goal will not start. The build goes on to the goal's other steps and other goals, and\nends failed (Build) holding this refusal whole as a cause. Nothing is thrown here: the steps that built keep their code.",
       "step": [
         {
           "index": 0,
-          "text": "list.add(ListName=%brokenGoals%, Value=\"%goal.Path%: %!error.Details.count% step(s) broken: %!error.Details.steps%; fix the words and build again\")",
+          "text": "list.add(ListName=%brokenGoals%, Value=%!error%)",
           "line": {
             "number": 96
           },
@@ -3606,47 +3606,16 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "text",
+                    "name": "item",
                     "template": "plang"
                   },
-                  "value": "%goal.Path%: %!error.Details.count% step(s) broken: %!error.Details.steps%; fix the words and build again",
+                  "value": "%!error%",
                   "variable": [
                     {
-                      "text": "%goal.Path%",
-                      "code": [
-                        {
-                          "variable": "goal"
-                        },
-                        {
-                          "property": "Path"
-                        }
-                      ]
-                    },
-                    {
-                      "text": "%!error.Details.count%",
+                      "text": "%!error%",
                       "code": [
                         {
                           "variable": "!error"
-                        },
-                        {
-                          "property": "Details"
-                        },
-                        {
-                          "property": "count"
-                        }
-                      ]
-                    },
-                    {
-                      "text": "%!error.Details.steps%",
-                      "code": [
-                        {
-                          "variable": "!error"
-                        },
-                        {
-                          "property": "Details"
-                        },
-                        {
-                          "property": "steps"
                         }
                       ]
                     }
@@ -3668,7 +3637,7 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "ca9fdcb5c7ba8c9a29f7ff0c3e8291eb2dff02bd2396f429d34d945c6651f368"
+      "hash": "87f2b3a694a8f611440b4d385c7c4191bfc7ea492776fcaf648bfa2aac5bbcde"
     }
   ],
   "visibility": "Public",

@@ -412,9 +412,9 @@ public sealed partial class @this
         var steps = Step.Items().Where(s => s.Error != null).ToList();
         if (steps.Count == 0) return null;
         return new global::app.error.@this(
-            $"goal '{Path}' has {steps.Count} broken step(s): {string.Join(", ", steps.Select(s => s.Index))}; fix the words and build again",
+            $"goal '{Path}' has {steps.Count} broken step(s): {string.Join(", ", steps.Select(s => s.Index))}",
             "GoalBroken", 400)
-        { Goal = this, list = steps.Select(s => s.Error!).ToList() };
+        { Goal = this, list = steps.Select(s => s.Error!).ToList(), FixSuggestion = "fix the words and build again" };
     }
 
     // Starts the steps, and folds a return that ends here — or, for a goal of another app, runs it there.

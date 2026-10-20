@@ -61,6 +61,22 @@ public class BrokenStepTests : System.IAsyncDisposable
     }
 
     [Test]
+    public async Task TheRefusalOfAnAnswer_NamesTheGoalItIsAbout()
+    {
+        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
+        var context = os.actor.list.User.Context;
+        var goal = Parse(OneBroken, context);
+
+        var refused = await goal.Step.Read("", context);
+
+        // a build that ends on this refusal names the goal by its path
+        await Assert.That(refused).IsNotNull();
+        await Assert.That(refused!.Key).IsEqualTo("StepsRefused");
+        await Assert.That(refused.Goal).IsNotNull();
+        await Assert.That(refused.Goal!.Path.ToString()).Contains("/Start.goal");
+    }
+
+    [Test]
     public async Task AStepThatBuildsOnTheNextRead_LosesItsError()
     {
         await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
@@ -98,6 +114,10 @@ public class BrokenStepTests : System.IAsyncDisposable
         await Assert.That(written).IsNotNull();
         await Assert.That(written!["message"]!.GetValue<string>()).Contains("output.shout");
         await Assert.That(written["list"]!.AsArray().Count).IsGreaterThan(0);
+        // the error writes itself, as it does everywhere: its id and status ride too, not a hand-built subset
+        await Assert.That(written["key"]!.GetValue<string>()).IsEqualTo("StepBroken");
+        await Assert.That(written["id"]).IsNotNull();
+        await Assert.That(written["status"]).IsNotNull();
 
         var loaded = await Reloaded(built, context);
         await Assert.That(loaded.Step[0].Error).IsNull();
@@ -125,6 +145,10 @@ public class BrokenStepTests : System.IAsyncDisposable
         await Assert.That(ran.Error!.Key).IsEqualTo("GoalBroken");
         await Assert.That(ran.Error.Message).Contains("/Start.goal");
         await Assert.That(ran.Error.Message).Contains("1");
+        // how to fix it is the error's FixSuggestion (the error page prints it as "Fix:"), not part of the message
+        await Assert.That(ran.Error.FixSuggestion).IsEqualTo("fix the words and build again");
+        await Assert.That(ran.Error.Message).DoesNotContain("fix the words");
+        await Assert.That(ran.Error.Goal).IsNotNull();
         await Assert.That(ran.Error.list.Count).IsEqualTo(1);
         await Assert.That(ran.Error.list[0].Message).Contains("output.shout");
         await Assert.That(ran.Error.list[0].list.Count).IsGreaterThan(0);
@@ -161,6 +185,29 @@ public class BrokenStepTests : System.IAsyncDisposable
         var invalid = await unbuilt.Validate(context);
         await Assert.That(invalid).IsNotNull();
         await Assert.That(invalid!.Message).Contains("no actions");
+    }
+
+    // A step the build could not fix has no code, so no gate to fold its block into. That is not a second mistake:
+    // the step is already broken. The fold leaves it be and keeps the steps under it, and the goal is saved broken.
+    [Test]
+    public async Task ABrokenStepWithStepsIndentedUnderIt_IsNotAFoldError_AndKeepsItsBlock()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        var context = app.actor.list.System.Context;
+        var goal = Make.Goal(context, "G",
+            Make.Step("if %x% = 1"),
+            Make.Step("write out inside", 1, Make.Action(context, "output", "write", ("Content", "inside"))),
+            Make.Step("write out after", Make.Action(context, "output", "write", ("Content", "after"))));
+        goal.Step[0].Error = new global::app.error.@this("step 0 (\"if %x% = 1\") is broken", "StepBroken", 400);
+
+        var action = new global::app.module.build.fold(context) { Goal = context.Ok<global::app.goal.@this>(goal) };
+        var result = await new global::app.module.build.code.Default().Fold(action);
+
+        await Assert.That(result.Success).IsTrue();
+        // all three steps are still in the goal, the block under the broken step among them
+        await Assert.That(goal.Step.Count).IsEqualTo(3);
+        await Assert.That(goal.Step[1].Text).IsEqualTo("write out inside");
+        await Assert.That(goal.Step[1].Code.Count).IsEqualTo(1);
     }
 
     [Test]

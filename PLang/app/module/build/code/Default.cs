@@ -170,6 +170,10 @@ public class Default : IBuilder
         while (i < flat.Count)
         {
             var step = flat[i];
+            // A step the build could not fix has no code, so no gate to fold a block into — and it is already broken,
+            // so that is not a second mistake. It is kept as it is, with the steps under it, which stay in the goal
+            // with their code; the goal is saved broken and will not start.
+            if (step.Error != null) { top.Add(step); i++; continue; }
             var block = flat.Body(i);   // the steps indented under it — the list answers
             int j = i + 1 + block.CountRaw;
 

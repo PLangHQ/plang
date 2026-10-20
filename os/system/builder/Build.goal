@@ -17,5 +17,6 @@ Build
 - build.unreached
 - save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'
 - build.appSave
-/ A goal was saved with broken steps: the build ends failed, and its last lines name each such goal.
-- condition.if(Left=%brokenGoals.count%, Operator=">", Right=0) { list.join(ListName=%brokenGoals%, Separator="\n"); variable.set(Name=%brokenLines%, Value=%!data%); error.throw(Message="%brokenLines%", Key="StepsBroken", Status=400) }
+/ A goal was saved with broken steps: the build ends failed, holding each such goal's refusal whole as a cause, so the
+/ error page names every goal, its step and why.
+- condition.if(Left=%brokenGoals.count%, Operator=">", Right=0) { error.throw(Message="the build left goals with steps it could not fix", Key="StepsBroken", Status=400, Cause=%brokenGoals%, FixSuggestion="fix the words and build again") }

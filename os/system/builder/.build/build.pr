@@ -569,11 +569,11 @@
     },
     {
       "index": 11,
-      "text": "condition.if(Left=%brokenGoals.count%, Operator=\">\", Right=0) { list.join(ListName=%brokenGoals%, Separator=\"\\n\"); variable.set(Name=%brokenLines%, Value=%!data%); error.throw(Message=\"%brokenLines%\", Key=\"StepsBroken\", Status=400) }",
+      "text": "condition.if(Left=%brokenGoals.count%, Operator=\">\", Right=0) { error.throw(Message=\"the build left goals with steps it could not fix\", Key=\"StepsBroken\", Status=400, Cause=%brokenGoals%, FixSuggestion=\"fix the words and build again\") }",
       "line": {
-        "number": 21
+        "number": 22
       },
-      "comment": "A goal was saved with broken steps: the build ends failed, and its last lines name each such goal.",
+      "comment": "A goal was saved with broken steps: the build ends failed, holding each such goal's refusal whole as a cause, so the\nerror page names every goal, its step and why.",
       "code": [
         {
           "module": "condition",
@@ -619,19 +619,35 @@
           "child": [
             {
               "index": 0,
-              "text": "list.join(ListName=%brokenGoals%, Separator=\"\\n\"); variable.set(Name=%brokenLines%, Value=%!data%); error.throw(Message=\"%brokenLines%\", Key=\"StepsBroken\", Status=400)",
+              "text": "error.throw(Message=\"the build left goals with steps it could not fix\", Key=\"StepsBroken\", Status=400, Cause=%brokenGoals%, FixSuggestion=\"fix the words and build again\")",
               "line": {
-                "number": 21
+                "number": 22
               },
               "code": [
                 {
-                  "module": "list",
-                  "name": "join",
+                  "module": "error",
+                  "name": "throw",
                   "property": [
                     {
-                      "name": "ListName",
+                      "name": "Message",
                       "type": {
-                        "name": "variable"
+                        "name": "text"
+                      },
+                      "value": "the build left goals with steps it could not fix"
+                    },
+                    {
+                      "name": "Key",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "StepsBroken"
+                    },
+                    {
+                      "name": "Cause",
+                      "type": {
+                        "name": "list",
+                        "kind": "error",
+                        "template": "plang"
                       },
                       "value": "%brokenGoals%",
                       "variable": [
@@ -646,93 +662,11 @@
                       ]
                     },
                     {
-                      "name": "Separator",
-                      "type": {
-                        "name": "text",
-                        "kind": "separator"
-                      },
-                      "value": "\n"
-                    }
-                  ]
-                },
-                {
-                  "module": "variable",
-                  "name": "set",
-                  "property": [
-                    {
-                      "name": "Name",
-                      "type": {
-                        "name": "variable"
-                      },
-                      "value": "%brokenLines%",
-                      "variable": [
-                        {
-                          "text": "%brokenLines%",
-                          "code": [
-                            {
-                              "variable": "brokenLines"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Value",
-                      "type": {
-                        "name": "item",
-                        "template": "plang"
-                      },
-                      "value": "%!data%",
-                      "variable": [
-                        {
-                          "text": "%!data%",
-                          "code": [
-                            {
-                              "variable": "!data"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ],
-                  "default": [
-                    {
-                      "name": "default",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": false
-                    }
-                  ]
-                },
-                {
-                  "module": "error",
-                  "name": "throw",
-                  "property": [
-                    {
-                      "name": "Message",
-                      "type": {
-                        "name": "text",
-                        "template": "plang"
-                      },
-                      "value": "%brokenLines%",
-                      "variable": [
-                        {
-                          "text": "%brokenLines%",
-                          "code": [
-                            {
-                              "variable": "brokenLines"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Key",
+                      "name": "FixSuggestion",
                       "type": {
                         "name": "text"
                       },
-                      "value": "StepsBroken"
+                      "value": "fix the words and build again"
                     }
                   ],
                   "default": [
@@ -755,5 +689,5 @@
   "child": [],
   "visibility": "Public",
   "file": "Build.goal",
-  "hash": "41c208bfc5d7fbec5658c9551bd30e3d2b0ae06b89afe61e5708942c6c333a05"
+  "hash": "85835f25b47a66ee42bfd9d81253f1fd9dc9dfcf2a915aa583509a6a6574d480"
 }

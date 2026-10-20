@@ -156,4 +156,61 @@ public class ThrowTests : System.IAsyncDisposable
         await Assert.That(list.At(1, app.actor.list.User.Context)!.Peek()!.ToString()).IsEqualTo("item-9");
     }
 
+    [Test]
+    public async Task Throw_WithCause_HoldsThoseErrorsWhole()
+    {
+        // `- throw "it broke", cause %errors%` — the errors that caused this one ride as its causes (its list): the
+        // same errors, not copies and not rebuilt from their messages.
+        var (context, _) = CreateContext();
+        var first = new global::app.error.@this("the first", "First", 400);
+        var second = new global::app.error.@this("the second", "Second", 500);
+        var causes = new global::app.type.item.list.@this<global::app.error.@this>(
+            new List<global::app.error.@this> { first, second },
+            context.App.type.list[typeof(global::app.type.item.list.@this<global::app.error.@this>)]);
+
+        var action = new Throw(context) { Message = (Text)"it broke", Key = (Text)"Broke", Cause = causes };
+        var result = await action.Start();
+
+        await result.IsFailure();
+        var err = result.Error!;
+        await Assert.That(err.Key).IsEqualTo("Broke");
+        await Assert.That(err.list.Count).IsEqualTo(2);
+        await Assert.That(ReferenceEquals(err.list[0], first)).IsTrue();
+        await Assert.That(ReferenceEquals(err.list[1], second)).IsTrue();
+    }
+
+    [Test]
+    public async Task Throw_WithACauseThatIsNotAnError_IsRefused_NamingIt()
+    {
+        // a cause list holds errors: a text in it is refused with a typed error that names what it is
+        var (context, _) = CreateContext();
+        var notErrors = new ListType(new[] { context.Ok((Text)"just words") }, context.App.type.list["list"]);
+
+        var action = Make.Action(context, "error", "throw", ("Message", "it broke"), ("Cause", notErrors));
+        var result = await action.Start(context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsNotEqualTo("error");
+        await Assert.That(result.Error.Message.ToLowerInvariant()).Contains("text");
+        await Assert.That(result.Error.Message.ToLowerInvariant()).Contains("error");
+    }
+
+    [Test]
+    public async Task Throw_ReRaise_KeepsItsOwnCauses()
+    {
+        // `- throw %!error%` hands an existing error through with the causes it already holds
+        var (context, _) = CreateContext();
+        var cause = new global::app.error.@this("underneath", "Under", 500);
+        var existing = new global::app.error.@this("on top", "Top", 400) { list = new List<global::app.error.@this> { cause } };
+
+        var action = new Throw(context) { Data = context.Ok<global::app.type.item.@this>(existing) };
+        var result = await action.Start();
+
+        await result.IsFailure();
+        await Assert.That(ReferenceEquals(result.Error, existing)).IsTrue();
+        await Assert.That(result.Error!.list.Count).IsEqualTo(1);
+        await Assert.That(ReferenceEquals(result.Error.list[0], cause)).IsTrue();
+    }
+
 }

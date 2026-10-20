@@ -3821,6 +3821,7 @@ action error.throw
   Data : item
   Status : status
   Key : text
+  Cause : list<error>
   FixSuggestion : text
 
 action file.copy

@@ -64,14 +64,6 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         return body;
     }
 
-    // What a step the build could not fix holds: it names itself, and each reason that still refuses it rides as a
-    // cause of its own (the gate messages the retry was told), so the .pr keeps them as they were said.
-    private static global::app.error.@this Broken(Step step, List<string> why)
-        => new($"step {step.Index} (\"{step.Text}\") is broken", "StepBroken", 400)
-        {
-            list = why.Select(w => new global::app.error.@this(w, "StepRefused", 400)).ToList(),
-        };
-
     // A step's line in the answer: `[i]` at the start of a line.
     private static readonly System.Text.RegularExpressions.Regex Head =
         new(@"^\[(\d+)\][ \t]*", System.Text.RegularExpressions.RegexOptions.Multiline);
@@ -229,8 +221,12 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         // each step now says why it is refused, or that it is not: a step that stays refused after the retry is
         // written into the .pr broken, with its reasons, and its goal does not start. A step that built (or kept its
         // code from an earlier read) holds none.
+        // It names the step; the reasons are its causes, each said once.
         for (int i = 0; i < CountRaw; i++)
-            this[i].Error = refused.TryGetValue(i, out var why) ? Broken(this[i], why) : null;
+            this[i].Error = refused.TryGetValue(i, out var why)
+                ? new global::app.error.@this($"step {i} (\"{this[i].Text}\") is broken", "StepBroken", 400)
+                    { list = why.Select(w => new global::app.error.@this(w, "StepRefused", 400)).ToList() }
+                : null;
 
         if (whole.Count == 0 && refused.Count == 0 && unconfirmed.Count == 0) return null;
         // the only problems are numbers to confirm: the decider is asked (the builder's ConfirmNumbers)
@@ -250,7 +246,9 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         var problems = whole.Concat(refused.Values.SelectMany(p => p)).ToList();
         return new global::app.error.@this(string.Join("; ", problems), key ?? "StepsRefused", 400)
         {
-            Details = new() { ["steps"] = string.Join(", ", refused.Keys), ["count"] = refused.Count },
+            // the goal whose steps these are: a build that ends on it names the goal by its path
+            Goal = CountRaw > 0 ? this[0].Goal : null,
+            Details = new() { ["steps"] = string.Join(", ", refused.Keys) },
         };
     }
 

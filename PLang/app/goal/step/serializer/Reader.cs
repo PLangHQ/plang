@@ -83,38 +83,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     }
                     reader.EndArray();
                     break;
-                // a step the build could not fix: its error and the causes that refused it, as the build wrote them
+                // a step the build could not fix: its error, read by the error's own reader
                 case "error":
-                    string errorKey = "", errorMessage = "";
-                    var causes = new List<global::app.error.@this>();
-                    reader.BeginObject();
-                    while (reader.NextName(out var field))
-                        switch (field)
-                        {
-                            case "key": errorKey = reader.String(); break;
-                            case "message": errorMessage = reader.String(); break;
-                            case "list":
-                                reader.BeginArray();
-                                while (reader.NextElement())
-                                {
-                                    string causeKey = "", causeMessage = "";
-                                    reader.BeginObject();
-                                    while (reader.NextName(out var causeField))
-                                        switch (causeField)
-                                        {
-                                            case "key": causeKey = reader.String(); break;
-                                            case "message": causeMessage = reader.String(); break;
-                                            default: throw new global::app.error.PrFormatOutdatedException($"error cause key '{causeField}' isn't in this .pr format", ctx.Origin);
-                                        }
-                                    reader.EndObject();
-                                    causes.Add(new global::app.error.@this(causeMessage, causeKey, 400));
-                                }
-                                reader.EndArray();
-                                break;
-                            default: throw new global::app.error.PrFormatOutdatedException($"error key '{field}' isn't in this .pr format", ctx.Origin);
-                        }
-                    reader.EndObject();
-                    step.Error = new global::app.error.@this(errorMessage, errorKey, 400) { list = causes };
+                    step.Error = new global::app.error.serializer.Reader().Read(ref reader, null, ctx) as global::app.error.@this;
                     break;
                 // Every key the step writes is read above; an unknown one means another builder wrote it.
                 default: throw new global::app.error.PrFormatOutdatedException($"step key '{name}' isn't in this .pr format", ctx.Origin);
