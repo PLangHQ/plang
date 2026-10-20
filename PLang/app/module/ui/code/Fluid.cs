@@ -318,18 +318,23 @@ public class Fluid : ITemplate
                 (FluidValue)new ArrayValue(new[] { FluidValue.Create(pair.key.Peek(), ctx.Options), FluidValue.Create(pair.value.Peek(), ctx.Options) }));
 
         /// <summary>How the value shows: its Output, written as text in the render's culture. A value reaches a
-        /// template already read (its door opened), so its Output completes at once; one still waiting on I/O is
-        /// refused, never blocked on.</summary>
+        /// template already read (its door opened), so its Output completes at once; a write that failed answers its
+        /// own error, and one still waiting on I/O is refused, never blocked on.</summary>
         public override string ToStringValue()
         {
-            using var written = new MemoryStream();
+            var written = new MemoryStream();
             var text = Writer(written);
             // liquid asks for the text synchronously (ToStringValue has no async form), so the write is never awaited
-            // here: one that hasn't completed at once is refused
+            // here: one that hasn't completed at once is refused, and keeps the stream it is still writing into
             var output = text.Kind.pair.Output(item, text, global::app.View.Out, context);
-            if (!output.IsCompletedSuccessfully)
-                throw new System.NotSupportedException("a template shows a value whose output waits on I/O — read it first");
-            return System.Text.Encoding.UTF8.GetString(written.ToArray());
+            if (!output.IsCompleted) throw new AppException(new global::app.error.@this(
+                "a template shows a value whose output waits on I/O — read it first", "TemplateValueUnread", 400));
+            using (written)
+            {
+                // completed: a write that failed re-raises its own error
+                output.GetAwaiter().GetResult();
+                return System.Text.Encoding.UTF8.GetString(written.ToArray());
+            }
         }
 
         public override async ValueTask WriteToAsync(TextWriter writer, System.Text.Encodings.Web.TextEncoder encoder,
@@ -361,9 +366,10 @@ public class Fluid : ITemplate
                 : other.IsNil() ? context.Null().Peek()
                 : global::app.type.item.@this.Create(other.ToObjectValue(), context);
             var compared = item.Compare(that, context);
-            return (compared.IsCompletedSuccessfully ? compared.Result
-                : throw new System.NotSupportedException("a template compares a value whose comparison waits on I/O"))
-                == global::app.data.Comparison.Equal;
+            // completed: a comparison that failed re-raises its own error; one still waiting on I/O is refused
+            if (!compared.IsCompleted) throw new AppException(new global::app.error.@this(
+                "a template compares a value whose comparison waits on I/O — read it first", "TemplateValueUnread", 400));
+            return compared.GetAwaiter().GetResult() == global::app.data.Comparison.Equal;
         }
 
         /// <summary>The value as liquid's own sort, uniq and compare take it — Fluid is the third-party boundary: a
