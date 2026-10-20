@@ -23,7 +23,7 @@ public sealed class @this
     // every class the assembly holds that its code wrote, read once for every fact below — not the ones the compiler
     // makes (a lambda's closure, an async method's state machine: `<…>` in the name), which are never a type, a kind,
     // a format or an action
-    private System.Type[] Classes => System.Threading.LazyInitializer.EnsureInitialized(ref _classes, ref _gate,
+    private System.Type[] Classes => _classes ?? System.Threading.LazyInitializer.EnsureInitialized(ref _classes, ref _gate,
         () => Clr.GetTypes().Where(clr => !clr.Name.Contains('<')).ToArray());
 
     /// <summary>A class that is a plang type of its own: the name it goes by, and what the class declares of itself —
@@ -62,7 +62,7 @@ public sealed class @this
     private Type[]? _type;
     /// <summary>The classes that are types of their own, by the name each goes by.</summary>
     internal System.Collections.Generic.IReadOnlyList<Type> type
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _type, ref _gate, () => Classes
+        => _type ?? System.Threading.LazyInitializer.EnsureInitialized(ref _type, ref _gate, () => Classes
             .Select(clr => global::app.type.list.@this.NameOf(clr) is { } name ? new Type(name, clr) : null)
             .OfType<Type>().ToArray());
 
@@ -96,7 +96,7 @@ public sealed class @this
 
     private Index? _index;
     /// <summary>The code's types by name and by class.</summary>
-    internal Index index => System.Threading.LazyInitializer.EnsureInitialized(ref _index, ref _gate, () => new Index(type));
+    internal Index index => _index ?? System.Threading.LazyInitializer.EnsureInitialized(ref _index, ref _gate, () => new Index(type));
 
     /// <summary>A kind class, the name of the type it is a kind of (the T of its kind&lt;T&gt;), and how it is made
     /// from that type's entry.</summary>
@@ -105,7 +105,7 @@ public sealed class @this
     private Kind[]? _kind;
     /// <summary>The kind classes: each born from nothing but the entry of the type it is a kind of.</summary>
     internal System.Collections.Generic.IReadOnlyList<Kind> kind
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _kind, ref _gate, () => KindClasses().ToArray());
+        => _kind ?? System.Threading.LazyInitializer.EnsureInitialized(ref _kind, ref _gate, () => KindClasses().ToArray());
 
     private System.Collections.Generic.IEnumerable<Kind> KindClasses()
     {
@@ -127,7 +127,7 @@ public sealed class @this
     private Format[]? _format;
     /// <summary>The classes that declare formats (<c>[Format]</c>), each with its declarations.</summary>
     internal System.Collections.Generic.IReadOnlyList<Format> format
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _format, ref _gate, () => Classes
+        => _format ?? System.Threading.LazyInitializer.EnsureInitialized(ref _format, ref _gate, () => Classes
             .Where(clr => clr.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false))
             .Select(clr => new Format(clr, global::app.type.item.@this.NameOf(clr),
                 System.Reflection.CustomAttributeExtensions.GetCustomAttributes<global::app.Attributes.FormatAttribute>(clr, inherit: false).ToArray(),
@@ -141,7 +141,7 @@ public sealed class @this
     private Choice[]? _choice;
     /// <summary>The classes marked a choice (<c>[Choice]</c>): each a closed set a <c>choice&lt;T&gt;</c> draws on.</summary>
     internal System.Collections.Generic.IReadOnlyList<Choice> choice
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _choice, ref _gate, () => Classes
+        => _choice ?? System.Threading.LazyInitializer.EnsureInitialized(ref _choice, ref _gate, () => Classes
             .Where(clr => clr.IsDefined(typeof(global::app.Attributes.ChoiceAttribute), inherit: false))
             .Select(clr => new Choice(clr, typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(clr)
                 .GetConstructor([typeof(string)])!))
@@ -155,7 +155,7 @@ public sealed class @this
     private Subclass[]? _subclass;
     /// <summary>The classes that are a kind of their family, by their own name — not one named as its family.</summary>
     internal System.Collections.Generic.IReadOnlyList<Subclass> subclass
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _subclass, ref _gate, () => Subclasses().ToArray());
+        => _subclass ?? System.Threading.LazyInitializer.EnsureInitialized(ref _subclass, ref _gate, () => Subclasses().ToArray());
 
     private System.Collections.Generic.IEnumerable<Subclass> Subclasses()
     {
@@ -182,7 +182,7 @@ public sealed class @this
     private Reader[]? _reader;
     /// <summary>The readers the code ships, each type's from its serializer folder.</summary>
     internal System.Collections.Generic.IReadOnlyList<Reader> reader
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _reader, ref _gate, () => Readers().ToArray());
+        => _reader ?? System.Threading.LazyInitializer.EnsureInitialized(ref _reader, ref _gate, () => Readers().ToArray());
 
     private System.Collections.Generic.IEnumerable<Reader> Readers()
     {
@@ -343,7 +343,7 @@ public sealed class @this
 
     private Kinds? _kinds;
     /// <summary>The code's kinds: each type's own, and the types a key may name one of.</summary>
-    internal Kinds kinds => System.Threading.LazyInitializer.EnsureInitialized(ref _kinds, ref _gate, () => new Kinds(this));
+    internal Kinds kinds => _kinds ?? System.Threading.LazyInitializer.EnsureInitialized(ref _kinds, ref _gate, () => new Kinds(this));
 
     /// <summary>An action class: its module (the namespace segment after the base), its name, and whether its result
     /// may be cached.</summary>
@@ -356,7 +356,7 @@ public sealed class @this
     /// <summary>The modules of plang's built-in actions (the classes under <c>app.module</c>), in the order their
     /// first action comes.</summary>
     internal System.Collections.Generic.IReadOnlyList<Module> module
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _module, ref _gate, () => Under("app.module").ToArray());
+        => _module ?? System.Threading.LazyInitializer.EnsureInitialized(ref _module, ref _gate, () => Under("app.module").ToArray());
 
     /// <summary>The modules under <paramref name="baseNamespace"/>: each the namespace segment after it, holding the
     /// action classes there, in the order their first action comes.</summary>

@@ -73,10 +73,39 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         => new(Types.Where(t => !t.Internal).Select(t => t.Name).Distinct(StringComparer.OrdinalIgnoreCase)
             .Select(name => (global::app.type.item.@this)new global::app.type.item.text.@this(name, this["text"])).ToList());
 
-    // The types plang's code lists, made for this list in the order its facts read them, and the facts' index of them
-    // by every name and class: one table for every app made from the code, each name's place here.
-    private global::app.type.@this[] _born = [];
+    // The types plang's code lists, each made for this list the first time it is asked (by a name or a class, through
+    // the facts' index — one table for every app made from the code, each name's place here) or when the list's rows
+    // are first read (Fill), in the order the facts read them. Held by reference: the first made is the one kept.
+    private global::app.type.@this?[] _born = [];
+    private global::app.assembly.@this? _bornCode;
     private global::app.assembly.@this.Index? _index;
+    // whether the made types are the list's rows yet: 0 not, 1 being added (the same thread reads what is added so
+    // far), 2 added
+    private int _filled;
+
+    // The code's type at a place in its facts, made for this list when first asked.
+    private global::app.type.@this Born(int at)
+    {
+        if (System.Threading.Volatile.Read(ref _born[at]) is { } made) return made;
+        var type = _bornCode!.type[at];
+        var born = type.Class == typeof(global::app.type.@this) ? new global::app.type.@this(this) : new global::app.type.@this(type, this);
+        return System.Threading.Interlocked.CompareExchange(ref _born[at], born, null) ?? born;
+    }
+
+    /// <summary>The types are the list's rows once its rows are first read or changed: every code type not made yet is
+    /// made then, and all of them added in the order the facts read them, before any added after.</summary>
+    private protected override void Fill()
+    {
+        if (System.Threading.Volatile.Read(ref _filled) == 2) return;
+        Load();
+        lock (_lock)
+        {
+            if (_filled != 0) return;
+            _filled = 1;
+            for (var at = 0; at < _born.Length; at++) base.Add(Born(at));
+            System.Threading.Volatile.Write(ref _filled, 2);
+        }
+    }
 
     // Every name a type added after the code's answers to (a type a program loads, another assembly's) — its word,
     // its namespace, its aliases, case aside — to the type, the first that answers. The guard keeps it: every type
@@ -98,11 +127,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 
     // The type a name names as the set stands (the guard asks while the types come in): the code's, else one added.
     private global::app.type.@this? Found(string name)
-        => _index is { } index && index.Name.TryGetValue(name, out var at) ? _born[at] : _named.GetValueOrDefault(name);
+        => _index is { } index && index.Name.TryGetValue(name, out var at) ? Born(at) : _named.GetValueOrDefault(name);
 
     // The type a C# class is, as the set stands: the code's, else one added.
     private global::app.type.@this? Found(System.Type clr)
-        => _index is { } index && index.Class.TryGetValue(clr, out var at) ? _born[at] : _classed.GetValueOrDefault(clr);
+        => _index is { } index && index.Class.TryGetValue(clr, out var at) ? Born(at) : _classed.GetValueOrDefault(clr);
 
     // The startup scan: every item class in Assemblies comes in under its name, read from the code's facts; a type's
     // facts are read when first asked, once every name is known (a fact names its property types), and so are its
@@ -112,39 +141,46 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         if (_loaded) return;
         lock (_lock)
         {
-            if (_loaded) return;
-            // each type is made holding this list, its facts read when asked; the type `type` is made holding this
-            // list as its values
-            var codes = Assemblies.Select(Code).ToList();
-            global::app.type.@this Made(global::app.assembly.@this.Type type) => type.Class == typeof(global::app.type.@this)
-                ? new global::app.type.@this(this)
-                : new global::app.type.@this(type, this);
-            // the first assembly's types are found through its facts' index (read once, a name two classes claim
-            // refused there), so the guard finds each already recorded as it comes in; another assembly's are
-            // recorded by the guard as they come
-            _born = codes[0].type.Select(Made).ToArray();
-            _index = codes[0].index;
-            foreach (var entry in _born) base.Add(entry);
-            foreach (var code in codes.Skip(1))
-                foreach (var type in code.type) base.Add(Made(type));
-            // each type's kinds are held when it is first asked for them (Enlist); what the code says of its kinds is
-            // read once, and a refusal there is plang broken. The readers a set or a subclass ships are this list's
-            // now: a read never waits on a kind being asked first.
-            _codes = codes;
-            foreach (var code in codes)
-                foreach (var owned in code.kinds.Owned.Values)
-                {
-                    foreach (var (choice, name) in owned.Choice)
-                        Reader.Register("choice", name, (global::app.type.reader.ITypeReader)choice.Reader.Invoke([name]));
-                    foreach (var subclass in owned.Subclass)
-                        if (subclass.Reader is { } reader)
-                            Reader.Register(subclass.Family, subclass.Kind, (global::app.type.reader.ITypeReader)reader.Invoke(null));
-                }
-            _loaded = true;
-            // kinds from more than one assembly are checked against each other here, every kind held
-            if (codes.Count > 1 && Guard() is { } clash) throw new InvalidOperationException(clash.Message);
+            // loaded, or being loaded by this thread (adding a type reads the rows, which asks the load)
+            if (_loaded || _loading) return;
+            _loading = true;
+            try { Scan(); }
+            finally { _loading = false; }
         }
     }
+
+    // The scan itself, under the load's lock. Each type is made holding this list, its facts read when asked; the
+    // type `type` is made holding this list as its values.
+    private void Scan()
+    {
+        var codes = Assemblies.Select(Code).ToList();
+        // the first assembly's types are found through its facts' index (read once, a name two classes claim refused
+        // there), each made when first asked; another assembly's are made now and recorded by the guard
+        _bornCode = codes[0];
+        _born = new global::app.type.@this?[codes[0].type.Count];
+        _index = codes[0].index;
+        foreach (var code in codes.Skip(1))
+            foreach (var type in code.type) base.Add(new global::app.type.@this(type, this));
+        // each type's kinds are held when it is first asked for them (Enlist); what the code says of its kinds is read
+        // once, and a refusal there is plang broken. The readers a set or a subclass ships are this list's now: a read
+        // never waits on a kind being asked first.
+        _codes = codes;
+        foreach (var code in codes)
+            foreach (var owned in code.kinds.Owned.Values)
+            {
+                foreach (var (choice, name) in owned.Choice)
+                    Reader.Register("choice", name, (global::app.type.reader.ITypeReader)choice.Reader.Invoke([name]));
+                foreach (var subclass in owned.Subclass)
+                    if (subclass.Reader is { } reader)
+                        Reader.Register(subclass.Family, subclass.Kind, (global::app.type.reader.ITypeReader)reader.Invoke(null));
+            }
+        _loaded = true;
+        // kinds from more than one assembly are checked against each other here, every kind held
+        if (codes.Count > 1 && Guard() is { } clash) throw new InvalidOperationException(clash.Message);
+    }
+
+    // whether the startup scan is running, on the thread that holds the load's lock
+    private bool _loading;
 
     /// <summary>The guard every slot passes: the types hold types, and every name a type answers to — its
     /// word, its namespace, its aliases — names one class. Only plang's own code reaches the slots around

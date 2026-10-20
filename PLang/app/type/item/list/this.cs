@@ -49,9 +49,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         get
         {
             if (System.Threading.Volatile.Read(ref _rows) is { } rows) return rows;
+            Fill();
             lock (_gate) return _rows ??= _items.ToArray();
         }
     }
+
+    /// <summary>Called before the rows are read or changed: a list whose rows are made when first needed (the types,
+    /// made from the code's facts) makes them here. A list that holds what it was given has nothing to make.</summary>
+    private protected virtual void Fill() { }
 
     // A list stores no context: an element is handed out with the context of whoever asks for it
     // (Items, At). A stored Data keeps its own. Every list holds the app's type its maker hands it:
@@ -114,6 +119,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public override global::app.type.item.@this Copy()
     {
         List<object?> rows;
+        Fill();
         lock (_gate) rows = _items.Select(slot => slot is Chunk chunk ? new Chunk((@this)chunk.List.Copy()) : Copied(slot)).ToList();
         return Holding(rows);
     }
@@ -155,6 +161,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // so no write can leave a reader walking stale rows. The edit's state rides in, so the edits capture nothing.
     private void Change<TState>(TState state, System.Action<@this, TState> edit)
     {
+        Fill();
         lock (_gate)
         {
             edit(this, state);
@@ -180,6 +187,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // faces read them without a context.
     private protected object? Stored(int index)
     {
+        Fill();
         lock (_gate)
             return Locate(index, out int row, out int offset, out @this? inner)
                 ? (inner != null ? inner.Stored(offset) : _items[row])
@@ -207,6 +215,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         get
         {
             int n = 0;
+            Fill();
             lock (_gate)
                 foreach (var row in _items) n += LeafCount(row);
             return n;
@@ -264,6 +273,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// asker's context, or C# null when out of range.</summary>
     internal Data? At(int index, actor.context.@this context)
     {
+        Fill();
         lock (_gate)
             return Locate(index, out int row, out int offset, out @this? inner)
                 ? (inner != null ? inner.At(offset, context) : Element(_items[row], context))

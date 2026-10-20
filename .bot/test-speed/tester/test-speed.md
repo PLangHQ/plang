@@ -155,6 +155,33 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 10. Type entries made on first ask: a birth at 0.3 ms, ~95 KB
+
+Allocation sampling with call stacks (4,000 shared births) pointed at:
+
+| what | share before | fix |
+|---|---|---|
+| `kept.list` in every module (and actor): an empty `ConcurrentDictionary` + lock each | ~12% | the store is made on the first add (one change in `kept.list` covers every holder) |
+| the code registry's 17 built-in providers, their dictionaries, a throwaway `Ok()` each | ~7% | `RegisterDefaults` arms them; made when the registry is first asked |
+| class-built types (`choice<ChannelDirection>`, `text`'s operator) reading `[PlangType]`/`[Format]` per value | ~3% | name and formats kept in the class identity cache `item` already had |
+| the 131 type entries | 23% | made on first ask (below) |
+| the facts' getters allocating their factory lambda on every read | 1.8% | a field check first |
+
+**Type entries on first ask.** The list base (`type.item.list`) gets one private hook, `Fill()`, empty by default,
+called before its rows are read or changed: `Now`, `Copy`, `Change`, `Stored`, `CountRaw`, `At`. The type list overrides
+it. A lookup by name or class (the facts' index) makes just that entry, into the place the index points at. The first
+read of the rows (a walk, a count, plang navigating `%!app.type.list%`) makes the rest and adds them all, in the facts'
+order, before any type added later. Answers and order are unchanged; the surface golden doesn't move.
+Load guards against re-entering itself on its own thread (adding another assembly's types reads the rows).
+
+**Birth now** (`new app` alone, 3 runs × 100, load ~9): shared **0.3 ms** median (min 0.2); ~95 KB per birth by the
+allocation trace (the timing test's 0.2 MB includes `Testing()` and `Dispose`). Fresh: 5.7 – 6.1 ms. C# green but
+Wire's six; plang 277 / 11, the same 11; `plang --test` 9.0 s.
+
+Left in a birth (~95 KB): type entries asked at birth (~16 asked by the app's own constructor: parent, datetime,
+setting, text, path, …); ~40 module objects; choice and subclass readers registered (~30 small objects + dictionary
+nodes); the actors' contexts, variable stores and channels; the reader registry's dictionaries.
+
 ## 9. Toward the floor: a birth at 0.4 ms, 0.2 MB (aimed at a server: thousands of users)
 
 Each step below was found by measuring: `dotnet-trace` CPU sampling of a whole suite (callers summed by a script),
