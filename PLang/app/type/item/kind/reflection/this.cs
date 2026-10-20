@@ -308,25 +308,17 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         var type = obj.GetType();
         // The DECLARED-face rule. A tagged type renders exactly its face for the view (cycles
         // [JsonIgnore]-disciplined). A type in OUR assembly that declares no face for the view (a
-        // context, a callstack, an actor) has nothing to show: on the wire writing it is a bug, so
-        // it throws LOUD naming it; a Debug dump — which never throws — writes it by name, as a
-        // reference, never walked. An untagged FOREIGN type (a plang-blind library DTO) can't
-        // declare, so it dumps transparently.
-        if (type.Assembly == typeof(global::app.type.kind.@this).Assembly && !Tagged.Declares(type, mode))
+        // context, a callstack, an actor) is the view's to answer: the wire and the store refuse it,
+        // naming it; a dump writes it by name, never walked. An untagged FOREIGN type (a plang-blind
+        // library DTO) can't declare, so it dumps transparently.
+        if (type.Assembly == typeof(global::app.type.kind.@this).Assembly && !writer.View.Declares(type))
         {
-            if (mode == global::app.View.Debug)
-            {
-                writer.String(obj.ToString() ?? type.Name);
-                return;
-            }
-            throw new global::app.data.OutputException(
-                $"'{type.FullName}' has no wire contract — it declares no [Out]/[Store] face and is "
-                + "not meant to cross the wire. Write what you actually meant to write, or tag the type.",
-                "NoWireContract");
+            writer.View.Undeclared(obj, writer);
+            return;
         }
 
         writer.BeginObject();
-        foreach (var entry in Tagged.PropertiesFor(type, mode))
+        foreach (var entry in Tagged.PropertiesFor(type, writer.View))
         {
             if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
             object? value;

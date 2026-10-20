@@ -48,9 +48,10 @@ public class TextTypeShapeTests
         await ctx.Variable.Set("t", new global::app.data.@this("t", grid, context: ctx));
 
         var ex = await Assert.That(async () => await ctx.Rendered("rows: %t.nope%"))
-            .Throws<global::app.error.VariableNotFoundException>();
+            .Throws<global::app.error.AppException>();
 
-        await Assert.That(ex!.Message).Contains("(a table)");
+        await Assert.That(ex!.Error.Key).IsEqualTo("VariableNotFound");
+        await Assert.That(ex.Message).Contains("(a table)");
         await Assert.That(ex.Message).DoesNotContain("(a this)");
     }
 

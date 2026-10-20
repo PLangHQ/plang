@@ -32,15 +32,22 @@ public class TypeProviderDllRoundtripTests : System.IAsyncDisposable
 
         var money = (global::app.type.item.@this)System.Activator.CreateInstance(moneyType, 10m, "USD")!;
 
-        var captured = new CapturingWriter(app.type.list["item"].kind["json"]!);
-        await captured.Kind.pair.Output(money, captured, global::app.View.Store, app.actor.list.User.Context);
+        var captured = new CapturingWriter(app.type.list["item"].kind["json"]!, global::app.View.Store, app.actor.list.User.Context);
+        await captured.Kind.pair.Output(money, captured, captured.View, captured.Context);
         await Assert.That(captured.Captured).IsEqualTo("USD 10");
     }
 
 
     private sealed class CapturingWriter : global::app.type.format.IWriter
     {
-        public CapturingWriter(global::app.type.kind.@this kind) { Kind = kind; }
+        public CapturingWriter(global::app.type.kind.@this kind, global::app.View view, global::app.actor.context.@this context)
+        {
+            Kind = kind;
+            View = view;
+            Context = context;
+        }
+        public global::app.View View { get; }
+        public global::app.actor.context.@this Context { get; }
         public global::app.type.kind.@this Kind { get; }
         public string? Captured { get; private set; }
         public void Null() { Captured = "(null)"; }

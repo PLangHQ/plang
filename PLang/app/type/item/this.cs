@@ -419,7 +419,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// a list is found by its characters, never by the escaped form the list writes it in.</summary>
     internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(string quoted, global::app.actor.context.@this context)
     {
-        var writer = new global::app.goal.step.action.formal.Writer(context.App.type.list);
+        var writer = new global::app.goal.step.action.formal.Writer(context);
         await writer.Kind.pair.Output(this, writer, global::app.View.Store, context);
         if (writer.ToString().Contains(quoted)) return true;
         foreach (var row in Rows(context) ?? [])
@@ -433,7 +433,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// holds what any of them holds.</summary>
     internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(global::app.type.item.number.@this number, global::app.actor.context.@this context)
     {
-        var writer = new global::app.goal.step.action.formal.Writer(context.App.type.list);
+        var writer = new global::app.goal.step.action.formal.Writer(context);
         await writer.Kind.pair.Output(this, writer, global::app.View.Store, context);
         if (System.Text.RegularExpressions.Regex.IsMatch(writer.ToString(),
                 $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(number.ToString())}(?![\d.]|\.\d)")) return true;
@@ -800,7 +800,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual async System.Threading.Tasks.Task<global::app.data.@this> Pour(System.IO.Stream into, actor.context.@this context)
     {
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(into))
-            await Output(new global::app.type.item.kind.json.Writer(utf8, context.App.type.list), global::app.View.Out, context);
+            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, context), global::app.View.Out, context);
         return context.Ok();
     }
 
@@ -830,7 +830,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                      {
                          Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                      }))
-            await Output(new global::app.type.item.kind.json.Writer(utf8, context.App.type.list), global::app.View.Debug, context);
+            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Debug, context), global::app.View.Debug, context);
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 
@@ -846,7 +846,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
-        => (context?.App.type.list["item"].kind["*"] as global::app.type.item.kind.reflection.@this
+        => (writer.Context.App.type.list["item"].kind["*"] as global::app.type.item.kind.reflection.@this
             ?? global::app.type.item.kind.reflection.@this.Fallback).Output(this, writer, mode, context);
 
     /// <summary>

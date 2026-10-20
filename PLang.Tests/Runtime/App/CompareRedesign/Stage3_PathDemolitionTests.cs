@@ -79,7 +79,7 @@ public class Stage3_PathDemolitionTests
             var p = new global::app.type.item.path.file.@this(loc, pathApp.actor.list.User.Context.App.type.list[new global::app.type.@this("path", "file"), pathApp.actor.list.User.Context]) { Raw = loc };
             using var ms = new MemoryStream();
             using var jw = new Utf8JsonWriter(ms);
-            var writer = new global::app.type.item.kind.json.Writer(jw, pathApp.type.list);
+            var writer = new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, pathApp.actor.list.System.Context);
             await writer.Kind.pair.Output(p, writer, global::app.View.Store, pathApp.actor.list.User.Context);
             jw.Flush();
             await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo($"\"{loc}\"").Because(loc);
@@ -276,7 +276,7 @@ public class Stage3_PathDemolitionTests
         var p = new global::app.type.item.path.file.@this("docs/readme.md", pathApp.actor.list.User.Context.App.type.list[new global::app.type.@this("path", "file"), pathApp.actor.list.User.Context]) { Raw = "docs/readme.md" };
         using var ms = new MemoryStream();
         using var jw = new Utf8JsonWriter(ms);
-        var writer = new global::app.type.item.kind.json.Writer(jw, pathApp.type.list);
+        var writer = new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, pathApp.actor.list.System.Context);
         await writer.Kind.pair.Output(p, writer, global::app.View.Store, pathApp.actor.list.User.Context);
         jw.Flush();
         await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo("\"docs/readme.md\"");

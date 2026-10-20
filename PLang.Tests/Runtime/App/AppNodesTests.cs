@@ -85,7 +85,7 @@ public class AppNodesTests
             using var ms = new System.IO.MemoryStream();
             await using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
             {
-                var json = new global::app.type.item.kind.json.Writer(utf8, user.App.type.list);
+                var json = new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, user);
                 await json.Kind.pair.Output(user.call, json, view, user);
             }
             return System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -234,8 +234,10 @@ public class AppNodesTests
         foreach (var shown in Shown) await Assert.That(members).Contains(shown);
         await Assert.That(members).Contains("variable");
         foreach (var plumbing in Plumbing) await Assert.That(members).DoesNotContain(plumbing);
+        // a dump shows each variable as written beside the value it resolves to: %app% is the app, by its name
         var memory = System.Text.Json.JsonDocument.Parse(dumped).RootElement.GetProperty("variable");
-        await Assert.That(memory.EnumerateArray().Any(v => v.ValueKind == System.Text.Json.JsonValueKind.String
-            && v.GetString() == app.Name(user).ToString())).IsTrue();
+        await Assert.That(memory.EnumerateArray().Any(v => v.GetProperty("written").GetString() == "%app%"
+            && v.GetProperty("value").GetString() == app.Name(user).ToString()
+            && v.GetProperty("type").GetString() == "app")).IsTrue();
     }
 }

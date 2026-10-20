@@ -32,13 +32,10 @@ class app.SensitiveAttribute : System.Attribute
 class app.StoreAttribute : System.Attribute
   ctor()
 
-enum app.View
-  static const Debug : app.View
-  static const Default : app.View
-  static const In : app.View
-  static const LlmBuilder : app.View
-  static const Out : app.View
-  static const Store : app.View
+abstract class app.View
+  static readonly Debug : app.View
+  static readonly Out : app.View
+  static readonly Store : app.View
 
 class app.call.Diff : System.IEquatable<app.call.Diff>
   At : System.DateTimeOffset { get; init; }
@@ -1050,7 +1047,7 @@ class app.type.code.this : app.type.item.this, app.type.item.IEncode<app.type.co
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
   static DetectLanguage(System.String source) : System.String
-  static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
+  static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
   static Resolve(System.String raw, app.actor.context.this context) : app.type.code.this
   static Shape : System.String { get; }
 
@@ -1093,6 +1090,7 @@ interface app.type.format.IWriter
   abstract BeginObject() : System.Void
   abstract Bool(System.Boolean value) : System.Void
   abstract Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
+  abstract Context : app.actor.context.this { get; }
   abstract DateTime(System.DateTime value) : System.Void
   abstract DateTimeOffset(System.DateTimeOffset value) : System.Void
   abstract Decimal(System.Decimal value) : System.Void
@@ -1110,6 +1108,7 @@ interface app.type.format.IWriter
   abstract String(System.String value) : System.Void
   abstract TimeSpan(System.TimeSpan value) : System.Void
   abstract Value(System.Object normalized) : System.Void
+  abstract View : app.View { get; }
   virtual BeginRecord(app.data.this record, app.View mode, app.actor.context.this context, System.Boolean layer) : System.Threading.Tasks.ValueTask
   virtual Content(System.String value, app.type.kind.this kind) : System.Void
   virtual EndRecord(app.data.this record, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
@@ -1200,7 +1199,7 @@ interface app.type.item.IDefault<TSelf>
   static abstract Default : TSelf { get; }
 
 interface app.type.item.IEncode<TSelf>
-  static abstract Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
+  static abstract Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
 
 interface app.type.item.IList<TSelf, L>
   static abstract List(app.this app) : L
@@ -1254,7 +1253,7 @@ class app.type.item.binary.this : app.type.item.this, app.type.item.ICreate<app.
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   static Create(System.Object raw, app.type.this type) : app.type.item.binary.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.binary.this
-  static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
+  static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
   static Shape : System.String { get; }
 
@@ -1642,7 +1641,7 @@ class app.type.item.image.this : app.type.item.this, app.data.IKindValidatable, 
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.image.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.image.this
-  static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
+  static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
   static FromBytes(System.Byte[] bytes, app.actor.context.this context) : app.type.item.image.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
   static Shape : System.String { get; }
@@ -1791,6 +1790,7 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   BeginObject() : System.Void
   Bool(System.Boolean value) : System.Void
   Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
+  Context : app.actor.context.this { get; }
   DateTime(System.DateTime value) : System.Void
   DateTimeOffset(System.DateTimeOffset value) : System.Void
   Decimal(System.Decimal value) : System.Void
@@ -1809,12 +1809,13 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   String(System.String value) : System.Void
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void
-  ctor(System.Text.Json.Utf8JsonWriter writer, app.type.list.this types)
+  View : app.View { get; }
+  ctor(System.Text.Json.Utf8JsonWriter writer, app.View view, app.actor.context.this context)
 
 class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>
   ctor(app.type.this owner)
   override Compressible : System.Boolean { get; }
-  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
+  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override IsText : System.Boolean { get; }
   override Load(System.Object raw, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.data.this>
@@ -1838,7 +1839,6 @@ class app.type.item.kind.list.this : app.type.kind.this<app.type.item.this>
   protected override OwnInternal : System.Nullable<System.Boolean> { get; }
 
 static class app.type.item.kind.reflection.Tagged
-  static Declares(System.Type type, app.View mode) : System.Boolean
   static IsTagAware(System.Type type) : System.Boolean
   static PropertiesFor(System.Type type, app.View mode) : System.Collections.Generic.IReadOnlyList<app.type.item.kind.reflection.Tagged+Entry>
 
@@ -2636,6 +2636,7 @@ class app.type.item.text.Writer : app.type.format.IWriter
   BeginObject() : System.Void
   Bool(System.Boolean value) : System.Void
   Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
+  Context : app.actor.context.this { get; }
   DateTime(System.DateTime value) : System.Void
   DateTimeOffset(System.DateTimeOffset value) : System.Void
   Decimal(System.Decimal value) : System.Void
@@ -2654,7 +2655,8 @@ class app.type.item.text.Writer : app.type.format.IWriter
   String(System.String value) : System.Void
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void
-  ctor(System.IO.Stream stream, System.Text.Encoding encoding, app.type.item.culture.this culture, app.type.list.this types)
+  View : app.View { get; }
+  ctor(System.IO.Stream stream, System.Text.Encoding encoding, app.type.item.culture.this culture, app.View view, app.actor.context.this context)
 
 enum app.type.item.text.empty [Choice, PlangType]
   static const drop : app.type.item.text.empty
@@ -2712,7 +2714,7 @@ class app.type.item.text.this : app.type.item.this, System.IEquatable<app.type.i
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   static Create(System.Object raw, app.type.this type) : app.type.item.text.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.text.this
-  static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
+  static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
   static Shape : System.String { get; }
 
@@ -2976,6 +2978,7 @@ class app.type.item.wire.kind.plang.Writer : app.type.format.IWriter
   BeginRecord(app.data.this record, app.View mode, app.actor.context.this context, System.Boolean layer) : System.Threading.Tasks.ValueTask
   Bool(System.Boolean value) : System.Void
   Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
+  Context : app.actor.context.this { get; }
   DateTime(System.DateTime value) : System.Void
   DateTimeOffset(System.DateTimeOffset value) : System.Void
   Decimal(System.Decimal value) : System.Void
@@ -2996,14 +2999,15 @@ class app.type.item.wire.kind.plang.Writer : app.type.format.IWriter
   String(System.String value) : System.Void
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void
-  ctor(System.Text.Json.Utf8JsonWriter writer, app.type.list.this types, app.View view)
+  View : app.View { get; }
+  ctor(System.Text.Json.Utf8JsonWriter writer, app.View view, app.actor.context.this context)
 
 class app.type.item.wire.kind.plang.this : app.type.kind.this<app.type.item.wire.this>
   Read(app.type.item.source source, app.type.reader.ReadContext ctx) : app.type.item.this
   ctor(app.type.this owner)
   override Compressible : System.Boolean { get; }
   override Decode(System.Byte[] raw, app.actor.context.this context, System.String name = …, app.View view = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
-  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> asked = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
+  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View asked = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Owns(app.type.format.IWriter writer) : System.Boolean
@@ -3023,7 +3027,7 @@ class app.type.kind.empty.this : app.type.kind.this
   override Coin(System.String name) : app.type.kind.this
   override Compressible : System.Boolean { get; }
   override Decode(System.Byte[] raw, app.actor.context.this context, System.String name = …, app.View view = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
-  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
+  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override IsClosed : System.Boolean { get; }
   override IsText : System.Boolean { get; }
@@ -3081,7 +3085,7 @@ class app.type.kind.this : app.type.this
   virtual Data(System.String name, System.Object node, app.data.this parent, app.actor.context.this ctx) : app.data.this
   virtual Decode(System.Byte[] raw, app.actor.context.this context, System.String name = …, app.View view = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
   virtual Descend(System.Object obj, System.String key, System.Boolean isIndex, app.actor.context.this ctx) : System.ValueTuple<System.Boolean, System.Object>
-  virtual Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
+  virtual Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   virtual Enumerate(System.Object obj, app.actor.context.this ctx) : System.Collections.Generic.IEnumerable<app.data.this>
   virtual Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   virtual IsSequence(System.Object host) : System.Boolean
@@ -3109,9 +3113,9 @@ class app.type.kind.this+Decoder : System.MulticastDelegate
 
 class app.type.kind.this+Encoder : System.MulticastDelegate
   ctor(System.Object object, System.IntPtr method)
-  virtual BeginInvoke(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct, System.AsyncCallback callback, System.Object object) : System.IAsyncResult
+  virtual BeginInvoke(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding, System.Threading.CancellationToken ct, System.AsyncCallback callback, System.Object object) : System.IAsyncResult
   virtual EndInvoke(System.IAsyncResult result) : System.Threading.Tasks.Task<app.data.this>
-  virtual Invoke(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
+  virtual Invoke(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
 
 abstract class app.type.kind.this<T> : app.type.kind.this
   ctor(System.String name, app.type.this owner)
@@ -3261,7 +3265,7 @@ class app.type.table.this : app.type.item.this, app.type.item.IEncode<app.type.t
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsSequence : System.Boolean { get; }
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
+  static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
 
 class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, app.type.item.IList<app.type.this, app.type.list.this>, app.type.item.ILoad<app.type.this>, app.type.item.IMatch<app.type.this> [PlangType]
   Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; init; }

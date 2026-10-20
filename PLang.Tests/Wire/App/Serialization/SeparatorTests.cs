@@ -22,12 +22,12 @@ public class SeparatorTests
         var shown = new List<string>();
         foreach (var offer in offers)
         {
-            var writer = new global::app.goal.step.action.formal.Writer(context.App.type.list);
+            var writer = new global::app.goal.step.action.formal.Writer(context);
             await writer.Kind.pair.Output(offer, writer, global::app.View.Store, context);
             written.Add(writer.ToString());
 
             using var stream = new System.IO.MemoryStream();
-            var text = new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture, context.App.type.list);
+            var text = new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture, global::app.View.Out, context);
             await text.Kind.pair.Output(offer, text, global::app.View.Out, context);
             shown.Add(System.Text.Encoding.UTF8.GetString(stream.ToArray()));
         }
@@ -87,7 +87,7 @@ public class SeparatorTests
     private static async Task<string> Written(global::app.type.item.separator.@this separator, global::app.actor.context.@this context)
     {
         using var stream = new System.IO.MemoryStream();
-        var writer = new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture, context.App.type.list);
+        var writer = new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture, global::app.View.Out, context);
         await writer.Kind.pair.Output(separator, writer, global::app.View.Store, context);
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }

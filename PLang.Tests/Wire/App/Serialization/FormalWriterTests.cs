@@ -40,7 +40,7 @@ public class FormalWriterTests : System.IAsyncDisposable
 
     internal static async Task<string> Formal(global::app.goal.step.@this step, global::app.actor.context.@this context)
     {
-        var writer = new global::app.goal.step.action.formal.Writer(context.App.type.list);
+        var writer = new global::app.goal.step.action.formal.Writer(context);
         await writer.Kind.pair.Output(step.Code, writer, global::app.View.Store, context);
         return writer.ToString();
     }
@@ -78,7 +78,7 @@ public class FormalWriterTests : System.IAsyncDisposable
     [Test]
     public async Task Leaves_WriteAsFormalLiterals()
     {
-        var writer = new global::app.goal.step.action.formal.Writer(app.type.list);
+        var writer = new global::app.goal.step.action.formal.Writer(app.actor.list.System.Context);
         writer.BeginArray(6);
         writer.String("a \"quoted\" \\ line\n"); writer.Long(10000); writer.Double(0.24); writer.Double(1); writer.Bool(true); writer.Null();
         writer.EndArray();
@@ -88,7 +88,7 @@ public class FormalWriterTests : System.IAsyncDisposable
     [Test]
     public async Task ADict_WritesItsKeysQuoted()
     {
-        var writer = new global::app.goal.step.action.formal.Writer(app.type.list);
+        var writer = new global::app.goal.step.action.formal.Writer(app.actor.list.System.Context);
         writer.BeginObject(); writer.Name("id"); writer.String("x"); writer.Name("n"); writer.Long(5); writer.EndObject();
         await Assert.That(writer.ToString()).IsEqualTo("{\"id\": \"x\", \"n\": 5}");
     }

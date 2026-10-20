@@ -350,49 +350,27 @@ public class source : @this
     public override bool IsLeaf => true;
 
     /// <summary>
-    /// A template source renders when it is written out, as a template text does: a whole
-    /// <c>%ref%</c> writes the bound value itself, a partial template writes its rendered text. A
-    /// plain source, and every source in the Store view (a <c>.pr</c> keeps the authored <c>%ref%</c>),
-    /// writes its raw content directly — a <c>string</c> or a <c>byte[]</c>, never a structured value: into a
-    /// writer of its declared kind's own format (json content into json) verbatim, otherwise bytes as bytes and a
-    /// string quoted. No materialize-on-write. (A <see cref="wire.@this"/> writes its slice its own way.)
+    /// A source writes itself as written — its raw content directly, a <c>string</c> or a <c>byte[]</c>, never a
+    /// structured value: into a writer of its declared kind's own format (json content into json) verbatim,
+    /// otherwise bytes as bytes and a string quoted. No materialize-on-write. Whether a template source is kept as
+    /// written or used is the writer's view's, where its Data is written. (A <see cref="wire.@this"/> writes its slice
+    /// its own way.)
     /// </summary>
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
-        if (Type.Template == null || mode == global::app.View.Store || context?.Variable == null || _value is not string template)
+        // The raw is content of its declared kind, as bytes or as characters: the writer decides how it looks
+        // (into a writer of the kind's own format, verbatim).
+        if (_value is byte[] b) { writer.Bytes(b, Type.kind); return; }
+        // A whole %ref% in a slot not typed text is the variable itself (`Value: item = %!data%`); inside a
+        // text it stays the text it is (`"Total: %x%"`).
+        if (Type.Template != null && IsVariable && !Type.Is("text"))
         {
-            // The raw is content of its declared kind, as bytes or as characters: the writer decides how it looks
-            // (into a writer of the kind's own format, verbatim).
-            if (_value is byte[] b) { writer.Bytes(b, Type.kind); return; }
-            // A whole %ref% in a slot not typed text is the variable itself (`Value: item = %!data%`); inside a
-            // text it stays the text it is (`"Total: %x%"`).
-            if (Type.Template != null && IsVariable && !Type.Is("text"))
-            {
-                await writer.Kind.pair.Output(_variable[0], writer, mode, context);
-                return;
-            }
-            writer.Content(_value.ToString() ?? "", Type.kind);
+            await writer.Kind.pair.Output(_variable[0], writer, mode, context);
             return;
         }
-        if (IsVariable)
-        {
-            // the bound value itself, in the value's place — never the binding's Data around it, which would read
-            // back as a value of its own (a dict of type and value)
-            var resolved = await Get(context);
-            if (resolved is { IsInitialized: true })
-            {
-                var bound = await resolved.Value();
-                if (!resolved.Success) throw new global::app.error.AppException(resolved.Error!);
-                await writer.Kind.pair.Output(bound, writer, mode, context);
-                return;
-            }
-            throw new global::app.error.VariableNotFoundException(resolved?.Name ?? template.Trim('%'));
-        }
-        // a partial template is a text's to render: hand over to one
-        await writer.Kind.pair.Output(new global::app.type.item.text.@this(template,
-            context.App.type.list[new global::app.type.@this("text", template: Type.Template), context], _variable), writer, mode, context);
+        writer.Content(_value.ToString() ?? "", Type.kind);
     }
 
 

@@ -46,7 +46,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
                 data = signed;
             }
             await using var utf8 = new Utf8JsonWriter(stream);
-            var writer = new Writer(utf8, context.App.type.list, view);
+            var writer = new Writer(utf8, view, context);
             if (data.Peek() is global::app.type.item.signature.@this sig)
                 await writer.Kind.pair.Output(sig, writer, view, context);
             else
@@ -67,9 +67,11 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
     /// without a signature is refused. A Data carries its own facts, so a <paramref name="template"/> and an
     /// <paramref name="origin"/> ask nothing of it.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
-        global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
+        global::app.actor.context.@this context, string name = "", global::app.View? view = null,
         System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
     {
+        // read as what crosses between actors, unless the asker reads its own store
+        view ??= global::app.View.Out;
         try
         {
             if (raw.Length == 0) return context.Ok();

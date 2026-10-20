@@ -25,8 +25,6 @@ public sealed class template : @this
             await base.Output(writer, mode, context);
             return;
         }
-        if (context is null) throw new System.InvalidOperationException(
-            "a template writes only with the caller's context — rendering needs it.");
-        await writer.Kind.pair.Output(Decoded(context), writer, mode, context);
+        await writer.Kind.pair.Output(Decoded(writer.Context), writer, mode, context);
     }
 }

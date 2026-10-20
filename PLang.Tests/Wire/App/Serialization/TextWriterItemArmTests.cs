@@ -18,7 +18,7 @@ public class TextWriterItemArmTests : System.IAsyncDisposable
     private async Task<string> Render(global::app.type.item.@this item)
     {
         using var ms = new System.IO.MemoryStream();
-        var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US", C.App.type.list[typeof(global::app.type.item.culture.@this)])!, C.App.type.list);
+        var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US", C.App.type.list[typeof(global::app.type.item.culture.@this)])!, global::app.View.Out, C);
         await w.Kind.pair.Output(item, w, global::app.View.Out, C);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }

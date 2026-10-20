@@ -24,6 +24,15 @@ public interface IWriter
     /// </summary>
     global::app.type.kind.@this Kind { get; }
 
+    /// <summary>What this write shows — chosen where the write starts (a <c>.pr</c> is Store, a response Out, a dump
+    /// Debug), held for the whole write. A value asks it nothing directly: its members show by their tags, and a value
+    /// that holds variables is kept or used by it.</summary>
+    global::app.View View { get; }
+
+    /// <summary>Who asks for this write — the asker every value written reads with (its rows, its renders). Never
+    /// null: a write no one asks for is the app's system actor's.</summary>
+    global::app.actor.context.@this Context { get; }
+
     void Null();
     void Bool(bool value);
     void Int(int value);

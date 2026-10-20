@@ -17,7 +17,9 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         public global::app.type.kind.@this Kind { get; }
         public string LastMethod { get; private set; } = "";
         public object? Last { get; private set; }
-        public CaptureWriter(global::app.type.kind.@this kind) { Kind = kind; }
+        public CaptureWriter(global::app.type.kind.@this kind, global::app.actor.context.@this context) { Kind = kind; Context = context; }
+        public global::app.View View => global::app.View.Out;
+        public global::app.actor.context.@this Context { get; }
         public void Null() { LastMethod = "Null"; }
         public void Bool(bool v) { }
         public void Int(int v) { }
@@ -48,7 +50,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         var img = app.actor.list.User.Context.Image(p!, PngBytes);
 
         using var ms = new System.IO.MemoryStream();
-        var text = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US", app.type.list[typeof(global::app.type.item.culture.@this)])!, app.type.list);
+        var text = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US", app.type.list[typeof(global::app.type.item.culture.@this)])!, global::app.View.Out, app.actor.list.System.Context);
         await text.Kind.pair.Output(img, text, global::app.View.Store, app.actor.list.User.Context);
         await Assert.That(System.Text.Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo($"[{PngBytes.Length} bytes]");
     }
@@ -62,7 +64,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.item.kind.json.Writer(utf, app.type.list);
+            var w = new global::app.type.item.kind.json.Writer(utf, global::app.View.Out, app.actor.list.System.Context);
             await w.Kind.pair.Output(img, w, global::app.View.Out, app.actor.list.User.Context);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -77,9 +79,9 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         var img = app.actor.list.User.Context.Image(p!, PngBytes);
         var beforeBytes = img.Bytes;
 
-        var text = new CaptureWriter(app.type.list["text"].kind);
+        var text = new CaptureWriter(app.type.list["text"].kind, app.actor.list.System.Context);
         await text.Kind.pair.Output(img, text, global::app.View.Store, app.actor.list.User.Context);
-        var json = new CaptureWriter(app.type.list["item"].kind["json"]!);
+        var json = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
         await json.Kind.pair.Output(img, json, global::app.View.Store, app.actor.list.User.Context);
 
         // Bytes is the same reference — no copy, no re-decode.
@@ -95,10 +97,10 @@ public class PlangTypesCut2_ImageTwoChannelsTests
             new global::app.type.@this("image"), context: app.actor.list.User.Context);
 
         await Assert.That(data.Type?.Name).IsEqualTo("image");
-        var text = new CaptureWriter(app.type.list["text"].kind);
+        var text = new CaptureWriter(app.type.list["text"].kind, app.actor.list.System.Context);
         await text.Kind.pair.Output(img, text, global::app.View.Store, app.actor.list.User.Context);
         await Assert.That(data.Type?.Name).IsEqualTo("image");
-        var json = new CaptureWriter(app.type.list["item"].kind["json"]!);
+        var json = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
         await json.Kind.pair.Output(img, json, global::app.View.Store, app.actor.list.User.Context);
         await Assert.That(data.Type?.Name).IsEqualTo("image");
     }

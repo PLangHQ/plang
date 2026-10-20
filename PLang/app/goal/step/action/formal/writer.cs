@@ -25,19 +25,25 @@ public sealed class Writer : IWriter
     /// <summary>List's <c>formal</c> — what a list of actions is written as.</summary>
     public global::app.type.kind.@this Kind { get; }
 
+    /// <summary>Formal is program text: what the step gave, as written — the Store view, always.</summary>
+    public global::app.View View => global::app.View.Store;
+
+    public global::app.actor.context.@this Context { get; }
+
     private readonly StringBuilder _out = new();
 
     // What the next value sits in: its separator, and whether one was written yet.
     private enum Frame { Top, Array, Dict, Rows, Call, Actions, Body, Record }
     private readonly Stack<(Frame Kind, int Count)> _frames = new();
 
-    /// <summary>A formal writer, its kind found among <paramref name="types"/>.</summary>
-    public Writer(global::app.type.list.@this types) : this(types["list"].kind[Token]!) { }
+    /// <summary>A formal writer asked by <paramref name="context"/>, its kind found among the asker's types.</summary>
+    public Writer(global::app.actor.context.@this context) : this(context.App.type.list["list"].kind[Token]!, context) { }
 
     // a writer of the same kind as one in hand (an option's value, written apart)
-    private Writer(global::app.type.kind.@this kind)
+    private Writer(global::app.type.kind.@this kind, global::app.actor.context.@this context)
     {
         Kind = kind;
+        Context = context;
         _frames.Push((Frame.Top, 0));
     }
 
@@ -100,7 +106,7 @@ public sealed class Writer : IWriter
     public async System.Threading.Tasks.ValueTask Option(string name, global::app.type.item.@this value,
         global::app.actor.context.@this? context)
     {
-        var written = new Writer(Kind);
+        var written = new Writer(Kind, Context);
         await Kind.pair.Output(value, written, global::app.View.Store, context);
         Element();
         _out.Append(name);

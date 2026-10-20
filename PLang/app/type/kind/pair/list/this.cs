@@ -30,7 +30,7 @@ public sealed class @this
     public System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        if (context != null) Find(context.App.type.list);
+        Find(writer.Context.App.type.list);
         for (var clr = value.GetType(); clr != null && clr != typeof(global::app.type.item.@this); clr = clr.BaseType)
             if (_pairs.TryGetValue(clr, out var pair)) return pair.Output(value, writer, mode, context);
         return value.Output(writer, mode, context);

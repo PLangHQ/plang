@@ -39,8 +39,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             await base.Output(writer, mode, context);
             return;
         }
-        // the app's own system actor asks when no one else does
-        var asker = context ?? actor.list.System.Context!;
+        // the writer's asker: whose memory a dump shows, and who every member is written for
+        var asker = writer.Context;
         var pair = writer.Kind.pair;
         if (_writing.Value)
         {

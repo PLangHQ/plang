@@ -26,18 +26,23 @@ public sealed class Writer : global::app.type.format.IWriter
     private readonly global::app.type.list.@this _types;
 
     /// <summary>A writer of text into <paramref name="stream"/>, its numbers read as <paramref name="culture"/>
-    /// reads them (the asker's <c>%!app.setting.culture%</c>); its kind is text's own format, among
-    /// <paramref name="types"/>.</summary>
-    public Writer(Stream stream, Encoding encoding, global::app.type.item.culture.@this culture, global::app.type.list.@this types)
+    /// reads them (the asker's <c>%!app.setting.culture%</c>), for <paramref name="view"/>, asked by
+    /// <paramref name="context"/>; its kind is text's own format.</summary>
+    public Writer(Stream stream, Encoding encoding, global::app.type.item.culture.@this culture, global::app.View view,
+        global::app.actor.context.@this context)
     {
         _stream = stream;
         _encoding = encoding;
         _culture = culture;
-        _types = types;
-        Kind = types["text"].kind;
+        View = view;
+        Context = context;
+        _types = context.App.type.list;
+        Kind = _types["text"].kind;
     }
 
     public global::app.type.kind.@this Kind { get; }
+    public global::app.View View { get; }
+    public global::app.actor.context.@this Context { get; }
 
     private void Bare(string text) => _stream.Write(_encoding.GetBytes(text));
 
@@ -46,7 +51,7 @@ public sealed class Writer : global::app.type.format.IWriter
     // EITHER a bare top-level scalar OR structural json, never interleaved.
     private global::app.type.item.kind.json.Writer Structural()
         => _json ??= new global::app.type.item.kind.json.Writer(
-               _utf8 = new Utf8JsonWriter(_stream), _types);
+               _utf8 = new Utf8JsonWriter(_stream), View, Context);
 
     // Scalars: bare at the top, json (quoted / comma-joined) when nested inside an open structure.
     public void Null() { if (_depth > 0) Structural().Null(); }

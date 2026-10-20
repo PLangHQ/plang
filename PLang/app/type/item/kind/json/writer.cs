@@ -17,16 +17,21 @@ public sealed class Writer : IWriter
     private readonly Utf8JsonWriter _writer;
     private readonly global::app.type.kind.@this _binary;   // the kind of bytes handed as a C# byte[]: plain bytes
 
-    /// <summary>A json writer over <paramref name="writer"/>, its kind item's <c>json</c> among
-    /// <paramref name="types"/>. Bare json shows a Data's value only (the record door writes nothing).</summary>
-    public Writer(Utf8JsonWriter writer, global::app.type.list.@this types)
+    /// <summary>A json writer over <paramref name="writer"/>, for <paramref name="view"/>, asked by
+    /// <paramref name="context"/>; its kind item's <c>json</c> among the asker's types. Bare json shows a Data's value
+    /// only (the record door writes nothing).</summary>
+    public Writer(Utf8JsonWriter writer, global::app.View view, global::app.actor.context.@this context)
     {
         _writer = writer;
-        Kind = types["item"].kind["json"]!;
-        _binary = types[typeof(global::app.type.item.binary.@this)].kind;
+        View = view;
+        Context = context;
+        Kind = context.App.type.list["item"].kind["json"]!;
+        _binary = context.App.type.list[typeof(global::app.type.item.binary.@this)].kind;
     }
 
     public global::app.type.kind.@this Kind { get; }
+    public global::app.View View { get; }
+    public global::app.actor.context.@this Context { get; }
 
     public void Null() => _writer.WriteNullValue();
     public void Bool(bool value) => _writer.WriteBooleanValue(value);

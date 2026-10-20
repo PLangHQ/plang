@@ -54,37 +54,37 @@ public class IWriterContractTests : System.IAsyncDisposable
     [Test] public async Task JsonWriter_Null_EmitsNullToken()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.type.item.kind.json.Writer(jw, app.type.list).Null();
+        new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, app.actor.list.System.Context).Null();
         await Assert.That(Flush(jw, ms)).IsEqualTo("null");
     }
 
     [Test] public async Task JsonWriter_Bool_EmitsTrueOrFalse()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.type.item.kind.json.Writer(jw, app.type.list).Bool(true);
+        new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, app.actor.list.System.Context).Bool(true);
         await Assert.That(Flush(jw, ms)).IsEqualTo("true");
         var (jw2, ms2) = MakeWriter();
-        new global::app.type.item.kind.json.Writer(jw2, app.type.list).Bool(false);
+        new global::app.type.item.kind.json.Writer(jw2, global::app.View.Out, app.actor.list.System.Context).Bool(false);
         await Assert.That(Flush(jw2, ms2)).IsEqualTo("false");
     }
 
     [Test] public async Task JsonWriter_Int_Long_Double_EmitNumericTokens()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.type.item.kind.json.Writer(jw, app.type.list).Int(42);
+        new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, app.actor.list.System.Context).Int(42);
         await Assert.That(Flush(jw, ms)).IsEqualTo("42");
         var (jw2, ms2) = MakeWriter();
-        new global::app.type.item.kind.json.Writer(jw2, app.type.list).Long(100L);
+        new global::app.type.item.kind.json.Writer(jw2, global::app.View.Out, app.actor.list.System.Context).Long(100L);
         await Assert.That(Flush(jw2, ms2)).IsEqualTo("100");
         var (jw3, ms3) = MakeWriter();
-        new global::app.type.item.kind.json.Writer(jw3, app.type.list).Double(1.5);
+        new global::app.type.item.kind.json.Writer(jw3, global::app.View.Out, app.actor.list.System.Context).Double(1.5);
         await Assert.That(Flush(jw3, ms3)).IsEqualTo("1.5");
     }
 
     [Test] public async Task JsonWriter_String_EmitsQuotedString_WithEscapes()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.type.item.kind.json.Writer(jw, app.type.list).String("hello \"world\"");
+        new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, app.actor.list.System.Context).String("hello \"world\"");
         var s = Flush(jw, ms);
         await Assert.That(s.StartsWith("\"") && s.EndsWith("\"")).IsTrue();
         await Assert.That(s).Contains("hello");
@@ -94,7 +94,7 @@ public class IWriterContractTests : System.IAsyncDisposable
     {
         var (jw, ms) = MakeWriter();
         var dt = new System.DateTime(2026, 1, 2, 3, 4, 5, System.DateTimeKind.Utc);
-        new global::app.type.item.kind.json.Writer(jw, app.type.list).DateTime(dt);
+        new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, app.actor.list.System.Context).DateTime(dt);
         var s = Flush(jw, ms);
         await Assert.That(s).Contains("2026");
     }
@@ -102,14 +102,14 @@ public class IWriterContractTests : System.IAsyncDisposable
     [Test] public async Task JsonWriter_Decimal_EmitsNumericToken()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.type.item.kind.json.Writer(jw, app.type.list).Decimal(3.14m);
+        new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, app.actor.list.System.Context).Decimal(3.14m);
         await Assert.That(Flush(jw, ms)).IsEqualTo("3.14");
     }
 
     [Test] public async Task JsonWriter_Bytes_EmitsBase64String()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.type.item.kind.json.Writer(jw, app.type.list)
+        new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, app.actor.list.System.Context)
             .Bytes(new byte[] { 1, 2, 3 }, app.type.list[typeof(global::app.type.item.binary.@this)].kind);
         var s = Flush(jw, ms);
         await Assert.That(s).IsEqualTo("\"AQID\"");
@@ -118,7 +118,7 @@ public class IWriterContractTests : System.IAsyncDisposable
     [Test] public async Task JsonWriter_BeginArray_EndArray_BracketArrayCorrectly()
     {
         var (jw, ms) = MakeWriter();
-        var w = new global::app.type.item.kind.json.Writer(jw, app.type.list);
+        var w = new global::app.type.item.kind.json.Writer(jw, global::app.View.Out, app.actor.list.System.Context);
         w.BeginArray(3);
         w.Int(1); w.Int(2); w.Int(3);
         w.EndArray();
@@ -130,7 +130,7 @@ public class IWriterContractTests : System.IAsyncDisposable
     {
         var context = app.actor.list.User.Context;
         var (jw, ms) = MakeWriter();
-        var w = new global::app.type.item.wire.kind.plang.Writer(jw, app.type.list, global::app.View.Out);
+        var w = new global::app.type.item.wire.kind.plang.Writer(jw, global::app.View.Out, app.actor.list.System.Context);
         var record = new global::app.data.@this("hello", "world", context: context);
         await record.Output(w, global::app.View.Out, context);
         var s = Flush(jw, ms);
@@ -142,7 +142,7 @@ public class IWriterContractTests : System.IAsyncDisposable
         await Assert.That(s).Contains("\"value\":\"world\"");
 
         var (jw2, ms2) = MakeWriter();
-        var w2 = new global::app.type.item.wire.kind.plang.Writer(jw2, app.type.list, global::app.View.Store);
+        var w2 = new global::app.type.item.wire.kind.plang.Writer(jw2, global::app.View.Store, app.actor.list.System.Context);
         await record.Output(w2, global::app.View.Store, context);
         await Assert.That(Flush(jw2, ms2)).Contains("\"name\":\"hello\"");
     }
@@ -151,7 +151,7 @@ public class IWriterContractTests : System.IAsyncDisposable
     {
         var context = app.actor.list.User.Context;
         var (jw, ms) = MakeWriter();
-        var w = new global::app.type.item.wire.kind.plang.Writer(jw, app.type.list, global::app.View.Out);
+        var w = new global::app.type.item.wire.kind.plang.Writer(jw, global::app.View.Out, app.actor.list.System.Context);
         var record = new global::app.data.@this("nums", new List<int> { 1, 2 }, context: context);
         await record.Output(w, global::app.View.Out, context);
         // each element writes itself as plang does: its type and its value

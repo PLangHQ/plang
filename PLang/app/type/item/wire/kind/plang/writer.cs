@@ -11,18 +11,20 @@ namespace app.type.item.wire.kind.plang;
 public sealed class Writer : global::app.type.format.IWriter
 {
     private readonly global::app.type.item.kind.json.Writer _json;
-    private readonly global::app.View _view;
 
-    /// <summary>plang's writer over <paramref name="writer"/>, for <paramref name="view"/>; its kind wire's
-    /// <c>plang</c> among <paramref name="types"/>.</summary>
-    public Writer(Utf8JsonWriter writer, global::app.type.list.@this types, global::app.View view)
+    /// <summary>plang's writer over <paramref name="writer"/>, for <paramref name="view"/>, asked by
+    /// <paramref name="context"/>; its kind wire's <c>plang</c> among the asker's types.</summary>
+    public Writer(Utf8JsonWriter writer, global::app.View view, global::app.actor.context.@this context)
     {
-        _json = new global::app.type.item.kind.json.Writer(writer, types);
-        _view = view;
-        Kind = types["wire"].kind["plang"]!;
+        _json = new global::app.type.item.kind.json.Writer(writer, view, context);
+        View = view;
+        Context = context;
+        Kind = context.App.type.list["wire"].kind["plang"]!;
     }
 
     public global::app.type.kind.@this Kind { get; }
+    public global::app.View View { get; }
+    public global::app.actor.context.@this Context { get; }
 
     public async System.Threading.Tasks.ValueTask BeginRecord(global::app.data.@this record, global::app.View mode,
         global::app.actor.context.@this? context, bool layer)
@@ -74,7 +76,7 @@ public sealed class Writer : global::app.type.format.IWriter
     }
 
     // a sensitive value is kept whole in plang's own store, and shown masked in every other view
-    public void Sensitive(string characters) => _json.String(_view == global::app.View.Store ? characters : "****");
+    public void Sensitive(string characters) => _json.String(View == global::app.View.Store ? characters : "****");
 
     public void Null() => _json.Null();
     public void Bool(bool value) => _json.Bool(value);

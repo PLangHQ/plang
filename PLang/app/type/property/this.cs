@@ -219,10 +219,9 @@ public sealed class @this : global::app.type.item.note.IAbout
             await writer.Kind.pair.Output(Type, writer, mode, context);
         }
         writer.Name("value");
-        // A template is program text: a diagnostic shows it as written, never run against live
-        // variables. Any other value writes in the asked view (a [Sensitive] member stays masked).
-        var asWritten = mode == global::app.View.Debug && Value is { HasVariable: true } ? global::app.View.Store : mode;
-        if (Value is { } value) await writer.Kind.pair.Output(value, writer, asWritten, context);
+        // a value that holds variables is the view's to write: kept as written, used, or both in a dump
+        if (Value is { HasVariable: true } template) await writer.View.Write(template, writer);
+        else if (Value is { } value) await writer.Kind.pair.Output(value, writer, mode, context);
         else writer.Null();
         // A stored row names the variables its value holds, parsed once at build.
         if (mode == global::app.View.Store && Value is { HasVariable: true } held)

@@ -60,7 +60,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             await stream.WriteAsync(characters.GetBytes(text.ToString()), ct);
         else
             await data.Output(new global::app.type.item.text.Writer(stream, characters,
-                context.Setting.Of<global::app.setting.@this>().Culture, context.App.type.list), view ?? global::app.View.Out, context);
+                context.Setting.Of<global::app.setting.@this>().Culture, view ?? global::app.View.Out, context), view ?? global::app.View.Out, context);
         await stream.FlushAsync(ct);
         return context.Ok();
     }
@@ -159,7 +159,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         using var ms = new System.IO.MemoryStream();
         var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8,
-            context.Setting.Of<global::app.setting.@this>().Culture, context.App.type.list);
+            context.Setting.Of<global::app.setting.@this>().Culture, global::app.View.Out, context);
         int pos = 0;
         for (int at = _value.IndexOf('%'); at >= 0; at = _value.IndexOf('%', at + 1))
         {
@@ -220,30 +220,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>
-    /// The text writes ITSELF (OBP: the value is responsible for its own render), so
-    /// <c>data.Output</c> never pre-materialises through <c>Value</c>. Plain content and the
-    /// Store view write the raw form verbatim (a <c>.pr</c> keeps the authored <c>%ref%</c>). A
-    /// whole-match <c>%ref%</c> is a reference — the bound value writes itself. A partial template
-    /// renders to its string form (a template becomes ONE value — its literals+refs can't ride as
-    /// interleaved tokens into a json/plang writer) and writes that. Either way the text hands the writer its
-    /// characters with the kind they are in; the writer decides how they look.
+    /// The text writes ITSELF, as written: its characters, with the kind they are in (a template's
+    /// <c>%ref%</c> as the step gave it). Whether a template is kept as written or used (resolved, rendered)
+    /// is the writer's view's to decide, where its Data is written; using it is its <see cref="Value"/>.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(
+    public override System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
-        if (Type.Template == null || mode == global::app.View.Store || context?.Variable == null)
-        {
-            writer.Content(_value, Format(context));
-            return;
-        }
-        if (IsVariable)
-        {
-            var resolved = await Get(context);
-            if (resolved is { IsInitialized: true }) { await resolved.Output(writer, mode, context); return; }
-            throw new global::app.error.VariableNotFoundException(resolved!.Name);   // the lookup already carries the name
-        }
-        writer.Content(await Rendered(context), Format(context));
+        writer.Content(_value, Format(writer.Context));
+        return default;
     }
 
     // The kind these characters are in, as the types hold it — one of text's own (md) or one text coins for another
