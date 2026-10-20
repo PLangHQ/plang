@@ -238,14 +238,14 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         root.Add(kind);
     }
 
-    // The app's entry a kind class is a kind of — the T of the kind<T> it derives from; null for a class that is no
-    // kind<T>, or whose T this list does not hold.
-    private global::app.type.@this? Owner(System.Type kind)
+    // The app's entry a kind class is a kind of — the T of the kind<T> it derives from, among the types by every name
+    // they answer to; null for a class that is no kind<T>, or whose T this list does not hold.
+    private global::app.type.@this? Owner(System.Type kind, IReadOnlyDictionary<string, global::app.type.@this> named)
     {
         for (var parent = kind.BaseType; parent != null; parent = parent.BaseType)
             if (parent.IsGenericType && parent.GetGenericTypeDefinition() == typeof(global::app.type.kind.@this<>))
                 return global::app.type.item.@this.NameOf(parent.GetGenericArguments()[0]) is { } name
-                    ? Items().FirstOrDefault(type => type.Names(name))
+                    ? named.GetValueOrDefault(name)
                     : null;
         return null;
     }
@@ -298,17 +298,24 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private error.@this? Enlist(Assembly assembly)
     {
         var seen = new HashSet<System.Type>();
+        // the assembly's classes, read once for every pass below; the types by every name they answer to, the first
+        // that answers, as the walk finds them (the types don't change while their kinds are enlisted)
+        var classes = assembly.GetTypes();
+        var named = new Dictionary<string, global::app.type.@this>(StringComparer.OrdinalIgnoreCase);
+        foreach (var type in Items())
+            foreach (var claim in type.Claims)
+                named.TryAdd(claim, type);
         // each kind class, born holding the entry of the type it is a kind of (the T of its kind<T>)
-        foreach (var t in assembly.GetTypes())
+        foreach (var t in classes)
             if (typeof(global::app.type.kind.@this).IsAssignableFrom(t) && t is { IsAbstract: false, ContainsGenericParameters: false }
-                && t.GetConstructor([typeof(global::app.type.@this)]) != null && Owner(t) is { } owner)
+                && t.GetConstructor([typeof(global::app.type.@this)]) != null && Owner(t, named) is { } owner)
                 Hold((global::app.type.kind.@this)System.Activator.CreateInstance(t, owner)!);
-        foreach (var t in assembly.GetTypes())
+        foreach (var t in classes)
         {
             // each format a type's class declares, a kind of that type — written by the class's own encode, read by
             // its own decode when it has one
             if (t.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false)
-                && global::app.type.item.@this.NameOf(t) is { } reads && Items().FirstOrDefault(type => type.Names(reads)) is { } declaring)
+                && global::app.type.item.@this.NameOf(t) is { } reads && named.GetValueOrDefault(reads) is { } declaring)
             {
                 var encode = Encoder(t);
                 var decode = Decoder(t);
@@ -319,7 +326,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             }
             // a list's element kinds, made as a list names its element (list<path>)
             if (t == typeof(global::app.type.item.list.@this)
-                && Items().FirstOrDefault(type => type.Names(global::app.type.item.@this.NameOf(t)!)) is { } list)
+                && named.GetValueOrDefault(global::app.type.item.@this.NameOf(t)!) is { } list)
                 Hold(new global::app.type.item.list.kind.@this(list, this));
             // settings are settings, not kinds (decision 774): each settings class is its own top-level
             // type, discovered like any other by its name (@this folder, or the owner word a nested one
@@ -349,11 +356,16 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         }
         // each class under a family that has kinds ([Kinds]) is one of its kinds, by its own name — but a class named as
         // its family (a typed list, a class of settings: the family holds those its own way) and a kind the family
-        // already holds (path's schemes, file and http)
-        foreach (var t in assembly.GetTypes())
+        // already holds (path's schemes, file and http). A subclass kind's own reader is the one in its serializer
+        // namespace, found among the readers the assembly ships, by their namespace.
+        var readers = classes.Where(r => r.Namespace is { } ns && ns.EndsWith(".serializer", StringComparison.Ordinal)
+                && typeof(global::app.type.reader.ITypeReader).IsAssignableFrom(r)
+                && r is { IsAbstract: false } && r.GetConstructor(System.Type.EmptyTypes) != null)
+            .GroupBy(r => r.Namespace!).ToDictionary(group => group.Key, group => group.First());
+        foreach (var t in classes)
             if (t is { IsAbstract: false, ContainsGenericParameters: false } && global::app.type.item.@this.FamilyOf(t) is { } member
-                && global::app.type.item.@this.NameOf(member.Family) is var family && member.Kind != family
-                && Items().FirstOrDefault(type => type.Names(family)) is { } owner && owner.kind[member.Kind] == null)
+                && global::app.type.item.@this.NameOf(member.Family) is { } family && member.Kind != family
+                && named.GetValueOrDefault(family) is { } owner && owner.kind[member.Kind] == null)
             {
                 // the kind object is a kind<family> typed to the family; the value class stays a family subclass
                 var subclassType = typeof(global::app.type.kind.subclass.@this<>).MakeGenericType(member.Family);
@@ -362,10 +374,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 // a subclass kind that ships its own reader (separator) reads under its family and kind — a
                 // {text, separator} reads via (text, separator), and the family's own reader would make the
                 // family's value, not the subclass's. Its namespace-keyed auto-registration is never consulted.
-                if (assembly.GetTypes().FirstOrDefault(r => r.Namespace == $"{t.Namespace}.serializer"
-                        && typeof(global::app.type.reader.ITypeReader).IsAssignableFrom(r)
-                        && r is { IsAbstract: false } && r.GetConstructor(System.Type.EmptyTypes) != null) is { } readerType)
-                    Reader.Register(family!, member.Kind,
+                if (readers.GetValueOrDefault($"{t.Namespace}.serializer") is { } readerType)
+                    Reader.Register(family, member.Kind,
                         (global::app.type.reader.ITypeReader)System.Activator.CreateInstance(readerType)!);
             }
         return null;
