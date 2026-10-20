@@ -24,7 +24,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     /// No indent skip-state — a fired control-flow action starts its own Child, so nesting is structural.
     /// Context is the ASK's, handed to each step's own Start. The node iterates ITSELF (the typed
     /// positional face).</summary>
-    public async System.Threading.Tasks.Task<data.@this> Start(actor.context.@this context)
+    public async System.Threading.Tasks.ValueTask<data.@this> Start(actor.context.@this context)
     {
         data.@this result = context.Ok();
         for (int i = 0; i < CountRaw; i++)

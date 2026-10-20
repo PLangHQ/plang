@@ -256,7 +256,7 @@ public class OnEventTests
         await Bind("%!app.goal[\"/A\"].on.start%", "before", "WatchA");
         await Bind("%!app.goal[\"/B\"].on.start%", "before", "WatchB");
 
-        await Task.WhenAll(Make.Call(Ctx, "A").Start(Ctx), Make.Call(Ctx, "B").Start(Ctx));
+        await Task.WhenAll(Make.Call(Ctx, "A").Start(Ctx).AsTask(), Make.Call(Ctx, "B").Start(Ctx).AsTask());
 
         await Assert.That(await Value("seenA")).IsSameReferenceAs(a);
         await Assert.That(await Value("seenB")).IsSameReferenceAs(b);

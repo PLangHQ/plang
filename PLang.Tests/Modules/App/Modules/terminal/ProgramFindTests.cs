@@ -52,7 +52,7 @@ public class ProgramFindTests : IDisposable
 
     private global::app.actor.context.@this Context => _app.actor.list.User.Context;
 
-    private Task<global::app.data.@this> Start(string app) => Make.Action(Context, "terminal", "start", ("App", app)).Start(Context);
+    private Task<global::app.data.@this> Start(string app) => Make.Action(Context, "terminal", "start", ("App", app)).Start(Context).AsTask();
 
     [Test] public async Task ABareName_IsTheTerminalsToFind()
     {

@@ -164,7 +164,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         Task<global::app.data.@this> Set(string name, object? value) => global::PLang.Tests.Shared.Make.Action(context,
-            "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", name, "variable"), ("value", value)).Start(context);
+            "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", name, "variable"), ("value", value)).Start(context).AsTask();
         await (await Set("%x%", "v")).IsSuccess();
         var named = (await context.Variable.Get("x")).Name;
         await (await Set("%d%", new Dictionary<string, object?>())).IsSuccess();

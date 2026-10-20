@@ -19,7 +19,7 @@ public sealed class GoalSteps : System.Collections.Generic.List<Step>
         foreach (var step in s) node.Add(step);
         return node;
     }
-    public System.Threading.Tasks.Task<global::app.data.@this> Start(global::app.actor.context.@this context)
+    public System.Threading.Tasks.ValueTask<global::app.data.@this> Start(global::app.actor.context.@this context)
         => ((global::app.goal.step.list.@this)this).Start(context);
 }
 

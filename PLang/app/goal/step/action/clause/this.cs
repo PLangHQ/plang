@@ -30,8 +30,8 @@ public class @this : global::app.goal.step.action.@this
 
     /// <summary>A clause was attached when the program was read: its turn leaves the chain's result — and
     /// <c>%!data%</c> — as they stand.</summary>
-    internal override Task<global::app.data.@this> Follow(global::app.data.@this result, actor.context.@this context)
-        => Task.FromResult(result);
+    internal override ValueTask<global::app.data.@this> Follow(global::app.data.@this result, actor.context.@this context)
+        => new(result);
 
     /// <summary>A recovery that runs the very action it is a clause of is a retry, not a recovery.</summary>
     internal override global::app.error.@this? Refuse(global::app.goal.step.action.@this? before)

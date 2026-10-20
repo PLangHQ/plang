@@ -120,7 +120,7 @@ public sealed partial class @this
     /// start, every after still runs on it. Error handling, caching, and timeouts are per-action modifiers, not
     /// step-level.
     /// </summary>
-    public async Task<data.@this> Start(actor.context.@this context)
+    public async ValueTask<data.@this> Start(actor.context.@this context)
     {
         // The step's own frame spans its whole run — what is bound before and after it, and its actions — so the
         // step in play is this one throughout, and back to the caller's the moment it ends.

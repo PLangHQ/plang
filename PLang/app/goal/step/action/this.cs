@@ -192,7 +192,8 @@ public partial class @this
     /// Context travels as parameter — actions are shared objects, not per-request.
     /// Owns its own callstack push/pop, anchor save/restore and exception translation.
     /// </summary>
-    public async Task<global::app.data.@this> Start(actor.context.@this context)
+    // A ValueTask: an action that finishes without waiting (most do) makes no Task for its answer.
+    public async ValueTask<global::app.data.@this> Start(actor.context.@this context)
     {
         // ONE FRAME PER ACTION. The frame spans the action's whole run — its lifecycle events,
         // its modifiers, and its dispatch — not just the dispatch. A modifier recovering from a
@@ -271,7 +272,7 @@ public partial class @this
 
     /// <summary>This action's turn in its step's chain, after <paramref name="result"/>: it starts, and its result
     /// is the chain's.</summary>
-    internal virtual Task<global::app.data.@this> Follow(global::app.data.@this result, actor.context.@this context)
+    internal virtual ValueTask<global::app.data.@this> Follow(global::app.data.@this result, actor.context.@this context)
         => Start(context);
 
     /// <summary>What the build refuses in this action as it follows <paramref name="before"/>: nothing.</summary>

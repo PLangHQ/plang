@@ -30,7 +30,7 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
     /// skipped). An ordinary action has an empty Child so never enters. Context is the ASK's, handed to
     /// each action's own Start. The node iterates ITSELF (the typed positional face), never a harvested
     /// element list.</summary>
-    public async System.Threading.Tasks.Task<data.@this> Start(actor.context.@this context)
+    public async System.Threading.Tasks.ValueTask<data.@this> Start(actor.context.@this context)
     {
         data.@this result = context.Ok();
         for (int i = 0; i < CountRaw; i++)
