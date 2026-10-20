@@ -23,21 +23,6 @@ public class @this : global::app.type.@this
     private readonly System.Collections.Generic.IReadOnlyList<string> _extension = [];
     private readonly bool _compressible;
     private readonly bool _text;
-    // How the owning type writes this format — its class's IEncode, bound when the kind was made; null for a
-    // type that writes none of its formats.
-    private readonly Encoder? _encode;
-    // How the owning type reads this format — its class's IDecode, bound when the kind was made; null for a type
-    // whose content is born lazily.
-    private readonly Decoder? _decode;
-
-    /// <summary>How a type writes its formats: the value a Data holds onto a stream, in a view.</summary>
-    public delegate global::System.Threading.Tasks.Task<global::app.data.@this> Encoder(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
-        System.Text.Encoding? encoding, System.Threading.CancellationToken ct);
-
-    /// <summary>How a type reads its formats: content of one, made into a value of the type.</summary>
-    public delegate global::System.Threading.Tasks.Task<global::app.data.@this> Decoder(byte[] raw,
-        global::app.actor.context.@this context, string name, global::app.type.item.path.@this? origin);
 
     public @this(string name) : base(name ?? throw new System.ArgumentNullException(nameof(name))) { }
 
@@ -61,16 +46,15 @@ public class @this : global::app.type.@this
     }
 
     /// <summary>A format of <paramref name="owner"/> — a kind its class declares with <c>[Format]</c>: the
-    /// MIMEs and extensions it answers to, whether its content compresses, and how its type writes and reads it.</summary>
-    public @this(global::app.Attributes.FormatAttribute format, global::app.type.@this owner, Encoder? encode = null, Decoder? decode = null)
+    /// MIMEs and extensions it answers to and whether its content compresses. How its type writes and reads it is
+    /// <see cref="format.@this{T}"/>'s.</summary>
+    public @this(global::app.Attributes.FormatAttribute format, global::app.type.@this owner)
         : this(format.Name, owner)
     {
         _mime = format.Mime is { } mime ? [mime] : [];
         _extension = format.Extension;
         _compressible = format.Compressible;
         _text = format.Text;
-        _encode = encode;
-        _decode = decode;
     }
 
     /// <summary>What values of other types look like written in this kind, when it isn't their own write (a list in
@@ -259,25 +243,22 @@ public class @this : global::app.type.@this
         global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
         System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
     {
-        // a type that reads this format itself makes the value now (a .pr into a goal)
-        if (_decode != null && template == null) return await _decode(raw, context, name, origin);
-        // else content decoded into a new value is a birth: it comes through its type's on.create, unread until used
+        // content decoded into a new value is a birth: it comes through its type's on.create, unread until used
         var type = context.App.type.list[new global::app.type.@this(Owner?.Name ?? "binary", IsEmpty ? null : Name, template: template), context];
         return await type.Create(raw, context, name, origin);
     }
 
     /// <summary>
-    /// A Data written onto a stream in this format — the one encode door, <see cref="Decode"/>'s pair. The
-    /// type that declares the format writes it (bound once, when the kind was made); a kind whose content is
-    /// written its own way overrides it (json, plang's transport). A kind with no writer of its own (one coined
-    /// for an extension: <c>.xyz</c>) writes as its family writes; a family with no format answers an error.
+    /// A Data written onto a stream in this format — the one encode door, <see cref="Decode"/>'s pair. A kind
+    /// whose content is written its own way overrides it (a declared format its type's write, json, plang's
+    /// transport). A kind with no writer of its own (one coined for an extension: <c>.xyz</c>) writes as its
+    /// family writes; a family with no format answers an error.
     /// With no <paramref name="view"/> the format writes its own face (a .pr its Store face).
     /// </summary>
     public virtual global::System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
         global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
-        => _encode != null ? _encode(stream, data, context, view, encoding, ct)
-            : !IsEmpty ? (Owner ?? context.App.type.list["binary"]).kind.Encode(stream, data, context, view, encoding, ct)
+        => !IsEmpty ? (Owner ?? context.App.type.list["binary"]).kind.Encode(stream, data, context, view, encoding, ct)
             : global::System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.@this(
                 $"nothing writes {Owner?.Name ?? "binary"} content", "NoEncoder", 400)));
 

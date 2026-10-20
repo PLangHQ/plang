@@ -3,7 +3,7 @@ namespace app.type.item;
 /// <summary>
 /// A type that writes its formats: the value a Data holds, onto a stream, in the given view — or, given none,
 /// the format's own face. A format kind
-/// the type declares encodes through this — bound once, when the kind is held on its type. A type that
+/// the type declares encodes through this — bound by the format on its first write. A type that
 /// doesn't implement it writes none of its formats.
 /// </summary>
 public interface IEncode<TSelf> where TSelf : @this, IEncode<TSelf>

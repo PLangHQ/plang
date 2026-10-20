@@ -25,9 +25,7 @@ public abstract class @this<T> : @this where T : global::app.type.item.@this
     private protected @this(string name, global::app.type.kind.@this? nested, global::app.type.@this owner)
         : base(name, nested, owner) { }
 
-    // A format of T declared on T's class with [Format] (image's png, text's md): the MIMEs, extension,
-    // and T's own encode/decode.
-    protected @this(global::app.Attributes.FormatAttribute format, global::app.type.@this owner,
-                    global::app.type.kind.@this.Encoder? encode, global::app.type.kind.@this.Decoder? decode)
-        : base(format, owner, encode, decode) { }
+    // A format of T declared on T's class with [Format] (image's png, text's md): the MIMEs and extension.
+    protected @this(global::app.Attributes.FormatAttribute format, global::app.type.@this owner)
+        : base(format, owner) { }
 }

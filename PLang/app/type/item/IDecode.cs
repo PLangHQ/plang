@@ -2,8 +2,8 @@ namespace app.type.item;
 
 /// <summary>
 /// A type that reads its formats: content in one of them (a file's bytes), made into a value of the type — the
-/// mirror of <see cref="IEncode{TSelf}"/>. A format kind the type declares decodes through this, bound once when
-/// the kind is held on its type. A type that doesn't implement it has its content born lazily, parsed when used.
+/// mirror of <see cref="IEncode{TSelf}"/>. A format kind the type declares decodes through this, bound by the
+/// format on its first read. A type that doesn't implement it has its content born lazily, parsed when used.
 /// </summary>
 public interface IDecode<TSelf> where TSelf : @this, IDecode<TSelf>
 {

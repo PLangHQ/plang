@@ -3037,7 +3037,9 @@ class app.type.kind.format.plang : app.type.format.IOutput
   ctor()
 
 class app.type.kind.format.this<T> : app.type.kind.this<T>
-  ctor(app.Attributes.FormatAttribute format, app.type.this owner, app.type.kind.this+Encoder encode = …, app.type.kind.this+Decoder decode = …)
+  ctor(app.Attributes.FormatAttribute format, app.type.this owner)
+  override Decode(System.Byte[] raw, app.actor.context.this context, System.String name = …, app.View view = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
+  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
 
 class app.type.kind.list.this : app.type.item.list.this<app.type.this>
   ctor(System.Collections.Generic.IEnumerable<app.type.this> types, app.type.this type)
@@ -3057,7 +3059,7 @@ class app.type.kind.this : app.type.this
   IsEmpty : System.Boolean { get; }
   ctor(System.String name)
   ctor(System.String name, app.type.this owner)
-  ctor(app.Attributes.FormatAttribute format, app.type.this owner, app.type.kind.this+Encoder encode = …, app.type.kind.this+Decoder decode = …)
+  ctor(app.Attributes.FormatAttribute format, app.type.this owner)
   override Equals(System.Object obj) : System.Boolean
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override GetHashCode() : System.Int32
@@ -3098,21 +3100,9 @@ class app.type.kind.this : app.type.this
   virtual Write(app.type.item.this value, app.type.format.IWriter writer) : System.Void
   virtual list(app.actor.context.this context) : app.type.kind.list.this
 
-class app.type.kind.this+Decoder : System.MulticastDelegate
-  ctor(System.Object object, System.IntPtr method)
-  virtual BeginInvoke(System.Byte[] raw, app.actor.context.this context, System.String name, app.type.item.path.this origin, System.AsyncCallback callback, System.Object object) : System.IAsyncResult
-  virtual EndInvoke(System.IAsyncResult result) : System.Threading.Tasks.Task<app.data.this>
-  virtual Invoke(System.Byte[] raw, app.actor.context.this context, System.String name, app.type.item.path.this origin) : System.Threading.Tasks.Task<app.data.this>
-
-class app.type.kind.this+Encoder : System.MulticastDelegate
-  ctor(System.Object object, System.IntPtr method)
-  virtual BeginInvoke(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct, System.AsyncCallback callback, System.Object object) : System.IAsyncResult
-  virtual EndInvoke(System.IAsyncResult result) : System.Threading.Tasks.Task<app.data.this>
-  virtual Invoke(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
-
 abstract class app.type.kind.this<T> : app.type.kind.this
   ctor(System.String name, app.type.this owner)
-  ctor(app.Attributes.FormatAttribute format, app.type.this owner, app.type.kind.this+Encoder encode, app.type.kind.this+Decoder decode)
+  ctor(app.Attributes.FormatAttribute format, app.type.this owner)
 
 class app.type.list.this : app.type.item.list.this<app.type.this>
   Add(System.Reflection.Assembly assembly, app.actor.context.this context) : app.data.this

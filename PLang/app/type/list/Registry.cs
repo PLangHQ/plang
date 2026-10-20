@@ -267,28 +267,6 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         => new($"'{key}' is already the format '{taken.Owner?.Name}{(taken.IsEmpty ? "" : "/" + taken.Name)}' — "
                + $"'{kind.Owner?.Name}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.", "TypeLoadCollision", 400);
 
-    // How a type's class writes its formats — its IEncode, bound once into a delegate (no reflection per
-    // write); null when the class writes none.
-    private global::app.type.kind.@this.Encoder? Encoder(System.Type clr)
-        => clr.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.IEncode<>))
-            ? (global::app.type.kind.@this.Encoder)GetType().GetMethod(nameof(Bound), BindingFlags.NonPublic | BindingFlags.Instance)!
-                .MakeGenericMethod(clr).Invoke(this, null)!
-            : null;
-
-    private global::app.type.kind.@this.Encoder Bound<T>() where T : global::app.type.item.@this, global::app.type.item.IEncode<T>
-        => T.Encode;
-
-    // How a type's class reads its formats — its IDecode, bound once into a delegate; null when its content is
-    // born lazily.
-    private global::app.type.kind.@this.Decoder? Decoder(System.Type clr)
-        => clr.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.IDecode<>))
-            ? (global::app.type.kind.@this.Decoder)GetType().GetMethod(nameof(Reading), BindingFlags.NonPublic | BindingFlags.Instance)!
-                .MakeGenericMethod(clr).Invoke(this, null)!
-            : null;
-
-    private global::app.type.kind.@this.Decoder Reading<T>() where T : global::app.type.item.@this, global::app.type.item.IDecode<T>
-        => T.Decode;
-
     // The kinds an assembly brings onto their types: every kind class (born from nothing), and every closed set its
     // classes mark a choice ([Choice]), each with its reader. Answers what it refuses (a class marked a choice that is
     // no closed set); null when every kind is held.
@@ -305,8 +283,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 Hold((global::app.type.kind.@this)System.Activator.CreateInstance(t, owner)!);
         foreach (var t in classes)
         {
-            // each format a type's class declares, a kind of that type — written by the class's own encode, read by
-            // its own decode when it has one. The type is found as the list finds any class's: by its name, else as
+            // each format a type's class declares, a kind of that type (whether the class writes and reads it itself
+            // is the format's own question). The type is found as the list finds any class's: by its name, else as
             // the list names the class (a list of actions is a list); a declared format no type reads is plang broken
             if (t.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false))
             {
@@ -314,12 +292,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                     is not { } declaring)
                     return new error.@this($"{t.FullName} declares a format, but no type reads it — it is no type of its own "
                         + "and the list names none for it.", "TypeLoadFormat", 400);
-                var encode = Encoder(t);
-                var decode = Decoder(t);
                 // each format is a kind<declaring-type> — one concrete class over the declaring type (774)
                 var kindType = typeof(global::app.type.kind.format.@this<>).MakeGenericType(t);
                 foreach (var format in t.GetCustomAttributes<global::app.Attributes.FormatAttribute>(inherit: false))
-                    Hold((global::app.type.kind.@this)System.Activator.CreateInstance(kindType, format, declaring, encode, decode)!);
+                    Hold((global::app.type.kind.@this)System.Activator.CreateInstance(kindType, format, declaring)!);
             }
             // a list's element kinds, made as a list names its element (list<path>)
             if (t == typeof(global::app.type.item.list.@this)
