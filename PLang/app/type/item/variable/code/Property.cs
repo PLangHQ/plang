@@ -12,7 +12,7 @@ public sealed class Property : Hop
     /// <summary>The member's name; a <c>!</c> first reads the binding.</summary>
     public string Name { get; }
 
-    internal Property(string text, string name, global::app.type.@this type) : base(text, type) => Name = name;
+    internal Property(string text, string name, Hop? next, global::app.type.@this type) : base(text, next, type) => Name = name;
 
     public override string Kind => "property";
 
@@ -58,6 +58,18 @@ public sealed class Property : Hop
 
         return previous.Context?.NotFound(key) ?? context.NotFound(key);
     }
+
+    /// <summary>A member's slot is the parent's child by that name, kept by the parent for the write; a <c>!</c> name's is
+    /// what its read reaches.</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Slot(
+        global::app.data.@this parent, global::app.actor.context.@this context)
+        => IsBinding ? await Start(parent, context) : await parent.Peek().Child(parent, Name, isIndex: false);
+
+    /// <summary>A <c>!</c> name written straight on the root (it is the last step) writes on the variable as it is — it
+    /// must exist; any other write goes into what the root holds, born when it holds nothing.</summary>
+    internal override System.Threading.Tasks.ValueTask<global::app.data.@this> Binding(
+        Variable root, global::app.actor.context.@this context)
+        => IsBinding && Next is null ? root.Start(null, context) : root.Ensure(context);
 
     /// <summary>A member takes the value as the parent's child; a <c>!</c> name lands in the
     /// binding's Properties.</summary>

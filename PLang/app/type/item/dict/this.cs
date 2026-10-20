@@ -37,6 +37,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // foreign dict keeps whatever comparer it came with — the dict object does not
     // police casing, the construction site picks the comparer.
     private readonly Dictionary<string, object?> _value;
+    // what the one mutation door writes under: an entry kept for a write is made and stored in one step
+    private readonly object _gate = new();
 
     // A dict stores no context: an entry is handed out with the context of whoever asks for it
     // (Slot, Entries, Get). A stored Data keeps its own.
@@ -286,7 +288,26 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // A Data is held under its key: one named otherwise (a variable's binding handed in) is held as a copy under
         // the key, so the one who handed it keeps its own name.
         if (slot is Data d && d.Name != key) slot = d.Copy(key);
-        _value[key] = slot;
+        lock (_gate) _value[key] = slot;
+    }
+
+    /// <summary>The entry at <paramref name="key"/> a write goes into: kept under its key, so the write lands in the
+    /// dict. A key it doesn't hold is what a read answers (its own surface, else NotFound).</summary>
+    public override async System.Threading.Tasks.ValueTask<Data> Child(Data parent, string key, bool isIndex)
+        => Entry(key, parent.Context) ?? await Get(parent, key, isIndex);
+
+    // The entry under a key, kept: a Data held under its key as it is; any other slot made its value (a Data named
+    // otherwise, its copy under the key) and stored there, in one step under the dict's lock. Null when the key is
+    // not held.
+    private Data? Entry(string key, actor.context.@this context)
+    {
+        lock (_gate)
+        {
+            if (!_value.ContainsKey(key)) return null;
+            var entry = Slot(key, context);
+            if (!ReferenceEquals(entry, _value[key])) Put(key, entry);
+            return entry;
+        }
     }
 
     /// <summary>

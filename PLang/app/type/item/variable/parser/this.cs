@@ -45,27 +45,20 @@ public sealed class @this
     {
         _pos = 0;
         _end = _text.Length;
-        var hops = new List<code.Hop>();
         // A path that starts bare starts with a member, as if written after a dot.
+        System.Func<code.Hop?, code.Hop>? bare = null;
         if (_end > 0 && _text[0] is not ('.' or '!' or '['))
         {
-            if (Named(0) is not { } first) { Fail(_text, "it starts with a name"); return null; }
-            hops.Add(first);
+            bare = Named(0);
+            if (bare is null) { Fail(_text, "it starts with a name"); return null; }
         }
-        while (_pos < _end)
+        if (!Steps(out var next, out var start))
         {
-            var start = _pos;
-            var hop = _text[_pos] switch
-            {
-                '.' => Member(start),
-                '!' => Binding(start),
-                '[' => Index(start),
-                _ => null,
-            };
-            if (hop == null) { Fail(_text, $"'{_text[_pos]}' can't follow '{_text[..start]}'"); return null; }
-            hops.Add(hop);
+            Fail(_text, $"'{_text[_pos]}' can't follow '{_text[..start]}'");
+            return null;
         }
-        return new code.@this(hops, Code);
+        var first = bare is null ? next : bare(next);
+        return first is null ? null : new code.@this(first, Code);
     }
 
     // what the parser's reads are born holding: the app's own types
@@ -148,29 +141,15 @@ public sealed class @this
         var text = _text[at..(close + 1)];
         _pos = at + 1;
         _end = close;
-        var hops = new List<code.Hop>();
 
         var bang = _pos < _end && _text[_pos] == '!';
         if (bang) _pos++;
         var root = Name();
         if (root.Length == 0) return Fail(text, "it starts with a name");
-        hops.Add(new code.Variable(bang ? "!" + root : root, Hop<code.Variable>()));
-
-        while (_pos < _end)
-        {
-            var start = _pos;
-            var hop = _text[_pos] switch
-            {
-                '.' => Member(start),
-                '!' => Binding(start),
-                '[' => Index(start),
-                _ => null,
-            };
-            if (hop == null)
-                return Fail(text, _pos < _end ? $"'{_text[_pos]}' can't follow '{_text[(at + 1)..start]}'" : "it ends early");
-            hops.Add(hop);
-        }
-        return new variable.@this(text, new code.@this(hops, Code), _types[typeof(variable.@this)]);
+        if (!Steps(out var next, out var start))
+            return Fail(text, _pos < _end ? $"'{_text[_pos]}' can't follow '{_text[(at + 1)..start]}'" : "it ends early");
+        return new variable.@this(text, new code.@this(new code.Variable(bang ? "!" + root : root, next, Hop<code.Variable>()), Code),
+            _types[typeof(variable.@this)]);
     }
 
     private variable.@this? Fail(string text, string why)
@@ -189,41 +168,75 @@ public sealed class @this
         return _text[start.._pos];
     }
 
+    // The steps from the cursor to the end, each read before the ones after it and made holding the next: false when
+    // one doesn't read (`start` where it begins, the cursor where its read stopped), true with null when none is left.
+    private bool Steps(out code.Hop? first, out int start)
+    {
+        first = null;
+        start = _pos;
+        if (_pos >= _end) return true;
+        var step = _text[_pos] switch
+        {
+            '.' => Member(start),
+            '!' => Binding(start),
+            '[' => Index(start),
+            _ => null,
+        };
+        if (step == null) return false;
+        if (!Steps(out var next, out start)) return false;
+        first = step(next);
+        return true;
+    }
+
     // .member, ."quoted key", or .method(values)
-    private code.Hop? Member(int start)
+    private System.Func<code.Hop?, code.Hop>? Member(int start)
     {
         _pos++;
         return Named(start);
     }
 
-    // What follows a member's dot: a name, a quoted key, or a method with its values.
-    private code.Hop? Named(int start)
+    // What follows a member's dot: a name, a quoted key, or a method with its values — the step made once its next is.
+    private System.Func<code.Hop?, code.Hop>? Named(int start)
     {
         if (_pos < _end && _text[_pos] is '"' or '\'')
-            return Quoted() is { } key ? new code.Property(_text[start.._pos], key, Hop<code.Property>()) : null;
+        {
+            if (Quoted() is not { } key) return null;
+            var text = _text[start.._pos];
+            return next => new code.Property(text, key, next, Hop<code.Property>());
+        }
         var name = Name();
         if (name.Length == 0) return null;
         if (_pos < _end && _text[_pos] == '(')
-            return Values() is { } values ? new code.Method(_text[start.._pos], name, values, Hop<code.Method>()) : null;
-        return new code.Property(_text[start.._pos], name, Hop<code.Property>());
+        {
+            if (Values() is not { } values) return null;
+            var text = _text[start.._pos];
+            return next => new code.Method(text, name, values, next, Hop<code.Method>());
+        }
+        {
+            var text = _text[start.._pos];
+            return next => new code.Property(text, name, next, Hop<code.Property>());
+        }
     }
 
     // !name — the binding's own plane
-    private code.Hop? Binding(int start)
+    private System.Func<code.Hop?, code.Hop>? Binding(int start)
     {
         _pos++;
         var name = Name();
-        return name.Length == 0 ? null : new code.Property(_text[start.._pos], "!" + name, Hop<code.Property>());
+        if (name.Length == 0) return null;
+        var text = _text[start.._pos];
+        return next => new code.Property(text, "!" + name, next, Hop<code.Property>());
     }
 
     // [0], ["k"], [idx], [%i%]
-    private code.Hop? Index(int start)
+    private System.Func<code.Hop?, code.Hop>? Index(int start)
     {
         _pos++;
         var key = Value(bare: true);
         if (key == null || _pos >= _end || _text[_pos] != ']') return null;
         _pos++;
-        return new code.Index(_text[start.._pos], key, Hop<code.Index>());
+        var text = _text[start.._pos];
+        return next => new code.Index(text, key, next, Hop<code.Index>());
     }
 
     // (value, value, …) — each a literal or a variable

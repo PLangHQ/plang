@@ -7,7 +7,7 @@ public sealed class Variable : Hop
 {
     public string Name { get; }
 
-    internal Variable(string name, global::app.type.@this type) : base(name, type) => Name = name;
+    internal Variable(string name, Hop? next, global::app.type.@this type) : base(name, next, type) => Name = name;
 
     public override string Kind => "variable";
 
@@ -47,6 +47,23 @@ public sealed class Variable : Hop
 
     // the ! names a run binds as it goes — never there before it runs
     private static readonly string[] Bound = ["!data", "!event", "!buildData"];
+
+    /// <summary>What the name holds, then the steps after it — the first of them stepping on the variable's own
+    /// binding.</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Read(
+        global::app.data.@this? previous, global::app.actor.context.@this context, bool own = false)
+    {
+        var binding = await Start(null, context);
+        return Next is null || !binding.Success || !binding.IsInitialized ? binding : await Next.Read(binding, context, own: true);
+    }
+
+    /// <summary>The variable rebinds to <paramref name="value"/>; with steps after it, the next writes on the binding it
+    /// says it writes on.</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Write(
+        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own = false)
+        => Next is null
+            ? await Set(null, value, context)
+            : await Next.Write(await Next.Binding(this, context), value, context, own: true);
 
     /// <summary>The variable rebinds to <paramref name="value"/>.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(

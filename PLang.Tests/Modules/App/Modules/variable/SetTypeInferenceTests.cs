@@ -136,17 +136,25 @@ public class SetTypeInferenceTests
 
     // A write through a read row reaches the list whatever C# container the row came in: one plang can't share (a
     // Dictionary<string, string>, a string[]) is made into its plang value at the read, and the write must still land.
-    [Test, Skip("red: the write lands in the row made at the read and is lost; waits on its fix")]
+    [Test]
     public async Task Set_ThroughARowOfAStringDictionary_ReachesTheList()
         => await WrittenThrough(new List<object?> { new Dictionary<string, string> { ["name"] = "a" } }, "%rows[0].name%");
 
-    [Test, Skip("red: the write lands in the row made at the read and is lost; waits on its fix")]
+    [Test]
     public async Task Set_ThroughARowOfAStringArray_ReachesTheList()
         => await WrittenThrough(new List<object?> { new[] { "a", "b" } }, "%rows[0][0]%");
 
-    [Test, Skip("red: the write lands in the entry made at the read and is lost; waits on its fix")]
+    [Test]
     public async Task Set_ThroughADictEntryOfAStringDictionary_ReachesTheDict()
         => await WrittenThrough(new Dictionary<string, object?> { ["headers"] = new Dictionary<string, string> { ["name"] = "a" } }, "%rows.headers.name%");
+
+    [Test]
+    public async Task Set_ThroughARowOfARow_ReachesTheList()
+        => await WrittenThrough(new List<object?> { new List<Dictionary<string, string>> { new() { ["name"] = "a" } } }, "%rows[0][0].name%");
+
+    [Test]
+    public async Task Set_ThroughADictEntryUnderAListRow_ReachesTheList()
+        => await WrittenThrough(new List<object?> { new Dictionary<string, Dictionary<string, string>> { ["headers"] = new() { ["name"] = "a" } } }, "%rows[0].headers.name%");
 
     private async Task WrittenThrough(object rows, string path)
     {

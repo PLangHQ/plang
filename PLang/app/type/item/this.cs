@@ -295,6 +295,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         global::app.data.@this parent, string key, bool isIndex)
         => Get(parent, key);
 
+    /// <summary>The child at <paramref name="key"/> a write further in goes into — what <see cref="Get(global::app.data.@this, string, bool)"/>
+    /// answers, for a value whose children are its own. A container whose rows are made at their read keeps the row
+    /// it makes, so the write lands in the container.</summary>
+    public virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Child(
+        global::app.data.@this parent, string key, bool isIndex)
+        => Get(parent, key, isIndex);
+
     /// <summary>
     /// Iteration as <c>(key, value)</c> pairs — the value owns how it iterates,
     /// the courier (<c>Data.EnumerateItems</c>) only delegates here. A leaf is a

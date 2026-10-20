@@ -10,7 +10,7 @@ public sealed class Index : Hop
     /// <summary>The key: a number, a text, or a variable.</summary>
     public global::app.type.item.@this Key { get; }
 
-    internal Index(string text, global::app.type.item.@this key, global::app.type.@this type) : base(text, type) => Key = key;
+    internal Index(string text, global::app.type.item.@this key, Hop? next, global::app.type.@this type) : base(text, next, type) => Key = key;
 
     public override string Kind => "index";
 
@@ -42,6 +42,15 @@ public sealed class Index : Hop
         var key = await Resolve(context);
         if (!key.Success) return key;
         return await previous.Peek().Get(previous, (await key.Value()).ToString()!, isIndex: true);
+    }
+
+    /// <summary>Its slot is the parent's child at the key, kept by the parent for the write.</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Slot(
+        global::app.data.@this parent, global::app.actor.context.@this context)
+    {
+        var key = await Resolve(context);
+        if (!key.Success) return key;
+        return await parent.Peek().Child(parent, (await key.Value()).ToString()!, isIndex: true);
     }
 
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(

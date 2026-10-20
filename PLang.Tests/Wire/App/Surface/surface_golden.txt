@@ -1483,6 +1483,7 @@ class app.type.item.dict.this : app.type.item.this, app.type.item.ICreate<app.ty
   Set(app.data.this value) : app.type.item.dict.this
   ctor(app.type.this type)
   override Cacheable : System.Boolean { get; }
+  override Child(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
   override Contains(app.data.this needle) : System.Threading.Tasks.ValueTask<System.Boolean>
   override Copy() : app.type.item.this
   override EnumerateItems(app.actor.context.this context) : System.Collections.Generic.IEnumerable<System.ValueTuple<app.data.this, app.data.this>>
@@ -1908,6 +1909,7 @@ class app.type.item.list.this : app.type.item.this, app.type.item.ICreate<app.ty
   ctor(app.type.item.list.this source, app.type.this type)
   ctor(app.type.this type)
   override Cacheable : System.Boolean { get; }
+  override Child(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
   override Contains(app.data.this needle) : System.Threading.Tasks.ValueTask<System.Boolean>
   override Copy() : app.type.item.this
   override EnumerateItems(app.actor.context.this context) : System.Collections.Generic.IEnumerable<System.ValueTuple<app.data.this, app.data.this>>
@@ -2735,6 +2737,7 @@ abstract class app.type.item.this : app.data.IBooleanResolvable, app.type.item.I
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.this
   virtual AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   virtual Cacheable : System.Boolean { get; }
+  virtual Child(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
   virtual Contains(app.data.this needle) : System.Threading.Tasks.ValueTask<System.Boolean>
   virtual Copy() : app.type.item.this
   virtual Debug(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.String>
@@ -2849,7 +2852,7 @@ abstract class app.type.item.variable.code.Hop : app.type.item.this, app.type.it
   Text : System.String { get; }
   abstract Kind : System.String { get; }
   abstract Start(app.data.this previous, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-  ctor(System.String text, app.type.this type)
+  ctor(System.String text, app.type.item.variable.code.Hop next, app.type.this type)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
   protected abstract Piece(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask

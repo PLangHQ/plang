@@ -13,7 +13,7 @@ public sealed class Method : Hop
     /// <summary>The values handed to the method, in order: literals, or variables.</summary>
     public global::app.type.item.list.@this Parameter { get; }
 
-    internal Method(string text, string name, global::app.type.item.list.@this parameter, global::app.type.@this type) : base(text, type)
+    internal Method(string text, string name, global::app.type.item.list.@this parameter, Hop? next, global::app.type.@this type) : base(text, next, type)
     {
         Name = name;
         Parameter = parameter;

@@ -12,7 +12,17 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
     /// <c>.replace("-", " ")</c>.</summary>
     public string Text { get; }
 
-    protected Hop(string text, global::app.type.@this type) : base(type) => Text = text;
+    /// <summary>The step after this one; null for the last.</summary>
+    internal Hop? Next { get; }
+
+    protected Hop(string text, Hop? next, global::app.type.@this type) : base(type)
+    {
+        Text = text;
+        Next = next;
+    }
+
+    /// <summary>This step and every step after it, in order.</summary>
+    internal IEnumerable<Hop> Chain => Next is null ? [this] : Next.Chain.Prepend(this);
 
     /// <summary>The kind the <c>.pr</c> writes it under: <c>variable</c>, <c>property</c>,
     /// <c>index</c>, <c>method</c>.</summary>
@@ -44,6 +54,42 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
     /// (<paramref name="own"/>). Most steps are the same either way.</summary>
     internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
         global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own) => Set(parent, value, context);
+
+    /// <summary>Its step, then the steps after it; a step that fails or reaches nothing answers there. Whether
+    /// <paramref name="previous"/> is the variable's own binding (<paramref name="own"/>) is the root's to say.</summary>
+    internal virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Read(
+        global::app.data.@this? previous, global::app.actor.context.@this context, bool own = false)
+    {
+        var data = await Start(previous, context, own);
+        return Next is null || !data.Success || !data.IsInitialized ? data : await Next.Read(data, context);
+    }
+
+    /// <summary>The value in <paramref name="parent"/>'s slot at this step, for a write that goes further in. By default
+    /// its read: a method's answer, a binding's Properties.</summary>
+    internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Slot(
+        global::app.data.@this parent, global::app.actor.context.@this context) => Start(parent, context);
+
+    /// <summary>The binding this step writes on, when it is the step right after <paramref name="root"/>: what the root
+    /// holds, born an empty dict when it holds nothing, so the write has a place to land.</summary>
+    internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Binding(
+        Variable root, global::app.actor.context.@this context) => root.Ensure(context);
+
+    /// <summary>Writes <paramref name="value"/>: the last step sets itself on <paramref name="parent"/>; any other step
+    /// takes its slot in the parent and hands it to the next. A slot holding nothing leaves the write nowhere to land.
+    /// Whether <paramref name="parent"/> is the variable's own binding (<paramref name="own"/>) is the root's to say.</summary>
+    internal virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Write(
+        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own = false)
+    {
+        if (Next is null) return await Set(parent, value, context, own);
+        if (parent is null) return context.NotFound(Text);
+        var slot = await Slot(parent, context);
+        if (!slot.Success) return slot;
+        if (!slot.IsInitialized)
+            return context.Error(new global::app.error.@this(
+                $"%{parent.Path}{Text}% holds nothing, so %{parent.Path}{string.Concat(Chain.Select(hop => hop.Text))}% has nowhere to be written",
+                "VariableNotFound", 404));
+        return await Next.Write(slot, value, context);
+    }
 
     /// <summary>Its <c>.pr</c> form, in every view: one object under its kind — <c>{"property": "address"}</c>.</summary>
     public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,

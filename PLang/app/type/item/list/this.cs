@@ -154,11 +154,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // The one mutation door: the edit runs under the list's lock, and the rows' snapshot is dropped with it —
     // so no write can leave a reader walking stale rows. The edit's state rides in, so the edits capture nothing.
     private void Change<TState>(TState state, System.Action<@this, TState> edit)
+        => Change((state, edit), static (list, s) => { s.edit(list, s.state); return true; });
+
+    // The same door, for an edit that answers what it did.
+    private TAnswer Change<TState, TAnswer>(TState state, System.Func<@this, TState, TAnswer> edit)
     {
         lock (_gate)
         {
-            edit(this, state);
+            var answer = edit(this, state);
             _rows = null;
+            return answer;
         }
     }
 
@@ -555,6 +560,27 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         // Implicit first: %list.street% → %list[0].street%.
         return await First(context)!.Get(key);
     }
+
+    /// <summary>The row at a position a write goes into: kept in its slot, so the write lands in the list. Any other
+    /// key is what a read answers.</summary>
+    public override async System.Threading.Tasks.ValueTask<Data> Child(Data parent, string key, bool isIndex)
+        => int.TryParse(key, out var index)
+            ? Row(index, parent.Context) ?? parent.Context.NotFound(key)
+            : await Get(parent, key, isIndex);
+
+    // The row at a flattened index, kept: a stored Data as it is; any other slot made its element and stored in its
+    // place, in one step under the list's lock, so two writes keep the same row. Null when out of range.
+    private Data? Row(int index, actor.context.@this context)
+        => Change((index, context), static (list, s) =>
+        {
+            if (!list.Locate(s.index, out int row, out int offset, out @this? inner)) return null;
+            if (inner != null) return inner.Row(offset, s.context);
+            if (list._items[row] is Data stored) return stored;
+            var element = list.Element(list._items[row], s.context);
+            list.Admit(element);
+            list._items[row] = element;
+            return element;
+        });
 
     /// <summary>
     /// The CLR exit door: a C# list of its own, never this list's rows. A collection target

@@ -7,7 +7,8 @@ namespace app.type.item.variable.code;
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<Hop>
 {
-    internal @this(System.Collections.Generic.IEnumerable<Hop> hops, global::app.type.@this type) : base(hops, type) { }
+    /// <summary>The code <paramref name="first"/> starts: it and every step after it.</summary>
+    internal @this(Hop first, global::app.type.@this type) : base(first.Chain, type) { }
 
     /// <summary>Its <c>.pr</c> form: the hops in order, each under its kind.</summary>
     public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
@@ -27,21 +28,11 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
 
     /// <summary>Runs every hop: what the variable holds — or, for a path read from a value
     /// (<see cref="parser.@this.Path"/>, no root), what <paramref name="from"/> holds there.</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(global::app.actor.context.@this context,
+    public System.Threading.Tasks.ValueTask<global::app.data.@this> Start(global::app.actor.context.@this context,
         global::app.data.@this? from = null)
-    {
-        var current = from;
-        var at = 0;
-        foreach (var hop in Items())
-        {
-            // the step right after the root steps on the variable's own binding
-            current = await hop.Start(current, context, own: at++ == 1 && from == null);
-            if (!current.IsInitialized || !current.Success) return current;
-        }
-        return current!;
-    }
+        => this[0].Read(from, context);
 
-    /// <summary>Runs every hop but the last to reach the parent, and the last writes itself: a member
+    /// <summary>The root writes, and each step hands the write on to the next, the last writing itself: a member
     /// sets that member, an index that key, a <c>!</c> name the binding's Properties, a bare root
     /// rebinds the variable. A root that holds nothing becomes an empty dict when a member or key is
     /// written into it; a <c>!</c> name written straight on the root needs the variable to exist. A node on
@@ -50,8 +41,7 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
     /// it): a template renders here, a reference writes what it names, a name it can't read fails the write.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(object? value, global::app.actor.context.@this context)
     {
-        var hops = Items().ToList();
-        if (hops.Count == 1) return await Root.Set(null, value, context);
+        if (CountRaw == 1) return await Root.Set(null, value, context);
 
         if (value is global::app.data.@this given && given.HasVariable)
         {
@@ -67,19 +57,7 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
         // caller's)
         if (!Root.Name.StartsWith('!')) await context.Variable.Own(Root.Name);
 
-        var parent = hops is [_, Property { IsBinding: true }]
-            ? await Root.Start(null, context)
-            : await Root.Ensure(context);
-        for (int i = 1; i < hops.Count - 1; i++)
-        {
-            parent = await hops[i].Start(parent, context);
-            if (!parent.Success) return parent;
-            if (!parent.IsInitialized)
-                return context.Error(new global::app.error.@this(
-                    $"%{string.Concat(hops.Take(i + 1).Select(h => h.Text))}% holds nothing, so %{string.Concat(hops.Select(h => h.Text))}% has nowhere to be written",
-                    "VariableNotFound", 404));
-        }
-        return await hops[^1].Set(parent, value, context, own: hops.Count == 2);
+        return await Root.Write(null, value, context);
     }
 
     /// <summary>What the variable holds — or, when it holds nothing, the value <paramref name="value"/> gives birth
