@@ -1,7 +1,8 @@
 # coder — item-doors — summary
 
 ## Version
-v2 (stage 1: a value is born whole — lists, singular nodes, and the per-type required ctor; item-doors 32–64)
+v2 (stage 1: a value is born whole — lists, singular nodes, the per-type required ctor, kinds born with their
+owner; item-doors 32–96)
 
 ## What this is
 Every plang value holds the one type object its app made for it (item-doors 33): the maker hands it in, and a value
@@ -76,6 +77,23 @@ in turn, smallest first. Decisions are numbered per branch (item-doors 1–47, `
   json read) opens and its value answers (`source.Fact`; `Fact` is async).
 - **An error's exception (60's red)**: `error.Exception` is C#-only (internal); plang and the 500 templates read
   `%!error.trace%` (its C# type, message and stack as text).
+- **A kind is born holding its owner (79, 81, 82; 925787b46)**: every kind class is a `kind<T>` whose only ctor takes
+  the app's entry for T; that owner is its `Family`; the registry enlists each with `types[T]` (`Registry.Owner`).
+  `Owner` is a type (the empty kind keeps its own); a kind answers only its own aliases (`Names`/`Keys`). Choice
+  sets read their options off the type they're handed (`choice<T>._set` gone); the family set reads the held kinds
+  lazily; template's kinds stay ownerless (stage 6). Settings' defaults are `[Default("…")]`, made by the birth.
+  No-context doors (number's/duration's operator statics, size's `Standards`, `reflection.Fallback`, test.format's
+  report kinds) are class-built, marked with 50.
+- **Fixes pushed on their own**: the `--debug` core dump (dcd7eb293: the app in its asker's memory walked forever;
+  the debug view answers "(cannot be shown: …)"); an image holds its declared type (b0cf849dc, b8813dd03: strict from
+  the declaration, the kind from it or the extension); a type with a kind and strict builds (aa8bb032f: the build's
+  strict probe reads through the Data, 87); a path-backed image reads nothing at the set (3956a8e09, 90).
+- **Registry.Enlist scans once (fix B, Ingi; 290aad619)** and **dev.sh's tested snapshot is taken at the sweep's
+  start (Ingi; 6f4d0572d)**. Test slowness measured: an app's birth is ~150 ms warm, ~90% of the suites' CPU; Ingi
+  chose to live with it (no static scan cache, no registry clone).
+- **In progress, uncommitted — 89, the app writes itself**: the 7 `[JsonIgnore]` on app's nodes go; `app.Output` writes
+  its members (Store → its [Store] record), `variable` in Debug only, an AsyncLocal guard writes its name when met
+  again. Held: on the wire `actor` and `parent` are refused (NoWireContract); the architect has it with Ingi.
 
 ## Interims (each flagged in code, each has its turn)
 - `culture.Machine` (the app setting's default) makes its own type — setting defaults move to birth in group 6 (17).
@@ -83,7 +101,8 @@ in turn, smallest first. Decisions are numbered per branch (item-doors 1–47, `
 - choice values (mouse Action/Button, navigate To) are made on read; at choice's turn they're held from birth.
 - The C# implicit operators (50): `data<T>(T)` keeps a private context-less birth (and refuses a null); binary's and
   duration's keep a class-built type — all until the implicit-conversion branch.
-- number keeps its own copy of its kind (`Kind`) until its turn, when it writes through `kind.Write` (56).
+- number's 15 static kinds and `Kinds` stay only for the C# operator births, owned by one class-built number type
+  (50); a number with an app asks its family's kinds.
 
 ## Open
 - test/plan/app-systems/type/duration/KeepsItsKind.test.goal asserts `%short.text%` (57: Text is gone); new steps
@@ -102,10 +121,19 @@ new global::app.type.item.datetime.@this(reader.DateTimeOffset(), ctx.Context.Ap
 ```
 
 ## Checks
-- C# sweep after each push: only the known reds (6 Wire snapshot/resume, ImageFromBytes); surface re-pinned with
-  the decision each time; the decider pin is back to its old value (41).
+- C# sweep after each push: only the known reds (6 Wire snapshot/resume); surface re-pinned with the decision each
+  time (last: 79); the decider pin is back to its old value (41). Small fixes are proved on a clean worktree with
+  their affected suites, not a forced sweep (Ingi).
+- plang tests (after 79): 303 total, 277 pass, 11 fail (the long-standing reds), 12 stale, 3 skipped; the four
+  strict-kind tests green on the builder's rebuilt .pr.
 - plang tests unbuilt here (no decider key): `test/plan/item-doors/app/type/dict/key/KeyIsTheFirstKey.test.goal`,
   `test/plan/item-doors/app/type/input/modifier/ModifierIsTheFirstKeyHeld.test.goal` — the test-designer builds them.
 
 ## Next
-On in the order (dict, text, number and setting done — see What was done): then setting, content, source, separator; last, number's static kinds and `KindOfClass` go.
+- 89 once Ingi rules on actor/parent on the wire, the 13 KB of type facts and nulls, and `variable`'s nameless list:
+  then its tests (each view's members, Debug-only variable with `%app%` as its name, app.pr's round trip), the
+  `data/this.Output.cs` comment, the surface re-pin citing 89. The tree holds a `Tmp_Capture` test in AppNodesTests
+  — remove it.
+- Then the stage-1 report: every stage-1 test, what stays marked (error, event, the 50 fallbacks), anything wrong.
+- Backlog from the architect: "this type, made strict" has two callers (image courier, builder's Tighten) — a third
+  makes it a type member (Ingi's); the strict imprint has two doors (image.Create and set.cs) — one door: the courier.

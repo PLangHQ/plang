@@ -145,6 +145,34 @@
           "category": "code",
           "confidence": "high",
           "context": "Type order: image, choice, bool born holding the app's type (operator births stay class-built until 50); ImageFromBytes (a known red) green; an unnamed enum is a bare choice. Dict !key on an unread dict: source.Fact opens (Fact async). Test makers moved to ctx.Image/ctx.Choice/ctx.Bool by Haiku passes, checked by build and sweep."
+        },
+        {
+          "paths": ["PLang/app/type/kind", "PLang/app/type/list/Registry.cs", "PLang/app/type/item/choice/set", "PLang/app/type/item/setting/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Kinds item (79/81/82, 925787b46): every kind is a kind<T> born holding its owner entry (its Family); choice sets read off the type they are handed; setting defaults by [Default]; no-context doors class-built, marked with 50; surface re-pinned citing 79."
+        },
+        {
+          "paths": ["PLang/app/this.cs", "PLang/app/module/debug/this.cs", "PLang/app/type/item/image/this.cs", "PLang/app/module/variable/set.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Standalone fixes, each proved on a clean worktree: --debug core dump (dcd7eb293), image keeps its declared type (b0cf849dc, b8813dd03), kind+strict builds (aa8bb032f, 87), path-backed image reads nothing at the set (3956a8e09, 90)."
+        },
+        {
+          "paths": ["PLang/app/type/list/Registry.cs", "dev.sh"],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Ingi: fix B (290aad619, Enlist scans once; small gain; an app's birth ~150 ms is ~90% of suite CPU, Ingi chose to live with it) and dev.sh's tested snapshot taken at the sweep's start (6f4d0572d), checked with a real mid-sweep edit."
+        },
+        {
+          "paths": ["PLang/app/this.cs", "PLang.Tests/Runtime/App/AppNodesTests.cs"],
+          "type": "decision",
+          "category": "code",
+          "confidence": "medium",
+          "context": "89 (the app writes itself) in progress, uncommitted: the Out view is refused for actor and parent (NoWireContract); held for Ingi through the architect."
         }
       ],
       "after": null
