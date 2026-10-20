@@ -1831,7 +1831,6 @@ class app.type.item.kind.list.this : app.type.kind.this<app.type.item.this>
   protected override OwnInternal : System.Nullable<System.Boolean> { get; }
 
 static class app.type.item.kind.reflection.Tagged
-  static IsTagAware(System.Type type) : System.Boolean
   static PropertiesFor(System.Type type, app.View mode) : System.Collections.Generic.IReadOnlyList<app.type.item.kind.reflection.Tagged+Entry>
 
 struct app.type.item.kind.reflection.Tagged+Entry : System.IEquatable<app.type.item.kind.reflection.Tagged+Entry>

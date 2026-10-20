@@ -88,8 +88,9 @@ public abstract class View
         return used;
     }
 
-    // Whether a type carries any wire tag: a deliberate host whose members are a contract.
-    private protected bool Tagged(System.Type type)
+    /// <summary>Whether <paramref name="type"/> carries any wire tag (Out, Store, Sensitive, Masked): a deliberate host
+    /// whose members are a contract. A type with none is transparent.</summary>
+    internal bool Tagged(System.Type type)
         => type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Any(p => Is<OutAttribute>(p) || Is<StoreAttribute>(p) || Is<SensitiveAttribute>(p) || Is<MaskedAttribute>(p));
 

@@ -4,27 +4,9 @@ using System.Reflection;
 namespace app.type.item.kind.reflection;
 
 /// <summary>
-/// Tagged-view filter: decides which properties on a CLR type a view writes.
-/// Read by an item's tagged <c>Output</c> and the reflection kind's, which
-/// write those properties as the value's property bag.
-///
-/// <para>Three modes:</para>
-/// <list type="bullet">
-///   <item><b>View.Out</b> — only <c>[Out]</c> ships. <c>[Sensitive]</c>
-///         excluded. <c>[Masked]</c> emits <c>"****"</c>. The wire form
-///         third parties see.</item>
-///   <item><b>View.Store</b> — only <c>[Store]</c> ships, but <c>[Sensitive]</c>
-///         and <c>[Masked]</c> are *ignored* in this mode. Round-trips the
-///         full local object to disk so it can be restored as-is (Identity
-///         with PrivateKey + IsDefault, setting with real value, etc.).
-///         No observer to hide from on the local persistence path.</item>
-///   <item><b>View.Debug</b> — every public instance property ships. <c>[Sensitive]</c>
-///         and <c>[Masked]</c> emit <c>"****"</c>: a developer reading a diagnostic tells
-///         "not set" from "set but hidden"; debug never unmasks.</item>
-/// </list>
-///
-/// <para>The per-(type, mode) result is cached on first use. Reflection
-/// fires once per type per mode per process.</para>
+/// The members of a CLR type a view writes, each with its wire name and whether it is masked, read once per
+/// (type, view) and kept. Which members show and which mask is the view's answer (<see cref="global::app.View"/>);
+/// this only remembers it. Read by item's general write and the reflection kind's read.
 /// </summary>
 public static class Tagged
 {
@@ -43,21 +25,6 @@ public static class Tagged
     public static IReadOnlyList<Entry> PropertiesFor(System.Type type, global::app.View mode)
         => _cache.GetOrAdd((type, mode), key => Compute(key.Type, key.Mode));
 
-    // True when the type carries any Out/Store/Sensitive/Masked tag — a deliberate host whose
-    // reflected shape is a wire contract (cycles are [JsonIgnore]-guarded). A type WITHOUT any
-    // tag is opaque: reflecting it whole risks pulling in cyclic/infra graph, so it is written
-    // by value, not reflected.
-    public static bool IsTagAware(System.Type type)
-    {
-        foreach (var p in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            if (p.IsDefined(typeof(OutAttribute), inherit: false)
-                || p.IsDefined(typeof(StoreAttribute), inherit: false)
-                || p.IsDefined(typeof(SensitiveAttribute), inherit: false)
-                || p.IsDefined(typeof(MaskedAttribute), inherit: false))
-                return true;
-        return false;
-    }
-
     private static IReadOnlyList<Entry> Compute(System.Type type, global::app.View view)
     {
         var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -66,7 +33,7 @@ public static class Tagged
         // A type with no Out/Store/Sensitive/Masked tag anywhere is transparent: every public property ships (nested
         // helper records round-trip without a tag inventory). PropertyInfo's IsDefined ignores the inherit flag — a
         // subclass that needs an [Out] on an overridden property re-applies it (FilePath/HttpPath's Scheme).
-        var tagged = IsTagAware(type);
+        var tagged = view.Tagged(type);
 
         foreach (var prop in props)
         {
