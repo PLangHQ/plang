@@ -30,9 +30,13 @@ public sealed record @this(
         if (IsNullable)
             sb.AppendLine("    [System.Diagnostics.CodeAnalysis.NotNull]");
         // Backing-free: the `field` keyword's compiler store — no hand-written field, no
-        // flag / fallback / reset machinery. The field-initializer covers an absent slot
-        // (Uninitialized / [Default] literal); Resolve() binds the value via the object initializer.
-        sb.AppendLine($"    public partial {TypeName}{nullable} {Name} {{ get => field!; init => field = value; }} = {Fallback};");
+        // flag / fallback / reset machinery. An absent slot (Uninitialized / [Default] literal) is made when first read,
+        // not at construction: Resolve() binds every slot through the object initializer, and C# runs field initializers
+        // before it, so an initializer would make each slot's fallback only to drop it.
+        // A nullable slot keeps its initializer: null set on it is a value (the slot left empty on purpose), not absent.
+        sb.AppendLine(IsNullable
+            ? $"    public partial {TypeName}{nullable} {Name} {{ get => field!; init => field = value; }} = {Fallback};"
+            : $"    public partial {TypeName}{nullable} {Name} {{ get => field ??= {Fallback.Replace("__ctx", "Context")}; init => field = value; }}");
         sb.AppendLine();
     }
 

@@ -360,6 +360,12 @@ public partial class @this
             ? Module
             : context.App.module.Named(Module.Name) ?? Module;
 
+    // The handler a catalog action resolves its runs through — made once (by reflection) and kept: its Resolve reads only
+    // what it is handed (the action, the asker's context) and makes the run's own instance, so one shell serves every run.
+    private module.ICodeGenerated? _shell;
+    private module.ICodeGenerated? Shell(global::app.module.@this module, actor.context.@this context)
+        => _shell ??= module.Create(Name, context);
+
     /// <summary>This action, instantiated — the live object carrying its typed parameters and
     /// Run. The action asks the module element it HOLDS for its own name; no registry re-resolves
     /// strings. A name the module doesn't carry, a property its element doesn't have (a .pr built
@@ -371,11 +377,13 @@ public partial class @this
         var module = Seen(context);
         if (module[Name] is not { } element)
             return (null, global::app.error.ActionError.NotFound($"Action '{Module}.{Name}'"));
-        if (Property.FirstOrDefault(p => element.Property[p.Name] == null) is { } unknown)
-            return (null, new global::app.error.ActionError(
-                $"{Module}.{Name} has no property {unknown.Name}; rebuild the goal", "UnknownProperty", 400));
+        // a property the step set that its element no longer has: the .pr was built before it went
+        for (var at = 0; at < Property.Count; at++)
+            if (element.Property[Property[at].Name] == null)
+                return (null, new global::app.error.ActionError(
+                    $"{Module}.{Name} has no property {Property[at].Name}; rebuild the goal", "UnknownProperty", 400));
 
-        var code = module.Create(Name, context);
+        var code = element.Shell(module, context);
         return code == null
             ? (null, new global::app.error.ActionError(
                 $"Action '{Module}.{Name}' does not implement ICodeGenerated", "ActionError", 500))

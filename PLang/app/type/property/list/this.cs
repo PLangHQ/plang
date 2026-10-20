@@ -139,7 +139,16 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
 
     /// <summary>The property named <paramref name="name"/>, or null.</summary>
     public Property? this[string name]
-        => Rows.FirstOrDefault(p => string.Equals(p.Name, name, System.StringComparison.OrdinalIgnoreCase));
+    {
+        get
+        {
+            // walked by position: every slot a run resolves asks here, so the walk allocates nothing
+            var rows = Rows;
+            for (var at = 0; at < rows.Count; at++)
+                if (string.Equals(rows[at].Name, name, System.StringComparison.OrdinalIgnoreCase)) return rows[at];
+            return null;
+        }
+    }
 
     public Property this[int index] => Rows[index];
     public int Count => Rows.Count;

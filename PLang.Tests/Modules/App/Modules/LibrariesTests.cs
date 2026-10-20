@@ -196,18 +196,26 @@ public class LibrariesTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task GetCodeGenerated_TypeBased_CreatesNewInstance()
+    public async Task GetCodeGenerated_TypeBased_EachRunResolvesANewInstance()
     {
         await using var engine = global::PLang.Tests.Session.App("/app").Testing();
+        var context = app.actor.list.User.Context;
 
-        // variable.set is type-registered (discovered via [Action] attribute)
-        var (action1, _) = (new PrAction(engine.type.list) { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
-        var (action2, _) = (new PrAction(engine.type.list) { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
+        // variable.set is type-registered (discovered via [Action] attribute). The handler a run executes is the one
+        // Resolve makes — a new instance per run, whatever shell it is resolved through (the catalog keeps one).
+        var first = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "x", "variable"), ("Value", "1"));
+        var second = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "y", "variable"), ("Value", "2"));
+        var (shell1, _) = first.Instance(context);
+        var (shell2, _) = second.Instance(context);
+        var (run1, _) = await shell1!.Resolve(first, context);
+        var (run2, _) = await shell2!.Resolve(second, context);
 
-        // Per-call instantiation — different instances each time
-        await Assert.That(action1).IsNotNull();
-        await Assert.That(action2).IsNotNull();
-        await Assert.That(ReferenceEquals(action1, action2)).IsFalse();
+        await Assert.That(run1).IsNotNull();
+        await Assert.That(run2).IsNotNull();
+        await Assert.That(ReferenceEquals(run1, run2)).IsFalse();
+        await Assert.That(ReferenceEquals(run1, shell1)).IsFalse();
     }
 
     #endregion

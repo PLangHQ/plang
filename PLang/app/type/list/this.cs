@@ -181,9 +181,10 @@ public sealed partial class @this
             : entry?.kind[name] is { } held ? (held.IsEmpty ? null : held)
             : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
         if (entry != null && kind == null && !type.Strict && type.Template == null) return entry;
-        return _full.GetOrAdd((entry, type.Name, kind?.Name, type.Strict, type.Template?.Name), _ => entry == null
-            ? new app.type.@this(type.Name, kind?.Name, type.Strict, type.Template) { kind = kind }
-            : new app.type.@this(entry, kind, type.Strict, type.Template));
+        // made from state handed in, not captured: a captured local makes its closure at every call, made or not
+        return _full.GetOrAdd((entry, type.Name, kind?.Name, type.Strict, type.Template?.Name), static (_, made) => made.entry == null
+            ? new app.type.@this(made.type.Name, made.kind?.Name, made.type.Strict, made.type.Template) { kind = made.kind }
+            : new app.type.@this(made.entry, made.kind, made.type.Strict, made.type.Template), (entry, type, kind));
     }
 
     // The full types made, one per entry, kind, strict and template: a kinded type is one object in this app.
