@@ -53,26 +53,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
     }
 
-    // The backing has diverged from a pure-raw aliased source: at least one slot
-    // holds a Data or an item.@this wrapper (a write elevated it, `add` dropped one
-    // in, or the wire parse built a nested container). Drives three O(1) decisions:
-    // the .Clr same-ref fast path (clean → hand the backing straight back), the
-    // context walk (clean → nothing context-bearing to propagate to), and the
-    // all-raw invariant. Stays false for a freshly-aliased CLR list that is only
-    // read — that is the million-row O(1) case.
-    private bool _hasWrapped;
-
-    // A slot that must be peeled at the CLR exit door — a Data or a plang wrapper. A raw CLR
-    // scalar or a raw nested container (List/Dictionary) is NOT one: it rides verbatim and is
-    // handed back as-is.
-    private static bool IsWrapped(object? slot)
-        => slot is Data or global::app.type.item.@this or Chunk;
-
     // A list stores no context: an element is handed out with the context of whoever asks for it
-    // (Row, Items, At). A stored Data keeps its own. Every list holds the app's type its maker hands it:
+    // (Items, At). A stored Data keeps its own. Every list holds the app's type its maker hands it:
     // its element kind and its template ride on that type.
     public @this(global::app.type.@this type) : this(new List<object?>(), type) { }
-    public @this(IEnumerable<Data> items, global::app.type.@this type) : this(new List<object?>(items), type) { _hasWrapped = true; }
+    public @this(IEnumerable<Data> items, global::app.type.@this type) : this(new List<object?>(items), type) { }
 
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>list</c> through; any other value declines (<c>null</c>). Real construction
@@ -111,22 +96,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// JSON round-trip). The list owns how a sequence of values becomes its rows; callers just
     /// hand over the values.</summary>
     public @this(IEnumerable<global::app.type.item.@this> values, global::app.type.@this type)
-        : this(new List<object?>(values), type) { _hasWrapped = true; }
+        : this(new List<object?>(values), type) { }
 
     /// <summary>Aliases a foreign CLR list as this list's backing — O(1), no walk,
-    /// no copy. The handoff contract: the source becomes the backing, so its slots
-    /// are assumed raw CLR values (the all-raw invariant <see cref="_hasWrapped"/> tracks
-    /// from here). A pure read keeps the backing pristine, so the CLR exit door hands
-    /// the same instance back; the first write elevates a slot and the backing diverges.
+    /// no copy. The handoff contract: the source becomes the backing, its slots raw CLR
+    /// values or plang values, each made an element when it is read. A read writes nothing
+    /// back, so the source stays as it was handed over until the list itself is written.
     /// The program nodes (action.list / step.list) are born here too.</summary>
     protected internal @this(List<object?> backing, global::app.type.@this type) : base(type) => _items = backing;
 
     /// <summary>A list born without a type — the type list alone, the maker of types, which answers its own type
     /// from itself (one of item's two bootstraps).</summary>
     private protected @this(List<object?> backing) => _items = backing;
-
-    private protected @this(List<object?> backing, bool wrapped, global::app.type.@this type) : this(backing, type)
-        => _hasWrapped = wrapped;
 
     /// <summary>A list no other holder's change reaches: its rows copied, in order (a nested container or a joined
     /// list copied, every other value shared), as a list of its own kind (<see cref="Holding"/>).</summary>
@@ -141,7 +122,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// list (<c>list&lt;T&gt;</c>) answers its own. A list that is a program's node (its steps, its actions) is itself:
     /// a program is shared, never copied.</summary>
     private protected virtual @this Holding(List<object?> rows)
-        => GetType() == typeof(@this) ? new @this(rows, _hasWrapped, Type) : this;
+        => GetType() == typeof(@this) ? new @this(rows, Type) : this;
 
     /// <summary>Adopt another list's rows into a fresh instance of THIS (sub)type — the value→slot
     /// materialization when a typed node slot (<c>list&lt;action&gt;</c>) is set from a value the
@@ -166,11 +147,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     internal @this AddRaw(object? raw)
     {
         Admit(raw);
-        Change(raw, static (list, r) =>
-        {
-            if (IsWrapped(r)) list._hasWrapped = true;   // a Data / nested wrapper diverges the backing
-            list._items.Add(r);
-        });
+        Change(raw, static (list, r) => list._items.Add(r));
         return this;
     }
 
@@ -334,11 +311,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this Add(global::app.type.item.@this value)
     {
         Admit(value);
-        Change(value, static (list, v) =>
-        {
-            list._hasWrapped = true;
-            list._items.Add(v);
-        });
+        Change(value, static (list, v) => list._items.Add(v));
         return this;
     }
 
@@ -349,11 +322,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this Add(@this other)
     {
         Admit(other);
-        Change(other, static (list, o) =>
-        {
-            list._hasWrapped = true;
-            list._items.Add(new Chunk(o));
-        });
+        Change(other, static (list, o) => list._items.Add(new Chunk(o)));
         return this;
     }
 
@@ -365,15 +334,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         Change((index, other), static (list, s) =>
         {
             var (index, other) = s;
-            list._hasWrapped = true;
             if (index < 0) index = 0;
             if (list.Locate(index, out int row, out int offset, out @this? inner) && inner == null)
                 list._items.Insert(row, new Chunk(other));
             else if (inner != null)
             {
                 // inside a chunk: split it at the offset so the extend lands between its halves
-                var head = new @this(inner.Slots().Take(offset).ToList(), wrapped: true, inner.Type);
-                var tail = new @this(inner.Slots().Skip(offset).ToList(), wrapped: true, inner.Type);
+                var head = new @this(inner.Slots().Take(offset).ToList(), inner.Type);
+                var tail = new @this(inner.Slots().Skip(offset).ToList(), inner.Type);
                 list._items[row] = new Chunk(tail);
                 list._items.Insert(row, new Chunk(other));
                 list._items.Insert(row, new Chunk(head));
@@ -388,11 +356,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this Add(Data item)
     {
         Admit(item);
-        Change(item, static (list, i) =>
-        {
-            list._hasWrapped = true;
-            list._items.Add(i);
-        });
+        Change(item, static (list, i) => list._items.Add(i));
         return this;
     }
 
@@ -404,7 +368,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         Change((index, item), static (list, s) =>
         {
             var (index, item) = s;
-            list._hasWrapped = true;
             if (index < 0) index = 0;
             if (list.Locate(index, out int row, out int offset, out @this? inner))
             {
@@ -429,7 +392,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     internal void RemoveAt(int index)
         => Change(index, static (list, index) =>
         {
-            list._hasWrapped = true;
             if (!list.Locate(index, out int row, out int offset, out @this? inner)) return;
             if (inner != null)
             {
@@ -522,7 +484,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         Change(flat.ToList(), static (list, slots) =>
         {
-            list._hasWrapped = true;
             list._items.Clear();
             list._items.AddRange(slots);
         });
@@ -540,7 +501,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         Change((index, slot), static (list, s) =>
         {
             var (index, slot) = s;
-            if (IsWrapped(slot)) list._hasWrapped = true;
             if (list.Locate(index, out int row, out int offset, out @this? inner))
             {
                 if (inner != null) inner.Put(offset, slot);

@@ -47,11 +47,9 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     /// <summary>Adopt another list's rows — the value→slot materialization (see the base overload).</summary>
     protected @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
 
-    private @this(System.Collections.Generic.List<object?> rows, bool wrapped, global::app.type.@this type) : base(rows, wrapped, type) { }
-
     /// <summary>A copy is a <c>list&lt;T&gt;</c> too; a program's node list (a subtype) is itself.</summary>
     private protected override global::app.type.item.list.@this Holding(System.Collections.Generic.List<object?> rows)
-        => GetType() == typeof(@this<T>) ? new @this<T>(rows, wrapped: true, Type) : this;
+        => GetType() == typeof(@this<T>) ? new @this<T>(rows, Type) : this;
 
     /// <summary>Value-membership typed to the element — because the parameter is
     /// <typeparamref name="T"/>, a caller can pass what converts to T (e.g. a bare
