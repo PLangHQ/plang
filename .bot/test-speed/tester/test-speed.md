@@ -155,6 +155,34 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 12. The generator lists the classes: cold start ~2,000 µs
+
+`PLang.Generators/Emission/Written` emits `PLang.Generated.Written` for plang code: `typeof` lists of the item classes
+and of the classes declaring `[Format]`, `[Choice]`, `[Action]`, or sitting in a `serializer` / `format` folder. The
+lists are supersets. The runtime facts (`app.assembly`) read them instead of walking every class, and keep every rule
+(naming, owners, sets) on the runtime side, so there's one source of truth. An assembly built without the generator
+is walked as before. `WrittenListsTests` checks each list holds every class the facts' rules pick when walking; a
+deletion test (dropping `[Choice]` from the generator) fails it.
+
+Also: `type.Spelled`, a type's spelled kind asked without making its empty kind, used by the list's lookups.
+
+| fact (cold) | §11 | now |
+|---|---|---|
+| type | 1,812 µs | 825 µs |
+| format | 888 µs | 494 µs |
+| choice | 629 µs | 74 µs |
+| subclass | 450 µs | 131 µs |
+| reader | 395 µs | 208 µs |
+| module | 762 µs | 688 µs |
+| kinds | 1,222 µs | 795 µs |
+| **all facts** | ~6,400 µs | **~3,400 µs** |
+
+Fresh birth (`new app` reading its own facts, warm JIT): ~4,100 → **~2,000 µs** (min ~1,440). Shared: ~190 µs.
+C# green but Wire's six; plang 277 / 11, the same 11.
+
+Left of a cold start: building attribute objects (142 `[Format]`, 143 `[Action]`), one instance per kind class to learn
+its keys, each type's statics. The generator could carry that data too (attribute arguments are data, not rules).
+
 ## 11. Locked core opened (Ingi: nothing merges from here): a birth at ~175 µs
 
 Units from here on: µs (1 ms = 1,000 µs; 1 µs = 1,000 ns).
