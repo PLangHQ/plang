@@ -362,8 +362,6 @@ public sealed class Reader
                 born = Born(type, await Arguments(records), marks: false);
             else if (holdsRecords && !value.IsVariable)
             { Fail($"`{prop}` takes a list of arguments, each a record: {prop}=[{{name: type = value}}, {{other: type = %x%}}]", at); return default; }
-            else if (value.Entries != null && value.Entries.Any(e => e.Type != null))
-            { Fail($"`{prop}` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments", at); return default; }
             else born = Born(type, Json(value));
             // a value born a template (it holds %variables%) is declared one in the .pr too, so it renders
             // again when the .pr is read
@@ -469,11 +467,19 @@ public sealed class Reader
         {
             if (v.Json != null) return v.Json;
             if (v.Items != null) return "[" + string.Join(",", v.Items.Select(Json)) + "]";
+            // an object's entries keep their type: a typed one is the row a dict writes for it, its type and its value
             if (v.Entries != null)
-                return "{" + string.Join(",", v.Entries.Select(e => System.Text.Json.JsonSerializer.Serialize(e.Key) + ":" + Json(e.Value))) + "}";
+                return "{" + string.Join(",", v.Entries.Select(e => System.Text.Json.JsonSerializer.Serialize(e.Key) + ":"
+                    + (e.Type is { } written ? Typed(written, e.Value) : Json(e.Value)))) + "}";
             Fail("an action can't be a value here");
             return "";
         }
+
+        // a value with the type it was written with, as a dict's typed entry reads back
+        private string Typed(string written, Literal value)
+            => "{\"type\":{\"name\":" + System.Text.Json.JsonSerializer.Serialize(TypeName(written))
+               + (TypeKind(written) is { } kind ? ",\"kind\":" + System.Text.Json.JsonSerializer.Serialize(kind) : "")
+               + "},\"value\":" + Json(value) + "}";
 
         private static Literal Scalar(string json, System.Text.Json.JsonValueKind kind, bool variable = false)
             => new() { Json = json, Kind = kind, IsVariable = variable };

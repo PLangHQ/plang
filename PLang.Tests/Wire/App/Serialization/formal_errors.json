@@ -92,10 +92,6 @@
     "message": "line 1, column 30: a `…` is still there: fill in goal.call's properties, as the step gives them"
   },
   {
-    "input": "variable.set(Name=%d%, Value={name: text = \"a\"})",
-    "message": "line 1, column 30: `Value` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments"
-  },
-  {
     "input": "condition.if(Left=%n%, Operator=<>, Right=5)",
     "message": "line 1, column 33: `Operator` is one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or; `<>` is not"
   },

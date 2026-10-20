@@ -47,6 +47,25 @@ public class FormalArgumentTests : System.IAsyncDisposable
         await Assert.That(writer.ToString()).DoesNotContain("s3cret");
     }
 
+    // an object's entries keep their type: a typed entry is a Data of that type under its key
+    [Test]
+    [Arguments("[{name: text = \"search\"}]", "name", "text")]
+    [Arguments("[{port: text = 8080}]", "port", "text")]
+    public async Task ATypedEntryInAnObject_KeepsItsType(string tools, string key, string type)
+    {
+        var step = new global::app.goal.step.@this(app.type.list) { Goal = FormalWriterTests.Goal(Ctx) };
+
+        var read = await new global::app.goal.step.action.formal.Reader(step, app.module.list)
+            .Read($"llm.query(Message=\"hi\", Tool={tools})", Ctx);
+
+        await read.IsSuccess();
+        var query = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
+        var tool = await new global::app.data.@this("Tool", query["Tool"]!.Value!, context: Ctx).Value();
+        var element = (global::app.type.item.dict.@this)(await ((global::app.type.item.list.@this)tool).Items(Ctx).Single().Value())!;
+        var entry = element.Entries(Ctx).Single(e => e.Name == key);
+        await Assert.That(entry.Type!.Name).IsEqualTo(type);
+    }
+
     // a slot that holds objects keeps them: only a slot that declares its elements are arguments reads records as them
     [Test]
     [Arguments("[{name: \"search\"}, {name: \"fetch\"}]", 2)]
