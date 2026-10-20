@@ -155,6 +155,33 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 13. The generator carries the attribute data: cold start ~1,500 µs
+
+The generator now also writes, as code:
+- **`FormatData`:** each `[Format]` class with its declarations, as `new FormatAttribute(...) { ... }` built from the
+  attribute's own arguments.
+- **`ActionData`:** each action class with its `[Action]`.
+- **`Statics`:** each item class's `Alias`, `OwnedClrTypes`, `Internal` and `Offer`, read through delegates that call
+  the static properties directly (own or inherited, as the reflection lookup found them; `Internal` only declared on
+  the class itself). A generic class stays on reflection.
+
+The facts read these instead of reflecting. `type.list.NameOf` reads a class's word from the identity cache.
+`WrittenListsTests` (9 tests) checks the data equals what reflection reads: formats per class, each action's name and
+cacheable, every type's statics through the facts versus reflection. Deletion-tested: writing every `Internal` as
+`false` fails it. The emitter writes nothing for code without plang's attributes (the generator's own test fixtures)
+and never fails the generator: any error means no lists, and the runtime walks as before.
+
+| fact (cold) | §12 | now |
+|---|---|---|
+| format | 494 µs | 16 µs |
+| module | 688 µs | 138 µs |
+| type | 825 µs | 682 µs |
+| **all facts** | ~3,400 µs | **~2,600 µs** |
+
+Fresh birth: ~2,000 → **~1,300 – 1,700 µs** (min ~1,140). Shared: ~185 µs. C# green but Wire's six; plang 277 / 11.
+
+Left: `kinds` ~1,000 µs (an instance per kind class and subclass kind, to learn keys the classes compute in code).
+
 ## 12. The generator lists the classes: cold start ~2,000 µs
 
 `PLang.Generators/Emission/Written` emits `PLang.Generated.Written` for plang code: `typeof` lists of the item classes

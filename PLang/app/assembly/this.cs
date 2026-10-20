@@ -29,22 +29,28 @@ public sealed class @this
     private sealed class Listed
     {
         public System.Type[] Item { get; }
-        public System.Type[] Format { get; }
         public System.Type[] Choice { get; }
-        public System.Type[] Action { get; }
         public System.Type[] Serializer { get; }
         public System.Type[] Pair { get; }
+        // the data the generator wrote as code: each format class's declarations, each action class's, and each item
+        // class's statics read by delegates (a class it lists none for declares none)
+        public (System.Type Class, global::app.Attributes.FormatAttribute[] Format)[] FormatData { get; }
+        public (System.Type Class, global::app.module.ActionAttribute Action)[] ActionData { get; }
+        public System.Collections.Generic.IReadOnlyDictionary<System.Type, (System.Func<object?>? Alias, System.Func<object?>? Owned,
+            bool Internal, System.Func<object?>? Offer)> Static { get; }
 
         public Listed(System.Type written)
         {
-            System.Type[] Of(string name)
-                => (System.Type[])written.GetField(name, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!.GetValue(null)!;
-            Item = Of(nameof(Item));
-            Format = Of(nameof(Format));
-            Choice = Of(nameof(Choice));
-            Action = Of(nameof(Action));
-            Serializer = Of(nameof(Serializer));
-            Pair = Of(nameof(Pair));
+            T Of<T>(string name)
+                => (T)written.GetField(name, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!.GetValue(null)!;
+            Item = Of<System.Type[]>(nameof(Item));
+            Choice = Of<System.Type[]>(nameof(Choice));
+            Serializer = Of<System.Type[]>(nameof(Serializer));
+            Pair = Of<System.Type[]>(nameof(Pair));
+            FormatData = Of<(System.Type, global::app.Attributes.FormatAttribute[])[]>(nameof(FormatData));
+            ActionData = Of<(System.Type, global::app.module.ActionAttribute)[]>(nameof(ActionData));
+            Static = Of<(System.Type Class, System.Func<object?>? Alias, System.Func<object?>? Owned, bool Internal, System.Func<object?>? Offer)[]>("Statics")
+                .ToDictionary(row => row.Class, row => (row.Alias, row.Owned, row.Internal, row.Offer));
         }
     }
 
@@ -76,31 +82,52 @@ public sealed class @this
         /// <summary>Every name the type answers to — its name, its namespace, its aliases: what no other type may claim.</summary>
         public string[] Claims { get; }
 
+        /// <summary>The type <paramref name="clr"/> is, its statics read off the class (reflection).</summary>
         public Type(string name, System.Type clr)
+            : this(name, clr, Declared<System.Collections.Generic.IReadOnlyList<string>>(clr, "Alias"),
+                Declared<System.Collections.Generic.IReadOnlyList<global::app.type.convert.OwnedClr>>(clr, "OwnedClrTypes"),
+                // declared by the class itself: a base that is internal (reference) leaves its subclasses (file, url) named
+                clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                                            | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(null) is true,
+                Declared<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>>(clr, "Offer")) { }
+
+        /// <summary>The type <paramref name="clr"/> is, its statics as given (the generator's code reads them).</summary>
+        public Type(string name, System.Type clr, System.Collections.Generic.IReadOnlyList<string>? alias,
+            System.Collections.Generic.IReadOnlyList<global::app.type.convert.OwnedClr>? owned, bool isInternal,
+            System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>? offer)
         {
             Name = name;
             Class = clr;
-            Alias = Declared<System.Collections.Generic.IReadOnlyList<string>>("Alias") ?? [];
+            Alias = alias ?? [];
+            Owned = owned ?? [];
+            Internal = isInternal;
+            Offer = offer;
             var space = typeof(global::app.type.item.@this).IsAssignableFrom(clr) ? global::app.type.item.@this.NamespaceOf(clr) : null;
             Claims = [name.ToLowerInvariant(), .. space != null && !string.Equals(space, name, System.StringComparison.OrdinalIgnoreCase) ? [space] : System.Array.Empty<string>(), .. Alias];
-            Owned = Declared<System.Collections.Generic.IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
-            // declared by the class itself: a base that is internal (reference) leaves its subclasses (file, url) named
-            Internal = clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-                                                   | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(null) is true;
-            Offer = Declared<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>>("Offer");
-
-            T? Declared<T>(string member) where T : class
-                => clr.GetProperty(member, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-                                           | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null) as T;
         }
+
+        private static T? Declared<T>(System.Type clr, string member) where T : class
+            => clr.GetProperty(member, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                                       | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null) as T;
     }
 
     private Type[]? _type;
     /// <summary>The classes that are types of their own, by the name each goes by.</summary>
     internal System.Collections.Generic.IReadOnlyList<Type> type
         => _type ?? System.Threading.LazyInitializer.EnsureInitialized(ref _type, ref _gate, () => Items
-            .Select(clr => global::app.type.list.@this.NameOf(clr) is { } name ? new Type(name, clr) : null)
+            .Select(clr => global::app.type.list.@this.NameOf(clr) is { } name ? Made(name, clr) : null)
             .OfType<Type>().ToArray());
+
+    // A type, its statics as the generator's code reads them when it listed the class's (a class it didn't list declares
+    // none), else read off the class — always for a generic class, whose statics no code can name.
+    private Type Made(string name, System.Type clr)
+    {
+        if (Written is not { } written || clr.IsGenericTypeDefinition) return new Type(name, clr);
+        if (!written.Static.TryGetValue(clr, out var statics)) return new Type(name, clr, null, null, false, null);
+        return new Type(name, clr, statics.Alias?.Invoke() as System.Collections.Generic.IReadOnlyList<string>,
+            statics.Owned?.Invoke() as System.Collections.Generic.IReadOnlyList<global::app.type.convert.OwnedClr>,
+            statics.Internal, statics.Offer?.Invoke() as System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>);
+    }
 
     /// <summary>The code's types by every name they answer to and by their class — each the type's place in
     /// <see cref="type"/>, the first that answers keeping a name. A name two classes claim is plang broken, thrown.</summary>
@@ -163,11 +190,14 @@ public sealed class @this
     private Format[]? _format;
     /// <summary>The classes that declare formats (<c>[Format]</c>), each with its declarations.</summary>
     internal System.Collections.Generic.IReadOnlyList<Format> format
-        => _format ?? System.Threading.LazyInitializer.EnsureInitialized(ref _format, ref _gate, () => (Written?.Format ?? Classes)
-            .Where(clr => clr.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false))
-            .Select(clr => new Format(clr, global::app.type.item.@this.NameOf(clr),
-                System.Reflection.CustomAttributeExtensions.GetCustomAttributes<global::app.Attributes.FormatAttribute>(clr, inherit: false).ToArray(),
-                typeof(global::app.type.kind.format.@this<>).MakeGenericType(clr)
+        => _format ?? System.Threading.LazyInitializer.EnsureInitialized(ref _format, ref _gate, () =>
+            // the declarations as the generator wrote them, else read off each class
+            (Written?.FormatData ?? Classes
+                .Where(clr => clr.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false))
+                .Select(clr => (clr, System.Reflection.CustomAttributeExtensions.GetCustomAttributes<global::app.Attributes.FormatAttribute>(clr, inherit: false).ToArray()))
+                .ToArray())
+            .Select(declared => new Format(declared.Class, global::app.type.item.@this.NameOf(declared.Class), declared.Format,
+                typeof(global::app.type.kind.format.@this<>).MakeGenericType(declared.Class)
                     .GetConstructor([typeof(global::app.Attributes.FormatAttribute), typeof(global::app.type.@this)])!))
             .ToArray());
 
@@ -465,10 +495,13 @@ public sealed class @this
     internal System.Collections.Generic.IEnumerable<Module> Under(string baseNamespace)
     {
         var action = new System.Collections.Generic.List<Action>();
-        foreach (var clr in Written?.Action ?? Classes)
+        // each class with its [Action] as the generator wrote it, else read off the class
+        var declared = Written?.ActionData
+            ?? Classes.Select(clr => (clr, System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.ActionAttribute>(clr)))
+                .Where(each => each.Item2 != null).Select(each => (each.clr, each.Item2!)).ToArray();
+        foreach (var (clr, attr) in declared)
         {
             if (clr.IsAbstract || !typeof(global::app.module.ICodeGenerated).IsAssignableFrom(clr)) continue;
-            if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.ActionAttribute>(clr) is not { } attr) continue;
             if (clr.Namespace == null || !clr.Namespace.StartsWith(baseNamespace + ".")) continue;
             action.Add(new Action(clr.Namespace[(baseNamespace.Length + 1)..], attr.Name ?? clr.Name.ToLowerInvariant(), clr, attr.Cacheable));
         }

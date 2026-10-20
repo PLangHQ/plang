@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace PLang.Generators.Emission.Written;
 
@@ -18,7 +19,12 @@ internal static class @this
     public static void Register(IncrementalGeneratorInitializationContext context)
         => context.RegisterSourceOutput(context.CompilationProvider, static (spc, compilation) =>
         {
-            if (Emit(compilation) is { } source) spc.AddSource("PLang.Generated.Written.g.cs", source);
+            // the lists only speed a cold start: code they can't be written for gets none (the runtime walks its
+            // classes), never a failed generator taking the actions' code with it
+            string? source;
+            try { source = Emit(compilation); }
+            catch (System.Exception) { source = null; }
+            if (source != null) spc.AddSource("PLang.Generated.Written.g.cs", source);
         });
 
     private static string? Emit(Compilation compilation)
@@ -28,6 +34,8 @@ internal static class @this
         var format = compilation.GetTypeByMetadataName("app.Attributes.FormatAttribute");
         var choice = compilation.GetTypeByMetadataName("app.Attributes.ChoiceAttribute");
         var action = compilation.GetTypeByMetadataName("app.module.ActionAttribute");
+        // the lists name these attributes' data: code that doesn't have them (a fixture standing in for plang) gets none
+        if (format is null || choice is null || action is null) return null;
 
         var items = new List<string>();
         var formats = new List<string>();
@@ -35,13 +43,30 @@ internal static class @this
         var actions = new List<string>();
         var serializers = new List<string>();
         var pairs = new List<string>();
+        // the data the facts read off these classes, written as code: each format's declarations, each action's, and
+        // each item class's statics (its aliases, the C# shapes it owns, whether plang keeps it, what it is offered)
+        var formatData = new List<string>();
+        var actionData = new List<string>();
+        var statics = new List<string>();
         foreach (var type in Types(compilation.Assembly.GlobalNamespace))
         {
             if (!Reachable(type) || Of(type) is not { } name) continue;
-            if (Derives(type, item)) items.Add(name);
-            if (Declares(type, format)) formats.Add(name);
+            if (Derives(type, item))
+            {
+                items.Add(name);
+                if (type.Arity == 0 && Statics(type, name) is { } read) statics.Add(read);
+            }
+            if (Declares(type, format))
+            {
+                formats.Add(name);
+                formatData.Add($"(typeof({name}), new {Display(format!)}[] {{ {string.Join(", ", Of(type, format!).Select(Construct))} }})");
+            }
             if (Declares(type, choice)) choices.Add(name);
-            if (Declares(type, action)) actions.Add(name);
+            if (Declares(type, action))
+            {
+                actions.Add(name);
+                actionData.Add($"(typeof({name}), {Construct(Of(type, action!).First())})");
+            }
             var space = type.ContainingNamespace?.ToDisplayString() ?? "";
             if (space.EndsWith(".serializer")) serializers.Add(name);
             if (space.EndsWith(".format")) pairs.Add(name);
@@ -59,8 +84,79 @@ internal static class @this
         List(sb, "Action", actions);
         List(sb, "Serializer", serializers);
         List(sb, "Pair", pairs);
+        Data(sb, $"(global::System.Type Class, {Display(format!)}[] Format)", "FormatData", formatData);
+        Data(sb, $"(global::System.Type Class, {Display(action!)} Action)", "ActionData", actionData);
+        Data(sb, "(global::System.Type Class, global::System.Func<object?>? Alias, global::System.Func<object?>? Owned, bool Internal, global::System.Func<object?>? Offer)",
+            "Statics", statics);
         sb.AppendLine("}");
         return sb.ToString();
+    }
+
+    private static void Data(StringBuilder sb, string shape, string name, List<string> rows)
+    {
+        sb.AppendLine($"    internal static readonly {shape}[] {name} = new {shape}[]");
+        sb.AppendLine("    {");
+        foreach (var row in rows) sb.AppendLine($"        {row},");
+        sb.AppendLine("    };");
+    }
+
+    // An item class's statics as code: each a delegate reading the public static property (its own or a base's, as a
+    // lookup by name finds it); Internal only when the class itself declares it. Null when it declares none of them.
+    private static string? Statics(INamedTypeSymbol type, string name)
+    {
+        string? Read(string member)
+            => Static(type, member, own: false) is { } found ? $"static () => (object?){name}.{found.Name}" : "null";
+        var alias = Read("Alias");
+        var owned = Read("OwnedClrTypes");
+        var offer = Read("Offer");
+        var isInternal = Static(type, "Internal", own: true) is { Type.SpecialType: SpecialType.System_Boolean } ? $"{name}.Internal" : "false";
+        if (alias == "null" && owned == "null" && offer == "null" && isInternal == "false") return null;
+        return $"(typeof({name}), {alias}, {owned}, {isInternal}, {offer})";
+    }
+
+    // A public static property by name — the class's own, else (not own) a base's.
+    private static IPropertySymbol? Static(INamedTypeSymbol type, string member, bool own)
+    {
+        for (var at = type; at != null; at = own ? null : at.BaseType)
+            foreach (var found in at.GetMembers(member).OfType<IPropertySymbol>())
+                if (found.IsStatic && found.DeclaredAccessibility == Accessibility.Public && found.GetMethod != null) return found;
+        return null;
+    }
+
+    private static IEnumerable<AttributeData> Of(INamedTypeSymbol type, INamedTypeSymbol attribute)
+        => type.GetAttributes().Where(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, attribute));
+
+    private static string Display(ITypeSymbol type) => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+    // An attribute as the code that makes it: its constructor's arguments, then its named ones.
+    private static string Construct(AttributeData attribute)
+    {
+        var args = string.Join(", ", attribute.ConstructorArguments.Select(Literal));
+        var named = string.Join(", ", attribute.NamedArguments.Select(a => $"{a.Key} = {Literal(a.Value)}"));
+        return $"new {Display(attribute.AttributeClass!)}({args})" + (named.Length > 0 ? $" {{ {named} }}" : "");
+    }
+
+    private static string Literal(TypedConstant constant)
+    {
+        if (constant.Kind == TypedConstantKind.Array)
+            return constant.IsNull ? "null"
+                : $"new {Display(((IArrayTypeSymbol)constant.Type!).ElementType)}[] {{ {string.Join(", ", constant.Values.Select(Literal))} }}";
+        if (constant.IsNull) return "null";
+        if (constant.Kind == TypedConstantKind.Type) return $"typeof({Display((ITypeSymbol)constant.Value!)})";
+        if (constant.Kind == TypedConstantKind.Enum) return $"({Display(constant.Type!)}){constant.Value}";
+        return constant.Value switch
+        {
+            string s => SymbolDisplay.FormatLiteral(s, quote: true),
+            char c => SymbolDisplay.FormatLiteral(c, quote: true),
+            bool b => b ? "true" : "false",
+            long l => l + "L",
+            ulong u => u + "UL",
+            uint u => u + "U",
+            float f => f.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "F",
+            double d => d.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "D",
+            decimal m => m.ToString(System.Globalization.CultureInfo.InvariantCulture) + "M",
+            _ => System.Convert.ToString(constant.Value, System.Globalization.CultureInfo.InvariantCulture)!,
+        };
     }
 
     private static void List(StringBuilder sb, string name, List<string> types)
