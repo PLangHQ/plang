@@ -29,24 +29,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // The single backing — key → raw-or-wrapped slot, mirroring list's _items. A
     // slot holds EITHER a raw CLR value (a scalar off the wire, a native
     // sub-container) OR a wrapped value (a Data / item dropped in by `set`/`add`
-    // carrying its own type/signature). Store raw, type on read: an entry borns a
-    // FRESH Data on read, never cached back, so a pure-read backing stays pristine
-    // and the CLR exit door hands this exact instance back (same-ref, O(1)).
+    // carrying its own type/signature). Store raw, type on read: an entry is made a
+    // FRESH Data on read, never written back, so a read leaves the backing as it was.
     //
     // The Dictionary IS the order (insertion order) and the casing (the key string).
     // PLang builds its own dicts case-insensitive (OrdinalIgnoreCase); an aliased
     // foreign dict keeps whatever comparer it came with — the dict object does not
     // police casing, the construction site picks the comparer.
     private readonly Dictionary<string, object?> _value;
-
-    // The backing has diverged from a pure-raw form — a slot holds a Data/wrapper.
-    // Drives the .Clr same-ref fast path (clean → hand _value straight back).
-    private bool _hasWrapped;
-
-    // A slot that must be peeled at the CLR exit door — a Data or a plang wrapper. A raw
-    // scalar or a raw nested container rides verbatim.
-    private static bool IsWrapped(object? slot)
-        => slot is Data or global::app.type.item.@this;
 
     // A dict stores no context: an entry is handed out with the context of whoever asks for it
     // (Slot, Entries, Get). A stored Data keeps its own.
@@ -91,15 +81,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>Aliases a foreign CLR dictionary as the backing — true O(1), no walk,
     /// no copy. The handoff contract: the source becomes the backing (its slots are
-    /// raw values, type-on-read). A pure read keeps it pristine, so <see cref="Clr"/>
-    /// hands the same instance back; the first write diverges it (<see cref="_hasWrapped"/>).
+    /// raw values, type-on-read). A read writes nothing back, so the source stays as it was
+    /// handed over until the dict itself is written.
     /// The comparer is the source's own — PLang's own dicts are built case-insensitive
     /// via the default ctor.</summary>
     internal @this(Dictionary<string, object?> backing, global::app.type.@this type)
         : base(type) => _value = backing;
-
-    private @this(Dictionary<string, object?> backing, bool wrapped, global::app.type.@this type)
-        : this(backing, type) => _hasWrapped = wrapped;
 
     /// <summary>A dict no other holder's change reaches: its entries copied (a nested container copied, every other
     /// value shared), in their order, with its keys' casing.</summary>
@@ -107,7 +94,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         var entries = new Dictionary<string, object?>(_value.Comparer);
         foreach (var (key, slot) in _value) entries[key] = Copied(slot);
-        return new @this(entries, _hasWrapped, Type);
+        return new @this(entries, Type);
     }
 
     // Type-on-read: hand back the entry under `key` as a FRESH Data born with the asker's
@@ -299,9 +286,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // A Data is held under its key: one named otherwise (a variable's binding handed in) is held as a copy under
         // the key, so the one who handed it keeps its own name.
         if (slot is Data d && d.Name != key) slot = d.Copy(key);
-        // A wrapped slot diverges the dict — the CLR exit door must peel. A raw scalar
-        // leaves it clean (the .Clr fast path still hands the backing back).
-        if (IsWrapped(slot)) _hasWrapped = true;
         _value[key] = slot;
     }
 
