@@ -23,19 +23,17 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
         return default;
     }
 
-    /// <summary>A span, or a text in the short form, as a short duration, born with the app's <c>{duration, short}</c>;
-    /// a text in another form declines (<c>null</c>).</summary>
+    /// <summary>A span, or a text in the short form, as a short duration born holding <paramref name="declared"/>; a
+    /// text in another form declines (<c>null</c>).</summary>
     public static new @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
-        var span = (raw is global::app.type.item.@this leaf ? leaf.Clr<object>() : raw) switch
-        {
-            System.TimeSpan given => given,
-            string text when System.Text.RegularExpressions.Regex.Match(text.Trim(), @"^(-?\d+(?:\.\d+)?)\s*(ms|s|m|h|d)$",
+        return declared is { } type && Span(raw, Read) is { } value ? new(value, type) : null;
+
+        static System.TimeSpan? Read(string text)
+            => System.Text.RegularExpressions.Regex.Match(text, @"^(-?\d+(?:\.\d+)?)\s*(ms|s|m|h|d)$",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase) is { Success: true } form
-                => Unit(double.Parse(form.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture), form.Groups[2].Value),
-            _ => (System.TimeSpan?)null,
-        };
-        return span is { } value && declared is { } type ? new(value, type) : null;
+                ? Unit(double.Parse(form.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture), form.Groups[2].Value)
+                : null;
 
         static System.TimeSpan Unit(double amount, string unit) => unit.ToLowerInvariant() switch
         {

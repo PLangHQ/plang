@@ -13,17 +13,14 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
         return default;
     }
 
-    /// <summary>A span, or a text in .NET's form, as a dotnet duration, born with the app's <c>{duration, dotnet}</c>;
-    /// a text in another form declines (<c>null</c>).</summary>
+    /// <summary>A span, or a text in .NET's form, as a dotnet duration born holding <paramref name="declared"/>; a text
+    /// in another form declines (<c>null</c>).</summary>
     public static new @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
-        var span = (raw is global::app.type.item.@this leaf ? leaf.Clr<object>() : raw) switch
-        {
-            System.TimeSpan given => given,
-            string text when text.Contains(':')
-                && System.TimeSpan.TryParse(text.Trim(), System.Globalization.CultureInfo.InvariantCulture, out var read) => read,
-            _ => (System.TimeSpan?)null,
-        };
-        return span is { } value && declared is { } type ? new(value, type) : null;
+        return declared is { } type && Span(raw, Read) is { } value ? new(value, type) : null;
+
+        static System.TimeSpan? Read(string text)
+            => text.Contains(':') && System.TimeSpan.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, out var read)
+                ? read : null;
     }
 }

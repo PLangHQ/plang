@@ -23,11 +23,21 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
 
+    /// <summary>How many bytes one of its standard's smallest units is (1024, 1000).</summary>
+    protected abstract long Step { get; }
+
+    /// <summary>Its standard's units above a byte, smallest first.</summary>
+    protected abstract string[] Units { get; }
+
     /// <summary>Its text in its standard — <c>95.4 MiB</c>, <c>100 MB</c>; <c>%s.text%</c>.</summary>
-    public abstract string Text { get; }
+    public string Text => Form(Step, Units);
 
     /// <summary>A size writes its text in the standard it is: <c>100 MB</c> stays <c>100 MB</c>.</summary>
-    protected internal abstract override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    {
+        writer.String(Text);
+        return default;
+    }
 
     /// <summary>A count of bytes, made by the standard its asker's setting names.</summary>
     public static @this Create(long bytes, global::app.actor.context.@this context)
@@ -73,10 +83,20 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         return null;
     }
 
-    /// <summary>The bytes <paramref name="text"/> is in the standard whose units, smallest first, are
-    /// <paramref name="units"/>, one of the smallest <paramref name="step"/> bytes — a number and one of its units, its
-    /// case ignored; null when it isn't written in it.</summary>
-    protected static long? Bytes(string text, long step, string[] units)
+    /// <summary>The bytes <paramref name="raw"/> is in the standard whose units, smallest first, are
+    /// <paramref name="units"/>, one of the smallest <paramref name="step"/> bytes: a count is itself; a text a number
+    /// and one of its units, its case ignored; null when it is neither.</summary>
+    protected static long? Bytes(object? raw, long step, string[] units)
+        => (raw is global::app.type.item.@this leaf ? leaf.Clr<object>() : raw) switch
+        {
+            long bytes => bytes,
+            int bytes => bytes,
+            string text => Bytes(text, step, units),
+            _ => null,
+        };
+
+    // the bytes a text in that standard is
+    private static long? Bytes(string text, long step, string[] units)
     {
         var form = System.Text.RegularExpressions.Regex.Match(text.Trim(), @"^(\d+(?:\.\d+)?)\s*([a-z]+)$",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
@@ -88,10 +108,9 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         return (long)decimal.Round(amount);
     }
 
-    /// <summary><see cref="Value"/> written in the standard whose units are <paramref name="units"/>: its largest unit
-    /// that is at least one, with one decimal at most (<c>95.4 MiB</c>, <c>100 MB</c>); under the smallest unit, bytes
-    /// (<c>512 B</c>).</summary>
-    protected string Form(long step, string[] units)
+    // its value written in the standard whose units are these: its largest unit that is at least one, with one decimal
+    // at most (95.4 MiB, 100 MB); under the smallest unit, bytes (512 B)
+    private string Form(long step, string[] units)
     {
         decimal amount = Value;
         var unit = -1;

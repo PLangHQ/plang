@@ -1553,6 +1553,7 @@ abstract class app.type.item.duration.this : app.type.item.this, System.IEquatab
   override Rank : System.Int32 { get; }
   protected abstract Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
+  protected static Span(System.Object raw, System.Func<System.String, System.Nullable<System.TimeSpan>> read) : System.Nullable<System.TimeSpan>
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.duration.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.duration.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
@@ -2495,8 +2496,8 @@ class app.type.item.signature.this : app.type.item.this, app.type.item.ICreate<a
 
 class app.type.item.size.iec.this : app.type.item.size.this, app.type.item.ICreate<app.type.item.size.iec.this>
   ctor(System.Int64 bytes, app.type.this type)
-  override Text : System.String { get; }
-  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  protected override Step : System.Int64 { get; }
+  protected override Units : System.String[] { get; }
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.size.iec.this
 
 static class app.type.item.size.serializer.Default
@@ -2514,14 +2515,14 @@ class app.type.item.size.setting.this : app.type.item.setting.this
 
 class app.type.item.size.si.this : app.type.item.size.this, app.type.item.ICreate<app.type.item.size.si.this>
   ctor(System.Int64 bytes, app.type.this type)
-  override Text : System.String { get; }
-  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  protected override Step : System.Int64 { get; }
+  protected override Units : System.String[] { get; }
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.size.si.this
 
 abstract class app.type.item.size.this : app.type.item.this, System.IEquatable<app.type.item.size.this>, app.type.item.ICreate<app.type.item.size.this>, app.type.item.setting.ISetting<app.type.item.size.setting.this> [Choice, Kinds, PlangType]
   Equals(app.type.item.size.this other) : System.Boolean
+  Text : System.String { get; }
   Value : System.Int64 { get; }
-  abstract Text : System.String { get; }
   ctor(System.Int64 bytes, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
@@ -2529,10 +2530,11 @@ abstract class app.type.item.size.this : app.type.item.this, System.IEquatable<a
   override IsTruthy() : System.Boolean
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  protected Form(System.Int64 step, System.String[] units) : System.String
-  protected abstract Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  protected abstract Step : System.Int64 { get; }
+  protected abstract Units : System.String[] { get; }
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  protected static Bytes(System.String text, System.Int64 step, System.String[] units) : System.Nullable<System.Int64>
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  protected static Bytes(System.Object raw, System.Int64 step, System.String[] units) : System.Nullable<System.Int64>
   static Create(System.Int64 bytes, app.actor.context.this context) : app.type.item.size.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.size.this
   static Resolve(System.String raw, app.actor.context.this context) : app.type.item.size.this

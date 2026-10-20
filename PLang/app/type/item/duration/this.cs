@@ -34,6 +34,16 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>A span born holding <paramref name="type"/> — the app's {duration, standard}.</summary>
     protected @this(System.TimeSpan value, global::app.type.@this type) : base(type) => Value = value;
 
+    /// <summary>The span <paramref name="raw"/> is in a standard whose text <paramref name="read"/> reads: a span is
+    /// itself, a text what the standard reads of it; null when it is neither.</summary>
+    protected static System.TimeSpan? Span(object? raw, System.Func<string, System.TimeSpan?> read)
+        => (raw is global::app.type.item.@this leaf ? leaf.Clr<object>() : raw) switch
+        {
+            System.TimeSpan given => given,
+            string text => read(text.Trim()),
+            _ => null,
+        };
+
     /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan is born short; a string (30s, ISO-8601
     /// <c>PT30S</c> or .NET <c>00:00:30</c>, via <see cref="Resolve"/>) is the standard it is written in, as
     /// <paramref name="context"/>'s types hold them; anything else declines (<c>null</c>). A text-wrapped literal

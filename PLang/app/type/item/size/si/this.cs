@@ -4,29 +4,17 @@ namespace app.type.item.size.si;
 /// too: their suffix is this standard's, whatever its case.</summary>
 public sealed class @this : size.@this, global::app.type.item.ICreate<@this>
 {
-    // its units above a byte, smallest first, and how many bytes one of the smallest is
-    private static readonly string[] Units = ["kB", "MB", "GB", "TB", "PB"];
-    private const long Step = 1000;
+    private const long step = 1000;
+    private static readonly string[] units = ["kB", "MB", "GB", "TB", "PB"];
 
     /// <summary>A count born holding <paramref name="type"/>, the app's <c>{size, si}</c>.</summary>
     public @this(long bytes, global::app.type.@this type) : base(bytes, type) { }
 
-    public override string Text => Form(Step, Units);
-
-    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-    {
-        writer.String(Text);
-        return default;
-    }
+    protected override long Step => step;
+    protected override string[] Units => units;
 
     /// <summary>A count, or a text in SI units, as an SI size born holding <paramref name="declared"/>; a text in
     /// another standard declines (<c>null</c>).</summary>
     public static new @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
-        => declared is { } type && (raw is global::app.type.item.@this leaf ? leaf.Clr<object>() : raw) switch
-        {
-            long bytes => bytes,
-            int bytes => bytes,
-            string text => Bytes(text, Step, Units),
-            _ => null,
-        } is { } count ? new(count, type) : null;
+        => declared is { } type && Bytes(raw, step, units) is { } count ? new(count, type) : null;
 }
