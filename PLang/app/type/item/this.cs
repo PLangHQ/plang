@@ -191,55 +191,24 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// (<paramref name="isIndex"/> tells positional from named, the grammar's Index-vs-Member fact),
     /// a <c>clr</c> host routes to its kind. Returns the (possibly REPLACED) value — a kind may
     /// materialize an immutable host into a new one; the caller rebinds when the instance differs.
-    /// <para>The DEFAULT reflects a public CLR property off THIS value — the write-symmetric twin of
-    /// <see cref="Get"/>'s reflect-default (a domain item's <c>step.Action</c>, a scalar's backing).
-    /// The member value opens its Data door, lowers ITSELF to the property type (<c>value.Clr</c> — the
-    /// sanctioned crossing), and rides into the slot; returns THIS (mutate-in-place). Containers
-    /// (<c>dict</c>/<c>list</c>) override with key/index writes; a value with no writable property for
-    /// <paramref name="key"/> throws. The writer's <paramref name="context"/> rides along for a value
-    /// that builds its child (a foreign host, a step constructing its actions); reflection needs none.</para>
+    /// <para>The DEFAULT writes one of the value's own members — the ones its type lists — and the member
+    /// writes itself (read as its type, then set): Ok, or why it couldn't. A thing that lives on keeps a member
+    /// a program adds beside its own. Containers (<c>dict</c>/<c>list</c>) override with key/index writes.</para>
     /// (Distinct from <see cref="Output"/>, which serializes.)
     /// </summary>
-    public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
+    public virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex, object? value,
+        global::app.actor.context.@this context)
     {
-        // a name is found ignoring its case; two members it names is the error naming both (the reflection kind's one lookup)
-        var prop = global::app.type.item.kind.reflection.@this.Reflect(GetType(), key);
-        if ((prop == null || !prop.CanWrite) && Kept is { } kept && !isIndex)
+        if (!isIndex && Listed(key, context) is { } member) return await member.Write(this, value, context);
+        if (!isIndex && Kept is { } kept)
         {
-            // a thing that lives on keeps a member a program adds — never in place of one of its own
-            if (prop != null || global::app.type.item.kind.reflection.@this.Method(GetType(), key) != null)
-                throw new global::app.error.AppException(new global::app.error.@this(
-                    $"{key} is {Type.Name}'s own — a program adds members beside it, never over it", "OwnMember", 400));
             kept.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
-            return this;
+            return context.Ok(this);
         }
-        if (value is global::app.data.@this binding) value = await binding.Value();
-        if (prop == null || !prop.CanWrite)
-            throw new System.NotSupportedException($"%…% ({Type.Name}) cannot take a child '{key}'");
-        if (value is @this iv && !prop.PropertyType.IsInstanceOfType(value))
-        {
-            // The declared type reads the value — the same reader a .pr uses: its own, else as a record its
-            // Create makes. The entity names WHICH reader (list<action> → the "list" reader) and the element
-            // kind ("action") so a list reader loops the element's reader (goal.call rides @schema:data).
-            var entity = context.App.type.list[prop.PropertyType];
-            if (entity != null)
-            {
-                var read = iv.Read(context.App.type.list.Reader.Reader(entity.Name, null, context),
-                    entity.kind.IsEmpty ? null : entity.kind.Name, context);
-                // The generic "list" reader produces a base list (its elements already read through their
-                // own reader). A typed node slot (list<action>)
-                // adopts those rows into ITS type: same rows, the declared container. No type-switch — any
-                // list<T> slot materializes the same way.
-                if (read is global::app.type.item.list.@this made && !prop.PropertyType.IsInstanceOfType(made)
-                    && typeof(global::app.type.item.list.@this).IsAssignableFrom(prop.PropertyType))
-                    read = (@this?)System.Activator.CreateInstance(prop.PropertyType, made);
-                value = read;
-            }
-            // a C# slot no plang type names: lowered at the reflection boundary, until a member writes itself
-            else value = iv.Clr(prop.PropertyType, context);
-        }
-        prop.SetValue(this, value);
-        return this;
+        // Where a plain value holds a member a program adds is Ingi's open question; until it is answered it holds
+        // none, and says so — a variable's own binding keeps the member instead.
+        return context.Error(new global::app.error.@this(
+            $"a {Type.Name} can't hold an added member yet ('{key}'); a dict can", "NoAddedMember", 404));
     }
 
     /// <summary>
@@ -274,48 +243,39 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
-    {
-        var member = await new global::app.type.clr.@this(this, parent.Context).Get(parent, key);
-        return member.IsInitialized ? member : await Setting(parent, key) ?? Kept?[key] ?? member;
-    }
+        => await Member(parent, key) ?? On(parent, key) ?? await Setting(parent, key) ?? Kept?[key] ?? parent.Context.NotFound(key);
+
+    // This value's events when the key is `on` — the event door, read by name though no member lists it.
+    private global::app.data.@this? On(global::app.data.@this parent, string key)
+        => string.Equals(key, "on", System.StringComparison.OrdinalIgnoreCase)
+            ? parent.Context.App.type.list.Kind(on.GetType()).Data(parent.Name, on, parent, parent.Context)
+            : null;
 
     /// <summary>The members this thing keeps beyond its own (<c>%!app.home%</c>), read after its own — a thing that
     /// lives on (the app, a call, an actor, a module, a goal, a step) keeps a list; a plain value keeps none.</summary>
     internal virtual global::app.type.item.kept.list.@this? Kept => null;
 
-    /// <summary>The member of this value's own plang surface named <paramref name="key"/> — one its class marks
-    /// <c>[LlmBuilder]</c>, the catalog's set (a list's <c>count</c>, <c>first</c>): a property's value, or what a method
-    /// that asks only for its asker answers. Null when the class marks none by that name; a value whose data reads
-    /// through by key (a list's rows, a dict's entries) asks this, never every public member it has.</summary>
+    /// <summary>The member of this value's own plang surface named <paramref name="key"/> — one its type lists (a list's
+    /// <c>count</c>, <c>first</c>), read off the value: a property's value, or what a method answers when it asks for
+    /// nothing a step must give. Null when the type lists none by that name; a value whose data reads through by key
+    /// (a list's rows, a dict's entries) asks this, never every public member it has.</summary>
     private protected async System.Threading.Tasks.ValueTask<global::app.data.@this?> Member(global::app.data.@this parent, string key)
-    {
-        var member = IdentityOf(GetType()).Members.GetOrAdd(key, static (name, type) => Marked(type, name), GetType());
-        object? answer = member switch
-        {
-            System.Reflection.PropertyInfo property => property.GetValue(this),
-            System.Reflection.MethodInfo method => method.Invoke(this,
-                method.GetParameters().Select(p => p.ParameterType == typeof(global::app.actor.context.@this) ? parent.Context : p.DefaultValue).ToArray()),
-            _ => null,
-        };
-        if (member == null) return null;
-        // a member that answers asynchronously answers what its task completes with
-        if (answer?.GetType().GetMethod("AsTask") is { } task) answer = task.Invoke(answer, null);
-        if (answer is System.Threading.Tasks.Task pending)
-        {
-            await pending;
-            answer = pending.GetType().GetProperty("Result")?.GetValue(pending);
-        }
-        return answer as global::app.data.@this ?? (answer == null ? parent.Context.NotFound(key) : new global::app.data.@this(key, answer, parent: parent));
-    }
+        => Listed(key, parent.Context) is { } member && member.Arguments?.All(argument => argument.Nullable) != false
+            ? await member.Read(this, parent)
+            : null;
 
-    // Which member of a class is its marked surface by a name — read into its identity the first time it is asked.
-    // (The reflection kind's one lookup, among the marked members: two a name matches is the error naming both.)
-    private static System.Reflection.MemberInfo? Marked(System.Type @class, string name)
-        => global::app.type.item.kind.reflection.@this.Reflect(@class, name,
-               p => System.Attribute.IsDefined(p, typeof(global::app.LlmBuilderAttribute)))
-           ?? (System.Reflection.MemberInfo?)global::app.type.item.kind.reflection.@this.Method(@class, name,
-               m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
-                   && m.GetParameters().All(p => p.ParameterType == typeof(global::app.actor.context.@this) || p.IsOptional));
+    // The member named key of what this value is — its own class's list, the one its type's offer is made of. A name is
+    // read ignoring its case, so two members it names is the error naming both, never one picked over the other.
+    private global::app.type.property.@this? Listed(string key, global::app.actor.context.@this context)
+    {
+        var named = context.App.type.list.Member(GetType())
+            .Where(member => string.Equals(member.Name, key, System.StringComparison.OrdinalIgnoreCase)).ToList();
+        if (named.Count > 1)
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"`{Type.Name}` has two members named {key}: " + string.Join(", ", named.Select(member => $"`{member.Member?.Name ?? member.Name}`")),
+                "AmbiguousMember", 400));
+        return named.FirstOrDefault();
+    }
 
     /// <summary>This owner's settings when <paramref name="key"/> is <c>setting</c> (<c>%!app.goal.list.setting%</c>);
     /// null for any other key, or an owner with none.</summary>
@@ -540,10 +500,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     internal virtual bool IsFinal => Type.Template == null;
 
-    // A C# class's plang identity — its namespace name, the family it is a kind of with the kind it is, when it is one,
-    // and its marked surface by member name, each name found the first time it is asked: pure facts of the class.
-    private readonly record struct Identity(string Namespace, (System.Type Family, string Kind)? Family,
-        System.Collections.Concurrent.ConcurrentDictionary<string, System.Reflection.MemberInfo?> Members);
+    // A C# class's plang identity — its namespace name, and the family it is a kind of with the kind it is, when it is
+    // one: pure facts of the class.
+    private readonly record struct Identity(string Namespace, (System.Type Family, string Kind)? Family);
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, Identity> _identities = new();
 
     private static Identity IdentityOf(System.Type t)
@@ -559,9 +518,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                 if (b.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false))
                 {
                     var called = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(ct, inherit: false)?.Name ?? space;
-                    return new(space, (b, called[(called.LastIndexOf('.') + 1)..]), new(System.StringComparer.OrdinalIgnoreCase));
+                    return new(space, (b, called[(called.LastIndexOf('.') + 1)..]));
                 }
-            return new(space, null, new(System.StringComparer.OrdinalIgnoreCase));
+            return new(space, null);
         });
 
     /// <summary>The name a class's type goes by — the word it declares (<c>[PlangType("text")]</c>), else its

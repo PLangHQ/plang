@@ -160,7 +160,7 @@ public class VariablesTests : System.IAsyncDisposable
         // Unlike a clr-wrapped foreign object, an :item IS the value (stored by
         // reference, no carrier), so the write mutates the very instance.
         var stack = _app.actor.list.User.Context.Variable;
-        var person = new PersonItem { Name = "John", Age = 30 };
+        var person = new PersonItem(_app.type.list[typeof(PersonItem)]) { Name = "John", Age = 30 };
         await stack.Set("person", person);
 
         await new global::app.type.item.variable.@this("person.Name").Set("Jane", stack.Context);
@@ -925,19 +925,22 @@ public class VariablesAccessorTests : System.IAsyncDisposable
 // :item — the post-clr extensibility story. It owns its own child-write (the write
 // counterpart of read-navigation), so `set %person.Name%` dispatches to it. Because
 // it IS the value (no clr carrier, no clone), the write lands on the instance.
+[global::app.Attributes.PlangType("person-fixture")]
 public sealed class PersonItem : global::app.type.item.@this
 {
-    public string? Name { get; set; }
-    public long Age { get; set; }
+    public PersonItem(global::app.type.@this type) : base(type) { }
 
-    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
+    [global::app.LlmBuilder] public string? Name { get; set; }
+    [global::app.LlmBuilder] public long Age { get; set; }
+
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
         if (string.Equals(key, "Name", System.StringComparison.OrdinalIgnoreCase))
             Name = value?.ToString();
         else if (string.Equals(key, "Age", System.StringComparison.OrdinalIgnoreCase))
             Age = System.Convert.ToInt64(value);
         else
-            throw new System.NotSupportedException($"PersonItem has no child '{key}'");
-        return new(this);
+            return new(context.Error(new global::app.error.@this($"PersonItem has no child '{key}'", "NoAddedMember", 404)));
+        return new(context.Ok(this));
     }
 }

@@ -576,16 +576,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>A list owns its child write — replace the element at the index. The key is already
     /// the resolved literal (data.Set resolved any <c>[%i%]</c> to its value); an out-of-range or
-    /// non-numeric key is an authoring error on a list, thrown loud (never silently reshaped to a dict).</summary>
-    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value, actor.context.@this context)
+    /// non-numeric key is an authoring error on a list, answered as one (never silently reshaped to a dict).</summary>
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex, object? value, actor.context.@this context)
     {
         if (int.TryParse(key, out var idx) && idx >= 0 && idx < CountRaw)
         {
             Put(idx, value);
-            return new(this);
+            return new(context.Ok(this));
         }
-        throw new System.NotSupportedException(
-            $"cannot set '[{key}]' on a list of {CountRaw} — index out of range or not numeric");
+        return new(context.Error(new global::app.error.@this(
+            $"cannot set '[{key}]' on a list of {CountRaw} — index out of range or not numeric", "CannotSetChild", 400)));
     }
 
     /// <summary>

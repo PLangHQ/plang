@@ -174,6 +174,7 @@ public sealed partial class @this
     public @this? Parent { get; set; }
 
     [Debug]
+    [LlmBuilder]
     public global::app.warning.list.@this Warning { get; init; } = new();
 
     [Debug, Default]

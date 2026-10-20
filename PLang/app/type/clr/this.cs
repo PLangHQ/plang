@@ -129,12 +129,14 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>The child-write door — the carrier routes to its <see cref="Kind"/> (the * kind
     /// reflects a settable property, the list kind writes an index). The kind returns the value
     /// carried back as an item; a host mutates in place, so identity holds.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
         // A clr host takes a CONCRETE child (a typed property / element), never a lazy Data — so a
         // Data value opens its own door to its value here. (dict/list hold Data lazily; a host can't.)
         if (value is global::app.data.@this dv) value = await dv.Value();
-        return await Kind.Set(Value, key, isIndex, value, context);
+        try { return context.Ok(await Kind.Set(Value, key, isIndex, value, context)); }
+        // the host's kind refuses the child (no such member, an index out of range): the write's answer
+        catch (global::app.error.AppException refused) { return context.Error(refused.Error); }
     }
 
     /// <summary>The children of the host, via its <see cref="Kind"/> — for <c>foreach</c>, handed

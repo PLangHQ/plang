@@ -12,13 +12,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Shape => "object";
 
     /// <summary>The most tokens in the answer — <c>%!llm.query.setting.limit.token%</c>.</summary>
-    [Out, Store] public global::app.type.item.number.@this Token { get; }
+    [Out, Store, LlmBuilder] public global::app.type.item.number.@this Token { get; }
 
     /// <summary>The most tool calls before the query stops — <c>%!llm.query.setting.limit.tool%</c>.</summary>
-    [Out, Store] public global::app.type.item.number.@this Tool { get; }
+    [Out, Store, LlmBuilder] public global::app.type.item.number.@this Tool { get; }
 
     /// <summary>How many times an answer that fails validation is asked again — <c>%!llm.query.setting.limit.retry%</c>.</summary>
-    [Out, Store] public global::app.type.item.number.@this Retry { get; }
+    [Out, Store, LlmBuilder] public global::app.type.item.number.@this Retry { get; }
 
     /// <summary>The defaults: 16000 tokens, ten tool calls, no retry.</summary>
     public @this() : this(16000, 10, 0) { }

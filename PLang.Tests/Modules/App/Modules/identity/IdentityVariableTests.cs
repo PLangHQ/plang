@@ -90,14 +90,13 @@ public class IdentityDataTests
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("true");
     }
 
+    // a private key is no member a program reads: navigating to it finds nothing
     [Test]
-    public async Task DotNavigation_PrivateKey_ReturnsPrivateKey()
+    public async Task DotNavigation_PrivateKey_IsNotNavigable()
     {
-        // [Sensitive] is serialization only, not access control — dot navigation works
         var identity = CreateTestIdentity();
         var data = new Data("test", identity, context: _app.actor.list.System.Context);
         var child = await data.Get("PrivateKey");
-        await Assert.That(child).IsNotNull();
-        await Assert.That((await child!.Value())?.ToString()).IsEqualTo("dGVzdHByaXZhdGVrZXk=");
+        await Assert.That(child.IsInitialized).IsFalse();
     }
 }

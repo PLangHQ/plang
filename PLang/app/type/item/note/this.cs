@@ -45,14 +45,16 @@ public sealed class @this : global::app.type.item.@this
     public override bool IsLeaf => false;
 
     /// <summary>The lines, in the file's order; none before the notes are read, or when there are none.</summary>
-    [global::app.Out]
+    [global::app.Out, global::app.LlmBuilder]
     public System.Collections.Generic.IReadOnlyList<line.@this> Line => _line ?? [];
 
     /// <summary>The line that says what it returns (<c>Returns — …</c>); null when none does.</summary>
+    [global::app.LlmBuilder]
     public line.@this? Returns => Line.FirstOrDefault(line => string.Equals(line.Name?.ToString(), Result, System.StringComparison.OrdinalIgnoreCase));
 
     /// <summary>What the notes and its parts don't agree on: a line naming none of them, a part no line names.</summary>
     [global::app.Out]
+    [global::app.LlmBuilder]
     public global::app.warning.list.@this Warning => _warning;
 
     /// <summary>The notes read, once: the file's lines, each a named line or a free one, then what they and its parts

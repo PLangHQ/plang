@@ -22,6 +22,7 @@ public sealed class @this : global::app.type.item.note.IAbout
     {
         var propType = prop.PropertyType;
         Name = prop.Name;
+        Member = prop;
 
         var bare = System.Nullable.GetUnderlyingType(propType) ?? propType;
         bool isDataGeneric = bare.IsGenericType
@@ -75,6 +76,70 @@ public sealed class @this : global::app.type.item.note.IAbout
     /// <summary>The type this is a member of, when it is one (<c>text</c> for <c>replace</c>) — whose teaching folder
     /// holds its notes.</summary>
     public string? Owner { get; init; }
+
+    // The C# member this one is, when it was read off a class — the property, or a method that asks only its
+    // asker. The one place a member is reflected: it reads and writes itself through it.
+    internal System.Reflection.MemberInfo? Member { get; init; }
+
+    /// <summary>This member's answer on <paramref name="owner"/>, as its child of <paramref name="parent"/>: what the
+    /// member holds (a Data whole; what an asynchronous one completes with), made by the kind of what it is. A member
+    /// with no C# member behind it answers nothing.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Read(global::app.type.item.@this owner,
+        global::app.data.@this parent)
+    {
+        var context = parent.Context;
+        object? answer;
+        switch (Member)
+        {
+            case PropertyInfo property: answer = property.GetValue(owner); break;
+            case MethodInfo method:
+                answer = method.Invoke(owner, method.GetParameters()
+                    .Select(p => p.ParameterType == typeof(global::app.actor.context.@this) ? context : p.DefaultValue).ToArray());
+                break;
+            default: return context.NotFound(Name);
+        }
+        // a member that answers asynchronously answers what its task completes with — a refusal as it is
+        if (answer?.GetType().GetMethod("AsTask", System.Type.EmptyTypes) is { } task) answer = task.Invoke(answer, null);
+        if (answer is System.Threading.Tasks.Task pending)
+        {
+            await pending;
+            answer = pending.GetType().GetProperty("Result")?.GetValue(pending);
+        }
+        if (answer is global::app.data.@this data) return data;
+        var kind = answer is null ? context.App.type.list["item"].kind["*"]! : context.App.type.list.Kind(answer.GetType());
+        return kind.Data(parent.Name, answer, parent, context);
+    }
+
+    /// <summary>Writes <paramref name="value"/> as this member of <paramref name="owner"/>: read as this member's type by
+    /// that type's reader (its own, else as a record its Create makes), then set. A member that can't be written, or a
+    /// value that doesn't read as its type, answers why.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Write(global::app.type.item.@this owner,
+        object? value, global::app.actor.context.@this context)
+    {
+        if (Member is not PropertyInfo { CanWrite: true } slot)
+            return context.Error(new global::app.error.@this(
+                $"{Name} is {owner.Type.Name}'s own — it can't be written", "OwnMember", 400));
+        var item = value is global::app.data.@this given ? await given.Value() : value as global::app.type.item.@this;
+        object? written = item ?? value;
+        if (item != null && !slot.PropertyType.IsInstanceOfType(item))
+        {
+            try
+            {
+                var read = item.Read(context.App.type.list.Reader.Reader(Type.Name, null, context),
+                    Type.kind.IsEmpty ? null : Type.kind.Name, context);
+                // a typed list member (list<action>) holds the rows the list reader read, as its own type
+                if (read is global::app.type.item.list.@this rows && !slot.PropertyType.IsInstanceOfType(rows)
+                    && typeof(global::app.type.item.list.@this).IsAssignableFrom(slot.PropertyType))
+                    read = System.Activator.CreateInstance(slot.PropertyType, rows);
+                // a member whose C# type no plang type is (a string) takes the plang value lowered — the C# boundary
+                written = read is global::app.type.item.@this plang && !slot.PropertyType.IsInstanceOfType(plang)
+                    ? plang.Clr(slot.PropertyType, context) : read;
+            }
+            catch (global::app.error.AppException refused) { return context.Error(refused.Error); }
+        }
+        slot.SetValue(owner, written);
+        return context.Ok(owner);
+    }
 
     /// <summary>What the builder is taught about this member — <c>/system/type/&lt;owner&gt;/&lt;member&gt;.notes.md</c>, its
     /// first line the member's one-liner; falsy when it has none, or when this is no type's member.</summary>

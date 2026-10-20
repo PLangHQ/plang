@@ -11,7 +11,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Shape => "object";
 
     /// <summary>How much of a download has come — null on an upload.</summary>
-    [Out] public global::app.type.item.size.@this? Received { get; }
+    [Out, LlmBuilder] public global::app.type.item.size.@this? Received { get; }
 
     /// <summary>How much of an upload has gone — null on a download.</summary>
     [Out] public global::app.type.item.size.@this? Sent { get; }

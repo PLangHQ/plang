@@ -40,7 +40,7 @@ public sealed partial class @this
 
     /// <summary>The step is written in formal — its text is its code. It is read as written, with every
     /// check an answer's line gets, and asked of no one: not the decider, not the LLM. Build-time only.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public bool IsFormal => FormalHead.IsMatch(Text);
 
     /// <summary>The step needs no answer: it is cached, or its own text is its code. Build-time only.</summary>
@@ -61,7 +61,7 @@ public sealed partial class @this
 
     private global::app.goal.step.action.list.@this _code;
     /// <summary>The step's code: the actions it runs, as the .pr holds them under <c>code</c>.</summary>
-    [Store, Debug, Default]
+    [Store, LlmBuilder, Debug, Default]
     public global::app.goal.step.action.list.@this Code
     {
         // A plain slot. Every action in it was born knowing this step — the reader constructs the
@@ -73,7 +73,7 @@ public sealed partial class @this
     private global::app.goal.step.pick.list.@this? _pick;
     /// <summary>The decider's reading of this step — its answers and the picks they mean. Build-time
     /// only: not stored in the .pr.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.goal.step.pick.list.@this Pick => _pick ??= new(this);
 
     /// <summary>

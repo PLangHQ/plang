@@ -41,18 +41,18 @@ public sealed class @this : global::app.type.item.setting.@this
 
     /// <summary>This run's value for one of the action's options (<c>set %!http.request.setting.timeout% = 5</c>),
     /// where the action-param seam reads it.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex,
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex,
         object? value, global::app.actor.context.@this context)
     {
         if (_action.Property[key] is not { } option)
-            throw new System.NotSupportedException($"action '{Path}' has no option '{key}'");
+            return context.Error(new global::app.error.@this($"action '{Path}' has no option '{key}'", "NoOption", 404));
         // born as the option's type — a record from its dict, the members it leaves out at their defaults; a value
         // the option can't take is refused before this run holds it
-        var raw = value is global::app.data.@this held ? await held.Value() : value;
+        var raw = value is global::app.data.@this given ? await given.Value() : value;
         var binding = new global::app.data.@this(key, raw, context: context);
         if (option.Type.Make(raw, binding) is not { } made)
-            throw new global::app.error.AppException(binding.Error!);
+            return context.Error(binding.Error!);
         await Write(key, made, context);
-        return this;
+        return context.Ok(this);
     }
 }

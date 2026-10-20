@@ -42,8 +42,8 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         if (!isIndex) return ctx.App.type.list["item"].kind["*"]!.Set(host, key, isIndex, value, ctx);
         var n = Length(host);
         if (!int.TryParse(key, out var i) || i < 0 || i >= n)
-            throw new System.NotSupportedException(
-                $"cannot set [{key}] on a sequence of {n} — index out of range or not numeric");
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"cannot set [{key}] on a sequence of {n} — index out of range or not numeric", "CannotSetChild", 400));
         if (host is System.Collections.IList il) il[i] = value;
         else Indexer(host).SetValue(host, value, new object[] { i });
         return new(new global::app.type.clr.@this(host, ctx));

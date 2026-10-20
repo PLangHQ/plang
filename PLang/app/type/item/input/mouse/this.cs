@@ -46,7 +46,7 @@ public sealed class @this : input.@this
     /// <summary>How far the wheel turned, down (up is negative).</summary>
     [Out] public global::app.type.item.number.@this Dy { get; }
     /// <summary>The modifier keys held: alt, ctrl, meta, shift.</summary>
-    [Out] public global::app.type.item.input.modifier.list.@this Modifier { get; }
+    [Out, LlmBuilder] public global::app.type.item.input.modifier.list.@this Modifier { get; }
 
     private protected override void Applied(ITarget target) => target.Mouse(this);
 

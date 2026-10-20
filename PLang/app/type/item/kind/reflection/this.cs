@@ -92,8 +92,8 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     {
         var prop = Reflect(host.GetType(), key);
         if (prop == null || !prop.CanWrite)
-            throw new System.NotSupportedException(
-                $"'{host.GetType().Name}' has no writable property '{key}'");
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"'{host.GetType().Name}' has no writable property '{key}'", "NoAddedMember", 404));
         if (value is global::app.type.item.@this iv && !prop.PropertyType.IsInstanceOfType(value))
             value = iv.Clr(prop.PropertyType);
         prop.SetValue(host, value);

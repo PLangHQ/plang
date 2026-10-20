@@ -64,7 +64,9 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// it (<c>- throw %!error%, fix suggestion %fix%</c>) — the same error, now with its fix.</summary>
     [global::app.LlmBuilder]
     public string? FixSuggestion { get; internal set; }
+    [global::app.LlmBuilder]
     public string? HelpfulLinks { get; init; }
+    [global::app.LlmBuilder]
     public DateTime CreatedUtc { get; }
     /// <summary>The C# exception behind the error, when one is: C#'s alone — plang reads it as <see cref="Trace"/>.</summary>
     internal Exception? Exception { get; init; }
@@ -86,6 +88,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// call frame (call.Start) whenever a handler returns an error. Lets you
     /// see "this is what the handler saw" without re-running with a debug flag.
     /// </summary>
+    [global::app.LlmBuilder]
     public List<ParamSnapshot>? Params { get; set; }
 
     /// <summary>

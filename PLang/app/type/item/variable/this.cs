@@ -90,6 +90,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>The text between the % signs (<c>user.name</c>, <c>!data</c>) — the form the variable
     /// store takes while callers still hand it names.</summary>
+    [global::app.LlmBuilder]
     public string Name => Text.Length >= 2 ? Text[1..^1] : Text;
 
     /// <summary>Runs the code: what the variable holds.</summary>

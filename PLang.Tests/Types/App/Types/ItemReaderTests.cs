@@ -14,25 +14,43 @@ public class ItemReaderTests : System.IAsyncDisposable
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
-    // a value with a member of a module's record type
-    private sealed class box : global::app.type.item.@this
-    {
-        public box(global::app.type.@this type) : base(type) { }
-        public Limit? Limit { get; set; }
-    }
-
     private global::app.type.item.@this Dict()
         => global::app.type.item.@this.Create(new Dictionary<string, object?> { ["token"] = 500L, ["tool"] = 3L }, Ctx);
 
+    private ReaderBox Box()
+    {
+        if (_app.type.list.Items().All(t => t.Name != "readerbox")) _app.type.list.Add(typeof(ReaderBox), Ctx, "readerbox");
+        return new(_app.type.list[typeof(ReaderBox)]);
+    }
+
     [Test] public async Task ADictIntoARecordMember_ArrivesAsTheRecord()
     {
-        var owner = new box(_app.type.list["item"]);
-        await owner.Set("limit", false, Dict(), Ctx);
+        var owner = Box();
+        await (await owner.Set("limit", false, Dict(), Ctx)).IsSuccess();
 
         await Assert.That(owner.Limit).IsNotNull();
         await Assert.That(owner.Limit!.Token.ToString()).IsEqualTo("500");
         await Assert.That(owner.Limit.Tool.ToString()).IsEqualTo("3");
         await Assert.That(owner.Limit.Retry.ToString()).IsEqualTo("0");
+    }
+
+    // a value reads its members from what it is: a file, a kind of path, answers its own class's size
+    [Test] public async Task AFile_AnswersItsSize_ThroughItsClass()
+    {
+        var file = global::app.type.item.path.@this.Resolve("/notes.txt", Ctx);
+        await Assert.That(file).IsTypeOf<global::app.type.item.path.file.@this>();
+        await Assert.That(_app.type.list.Member(file.GetType())["size"]).IsNotNull();
+        var size = await file.Get(new global::app.data.@this("f", file, context: Ctx), "size");
+        await Assert.That(size.Error?.Key).IsNotEqualTo("NotFound");
+    }
+
+    // a member that can't be written answers why, never a throw
+    [Test] public async Task AReadOnlyMember_RefusesTheWriteWithWhy()
+    {
+        var answer = await Box().Set("label", false, new global::app.type.item.text.@this("x", _app.type.list["text"]), Ctx);
+
+        await answer.IsFailure();
+        await Assert.That(answer.Error!.Key).IsEqualTo("OwnMember");
     }
 
     // a list of a record type holds that type: each element read by the element type's reader, Record when it has none
@@ -70,4 +88,15 @@ public class ItemReaderTests : System.IAsyncDisposable
         await Assert.That(viaTokens.Tool.ToString()).IsEqualTo(viaJson.Tool.ToString());
         await Assert.That(viaTokens.Retry.ToString()).IsEqualTo(viaJson.Retry.ToString());
     }
+}
+
+/// <summary>A value with a member of a module's record type, and one it only answers — the members its type lists.</summary>
+[global::app.Attributes.PlangType("readerbox")]
+public sealed class ReaderBox : global::app.type.item.@this
+{
+    public ReaderBox(global::app.type.@this type) : base(type) { }
+
+    [global::app.LlmBuilder] public global::app.module.llm.type.limit.@this? Limit { get; set; }
+
+    [global::app.LlmBuilder] public global::app.type.item.text.@this? Label => null;
 }

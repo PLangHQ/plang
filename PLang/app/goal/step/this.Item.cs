@@ -26,8 +26,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>The step takes its own children. A write to <c>code</c> is the step taking the actions it is
     /// handed — actions, each the step's own; any other value is refused with why, the step's code as it was (the
-    /// builder writes code in formal, read into actions). Every other key falls to the reflected default.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
+    /// builder writes code in formal, read into actions). Every other key is one of the step's own members.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
         string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
         if (isIndex || !string.Equals(key, "code", System.StringComparison.OrdinalIgnoreCase))
@@ -38,11 +38,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
         var node = new global::app.goal.step.action.list.@this(_code.Type);
         foreach (var row in Rows(incoming, context))
-            node.Add(row as global::app.goal.step.action.@this ?? throw new global::app.error.AppException(
-                new global::app.error.@this($"a step's code is actions; a {row.Type.Name} is not one — the builder writes code in formal",
-                    "NotAnAction", 400)));
+        {
+            if (row is not global::app.goal.step.action.@this action)
+                return context.Error(new global::app.error.@this(
+                    $"a step's code is actions; a {row.Type.Name} is not one — the builder writes code in formal", "NotAnAction", 400));
+            node.Add(action);
+        }
         _code = node;
-        return this;
+        return context.Ok(this);
     }
 
     /// <summary>The rows of an incoming action write. A several-valued write enumerates ITSELF — a

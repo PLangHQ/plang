@@ -111,7 +111,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// When the app's identity last changed — read from app.pr, else this run's start (an identity created now).
     /// </summary>
-    [global::app.Store]
+    [global::app.Store, global::app.LlmBuilder]
     public global::app.type.item.datetime.@this Updated { get; internal set; }
 
     /// <summary>
@@ -123,6 +123,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// The OS absolute path of the application (e.g. C:\myapp or /home/user/app).
     /// </summary>
+    [global::app.LlmBuilder]
     public string AbsolutePath { get; }
 
     /// <summary>

@@ -97,6 +97,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     public virtual global::app.goal.step.@this? Step { get; }
 
     /// <summary>The action this frame runs. Null in a goal's or a step's frame.</summary>
+    [global::app.LlmBuilder]
     public global::app.goal.step.action.@this? Action { get; }
 
     /// <summary>The event whose bound call is running in this frame, as <c>%!event%</c> reads it — its value the
@@ -120,6 +121,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// the error stays in the list either way (audit trail). See <see cref="error.@this"/>
     /// for thread-safety semantics.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.error.list.@this Errors { get; }
 
     /// <summary>
@@ -162,6 +164,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// Variable mutations observed during this Call's lifetime. Null unless Flags.Diff was
     /// on at Push. See <see cref="diff.@this"/> for thread-safety + snapshot iteration.
     /// </summary>
+    [global::app.LlmBuilder]
     public diff.@this? Diffs { get; }
 
     // --- Tag tier ---

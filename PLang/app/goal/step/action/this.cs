@@ -15,7 +15,7 @@ public partial class @this
     /// construction door sets it; reading it unset means the action was built outside a door,
     /// which is a bug, so it throws rather than answering a half-built identity. Carries [Debug]
     /// only — the wire form is written explicitly by <c>Output</c>.</summary>
-    [Debug]
+    [Debug, LlmBuilder]
     public global::app.module.@this Module
     {
         get => _module ?? throw new System.InvalidOperationException(
@@ -35,7 +35,7 @@ public partial class @this
     /// <summary>The action's properties. A program action's are what its step set (the .pr's
     /// <c>"property"</c>); a catalog action's (<c>module[name]</c>) are its handler class's, reflected.
     /// Which one is decided by the list's constructor — the catalog element is born with its own.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.property.list.@this Property { get; init; } = new();
 
     /// <summary>What the build froze for the properties the step did not set (the .pr's
@@ -149,7 +149,7 @@ public partial class @this
     /// action exist outside any program and therefore have no step — a catalog element (a
     /// module-minted descriptor), and a synthetic action composed in C# (<c>new action(new sign{...}, context)</c>,
     /// the signing/verify/ask seam) when it starts before any goal runs.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public Step? Step { get; init; }
 
     // Teaching prose (Description / Notes / Examples) is no longer stored on the action host — it lives

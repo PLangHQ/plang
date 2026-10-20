@@ -649,7 +649,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// properties and no <see cref="Shape"/>.</summary>
     public property.list.@this? Property
     {
-        get => OwnProperty ?? kind.OwnProperty ?? (Family.Member is { Count: > 0 } member ? member : null);
+        get => OwnProperty ?? kind.OwnProperty ?? (Member is { Count: > 0 } member ? member : null);
         init => _property = value;
     }
     private property.list.@this? _property;
@@ -831,56 +831,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // identity alone.
     private readonly list.@this? _list;
 
-    // The members the class marks plang's ([LlmBuilder]), listed where they are declared — read on the first ask
-    // and kept: the first list made is the one every asker gets. Empty for a type that is its identity alone.
+    // The members of the class this type describes — the type list's one list per class, which a value of that class
+    // reads its members from too. A class under it that is no kind of its own (an error's subclass) is read by its
+    // value through its own class's list, but offered here as this type's. Empty for a type that is its identity alone.
     private property.list.@this Member
-    {
-        get
-        {
-            if (_property is { } read) return read;
-            var made = new property.list.@this();
-            if (_list is { } list && ClrType is { } clr)
-            {
-                // A method that asks only for its asker's context is read as a property (%p.relative%); any other is
-                // called with its arguments (%x.replace("a", "b")%).
-                var methods = new Queue<System.Reflection.MethodInfo>(clr.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-                    .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void))
-                    .OrderBy(m => m.MetadataToken));
-                foreach (var prop in clr.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-                {
-                    if (!prop.CanRead || prop.Name == "EqualityContract") continue;
-                    if (!System.Attribute.IsDefined(prop, typeof(global::app.LlmBuilderAttribute))) continue;
-                    while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
-                        && m.MetadataToken < prop.GetMethod!.MetadataToken)
-                        made.Add(Method(methods.Dequeue()));
-                    made.Add(list.Property(prop.Name, prop.PropertyType, owner: Name));
-                }
-                while (methods.TryDequeue(out var m)) made.Add(Method(m));
-
-                // A method as the catalog lists it: what it answers (an asynchronous one, what its task completes
-                // with), and — unless it asks only for its asker — what it is called with. The asker's context and a
-                // cancellation are the runtime's to give, never a step's argument.
-                property.@this Method(System.Reflection.MethodInfo m)
-                {
-                    var answers = m.ReturnType is { IsGenericType: true } task
-                                  && (task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
-                                      || task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.ValueTask<>))
-                        ? task.GenericTypeArguments[0] : m.ReturnType;
-                    // a member answering through a Data (so a failure rides it) answers what the Data holds
-                    if (answers is { IsGenericType: true } data && data.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
-                        answers = data.GenericTypeArguments[0];
-                    var parameters = m.GetParameters();
-                    if (parameters is [{ ParameterType: var only }] && only == typeof(actor.context.@this))
-                        return list.Property(m.Name, answers, owner: Name);
-                    return list.Property(m.Name, answers, parameters
-                        .Where(p => p.ParameterType != typeof(actor.context.@this) && p.ParameterType != typeof(System.Threading.CancellationToken))
-                        .Select(p => list.Property(p.Name!, p.ParameterType, optional: p.IsOptional))
-                        .ToList(), owner: Name);
-                }
-            }
-            return System.Threading.Interlocked.CompareExchange(ref _property, made, null) ?? made;
-        }
-    }
+        => _property ?? Family._property
+           ?? ((Family._list is { } list && (ClrType ?? Family.ClrType) is { } clr) ? list.Member(clr) : new());
 
     // What the class's Resolve takes first — a scalar is made from it; null when the class resolves nothing.
     private System.Reflection.ParameterInfo? Source

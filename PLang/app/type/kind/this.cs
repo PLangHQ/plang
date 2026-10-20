@@ -233,10 +233,11 @@ public class @this : global::app.type.@this
 
     /// <summary>Write a child <paramref name="key"/> onto a host of this kind — the kind owns HOW
     /// its content takes a new child (<paramref name="isIndex"/> tells positional from named).
-    /// Returns the value carried as an item; a kind with no writable content throws.</summary>
+    /// Returns the value carried as an item; a kind with no writable content refuses, its error carried.</summary>
     public virtual global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
         object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
-        => throw new System.NotSupportedException($"kind '{Name}' cannot set a child");
+        => throw new global::app.error.AppException(new global::app.error.@this(
+            $"kind '{Name}' cannot set a child", "NoAddedMember", 404));
 
     /// <summary>The SYNC decode: raw (string / bytes) → a value item OF this kind, or DECLINE
     /// (null). This is the SINGLE decode body — <see cref="Load"/> is its async face, and the sync

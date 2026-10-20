@@ -32,6 +32,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>
     /// Name of the actor ("System", "Service", or "User").
     /// </summary>
+    [global::app.LlmBuilder]
     public string Name { get; }
 
     /// <summary>An actor written alone, in every view, is its name — what a program reads an actor by; its context,
@@ -46,6 +47,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>
     /// The PLang execution context owned by this actor.
     /// </summary>
+    [global::app.LlmBuilder]
     public context.@this Context { get; }
 
     /// <summary>

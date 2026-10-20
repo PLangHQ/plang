@@ -42,7 +42,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly object? _registering;
 
     /// <summary>The module name — "file", "variable", "list"; empty for the app's module.</summary>
-    [Debug, Out]
+    [Debug, Out, LlmBuilder]
     public string Name { get; }
 
     /// <summary>The module IS its name in text — so a site composing the qualified form
@@ -167,6 +167,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>The module's actions as the NATIVE plang list — step actions and clauses alike (the type
     /// IS the role). Filterable by the list module, renderable by templates.</summary>
+    [LlmBuilder]
     public global::app.type.item.list.@this Action
         => new(_action.Values.Select(a => (object?)a).ToList(), App.type.list["list"]);
 
@@ -245,16 +246,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private global::app.type.item.file.@this? _description;
 
     /// <summary>The module's description — module.description.md.</summary>
+    [LlmBuilder]
     public global::app.type.item.file.@this Description => _description ??= new(Folder.Combine("module.description.md"), App.actor.list.System.Context!);
 
     private global::app.type.item.file.@this? _notes;
 
     /// <summary>The module's notes — module.notes.md; falsy when the module has none.</summary>
+    [LlmBuilder]
     public global::app.type.item.file.@this Notes => _notes ??= new(Folder.Combine("module.notes.md"), App.actor.list.System.Context!);
 
     private global::app.type.item.file.@this? _guide;
 
     /// <summary>The module's guide — module.guide.md: prose for a learner, shown on the module's page and never read by
     /// the builder; falsy when the module has none.</summary>
+    [LlmBuilder]
     public global::app.type.item.file.@this Guide => _guide ??= new(Folder.Combine("module.guide.md"), App.actor.list.System.Context!);
 }

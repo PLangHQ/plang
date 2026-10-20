@@ -45,25 +45,27 @@ public partial class @this
         if (target is null)
             return _context?.NotFound(key) ?? this;
 
-        // A value that can't take this child says so (NotSupported) — the write answers that as an error,
-        // not a crash: `set %!app.goal.list.setting.foo% = 1` is a program's mistake.
-        global::app.type.item.@this written;
-        try { written = await target.Set(key, isIndex, value, _context); }
-        catch (System.NotSupportedException ex)
+        // The value takes the child, or answers why it can't — `set %!app.goal.list.setting.foo% = 1` is a program's
+        // mistake, answered as one.
+        @this written;
+        // a value the child refuses outright (a reserved key) says why
+        try { written = await target.Set(key, isIndex, value, _context!); }
+        catch (global::app.error.AppException ex) { return _context?.Error(ex.Error) ?? this; }
+        if (!written.Success)
         {
-            // a variable's own binding (keeps) holds a member its value can't take (`set %name.lang% = "is"`); a plain
-            // value inside another has nowhere to keep one
+            if (!written.Error!.Status.IsNotFound) return _context?.Error(written.Error) ?? this;
+            // a variable's own binding (keeps) holds a member its value has no place for (`set %name.lang% = "is"`); a
+            // plain value inside another has nowhere to keep one
             if (keeps && !isIndex)
             {
                 Properties[key] = value is @this given ? await given.Value() : value;
                 return this;
             }
             return _context?.Error(new global::app.error.@this(
-                $"{ex.Message}: %{Path}% is a {target.Type.Name} inside another value, and has nowhere to keep a member", "CannotSetChild", 400)) ?? this;
+                $"{written.Error.Message}: %{Path}% is a {target.Type.Name} inside another value, and has nowhere to keep a member",
+                "CannotSetChild", 400)) ?? this;
         }
-        // a value the child refuses (an option's value out of its range, a reserved key) says why
-        catch (global::app.error.AppException ex) { return _context?.Error(ex.Error) ?? this; }
-        if (!ReferenceEquals(written, Peek())) SetValue(written);
+        if (!ReferenceEquals(written.Peek(), Peek())) SetValue(written.Peek());
         return this;
     }
 }

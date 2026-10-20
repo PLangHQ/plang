@@ -16,19 +16,19 @@ public sealed class @this : global::app.type.item.@this
     public override bool IsLeaf => false;
 
     /// <summary>What the line is about — a part's name, or <c>Returns</c>; null for a free line.</summary>
-    [global::app.Out]
+    [global::app.Out, global::app.LlmBuilder]
     public global::app.type.item.text.@this? Name { get; }
 
     /// <summary>What it means; a free line's characters, as written.</summary>
-    [global::app.Out]
+    [global::app.Out, global::app.LlmBuilder]
     public global::app.type.item.text.@this Prose { get; }
 
     /// <summary>How a step says it (<c>· say:</c>); null when the line doesn't say.</summary>
-    [global::app.Out]
+    [global::app.Out, global::app.LlmBuilder]
     public global::app.type.item.text.@this? Say { get; }
 
     /// <summary>When the builder writes it (<c>· builder:</c>); null when the line doesn't say.</summary>
-    [global::app.Out]
+    [global::app.Out, global::app.LlmBuilder]
     public global::app.type.item.text.@this? Builder { get; }
 
     /// <summary>What the decider is asked about it, when its action may be the step's (<c>· ask:</c>) — an option the

@@ -67,7 +67,7 @@ public partial class @this : global::app.type.item.note.IAbout
     /// undefined T (bare <c>Task&lt;Data&gt;</c> or <c>Data&lt;object&gt;</c>) is <c>item</c> — the
     /// unconstrained plang type, C#'s <c>object</c>. Null only when <c>Run</c> isn't Data-shaped
     /// at all, which no real action is.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.@this? Return
     {
         get
@@ -102,11 +102,11 @@ public partial class @this : global::app.type.item.note.IAbout
     private global::app.type.item.file.@this? _guide;
 
     /// <summary>The action's description — {Name}.description.md.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.item.file.@this Description => _description ??= new(Module.Folder.Combine($"{Name}.description.md"), App!.actor.list.System.Context!);
 
     /// <summary>The action's notes, read line by line — {Name}.notes.md; no lines when the action has none.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.item.note.@this Note => _note ??= new(this, new(Module.Folder.Combine($"{Name}.notes.md"), App!.actor.list.System.Context!),
         App!.type.list[typeof(global::app.type.item.note.@this)]);
 
@@ -122,6 +122,6 @@ public partial class @this : global::app.type.item.note.IAbout
 
     /// <summary>The action's guide — {Name}.guide.md: prose for a learner, shown on the module's page after the
     /// action's Returns line and never read by the builder; falsy when the action has none.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.item.file.@this Guide => _guide ??= new(Module.Folder.Combine($"{Name}.guide.md"), App!.actor.list.System.Context!);
 }

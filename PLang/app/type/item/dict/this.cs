@@ -276,10 +276,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>A dict owns its child write — set the key (create or overwrite). A dict keys by
     /// name whether the leaf was <c>[k]</c> or <c>.k</c>, so <paramref name="isIndex"/> is moot.</summary>
-    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value, actor.context.@this context)
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex, object? value, actor.context.@this context)
     {
         Set(key, value);
-        return new(this);
+        return new(context.Ok(this));
     }
 
     /// <summary>

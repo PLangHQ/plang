@@ -278,8 +278,56 @@ public sealed partial class @this
     /// <summary>A type's property <paramref name="name"/> of C# class <paramref name="clr"/> — its
     /// type born from its name and class directly, since a type's facts are read while the set fills. A member a step
     /// calls with <paramref name="arguments"/> carries them.</summary>
+    // The members each class marks plang's ([LlmBuilder]) — what it declares and what it inherits, built on the first ask
+    // and kept: the one source a value reads its members from and a type's offer is made of.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, property.list.@this> _member = new();
+
+    /// <summary>The members <paramref name="clr"/> marks plang's, listed where they are declared. A method that asks
+    /// only for its asker's context is read as a property (<c>%p.relative%</c>); any other is called with its arguments
+    /// (<c>%x.replace("a", "b")%</c>).</summary>
+    internal property.list.@this Member(System.Type clr) => _member.GetOrAdd(clr, @class =>
+    {
+        var owner = _classed.GetValueOrDefault(@class)?.Name ?? app.type.item.@this.NameOf(@class);
+        var made = new property.list.@this();
+        var methods = new Queue<System.Reflection.MethodInfo>(@class.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void))
+            .OrderBy(m => m.MetadataToken));
+        foreach (var prop in @class.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            if (!prop.CanRead || prop.Name == "EqualityContract") continue;
+            if (!System.Attribute.IsDefined(prop, typeof(global::app.LlmBuilderAttribute))) continue;
+            while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
+                && m.MetadataToken < prop.GetMethod!.MetadataToken)
+                made.Add(Method(methods.Dequeue()));
+            made.Add(Property(prop.Name, prop.PropertyType, owner: owner, member: prop));
+        }
+        while (methods.TryDequeue(out var m)) made.Add(Method(m));
+        return made;
+
+        // A method as the catalog lists it: what it answers (an asynchronous one, what its task completes with), and —
+        // unless it asks only for its asker — what it is called with. The asker's context and a cancellation are the
+        // runtime's to give, never a step's argument.
+        property.@this Method(System.Reflection.MethodInfo m)
+        {
+            var answers = m.ReturnType is { IsGenericType: true } task
+                          && (task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
+                              || task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.ValueTask<>))
+                ? task.GenericTypeArguments[0] : m.ReturnType;
+            // a member answering through a Data (so a failure rides it) answers what the Data holds
+            if (answers is { IsGenericType: true } data && data.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
+                answers = data.GenericTypeArguments[0];
+            var parameters = m.GetParameters();
+            if (parameters is [{ ParameterType: var only }] && only == typeof(actor.context.@this))
+                return Property(m.Name, answers, owner: owner, member: m);
+            return Property(m.Name, answers, parameters
+                .Where(p => p.ParameterType != typeof(actor.context.@this) && p.ParameterType != typeof(System.Threading.CancellationToken))
+                .Select(p => Property(p.Name!, p.ParameterType, optional: p.IsOptional))
+                .ToList(), owner: owner, member: m);
+        }
+    });
+
     internal property.@this Property(string name, System.Type clr, System.Collections.Generic.IReadOnlyList<property.@this>? arguments = null,
-        bool optional = false, string? owner = null)
+        bool optional = false, string? owner = null, System.Reflection.MemberInfo? member = null)
     {
         var (typeName, kind) = PlangName(clr);
         return new property.@this
@@ -289,6 +337,7 @@ public sealed partial class @this
             Arguments = arguments,
             Nullable = optional,
             Owner = owner,
+            Member = member,
         };
     }
 

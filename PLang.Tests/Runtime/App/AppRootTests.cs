@@ -62,8 +62,8 @@ public class AppRootTests
 
     private sealed class CasedItem : global::app.type.item.@this
     {
-        public string Thing { get; set; } = "upper";
-        public string thing { get; set; } = "lower";
+        [global::app.LlmBuilder] public string Thing { get; set; } = "upper";
+        [global::app.LlmBuilder] public string thing { get; set; } = "lower";
     }
 
     // a write onto a plang value finds its member the way a read does: two members differing only by case is the error

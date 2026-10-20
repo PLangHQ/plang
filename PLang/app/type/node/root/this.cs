@@ -69,18 +69,18 @@ public sealed class @this : global::app.type.node.@this<global::app.type.@this, 
 
     /// <summary><c>format</c> written: the writing goal's format from now until it returns — its call frame's. A
     /// format no type reads is refused, never quiet text.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value,
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex, object? value,
         global::app.actor.context.@this context)
     {
         if (isIndex || !string.Equals(key, "format", System.StringComparison.OrdinalIgnoreCase))
             return await base.Set(key, isIndex, value, context);
         var text = value is global::app.data.@this d ? (await d.Value())?.ToString() : value?.ToString();
         if (string.IsNullOrWhiteSpace(text) || Named(text) is not { } kind)
-            throw new global::app.error.AppException(new global::app.error.@this(
+            return context.Error(new global::app.error.@this(
                 $"No format '{text}': name one a type reads — a MIME (application/plang), a name (json) or an extension (.md)", "FormatNotFound", 400));
         if (!context.call.SetFormat(kind))
             Format = kind;   // no goal running (the app starting): the app's own
-        return this;
+        return context.Ok(this);
     }
 
     // a format as it is written: its MIME when it has one (application/plang), else its name

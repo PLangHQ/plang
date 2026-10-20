@@ -24,15 +24,15 @@ public class @this : global::app.type.item.setting.@this
     /// <summary>This run's value for an option of the module: one of its own class's, else one any of its
     /// actions takes (<c>set %!http.setting.timeout% = 5</c> → <c>http.setting.timeout</c>, which each of those
     /// actions reads after its own key).</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex,
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex,
         object? value, global::app.actor.context.@this context)
     {
         if (Option(key) != null) return await base.Set(key, isIndex, value, context);
         var module = await context.App.module.Get(Module, context);
         if (!module.Success || await module.Value() is not { } found
             || !found.ActionNames.Any(name => found[name]?.Property[key] != null))
-            throw new System.NotSupportedException($"module '{Module}' has no option '{key}'");
+            return context.Error(new global::app.error.@this($"module '{Module}' has no option '{key}'", "NoOption", 404));
         await Write(key, value, context);
-        return this;
+        return context.Ok(this);
     }
 }

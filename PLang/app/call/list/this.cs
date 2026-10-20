@@ -71,6 +71,7 @@ public sealed partial class @this : global::app.type.item.@this
 
     /// <summary>What this stack captures (<c>%!app.call.setting%</c>), as its settings have it now — a read is
     /// a lookup in their cache, built again only after a write. A push reads it once.</summary>
+    [global::app.LlmBuilder]
     public setting.@this Setting => _settings().Of<setting.@this>();
 
     // An open diff scope (DiffScope) turns Diff on for as long as it's open, whatever the setting says.

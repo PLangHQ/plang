@@ -127,19 +127,19 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// path (<c>set %!app.goal.list.setting.os% = true</c> → <c>app.goal.list.setting.os</c>), where the next read
     /// builds it from. The answer is a copy with the option set; this instance — the one the settings handed out,
     /// read-only — is unchanged.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex,
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex,
         object? value, global::app.actor.context.@this context)
     {
         if (Option(key) == null && Switch(key)?.SetMethod == null)
-            throw new System.NotSupportedException($"setting '{Path}' has no option '{key}'");
+            return context.Error(new global::app.error.@this($"setting '{Path}' has no option '{key}'", "NoOption", 404));
         // onto a copy through the one convert walk (a choice from its text) — a value the option can't take is
         // refused before this run holds it
-        var raw = value is global::app.data.@this held ? await held.Value() : value;
+        var raw = value is global::app.data.@this given ? await given.Value() : value;
         var set = Copy();
         var applied = set.Apply(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { [key] = raw }, context);
-        if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
+        if (!applied.Success) return context.Error(applied.Error!);
         await Write(key, value, context);
-        return set;
+        return context.Ok(set);
     }
 
     /// <summary>This run's value for <paramref name="key"/> under this setting's path, in the writer's
