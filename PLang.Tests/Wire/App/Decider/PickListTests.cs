@@ -54,11 +54,11 @@ public class PickListTests
     // (decider.json) and stage.
     private static async Task<string> Rendered(string template, global::app.goal.@this goal, global::app.actor.context.@this context, int stage = 0)
     {
-        context.Variable.Set(new global::app.data.@this("goal", goal, context: context));
-        context.Variable.Set(new global::app.data.@this("modules", context.App.module.list, context: context));
+        await context.Variable.Set(new global::app.data.@this("goal", goal, context: context));
+        await context.Variable.Set(new global::app.data.@this("modules", context.App.module.list, context: context));
         var decider = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(DeciderJson)).RootElement;
-        context.Variable.Set(new global::app.data.@this("decider", Answer(decider, context), context: context));
-        context.Variable.Set(new global::app.data.@this("stage", stage, context: context));
+        await context.Variable.Set(new global::app.data.@this("decider", Answer(decider, context), context: context));
+        await context.Variable.Set(new global::app.data.@this("stage", stage, context: context));
         var render = new global::app.module.ui.Render(context)
         {
             Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(
@@ -251,9 +251,9 @@ public class PickListTests
         foreach (var entry in Golden())
         {
             var goal = Goal(entry, context);
-            context.Variable.Set(new global::app.data.@this("goal", goal, context: context));
-            context.Variable.Set(new global::app.data.@this("answer", Answer(entry.GetProperty("answer1"), context), context: context));
-            context.Variable.Set(new global::app.data.@this("popular", Popular(), context: context));
+            await context.Variable.Set(new global::app.data.@this("goal", goal, context: context));
+            await context.Variable.Set(new global::app.data.@this("answer", Answer(entry.GetProperty("answer1"), context), context: context));
+            await context.Variable.Set(new global::app.data.@this("popular", Popular(), context: context));
             await (await (await context.Action("build.pick(Goal=%goal%, Answer=%answer%, Popular=%popular%)")).Start(context)).IsSuccess();
             var question = await Rendered("decider2.template", (await context.Variable.Get("goal")).Peek() as global::app.goal.@this ?? goal, context);
             differ.AddRange(Differ(entry.GetProperty("goal").GetString()!, question, entry.GetProperty("question2")));

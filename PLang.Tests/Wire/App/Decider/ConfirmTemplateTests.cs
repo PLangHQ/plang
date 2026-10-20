@@ -34,8 +34,8 @@ public class ConfirmTemplateTests
         {
             new(1, "on.error", "RetryCount", "1", "call Flaky, on error retry once, ignore"),
         };
-        context.Variable.Set(new global::app.data.@this("numbers", numbers, context: context));
-        context.Variable.Set(new global::app.data.@this("modules", context.App.module.list, context: context));
+        await context.Variable.Set(new global::app.data.@this("numbers", numbers, context: context));
+        await context.Variable.Set(new global::app.data.@this("modules", context.App.module.list, context: context));
 
         var questions = System.Text.Json.Nodes.JsonNode.Parse(await Rendered("confirm.template", context))!.AsObject();
         var state = await Rendered("confirm.state.template", context);
@@ -57,8 +57,8 @@ public class ConfirmTemplateTests
         var numbers = golden.GetProperty("numbers").EnumerateArray().Select(n => new global::app.goal.step.unwritten.@this(
             n.GetProperty("step").GetInt32(), n.GetProperty("action").GetString()!, n.GetProperty("property").GetString()!,
             n.GetProperty("value").GetString()!, n.GetProperty("text").GetString()!)).ToList();
-        context.Variable.Set(new global::app.data.@this("numbers", numbers, context: context));
-        context.Variable.Set(new global::app.data.@this("modules", context.App.module.list, context: context));
+        await context.Variable.Set(new global::app.data.@this("numbers", numbers, context: context));
+        await context.Variable.Set(new global::app.data.@this("modules", context.App.module.list, context: context));
         return (await Rendered("confirm.state.template", context),
             System.Text.Json.Nodes.JsonNode.Parse(await Rendered("confirm.template", context))!, numbers);
     }
