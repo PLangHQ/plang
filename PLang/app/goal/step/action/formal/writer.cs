@@ -180,18 +180,6 @@ public sealed class Writer : IWriter
             case float f: Float(f); return;
             case double d: Double(d); return;
             case decimal m: Decimal(m); return;
-            // the other C# numbers: the small ones as an int, the wide ones as a long, past that their digits
-            case byte n: Int(n); return;
-            case sbyte n: Int(n); return;
-            case short n: Int(n); return;
-            case ushort n: Int(n); return;
-            case uint n: Long(n); return;
-            case ulong n when n <= long.MaxValue: Long((long)n); return;
-            case ulong n: String(n.ToString(CultureInfo.InvariantCulture)); return;
-            case System.Half n: Double((double)n); return;
-            case System.Int128 n: String(n.ToString(CultureInfo.InvariantCulture)); return;
-            case System.UInt128 n: String(n.ToString(CultureInfo.InvariantCulture)); return;
-            case System.Numerics.BigInteger n: String(n.ToString(CultureInfo.InvariantCulture)); return;
             case string s: String(s); return;
             case byte[] bytes: String(System.Convert.ToBase64String(bytes)); return;
             default:

@@ -50,9 +50,29 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The exact boxed CLR numeric value (int, uint, BigInteger, Half, decimal, …).</summary>
     public object BoxedValue => _value;
     public override bool IsLeaf => true;
-    /// <summary>A number writes its own value, the C# number it is held as; the writer decides how that looks (a
-    /// 128-bit integer past json's range as its digits).</summary>
-    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.Value(_value); return default; }
+    /// <summary>A number writes its value through the writer's number primitives, as the C# number it is held as: the
+    /// small widths as an int, the wide ones as a long while they fit, a half as a double; one no primitive holds
+    /// (past a long, a 128-bit or big integer) as its digits. The writer decides how each looks.</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w)
+    {
+        switch (_value)
+        {
+            case int n: w.Int(n); break;
+            case long n: w.Long(n); break;
+            case float n: w.Float(n); break;
+            case double n: w.Double(n); break;
+            case decimal n: w.Decimal(n); break;
+            case byte n: w.Int(n); break;
+            case sbyte n: w.Int(n); break;
+            case short n: w.Int(n); break;
+            case ushort n: w.Int(n); break;
+            case uint n: w.Long(n); break;
+            case ulong n when n <= long.MaxValue: w.Long((long)n); break;
+            case System.Half n: w.Double((double)n); break;
+            default: w.String(System.Convert.ToString(_value, System.Globalization.CultureInfo.InvariantCulture)!); break;
+        }
+        return default;
+    }
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
 

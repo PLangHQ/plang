@@ -80,19 +80,6 @@ public sealed class Writer : IWriter
             case float f: Float(f); return;
             case double d: Double(d); return;
             case decimal dec: Decimal(dec); return;
-            // the other C# numbers, each as json can hold it: the small ones as an int, the wide ones as a long while
-            // they fit, past that their digits (a json number would lose them)
-            case byte n: Int(n); return;
-            case sbyte n: Int(n); return;
-            case short n: Int(n); return;
-            case ushort n: Int(n); return;
-            case uint n: Long(n); return;
-            case ulong n when n <= long.MaxValue: Long((long)n); return;
-            case ulong n: String(n.ToString(System.Globalization.CultureInfo.InvariantCulture)); return;
-            case System.Half n: Double((double)n); return;
-            case System.Int128 n: String(n.ToString(System.Globalization.CultureInfo.InvariantCulture)); return;
-            case System.UInt128 n: String(n.ToString(System.Globalization.CultureInfo.InvariantCulture)); return;
-            case System.Numerics.BigInteger n: String(n.ToString(System.Globalization.CultureInfo.InvariantCulture)); return;
             case string s: String(s); return;
             case System.DateTime dt: DateTime(dt); return;
             case System.DateTimeOffset dto: DateTimeOffset(dto); return;
