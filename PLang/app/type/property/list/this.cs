@@ -110,15 +110,19 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
     /// (<paramref name="declared"/>, the catalogue's): an explicit null on an optional property, and a
     /// value equal to the property's default — its default applies, the same behaviour. A null named in
     /// <paramref name="operand"/> is a value of its own (a condition's <c>Right=null</c>) and stays.</summary>
-    public void Reduce(@this declared, System.Collections.Generic.IReadOnlySet<string> operand)
+    public async System.Threading.Tasks.ValueTask Reduce(@this declared, System.Collections.Generic.IReadOnlySet<string> operand,
+        global::app.actor.context.@this context)
     {
-        Rows.RemoveAll(row =>
+        var dropped = new System.Collections.Generic.List<Property>();
+        foreach (var row in Rows)
         {
-            if (declared[row.Name] is not { } slot) return false;
-            if (row.Value is null or { IsNull: true })
-                return (slot.Nullable || slot.HasDefault) && !operand.Contains(row.Name);
-            return slot.IsDefault(row.Value);
-        });
+            if (declared[row.Name] is not { } slot) continue;
+            if (row.Value is null or { IsNull: true }
+                    ? (slot.Nullable || slot.HasDefault) && !operand.Contains(row.Name)
+                    : await slot.IsDefault(row.Value, context))
+                dropped.Add(row);
+        }
+        Rows.RemoveAll(dropped.Contains);
     }
 
     /// <summary>The property named <paramref name="name"/>, or null.</summary>

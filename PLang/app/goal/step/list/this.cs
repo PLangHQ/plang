@@ -144,7 +144,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 continue;
             }
             var actions = (global::app.goal.step.action.list.@this)formal.Peek()!;
-            foreach (var action in actions.Items()) action.Reduce();
+            foreach (var action in actions.Items()) await action.Reduce(context);
             read[i] = actions;
         }
 

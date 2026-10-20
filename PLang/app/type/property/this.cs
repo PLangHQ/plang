@@ -119,7 +119,7 @@ public sealed class @this : global::app.type.item.note.IAbout
         if (Member is not PropertyInfo { CanWrite: true } slot)
             return context.Error(new global::app.error.@this(
                 $"{Name} is {owner.Type.Name}'s own — it can't be written", "OwnMember", 400));
-        var item = value is global::app.data.@this given ? await given.Value() : value as global::app.type.item.@this;
+        var item = value is global::app.data.@this data ? await data.Value() : value as global::app.type.item.@this;
         object? written = item ?? value;
         if (item != null && !slot.PropertyType.IsInstanceOfType(item))
         {
@@ -181,26 +181,16 @@ public sealed class @this : global::app.type.item.note.IAbout
     /// <summary>Is <paramref name="value"/> this property's default — a value the step could have left
     /// out (its default applies: the same behaviour)? A bool compares by its word, a number by its
     /// value, a variable by its name with or without its % signs, anything else by its text.</summary>
-    public bool IsDefault(global::app.type.item.@this? value)
+    /// <summary>Whether <paramref name="value"/> is this member's default: the value asks itself, against the default
+    /// made as this member's type. A member with no default has none to be.</summary>
+    public async System.Threading.Tasks.ValueTask<bool> IsDefault(global::app.type.item.@this? value, global::app.actor.context.@this context)
     {
         if (Default == null || value == null) return false;
-        var written = value.ToString();
-        // a value read from formal may still be its JSON slice: "A" is the text A
-        if (written.Length >= 2 && written[0] == '"' && written[^1] == '"')
-            written = System.Text.Json.JsonSerializer.Deserialize<string>(written) ?? written;
-        var fallback = Default switch
-        {
-            bool b => b ? "true" : "false",
-            System.IFormattable f => f.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
-            _ => Default.ToString() ?? "",
-        };
-        if (Default is bool) return string.Equals(written, fallback, System.StringComparison.OrdinalIgnoreCase);
-        if (Type.Name == "variable") return written.Trim('%') == fallback.Trim('%');
-        var invariant = System.Globalization.CultureInfo.InvariantCulture;
-        if (double.TryParse(written, System.Globalization.NumberStyles.Float, invariant, out var a)
-            && double.TryParse(fallback, System.Globalization.NumberStyles.Float, invariant, out var d))
-            return a == d;
-        return written == fallback;
+        // the value as it is read — a slot still its written form (a wire) opens through its door first
+        var data = new global::app.data.@this(Name, value, context: context);
+        var opened = await data.Value();
+        return data.Success && opened != null
+               && await opened.Compare(Type.Make(Default, context), context) == global::app.data.Comparison.Equal;
     }
 
     /// <summary>The value a program action holds, raw as loaded — a lazy wire/source, or the

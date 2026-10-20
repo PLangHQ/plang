@@ -3173,7 +3173,7 @@ class app.type.property.list.this : System.Collections.Generic.IEnumerable<app.t
   Item[System.Int32] : app.type.property.this { get; }
   Item[System.String] : app.type.property.this { get; }
   Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  Reduce(app.type.property.list.this declared, System.Collections.Generic.IReadOnlySet<System.String> operand) : System.Void
+  Reduce(app.type.property.list.this declared, System.Collections.Generic.IReadOnlySet<System.String> operand, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   Set(app.type.property.this property) : System.Void
   ctor()
 
@@ -3183,7 +3183,7 @@ class app.type.property.this : app.type.item.note.IAbout
   Default : System.Object { get; init; }
   HasDefault : System.Boolean { get; }
   Holding(app.type.item.this value) : app.type.property.this
-  IsDefault(app.type.item.this value) : System.Boolean
+  IsDefault(app.type.item.this value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.Boolean>
   IsInput : System.Boolean { get; init; }
   IsMethod : System.Boolean { get; }
   Name : System.String { get; init; }

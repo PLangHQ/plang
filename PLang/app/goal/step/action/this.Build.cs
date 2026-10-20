@@ -122,13 +122,13 @@ public partial class @this
     /// a value equal to its default (the same behaviour either way) — here and in every action this one
     /// holds: its properties' actions, its branch body. A condition's operand keeps its null: <c>Right=null</c>
     /// compares with null.</summary>
-    public void Reduce()
+    public async System.Threading.Tasks.ValueTask Reduce(global::app.actor.context.@this context)
     {
         if (Module[Name] is { } catalog)
-            Property.Reduce(catalog.Property, string.Equals(Module.Name, "condition", StringComparison.OrdinalIgnoreCase)
-                ? new HashSet<string> { "Left", "Right" } : new HashSet<string>());
-        foreach (var held in Held) held.Reduce();
+            await Property.Reduce(catalog.Property, string.Equals(Module.Name, "condition", StringComparison.OrdinalIgnoreCase)
+                ? new HashSet<string> { "Left", "Right" } : new HashSet<string>(), context);
+        foreach (var held in Held) await held.Reduce(context);
         for (int i = 0; i < Child.Count; i++)
-            foreach (var action in Child[i].Code.Items()) action.Reduce();
+            foreach (var action in Child[i].Code.Items()) await action.Reduce(context);
     }
 }

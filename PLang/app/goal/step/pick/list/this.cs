@@ -220,7 +220,7 @@ public sealed class @this
             var name = key[..key.LastIndexOf('.')];
             var built = every.Where(a => $"{a.Module.Name}.{a.Name}" == name).ToList();
             // a capture's options aren't the step's to give: none is held to it
-            if (built.Count > 0 && !built.Any(IsCapture) && built.All(a => a[property.Name] == null) && !property.IsDefault(value))
+            if (built.Count > 0 && !built.Any(IsCapture) && built.All(a => a[property.Name] == null) && !await property.IsDefault(value, context))
             {
                 var option = new global::app.goal.step.action.formal.Writer(context.App.type.list);
                 await option.Option(property.Name, value, context);
