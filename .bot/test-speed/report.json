@@ -146,9 +146,9 @@
         }
       ],
       "after": {
-        "status": "section 15 committed on test-speed",
-        "health": "C# green but Wire's six carried (baseline); plang same 11 names",
-        "notes": "Birth ~88 us / ~30 KB shared; ~1,300 us fresh. test-speed.md sections 12-15."
+        "status": "sections 16-18 committed on test-speed",
+        "health": "C# green but Wire's six carried (baseline); plang same 11 names on every step",
+        "notes": "Birth ~18 KB. Small app end to end ~1.5 ms / ~290 KB (was 6.1 ms / ~780 KB): goals shared across apps, class facts once per process, list reads lock-free. test-speed.md sections 12-18."
       }
     }
   ]
