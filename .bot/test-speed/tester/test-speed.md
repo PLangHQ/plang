@@ -155,6 +155,50 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 9. Toward the floor: a birth at 0.4 ms, 0.2 MB (aimed at a server: thousands of users)
+
+Each step below was found by measuring: `dotnet-trace` CPU sampling of a whole suite (callers summed by a script),
+and allocation sampling of 2,000 shared births summed by object type.
+
+| step | what was found | fix |
+|---|---|---|
+| fresh birth regressed (18 ms) | the facts made a throwaway format kind per `[Format]` to learn its keys | a format's keys come from its attribute |
+| facts walks | 2,355 of PLang's 3,311 classes are compiler-made (closures, state machines) | the facts skip classes with `<` in the name |
+| 9 threads read the same facts at once | a suite's (or a server's) first wave each read the facts in full (~2.6 s CPU) | each fact read once under one gate; the rest wait for that answer |
+| reader registry | each app walked every class on its first read, and for each serializer folder walked all classes again; a static `Read` was called through `MethodInfo.Invoke` per read | readers come from the facts; a static `Read` is a delegate bound once |
+| `text`'s implicit operator | every C# string turned into `text` read `text`'s `[Format]` and made a format kind (2% of a suite's CPU) | a class-built type reads its own format when its kind is first asked |
+| empty kinds (14% of birth allocation) | every type entry was born with an empty kind, itself a full type object | made when the type's kind is first asked |
+| binder delegates (13%) | each type object bound two delegates at birth, empty kinds included | bound on first use |
+| `MemoryCache` (6%) | each app opened a named memory cache with expiry buckets and timers | opened when something is first cached |
+| `Claims` iterators (6%) | a type's names walked by iterator three times while indexing | an array the facts read once |
+| name index (11%) | each app built an immutable name and class index | the facts' index (name or class to the entry's place) over each app's entry array |
+
+**Birth, `new app` alone** (3 runs × 100, load ~6):
+
+| | median | CPU / birth (with Testing + Dispose) | alloc |
+|---|---|---|---|
+| shared facts | **0.4 ms** (min 0.3) | 0.8 ms | **0.2 MB** |
+| fresh (the CLI's one app) | 6.2 ms | 8.5 ms | 1.1 MB |
+
+**Suites** (the sweep, all at once, load ~5): Types 7.5 s, Data 7.6 s, Runtime 9.5 s, Wire 19 s, Modules 21.5 s (§7:
+18 / 17 / 17 / — / 40). `plang --test` 8.2 s (17 – 18 before).
+
+What a shared birth still allocates (~170 KB, by share): the 131 type entries 20%; `object[]` 7%; lock objects 7%;
+`ConcurrentDictionary<string, data>` tables 7% (variable stores, made at birth at default capacity); the code
+registry's `ConcurrentDictionary<string, ICode>` 3%; reflection at birth (`CustomAttributeRecord`, method stubs) 4%;
+module objects 3%.
+
+**Cleanup for the report (Ingi):** plang walks an assembly's classes (`Assembly.GetTypes`, .NET's
+`RuntimeModule.GetDefinedTypes` underneath) from several places, each its own way. Each is a code fact and belongs in
+the one facts object (`app.assembly`):
+- `type.kind.pair.list.Find`: each format's write pairs, per app, on first output.
+- `actor.setting.Index`: the setting classes.
+- `module.list.type.query.Known`: a static walk.
+- `choice.set.family`'s template branch: walks the classes for template kinds.
+- `type.item.@this.NameOf(assembly, namespace)`: `GetType` per call.
+- `type.list.@this.PlangName`'s `Owns` walk: every entry per raw C# shape named (not a class walk, but the same
+  shape).
+
 ## 8. Made when asked: a birth at ~1.8 ms, 0.5 MB
 
 What a shared birth made, with time and memory per section (load ~6, 100 births):
