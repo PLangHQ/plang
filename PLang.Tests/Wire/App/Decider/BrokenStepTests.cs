@@ -60,6 +60,32 @@ public class BrokenStepTests : System.IAsyncDisposable
         await Assert.That(goal.Step[1].Code.Count).IsEqualTo(0);
     }
 
+    // A refused step's causes are the errors that refused it, each whole with its own key: an `on error key` and the
+    // start screen see what went wrong. The step error names the step; its causes don't repeat it.
+    [Test]
+    public async Task ARefusedStepsCause_KeepsItsOwnKey()
+    {
+        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
+        var (goal, _) = await Built(os, "Start\n- condition.else()\n");
+
+        var error = goal.Step[0].Error;
+        await Assert.That(error).IsNotNull();
+        await Assert.That(error!.list.Any(c => c.Key == "ElseWithoutIf")).IsTrue();
+        await Assert.That(error.list.Any(c => c.Key == "StepRefused")).IsFalse();
+    }
+
+    [Test]
+    public async Task ARefusedStepsCauses_DontRepeatTheStep()
+    {
+        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
+        var (goal, _) = await Built(os, "Start\n- write out \"b\"\n");
+
+        var error = goal.Step[0].Error!;
+        await Assert.That(error.Message).Contains("write out");
+        await Assert.That(error.list.Any(c => c.Message.Contains("has no entry"))).IsTrue();
+        await Assert.That(error.list.Any(c => c.Message.Contains("write out"))).IsFalse();
+    }
+
     [Test]
     public async Task TheRefusalOfAnAnswer_NamesTheGoalItIsAbout()
     {

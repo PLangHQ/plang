@@ -105,8 +105,12 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             else if (!lines.TryAdd(i, line)) whole.Add($"step [{i}] is answered twice");
         }
 
-        var refused = new SortedDictionary<int, List<string>>();
-        void Refuse(int i, string why) { if (!refused.TryGetValue(i, out var p)) refused[i] = p = new(); p.Add(why); }
+        // each step's causes, whole: an error that refused it keeps its own key; a reason this read gives keys its check
+        var refused = new SortedDictionary<int, List<global::app.error.@this>>();
+        void Refuse(int i, global::app.error.@this cause) { if (!refused.TryGetValue(i, out var p)) refused[i] = p = new(); p.Add(cause); }
+        // how a cause reads in the retry: under its step, with the reasons it holds
+        string Said(int i, global::app.error.@this cause) => $"step {i} (\"{this[i].Text}\") — {cause.Message}"
+            + (cause.list is { Count: > 0 } inner ? $": {string.Join("; ", inner.Select(c => c.FixSuggestion ?? c.Message))}" : "");
         string? key = null;
         // numbers the words don't write as digits, still to be confirmed by the decider
         var unconfirmed = new List<global::app.goal.step.unwritten.@this>();
@@ -126,21 +130,21 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             }
             // a step written in formal is its own line: read as written, whatever the answer says
             string? line = step.IsFormal ? step.Text : null;
-            if (line == null && !lines.TryGetValue(i, out line)) { Refuse(i, $"step {i} (\"{step.Text}\") has no entry"); continue; }
+            if (line == null && !lines.TryGetValue(i, out line)) { Refuse(i, new global::app.error.@this("has no entry", "StepUnanswered", 400)); continue; }
             var formal = await new global::app.goal.step.action.formal.Reader(step, modules).Read(line, context);
             if (!formal.Success && step.IsFormal)
             {
-                Refuse(i, $"step {i} is written in formal and does not read: {formal.Error!.FixSuggestion ?? formal.Error.Message}");
+                Refuse(i, new global::app.error.@this("is written in formal and does not read", "FormalUnread", 400) { list = [formal.Error!] });
                 continue;
             }
             if (!formal.Success)
             {
-                Refuse(i, $"step {i} does not parse: {formal.Error!.FixSuggestion ?? formal.Error.Message} — in: [{i}] {line.Trim()}");
+                Refuse(i, new global::app.error.@this($"does not parse, in: [{i}] {line.Trim()}", "StepUnread", 400) { list = [formal.Error!] });
                 var named = Named.Matches(line).Select(m => (m.Groups[1].Value, m.Groups[2].Value))
                     .Where(a => modules.Items().Any(m => string.Equals(m.Name, a.Item1, System.StringComparison.OrdinalIgnoreCase)
                         && m[a.Item2] != null))
                     .Select(a => $"{a.Item1}.{a.Item2}");
-                foreach (var why in step.Pick.Unlisted(named)) Refuse(i, why);
+                foreach (var why in step.Pick.Unlisted(named)) Refuse(i, new global::app.error.@this(why, "ActionUnlisted", 400));
                 continue;
             }
             var actions = (global::app.goal.step.action.list.@this)formal.Peek()!;
@@ -180,8 +184,8 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                     var inside = action.Child.Items().SelectMany(c => c.Code.Own).ToList();
                     var spare = below.ToList();
                     if (inside.All(spare.Remove)) action.Child = new @this(action.Child.Type);
-                    else Refuse(i, $"step {i}'s body is the steps indented under it ({string.Join(", ", body.Items().Select(b => b.Index))}); " +
-                                   $"the builder places them — write step {i} without {{ }} and each indented step on its own line");
+                    else Refuse(i, new global::app.error.@this($"step {i}'s body is the steps indented under it ({string.Join(", ", body.Items().Select(b => b.Index))}); " +
+                                   $"the builder places them — write step {i} without {{ }} and each indented step on its own line", "BodyIndented", 400));
                 }
             }
             step.Code = actions;
@@ -189,26 +193,26 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             if (invalid != null)
             {
                 key ??= invalid.Key == "ElseWithoutIf" ? invalid.Key : null;
-                foreach (var cause in invalid.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
+                foreach (var cause in invalid.list) Refuse(i, cause);
             }
             // the answer holds what the step's words say — checked on the answer as written, before the
             // handlers' Build may change it
-            foreach (var uncovered in await step.Cover(check)) Refuse(i, $"step {i} (\"{step.Text}\") — {uncovered}");
+            foreach (var uncovered in await step.Cover(check)) Refuse(i, new global::app.error.@this(uncovered, "NotCovered", 400));
             // a number the words don't write as digits: confirmed by the decider, or asked
             var asked = false;
             foreach (var number in await step.Unwritten(check))
             {
                 if (confirmed == null) { unconfirmed.Add(number); asked = true; }
-                else if (!await number.Given(confirmed, check)) Refuse(i, $"step {i} (\"{step.Text}\") — {number.Message}");
+                else if (!await number.Given(confirmed, check)) Refuse(i, new global::app.error.@this(number.Message, "UnwrittenNumber", 400));
             }
             // only code that judged itself sound is built
             if (invalid == null && await actions.Build(check) is { } failed)
-                foreach (var cause in failed.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
+                foreach (var cause in failed.list) Refuse(i, cause);
             // a step written in formal was asked of no decider: there are no picks to agree with
             var (disagree, warnings) = step.IsFormal
                 ? (new List<string>(), new List<global::app.warning.@this>()) : await step.Pick.Agree(actions, context);
-            foreach (var why in disagree) Refuse(i, why);
-            foreach (var declined in await step.Scope(scratch)) Refuse(i, $"step {i} (\"{step.Text}\") — {declined.Message}");
+            foreach (var why in disagree) Refuse(i, new global::app.error.@this(why, "PickDisagrees", 400));
+            foreach (var declined in await step.Scope(scratch)) Refuse(i, declined);
             if (refused.ContainsKey(i) || asked) step.Code = new global::app.goal.step.action.list.@this(step.Code.Type);   // open again
             else
             {
@@ -225,7 +229,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         for (int i = 0; i < CountRaw; i++)
             this[i].Error = refused.TryGetValue(i, out var why)
                 ? new global::app.error.@this($"step {i} (\"{this[i].Text}\") is broken", "StepBroken", 400)
-                    { list = why.Select(w => new global::app.error.@this(w, "StepRefused", 400)).ToList() }
+                    { list = why }
                 : null;
 
         if (whole.Count == 0 && refused.Count == 0 && unconfirmed.Count == 0) return null;
@@ -242,8 +246,8 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 },
             };
         // among other problems, an unconfirmed number is refused with them
-        foreach (var number in unconfirmed) Refuse(number.Step, $"step {number.Step} (\"{number.Text}\") — {number.Message}");
-        var problems = whole.Concat(refused.Values.SelectMany(p => p)).ToList();
+        foreach (var number in unconfirmed) Refuse(number.Step, new global::app.error.@this(number.Message, "UnwrittenNumber", 400));
+        var problems = whole.Concat(refused.SelectMany(p => p.Value.Select(cause => Said(p.Key, cause)))).ToList();
         return new global::app.error.@this(string.Join("; ", problems), key ?? "StepsRefused", 400)
         {
             // the goal whose steps these are: a build that ends on it names the goal by its path

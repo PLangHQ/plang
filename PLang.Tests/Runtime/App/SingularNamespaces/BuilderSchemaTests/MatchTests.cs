@@ -122,7 +122,7 @@ public class MatchTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("StepsRefused");
-        await Assert.That(result.Error.Message).Contains("step 1 (\"write out \"b\"\") has no entry");
+        await Assert.That(result.Error.Message).Contains("step 1 (\"write out \"b\"\") — has no entry");
         await Assert.That(result.Error.Message).Contains("your answer writes 1, which the step doesn't");
     }
 
@@ -386,7 +386,8 @@ public class MatchTests
         var result = await Match(goal, "[0] output.write(Data=\"a\")\n[1] ", app.actor.list.System.Context);
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Message).Contains("step 1 does not parse: a step holds at least one action");
+        await Assert.That(result.Error!.Message).Contains("— does not parse, in: [1]");
+        await Assert.That(result.Error!.Message).Contains("a step holds at least one action");
     }
 
     [Test]

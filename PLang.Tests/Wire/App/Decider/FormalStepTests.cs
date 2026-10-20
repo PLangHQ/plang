@@ -50,7 +50,7 @@ public class FormalStepTests
 
         var refused = await Read(goal, "", context);
 
-        await Assert.That(refused?.Message).Contains("step 0 is written in formal and does not read");
+        await Assert.That(refused?.Message).Contains("step 0 (\"output.shout(Data=\"a\")\") — is written in formal and does not read");
         await Assert.That(refused?.Message).Contains("shout");
         await Assert.That(goal.Step[0].Code.Count).IsEqualTo(0);
     }
