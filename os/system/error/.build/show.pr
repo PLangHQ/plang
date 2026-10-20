@@ -65,12 +65,11 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
-      "text": "render %template%, error=%error%, on error 404 call Fallback then retry once, write to %text%",
+      "text": "ui.render(Template=%template%, Parameter={error: %error%}); on.error(Status=404, Recovery=[goal.call(Name=\"Fallback\")], RetryCount=1, Order=\"GoalFirst\"); variable.set(Name=%text%, Value=%!data%)",
       "line": {
         "number": 6
       },
@@ -134,15 +133,6 @@
                         "name": "goal"
                       },
                       "value": "Fallback"
-                    }
-                  ],
-                  "default": [
-                    {
-                      "name": "parallel",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": false
                     }
                   ]
                 }
@@ -224,14 +214,7 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 1's saved code no longer holds — rebuilt: step 1 'render %template%, error=%error%, on error 404 call Fallback then retry once, write to %text%': on.error: 'StatusCode' is not a property of this action. Its properties are: Status, Key, Message, RetryCount, RetryOver, Order, Ignore, Recovery.; on.error: the default frozen for 'ignoreerror' is no option of this action any more.; variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
@@ -271,8 +254,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [
@@ -332,12 +314,11 @@
               "key": "Reopened",
               "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %template% = \"/system/error/400.txt\"': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
-          ],
-          "waitForExecution": true
+          ]
         },
         {
           "index": 1,
-          "text": "if %error.status% >= 500, call Runtime",
+          "text": "condition.if(Left=%error.status%, Operator=\">=\", Right=500) { goal.call(Name=\"Runtime\") }",
           "line": {
             "number": 12
           },
@@ -402,35 +383,18 @@
                           },
                           "value": "Runtime"
                         }
-                      ],
-                      "default": [
-                        {
-                          "name": "parallel",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": false
-                        }
                       ]
                     }
-                  ],
-                  "waitForExecution": true
+                  ]
                 }
               ]
             }
-          ],
-          "waitForExecution": true
+          ]
         }
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/system/error/Show.goal",
-      "prPath": "/system/error/.build/show.pr",
-      "hash": "f0f9913395bc311cc8cdd165d30d6b6304caf1fffed5155680e9f455de10a2f3",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": true,
-      "isTest": false
+      "hash": "e5577fda59c9bfb473ffb7c856c408f3aa0537b236beb8e264ac7fd82038f334"
     },
     {
       "name": "Runtime",
@@ -487,27 +451,15 @@
               "key": "Reopened",
               "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %template% = \"/system/error/500.txt\"': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
-          ],
-          "waitForExecution": true
+          ]
         }
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/system/error/Show.goal",
-      "prPath": "/system/error/.build/show.pr",
-      "hash": "611a6eef195e5b9f76992f1ffd7b24b4b0907f4902a59255799195c736d41c12",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": true,
-      "isTest": false
+      "hash": "611a6eef195e5b9f76992f1ffd7b24b4b0907f4902a59255799195c736d41c12"
     }
   ],
   "visibility": "Public",
-  "path": "/system/error/Show.goal",
-  "prPath": "/system/error/.build/show.pr",
-  "hash": "b7cd51d9d387404ec48ddc48a735cd59e384c5a63baf1b81a1752d908d9dc205",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false
+  "file": "Show.goal",
+  "hash": "e6c3d12d2266b134d8832f25c7ffc65a3b5942df9d81df3de2b585d501434710"
 }

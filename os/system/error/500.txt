@@ -82,7 +82,7 @@ For C# developers:
 {%- endif %}
 {%- for cause in error.list %}
 
---- Error during error handling [{{ forloop.index }}] ---
+--- Caused by [{{ forloop.index }}] ---
     {{ cause.Key }} ({{ cause.status.code }}): {{ cause.Message }}
 {%- if cause.Step %}
     at {{ cause.Step.Goal.Path }}:{{ cause.Step.Line.Number }} - {{ cause.Step.Text }}

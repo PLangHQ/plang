@@ -88,7 +88,7 @@
     },
     {
       "index": 1,
-      "text": "call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%",
+      "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"goalHeader\", goal: %goal%})",
       "line": {
         "number": 8
       },
@@ -111,22 +111,7 @@
               },
               "value": [{"name":"kind","type":{"name":"text"},"value":"goalHeader"},{"name":"goal","type":{"name":"item","template":"plang"},"value":"%goal%","variable":[{"text":"%goal%","code":[{"variable":"goal"}]}]}]
             }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
           ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 1 uses goal.call, which the decider was not sure of (0.85)"
         }
       ]
     },
@@ -444,7 +429,7 @@
     },
     {
       "index": 6,
-      "text": "foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%",
+      "text": "loop.foreach(Collection=%parentGoal.Child%); goal.call(Name=\"BuildSubGoal\", Parameter={subGoal: %item%})",
       "line": {
         "number": 14
       },
@@ -512,15 +497,6 @@
                 "name": "list"
               },
               "value": [{"name":"subGoal","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
-            }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
             }
           ]
         }
@@ -1006,7 +982,7 @@
     },
     {
       "index": 13,
-      "text": "build.fold Goal=%goal%, on error call HandleBuildFailure",
+      "text": "build.fold(Goal=%goal%); on.error(Recovery=[goal.call(Name=\"HandleBuildFailure\")])",
       "line": {
         "number": 24
       },
@@ -1057,15 +1033,6 @@
                         "name": "goal"
                       },
                       "value": "HandleBuildFailure"
-                    }
-                  ],
-                  "default": [
-                    {
-                      "name": "parallel",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": false
                     }
                   ]
                 }
@@ -1286,7 +1253,7 @@
         },
         {
           "index": 2,
-          "text": "call Decide",
+          "text": "goal.call(Name=\"/system/builder/BuildGoal/Decide\")",
           "line": {
             "number": 37
           },
@@ -1302,22 +1269,13 @@
                   },
                   "value": "/system/builder/BuildGoal/Decide"
                 }
-              ],
-              "default": [
-                {
-                  "name": "parallel",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
-                }
               ]
             }
           ]
         },
         {
           "index": 3,
-          "text": "call Properties",
+          "text": "goal.call(Name=\"/system/builder/BuildGoal/Properties\")",
           "line": {
             "number": 38
           },
@@ -1333,22 +1291,13 @@
                   },
                   "value": "/system/builder/BuildGoal/Properties"
                 }
-              ],
-              "default": [
-                {
-                  "name": "parallel",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
-                }
               ]
             }
           ]
         },
         {
           "index": 4,
-          "text": "build.match(Goal=%goal%, Answer=%answer%); on.error(Key=\"UnwrittenNumber\", Recovery=[goal.call(Name=\"ConfirmNumbers\")]); on.error(Key=\"ElseWithoutIf\", Recovery=[goal.call(Name=\"SourceError\")]); on.error(Recovery=[goal.call(Name=\"FixSteps\")])",
+          "text": "build.match(Goal=%goal%, Answer=%answer%); on.error(Recovery=[goal.call(Name=\"ConfirmNumbers\")], Key=\"UnwrittenNumber\"); on.error(Key=\"ElseWithoutIf\", Recovery=[goal.call(Name=\"SourceError\")]); on.error(Recovery=[goal.call(Name=\"FixSteps\")])",
           "line": {
             "number": 39
           },
@@ -1400,13 +1349,6 @@
               "name": "error",
               "property": [
                 {
-                  "name": "Key",
-                  "type": {
-                    "name": "text"
-                  },
-                  "value": "UnwrittenNumber"
-                },
-                {
                   "name": "Recovery",
                   "type": {
                     "name": "list",
@@ -1424,18 +1366,16 @@
                           },
                           "value": "ConfirmNumbers"
                         }
-                      ],
-                      "default": [
-                        {
-                          "name": "parallel",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": false
-                        }
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "UnwrittenNumber"
                 }
               ],
               "default": [
@@ -1477,15 +1417,6 @@
                           },
                           "value": "SourceError"
                         }
-                      ],
-                      "default": [
-                        {
-                          "name": "parallel",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": false
-                        }
                       ]
                     }
                   ]
@@ -1523,15 +1454,6 @@
                           },
                           "value": "FixSteps"
                         }
-                      ],
-                      "default": [
-                        {
-                          "name": "parallel",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": false
-                        }
                       ]
                     }
                   ]
@@ -1552,7 +1474,7 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "00f17ac1a74715655db1ce9f1fe9ebd980b19e50098a297e61d0b016e27c65a3"
+      "hash": "29b5327e43206d63bed2ea7f7f6a79d565b5e74428efa5e80da0b96f9432d061"
     },
     {
       "name": "FixSteps",
@@ -1560,7 +1482,7 @@
       "step": [
         {
           "index": 0,
-          "text": "call /system/builder/EmitBuildEvent kind=\"properties-rejected\", errorMessage=%!error.Message%",
+          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"properties-rejected\", errorMessage: %!error.Message%})",
           "line": {
             "number": 46
           },
@@ -1582,15 +1504,6 @@
                     "name": "list"
                   },
                   "value": [{"name":"kind","type":{"name":"text"},"value":"properties-rejected"},{"name":"errorMessage","type":{"name":"item","template":"plang"},"value":"%!error.Message%","variable":[{"text":"%!error.Message%","code":[{"variable":"!error"},{"property":"Message"}]}]}]
-                }
-              ],
-              "default": [
-                {
-                  "name": "parallel",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
                 }
               ]
             }
@@ -1828,7 +1741,7 @@
         },
         {
           "index": 3,
-          "text": "build.match(Goal=%goal%, Answer=%answer%); on.error(Key=\"UnwrittenNumber\", Recovery=[goal.call(Name=\"ConfirmNumbers\")])",
+          "text": "build.match(Goal=%goal%, Answer=%answer%); on.error(Recovery=[goal.call(Name=\"ConfirmNumbers\")], Key=\"UnwrittenNumber\")",
           "line": {
             "number": 49
           },
@@ -1880,13 +1793,6 @@
               "name": "error",
               "property": [
                 {
-                  "name": "Key",
-                  "type": {
-                    "name": "text"
-                  },
-                  "value": "UnwrittenNumber"
-                },
-                {
                   "name": "Recovery",
                   "type": {
                     "name": "list",
@@ -1904,18 +1810,16 @@
                           },
                           "value": "ConfirmNumbers"
                         }
-                      ],
-                      "default": [
-                        {
-                          "name": "parallel",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": false
-                        }
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "UnwrittenNumber"
                 }
               ],
               "default": [
@@ -1933,7 +1837,7 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "2b98366c0db2a16a1c4cbb3d75aafbd92c6dbad620c4be38c16e9bc23fb8ab48"
+      "hash": "af8263debe8f0348988028702a76d5cb83a8f623bea932fb2a1ebb8d4c0df019"
     },
     {
       "name": "ConfirmNumbers",
@@ -2397,7 +2301,7 @@
         },
         {
           "index": 1,
-          "text": "call /system/builder/EmitBuildEvent kind=\"subGoalHeader\", goal=%goal%",
+          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"subGoalHeader\", goal: %goal%})",
           "line": {
             "number": 66
           },
@@ -2419,15 +2323,6 @@
                     "name": "list"
                   },
                   "value": [{"name":"kind","type":{"name":"text"},"value":"subGoalHeader"},{"name":"goal","type":{"name":"item","template":"plang"},"value":"%goal%","variable":[{"text":"%goal%","code":[{"variable":"goal"}]}]}]
-                }
-              ],
-              "default": [
-                {
-                  "name": "parallel",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
                 }
               ]
             }
@@ -2902,7 +2797,7 @@
         },
         {
           "index": 7,
-          "text": "call /system/builder/EmitBuildEvent kind=\"subGoalDone\", goal=%goal%, subgoalMs=%subgoalMs%",
+          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"subGoalDone\", goal: %goal%, subgoalMs: %subgoalMs%})",
           "line": {
             "number": 72
           },
@@ -2925,15 +2820,6 @@
                   },
                   "value": [{"name":"kind","type":{"name":"text"},"value":"subGoalDone"},{"name":"goal","type":{"name":"item","template":"plang"},"value":"%goal%","variable":[{"text":"%goal%","code":[{"variable":"goal"}]}]},{"name":"subgoalMs","type":{"name":"item","template":"plang"},"value":"%subgoalMs%","variable":[{"text":"%subgoalMs%","code":[{"variable":"subgoalMs"}]}]}]
                 }
-              ],
-              "default": [
-                {
-                  "name": "parallel",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
-                }
               ]
             }
           ]
@@ -2941,7 +2827,7 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "330882f4fc67b23907129602f41b4374ef25cd9289876d75c0e888cd70b9ffe8"
+      "hash": "0e7b5b2dc2bb626ea03d2fccbcb0fe1c543d91c667a12de0e82b5c70eee4c9b2"
     },
     {
       "name": "SourceError",
@@ -3329,7 +3215,7 @@
       "step": [
         {
           "index": 0,
-          "text": "call /system/builder/EmitBuildEvent kind=\"goalError\", goal=%goal%, errorMessage=%!error.Message%, fix=%!error.FixSuggestion%",
+          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"goalError\", goal: %goal%, errorMessage: %!error.Message%, fix: %!error.FixSuggestion%})",
           "line": {
             "number": 87
           },
@@ -3351,15 +3237,6 @@
                     "name": "list"
                   },
                   "value": [{"name":"kind","type":{"name":"text"},"value":"goalError"},{"name":"goal","type":{"name":"item","template":"plang"},"value":"%goal%","variable":[{"text":"%goal%","code":[{"variable":"goal"}]}]},{"name":"errorMessage","type":{"name":"item","template":"plang"},"value":"%!error.Message%","variable":[{"text":"%!error.Message%","code":[{"variable":"!error"},{"property":"Message"}]}]},{"name":"fix","type":{"name":"item","template":"plang"},"value":"%!error.FixSuggestion%","variable":[{"text":"%!error.FixSuggestion%","code":[{"variable":"!error"},{"property":"FixSuggestion"}]}]}]
-                }
-              ],
-              "default": [
-                {
-                  "name": "parallel",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
                 }
               ]
             }
@@ -3569,7 +3446,7 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "7cc7495e97295315ff0409e4eeee37a6d2d113ef7eb2cf6e0efa88d1bdd95201"
+      "hash": "e990e47c7227adab84f076feea61f7331cfaf03b628969906a6e4334e576c743"
     },
     {
       "name": "LeaveBroken",
@@ -3642,5 +3519,5 @@
   ],
   "visibility": "Public",
   "file": "Start.goal",
-  "hash": "cba1c94e62c6f472883f9c1f4d992ee5bc9f6dc20c649cd1a8f63dbbdf05518b"
+  "hash": "0034dfbc398479278a9f646a27773cb3f546d19e9ef2ff80d90ab084cd23910f"
 }

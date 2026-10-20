@@ -106,7 +106,7 @@ public class ErrorShowTests : System.IAsyncDisposable
         await Assert.That(text).Contains("Check the key");
         await Assert.That(text).Contains("https://docs.example.com/api");
         await Assert.That(text).Contains("InvalidOperationException: Boom");
-        await Assert.That(text).Contains("Error during error handling [1]");
+        await Assert.That(text).Contains("Caused by [1]");
         await Assert.That(text).Contains("RetryFailed (500): retry failed too");
     }
 

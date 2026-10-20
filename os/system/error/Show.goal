@@ -3,13 +3,13 @@
 / inside a handler; at the top level the app hands in the failed run's error.
 Show
 - set %template% = "/system/error/%error.status.code%.txt"
-- render %template%, error=%error%, on error 404 call Fallback then retry once, write to %text%
+- ui.render(Template=%template%, Parameter={error: %error%}); on.error(Status=404, Recovery=[goal.call(Name="Fallback")], RetryCount=1, Order="GoalFirst"); variable.set(Name=%text%, Value=%!data%)
 - write %text% to error channel
 
 / No template for this code: its family's — 400.txt below 500, 500.txt from 500 up.
 Fallback
 - set %template% = "/system/error/400.txt"
-- if %error.status% >= 500, call Runtime
+- condition.if(Left=%error.status%, Operator=">=", Right=500) { goal.call(Name="Runtime") }
 
 Runtime
 - set %template% = "/system/error/500.txt"
