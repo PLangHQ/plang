@@ -27,7 +27,15 @@ Decisions are numbered per branch in `.bot/item-doors/architect/summary.md`.
 - Tests: C# green except Wire's six snapshot/resume reds (red before the branch); plang 277 pass, the same 11
   long-standing reds, 12 stale. Surface re-pinned under 107 and 844.
 
+- **Stage 3 begun (129)**: PLNG006 (dab4a8459), a generator error for a value written around its output kind
+  (`x.Output(writer, …)` on an item other than this/base, outside the door and a pair's own value); it runs on PLang
+  and every test project. The record door (d5f3f500e): `BeginRecord(record, mode, context, layer)`/`EndRecord`, async,
+  empty by default; `EmitsSchema` gone; plang writes with its own writer (`wire/kind/plang/writer.cs`), json.Writer is
+  item's json only.
+
 ## Next
+- JSON Schema as pairs (129 #2) waits on Ingi: `pair.list[System.Type]`, `json.Writer(utf8, kind)`,
+  `[Format("schema")]` on type. The llm table (#3) waits on the llm-writer merge.
 - **(c2) the identity pair** — waits on Ingi's yes to the `Written` virtual on item. With it: wire's two Owns sites
   go, the writers compare their own Kind, `Owns` leaves kind (locked removal, plan-approved; re-pin citing 107).
 - The memory as `list<variable>` (103) waits on Ingi.
