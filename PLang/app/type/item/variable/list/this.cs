@@ -64,6 +64,13 @@ public partial class @this
         _variables["NowUtc"] = new data.DynamicData("NowUtc", asker => asker.Ok(DateTimeOffset.UtcNow), context, datetime);
         _variables["GUID"] = new data.DynamicData("GUID", asker => asker.Ok(Guid.NewGuid()), context,
             context.App.type.list[typeof(app.type.item.guid.@this)]);
+        // %MyIdentity% — the app's own identity; %Identity% — who the asking actor acts for: its identity's public key
+        // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read from the asker's
+        // actor, so a setDefault or rename is reflected, and born with the memory — not set — so an actor born at any
+        // time has them at once and nothing bound to a variable's set runs for them.
+        _variables["MyIdentity"] = new data.DynamicData("MyIdentity", asker => asker.Ok(asker.Actor.DefaultIdentity), context);
+        _variables["Identity"] = new data.DynamicData("Identity",
+            asker => asker.Ok((asker.Actor.Identity ?? asker.Actor.DefaultIdentity)?.PublicKey), context);
     }
 
     /// <summary>

@@ -108,17 +108,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Permission = new permission.@this(this);
         _channels = new global::app.channel.list.@this(app, this);
         _tasks = new global::app.task.list.@this(this);
-
-        // %MyIdentity% — the app's own identity; %Identity% — who this actor acts for: its identity's public key
-        // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read, so a
-        // setDefault or rename is reflected.
-        Context.Variable.Set("MyIdentity", new data.DynamicData("MyIdentity", asker => asker.Ok(DefaultIdentity), Context));
-        Context.Variable.Set("Identity", new data.DynamicData("Identity", asker => asker.Ok((Identity ?? DefaultIdentity)?.PublicKey), Context));
+        // %MyIdentity% and %Identity% are not set here: the memory is born holding them (variable.list), computed from
+        // whoever asks, so an actor born at any time has them at once and no set — nor anything bound to one — runs.
     }
 
     /// <summary>The app's default identity — the system actor's, made on first ask. Not <see cref="Identity"/>'s
     /// fallback: the identity store reads the system's own slot while it makes the default.</summary>
-    private Identity? DefaultIdentity
+    internal Identity? DefaultIdentity
     {
         get
         {
