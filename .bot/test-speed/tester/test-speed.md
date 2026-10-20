@@ -155,6 +155,35 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 22. Another round of allocation cuts: Condition ~171 KB in Debug, ~121 KB in Release
+
+| app | §20 (Debug) | now, Debug (birth / load / run) | now, Release |
+|---|---|---|---|
+| Condition | ~197 KB | **~171 KB** (37.5 / 7 / 127) | **~121 KB** (37 / 6 / 77) |
+| ListOps2 | ~210 KB | **~185 KB** (37.5 / 7 / 141) | **~129 KB** |
+| ForeachDictionary | ~355 KB | **~316 KB** (37.5 / 7 / 271) | **~230 KB** |
+| File | ~339 KB | **~300 KB** (37.5 / 7 / 255) | **~207 KB** |
+
+Debug Condition 1.25 ms at load ~8 (one round). Release times this round were swamped by load (10 – 12) and are not
+quoted; its allocations are exact.
+
+| change | |
+|---|---|
+| settings: the path → class index once per app (the chain's root), not per scope (each context is one); a scope's values, builds and reading slot made when first used | birth 40.3 → 37.5 KB |
+| generated handlers keep the current frame and build the call chain only when an error carries it (it was an array of the whole chain per Resolve/Attach/Live) | |
+| a write offers the previous value (a closure + state machine) only to a value that keeps it — `item.Keeps`, a task's | every `!data` set |
+| goal `Folder` kept with its path; a program property's empty bag not cloned per run | |
+| `type.list.Of(name, kind, template)` — the full type without a probe `new type(…)` (type + empty kind each), used on the run path (bool/text/list/dict readers, number, size, source) | 77 probe sites remain, mostly read-once paths |
+| generated `__View`/`__Default` answer null when the option is absent; the slot's NotFound is made only when it is its answer | per unset option per action |
+| a step's, an action's and their lists' `Start` (and `Follow`) are `ValueTask` | a Task per synchronous run |
+
+Tried and reverted: the settings' defaults shared per process (a default can be made from the app: a path under its
+folder — 23 tests caught it), then per app (a caller changes what it is handed, despite "read-only"; with a copy each
+time it saved nothing measurable).
+
+Release vs Debug: Debug allocates every async method's state machine on the heap; Release keeps it on the stack unless
+the method really waits. ~30% of a Debug app's allocations are that — production pays the Release figure.
+
 ## 21. What it does for the suites, and where the time goes now
 
 **The suites**, parent commit (`b2354e747`, item-doors when test-speed was cut) vs test-speed, back to back, `./dev.sh
