@@ -18,7 +18,7 @@ using hash = global::app.module.crypto.type.hash.@this;
 ///   "signature":"&lt;b64&gt;", "value":{ "@schema":"data", … } }
 /// </code>
 ///
-/// <para>OBP: the layer owns its <b>wire shape</b> (<see cref="Write"/> renders
+/// <para>OBP: the layer owns its <b>wire shape</b> (<see cref="Output"/> renders
 /// the object via the <see cref="IWriter"/> object surface, each field rendering
 /// ITSELF — Rule 9; the writer never type-switches on it). The cryptographic
 /// <b>operation</b> (hash, sign, verify) is owned by the signing module, reached

@@ -81,7 +81,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     [global::app.Out, global::app.Store]
     public string Mime => Type.kind.Mime is { Count: > 0 } m ? m[0] : "application/octet-stream";
 
-    /// <summary>An image writes its own form (<see cref="Write"/>) in every view; it never loads while it
+    /// <summary>An image writes its own form in every view; it never loads while it
     /// writes.</summary>
     public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)

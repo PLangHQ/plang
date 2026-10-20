@@ -198,7 +198,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// (<c>dict</c>/<c>list</c>) override with key/index writes; a value with no writable property for
     /// <paramref name="key"/> throws. The writer's <paramref name="context"/> rides along for a value
     /// that builds its child (a foreign host, a step constructing its actions); reflection needs none.</para>
-    /// (Distinct from <see cref="Write(global::app.type.format.IWriter)"/>, which serializes.)
+    /// (Distinct from <see cref="Output"/>, which serializes.)
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {

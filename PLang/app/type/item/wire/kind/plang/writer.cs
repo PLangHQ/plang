@@ -51,10 +51,10 @@ public sealed class Writer : global::app.type.format.IWriter
         global::app.actor.context.@this? context)
     {
         // a stored row names the variables its value holds, each as its text and code, parsed once at build
-        if (mode == global::app.View.Store && record.Peek() is { HasVariable: true } held)
+        if (mode == global::app.View.Store && record.Peek() is { HasVariable: true } value)
         {
             _json.Name("variable");
-            await new global::app.type.item.variable.serializer.Entry().Write(this, held.Variable, mode, context);
+            await new global::app.type.item.variable.serializer.Entry().Write(this, value.Variable, mode, context);
         }
         if (record.Properties.Count > 0)
         {

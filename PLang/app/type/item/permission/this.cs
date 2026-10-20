@@ -36,7 +36,7 @@ public enum Verb
 /// <para>Permission is a fundamental PLang value (an <c>item</c>), not a path
 /// thing: it <i>references</i> a resource (a <see cref="Path"/> of any scheme —
 /// <c>file://</c>, <c>http://</c>, …) but is an authorization in its own right.
-/// It owns its wire form via <see cref="Write"/>/<see cref="Create"/> — no
+/// It owns its wire form via <see cref="Output"/>/<see cref="Create"/> — no
 /// reflection, no Normalize.</para>
 ///
 /// <para>Identity is (Actor + Path + Verbs); the persistence root is the
@@ -138,7 +138,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return Regex.IsMatch(candidate, rx.ToString());
     }
 
-    /// <summary>A grant writes its own form (<see cref="Write"/>) in every view.</summary>
+    /// <summary>A grant writes its own form in every view.</summary>
     /// <summary>
     /// The grant owns its wire form: <c>{actor, path, match, verbs:[…]}</c>, in every view. No
     /// reflection — the writer never type-switches on it (OBP Rule 9). Symmetric
@@ -160,7 +160,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>
-    /// Reconstructs a grant from its own <see cref="Write"/> shape (the wire dict
+    /// Reconstructs a grant from its own <see cref="Output"/> shape (the wire dict
     /// <c>{actor, path, match, verbs:[…]}</c>). Pass-through when the value already
     /// is a grant; declines anything else.
     /// </summary>
