@@ -176,6 +176,21 @@ public class AppNodesTests
         await Assert.That(app.parent.IsTruthy()).IsFalse();
     }
 
+    // The memory's system variables hold the app's types: %Now% the app's datetime, %GUID% the app's guid.
+    [Test]
+    public async Task SystemVariables_HoldTheAppsTypes()
+    {
+        await using var app = NewApp();
+        var user = app.actor.list.User.Context;
+
+        var now = await user.Variable.Get("Now");
+        var guid = await user.Variable.Get("GUID");
+
+        await Assert.That(now.Type).IsSameReferenceAs(app.type.list[typeof(global::app.type.item.datetime.@this)]);
+        await Assert.That(now.Peek().Type).IsSameReferenceAs(app.type.list[typeof(global::app.type.item.datetime.@this)]);
+        await Assert.That(guid.Type).IsSameReferenceAs(app.type.list[typeof(global::app.type.item.guid.@this)]);
+    }
+
     // The app's members by their written names: what it writes at its top, in a view.
     private static System.Collections.Generic.List<string> Members(string written)
         => System.Text.Json.JsonDocument.Parse(written).RootElement.EnumerateObject().Select(p => p.Name).ToList();
