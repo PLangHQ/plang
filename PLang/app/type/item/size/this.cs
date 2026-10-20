@@ -34,9 +34,9 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         => Of(bytes, context.Setting.Of<setting.@this>().Standard.Value, new global::app.data.@this("", context: context))
            ?? throw new System.InvalidOperationException($"the size standard {context.Setting.Of<setting.@this>().Standard.Value.Name} made no size of {bytes} bytes.");
 
-    // a count made by its standard: the standard, a kind of size, is the type its values are as a kind of the app's size
+    // a count made by its standard, through the app's entry for {size, <standard>}
     private static @this? Of(long bytes, global::app.type.kind.@this<@this> standard, global::app.data.@this data)
-        => new global::app.type.@this(standard.Owner!, standard, false, null).Make(bytes, data) as @this;
+        => data.Context.App.type.list[new global::app.type.@this("size", standard.Name), data.Context].Make(bytes, data) as @this;
 
     // raw as a size: a count made by its asker's standard, a text the standard its suffix names
     private static @this? Read(object? raw, global::app.actor.context.@this context)

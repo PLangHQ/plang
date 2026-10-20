@@ -56,11 +56,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     {
         if (Create(value, data.Context) is { } built)
         {
-            // asked for in a standard (`as iso`): the same span, made by that standard, the type its values are as a
-            // kind of the app's duration
+            // asked for in a standard (`as iso`): the same span, made by that standard, through the app's entry for it
             if (declared?.kind is { IsEmpty: false } asked && !string.Equals(asked.Name, built.Type.kind.Name, System.StringComparison.OrdinalIgnoreCase)
                 && data.Context.App.type.list["duration"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
-                return new global::app.type.@this(standard.Owner!, standard, false, null).Make(built.Value, data) as @this;
+                return data.Context.App.type.list[new global::app.type.@this("duration", standard.Name), data.Context].Make(built.Value, data) as @this;
             return built;
         }
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)

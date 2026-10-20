@@ -46,7 +46,8 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
                 $"cannot set [{key}] on a sequence of {n} — index out of range or not numeric", "CannotSetChild", 400));
         if (host is System.Collections.IList il) il[i] = value;
         else Indexer(host).SetValue(host, value, new object[] { i });
-        return new(new global::app.type.clr.@this(host, ctx));
+        // the sequence answers as the plang list it is
+        return new(global::app.type.item.@this.Create(host, ctx));
     }
 
     // Positional access over any sequence host — a non-generic IList (array, List<T>) is direct;

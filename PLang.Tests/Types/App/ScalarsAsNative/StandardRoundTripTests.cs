@@ -48,6 +48,18 @@ public class StandardRoundTripTests : System.IAsyncDisposable
         await Assert.That(await Ctx.Written(value)).IsEqualTo(text);
     }
 
+    // a value made in a standard holds the app's own entry for it, never a type object of its own
+    [Test]
+    public async Task AStandardsValue_HoldsTheAppsEntryForIt()
+    {
+        var count = global::app.type.item.size.@this.Create(2048, Ctx);
+        var carrier = new global::app.data.@this("d", context: Ctx);
+        var asked = global::app.type.item.duration.@this.Create("30s", new global::app.type.@this("duration", "iso"), carrier)!;
+
+        await Assert.That(ReferenceEquals(count.Type, Ctx.App.type.list[new global::app.type.@this("size", "iec"), Ctx])).IsTrue();
+        await Assert.That(ReferenceEquals(asked.Type, Ctx.App.type.list[new global::app.type.@this("duration", "iso"), Ctx])).IsTrue();
+    }
+
     [Test]
     [Arguments("100 MB", "si")]
     [Arguments("95.4 MiB", "iec")]
