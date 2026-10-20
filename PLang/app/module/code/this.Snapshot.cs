@@ -31,9 +31,9 @@ public sealed partial class @this : ISnapshot
         var types = s.Context.App.type.list;
 
         Ready();
-        foreach (var (type, dict) in _providers)
+        foreach (var (type, dict) in Held.Providers)
         {
-            _defaults.TryGetValue(type, out var currentDefaultName);
+            Held.Defaults.TryGetValue(type, out var currentDefaultName);
 
             foreach (var (name, provider) in dict)
             {
@@ -51,7 +51,7 @@ public sealed partial class @this : ISnapshot
             // If they differ, the user changed the selection — emit an override so Restore
             // re-applies it after the fresh App's RegisterDefaults reproduces the built-ins.
             // No built-in for the type → emit unconditionally so the chosen default survives.
-            _builtInDefaults.TryGetValue(type, out var bornDefault);
+            Held.BuiltInDefaults.TryGetValue(type, out var bornDefault);
             if (currentDefaultName != null
                 && (bornDefault == null
                     || !string.Equals(currentDefaultName, bornDefault, StringComparison.OrdinalIgnoreCase)))

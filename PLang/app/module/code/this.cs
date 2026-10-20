@@ -14,7 +14,21 @@ namespace app.module.code;
 /// </summary>
 public sealed partial class @this : IAsyncDisposable
 {
-    private readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> _providers = new();
+    // The registry's tables — the providers per interface, each interface's default, and the default each was born
+    // with — made when the registry is first used: an app that asks for no provider holds none.
+    private sealed class Tables
+    {
+        public ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> Providers { get; } = new();
+        // The default's name per interface. A default is selection, and selection is the registry's: one provider can
+        // serve several interfaces (Ed25519 is ISigning and IKey), each with its own default.
+        public ConcurrentDictionary<System.Type, string> Defaults { get; } = new();
+        // The default each interface was born with at RegisterDefaults. Snapshot capture compares the current default
+        // against it to tell a user's selection from what a fresh App sets itself.
+        public ConcurrentDictionary<System.Type, string> BuiltInDefaults { get; } = new();
+    }
+
+    private Tables? _tables;
+    private Tables Held => _tables ?? System.Threading.LazyInitializer.EnsureInitialized(ref _tables, () => new Tables());
     private bool _disposed;
 
     /// <summary>
@@ -25,13 +39,6 @@ public sealed partial class @this : IAsyncDisposable
 
     public @this(actor.context.@this context) => Context = context;
 
-    // The default's name per interface. A default is selection, and selection is the registry's: one
-    // provider can serve several interfaces (Ed25519 is ISigning and IKey), each with its own default.
-    private readonly ConcurrentDictionary<System.Type, string> _defaults = new();
-
-    // The default each interface was born with at RegisterDefaults. Snapshot capture compares the
-    // current default against it to tell a user's selection from what a fresh App sets itself.
-    private readonly ConcurrentDictionary<System.Type, string> _builtInDefaults = new();
 
     /// <summary>
     /// Disposes every registered provider instance (IAsyncDisposable preferred,
@@ -41,7 +48,7 @@ public sealed partial class @this : IAsyncDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        foreach (var provider in _providers.Values.SelectMany(p => p.Values))
+        foreach (var provider in _tables?.Providers.Values.SelectMany(p => p.Values) ?? [])
         {
             if (provider is IAsyncDisposable asyncProv)
                 await asyncProv.DisposeAsync();
@@ -71,7 +78,7 @@ public sealed partial class @this : IAsyncDisposable
     public (T? Provider, global::app.error.@this? Error) Get<T>(string? name = null) where T : class, ICode
     {
         Ready();
-        if (!_providers.TryGetValue(typeof(T), out var typeDict))
+        if (!Held.Providers.TryGetValue(typeof(T), out var typeDict))
             return (null, new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
 
         if (!string.IsNullOrEmpty(name))
@@ -81,7 +88,7 @@ public sealed partial class @this : IAsyncDisposable
             return ((T)provider, null);
         }
 
-        if (_defaults.TryGetValue(typeof(T), out var defaultName) && typeDict.TryGetValue(defaultName, out var chosen))
+        if (Held.Defaults.TryGetValue(typeof(T), out var defaultName) && typeDict.TryGetValue(defaultName, out var chosen))
             return ((T)chosen, null);
 
         return (null, new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
@@ -111,7 +118,7 @@ public sealed partial class @this : IAsyncDisposable
     public IReadOnlyList<T> List<T>() where T : class, ICode
     {
         Ready();
-        if (!_providers.TryGetValue(typeof(T), out var typeDict))
+        if (!Held.Providers.TryGetValue(typeof(T), out var typeDict))
             return Array.Empty<T>();
 
         return typeDict.Values.Cast<T>().ToList();
@@ -124,7 +131,7 @@ public sealed partial class @this : IAsyncDisposable
     {
         Ready();
         var result = new List<ICode>();
-        foreach (var typeDict in _providers.Values)
+        foreach (var typeDict in Held.Providers.Values)
             result.AddRange(typeDict.Values);
         return result;
     }
@@ -139,13 +146,13 @@ public sealed partial class @this : IAsyncDisposable
     public IEnumerable<ICode> All()
     {
         Ready();
-        return _providers.Values.SelectMany(dict => dict.Values);
+        return Held.Providers.Values.SelectMany(dict => dict.Values);
     }
 
     public bool Has<T>() where T : class, ICode
     {
         Ready();
-        return _providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
+        return Held.Providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
     }
 
     // --- Non-generic methods (single source of truth) ---
@@ -156,12 +163,12 @@ public sealed partial class @this : IAsyncDisposable
     public data.@this Register(System.Type providerType, ICode provider)
     {
         Ready();
-        var typeDict = _providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
+        var typeDict = Held.Providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
 
         if (!typeDict.TryAdd(provider.Name, provider))
             return Context.Error(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
 
-        _defaults.TryAdd(providerType, provider.Name);
+        Held.Defaults.TryAdd(providerType, provider.Name);
 
         // A provider is engine plumbing, never a plang value — the registration
         // just succeeds. Returning the provider as the value would wrap a CLR
@@ -175,7 +182,7 @@ public sealed partial class @this : IAsyncDisposable
     public IReadOnlyList<ICode> List(System.Type providerType)
     {
         Ready();
-        return _providers.TryGetValue(providerType, out var typeDict)
+        return Held.Providers.TryGetValue(providerType, out var typeDict)
             ? typeDict.Values.ToList()
             : Array.Empty<ICode>();
     }
@@ -189,13 +196,13 @@ public sealed partial class @this : IAsyncDisposable
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
         Ready();
-        if (!_providers.TryGetValue(providerType, out var typeDict))
+        if (!Held.Providers.TryGetValue(providerType, out var typeDict))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var provider))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
-        if (_defaults.TryGetValue(providerType, out var defaultName)
+        if (Held.Defaults.TryGetValue(providerType, out var defaultName)
             && string.Equals(defaultName, provider.Name, StringComparison.OrdinalIgnoreCase))
             return Context.Error(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
 
@@ -212,14 +219,14 @@ public sealed partial class @this : IAsyncDisposable
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
         Ready();
-        if (!_providers.TryGetValue(providerType, out var typeDict))
+        if (!Held.Providers.TryGetValue(providerType, out var typeDict))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var newDefault))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         // One slot per interface — the provider's other interfaces keep their own default.
-        _defaults[providerType] = newDefault.Name;
+        Held.Defaults[providerType] = newDefault.Name;
         return Context.Ok();
     }
 
@@ -238,7 +245,7 @@ public sealed partial class @this : IAsyncDisposable
     private void Ready()
     {
         if (!_armed || System.Threading.Volatile.Read(ref _built) == 2) return;
-        lock (_providers)
+        lock (Held.Providers)
         {
             if (_built != 0) return;
             _built = 1;
@@ -280,11 +287,11 @@ public sealed partial class @this : IAsyncDisposable
     private void RegisterBuiltIn<T>(T provider) where T : class, ICode
     {
         provider.IsBuiltIn = true;
-        var typeDict = _providers.GetOrAdd(typeof(T), _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
+        var typeDict = Held.Providers.GetOrAdd(typeof(T), _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
         typeDict.TryAdd(provider.Name, provider);
-        _defaults.TryAdd(typeof(T), provider.Name);
+        Held.Defaults.TryAdd(typeof(T), provider.Name);
         // Stamp the type's "natural" default name *once* — the first built-in for a type
         // becomes default by virtue of being first-registered, mirroring Register's contract.
-        _builtInDefaults.TryAdd(typeof(T), provider.Name);
+        Held.BuiltInDefaults.TryAdd(typeof(T), provider.Name);
     }
 }

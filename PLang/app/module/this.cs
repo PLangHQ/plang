@@ -36,10 +36,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     // The app's module, which holds every module; null on the app's module itself.
     private readonly @this? _root;
-    // Held by the app's module only: the app, the modules, and the lock a registration takes.
+    // Held by the app's module only: the app, and the modules — made when first asked, from the ones the code lists
+    // (each module makes its actions when it is first asked for them); held by reference, the first made kept. A
+    // registration locks the modules.
     private readonly global::app.@this? _app;
-    private readonly global::app.type.item.list.@this<@this>? _modules;
-    private readonly object? _registering;
+    private global::app.type.item.list.@this<@this>? _modules;
 
     /// <summary>The module name — "file", "variable", "list"; empty for the app's module.</summary>
     [Debug, Out, LlmBuilder]
@@ -55,11 +56,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         Name = "";
         _app = app;
-        _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
-        _registering = new object();
-        // the built-in modules, as plang's code says them (read once for every app made from it); each makes its
-        // actions when it is first asked for them
-        foreach (var module in app.type.list.Code.module) _modules.Add(new @this(module.Name, this, module.Action));
+    }
+
+    // The app's modules: the built-ins as plang's code says them (read once for every app made from it), made the first
+    // time any module is asked.
+    private global::app.type.item.list.@this<@this> Modules
+    {
+        get
+        {
+            if (_modules is { } held) return held;
+            var made = new global::app.type.item.list.@this<@this>(_app!.type.list[typeof(global::app.type.item.list.@this<@this>)]);
+            foreach (var module in _app.type.list.Code.module) made.Add(new @this(module.Name, this, module.Action));
+            return System.Threading.Interlocked.CompareExchange(ref _modules, made, null) ?? made;
+        }
     }
 
     internal @this(string name, @this root, System.Collections.Generic.IReadOnlyList<global::app.assembly.@this.Action>? born = null)
@@ -103,7 +112,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// (<c>%!app.module.list%</c>), never written with a module: every module reaches it.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     [global::app.LlmBuilder]
-    public global::app.type.item.list.@this<@this> list => Root._modules!;
+    public global::app.type.item.list.@this<@this> list => Root.Modules;
 
     /// <summary>The module <paramref name="name"/> names, by its own <see cref="Match"/>; NotFound when none does. The
     /// answer is born with the asker's <paramref name="context"/>.</summary>
@@ -142,7 +151,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // registrations reach one module.
     private @this Of(string name)
     {
-        lock (Root._registering!)
+        lock (Root.Modules)
         {
             if (Named(name) is { } held) return held;
             var born = new @this(name, Root);
@@ -166,7 +175,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal void Add(string actionName, System.Type clr, bool cacheable)
     {
         var made = Made(actionName, clr, cacheable);
-        lock (Root._registering!)
+        lock (Root.Modules)
         {
             var index = Action.Items().Select((action, at) => (action, at))
                 .FirstOrDefault(each => string.Equals(each.action.Name, actionName, System.StringComparison.OrdinalIgnoreCase));
@@ -256,7 +265,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// only the module can empty itself.</summary>
     internal void Clear()
     {
-        lock (Root._registering!)
+        lock (Root.Modules)
             for (var at = Action.CountRaw - 1; at >= 0; at--) Action.RemoveAt(at);
     }
 

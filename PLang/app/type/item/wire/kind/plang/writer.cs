@@ -56,7 +56,7 @@ public sealed class Writer : global::app.type.format.IWriter
             _json.Name("variable");
             await new global::app.type.item.variable.serializer.Entry().Write(this, value.Variable, mode, context);
         }
-        if (record.Properties.Count > 0)
+        if (record.HasProperties)
         {
             _json.Name("properties");
             _json.BeginObject();

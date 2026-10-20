@@ -206,7 +206,17 @@ public partial class @this
     [JsonIgnore]
     [LlmIgnore]
     [Out, Store]
-    public virtual Properties Properties { get; set; } = new();
+    public virtual Properties Properties
+    {
+        get => _properties ?? System.Threading.Interlocked.CompareExchange(ref _properties, new Properties(), null) ?? _properties;
+        set => _properties = value;
+    }
+    // the bag, made when first asked (most values never carry a property); held by reference — a copy shares it — so
+    // the first made is the one kept
+    private Properties? _properties;
+
+    /// <summary>Whether this Data carries any property — asked without making the bag.</summary>
+    internal virtual bool HasProperties => _properties is { Count: > 0 };
 
 
     [JsonConstructor]
@@ -968,6 +978,8 @@ public class DynamicData : @this
         get => _found(Context)?.Properties ?? base.Properties;
         set => base.Properties = value;
     }
+
+    internal override bool HasProperties => _found(Context)?.HasProperties ?? base.HasProperties;
 
     /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
     public override global::app.type.item.@this Peek() => _cell.Compute(Context);

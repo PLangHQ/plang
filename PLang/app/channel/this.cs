@@ -41,18 +41,36 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// <summary>Logical channel name (e.g. "output", "logger"). Case-insensitive at registry level.</summary>
     [global::app.Debug] public string Name { get; init; } = "";
 
+    // A channel's settings as values, each made when first read unless the channel was given one: a channel that is
+    // never asked for them (most console channels) makes none.
+    private global::app.type.item.choice.@this<ChannelDirection>? _direction;
+    private global::app.type.item.number.@this? _buffer;
+    private global::app.type.item.text.@this? _mime;
+
     /// <summary>Direction (Input / Output / Bidirectional).</summary>
-    [global::app.Debug] public global::app.type.item.choice.@this<ChannelDirection> Direction { get; init; } = ChannelDirection.Bidirectional;
+    [global::app.Debug] public global::app.type.item.choice.@this<ChannelDirection> Direction
+    {
+        get => _direction ??= ChannelDirection.Bidirectional;
+        init => _direction = value;
+    }
 
     /// <summary>Buffer size in bytes. Stream-backed channels honour; Goal channel ignores. Default 4096.</summary>
     [global::app.LlmBuilder]
-    public global::app.type.item.number.@this Buffer { get; init; } = 4096;
+    public global::app.type.item.number.@this Buffer
+    {
+        get => _buffer ??= 4096;
+        init => _buffer = value;
+    }
 
     /// <summary>I/O timeout. JSON wire shape is ISO 8601 (e.g. "PT30S") via custom converter. Default 30s.</summary>
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);
 
     /// <summary>MIME type that drives serializer selection. Default "text/plain".</summary>
-    [global::app.Debug, global::app.LlmBuilder] public global::app.type.item.text.@this Mime { get; init; } = "text/plain";
+    [global::app.Debug, global::app.LlmBuilder] public global::app.type.item.text.@this Mime
+    {
+        get => _mime ??= "text/plain";
+        init => _mime = value;
+    }
 
     /// <summary>Text encoding name. Default "utf-8".</summary>
     public string Encoding { get; init; } = "utf-8";

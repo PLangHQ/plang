@@ -503,7 +503,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     // A C# class's plang identity — its namespace name, and the family it is a kind of with the kind it is, when it is
     // one: pure facts of the class.
     private readonly record struct Identity(string Namespace, (System.Type Family, string Kind)? Family, string Name,
-        global::app.Attributes.FormatAttribute[] Format);
+        global::app.Attributes.FormatAttribute[] Format, string? Word);
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, Identity> _identities = new();
 
     private static Identity IdentityOf(System.Type t)
@@ -516,17 +516,21 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             var owner = ct.DeclaringType is { } d ? d.Name.Split('`')[0].TrimStart('@') + "." : "";
             var space = (name == "this" ? ns : ns.Length == 0 ? name : $"{ns}.{owner}{name}").ToLowerInvariant();
             // the word the class declares it goes by, else its namespace; the formats it declares
-            var called = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(ct, inherit: false)?.Name ?? space;
+            var word = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(ct, inherit: false)?.Name;
+            var called = word ?? space;
             var format = System.Reflection.CustomAttributeExtensions.GetCustomAttributes<global::app.Attributes.FormatAttribute>(ct, inherit: false).ToArray();
             for (var b = ct.BaseType; b != null; b = b.BaseType)
                 if (b.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false))
-                    return new(space, (b, called[(called.LastIndexOf('.') + 1)..]), called, format);
-            return new(space, null, called, format);
+                    return new(space, (b, called[(called.LastIndexOf('.') + 1)..]), called, format, word);
+            return new(space, null, called, format, word);
         });
 
     /// <summary>The name a class's type goes by — the word it declares (<c>[PlangType("text")]</c>), else its
     /// namespace (<see cref="NamespaceOf"/>). Nothing is guessed from a folder.</summary>
     internal static string NameOf(System.Type t) => IdentityOf(t).Name;
+
+    /// <summary>The word a class declares it goes by (<c>[PlangType("…")]</c>), read once; null when it declares none.</summary>
+    internal static string? WordOf(System.Type t) => IdentityOf(t).Word;
 
     /// <summary>The formats a class declares (<c>[Format]</c>), read once.</summary>
     internal static global::app.Attributes.FormatAttribute[] FormatsOf(System.Type t) => IdentityOf(t).Format;
