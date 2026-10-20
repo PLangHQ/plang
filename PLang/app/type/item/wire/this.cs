@@ -74,8 +74,8 @@ public class @this : global::app.type.item.source
     internal override object? Clr(System.Type target, actor.context.@this? context)
         => context is null ? Clr(target) : Decoded(context).Clr(target);
 
-    internal override object? Clr(System.Type target) => throw new System.InvalidOperationException(
-        "an undecoded wire lowers to CLR through its Data (Data.Clr) — decoding needs the caller's context.");
+    internal override object? Clr(System.Type target) => throw new global::app.error.AppException(new global::app.error.@this(
+        "an undecoded wire lowers to CLR through its Data (Data.Clr) — decoding needs the caller's context.", "WireUndecoded", 400));
 
     // Read as another type, an undecoded wire is what it decodes to, read as tokens.
     internal override object? Read(global::app.type.reader.ITypeReader reader, string? kind,

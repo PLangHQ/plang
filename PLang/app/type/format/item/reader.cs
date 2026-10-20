@@ -71,8 +71,8 @@ public struct Reader : IReader
     // a value not entered is passed over by the next step: nothing to skip
     public void Skip() { }
 
-    public byte[] RawValue() => throw new System.NotSupportedException(
-        "a plang value has no raw bytes — it reads as tokens");
+    public byte[] RawValue() => throw new global::app.error.AppException(new global::app.error.@this(
+        "a plang value has no raw bytes — it reads as tokens", "NotTokens", 400));
 
     private void Enter() => _open.Push(new Open(_at, _at.EnumerateItems(_context).GetEnumerator()));
 

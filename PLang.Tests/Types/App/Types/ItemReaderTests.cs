@@ -44,31 +44,33 @@ public class ItemReaderTests : System.IAsyncDisposable
         await Assert.That(size.Error?.Key).IsNotEqualTo("NotFound");
     }
 
-    // a dict read into a record reads as tokens all the way down: a value nested in it is read, never a crash
-    [Test, Skip("red: the dict reader asks a plang value for raw bytes and a NotSupportedException escapes; waits on its fix")]
-    public async Task ADictHoldingADict_IntoARecordMember_IsRead()
+    // a dict read into a record is read as tokens, and a value nested in it has none to give yet: the write answers
+    // that as its error, never a .NET exception
+    [Test] public async Task ADictHoldingADict_IntoARecordMember_AnswersNotTokens()
     {
         var owner = Box();
         var nested = global::app.type.item.@this.Create(new Dictionary<string, object?>
             { ["token"] = 500L, ["extra"] = new Dictionary<string, object?> { ["inner"] = 1L } }, Ctx);
 
-        await (await owner.Set("limit", false, nested, Ctx)).IsSuccess();
+        var answer = await owner.Set("limit", false, nested, Ctx);
 
-        await Assert.That(owner.Limit!.Token.ToString()).IsEqualTo("500");
+        await answer.IsFailure();
+        await Assert.That(answer.Error!.Key).IsEqualTo("NotTokens");
     }
 
-    // an entry still encoded (a .pr's lazy slice) is read by what it decodes to, never refused as a leaf with no raw face
-    [Test, Skip("red: the walk asks an unread slice for its raw face and an InvalidOperationException escapes; waits on its fix")]
-    public async Task ADictHoldingAnUnreadSlice_IntoARecordMember_IsRead()
+    // an entry still encoded (a .pr's lazy slice) can't be read without the context that decodes it: the write answers
+    // that as its error, never a .NET exception
+    [Test] public async Task ADictHoldingAnUnreadSlice_IntoARecordMember_AnswersWireUndecoded()
     {
         var owner = Box();
         var slice = Ctx.App.type.list[new global::app.type.@this("dict"), Ctx].Make("{\"inner\": 1}",
             (global::app.type.item.wire.kind.plang.@this)Ctx.App.type.list["wire"].kind["plang"]!);
         var nested = global::app.type.item.@this.Create(new Dictionary<string, object?> { ["token"] = 500L, ["extra"] = slice }, Ctx);
 
-        await (await owner.Set("limit", false, nested, Ctx)).IsSuccess();
+        var answer = await owner.Set("limit", false, nested, Ctx);
 
-        await Assert.That(owner.Limit!.Token.ToString()).IsEqualTo("500");
+        await answer.IsFailure();
+        await Assert.That(answer.Error!.Key).IsEqualTo("WireUndecoded");
     }
 
     // a member that can't be written answers why, never a throw

@@ -29,7 +29,8 @@ public class WireStoresNoContextTests
     public async Task UnloadedWire_LoweredWithoutAContext_FailsByName()
     {
         var wire = Wire("42", "number");
-        await Assert.That(() => wire.Clr<long>()).Throws<System.InvalidOperationException>();
+        var refused = await Assert.That(() => wire.Clr<long>()).Throws<global::app.error.AppException>();
+        await Assert.That(refused!.Error.Key).IsEqualTo("WireUndecoded");
     }
 
     [Test]
