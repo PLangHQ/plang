@@ -113,10 +113,9 @@ public sealed class Writer : global::app.type.format.IWriter
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
             case byte[] bytes: Bytes(bytes, _types[typeof(global::app.type.item.binary.@this)].kind); return;
-            // a plang value is never handed here: it writes itself through its own Output
-            default:                                    // a C# collection → json content
+            // a plang value is never handed here, nor a collection: each writes itself through its own Output
+            default:
                 Structural().Value(normalized);
-                _utf8!.Flush();
                 return;
         }
     }

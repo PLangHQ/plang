@@ -4,8 +4,8 @@ namespace app.type.format;
 /// Format-encoder protocol: what a value writes itself through.
 ///
 /// <para>Each value writes itself through its own <c>Output</c>, calling the
-/// writer's primitives, arrays and records; a C# value (a primitive, a byte[],
-/// a collection) goes through <see cref="Value"/>. The writer decides how each
+/// writer's primitives, arrays and records; a C# primitive (or a byte[]) goes
+/// through <see cref="Value"/>. The writer decides how each
 /// looks in its target format. JSON (<see cref="json.Writer"/>) is the first impl;
 /// protobuf / MsgPack / CBOR ship later as siblings without touching any
 /// domain type.</para>
@@ -123,8 +123,8 @@ public interface IWriter
     void EndRecord();
 
     /// <summary>
-    /// Write a C# value in the current slot: a primitive, a byte[], a Data as
-    /// its record, a collection as an array; a plang value writes itself.
+    /// Write a C# primitive (or a byte[], as plain bytes) in the current slot; a plang
+    /// value, a Data and a collection each write themselves.
     /// </summary>
     void Value(object? normalized);
 }

@@ -10,7 +10,7 @@ namespace app.type.item.kind.json;
 ///
 /// <para>The writer never reflects: each value (a Data's record too) writes itself
 /// through its own <c>Output</c>, and <see cref="Value"/> takes only the C# values of
-/// the tree contract (primitives / byte[] / C# collections).</para>
+/// the tree contract (C# primitives and byte[]).</para>
 /// </summary>
 public sealed class Writer : IWriter
 {
@@ -101,12 +101,7 @@ public sealed class Writer : IWriter
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
             case byte[] bytes: Bytes(bytes, _binary); return;
-            // A plang value is never handed here: it writes itself through its own Output.
-            case System.Collections.IEnumerable list:
-                BeginArray(-1);
-                foreach (var item in list) Value(item);
-                EndArray();
-                return;
+            // A plang value is never handed here, nor a collection: each writes itself through its own Output.
             default:
                 // Reaching here means a caller handed the writer a C# value whose
                 // runtime type isn't in the tree contract. Falling back to STJ would
