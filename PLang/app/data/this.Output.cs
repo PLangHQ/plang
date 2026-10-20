@@ -16,7 +16,9 @@ public partial class @this
     /// <summary>Cap on variable-resolution recursion at output. A self-referential variable chain
     /// (<c>a=%b%</c>, <c>b=%a%</c>) resolves forever; this bounds it to a typed error. NOT a general
     /// graph-depth cap — Output serializes plang TREES (from wire/literals; the writer fail-closes on
-    /// any non-plang value), so variable resolution is the only output recursion that can cycle.</summary>
+    /// any non-plang value). Two writes can meet themselves: variable resolution (bounded here) and the
+    /// app, which its asker's memory can hold — the app guards its own write (met again, it writes its
+    /// name).</summary>
     private const int MaxResolveDepth = 50;
 
     /// <summary>Tracks variable-resolution recursion depth (AsyncLocal — one chain per serialize walk).</summary>
@@ -52,9 +54,10 @@ public partial class @this
 
         // A reference binding resolves to its target binding before output — but ONLY for an
         // outbound/wire write (Out/Debug carry the resolved VALUE). A Store write (.pr) preserves
-        // the authored ref verbatim. This resolution is the ONE output recursion that can cycle
-        // (a=%b%, b=%a%) — guarded so it fails typed, not via stack overflow. Every other value graph
-        // is a tree (the writer fail-closes on any non-plang value), so nothing else recurses unbounded.
+        // the authored ref verbatim. This resolution can cycle (a=%b%, b=%a%) — guarded so it fails
+        // typed, not via stack overflow. The app is the other graph that holds itself (through its
+        // asker's memory) and guards its own write; every other value graph is a tree (the writer
+        // fail-closes on any non-plang value).
         if (_item is global::app.type.item.variable.@this vref && context != null && mode != View.Store)
         {
             if (_outputDepth.Value++ > MaxResolveDepth)

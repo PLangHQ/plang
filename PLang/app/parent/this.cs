@@ -20,6 +20,19 @@ public sealed class @this : global::app.type.item.@this
     /// frames, and the parent's answer comes back down its input: <see cref="Answered"/>).</summary>
     internal Func<string, Task>? Link { get; set; }
 
+    /// <summary>A parent written alone, in every view, says what it knows: null when nothing links this plang to one,
+    /// <c>linked</c> when something does — it holds no location.</summary>
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        if (Link is null) writer.Null();
+        else writer.String("linked");
+        return default;
+    }
+
+    /// <summary>There is a parent only when something links this plang to one (<c>if %!app.parent%</c>).</summary>
+    public override bool IsTruthy() => Link is not null;
+
     /// <summary>One step by dot: <c>goal</c> — the parent's goals, picked by name.</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
         => string.Equals(key, "goal", StringComparison.OrdinalIgnoreCase)

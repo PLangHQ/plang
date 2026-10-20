@@ -147,4 +147,77 @@ public class AppNodesTests
         await Assert.That(dumped).Contains(app.Id);
         await Assert.That((await Read("%!app.variable%", user)).IsInitialized).IsTrue();
     }
+
+    // An actor written alone is its name, in every view: on the wire and in a dump.
+    [Test]
+    public async Task Actor_WrittenAlone_IsItsName()
+    {
+        await using var app = NewApp();
+        var user = app.actor.list.User.Context;
+        using var ms = new System.IO.MemoryStream();
+
+        await (await user.Format("application/json").Encode(ms, user.Ok(app.actor.list.User), user)).IsSuccess();
+
+        await Assert.That(System.Text.Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo($"\"{app.actor.list.User.Name}\"");
+        await Assert.That(await app.actor.list.User.Debug(user)).IsEqualTo($"\"{app.actor.list.User.Name}\"");
+    }
+
+    // A parent written alone says what it knows: null when nothing links it, and then it reads false.
+    [Test]
+    public async Task Parent_Unlinked_IsNull_AndFalse()
+    {
+        await using var app = NewApp();
+        var user = app.actor.list.User.Context;
+        using var ms = new System.IO.MemoryStream();
+
+        await (await user.Format("application/json").Encode(ms, user.Ok(app.parent), user)).IsSuccess();
+
+        await Assert.That(System.Text.Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo("null");
+        await Assert.That(app.parent.IsTruthy()).IsFalse();
+    }
+
+    // The app's members by their written names: what it writes at its top, in a view.
+    private static System.Collections.Generic.List<string> Members(string written)
+        => System.Text.Json.JsonDocument.Parse(written).RootElement.EnumerateObject().Select(p => p.Name).ToList();
+
+    private static readonly string[] Shown = ["goal", "type", "actor", "error", "test", "shortcut", "module", "store",
+        "parent", "id", "created", "updated"];
+    private static readonly string[] Plumbing = ["cache", "fileSystem", "code", "debug", "build", "keepAlive", "absolutePath",
+        "osAbsolutePath", "startedAt", "uptime"];
+
+    // `write out %!app%`: on the wire the app writes what it holds — never the asker's memory, never its C# plumbing.
+    [Test]
+    public async Task App_OnTheWire_WritesWhatItHolds_NotTheMemoryNorThePlumbing()
+    {
+        await using var app = NewApp();
+        var user = app.actor.list.User.Context;
+        await user.Variable.Set("app", user.Ok(app));
+        using var ms = new System.IO.MemoryStream();
+
+        await (await user.Format("application/json").Encode(ms, user.Ok(app), user)).IsSuccess();
+
+        var members = Members(System.Text.Encoding.UTF8.GetString(ms.ToArray()));
+        foreach (var shown in Shown) await Assert.That(members).Contains(shown);
+        await Assert.That(members).DoesNotContain("variable");
+        foreach (var plumbing in Plumbing) await Assert.That(members).DoesNotContain(plumbing);
+    }
+
+    // A dump of the app shows the asker's memory too, the app inside it as its name, and no plumbing.
+    [Test]
+    public async Task App_InADump_ShowsTheMemory_WithTheAppAsItsName()
+    {
+        await using var app = NewApp();
+        var user = app.actor.list.User.Context;
+        await user.Variable.Set("app", user.Ok(app));
+
+        var dumped = await app.Debug(user);
+
+        var members = Members(dumped);
+        foreach (var shown in Shown) await Assert.That(members).Contains(shown);
+        await Assert.That(members).Contains("variable");
+        foreach (var plumbing in Plumbing) await Assert.That(members).DoesNotContain(plumbing);
+        var memory = System.Text.Json.JsonDocument.Parse(dumped).RootElement.GetProperty("variable");
+        await Assert.That(memory.EnumerateArray().Any(v => v.ValueKind == System.Text.Json.JsonValueKind.String
+            && v.GetString() == app.Name(user).ToString())).IsTrue();
+    }
 }
