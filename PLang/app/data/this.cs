@@ -240,7 +240,10 @@ public partial class @this
         // The value is born WITH this Data's context — never context-less then
         // stamped. JSON natives-out here; a plain string stays a string for the
         // type to decide.
-        var parsed = new global::app.type.item.serializer.json(_context).Parse(value);
+        // (only a json DOM value parses: anything else is itself, so no parser is made for it)
+        var parsed = value is System.Text.Json.JsonElement or System.Text.Json.Nodes.JsonNode
+            ? new global::app.type.item.serializer.json(_context).Parse(value)
+            : value;
         // A declared, non-polymorphic type owns construction — ONE door. The type
         // forks internally (raw → a lazy source at its format; a built value already
         // of the type → hold; a different built type → re-type via its hook; null →
@@ -389,7 +392,9 @@ public partial class @this
     /// </summary>
     public virtual void SetValue(object? value)
     {
-        _item = global::app.type.item.@this.Create(new global::app.type.item.serializer.json(_context).Parse(value), _context);
+        _item = global::app.type.item.@this.Create(value is System.Text.Json.JsonElement or System.Text.Json.Nodes.JsonNode
+            ? new global::app.type.item.serializer.json(_context).Parse(value)
+            : value, _context);
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
     }

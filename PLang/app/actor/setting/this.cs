@@ -102,6 +102,8 @@ public sealed class @this : IDisposable
     public async ValueTask<data.@this> Get(global::app.goal.step.action.@this action, string option)
     {
         await Load();
+        // nothing set this run and no row saved, anywhere up the chain: the answer is none, made without its keys
+        if (IsBare) return _context.NotFound(option);
         // read where each node writes: under the action's settings' path, then its module's
         var settings = new global::app.type.item.setting.action.@this(action);
         var own = settings.Path;
@@ -111,6 +113,17 @@ public sealed class @this : IDisposable
         if (Saved(own) is { } row && Option(row, option) is { } saved) return saved;
         if (Saved(module) is { } held && Option(held, option) is { } kept) return kept;
         return _context.NotFound($"{own}.{option}");
+    }
+
+    // Whether no scope up the chain holds a value of this run or a saved row (the common run: nothing configured).
+    private bool IsBare
+    {
+        get
+        {
+            for (@this? s = this; s != null; s = s._parent)
+                if (!s._values.IsEmpty || s._held is { IsEmpty: false }) return false;
+            return true;
+        }
     }
 
     // This run's value for the first key that has one, the closest scope first.

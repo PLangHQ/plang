@@ -245,7 +245,7 @@ public sealed partial class @this : global::app.type.item.@this
         var caller = _current.Value;
 
         // the caller's depth is its own fact: one more frame past MaxDepth is the overflow
-        if (caller != null && caller.Depth >= MaxDepth)
+        if (caller != null && caller._depth >= MaxDepth)
             throw new CallStackOverflowException(MaxDepth);
 
         return Enter(new call.@this(_call, goal, step, action, caller, this, _datetime, _duration, _dict, caller, variables ?? Variables, names));

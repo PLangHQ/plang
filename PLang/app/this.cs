@@ -135,8 +135,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     // The os/ root anchor. Pure name math against AppContext.BaseDirectory;
     // path.Resolve can't be used because App is still constructing and has
     // no Context yet, so this routes through PathHelper directly.
-    public string OsAbsolutePath =>
-        PathHelper.GetFullPath(PathHelper.Combine(AppContext.BaseDirectory, "os"));
+    public string OsAbsolutePath => Os;
+
+    // the process's os folder: where it runs from says it, so it is worked out once (every file gate asks)
+    private static readonly string Os = PathHelper.GetFullPath(PathHelper.Combine(AppContext.BaseDirectory, "os"));
 
     /// <summary>
     /// The environment the app runs in ("production", "development") as <paramref name="context"/>'s settings

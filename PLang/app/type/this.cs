@@ -169,8 +169,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// class's own parameterless construction (an empty list or dict, 0, "", false). A type with none
     /// (a goal, an item, a host) answers its typed null: still null, still this type.</summary>
     public item.@this Empty(global::app.actor.context.@this context)
+        // the answer kept is asked without a closure: the making below captures its locals, which C# allocates on
+        // entry to the method that declares them
+        => _answers?.Empty is { } made ? made() : Made();
+
+    // How this type makes its empty value, worked out once and kept; its first empty value.
+    private item.@this Made()
     {
-        if (_answers?.Empty is { } made) return made();
         var clr = ClrType;
         const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
             | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;

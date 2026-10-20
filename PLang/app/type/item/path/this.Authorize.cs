@@ -107,11 +107,13 @@ public partial class @this
     private bool IsUnder(string? rootCandidate, StringComparison cmp)
     {
         if (string.IsNullOrEmpty(rootCandidate)) return false;
-        var rootWithSeparator = rootCandidate.EndsWith(PathHelper.DirectorySeparatorChar)
-            ? rootCandidate
-            : rootCandidate + PathHelper.DirectorySeparatorChar;
-        return Absolute.StartsWith(rootWithSeparator, cmp)
-            || string.Equals(Absolute, rootCandidate, cmp);
+        // the root itself, or under it: it starts the path and a separator follows it (or ends it) — compared in place,
+        // no root-with-separator string made at every gate
+        var absolute = Absolute;
+        if (!absolute.StartsWith(rootCandidate, cmp)) return false;
+        return absolute.Length == rootCandidate.Length
+            || rootCandidate[^1] == PathHelper.DirectorySeparatorChar
+            || absolute[rootCandidate.Length] == PathHelper.DirectorySeparatorChar;
     }
 
     /// <summary>
