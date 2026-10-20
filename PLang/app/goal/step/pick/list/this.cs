@@ -182,7 +182,7 @@ public sealed class @this
             else if (id.StartsWith("@also.", StringComparison.Ordinal)) _also[id["@also.".Length..]] = noul;
             else if (id.StartsWith(OptionKey, StringComparison.Ordinal)) await Choose(id[OptionKey.Length..], await Choice(a, context), context);
             else if (id.StartsWith(KindKey, StringComparison.Ordinal)) Refine(id[KindKey.Length..], await Choice(a, context), context);
-            else if (id.StartsWith(StrictKey, StringComparison.Ordinal)) StrictRefine(id[StrictKey.Length..], noul, context);
+            else if (id.StartsWith(StrictKey, StringComparison.Ordinal)) Tighten(id[StrictKey.Length..], noul, context);
             else if (Branch(context).Any(b => $"{b.Module.Name}.{b.Name}" == id)) _branch[id] = noul;
             else if (id.Contains('.')) _named[id] = noul;
             else _choice[id] = (await Choice(a, context), a.Get<number>("confidence", context));
@@ -671,7 +671,7 @@ public sealed class @this
 
     // The strict follow-up's answer: a yes (noul at the possible floor or more) makes the Option's type strict, born
     // through the type's constructor, keeping whatever kind a kind follow-up has already set. A no leaves it as is.
-    private void StrictRefine(string key, number? noul, global::app.actor.context.@this context)
+    private void Tighten(string key, number? noul, global::app.actor.context.@this context)
     {
         if (noul is not { } yes || !(yes >= (number)Possible) || !_option.TryGetValue(key, out var option)) return;
         var picked = Picked(option.Value, context);
