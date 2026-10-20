@@ -23,7 +23,7 @@ public sealed class @this<T, L> : global::app.type.node.@this<T, L>
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        if (context != null && T.Current(context) is { } one) return one.Output(writer, mode, context);
+        if (context != null && T.Current(context) is { } one) return writer.Kind.pair.Output(one, writer, mode, context);
         writer.Null();
         return default;
     }

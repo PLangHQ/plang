@@ -41,31 +41,32 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         }
         // the app's own system actor asks when no one else does
         var asker = context ?? actor.list.System.Context!;
+        var pair = writer.Kind.pair;
         if (_writing.Value)
         {
-            await Name(asker).Output(writer, mode, asker);
+            await pair.Output(Name(asker), writer, mode, asker);
             return;
         }
         _writing.Value = true;
         try
         {
             writer.BeginObject();
-            writer.Name("goal"); await goal.Output(writer, mode, asker);
-            writer.Name("type"); await type.Output(writer, mode, asker);
-            writer.Name("actor"); await actor.Output(writer, mode, asker);
-            writer.Name("error"); await error.Output(writer, mode, asker);
-            writer.Name("test"); await test.Output(writer, mode, asker);
-            writer.Name("shortcut"); await shortcut.Output(writer, mode, asker);
-            writer.Name("module"); await module.Output(writer, mode, asker);
-            writer.Name("store"); await store.Output(writer, mode, asker);
-            writer.Name("parent"); await parent.Output(writer, mode, asker);
+            writer.Name("goal"); await pair.Output(goal, writer, mode, asker);
+            writer.Name("type"); await pair.Output(type, writer, mode, asker);
+            writer.Name("actor"); await pair.Output(actor, writer, mode, asker);
+            writer.Name("error"); await pair.Output(error, writer, mode, asker);
+            writer.Name("test"); await pair.Output(test, writer, mode, asker);
+            writer.Name("shortcut"); await pair.Output(shortcut, writer, mode, asker);
+            writer.Name("module"); await pair.Output(module, writer, mode, asker);
+            writer.Name("store"); await pair.Output(store, writer, mode, asker);
+            writer.Name("parent"); await pair.Output(parent, writer, mode, asker);
             writer.Name("id"); writer.String(Id);
-            writer.Name("created"); await Created.Output(writer, mode, asker);
-            writer.Name("updated"); await Updated.Output(writer, mode, asker);
+            writer.Name("created"); await pair.Output(Created, writer, mode, asker);
+            writer.Name("updated"); await pair.Output(Updated, writer, mode, asker);
             if (Version != null) { writer.Name("version"); writer.String(Version); }
             // the asker's memory, as its node writes it: its variables' values, not yet their names — those come when the
             // memory writes itself
-            if (mode == global::app.View.Debug) { writer.Name("variable"); await variable.Output(writer, mode, asker); }
+            if (mode == global::app.View.Debug) { writer.Name("variable"); await pair.Output(variable, writer, mode, asker); }
             writer.EndObject();
         }
         finally { _writing.Value = false; }

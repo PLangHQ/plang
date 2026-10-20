@@ -390,8 +390,8 @@ public class source : @this
             throw new global::app.error.VariableNotFoundException(resolved?.Name ?? template.Trim('%'));
         }
         // a partial template is a text's to render: hand over to one
-        await new global::app.type.item.text.@this(template,
-            context.App.type.list[new global::app.type.@this("text", template: Type.Template), context], _variable).Output(writer, mode, context);
+        await writer.Kind.pair.Output(new global::app.type.item.text.@this(template,
+            context.App.type.list[new global::app.type.@this("text", template: Type.Template), context], _variable), writer, mode, context);
     }
 
 

@@ -933,7 +933,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                 if (context != null && value is not System.IConvertible
                     && context.App.type.list[value.GetType()].ClrType == typeof(global::app.type.clr.@this))
                 {
-                    await global::app.type.item.@this.Create(value, context).Output(writer, mode, context);
+                    await writer.Kind.pair.Output(global::app.type.item.@this.Create(value, context), writer, mode, context);
                     break;
                 }
                 writer.Value(value); break;

@@ -59,7 +59,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (Child.Count > 0)
         {
             writer.Name("child");
-            await Child.Output(writer, mode, context);   // step.list writes its own bare array
+            await writer.Kind.pair.Output(Child, writer, mode, context);   // step.list writes its own bare array
         }
         writer.EndObject();
     }

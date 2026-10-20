@@ -25,7 +25,7 @@ public sealed class @this : global::app.type.item.list.@this<Tag>
         global::app.actor.context.@this? context)
     {
         writer.BeginArray((int)Count);
-        for (int i = 0; i < Count; i++) await this[i].Output(writer, mode, context);
+        for (int i = 0; i < Count; i++) await writer.Kind.pair.Output(this[i], writer, mode, context);
         writer.EndArray();
     }
 
