@@ -176,6 +176,20 @@
         }
       ],
       "after": null
+    },
+    {
+      "id": "6b1f3c2e-8a4d-4e7b-9c21-5d0e7f3a9b14",
+      "bot": "tester",
+      "timestamp_start": "2026-10-20T01:44:00Z",
+      "timestamp_end": "2026-10-20T02:45:00Z",
+      "intent": "Measure why the C# tests are slow (app birth cost, TUnit parallelism, app changes) and weigh designs with Ingi",
+      "before": { "assumptions": "a birth is ~150 ms, dominated by Registry.Enlist (coder's numbers)", "risk": "timings distorted by the other bots' load" },
+      "plan": ".bot/item-doors/tester/v1/plan.md",
+      "actions": [
+        { "paths": ["PLang/app/type/list/Registry.cs", "PLang/app/this.cs", "PLang/app/module/this.cs"], "type": "review", "category": "code", "confidence": "high", "context": "temporary stopwatch instrumentation to split a birth; reverted, never committed" },
+        { "paths": [".bot/item-doors/tester/test-speed.md"], "type": "create", "category": "doc", "confidence": "high", "context": "birth split by part, TUnit parallelism per mode with load, app changes per kind, design table" }
+      ],
+      "after": { "status": "table written; design under discussion with Ingi", "health": "no production change", "notes": "choice walk ~40 ms and faceted entries ~25-30 ms dominate; reading the classes ~2 ms; 15 MB allocated per birth" }
     }
   ]
 }
