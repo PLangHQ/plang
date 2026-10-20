@@ -152,7 +152,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         if (test.Status == Status.Ready)
         {
             // born from the code this app was made from: plang's facts are read once for the whole run
-            await using var app = new global::app.@this(_app.AbsolutePath, assembly: _app.assembly);
+            await using var app = new global::app.@this(_app.AbsolutePath, assembly: _app.type.list.Code);
             app.test.list.Open(test);
             Made?.Invoke(app);
             await test.Start(app, context);

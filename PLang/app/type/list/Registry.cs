@@ -23,7 +23,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private readonly object _lock = new();
     private volatile bool _loaded;
     // the facts of plang's own assembly this list was born holding (read once by whoever makes apps); null reads them here
-    private readonly global::app.assembly.@this? _code;
+    private global::app.assembly.@this? _code;
     // the facts of every assembly the startup scan read, kept for the kinds each type is given when first asked
     private IReadOnlyList<global::app.assembly.@this> _codes = [];
     // the types that hold kinds no assembly's facts list (a scheme, a loaded assembly's): a lookup by key asks them too
@@ -153,7 +153,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     // type `type` is made holding this list as its values.
     private void Scan()
     {
-        var codes = Assemblies.Select(Code).ToList();
+        var codes = Assemblies.Select(Read).ToList();
         // the first assembly's types are found through its facts' index (read once, a name two classes claim refused
         // there), each made when first asked; another assembly's are made now and recorded by the guard
         _bornCode = codes[0];
@@ -162,18 +162,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         foreach (var code in codes.Skip(1))
             foreach (var type in code.type) base.Add(new global::app.type.@this(type, this));
         // each type's kinds are held when it is first asked for them (Enlist); what the code says of its kinds is read
-        // once, and a refusal there is plang broken. The readers a set or a subclass ships are this list's now: a read
-        // never waits on a kind being asked first.
+        // once, and a refusal there is plang broken. The readers a set or a subclass ships are among the code's readers
+        // (Reader): a read never waits on a kind being asked first.
         _codes = codes;
-        foreach (var code in codes)
-            foreach (var owned in code.kinds.Owned.Values)
-            {
-                foreach (var (choice, name) in owned.Choice)
-                    Reader.Register("choice", name, (global::app.type.reader.ITypeReader)choice.Reader.Invoke([name]));
-                foreach (var subclass in owned.Subclass)
-                    if (subclass.Reader is { } reader)
-                        Reader.Register(subclass.Family, subclass.Kind, (global::app.type.reader.ITypeReader)reader.Invoke(null));
-            }
+        foreach (var code in codes) _ = code.kinds;
         _loaded = true;
         // kinds from more than one assembly are checked against each other here, every kind held
         if (codes.Count > 1 && Guard() is { } clash) throw new InvalidOperationException(clash.Message);
@@ -355,8 +347,14 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     }
 
     // The facts of an assembly this list reads: the ones it was born holding when they are that assembly's, else read here.
-    private global::app.assembly.@this Code(Assembly assembly)
-        => _code is { } code && code.Clr == assembly ? code : new global::app.assembly.@this(assembly);
+    private global::app.assembly.@this Read(Assembly assembly)
+        => Code.Clr == assembly ? Code : new global::app.assembly.@this(assembly);
+
+    /// <summary>What plang's own code says — its types, kinds, formats, closed sets, actions, readers — the facts this
+    /// list (and the app it is the types of) is made from: the ones it was born holding, read once for every app made
+    /// from them, else read for this list when first asked.</summary>
+    internal global::app.assembly.@this Code
+        => _code ?? System.Threading.Interlocked.CompareExchange(ref _code, new global::app.assembly.@this(typeof(@this).Assembly), null) ?? _code!;
 
     // The guard every format passes once a scan has held its kinds: a MIME or an extension is one format's —
     // a second kind answering to it would make the walk's answer depend on the order the types came in.

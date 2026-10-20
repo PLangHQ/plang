@@ -14,6 +14,10 @@ public sealed class @this : global::app.type.node.@this<global::app.type.@this, 
     /// <summary>The app's types, their list made here: every other value is born holding its type from it.</summary>
     public @this(global::app.@this app) : this(app, global::app.type.@this.List(app)) { }
 
+    /// <summary>The app's types made from <paramref name="code"/>, the code's facts read once for every app made from
+    /// them; null reads them for this app.</summary>
+    internal @this(global::app.@this app, global::app.assembly.@this? code) : this(app, new global::app.type.list.@this(code)) { }
+
     private @this(global::app.@this app, global::app.type.list.@this types) : base(app, types, () => types) { }
 
     /// <summary>The app's own format, under every goal's: plain text, unless the app was started with another.</summary>

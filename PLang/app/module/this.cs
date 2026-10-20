@@ -59,7 +59,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _registering = new object();
         // the built-in modules, as plang's code says them (read once for every app made from it); each makes its
         // actions when it is first asked for them
-        foreach (var module in app.assembly.module) _modules.Add(new @this(module.Name, this, module.Action));
+        foreach (var module in app.type.list.Code.module) _modules.Add(new @this(module.Name, this, module.Action));
     }
 
     internal @this(string name, @this root, System.Collections.Generic.IReadOnlyList<global::app.assembly.@this.Action>? born = null)

@@ -31,8 +31,10 @@ public sealed class @this
     /// </summary>
     public delegate object? Read(object raw, string? kind, ReadContext ctx);
 
-    private readonly ConcurrentDictionary<(string Type, string Kind), Read> _generated = new();
-    private readonly ConcurrentDictionary<(string Type, string Kind), Read> _runtime = new();
+    // The code's readers — the facts' tables, shared by every app made from the code (the whole-payload reads and the
+    // token readers) — and the ones registered at run time (a loaded DLL's), made on the first registration.
+    private IReadOnlyDictionary<(string Type, string Kind), Read> _generated = new Dictionary<(string, string), Read>();
+    private ConcurrentDictionary<(string Type, string Kind), Read>? _runtime;
 
     // The typed (ITypeReader) registry — the two read modes live side by side, and
     // both are load-bearing:
@@ -43,11 +45,10 @@ public sealed class @this
     //     (CSV parse, base64, JSON-of-a-string). A token reader buys nothing here.
     // A type may answer both — its wire value streams via Typed, its content form
     // (a file's bytes materialising through source.Value) decodes via Of.
-    private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _generatedTyped = new();
-    private readonly ConcurrentDictionary<(string Type, string Kind), ITypeReader> _runtimeTyped = new();
+    private IReadOnlyDictionary<(string Type, string Kind), ITypeReader> _generatedTyped = new Dictionary<(string, string), ITypeReader>();
+    private ConcurrentDictionary<(string Type, string Kind), ITypeReader>? _runtimeTyped;
 
-    private readonly object _initLock = new();
-    private bool _initialized;
+    private volatile bool _initialized;
 
     /// <summary>
     /// Assemblies to scan for <c>serializer/&lt;kind&gt;.cs</c> classes.
@@ -67,9 +68,10 @@ public sealed class @this
     {
         EnsureInitialized();
         var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
-        if (_runtime.TryGetValue((typeName, k), out var rt)) return rt;
+        var runtime = _runtime;
+        if (runtime != null && runtime.TryGetValue((typeName, k), out var rt)) return rt;
         if (_generated.TryGetValue((typeName, k), out var gen)) return gen;
-        if (_runtime.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
+        if (runtime != null && runtime.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
         if (_generated.TryGetValue((typeName, AnyKind), out var genAny)) return genAny;
         return null;
     }
@@ -85,9 +87,10 @@ public sealed class @this
     {
         EnsureInitialized();
         var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
-        if (_runtimeTyped.TryGetValue((typeName, k), out var rt)) return rt;
+        var runtime = _runtimeTyped;
+        if (runtime != null && runtime.TryGetValue((typeName, k), out var rt)) return rt;
         if (_generatedTyped.TryGetValue((typeName, k), out var gen)) return gen;
-        if (_runtimeTyped.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
+        if (runtime != null && runtime.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
         if (_generatedTyped.TryGetValue((typeName, AnyKind), out var genAny)) return genAny;
         return null;
     }
@@ -131,7 +134,7 @@ public sealed class @this
     {
         if (string.IsNullOrEmpty(kind)) return null;
         EnsureInitialized();
-        foreach (var key in _runtime.Keys)
+        foreach (var key in _runtime?.Keys ?? [])
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
         foreach (var key in _generated.Keys)
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
@@ -146,7 +149,7 @@ public sealed class @this
     public void Register(string typeName, string kind, Read read)
     {
         if (string.IsNullOrWhiteSpace(typeName) || string.IsNullOrWhiteSpace(kind) || read == null) return;
-        _runtime[(typeName, kind)] = read;
+        System.Threading.LazyInitializer.EnsureInitialized(ref _runtime)[(typeName, kind)] = read;
     }
 
     /// <summary>The typed runtime seam — mirrors the untyped <see cref="Register(string,string,Read)"/>
@@ -155,32 +158,37 @@ public sealed class @this
     public void Register(string typeName, string kind, ITypeReader reader)
     {
         if (string.IsNullOrWhiteSpace(typeName) || string.IsNullOrWhiteSpace(kind) || reader == null) return;
-        _runtimeTyped[(typeName, kind)] = reader;
+        System.Threading.LazyInitializer.EnsureInitialized(ref _runtimeTyped)[(typeName, kind)] = reader;
     }
 
     private void EnsureInitialized()
     {
         if (_initialized) return;
-        lock (_initLock)
+        lock (Assemblies)
         {
             if (_initialized) return;
-            foreach (var asm in Assemblies)
-                IndexAssembly(asm);
+            // one assembly's readers are its facts' tables as they stand, shared; several are merged for this registry,
+            // a later assembly's answering over an earlier's
+            var readers = Assemblies.Select(assembly => (_code?.Invoke(assembly) ?? new global::app.assembly.@this(assembly)).readers).ToList();
+            if (readers.Count == 1)
+            {
+                _generated = readers[0].Read;
+                _generatedTyped = readers[0].Typed;
+            }
+            else
+            {
+                var read = new Dictionary<(string, string), Read>();
+                var typed = new Dictionary<(string, string), ITypeReader>();
+                foreach (var each in readers)
+                {
+                    foreach (var (key, value) in each.Read) read[key] = value;
+                    foreach (var (key, value) in each.Typed) typed[key] = value;
+                }
+                _generated = read;
+                _generatedTyped = typed;
+            }
             _initialized = true;
         }
-    }
-
-    // An assembly's readers, as its code's facts list them (read once for every app made from them): each token
-    // reader made for this registry, each whole-payload read shared.
-    private void IndexAssembly(Assembly assembly)
-    {
-        foreach (var reader in (_code?.Invoke(assembly) ?? new global::app.assembly.@this(assembly)).reader)
-            if (reader.Made is { } made)
-            {
-                var instance = (ITypeReader)made.Invoke(null);
-                _generatedTyped[(reader.Type, instance.Kind)] = instance;
-            }
-            else _generated[(reader.Type, reader.Kind)] = reader.Read!;
     }
 
     // The code's facts for an assembly — the ones the type list was born holding; null reads them here.

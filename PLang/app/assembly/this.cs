@@ -182,9 +182,61 @@ public sealed class @this
     private Reader[]? _reader;
     /// <summary>The readers the code ships, each type's from its serializer folder.</summary>
     internal System.Collections.Generic.IReadOnlyList<Reader> reader
-        => _reader ?? System.Threading.LazyInitializer.EnsureInitialized(ref _reader, ref _gate, () => Readers().ToArray());
+        => _reader ?? System.Threading.LazyInitializer.EnsureInitialized(ref _reader, ref _gate, () => Shipped().ToArray());
 
-    private System.Collections.Generic.IEnumerable<Reader> Readers()
+    /// <summary>A pair the code ships: how values of a class (and every class under it) look in an output kind, when it
+    /// isn't their own write — the IOutput class in the class's <c>format</c> folder, named for the kind. Made once,
+    /// shared by every app (a pair holds nothing of an app).</summary>
+    internal sealed record Pair(string Kind, System.Type Class, global::app.type.format.IOutput Output);
+
+    private Pair[]? _pair;
+    /// <summary>The pairs the code ships, each type's from its format folder.</summary>
+    internal System.Collections.Generic.IReadOnlyList<Pair> pair
+        => _pair ?? System.Threading.LazyInitializer.EnsureInitialized(ref _pair, ref _gate, () => Classes
+            .Where(clr => clr is { IsAbstract: false, Namespace: { } ns } && ns.EndsWith(".format", System.StringComparison.Ordinal)
+                && typeof(global::app.type.format.IOutput).IsAssignableFrom(clr))
+            .Select(clr => (clr, owner: Clr.GetType(clr.Namespace![..^".format".Length] + ".this"), made: clr.GetConstructor(System.Type.EmptyTypes)))
+            .Where(each => each.owner != null && each.made != null)
+            .Select(each => new Pair(each.clr.Name, each.owner!, (global::app.type.format.IOutput)each.made!.Invoke(null)))
+            .ToArray());
+
+    /// <summary>The code's readers by (type, kind), made once and shared by every app made from the code (a reader holds
+    /// nothing of an app — what it reads arrives with its read): each type's from its serializer folder, and the closed
+    /// sets' and family subclasses' own, which answer before a folder's under the same key.</summary>
+    internal sealed class Readers
+    {
+        public System.Collections.Generic.IReadOnlyDictionary<(string Type, string Kind), global::app.type.reader.@this.Read> Read { get; }
+        public System.Collections.Generic.IReadOnlyDictionary<(string Type, string Kind), global::app.type.reader.ITypeReader> Typed { get; }
+
+        public Readers(@this code)
+        {
+            var read = new System.Collections.Generic.Dictionary<(string, string), global::app.type.reader.@this.Read>();
+            var typed = new System.Collections.Generic.Dictionary<(string, string), global::app.type.reader.ITypeReader>();
+            foreach (var reader in code.reader)
+                if (reader.Made is { } made)
+                {
+                    var instance = (global::app.type.reader.ITypeReader)made.Invoke(null);
+                    typed[(reader.Type, instance.Kind)] = instance;
+                }
+                else read[(reader.Type, reader.Kind)] = reader.Read!;
+            foreach (var owned in code.kinds.Owned.Values)
+            {
+                foreach (var (choice, name) in owned.Choice)
+                    typed[("choice", name)] = (global::app.type.reader.ITypeReader)choice.Reader.Invoke([name]);
+                foreach (var subclass in owned.Subclass)
+                    if (subclass.Reader is { } made)
+                        typed[(subclass.Family, subclass.Kind)] = (global::app.type.reader.ITypeReader)made.Invoke(null);
+            }
+            Read = read;
+            Typed = typed;
+        }
+    }
+
+    private Readers? _readers;
+    /// <summary>The code's readers, shared by every app made from it.</summary>
+    internal Readers readers => _readers ?? System.Threading.LazyInitializer.EnsureInitialized(ref _readers, ref _gate, () => new Readers(this));
+
+    private System.Collections.Generic.IEnumerable<Reader> Shipped()
     {
         // the words the item classes of each namespace declare ([PlangType]) — a folder whose @this is no type reads
         // the one type its classes declare by word (a module's: [PlangType("ask")] in app.module.output)

@@ -326,16 +326,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     public keepalive.@this KeepAlive { get; } = new();
 
-    /// <summary>What plang's own code says — its types, kinds, formats, closed sets and actions — the facts this app
-    /// was made from. Handed in by whoever makes many apps (read once for all of them), else read at this birth.</summary>
-    internal global::app.assembly.@this assembly { get; }
-
+    /// <param name="assembly">What plang's own code says — its types, kinds, formats, closed sets and actions — read
+    /// once by whoever makes many apps and handed to each; the app's types hold it (<c>type.list.Code</c>). Null reads
+    /// it for this app.</param>
     public @this(string absolutePath,
         string? environment = null,
         bool autoWireConsoleChannels = true,
         global::app.assembly.@this? assembly = null)
     {
-        this.assembly = assembly ?? new(typeof(@this).Assembly);
         Id = Guid.NewGuid().ToString("N")[..12];
         var trimmed = absolutePath.TrimEnd('/', '\\');
         var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
@@ -343,7 +341,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         AbsolutePath = absolutePath;
 
         // The types come first: every value is born holding its type from this list, the actors' contexts too.
-        type = new(this);
+        type = new(this, assembly);
         parent = new(type.list[typeof(global::app.parent.@this)]);
 
         StartedAt = new(DateTimeOffset.UtcNow, type.list[typeof(global::app.type.item.datetime.@this)]);

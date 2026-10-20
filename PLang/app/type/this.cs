@@ -33,7 +33,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     item.IList<@this, list.@this>
 {
     /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>
-    public static list.@this List(global::app.@this app) => new(app.assembly);
+    public static list.@this List(global::app.@this app) => new();
 
     /// <summary>The type's identity — <c>{name, kind?, strict?, template?}</c>: what a type is in plang's own output kind
     /// (its pair writes it: a Data's and a property row's type slot), and a type held as a value in every view but Out

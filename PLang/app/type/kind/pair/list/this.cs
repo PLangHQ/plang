@@ -12,7 +12,6 @@ public sealed class @this
     // the output kind these pairs are written in
     private readonly global::app.type.kind.@this _kind;
     private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, global::app.type.format.IOutput> _pairs = new();
-    private readonly object _gate = new();
     private volatile bool _found;
 
     /// <summary>The pairs written in <paramref name="kind"/>.</summary>
@@ -37,23 +36,18 @@ public sealed class @this
     }
 
     // The pairs the app's assemblies ship for this kind, found once: each IOutput class named for this kind in a
-    // `format` folder, a pair for the class whose folder holds it.
+    // `format` folder (the code's facts list them, read once for every app), a pair for the class whose folder holds it.
     private void Find(global::app.type.list.@this types)
     {
         if (_found) return;
-        lock (_gate)
+        lock (_pairs)
         {
             if (_found) return;
             foreach (var assembly in types.Assemblies)
-                foreach (var clr in assembly.GetTypes())
-                    if (clr is { IsAbstract: false, Namespace: { } ns } && ns.EndsWith(".format", System.StringComparison.Ordinal)
-                        && string.Equals(clr.Name, _kind.Name, System.StringComparison.OrdinalIgnoreCase)
-                        && typeof(global::app.type.format.IOutput).IsAssignableFrom(clr)
-                        && ReferenceEquals(types.Format(clr.Name), _kind)
-                        // the class whose folder holds the `format` folder: its @this
-                        && assembly.GetType(ns[..^".format".Length] + ".this") is { } owner
-                        && clr.GetConstructor(System.Type.EmptyTypes) is { } made)
-                        _pairs.TryAdd(owner, (global::app.type.format.IOutput)made.Invoke(null));
+                foreach (var pair in (assembly == types.Code.Clr ? types.Code : new global::app.assembly.@this(assembly)).pair)
+                    if (string.Equals(pair.Kind, _kind.Name, System.StringComparison.OrdinalIgnoreCase)
+                        && ReferenceEquals(types.Format(pair.Kind), _kind))
+                        _pairs.TryAdd(pair.Class, pair.Output);
             _found = true;
         }
     }
