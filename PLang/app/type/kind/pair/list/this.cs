@@ -24,7 +24,8 @@ public sealed class @this
 
     /// <summary>
     /// The one door a value is written through in this kind: the pair for its class (or its nearest base) when this kind
-    /// has one, else the value writes itself.
+    /// has one, else the value writes itself. A value writing a member writes it through here, never
+    /// <c>member.Output(writer, …)</c> directly — that skips the member's pair.
     /// </summary>
     public System.Threading.Tasks.ValueTask Output(global::app.type.item.@this value, global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)

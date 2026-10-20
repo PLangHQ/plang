@@ -74,7 +74,9 @@ public class @this : global::app.type.@this
     }
 
     /// <summary>What values of other types look like written in this kind, when it isn't their own write (a list in
-    /// formal, a type in plang) — and the one door a value is written through in it. Made when first asked.</summary>
+    /// formal, a type in plang) — and the one door a value is written through in it: a value writing a member writes it
+    /// through <c>writer.Kind.pair.Output(member, …)</c>, never <c>member.Output(writer, …)</c>, or the member's pair is
+    /// skipped. Made when first asked.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public pair.list.@this pair => System.Threading.LazyInitializer.EnsureInitialized(ref _pair, () => new(this));
     private pair.list.@this? _pair;

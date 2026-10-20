@@ -3020,6 +3020,10 @@ class app.type.kind.empty.this : app.type.kind.this
   protected override BornKind() : app.type.kind.this
   protected override Owner : app.type.this { get; }
 
+class app.type.kind.format.plang : app.type.format.IOutput
+  Output(app.type.item.this value, app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  ctor()
+
 class app.type.kind.format.this<T> : app.type.kind.this<T>
   ctor(app.Attributes.FormatAttribute format, app.type.this owner, app.type.kind.this+Encoder encode = …, app.type.kind.this+Decoder decode = …)
 
