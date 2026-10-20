@@ -56,26 +56,92 @@ public partial class @this
     public @this(actor.context.@this context)
     {
         Context = context;
-        // System variables are born WITH context — a computed lifts its factory result
-        // through the registry, so it must hold a context at birth (not stamped after) — each
-        // holding the app's type for what it is (the app's types exist before its actors).
-        var datetime = context.App.type.list[typeof(app.type.item.datetime.@this)];
-        _variables["Now"] = new data.DynamicData("Now", asker => asker.Ok(DateTimeOffset.Now), context, datetime);
-        _variables["NowUtc"] = new data.DynamicData("NowUtc", asker => asker.Ok(DateTimeOffset.UtcNow), context, datetime);
-        _variables["GUID"] = new data.DynamicData("GUID", asker => asker.Ok(Guid.NewGuid()), context,
-            context.App.type.list[typeof(app.type.item.guid.@this)]);
-        // %MyIdentity% — the app's own identity; %Identity% — who the asking actor acts for: its identity's public key
-        // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read from the asker's
-        // actor, so a setDefault or rename is reflected, and born with the memory — not set — so an actor born at any
-        // time has them at once and nothing bound to a variable's set runs for them.
-        _variables["MyIdentity"] = new data.DynamicData("MyIdentity", asker => asker.Ok(asker.Actor.DefaultIdentity), context);
-        _variables["Identity"] = new data.DynamicData("Identity",
-            asker => asker.Ok((asker.Actor.Identity ?? asker.Actor.DefaultIdentity)?.PublicKey), context);
     }
 
-    /// <summary>A variable a context is born holding (<c>%!app%</c>, <c>%!context%</c>) — placed as the memory's own are,
-    /// before anything runs in it: no frame holds a name yet and nothing is bound to a set, so it is no set.</summary>
-    internal void Born(data.@this value) => _variables[value.Name] = value;
+    // The variables a memory holds without anything setting them, each computed at every read — made the first time
+    // its name is asked for, or when the memory is walked whole, so a memory nobody reads them in never makes them.
+    // Held as they always were (a set or a remove changes them), never set: nothing bound to a set runs for them.
+    // Each is made with this memory's context and holds the app's type for what it is.
+    private static readonly (string Name, System.Func<@this, data.@this> Make)[] Computed =
+    [
+        ("Now", m => new data.DynamicData("Now", asker => asker.Ok(DateTimeOffset.Now), m._context,
+            m._context.App.type.list[typeof(app.type.item.datetime.@this)])),
+        ("NowUtc", m => new data.DynamicData("NowUtc", asker => asker.Ok(DateTimeOffset.UtcNow), m._context,
+            m._context.App.type.list[typeof(app.type.item.datetime.@this)])),
+        ("GUID", m => new data.DynamicData("GUID", asker => asker.Ok(Guid.NewGuid()), m._context,
+            m._context.App.type.list[typeof(app.type.item.guid.@this)])),
+        // %MyIdentity% — the app's own identity; %Identity% — who the asking actor acts for: its identity's public key
+        // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read from the asker's
+        // actor, so a setDefault or rename is reflected.
+        ("MyIdentity", m => new data.DynamicData("MyIdentity", asker => asker.Ok(asker.Actor.DefaultIdentity), m._context)),
+        ("Identity", m => new data.DynamicData("Identity",
+            asker => asker.Ok((asker.Actor.Identity ?? asker.Actor.DefaultIdentity)?.PublicKey), m._context)),
+        // a context's own (Born): the app and the context the memory belongs to
+        ("!app", m => new data.DynamicData("!app", asker => asker.Ok(m._context.App), m._context)),
+        ("!context", m => new data.DynamicData("!context", asker => asker.Ok(m._context), m._context)),
+    ];
+
+    // Which of Computed are still to be made, one bit each: every memory holds the first five, a context's own the last two.
+    private static class Held { public const int Memory = 0b0011111, Context = 0b1100000; }
+    private int _unmade = Held.Memory;
+
+    /// <summary>This memory is a context's own: it holds <c>%!app%</c> and <c>%!context%</c> too, made new when first
+    /// asked for — what a context is born holding, before anything runs in it, so it is no set.</summary>
+    internal void Born()
+    {
+        lock (_variables)
+        {
+            _variables.TryRemove("!app", out _);
+            _variables.TryRemove("!context", out _);
+            _unmade |= Held.Context;
+        }
+    }
+
+    // What `name` holds in this memory — a computed one made now, the first time it is asked for.
+    private bool Find(string name, out data.@this held)
+        => _variables.TryGetValue(name, out held!) || (_unmade != 0 && Made(name, out held));
+
+    private bool Made(string name, out data.@this held)
+    {
+        held = null!;
+        for (var at = 0; at < Computed.Length; at++)
+        {
+            if (!Comparer.Equals(Computed[at].Name, name)) continue;
+            lock (_variables) Make(at);
+            return _variables.TryGetValue(name, out held!);
+        }
+        return false;
+    }
+
+    // Makes Computed[at] if it is still to be made (under the lock); a value written under its name first stays.
+    private void Make(int at)
+    {
+        if ((_unmade & (1 << at)) == 0) return;
+        _variables.TryAdd(Computed[at].Name, Computed[at].Make(this));
+        _unmade &= ~(1 << at);
+    }
+
+    // The memory whole, every computed one made — what a walk over it sees.
+    private ConcurrentDictionary<string, data.@this> All
+    {
+        get
+        {
+            if (_unmade != 0)
+                lock (_variables)
+                    for (var at = 0; at < Computed.Length; at++) Make(at);
+            return _variables;
+        }
+    }
+
+    // Writes `value` under `name` straight into the memory (a clone, a projection): a computed one it names is made.
+    private void Place(string name, data.@this value)
+    {
+        _variables[name] = value;
+        if (_unmade == 0) return;
+        for (var at = 0; at < Computed.Length; at++)
+            if (Comparer.Equals(Computed[at].Name, name))
+                lock (_variables) _unmade &= ~(1 << at);
+    }
 
     /// <summary>
     /// Stores a Data under its own Data.Name.
@@ -148,7 +214,7 @@ public partial class @this
                 return hadPrev && ReferenceEquals(prevFrame, dv) ? (dv, false, null) : (dv, true, prevValue);
             }
 
-            var had = _variables.TryGetValue(name, out var prev);
+            var had = Find(name, out var prev);
             var before = had ? prev!.Peek() : null;
             _variables[name] = dv;
             return had && ReferenceEquals(prev, dv) ? (dv, false, null) : (dv, true, before);
@@ -175,7 +241,7 @@ public partial class @this
             return (data, true, inheritedValue);
         }
 
-        if (_variables.TryGetValue(name, out var existing))
+        if (Find(name, out var existing))
         {
             // Rebind, don't mutate: mint a new Data (mirrors the Data-value branch above).
             // In-place mutation of `existing` is the alias bug — a Data the variable shared
@@ -247,7 +313,7 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<data.@this> Own(string name)
     {
         var keeper = _context.call.Current?.Keeper(name);
-        if (keeper != null ? keeper.Holds(name) : _variables.ContainsKey(name)) return await Get(name);
+        if (keeper != null ? keeper.Holds(name) : Find(name, out _)) return await Get(name);
         var read = await Get(name);
         if (read.Success && read.IsInitialized) await read.Value();
         if (!read.Success || !read.IsInitialized || read.Peek() is not { } value) return read;
@@ -273,7 +339,7 @@ public partial class @this
         // its caller's — and the write lands in it: the caller's stays as it was
         var frame = _context.call.Current?.Keeper(name);
         if (frame != null ? !(frame.TryGet(name, out var held) && ReferenceEquals(held, expected))
-                          : !_variables.TryGetValue(name, out held) || !ReferenceEquals(held, expected))
+                          : !Find(name, out held) ||!ReferenceEquals(held, expected))
             return held ?? expected;
 
         // Rebind — the same rebind Set does.
@@ -294,7 +360,7 @@ public partial class @this
     {
         if (string.IsNullOrEmpty(name)) return null;
         if (_context.call.Current is { } frame && frame.TryGet(name, out var framed)) return framed;
-        return _variables.TryGetValue(name, out var v) ? v : Outer?.Peek(name);
+        return Find(name, out var v) ? v : Outer?.Peek(name);
     }
 
     /// <summary>The value-counterpart to <see cref="Get"/>: hand back the VALUE a
@@ -312,7 +378,7 @@ public partial class @this
             return System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name ?? ""));
         if (_context.call.Current is { } frame && frame.TryGet(name, out var framed))
             return System.Threading.Tasks.ValueTask.FromResult(framed);
-        if (_variables.TryGetValue(name, out var root)) return System.Threading.Tasks.ValueTask.FromResult(root);
+        if (Find(name, out var root)) return System.Threading.Tasks.ValueTask.FromResult(root);
         return Outer?.Get(name) ?? System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name));
     }
 
@@ -346,7 +412,7 @@ public partial class @this
     {
         if (_context.call.Current is { } frame && frame.TryGet(name, out _))
             return true;
-        return _variables.ContainsKey(name) || (Outer?.Contains(name) ?? false);
+        return Find(name, out _) || (Outer?.Contains(name) ?? false);
     }
 
     /// <summary>
@@ -356,7 +422,7 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Remove(string name)
     {
-        if (!_variables.TryGetValue(name, out var held)) return _context.NotFound(name);
+        if (!Find(name, out var held)) return _context.NotFound(name);
         if (await Before(Events?.remove, name, held) is { } refused) return refused;
         if (!_variables.TryRemove(name, out var removed)) return _context.NotFound(name);
         return Events?.remove is { after.Count: > 0 } remove ? await remove.After(Named(name), removed, _context) : removed;
@@ -368,9 +434,10 @@ public partial class @this
     public Dictionary<string, string> GetChangedSince(DateTime since)
     {
         var result = new Dictionary<string, string>();
-        foreach (var (name, data) in _variables)
+        foreach (var (name, data) in All)
         {
             if (name.StartsWith("!")) continue; // skip system variables
+            if (data is global::app.data.DynamicData) continue; // computed, never set: never changed
             if (data.Updated > since)
                 result[name] = data.Peek()?.ToString() ?? "(null)";
         }
@@ -384,7 +451,7 @@ public partial class @this
     {
         get
         {
-            var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys)
+            var names = (_context.call.Current?.Names ?? []).Concat(All.Keys)
                 .Where(n => !n.StartsWith('!'))
                 .Distinct(StringComparer.OrdinalIgnoreCase);
             var held = new global::app.type.item.list.@this<global::app.type.item.variable.@this>(
@@ -403,7 +470,7 @@ public partial class @this
     /// </summary>
     public IEnumerable<string> GetNames()
     {
-        return _variables.Keys.Where(k => !k.StartsWith("!"));
+        return All.Keys.Where(k => !k.StartsWith("!"));
     }
 
     /// <summary>
@@ -417,7 +484,9 @@ public partial class @this
             foreach (var name in frame.Names)
                 if (!name.StartsWith('!') && seen.Add(name) && frame.TryGet(name, out var framed))
                     yield return new(name, framed);
-        foreach (var kvp in _variables.Where(kvp => !kvp.Key.StartsWith("!")).OrderByDescending(kvp => kvp.Value.Updated))
+        // a computed one is the memory's from its birth, older than anything set: last, whenever it was made
+        foreach (var kvp in All.Where(kvp => !kvp.Key.StartsWith("!"))
+                     .OrderBy(kvp => kvp.Value is data.DynamicData).ThenByDescending(kvp => kvp.Value.Updated))
             if (seen.Add(kvp.Key)) yield return kvp;
     }
 
@@ -426,7 +495,7 @@ public partial class @this
     /// </summary>
     public void Clear()
     {
-        var toRemove = _variables
+        var toRemove = All
             .Where(kvp => !kvp.Key.StartsWith("!") && kvp.Value is not data.DynamicData)
             .Select(kvp => kvp.Key)
             .ToList();
@@ -444,15 +513,15 @@ public partial class @this
     public @this Clone()
     {
         var clone = new @this(_context);
-        foreach (var kvp in _variables)
+        foreach (var kvp in All)
         {
-            // Data.DynamicData (Now, GUID, etc.) — already in clone from constructor
+            // Data.DynamicData (Now, GUID, etc.) — the clone makes its own
             if (kvp.Value is data.DynamicData) continue;
 
             // System context vars (! prefix) — skip, they're per-execution
             if (kvp.Key.StartsWith("!")) continue;
 
-            clone._variables[kvp.Key] = kvp.Value.Clone();
+            clone.Place(kvp.Key, kvp.Value.Clone());
         }
         clone.Context = Context;
         return clone;
@@ -461,14 +530,14 @@ public partial class @this
     /// <summary>
     /// Saves a snapshot of current variable keys for later restore.
     /// </summary>
-    public HashSet<string> Save() => new HashSet<string>(_variables.Keys, StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> Save() => new HashSet<string>(All.Keys,StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Restores to a saved snapshot: removes any variables added after the snapshot.
     /// </summary>
     public void Restore(HashSet<string> snapshot)
     {
-        foreach (var key in _variables.Keys)
+        foreach (var key in All.Keys)
         {
             if (!snapshot.Contains(key))
                 _variables.TryRemove(key, out _);
@@ -481,7 +550,7 @@ public partial class @this
     public Dictionary<string, object?> ToDictionary(bool includeSystem = false)
     {
         var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        foreach (var kvp in _variables)
+        foreach (var kvp in All)
         {
             if (!includeSystem && kvp.Key.StartsWith("!"))
                 continue;
@@ -503,7 +572,7 @@ public partial class @this
     public global::app.type.item.dict.@this Snapshot()
     {
         var vars = new global::app.type.item.dict.@this(_context.App.type.list[typeof(global::app.type.item.dict.@this)]);
-        foreach (var kvp in _variables)
+        foreach (var kvp in All)
         {
             if (kvp.Key.StartsWith("!")) continue;
             if (kvp.Value is data.DynamicData) continue;

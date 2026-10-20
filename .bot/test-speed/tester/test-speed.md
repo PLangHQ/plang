@@ -155,6 +155,36 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 15. System variables made on first ask: a birth at ~88 µs, ~30 KB
+
+`Now`, `NowUtc`, `GUID`, `MyIdentity`, `Identity` (every memory) and `!app`, `!context` (a context's own) are one
+fixed table on the variable list (`variable/list/this.cs` `Computed`). A memory makes one the first time its name is
+looked up (`Find`: a miss on the store asks the table), and makes all of them before anything walks the store
+(`All`: names, listings, snapshots, clone, save/restore), so every walk sees what it saw before. One bit per entry
+records "made": a set or remove of a system variable sticks, as before. `!app`/`!context` read the memory's live
+context; the context says `Variable.Born()` instead of placing two Data. Writes that bypass a set (a clone, the
+throw-time projection) go through `Place`, which marks a system name as made.
+
+Two orderings leaned on the birth time: `GetAll` (newest first) put the system variables last because they were born
+first. Made late, they'd sort first, so they are ordered last explicitly (`GetAll_OrderedByUpdated` caught it).
+`GetChangedSince` skips them, because nothing sets them. Before, they counted as "changed" only for a `since` earlier
+than the memory's birth.
+
+| measure (3 runs × 100, same machine) | before | after |
+|---|---|---|
+| shared birth, median | 90 – 108 µs (load ~7) | **87 – 92 µs** (load ~9 – 10) |
+| shared birth, min | 71 – 90 µs | 66 – 70 µs |
+| fresh birth, median | 1,162 – 1,385 µs | 1,276 – 1,332 µs (noise) |
+| birth + test mode + dispose, alloc | 121 KB | 117 KB |
+| birth alone (4,000 traced) | ~34 KB | **~30 KB** |
+
+C#: green except Wire's six `carried` snapshot tests, the same six red on the previous commit. plang: the same 11
+names fail as on the previous commit (names diffed, not counted).
+
+Left in a birth (~30 KB): type entries the app's own constructor asks for (`type.list[Type]` → `Born`, ~10%), the
+empty kinds' key tables (`kind.Keys` iterator + dictionary, ~9%), each actor's channel table (~3.6%) and context
+(cancellation source, stacks, the variable store's own dictionary, ~2.6%), the type list's tables.
+
 ## 14. Speed and memory, round on round: a birth at ~95 µs, ~34 KB
 
 Each cut found by allocation sampling with call stacks over 4,000 shared births:

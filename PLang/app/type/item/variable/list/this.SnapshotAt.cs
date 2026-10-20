@@ -22,14 +22,14 @@ public partial class @this
         // Latest first — undo each mutation by writing its Before value.
         var events = stack.EventsSince(error.CreatedUtc).Reverse();
         foreach (var diff in events)
-            clone._variables[diff.Name] = new data.@this(diff.Name, diff.Before, context: _context);
+            clone.Place(diff.Name, new data.@this(diff.Name, diff.Before, context: _context));
         return clone;
     }
 
     private @this ShallowCloneStore()
     {
         var copy = new @this(_context);
-        foreach (var kvp in _variables)
+        foreach (var kvp in All)
         {
             // Same skip rule as Clone(): per-execution cells are shared live, never
             // cloned. DynamicData (Now/GUID) and !-prefixed context vars (!app,
@@ -38,7 +38,7 @@ public partial class @this
             // projection of USER variable state, not of infrastructure handles.
             if (kvp.Value is data.DynamicData || kvp.Key.StartsWith("!")) continue;
             // Carry the live Data instance by clone so mutations on `copy` don't bleed back.
-            copy._variables[kvp.Key] = kvp.Value.Clone();
+            copy.Place(kvp.Key, kvp.Value.Clone());
         }
         return copy;
     }

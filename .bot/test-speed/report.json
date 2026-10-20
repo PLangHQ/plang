@@ -130,12 +130,25 @@
           "category": "code",
           "confidence": "medium",
           "context": "Generator lists classes and carries attribute data (formats, actions, statics) with guard tests (deletion-tested); lighter type object; actor/context/call list/channels/store/permission parts made on first use. Shared birth ~95 us / ~34 KB; fresh ~1,200 us. C# green but Wire six; plang 277/11."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/variable/list/this.cs",
+            "PLang/app/type/item/variable/list/this.Snapshot.cs",
+            "PLang/app/type/item/variable/list/this.SnapshotAt.cs",
+            "PLang/app/actor/context/this.cs",
+            ".bot/test-speed/tester/test-speed.md"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "System variables (Now, NowUtc, GUID, MyIdentity, Identity, !app, !context) made on first ask from one table, all made before any walk; GetAll orders them last. Shared birth ~88 us / ~30 KB. C# green but the six carried snapshot tests (red on the previous commit too); plang the same 11 names (diffed)."
         }
       ],
       "after": {
-        "status": "157 committed on test-speed",
-        "health": "C# green but Wire's six baseline; plang 277/11",
-        "notes": "Birth ~95 us / ~34 KB shared; ~1,200 us fresh. test-speed.md sections 12-14."
+        "status": "section 15 committed on test-speed",
+        "health": "C# green but Wire's six carried (baseline); plang same 11 names",
+        "notes": "Birth ~88 us / ~30 KB shared; ~1,300 us fresh. test-speed.md sections 12-15."
       }
     }
   ]

@@ -20,7 +20,7 @@ public partial class @this : ISnapshot
     {
         // Each captured variable is its own entry of the section — the snapshot's native shape, a
         // dict of Data — so %snap.variables.x% navigates straight to it.
-        foreach (var kvp in _variables)
+        foreach (var kvp in All)
         {
             if (kvp.Key.StartsWith("!")) continue;
             // Always-fresh cells (Now, NowUtc, GUID, MyIdentity) — the lazy

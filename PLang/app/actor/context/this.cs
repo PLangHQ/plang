@@ -146,22 +146,10 @@ public sealed class @this : IDisposable
         call = new(app.type.list, () => app.type.list[new global::app.type.@this("duration", "short"), this],
             () => Setting, () => new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
 
-        // Register context variables on the Variables
-        RegisterContextVariables();
-    }
-
-    /// <summary>
-    /// Registers context variables (prefixed with !) on the Variables.
-    /// </summary>
-    private void RegisterContextVariables()
-    {
-        var vars = Variable;
-
-        // All context variables are lazy — context has app, fetch at request time. The goal, step, error, test and
-        // channels in play are the app's shortcuts (/system/shortcut/: %!goal%, %!step%, %!error%, %!test%,
-        // %!channel%), each reading its asker's place through the app.
-        vars.Born(new data.DynamicData("!app", asker => asker.Ok(App), this));
-        vars.Born(new data.DynamicData("!context", asker => asker.Ok(this), this));
+        // The memory holds %!app% and %!context%, made when first asked for. The goal, step, error, test and channels
+        // in play are the app's shortcuts (/system/shortcut/: %!goal%, %!step%, %!error%, %!test%, %!channel%), each
+        // reading its asker's place through the app.
+        Variable.Born();
     }
 
     // --- Value births ---
