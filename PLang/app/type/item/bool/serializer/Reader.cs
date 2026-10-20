@@ -18,7 +18,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        var type = ctx.Context.App.type.list[new global::app.type.@this("bool", kind), ctx.Context];
+        var type = ctx.Context.App.type.list.Of("bool", kind);
         if (reader.Null()) return new global::app.type.item.@null.@this(type);
         return reader.Peek() switch
         {

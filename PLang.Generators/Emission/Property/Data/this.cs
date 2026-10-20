@@ -171,15 +171,15 @@ public sealed record @this(
         sb.AppendLine("        else");
         sb.AppendLine("        {");
         sb.AppendLine($"            var __d = __View<{InnerType}>(action, \"{ParamName}\", context);");
-        sb.AppendLine($"            if (__d.HasValue) {Local} = __d;");
+        sb.AppendLine($"            if (__d is {{ HasValue: true }}) {Local} = __d;");
         sb.AppendLine($"            else if ({settingGet} is {{ IsInitialized: true }} __s) {Local} = __s.As<{InnerType}>();");
-        sb.AppendLine($"            else if (__Default<{InnerType}>(action, \"{ParamName}\", context) is var __f && __f.HasValue) {Local} = __f;");
+        sb.AppendLine($"            else if (__Default<{InnerType}>(action, \"{ParamName}\", context) is {{ HasValue: true }} __f) {Local} = __f;");
         if (IsNullable)
             sb.AppendLine($"            else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\", context);");
         else if (DefaultValue != null)
             sb.AppendLine($"            else {Local} = {Defaulted("context")};");
         else
-            sb.AppendLine($"            else {Local} = __d;");
+            sb.AppendLine($"            else {Local} = __d ?? global::app.data.@this.NotFound(\"{ParamName}\", context).As<{InnerType}>();");
         sb.AppendLine("        }");
         sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
         // [Default] also fires when the step value resolves to null (`mime: %unsetVar%`).

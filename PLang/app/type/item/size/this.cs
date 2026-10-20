@@ -35,7 +35,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         : this(bytes, context.Setting.Of<setting.@this>().Standard.Value, context) { }
 
     private @this(long bytes, kind.@this kind, actor.context.@this context)
-        : this(bytes, kind, context.App.type.list[new global::app.type.@this("size", kind.Name), context]) { }
+        : this(bytes, kind, context.App.type.list.Of("size", kind.Name)) { }
 
     // a count with no asker: in iec, the setting's own default
     private @this(long bytes) : this(bytes, Standards[0]) { }

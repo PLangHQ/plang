@@ -270,5 +270,10 @@ public sealed class @this : global::app.type.item.note.IAbout
 
     /// <summary>The run's own Data over this property — born with the run's context, the bag its own copy.</summary>
     public global::app.data.@this Data(global::app.actor.context.@this context)
-        => new(Name, (object?)Value, context: context) { Properties = Properties.Clone() };
+    {
+        var data = new global::app.data.@this(Name, (object?)Value, context: context);
+        // a bag with nothing in it is not copied: the run's Data makes its own when something is set on it
+        if (Properties.Count > 0) data.Properties = Properties.Clone();
+        return data;
+    }
 }

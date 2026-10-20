@@ -88,7 +88,19 @@ public sealed partial class @this
 
     /// <summary>The folder holding this goal's source .goal file — what a relative path in it resolves against.
     /// Null for a goal with no Path.</summary>
-    public global::app.type.item.path.@this? Folder => Path?.Parent;
+    public global::app.type.item.path.@this? Folder
+    {
+        get
+        {
+            // kept with the path it was made from: every relative path a step resolves asks it
+            if (Path is not { } source) return null;
+            if (_folder is { } held && ReferenceEquals(held.Source, source)) return held.Pr;
+            var made = new Built(source, source.Parent);
+            _folder = made;
+            return made.Pr;
+        }
+    }
+    private Built? _folder;
 
     /// <summary>The .pr this goal is built to (<see cref="Pr"/>); none without a Path.</summary>
     [Debug]

@@ -167,24 +167,31 @@ public sealed partial class @this
             // entity's face and the facts can never disagree. A kinded family is born here with
             // its kind (already the canonical name); every other name is the named entity.
             var (name, kind) = PlangName(clrType);
-            return kind == null ? this[name] : Full(new app.type.@this(name), kind);
+            return kind == null ? this[name] : Full(name, kind, false, null);
         }
     }
+
+    /// <summary>The full type <paramref name="name"/> of kind <paramref name="kind"/> (a template's when given) — the
+    /// same answer as asking with an identity <c>new type(name, kind)</c>, without making one to ask with.</summary>
+    internal app.type.@this Of(string name, string? kind, global::app.type.item.template.kind.@this? template = null)
+        => Full(name, string.IsNullOrEmpty(kind) ? null : kind, false, template);
 
     // The full type for an identity and its kind's name — the type carries its own kind of that name, its
     // behaviour with it; a choice's kind (its set) carries the set's options. The type's own format
     // answering to the name (`{text, txt}`) is the type itself, no kind.
-    private app.type.@this Full(app.type.@this type, string? name)
+    private app.type.@this Full(app.type.@this type, string? name) => Full(type.Name, name, type.Strict, type.Template);
+
+    private app.type.@this Full(string typeName, string? name, bool strict, global::app.type.item.template.kind.@this? template)
     {
-        var entry = Find(type.Name);
+        var entry = Find(typeName);
         var kind = name == null ? null
             : entry?.kind[name] is { } held ? (held.IsEmpty ? null : held)
             : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
-        if (entry != null && kind == null && !type.Strict && type.Template == null) return entry;
+        if (entry != null && kind == null && !strict && template == null) return entry;
         // made from state handed in, not captured: a captured local makes its closure at every call, made or not
-        return _full.GetOrAdd((entry, type.Name, kind?.Name, type.Strict, type.Template?.Name), static (_, made) => made.entry == null
-            ? new app.type.@this(made.type.Name, made.kind?.Name, made.type.Strict, made.type.Template) { kind = made.kind }
-            : new app.type.@this(made.entry, made.kind, made.type.Strict, made.type.Template), (entry, type, kind));
+        return _full.GetOrAdd((entry, typeName, kind?.Name, strict, template?.Name), static (_, made) => made.entry == null
+            ? new app.type.@this(made.typeName, made.kind?.Name, made.strict, made.template) { kind = made.kind }
+            : new app.type.@this(made.entry, made.kind, made.strict, made.template), (entry, typeName, kind, strict, template));
     }
 
     // The full types made, one per entry, kind, strict and template: a kinded type is one object in this app.

@@ -439,15 +439,17 @@ public static class @this
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
                     => (action?[name] ?? action?.Default[name])?.Data(context) ?? global::app.data.@this.NotFound(name, context);
 
-                private static global::app.data.@this<T> __View<T>(
+                // null when the step (or what the build froze) doesn't name the option: the slot's NotFound is made only
+                // where it is the slot's answer, not for every option a step leaves out
+                private static global::app.data.@this<T>? __View<T>(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
                     where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-                    => action?[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name, context).As<T>();
+                    => action?[name]?.Data(context).As<T>();
 
-                private static global::app.data.@this<T> __Default<T>(
+                private static global::app.data.@this<T>? __Default<T>(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
                     where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-                    => action?.Default[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name, context).As<T>();
+                    => action?.Default[name]?.Data(context).As<T>();
 
                 // Wraps a resolution error with the action's module.action context so the
                 // reader can locate the failing call site. The raw error from Data<T>.As<T>

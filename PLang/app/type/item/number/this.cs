@@ -184,7 +184,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // a number made here is born holding the app's {number, <its kind>}, as the binding's asker names the app (a
         // binding with no context, the operator's, keeps the operator's birth)
         @this Typed(@this made) => data.Context is { } context
-            ? new(context.App.type.list[new global::app.type.@this("number", made.Kind.Name), context], made)
+            ? new(context.App.type.list.Of("number", made.Kind.Name), made)
             : made;
     }
 

@@ -285,7 +285,7 @@ public class source : @this
     /// text type, as <paramref name="context"/>'s types hold it.</summary>
     private protected virtual global::app.type.item.text.@this? Text(actor.context.@this context)
         => HasVariable && !IsVariable && Peek() is string template
-            ? new(template, context.App.type.list[new global::app.type.@this("text", template: Type.Template), context], _variable)
+            ? new(template, context.App.type.list.Of("text", null, Type.Template), _variable)
             : null;
 
     /// <summary>The type reads its own raw form — the declaration is the whole selector. One
@@ -392,7 +392,7 @@ public class source : @this
         }
         // a partial template is a text's to render: hand over to one
         await writer.Kind.pair.Output(new global::app.type.item.text.@this(template,
-            context.App.type.list[new global::app.type.@this("text", template: Type.Template), context], _variable), writer, mode, context);
+            context.App.type.list.Of("text", null, Type.Template), _variable), writer, mode, context);
     }
 
 
