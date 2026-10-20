@@ -135,6 +135,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     // The os/ root anchor. Pure name math against AppContext.BaseDirectory;
     // path.Resolve can't be used because App is still constructing and has
     // no Context yet, so this routes through PathHelper directly.
+    [global::app.LlmBuilder]
     public string OsAbsolutePath =>
         PathHelper.GetFullPath(PathHelper.Combine(AppContext.BaseDirectory, "os"));
 

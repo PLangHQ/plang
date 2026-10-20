@@ -288,6 +288,7 @@ public sealed partial class @this
     /// <summary>The goal as its .pr holds it — the last build of this source (goal.Merge). Null when
     /// the goal has no .pr yet.</summary>
     [JsonIgnore]
+    [global::app.LlmBuilder]
     public @this? Cache { get; private set; }
 
     /// <summary>The goal is cached: its source is the one its <see cref="Cache"/> was built from (every

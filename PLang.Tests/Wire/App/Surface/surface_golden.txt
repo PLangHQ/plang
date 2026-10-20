@@ -971,7 +971,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Load() : System.Threading.Tasks.Task<app.data.this>
   Mode : app.type.item.choice.this<app.Mode> { get; }
   Name(app.actor.context.this context) : app.type.item.text.this [LlmBuilder]
-  OsAbsolutePath : System.String { get; }
+  OsAbsolutePath : System.String { get; } [LlmBuilder]
   RequestShutdown() : System.Void
   Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
   ResumeFromWire(System.String json, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
@@ -3331,6 +3331,7 @@ type app
   .created : datetime
   .updated : datetime
   .absolutePath : text
+  .osAbsolutePath : text
   .environment : text
   .call : app.call.list
   .trace : app.actor.context.trace
@@ -3623,6 +3624,7 @@ type goal
   .visibility : choice<visibility>
   .path : path
   .warning : list<clr>
+  .cache : goal
   .isCached : bool
 
 type guid

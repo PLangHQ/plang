@@ -15,7 +15,7 @@ public class OsNavigatedMemberTests : System.IAsyncDisposable
     private async Task<global::app.data.@this> Read(string text)
         => await new global::app.type.item.variable.parser.@this(text, _app.type.list).Variable[0].Start(Ctx);
 
-    [Test, Skip("red: the member isn't on the app's member list; marked with the os sweep")]
+    [Test]
     public async Task TheAppsOsAbsolutePath_Reads()
     {
         var read = await Read("%!app.OsAbsolutePath%");
@@ -25,7 +25,7 @@ public class OsNavigatedMemberTests : System.IAsyncDisposable
     }
 
     // a fresh goal holds no cache, so what reads it is the goal's member list: Cache is on it
-    [Test, Skip("red: the member isn't on the goal's member list; marked with the os sweep")]
+    [Test]
     public async Task AGoalsCache_IsAMemberPlangReads()
         => await Assert.That(_app.type.list.Member(typeof(global::app.goal.@this))["cache"]).IsNotNull();
 }
