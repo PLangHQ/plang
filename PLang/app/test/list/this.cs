@@ -152,7 +152,9 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         if (test.Status == Status.Ready)
         {
             // born from the code this app was made from: plang's facts are read once for the whole run
-            await using var app = new global::app.@this(_app.AbsolutePath, assembly: _app.type.list.Code);
+            // sharing the one type list every app made from this code shares — unless the test's program loads code,
+            // whose types are its app's own
+            await using var app = new global::app.@this(_app.AbsolutePath, assembly: _app.type.list.Code, shareTypes: !Loads(test));
             app.test.list.Open(test);
             Made?.Invoke(app);
             await test.Start(app, context);
@@ -160,5 +162,9 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         }
         Add(test);
     }
+
+    // Whether a goal the test reaches loads code (code.load): its types join its app, which can't share them.
+    private static bool Loads(global::app.test.@this test)
+        => test.Reach.Any(goal => goal.Step.Items().Any(step => step.Code.Own.Contains("code.load", StringComparer.OrdinalIgnoreCase)));
 
 }

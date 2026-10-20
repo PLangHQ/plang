@@ -43,7 +43,8 @@ public sealed class Coverage
     /// own result is truthy), keyed by its position in the step's action chain. Answers the binding; whoever
     /// watches removes it when the watch ends.</summary>
     public global::app.@event.binding.@this Watch(global::app.actor.context.@this context)
-        => context.App.type.list["action"].Own().Bind("start", global::app.@event.When.after,
+        // held by the app when its types are shared: the watch is this app's
+        => global::app.@event.held.@this.Own(context.App.type.list["action"], context, global::app.@event.binding.Scope.actor).Bind("start", global::app.@event.When.after,
             async (item, result, ctx) =>
             {
                 if (item is not global::app.goal.step.action.@this action) return ctx.Ok();

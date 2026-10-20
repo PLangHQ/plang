@@ -110,8 +110,7 @@ public sealed partial class @this
     {
         0 => context.App.step,
         1 => this,
-        // what the asker's app bound on this step, which every app made from the code shares
-        _ => global::app.@event.held.@this.Level(this, depth - 2, context),
+        _ => null,
     };
 
     /// <summary>

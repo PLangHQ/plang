@@ -33,6 +33,16 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     /// <summary>A list born holding <paramref name="code"/>, the facts of plang's assembly read once for every app made from it.</summary>
     internal @this(global::app.assembly.@this? code) : this() => _code = code;
 
+    /// <summary>Whether this list is the one every app made from its code shares (an app born to share its types): it
+    /// holds plang's own types and nothing an app adds — an app that adds types (loads code) is born with its own.</summary>
+    internal bool IsShared { get; init; }
+
+    // An addition to a shared list would reach every app sharing it: refused, saying why.
+    private global::app.error.@this? Unshared(string what)
+        => IsShared ? new global::app.error.@this(
+            $"this app shares its types with every app made from the same code, so it adds no {what} — an app that adds types is born with its own (shareTypes: false)",
+            "TypesShared", 400) : null;
+
     /// <summary>Assemblies the startup scan reads. Defaults to the App assembly; callers can extend.</summary>
     public List<Assembly> Assemblies { get; } = new() { typeof(@this).Assembly };
 
@@ -231,6 +241,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     /// </summary>
     public data.@this Add(System.Type clr, actor.context.@this context, string? name = null)
     {
+        if (Unshared("type") is { } shared) return context.Error(shared);
         if ((name ?? NameOf(clr)) is not { } claimed)
             return context.Error(new error.@this($"{clr.FullName} is not a plang type — only items are.", "TypeLoadNotAType", 400));
         // The class that already owns the name adds nothing new: the same answer, whatever the name.
@@ -265,6 +276,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     {
         // An assembly the startup scan read brings nothing new: its types and kinds are in.
         if (Assemblies.Contains(assembly)) return context.Ok(new List<global::app.type.@this>());
+        if (Unshared("assembly's types") is { } shared) return context.Error(shared);
 
         System.Type[] exported;
         try { exported = assembly.GetExportedTypes(); }
@@ -301,6 +313,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     /// A kind of the same name on that type is replaced.</summary>
     public void Add(global::app.type.kind.@this kind)
     {
+        if (Unshared("kind") is { } shared) throw new global::app.error.AppException(shared);
         Load();
         foreach (var key in kind.Mime.Concat(kind.Extension))
             foreach (var type in Candidates(key).Append(kind.Owner).OfType<global::app.type.@this>())

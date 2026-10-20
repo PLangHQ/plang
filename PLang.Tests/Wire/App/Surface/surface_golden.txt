@@ -990,7 +990,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Version : System.String { get; } [Store]
   actor : app.type.node.current.this<app.actor.this, app.actor.list.this> { get; } [LlmBuilder]
   call(app.actor.context.this context) : app.call.list.this [LlmBuilder]
-  ctor(System.String absolutePath, System.String environment = …, System.Boolean autoWireConsoleChannels = …, app.assembly.this assembly = …)
+  ctor(System.String absolutePath, System.String environment = …, System.Boolean autoWireConsoleChannels = …, app.assembly.this assembly = …, System.Boolean shareTypes = …)
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
   error : app.type.node.current.this<app.error.this, app.error.list.this> { get; } [LlmBuilder]
   event(app.actor.context.this context) : app.data.this [LlmBuilder]

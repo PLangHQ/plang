@@ -331,10 +331,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <param name="assembly">What plang's own code says — its types, kinds, formats, closed sets and actions — read
     /// once by whoever makes many apps and handed to each; the app's types hold it (<c>type.list.Code</c>). Null reads
     /// it for this app.</param>
+    /// <param name="shareTypes">The app shares the one type list every app made from <paramref name="assembly"/> shares
+    /// (a server's app per request): no list of its own to make, and none of its types' tables; it adds no types or
+    /// kinds (it loads no code). Off: the app's types are its own.</param>
     public @this(string absolutePath,
         string? environment = null,
         bool autoWireConsoleChannels = true,
-        global::app.assembly.@this? assembly = null)
+        global::app.assembly.@this? assembly = null,
+        bool shareTypes = false)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         var trimmed = absolutePath.TrimEnd('/', '\\');
@@ -343,7 +347,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         AbsolutePath = absolutePath;
 
         // The types come first: every value is born holding its type from this list, the actors' contexts too.
-        type = new(this, assembly);
+        type = new(this, assembly, shareTypes);
         parent = new(type.list[typeof(global::app.parent.@this)]);
 
         StartedAt = new(DateTimeOffset.UtcNow, type.list[typeof(global::app.type.item.datetime.@this)]);

@@ -157,6 +157,12 @@ public sealed class @this
         }
     }
 
+    private global::app.type.list.@this? _types;
+    /// <summary>The type list every app made from this code shares when it is born to (it adds no types of its own) —
+    /// the code's types and kinds, made for the first such app and kept for the process.</summary>
+    internal global::app.type.list.@this types
+        => _types ?? System.Threading.LazyInitializer.EnsureInitialized(ref _types, ref _gate, () => new global::app.type.list.@this(this) { IsShared = true });
+
     private System.Collections.Generic.Dictionary<string, System.Type>? _setting;
     /// <summary>The setting classes by the path each is read by, in the order the types are read (a later path wins).</summary>
     internal System.Collections.Generic.IReadOnlyDictionary<string, System.Type> setting

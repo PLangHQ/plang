@@ -363,10 +363,12 @@ public sealed partial class @this
     private static async Task<data.@this> Read(global::app.type.item.path.@this pr, global::app.@this app)
     {
         var context = app.actor.list.System.Context;
-        var before = app.goal.type.on.load.before;
-        if (before.Count > 0 && await before.Start(pr, context.Ok(), context) is { } answer
-            && (!answer.Success || answer.Handled))
-            return answer;
+        // what is bound before a goal loads — on the goal type, and what this app holds for it (a shared type list's
+        // entry holds nothing an app binds)
+        for (var at = 0; global::app.@event.held.@this.On(app.goal.type, at, context) is { } on; at++)
+            if (on.load.before is { Count: > 0 } before && await before.Start(pr, context.Ok(), context) is { } answer
+                && (!answer.Success || answer.Handled))
+                return answer;
         try
         {
             // the program read once for every app made from this code over this folder
@@ -400,8 +402,7 @@ public sealed partial class @this
     {
         0 => context.App.goal.type,
         1 => this,
-        // what the asker's app bound on this goal, which every app made from the code shares
-        _ => global::app.@event.held.@this.Level(this, depth - 2, context),
+        _ => null,
     };
 
     /// <summary>

@@ -70,7 +70,8 @@ public sealed class @this
         if (Setting.Variables.CountRaw > 0)
         {
             var watched = Watched;
-            var variables = _context.App.variable.type.Own();
+            var variables = global::app.@event.held.@this.Own(_context.App.variable.type, _context.App.actor.list.User.Context,
+                global::app.@event.binding.Scope.actor);
             bool Watches(global::app.type.item.@this item, actor.context.@this _)
                 => item is global::app.type.item.variable.@this variable && watched.Contains(variable.Name);
             variables.Bind("set", When.after, (item, result, context) => Watch((global::app.type.item.variable.@this)item, "SET", result, context),
@@ -123,18 +124,21 @@ public sealed class @this
         var types = _context.App.type.list;
         var step = Setting.Step?.ToInt32();
 
-        var steps = types["step"].Own();
+        // held by the app when its types are shared: the watch is this app's
+        global::app.@event.on.own Own(global::app.type.@this type)
+            => global::app.@event.held.@this.Own(type, user.Context, global::app.@event.binding.Scope.actor);
+        var steps = Own(types["step"]);
         steps.Bind("start", When.before, (_, _, context) => BeforeStepHandler(context, step), user, global::app.@event.binding.Scope.actor,
             (item, _) => item is global::app.goal.step.@this s && Watches(s.Goal));
         steps.Bind("start", When.after, (_, _, context) => AfterStepHandler(context, step), user, global::app.@event.binding.Scope.actor,
             (item, _) => item is global::app.goal.step.@this s && Watches(s.Goal));
 
-        types["goal"].Own().Bind("start", When.after, (_, _, context) => AfterGoalHandler(context), user, global::app.@event.binding.Scope.actor,
+        Own(types["goal"]).Bind("start", When.after, (_, _, context) => AfterGoalHandler(context), user, global::app.@event.binding.Scope.actor,
             (item, _) => item is global::app.goal.@this g && Watches(g));
 
         if (Setting.Level.Value == global::app.module.debug.Level.Action)
         {
-            var actions = types["action"].Own();
+            var actions = Own(types["action"]);
             actions.Bind("start", When.before, (_, _, context) => BeforeActionHandler(context, step), user, global::app.@event.binding.Scope.actor);
             actions.Bind("start", When.after, (_, _, context) => AfterActionHandler(context, step), user, global::app.@event.binding.Scope.actor);
         }

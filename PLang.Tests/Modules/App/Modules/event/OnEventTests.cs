@@ -212,6 +212,50 @@ public class OnEventTests
     }
 
     [Test]
+    public async Task ABindingOnASharedTypeEntry_IsTheBindingAppsOwn()
+    {
+        // two apps sharing the one type list of their code: an app-wide binding on the goal type's start, made in one,
+        // fires there and never in the other — and the shared entry itself holds nothing
+        await using var first = new global::app.@this("/shared", assembly: global::PLang.Tests.Session.Code, shareTypes: true).Testing();
+        await using var second = new global::app.@this("/shared", assembly: global::PLang.Tests.Session.Code, shareTypes: true).Testing();
+        await Assert.That(ReferenceEquals(first.goal.type, second.goal.type)).IsTrue();
+
+        var here = first.actor.list.User.Context;
+        var watch = Make.Goal(here, "Watch", Make.Step("set %seen% = yes",
+            Make.Action(here, "variable", "set", Make.Param(here, "Name", "seen", "variable"), ("Value", "yes"))));
+        first.goal.list.Add(watch);
+        var bound = await Make.Action(here, "on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"),
+            ("Action", Make.Call(here, "Watch")), ("Scope", "app")).Start(here);
+        await bound.IsSuccess();
+        await Assert.That(first.goal.type.on.start.before.Count).IsEqualTo(0);
+
+        var there = second.actor.list.User.Context;
+        var target = Make.Goal(there, "Target");
+        second.goal.list.Add(target);
+        await (await target.Start(there)).IsSuccess();
+        await Assert.That((await there.Variable.Get("seen")).IsInitialized).IsFalse();
+
+        var mine = Make.Goal(here, "Mine");
+        first.goal.list.Add(mine);
+        await mine.Start(here);
+        await Assert.That((await (await here.Variable.Get("seen")).Value())?.ToString()).IsEqualTo("yes");
+    }
+
+    [Test]
+    public async Task ASharedTypeList_RefusesAnAddition_SayingWhy()
+    {
+        await using var shared = new global::app.@this("/shared", assembly: global::PLang.Tests.Session.Code, shareTypes: true).Testing();
+        var added = shared.type.list.Add(typeof(global::app.type.item.text.@this).Assembly, shared.actor.list.User.Context);
+        var loaded = shared.type.list.Add(typeof(OnEventTests), shared.actor.list.User.Context, "probe");
+
+        await Assert.That(loaded.Success).IsFalse();
+        await Assert.That(loaded.Error!.Key).IsEqualTo("TypesShared");
+        await Assert.That(shared.type.list.Contains("probe")).IsFalse();
+        // plang's own assembly is already in: adding it brings nothing, and is no addition
+        await added.IsSuccess();
+    }
+
+    [Test]
     public async Task AfterAnAction_TheCallReadsItsResult()
     {
         Goal("Watch", Keep("seenResult", "%!event!result%"));

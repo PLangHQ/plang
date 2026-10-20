@@ -18,6 +18,11 @@ public sealed class @this : global::app.type.node.@this<global::app.type.@this, 
     /// them; null reads them for this app.</summary>
     internal @this(global::app.@this app, global::app.assembly.@this? code) : this(app, new global::app.type.list.@this(code)) { }
 
+    /// <summary>The app's types: the one list every app made from <paramref name="code"/> shares, when
+    /// <paramref name="share"/> (the app adds no types of its own); else its own, as above.</summary>
+    internal @this(global::app.@this app, global::app.assembly.@this? code, bool share)
+        : this(app, share && code != null ? code.types : new global::app.type.list.@this(code)) { }
+
     private @this(global::app.@this app, global::app.type.list.@this types) : base(app, types, () => types) { }
 
     /// <summary>A type by a name it answers to (its name, namespace or an alias) — the list's own index, not a walk of

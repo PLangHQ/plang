@@ -37,17 +37,20 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     private static readonly System.Func<@this, binding.list.@this> BeforeSide = e => e.before;
     private static readonly System.Func<@this, binding.list.@this> AfterSide = e => e.after;
 
-    // The outermost and innermost of the item's levels with something bound on one side; -1 when none has.
+    // The outermost and innermost of the item's levels with something bound on one side; -1 when none has. A level's
+    // bindings are its own and what the asker's app holds for it (held.On).
     private (int Outer, int Inner) Bound(global::app.type.item.@this item, global::app.actor.context.@this context,
         System.Func<@this, binding.list.@this> side)
     {
         int outer = -1, inner = -1;
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            if (Of(level.on) is { } held && side(held).Count > 0)
-            {
-                if (outer < 0) outer = depth;
-                inner = depth;
-            }
+            for (var at = 0; global::app.@event.held.@this.On(level, at, context) is { } on; at++)
+                if (Of(on) is { } held && side(held).Count > 0)
+                {
+                    if (outer < 0) outer = depth;
+                    inner = depth;
+                    break;
+                }
         return (outer, inner);
     }
 
@@ -71,11 +74,12 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     {
         var answer = result ?? context.Ok();
         for (; item.Level(depth, context) is { } level; depth++)
-        {
-            if (Of(level.on)?.before is not { Count: > 0 } side) continue;
-            answer = await side.Start(item, answer, context);
-            if (!answer.Success || answer.Handled) return answer;
-        }
+            for (var at = 0; global::app.@event.held.@this.On(level, at, context) is { } on; at++)
+            {
+                if (Of(on)?.before is not { Count: > 0 } side) continue;
+                answer = await side.Start(item, answer, context);
+                if (!answer.Success || answer.Handled) return answer;
+            }
         return answer;
     }
 
@@ -97,7 +101,9 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     {
         for (; depth >= 0; depth--)
         {
-            if (Of(item.Level(depth, context)!.on)?.after is { Count: > 0 } side) result = await side.Start(item, result, context);
+            var level = item.Level(depth, context)!;
+            for (var at = 0; global::app.@event.held.@this.On(level, at, context) is { } on; at++)
+                if (Of(on)?.after is { Count: > 0 } side) result = await side.Start(item, result, context);
         }
         return result;
     }

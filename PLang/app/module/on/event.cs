@@ -71,22 +71,12 @@ public partial class OnEvent : IContext
         // name that is none of the choice's) is the answer
         return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(call =>
         {
-            var own = Holder(item, scope.Value).Own();
+            // a shared object (a program's goal, step or action; a type entry of the shared list) holds nothing an app
+            // binds: the app's context does, so another app never sees it and it goes with the app
+            var own = global::app.@event.held.@this.Own(item, Context, scope.Value);
             var @event = own[named.Name]!;
             return Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(own.Bind(named.Name, when.Value,
                 side => new global::app.@event.binding.action.@this(side, @event, call, Context.Actor!, scope.Value))));
         }))));
-    }
-
-    // What the binding is kept on: a shared program object (a goal, a step, a program's action — every app made from
-    // the same code runs the one read) is held by this app's context — the actor's, or the system's for an app-wide
-    // binding — so another app never sees it and it goes with the app; any other item holds its own.
-    private global::app.type.item.@this Holder(global::app.type.item.@this item, global::app.@event.binding.Scope scope)
-    {
-        if (item is not (global::app.goal.@this or global::app.goal.step.@this or global::app.goal.step.action.@this)) return item;
-        // a module's catalog action is the app's own (each app holds its modules), never a program's
-        if (item is global::app.goal.step.action.@this action && ReferenceEquals(action.Module[action.Name], action)) return item;
-        var keeper = scope == global::app.@event.binding.Scope.app ? Context.App.actor.list.System.Context : Context.Actor!.Context;
-        return keeper.Holding.Hold(item);
     }
 }

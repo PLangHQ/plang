@@ -172,16 +172,13 @@ public partial class @this
         // binds on a module (%!app.module["file"].on%) is its own app's
         var module = Seen(context);
         var catalog = module[Name] is { } found && !ReferenceEquals(found, this) ? found : null;
-        // the levels the action has of its own; past them, what the asker's app bound on this action (shared by every
-        // app made from the code)
-        var own = catalog != null ? 4 : 3;
         return depth switch
         {
             0 => context.App.action,
             1 => module,
             2 => catalog ?? this,
-            3 when catalog != null => this,
-            _ => global::app.@event.held.@this.Level(this, depth - own, context),
+            3 => catalog != null ? this : null,
+            _ => null,
         };
     }
 
