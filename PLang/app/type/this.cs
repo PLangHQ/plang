@@ -109,9 +109,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     internal global::app.type.kind.@this? Declared(string name)
     {
         if (ClrType is not { } clr || !typeof(item.@this).IsAssignableFrom(clr)) return null;
-        foreach (var attribute in clr.GetCustomAttributes(typeof(global::app.Attributes.FormatAttribute), inherit: false))
-            if (attribute is global::app.Attributes.FormatAttribute format
-                && string.Equals(format.Name, name, System.StringComparison.OrdinalIgnoreCase))
+        foreach (var format in item.@this.FormatsOf(clr))
+            if (string.Equals(format.Name, name, System.StringComparison.OrdinalIgnoreCase))
                 return (global::app.type.kind.@this)System.Activator.CreateInstance(
                     typeof(global::app.type.kind.format.@this<>).MakeGenericType(clr), format, this)!;
         return null;

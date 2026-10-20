@@ -30,6 +30,7 @@ public sealed partial class @this : ISnapshot
         var overrides = new List<DefaultOverride>();
         var types = s.Context.App.type.list;
 
+        Ready();
         foreach (var (type, dict) in _providers)
         {
             _defaults.TryGetValue(type, out var currentDefaultName);

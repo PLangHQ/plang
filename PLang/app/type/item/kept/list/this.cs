@@ -8,21 +8,28 @@ namespace app.type.item.kept.list;
 /// </summary>
 public sealed class @this : global::app.snapshot.ISnapshot
 {
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, global::app.data.@this> _kept =
-        new(System.StringComparer.OrdinalIgnoreCase);
+    // The members kept, made when the first is kept: most things a program never adds to (every module of every app)
+    // keep none, and hold no store for them.
+    private System.Collections.Concurrent.ConcurrentDictionary<string, global::app.data.@this>? _kept;
+
+    private System.Collections.Concurrent.ConcurrentDictionary<string, global::app.data.@this> Kept
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _kept, () => new(System.StringComparer.OrdinalIgnoreCase));
 
     /// <summary>The member kept as <paramref name="name"/>; null when none is.</summary>
-    public global::app.data.@this? this[string name] => _kept.TryGetValue(name, out var kept) ? kept : null;
+    public global::app.data.@this? this[string name]
+        => System.Threading.Volatile.Read(ref _kept) is { } kept && kept.TryGetValue(name, out var member) ? member : null;
 
     /// <summary>Keeps <paramref name="value"/> as <paramref name="name"/>, over what was kept by that name.</summary>
-    internal void Add(string name, global::app.data.@this value) => _kept[name] = value;
+    internal void Add(string name, global::app.data.@this value) => Kept[name] = value;
 
     /// <summary>Its section in a snapshot.</summary>
     public string Section => "Kept";
 
     /// <summary>Writes the kept members, by name, each as the Data it is.</summary>
     public void Capture(global::app.snapshot.@this s)
-        => s.Write("kept", new System.Collections.Generic.Dictionary<string, global::app.data.@this>(_kept, System.StringComparer.OrdinalIgnoreCase));
+        => s.Write("kept", System.Threading.Volatile.Read(ref _kept) is { } kept
+            ? new System.Collections.Generic.Dictionary<string, global::app.data.@this>(kept, System.StringComparer.OrdinalIgnoreCase)
+            : new System.Collections.Generic.Dictionary<string, global::app.data.@this>(System.StringComparer.OrdinalIgnoreCase));
 
     /// <summary>Puts back the kept members the section holds — a section without them leaves what is kept as it is.</summary>
     public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
@@ -30,7 +37,7 @@ public sealed class @this : global::app.snapshot.ISnapshot
         var entry = s.Entries.Get("kept", context);
         if (entry == null) return;
         var kept = await entry.Value<global::app.type.item.dict.@this>();
-        _kept.Clear();
-        foreach (var member in kept.Entries(context)) _kept[member.Name] = member;
+        Kept.Clear();
+        foreach (var member in kept.Entries(context)) Kept[member.Name] = member;
     }
 }

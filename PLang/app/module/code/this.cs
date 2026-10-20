@@ -70,6 +70,7 @@ public sealed partial class @this : IAsyncDisposable
     // provider comes back directly beside a typed error.
     public (T? Provider, global::app.error.@this? Error) Get<T>(string? name = null) where T : class, ICode
     {
+        Ready();
         if (!_providers.TryGetValue(typeof(T), out var typeDict))
             return (null, new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
 
@@ -109,6 +110,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public IReadOnlyList<T> List<T>() where T : class, ICode
     {
+        Ready();
         if (!_providers.TryGetValue(typeof(T), out var typeDict))
             return Array.Empty<T>();
 
@@ -120,6 +122,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public IReadOnlyList<ICode> List()
     {
+        Ready();
         var result = new List<ICode>();
         foreach (var typeDict in _providers.Values)
             result.AddRange(typeDict.Values);
@@ -133,11 +136,15 @@ public sealed partial class @this : IAsyncDisposable
     /// Iterates all provider instances across all types.
     /// Used for disposal and inspection.
     /// </summary>
-    public IEnumerable<ICode> All() => _providers.Values
-        .SelectMany(dict => dict.Values);
+    public IEnumerable<ICode> All()
+    {
+        Ready();
+        return _providers.Values.SelectMany(dict => dict.Values);
+    }
 
     public bool Has<T>() where T : class, ICode
     {
+        Ready();
         return _providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
     }
 
@@ -148,6 +155,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public data.@this Register(System.Type providerType, ICode provider)
     {
+        Ready();
         var typeDict = _providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
 
         if (!typeDict.TryAdd(provider.Name, provider))
@@ -165,9 +173,12 @@ public sealed partial class @this : IAsyncDisposable
     /// Lists all providers registered for a runtime-resolved type (typed C# access).
     /// </summary>
     public IReadOnlyList<ICode> List(System.Type providerType)
-        => _providers.TryGetValue(providerType, out var typeDict)
+    {
+        Ready();
+        return _providers.TryGetValue(providerType, out var typeDict)
             ? typeDict.Values.ToList()
             : Array.Empty<ICode>();
+    }
 
     /// <summary>
     /// Removes a named provider by runtime-resolved type. Cannot remove the default.
@@ -177,6 +188,7 @@ public sealed partial class @this : IAsyncDisposable
         if (string.IsNullOrEmpty(name))
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
+        Ready();
         if (!_providers.TryGetValue(providerType, out var typeDict))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
@@ -199,6 +211,7 @@ public sealed partial class @this : IAsyncDisposable
         if (string.IsNullOrEmpty(name))
             return Context.Error(new ActionError("Provider name is required", "ValidationError", 400));
 
+        Ready();
         if (!_providers.TryGetValue(providerType, out var typeDict))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
@@ -214,7 +227,28 @@ public sealed partial class @this : IAsyncDisposable
     /// Registers built-in default providers. Called by App constructor.
     /// Each module owns its default provider — this method is the single registration point.
     /// </summary>
-    public void RegisterDefaults()
+    public void RegisterDefaults() => _armed = true;
+
+    // Whether this registry holds the built-ins (RegisterDefaults), and whether they are made: 0 not yet, 1 being
+    // registered (a registration on the same thread sees them so far), 2 made. They are made the first time the
+    // registry is asked anything: an app that asks for no provider never makes them.
+    private bool _armed;
+    private int _built;
+
+    private void Ready()
+    {
+        if (!_armed || System.Threading.Volatile.Read(ref _built) == 2) return;
+        lock (_providers)
+        {
+            if (_built != 0) return;
+            _built = 1;
+            Born();
+            System.Threading.Volatile.Write(ref _built, 2);
+        }
+    }
+
+    // The built-in providers, each module's default.
+    private void Born()
     {
         // Stamp every built-in registration so the snapshot capture skips them —
         // the fresh App's RegisterDefaults reproduces the same set on Restore, so
@@ -246,7 +280,9 @@ public sealed partial class @this : IAsyncDisposable
     private void RegisterBuiltIn<T>(T provider) where T : class, ICode
     {
         provider.IsBuiltIn = true;
-        Register(typeof(T), provider);
+        var typeDict = _providers.GetOrAdd(typeof(T), _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
+        typeDict.TryAdd(provider.Name, provider);
+        _defaults.TryAdd(typeof(T), provider.Name);
         // Stamp the type's "natural" default name *once* — the first built-in for a type
         // becomes default by virtue of being first-registered, mirroring Register's contract.
         _builtInDefaults.TryAdd(typeof(T), provider.Name);
