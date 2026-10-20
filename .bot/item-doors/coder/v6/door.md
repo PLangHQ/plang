@@ -1,142 +1,189 @@
-# coder — item-doors — v6 — the door and the pairs (167): the trace
+# coder — item-doors — v6 — the door, reshaped with 168–172
 
-Nothing built. Row 167 read.
+Nothing built. The first trace is 71c2eecb2; this replaces it.
 
-## Today, as traced
+## The answer to 172: yes, a type's look in a format is its kind for that format
 
-- `writer.Kind.pair` (kind/pair/list/this.cs) holds one output kind's looks, keyed by C# class. On the first write it scans every
-  class of every assembly for an `IOutput` named for the kind in a `.format` namespace (`Find`, :45–63). The lookup
-  walks the value's C# base classes (:37–38), and falls back to `value.Output`.
-- 107 `pair.Output(…)` calls in 53 production files (41 in tests); 89 `Output` overrides (6 in tests); 34 direct
-  `x.Output(writer, mode, …)` calls; PLNG006 forbids a direct one.
-- The five looks (`IOutput`):
-  - `type/format/plang.cs`: a type in plang is its identity, `((type)value).Write(writer)`
-  - `type/kind/format/plang.cs`: a kind in plang is its name, `value.Output(...)`, an undo of the type one, because kind
-    derives from type in C#
-  - `goal/step/action/format/formal.cs`: an action's call (casts the writer to formal's)
-  - `goal/step/action/list/format/formal.cs`: a step's actions on one line (casts)
-  - `type/item/list/format/formal.cs`: a list of named Data is a list of arguments, else its elements (casts; an
-    `if` on the list's shape)
-- A type's face (`type/this.cs:62`): `mode != Out → identity, else its word (text, list<path>)`.
-- Plang's own type relation is the fact chain `type → kind → Family` (`Values => Own ?? kind.Own ?? Family._x`,
-  type/this.cs:657–). A probe (not committed) showed:
-  - `action.list` is `{list, action}` and `step.list` is `{list, step}`; each has family `list` and an element kind,
-    and its ClrType is `list<T>`, not the sealed subclass. `list<path>` is `{list, path}`.
-  - The `kind` class has no type entry of its own (it falls to `clr`). A type or kind value is born with no type: its
-    `.Type` is rebuilt from its C# class (`FamilyOf`, item/this.cs:390) — family (1), Ingi's.
+What's already there:
+- **Kinds are found by class:** the registry makes every `kind<T>` class anywhere in the assembly, owned by T's entry
+  (`Registry.Enlist`, Registry.cs:302–305). No namespace and no string.
+- **Kinds already write values:**
+  - `kind.Write(value, writer)` has 17 overrides: number's 16 precisions and duration's kind.
+  - number and duration call `Type.kind.Write(this, w)` from their Output (number/this.cs:54, duration/this.cs:33): the
+    value's own kind writes it.
+  - kind's second value door, `Output(object host, writer, mode, ctx)`, is overridden by the kind base, dict, list and
+    reflection; it writes a C# host value of that kind.
+- **Formats are kinds:**
+  - json is a kind of item, plang a kind of wire, and formal a kind of `{list, action}` (`[Format("formal")]` on
+    action.list, action/list/this.cs:18).
+  - The text writer's Kind is text's empty kind (text/writer.cs:37).
+  - A probe showed that action.list is `{list, action}` and step.list `{list, step}` (family list); `list<path>` is
+    `{list, path}`; and the kind class has no type entry of its own.
 
 ## The shape
 
-The jump: value → its type → that type's form for the writer's kind → it writes. No door, no scan, no base walk.
-
 ```csharp
 // item.@this
-public ValueTask Output(IWriter writer) => Type.Form(writer.Kind).Output(this, writer);        // NEW: non-virtual, the jump
-protected internal virtual ValueTask Write(IWriter writer)                                      // NEW: the value's own write, for every format with no form
-    // (today's 89 Output bodies move here, minus `mode`; base = the reflection kind's tagged bag, as today)
+public ValueTask Output(IWriter writer)                                   // NEW: public, non-virtual, the jump
+    => Type.Look[writer.Kind].Output(this, writer);
+protected internal virtual ValueTask Write(IWriter writer)                // NEW: the value's own write (today's 89 Output bodies, without mode and context)
 
 // type.@this
-internal form.IForm Form(kind.@this kind)                                                       // NEW: own ?? kind's ?? Family's ?? itself
-    => _form.GetOrAdd(kind, k => Own(k) ?? this.kind.Form(k, of: this) ?? Family.Form(k) ?? Itself);
-// Own(k): the class `<type's namespace>.format.<k.Name>` in the type's assembly — one GetType, no scan,
-// read the first time this type writes in k and kept on the type.
-// Itself: the form that is the value's own Write.
+internal look.list.@this Look { get; }                                     // NEW: born with the type (name: OPEN 4)
+// one table per type entry, made where kinds are made: the family's looks, then the type's own over them.
+// Look[format] is one lookup; a miss answers the type's own kind (Type.kind). No ?? chain:
+// the family's looks are already in the table.
+
+// kind.@this
+public virtual ValueTask Output(item value, IWriter writer)               // CHANGED: was Write(item value, writer) and Output(object host, …), now one door
+    => value.Write(writer);                                                // the empty kind: the value's own write
+// number's 16 precisions and duration's kind override it, as they override Write today: a {number, short} misses every
+// format and its own kind (short) writes it, so number's Output override goes
+
+// a look: a kind of its type written in one format
+public abstract class kind<TValue, TWriter> : kind<TValue>                 // NEW: alongside kind<T>
+{
+    protected abstract System.Type Format { get; }                          // the format, named by a class (below)
+    public sealed override ValueTask Output(item value, IWriter writer) => Output((TValue)value, (TWriter)writer);
+    protected abstract ValueTask Output(TValue value, TWriter writer);
+}
 
 // IWriter
-View View { get; }                                                                               // NEW: made with its view
+global::app.View View { get; }                                             // NEW (170)
+global::app.actor.context.@this Context { get; }                           // NEW (170), never null
+// kind (a format): makes its own writer
+public virtual IWriter Writer(System.IO.Stream stream, View view, context.@this context)   // NEW: the 21 `new …Writer(` sites become this
 ```
-- **A form**, which is what `IOutput` is: "the form a type takes in one format". The name `pair` goes.
-  ```csharp
-  public interface IForm { ValueTask Output(item value, IWriter writer); }                       // was IOutput, minus mode
-  public abstract class form<TValue, TWriter> : IForm where TValue : item where TWriter : IWriter  // NEW
-  {
-      ValueTask IForm.Output(item value, IWriter writer) => Output((TValue)value, (TWriter)writer);
-      protected abstract ValueTask Output(TValue value, TWriter writer);
-  }
-  ```
-  Formal's three forms derive from `form<action, formal.Writer>` and so on: each gets formal's writer typed (BeginCall,
-  BeginRows) with no cast in the form. The one conversion is in the base. It can't fail, because a type keys its
-  form by its own class and the kind whose writer it names.
-- **A kinded type** (`{list, action}`, `{text, md}`) gets its form by the fact chain: its own form, else its kind's form
-  for a type of it (`kind.Form(k, of: type)`), else its Family's. The element kind of `{list, action}` asks
-  action for how a list of actions looks: `goal/step/action/list/format/formal.cs` stays where it is, read as "a list of
-  actions in formal". `{list, path}` and every other list fall through to list's form (`type/item/list/format/formal.cs`).
-  There is no C# class walk: `step.list`'s look comes from `{list, step}`, its plang type.
-- **kind**'s plang form goes. A kind written as a value writes itself (its name) because no form is found for it.
-  That holds only when a kind is born with a type entry of its own, not `type`'s: today its `.Type` is rebuilt from its
-  C# class, which leads to type's form. Gated on family (1).
-- **Views**: `mode` leaves every parameter list. The writer is made with its view: the plang writer already holds
-  `_view`, json/text/formal take one where they are made (the 11 fixed-view calls make their writer there). View
-  becomes objects (Store, Out, Debug), each answering what it shows, so no value switches on it.
+- **A look names its format by a class**, resolved once to the app's kind object where the look is made: a format kind's
+  own class (`wire.kind.plang.@this`, `item.kind.json.@this`), or a type's class for that type's own format
+  (`text.@this` → text's empty kind). No string. formal needs a kind class of its own for this. Today it is minted
+  from `[Format("formal")]` like md and xml, which share one generic class; the NEW class is
+  `goal/step/action/list/kind/formal` (replacing the attribute).
+- **The one cast** is the base `kind<TValue, TWriter>.Output`, and it converts both arguments:
+  - The value: the table belongs to the value's own type entry, whose class makes the value, so the value is a TValue
+    (`{list, action}`'s look for an action.list, a `list<action>`).
+  - The writer: the only writer whose Kind is format F is the one F makes (`kind.Writer`), so it is F's TWriter.
+- **Where each look is found:** the lookup runs among the value's family's kinds and its own, by the writer's Kind
+  object, never a name. `{number, short}` asks its table, which holds number's looks; `{list, action}`'s holds list's,
+  then its own.
 
-## The view checks: 22 (17 in values, 5 in plang's writer and format)
+## The four looks as kinds
 
-| check | serves | place in the shape |
+| look | as a kind | reads its format back? |
 |---|---|---|
-| app.cs:37 `Store → base` | the app at rest is its [Store] record | the app's form for (any kind, Store) is the default (Itself → its tagged bag); its object write is its Write for Out/Debug. **Form keyed by view** |
-| app.cs:69 `Debug → + variable` | the asker's memory shows only in a dump | a member tagged `[Debug]`, written through the tag filter. **View shows its tags** |
-| data.Output:61 `!Store → a variable resolves` | a .pr keeps `%ref%`; the wire carries the value | variable's form for Store writes the reference; its Write (Out/Debug) the value it names. **Form keyed by view**, on variable |
-| goal.Item:130 `Debug → base` | a dump shows the reflection (with Errors/Warnings) | goal's object write is its form for Out and Store; Debug falls to Itself (reflection). **Form keyed by view** |
-| step.Item:75 `Debug → base` | the same for a step | as goal |
-| property:224 `Debug & has variable → Store` | a dump shows a template as written | moves to the template value: text's and source's form for Debug is the as-written one (rows 10, 11). The property writes `Value` plainly |
-| property:228 `Store → + variable list` | a .pr row lists its variables | a member shown in Store. **View shows its tags** (the row's `variable` as a [Store]-only member) |
-| type.cs:62 `!Out → identity, Out → face` | `%!app.type.text%` reads "text"; a .pr holds the identity | type's form for (plang, any) = identity; type's form for (any, Out) = its face; Itself = identity. **Form keyed by view** |
-| wire/template.cs:23 `Store → slice` | the .pr keeps the authored slice | dissolves with 158 (the template's two branches become one). Untouched here |
-| source:364 `Store or no ctx → raw` | the authored raw at rest; a template renders on the wire | the template source's form for Store/Debug = raw, Itself (Out) = render. **Form keyed by view**. "No context" stays an if in Write (a value can't render with no asker) — **if kept, why: not a view** |
-| text:235 same | the same for text | as source |
-| Tagged.cs:66 `!Debug → [Debug] members not declared` | what a type declares per view | `writer.View.Declares(type)`. **View object** |
-| Tagged.cs:118 `!Out & JsonIgnore` | cycle-protection outside Out | `writer.View.Shows(property)`. **View object** |
-| Tagged.cs:141 `!Store → masked` | Masked/Sensitive hidden except at rest | `writer.View.Masks(property)`. **View object** |
-| reflection:317 `Debug → name, else throw` | a dump never throws; the wire refuses an undeclared type | `writer.View.Undeclared(obj, writer)`: Debug writes its name; Out/Store refuse (NoWireContract). **View object** |
-| identity:61, :65 `Store/Debug → private members; Store → real key` | the key at rest only | `PrivateKey` through `writer.Sensitive` (it exists: `****`, and plang's Store writer keeps it whole); the Store-only members tagged `[Store]`. **View shows its tags** |
-| plang writer:37, :54, :77 | the writer's own record and masking | the writer's own view, which the writer owns. Stays, inside the writer |
-| plang kind:42, :93 | sign in Store; refuse unsigned in Out | the format's encode and decode, not a value. Stays |
+| a type in text: the word (`list<path>`) | `kind<type, text.Writer>` naming text | yes: the type list's name door (`app.type.list["list<path>"]` reads the word) |
+| a type in plang and in json: the identity | `kind<type, IWriter>`, one per format (plang, json), from type/format/plang.cs | yes: the type reader (`type.Read`, type/this.cs:439) |
+| an action in formal: its call | `kind<action, formal.Writer>`, from action/format/formal.cs | the formal reader reads an action today inside a step's line; this kind can hold it |
+| an action list in formal: `a; b` | the NEW formal kind of `{list, action}` itself, both the format and the look | yes: the formal reader is its read |
 
-So every value check becomes one of two things: a form selected by (kind, view), or a member the view shows by its
-tag. The only `if` left in a value is source's and text's "no asker to render with", which is not a view.
+- 168 makes it the format that decides a type's face, so `text` vs `{"name":"text"}` is two looks. A visible change: a
+  type in a json response becomes `{"name": "text"}`.
+- **A kind written as its name** (a kind held as a value) goes with kind's plang form. That waits on stage 1: a kind
+  value has no type entry of its own today, and its `.Type` is rebuilt from its C# class (item/this.cs:390), which
+  would find type's looks. Marked, not solved.
+
+## 171: a list of Data in formal is a list of records
+
+- list's formal form (`type/item/list/format/formal.cs`) and its `if` go. A list writes as a list: `[`, each element, `]`.
+- An element that is a Data writes its record through formal's record door: NEW `BeginRecord` and `EndRecord` on the
+  formal writer (formal/writer.cs has neither today, so a Data writes its value alone). BeginRecord writes `{` and the
+  row (`name: type = `, its existing `Row`); EndRecord writes `}`. So
+  `Parameter: list = [{to: item = %user.email%}, {subject: text = "Hi"}]`.
+- **The formal reader** (formal/reader.cs:359, `Arguments` :432): a list-typed property reads `[{name: type = value}, …]`,
+  each element a typed record becoming a Data. The `{name: type = value, …}` form goes. The authored
+  `Parameter={name: "value"}` (reader :503; in 5 os .goal files, 10 lines, among them BuildGoal/Start.goal) is OPEN 2.
+- **What moves:**
+  - teaching: `os/system/modules/goal/call.notes.md`, `ui/render.notes.md`, `ui/render.examples.md`, and
+    `os/system/builder/llm/Properties.llm`
+  - the formal fixtures: `formal_golden.json` (FormalWriterTests, FormalReaderTests)
+  - the decider fixtures and page goldens, re-pinned by the teaching-edit rule
+  - the os .goal files that build to `.pr` (rebuilt, never hand-edited)
+
+## The 22 view checks, each as tag, kept/used or format (168)
+
+| check | is | becomes |
+|---|---|---|
+| app.cs:37 Store → [Store] record | tag | the view shows its tagged members |
+| app.cs:69 Debug → the memory | tag | `[Debug]` on the memory member |
+| property:228 Store → the row's variable list | tag | a `[Store]` member of the row |
+| identity:61, :65 | tag | `[Store]` members; PrivateKey through `writer.Sensitive` |
+| goal.Item:130, step.Item:75 Debug → reflection | tag | Debug shows the `[Debug]` members; the custom shape is the members tagged for Out and Store |
+| Tagged.cs:66, :118, :141 | tag | the view object: `Declares`, `Shows`, `Masks` |
+| reflection:317 undeclared type | tag | the view object: Debug writes its name; Out and Store refuse |
+| data.Output:61 a variable resolves unless Store | kept/used | the view, once (below) |
+| source:364, text:235 Store → raw, else render | kept/used | the view, once |
+| property:224 a template as written in Debug | kept/used | 169: Debug writes both |
+| wire/template.cs:23 Store → slice | kept/used | the view, once (and 158) |
+| type.cs:62 face vs identity | format | two looks (text vs plang/json) |
+| plang writer:37, :54 | kept/used | the view, once |
+| plang writer:77 Sensitive | tag | the view's Masks |
+| plang kind:42 (hash in the Store view), :93 (Out refuses unsigned) | the format's encode and decode | stays in the format: it is the format's rule, not a value's |
+
+**Kept or used, decided once (168, 169).** The one place is Data.Output, the courier, where a value holding variables
+is met: `writer.View.Write(data, writer)` (NEW on View).
+- Store writes it as written.
+- Out writes what it resolves to.
+- Debug writes it as written, then `→` the value it resolves to with its type, or `not set`
+  (`Value = %user% → {"name": "Ada"} (dict)`).
+
+A value holding variables writes itself as written; using it is `data.Value()`. So no value knows the view: text,
+source, wire and template lose their branches. A property row's value and a dict's entries are Data, so both pass the
+courier.
+
+## 170: the context-null checks that go (the writer holds its asker, never null)
+
+- source.cs:364, text/this.cs:134 and :235: the "no asker to render with" branch.
+- wire/this.cs:65 and wire/template.cs:28: they throw when there's no context.
+- prose/this.cs:69: `context == null ? ""`.
+- node/this.cs:63: `context != null ? Of(context) : list`.
+- kind/pair/list/this.cs:33 goes with pair.
+- app.cs:43's `context ?? system` moves to where the writer is made.
+- Stays: wire/this.cs:75, the lowering path (Clr), not a write. It is F7's interim refusal until the walk opens a wire.
 
 ## What goes
 
-- `writer.Kind.pair` and `kind.pair`, `pair.list` with its Find scan and class walk, and the 107 door calls: back to
-  `member.Output(writer)`.
-- PLNG006 and its tests: calling `Output` *is* the door.
-- kind's undo form; the formal casts; `mode` from 89 overrides, 34 direct calls and IOutput.
+- `kind.pair`, pair.list (its Find scan and class walk), `IOutput`, and the 107 door calls: back to `member.Output(writer)`.
+- PLNG006 and its tests; kind's undo form; list's formal form and its if; the formal casts (one checked conversion in
+  the base).
+- `mode` and `context` from 89 overrides, 34 direct calls and Data.Output.
+
+## No if, switch or null on the write path, except
+
+- `Look[format]`'s miss answers `Type.kind`: a dictionary's default, a selection, one place.
+- The view's own decisions (Store/Out/Debug as objects, each answering for itself): no switch.
 
 ## Locked surface for Ingi
 
-- `item.Output`: from `public virtual (writer, mode, context?)` to `public (writer)`, non-virtual; its body is the
-  jump.
-- NEW `protected internal virtual Write(writer)` on item. The 89 overrides move to it (6 in tests). Where `context`
-  goes: the writer or the value (see OPEN 3).
-- `IWriter`: NEW `View`. `IOutput` becomes `IForm` (minus mode), plus NEW `form<TValue, TWriter>`.
-- `type`: NEW `Form(kind)`. `kind`: NEW `Form(kind, of: type)`; `pair` goes.
-- `View`: from an enum to objects with `Declares` / `Shows` / `Masks` / `Undeclared`.
-- `Data.Output(writer, mode, context, layer)`: mode leaves it too.
+- `item.Output`: from `public virtual (writer, mode, context?)` to `public Output(writer)`, non-virtual, the jump.
+- NEW `protected internal virtual Write(writer)` on item; the 89 overrides move to it (+6 in tests).
+- kind:
+  - `Write(item value, writer)` and `Output(object host, writer, mode, ctx)` become one `Output(item value, writer)`:
+    17 + 4 overrides.
+  - NEW `kind<TValue, TWriter>`; NEW `Writer(stream, view, context)` on a format kind; `pair` goes.
+  - NEW formal kind class (replaces `[Format("formal")]`).
+- type: NEW `Look`.
+- IWriter: NEW `View` and `Context`. `IOutput` goes.
+- View: from an enum to objects (`Shows`, `Masks`, `Declares`, `Undeclared`, `Write`).
+- Data.Output loses mode and context.
 
 ## Tests that pin today
 
-- `.pr` byte-equal:
-  - `PrByteEqualTests`
-  - `ActionPropertyPrTests.WrittenPr_ReadsBackAndWritesAgain_ByteIdentical`
-- The page goldens: `ModulePageTests`, `TypePageTests`.
-- The formal fixtures: `PickListTests`, `ConfirmTemplateTests`, `LineTwinTests`, `PickOptionTests`, `FormalWriterTests`,
-  `FormalReaderTests`, `FormalKindTests`.
-- Views:
-  - `DebugViewTests`: a goal dump, a parameter as written, a sensitive value masked, a binding dump is its name
-  - `Cut2_DebugModeTests`
-  - `CollectedTypeTests`: a type's face
-- Sensitive and masking: `SensitivePropertyFilterTests`, `MaskedAttributeTests`, `IdentityHandlerTests`,
-  `TheKey_IsNeverShown`.
+- `.pr` byte-equal: `PrByteEqualTests`, `ActionPropertyPrTests`.
+- Pages: `ModulePageTests`, `TypePageTests`.
+- formal: `FormalWriterTests` / `FormalReaderTests` (formal_golden.json), `FormalKindTests`, the decider fixtures
+  (`PickListTests`, `ConfirmTemplateTests`, `LineTwinTests`, `PickOptionTests`).
+- Views: `DebugViewTests` (it moves with 169: `%missing%` becomes `not set`), `Cut2_DebugModeTests`.
+- The face: `CollectedTypeTests` (a type in json moves to `{"name": …}`).
+- Masking: `SensitivePropertyFilterTests`, `MaskedAttributeTests`, `IdentityHandlerTests`, `TheKey_IsNeverShown`.
 - The surface golden.
 
 ## OPEN for Ingi
 
-1. A form keyed by view as well as kind (`<type>/format/<kind>.cs` serving declared views, or a view folder). Or
-   values keep the six view-selected checks, reading `writer.View`. The first leaves no if; the second is smaller.
-2. View as objects instead of an enum (Store/Out/Debug answer `Shows`, `Masks`, `Undeclared`).
-3. `context` on Output: today it rides beside `mode`. It is the asker's, not the writer's format; it could stay a
-   parameter, or the writer could be made with its asker as it is made with its view.
-4. A kind's own plang type (family 1): the kind look goes only when a kind is born holding its own entry.
-5. The list-of-arguments look keeps an `if` on the list's shape (every element named). Either goal.call's
-   `Parameter` is its own `{list, argument}` type with its own form, or the if stays inside list's formal form.
-6. The name: `IForm` / `form` for "the form a type takes in one format"; `Write` for the value's own write.
+1. Naming 172's clash (a kind is an item). My lean: the value's own write is item's `Write(writer)`, and a kind writing
+   a value of it is `kind.Output(value, writer)`, folding kind's two value doors into one. The other reading keeps
+   `kind.Write(value, writer)` beside item's `Write(writer)` as one verb with two objects (itself, or a value).
+2. The authored `Parameter={name: "value"}` in .goal formal (5 os goals): keep reading it as input, or rewrite those
+   goals to `[{name: type = value}]`, so formal has one argument form.
+3. formal becomes a kind class of its own (needed so a look names its format by class, not by the string "formal").
+4. The table's name on type: `Look` is my placeholder for "the type's kinds by format". It could also be read as the
+   kind list keyed by format, with no word of its own.
