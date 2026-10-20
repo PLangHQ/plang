@@ -6,9 +6,9 @@ namespace app.module.archive.type.archive.kind.tar;
 /// kind (<c>tar.gz</c>).</summary>
 public class @this : bundle.@this
 {
-    public @this() : this("tar") { }
+    public @this(global::app.type.@this owner) : this("tar", owner) { }
 
-    protected @this(string name) : base(name) { }
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     public override string? Suffix => ".tar";
 

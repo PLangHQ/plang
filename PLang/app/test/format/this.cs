@@ -8,11 +8,14 @@ namespace app.test.format;
 [global::app.Attributes.PlangType("format")]
 public sealed class @this
 {
-    // the format kinds plang declares, the ones that write a report
+    // the format kinds plang declares, the ones that write a report — a format is named by its text, with no app to
+    // ask, so each is built holding a class-built type of its kind<T>'s T; they go with the implicit-conversion branch
     private static readonly global::app.type.kind.@this[] Reporting = typeof(@this).Assembly.GetTypes()
-        .Where(t => typeof(global::app.type.kind.@this).IsAssignableFrom(t) && t is { IsAbstract: false }
-                    && t.GetConstructor(System.Type.EmptyTypes) != null)
-        .Select(t => (global::app.type.kind.@this)System.Activator.CreateInstance(t)!)
+        .Where(t => t is { IsAbstract: false, ContainsGenericParameters: false, BaseType.IsGenericType: true }
+                    && t.BaseType.GetGenericTypeDefinition() == typeof(global::app.type.kind.@this<>)
+                    && t.GetConstructor([typeof(global::app.type.@this)]) != null)
+        .Select(t => (global::app.type.kind.@this)System.Activator.CreateInstance(t, new global::app.type.@this(
+            global::app.type.item.@this.NameOf(t.BaseType!.GetGenericArguments()[0])!, t.BaseType.GetGenericArguments()[0]))!)
         .Where(k => k.Report != null)
         .ToArray();
 

@@ -7,7 +7,7 @@ namespace app.module.crypto.type.hash.kind;
 /// </summary>
 public abstract class @this : global::app.type.kind.@this<global::app.module.crypto.type.hash.@this>
 {
-    protected @this(string name) : base(name) { }
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     /// <summary>A digest begun: bytes are added to it as they come, then its hash is read.</summary>
     public abstract digest.@this Digest();

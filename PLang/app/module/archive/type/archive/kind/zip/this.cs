@@ -9,7 +9,7 @@ public sealed class @this : bundle.@this
     // the file-type bits of a unix mode, and a link's
     private const int Type = 0xF000, Link = 0xA000;
 
-    public @this() : base("zip") { }
+    public @this(global::app.type.@this owner) : base("zip", owner) { }
 
     public override string? Suffix => ".zip";
 

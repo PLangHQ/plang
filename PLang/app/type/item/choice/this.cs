@@ -31,12 +31,6 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     IChoice
     where T : notnull
 {
-    // The closed set this choice draws from — its name (the kind) and its options. Per closed
-    // type (a static on a generic is per-T): the reader and Parse have no context to ask the
-    // registry, and the set is T's own fact. A named-set class resolves a name via ctor(string).
-    private static readonly set.@this _set = set.@this.For(typeof(T))
-        ?? throw new System.InvalidOperationException($"choice<{typeof(T).Name}>: {typeof(T).FullName} is not a closed set.");
-
     public T Value { get; }
 
     /// <summary>The option <paramref name="value"/>, born holding <paramref name="type"/> — the app's
@@ -85,12 +79,15 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     /// FormatException naming the options when it names none.</summary>
     public static @this<T> Parse(string symbol, global::app.type.@this type)
     {
-        // the set answers the member its symbol names — an enum's, a family's kind, a named set's
-        try { return new((T)_set.Member(symbol), type); }
+        // the set — the type's kind, the app's {choice, <set>} — answers the member its symbol names: an enum's, a
+        // family's kind, a named set's
+        var set = type.kind as set.@this
+            ?? throw new System.InvalidOperationException($"choice<{typeof(T).Name}> is parsed against {type.Name}, which is no closed set.");
+        try { return new((T)set.Member(symbol), type); }
         catch (System.ArgumentException ex)
         {
             throw new System.FormatException(
-                $"'{symbol}' is not a {_set.Name} option. Valid: {string.Join(", ", _set.Values)}", ex);
+                $"'{symbol}' is not a {set.Name} option. Valid: {string.Join(", ", set.Values ?? [])}", ex);
         }
     }
 
@@ -109,11 +106,12 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     public static @this<T>? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this<T> self) return self;
-        try { if (Create(raw, declared ?? data.Context.App.type.list[typeof(@this<T>)]) is { } made) return made; }
+        var type = declared ?? data.Context.App.type.list[typeof(@this<T>)];
+        try { if (Create(raw, type) is { } made) return made; }
         catch (System.FormatException ex)
         {
             data.Fail(new global::app.error.@this(ex.Message, "ChoiceInvalid", 400)
-                { FixSuggestion = $"Valid options: {string.Join(", ", _set.Values)}" });
+                { FixSuggestion = $"Valid options: {string.Join(", ", type.Values ?? [])}" });
             return null;
         }
         data.Fail(new global::app.error.@this(

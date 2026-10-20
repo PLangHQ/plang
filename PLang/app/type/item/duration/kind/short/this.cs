@@ -4,7 +4,7 @@ namespace app.type.item.duration.kind.@short;
 /// <c>1d</c>. A span is written in its largest whole unit (90s stays <c>90s</c>, 3600s is <c>1h</c>).</summary>
 public sealed class @this : kind.@this
 {
-    public @this() : base("short") { }
+    public @this(global::app.type.@this owner) : base("short", owner) { }
 
     internal override System.TimeSpan? Span(string text)
     {

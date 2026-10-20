@@ -10,14 +10,12 @@ namespace app.type.item.kind.dict;
 /// dict</c> (a clr(json) → native dict) is here, not on json — reusing the universal DOM
 /// narrower (<c>item.serializer.json.Parse</c>). Claims <c>IDictionary</c> by assignable match.
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.type.item.@this>
 {
-    public @this() : base("dict") { }
+    public @this(global::app.type.@this owner) : base("dict", owner) { }
 
     // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out (814).
     protected override bool? OwnInternal => true;
-
-    protected internal override string Owner => "item";
 
     public override System.Type? ClrForm => typeof(System.Collections.IDictionary);
 

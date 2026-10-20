@@ -5,7 +5,7 @@ public sealed class @this : set.@this
 {
     private readonly System.Type _clr;
 
-    internal @this(System.Type clr) : base(clr, Declared(clr)) => _clr = clr;
+    internal @this(System.Type clr, global::app.type.@this owner) : base(clr, Declared(clr), owner) => _clr = clr;
 
     protected override System.Collections.Generic.IReadOnlyList<string>? OwnValues => System.Enum.GetNames(_clr);
 

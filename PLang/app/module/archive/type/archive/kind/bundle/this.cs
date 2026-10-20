@@ -17,7 +17,7 @@ public abstract class @this : kind.@this
     // the mode a packed entry is given: a folder anyone may enter, a file its owner may write
     private const System.IO.UnixFileMode Folder = (System.IO.UnixFileMode)0b111_101_101, File_ = (System.IO.UnixFileMode)0b110_100_100;
 
-    protected @this(string name) : base(name) { }
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     /// <summary>The entries <paramref name="from"/> holds, in order; each entry's content is read before the next is
     /// asked for.</summary>

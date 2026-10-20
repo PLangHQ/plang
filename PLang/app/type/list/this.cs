@@ -43,7 +43,7 @@ public sealed partial class @this
         var root = Named.GetValueOrDefault(type)?.kind;
         var had = string.IsNullOrEmpty(kind) ? root : root?[kind] ?? root?.Coin(kind);
         return had is { Owner: not null } ? had
-            : string.IsNullOrEmpty(kind) ? new global::app.type.kind.empty.@this(type) : new global::app.type.kind.@this(kind!);
+            : string.IsNullOrEmpty(kind) ? new app.type.@this(type).kind : new global::app.type.kind.@this(kind!);
     }
 
     // The kind a type holds that answers to the key — by name, alias, MIME or extension; a type's own
@@ -57,7 +57,7 @@ public sealed partial class @this
             if (type.kind[key] is not { } kind) continue;
             if (found != null)
                 throw new System.InvalidOperationException(
-                    $"'{key}' is a kind of more than one type ({found.Owner}, {kind.Owner}) — ask the type for its kind.");
+                    $"'{key}' is a kind of more than one type ({found.Owner?.Name}, {kind.Owner?.Name}) — ask the type for its kind.");
             found = kind;
         }
         return found;
@@ -134,7 +134,7 @@ public sealed partial class @this
 
     // The full type a held kind makes: its owner, with the kind unless it is the owner's own format.
     private app.type.@this Of(global::app.type.kind.@this kind, actor.context.@this context)
-        => this[new app.type.@this(kind.Owner!, kind.IsEmpty ? null : kind.Name), context];
+        => this[new app.type.@this(kind.Owner!.Name, kind.IsEmpty ? null : kind.Name), context];
 
     /// <summary>
     /// The full type for a value's type — its identity (name, kind, strict, template) with the
@@ -253,7 +253,7 @@ public sealed partial class @this
             && type.GetGenericArguments()[0] is var options)
             return ("choice", options.IsEnum && options.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false) is null
                 ? null
-                : global::app.type.item.choice.set.@this.For(options)?.Name ?? options.Name);
+                : global::app.type.item.choice.set.@this.For(options, this)?.Name ?? options.Name);
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && Array.Find(types, t => t.ClrType == type) is { } own)
             return (own.Name, null);
         // the app's node for a concept (node<goal>, its current node) is a node

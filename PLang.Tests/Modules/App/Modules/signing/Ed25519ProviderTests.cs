@@ -113,7 +113,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
             nonce: app.actor.list.User.Context.Text(nonce),
             created: new global::app.type.item.datetime.@this(DateTimeOffset.UnixEpoch, app.type.list[typeof(global::app.type.item.datetime.@this)]),
             identity: app.actor.list.User.Context.Text(identityPublicKey),
-            hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
+            hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), (global::app.module.crypto.type.hash.kind.keccak256.@this)app.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
             signature: new global::app.type.item.binary.@this(Array.Empty<byte>(), app.type.list[typeof(global::app.type.item.binary.@this)]));
 
     // A copy of a signed signature with one field swapped — for the mismatch tests.

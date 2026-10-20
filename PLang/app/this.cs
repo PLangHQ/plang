@@ -308,9 +308,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         Code.RegisterDefaults();
         // path's schemes, each a kind of path that builds its own path subclass. (The types' own
         // scan finds the kind classes and choice's closed sets.)
-        type.list.Add(new global::app.type.item.path.scheme.@this("file", (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
-        type.list.Add(new global::app.type.item.path.scheme.@this("http", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-        type.list.Add(new global::app.type.item.path.scheme.@this("https", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+        var path = type.list[typeof(global::app.type.item.path.@this)];
+        type.list.Add(new global::app.type.item.path.scheme.@this("file", path, (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
+        type.list.Add(new global::app.type.item.path.scheme.@this("http", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+        type.list.Add(new global::app.type.item.path.scheme.@this("https", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
         // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
         // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),
         // else its file.
@@ -432,7 +433,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             // the use door — json parses the bytes into the dict the app's [Store] face reads back from.
             if (await decoded.Open() is not global::app.type.item.dict.@this identity || !decoded.Success)
                 return Unreadable(decoded.Error?.Message ?? "not a json object");
-            new global::app.type.item.kind.reflection.@this().Read(identity, this, context);
+            ((global::app.type.item.kind.reflection.@this)type.list["item"].kind["*"]!).Read(identity, this, context);
             _stored = true;
             return context.Ok();
         }

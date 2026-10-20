@@ -890,7 +890,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
-        if (!IsLeaf) return new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
+        if (!IsLeaf)
+            return (context?.App.type.list["item"].kind["*"] as global::app.type.item.kind.reflection.@this
+                    ?? global::app.type.item.kind.reflection.@this.Fallback).Output(this, writer, mode, context);
         Write(writer);
         return System.Threading.Tasks.ValueTask.CompletedTask;
     }

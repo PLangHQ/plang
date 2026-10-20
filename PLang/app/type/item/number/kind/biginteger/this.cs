@@ -5,7 +5,7 @@ namespace app.type.item.number.kind.biginteger;
 /// lowers through its own exact-integer door, a string parses, anything else declines loud.</summary>
 public sealed class @this : global::app.type.item.number.kind.@this
 {
-    public @this() : base("biginteger") { }
+    public @this(global::app.type.@this owner) : base("biginteger", owner) { }
 
     public override global::app.type.item.number.@this Create(global::app.type.item.@this value)
         => value.Clr<object>() switch

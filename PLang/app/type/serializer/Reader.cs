@@ -61,7 +61,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (nested != null)
         {
             var entry = ctx.Context.App.type.list[name];
-            var element = new global::app.type.item.list.kind.element.@this(nested);
+            var element = new global::app.type.item.list.kind.element.@this(entry, nested);
             return new global::app.type.@this(entry, element, strict, marked);
         }
         return ctx.Context.App.type.list[new global::app.type.@this(name, typeKind, strict, marked), ctx.Context];

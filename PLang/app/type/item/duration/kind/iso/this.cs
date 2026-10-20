@@ -3,7 +3,7 @@ namespace app.type.item.duration.kind.iso;
 /// <summary>ISO 8601 — <c>PT30S</c>, <c>P1DT2H30M</c>. Years and months are refused: a span has no calendar.</summary>
 public sealed class @this : kind.@this
 {
-    public @this() : base("iso") { }
+    public @this(global::app.type.@this owner) : base("iso", owner) { }
 
     internal override System.TimeSpan? Span(string text)
     {

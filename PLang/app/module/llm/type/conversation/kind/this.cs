@@ -7,7 +7,7 @@ namespace app.module.llm.type.conversation.kind;
 /// </summary>
 public sealed class @this : global::app.type.kind.@this<global::app.module.llm.type.conversation.@this>
 {
-    public @this() : base("") { }
+    public @this(global::app.type.@this owner) : base("", owner) { }
 
     /// <summary>The step's variables, but those the walk knows (<c>step.Typed</c>) as a type a conversation doesn't take.
     /// One the walk can't type stays offered: that stands in for an llm's answer — llm.query forwards a Data of no type

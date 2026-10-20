@@ -135,7 +135,7 @@ public class LoudRunTests
             NewTest("Old", Status.Stale, "no .pr"), NewTest("A", Status.Pass),
         }, _app.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]);
         using var ms = new System.IO.MemoryStream();
-        await (await new global::app.test.junit.@this().Encode(ms, ctx.Ok(run), ctx)).IsSuccess();
+        await (await new global::app.test.junit.@this(_app.type.list[typeof(global::app.test.@this)]).Encode(ms, ctx.Ok(run), ctx)).IsSuccess();
         var xml = System.Text.Encoding.UTF8.GetString(ms.ToArray());
 
         await Assert.That(xml).Contains("errors=\"1\"");

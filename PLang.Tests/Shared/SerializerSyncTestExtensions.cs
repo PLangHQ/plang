@@ -21,7 +21,7 @@ public static class SerializerSyncTestExtensions
     public static global::app.type.@this Stamp(this global::app.type.list.@this types, string mime, global::app.actor.context.@this ctx)
     {
         var format = types.Mime(mime);
-        return types[new global::app.type.@this(format.Owner ?? "binary", format.IsEmpty ? null : format.Name), ctx];
+        return types[new global::app.type.@this(format.Owner?.Name ?? "binary", format.IsEmpty ? null : format.Name), ctx];
     }
 
     public static global::app.data.@this<global::app.type.item.text.@this> Serialize(this global::app.type.kind.@this format,

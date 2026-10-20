@@ -22,7 +22,7 @@ public class FormatEncodeContractTests : System.IAsyncDisposable
     {
         global::app.data.@this? last = null;
         app.type.list.Add(new global::app.type.kind.@this(
-            new global::app.Attributes.FormatAttribute("xprobe", "application/x-probe", ".xprobe"), "binary",
+            new global::app.Attributes.FormatAttribute("xprobe", "application/x-probe", ".xprobe"), app.type.list["binary"],
             (stream, data, context, view, encoding, ct) => { last = data; return Task.FromResult(context.Ok()); }));
 
         var ch = new global::app.channel.type.stream.@this(

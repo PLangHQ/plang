@@ -224,17 +224,31 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 prop.SetValue(node, val);
             }
         }
-        // a member that can't be null and the values leave out holds the empty value its own class is born as, holding
-        // the app's type for it: an empty list or dict, a nested setting at its defaults, the machine's culture
+        // a member the values leave out holds its declared default, made by its type from the app ([Default("iec")] is
+        // the app's iec); one that can't be null and declares none holds the empty value its own class is born as,
+        // holding the app's type for it: an empty list or dict, a nested setting at its defaults, the machine's culture
         const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
             | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
         var nullability = new System.Reflection.NullabilityInfoContext();
         foreach (var member in node.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-            if (member.SetMethod?.IsPublic == true && typeof(global::app.type.item.@this).IsAssignableFrom(member.PropertyType)
-                && nullability.Create(member).WriteState != System.Reflection.NullabilityState.Nullable
-                && member.GetValue(node) == null
+        {
+            if (member.SetMethod?.IsPublic != true || !typeof(global::app.type.item.@this).IsAssignableFrom(member.PropertyType)
+                || member.GetValue(node) != null) continue;
+            if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.DefaultAttribute>(member) is { } declared)
+            {
+                var asked = new global::app.data.@this(member.Name, context: context);
+                if (context.App.type.list[member.PropertyType].Make(declared.Value, asked) is { } made
+                    && member.PropertyType.IsInstanceOfType(made))
+                    member.SetValue(node, made);
+                else
+                    return context.Error(asked.Error ?? new global::app.error.@this(
+                        $"setting '{member.Name}' declares a default its {member.PropertyType.Name} cannot be made from: {declared.Value}",
+                        "TypeConversionFailed", 400));
+            }
+            else if (nullability.Create(member).WriteState != System.Reflection.NullabilityState.Nullable
                 && member.PropertyType.GetConstructor(any, [typeof(global::app.type.@this)]) is { } empty)
                 member.SetValue(node, empty.Invoke([context.App.type.list[member.PropertyType]]));
+        }
         return context.Ok();
     }
 

@@ -10,7 +10,7 @@ namespace app.test.junit;
 /// </summary>
 public sealed class @this : global::app.type.kind.@this<global::app.test.@this>
 {
-    public @this() : base("junit") { }
+    public @this(global::app.type.@this owner) : base("junit", owner) { }
 
     public override System.Collections.Generic.IReadOnlyList<string> Mime => ["application/junit+xml"];
 

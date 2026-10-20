@@ -4,7 +4,7 @@ namespace app.type.item.number.kind.int128;
 /// reach Int128, so it owns its arms (throws precise); rides the wire as its invariant string.</summary>
 public sealed class @this : global::app.type.item.number.kind.@this
 {
-    public @this() : base("int128") { }
+    public @this(global::app.type.@this owner) : base("int128", owner) { }
 
     public override global::app.type.item.number.@this Create(global::app.type.item.@this value)
         => value.Clr<object>() switch

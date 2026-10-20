@@ -19,7 +19,6 @@ namespace app.type.kind;
 /// </summary>
 public class @this : global::app.type.@this
 {
-    private readonly string? _owner;
     private readonly System.Collections.Generic.IReadOnlyList<string> _mime = [];
     private readonly System.Collections.Generic.IReadOnlyList<string> _extension = [];
     private readonly bool _compressible;
@@ -42,13 +41,13 @@ public class @this : global::app.type.@this
 
     public @this(string name) : base(name ?? throw new System.ArgumentNullException(nameof(name))) { }
 
-    /// <summary>A kind named <paramref name="name"/> whose facts fall back to <paramref name="family"/>'s
-    /// (its parent type) — used by <c>kind&lt;T&gt;</c> to pass what the kind does not answer up to T.</summary>
-    protected @this(string name, global::app.type.@this? family) : base(name, family) { }
+    /// <summary>A kind named <paramref name="name"/> of <paramref name="owner"/> — the app's entry for the type it is a
+    /// kind of, handed in by the registry that enlists it. Its facts fall back to the owner's.</summary>
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     /// <summary>A kind whose own kind is <paramref name="ownKind"/> — a nested kind (<c>{list, kind: {list, kind:
     /// path}}</c>), where this kind is itself a kinded type. Null <paramref name="ownKind"/> leaves the born empty kind.</summary>
-    private protected @this(string name, global::app.type.kind.@this? ownKind, global::app.type.@this? family) : base(name, ownKind, family) { }
+    private protected @this(string name, global::app.type.kind.@this? ownKind, global::app.type.@this owner) : base(name, ownKind, owner) { }
 
     /// <summary>A kind is a full type already — its facts are its own (a setting kind's options, a
     /// format's MIMEs), its parent's the fallback. It navigates its OWN members directly, never
@@ -61,21 +60,11 @@ public class @this : global::app.type.@this
         return member.IsInitialized ? member : await base.Get(parent, key);
     }
 
-    /// <summary>Every kind <paramref name="assembly"/> builds from nothing — each kind class (not abstract, a
-    /// parameterless ctor), one instance each. How the type registry finds the kinds it holds, and how a choice over a
-    /// kind family finds that family's: one discovery, so the two agree on what a family holds.</summary>
-    internal static System.Collections.Generic.IEnumerable<@this> Every(System.Reflection.Assembly assembly)
-        => assembly.GetTypes()
-            .Where(t => typeof(@this).IsAssignableFrom(t) && t is { IsAbstract: false } && t != typeof(@this)
-                        && t.GetConstructor(System.Type.EmptyTypes) != null)
-            .Select(t => (@this)System.Activator.CreateInstance(t)!);
-
     /// <summary>A format of <paramref name="owner"/> — a kind its class declares with <c>[Format]</c>: the
     /// MIMEs and extensions it answers to, whether its content compresses, and how its type writes and reads it.</summary>
-    public @this(global::app.Attributes.FormatAttribute format, string owner, Encoder? encode = null, Decoder? decode = null)
-        : this(format.Name)
+    public @this(global::app.Attributes.FormatAttribute format, global::app.type.@this owner, Encoder? encode = null, Decoder? decode = null)
+        : this(format.Name, owner)
     {
-        _owner = owner;
         _mime = format.Mime is { } mime ? [mime] : [];
         _extension = format.Extension;
         _compressible = format.Compressible;
@@ -100,10 +89,11 @@ public class @this : global::app.type.@this
     /// </summary>
     internal override bool Names(string key)
     {
-        // A kind answers to its type's names (its own name and aliases, through the base) AND to its MIMEs
-        // and extensions — a format kind answers to `application/json` and `.json` too.
-        if (base.Names(key)) return true;
+        // A kind answers to its own name and aliases — never its owner's, which the type's names fall back to — AND
+        // to its MIMEs and extensions: a format kind answers to `application/json` and `.json` too.
         if (string.IsNullOrEmpty(key)) return false;
+        if (string.Equals(Name, key, System.StringComparison.OrdinalIgnoreCase)
+            || Own.Contains(key, System.StringComparer.OrdinalIgnoreCase)) return true;
         if (Mime.Count > 0)
         {
             var semicolon = key.IndexOf(';');
@@ -176,25 +166,26 @@ public class @this : global::app.type.@this
     /// already a token of it, relayed verbatim. By default no writer is.</summary>
     public virtual bool Owns(global::app.type.format.IWriter writer) => false;
 
-    // A kind's own aliases are its answer to the type's OwnAlias hook (int → "integer").
+    // A kind's own aliases (int → "integer") — what it answers to by name besides its name; never its owner's, which a
+    // kinded type ({text, md}) reads as its family's.
+    private System.Collections.Generic.IReadOnlyList<string> Own => OwnAlias ?? [];
 
-    /// <summary>The name of the type this kind is a kind of: the type whose class declares it as a format
-    /// (png is image's, md text's), or whose kind class it is (number's precisions are number's,
-    /// json/list/dict/<c>*</c> are item's). Null for a name no type declares.</summary>
-    protected internal virtual string? Owner => _owner;
+    /// <summary>The keys this kind answers to as its type holds it: its name, its own aliases, its MIMEs.</summary>
+    internal System.Collections.Generic.IEnumerable<string> Keys => Own.Prepend(Name).Concat(Mime);
+
+    /// <summary>The type this kind is a kind of — the app's entry it was born holding: the type whose class
+    /// declares it as a format (png is image's, md text's), or whose kind class it is (number's precisions are
+    /// number's, json/list/dict/<c>*</c> are item's). Null for a kind of a name no type holds.</summary>
+    protected internal virtual global::app.type.@this? Owner => _family;
 
     /// <summary>
     /// The type this kind is a kind of — what its content is (md → text, json → item, int →
-    /// number): the type that declares it, else the type whose reader reads this kind, else
+    /// number): its owner, else the type whose reader reads this kind, else
     /// <c>binary</c>. <c>{binary, md}</c> is bytes whose content is text. Asked with the caller's context.
     /// </summary>
     public global::app.type.@this type(actor.context.@this context)
-    {
-        string name = Owner
-                      ?? context.App.type.list.Reader.TypeOf(Name)
-                      ?? "binary";
-        return context.App.type.list[new global::app.type.@this(name), context];
-    }
+        => Owner ?? context.App.type.list[new global::app.type.@this(
+            context.App.type.list.Reader.TypeOf(Name) ?? "binary"), context];
 
     /// <summary>
     /// The kinds of this kind's type, each as the full type it makes: <c>{number, int}</c>,
@@ -262,7 +253,7 @@ public class @this : global::app.type.@this
         // a type that reads this format itself makes the value now (a .pr into a goal)
         if (_decode != null && template == null) return await _decode(raw, context, name, origin);
         // else content decoded into a new value is a birth: it comes through its type's on.create, unread until used
-        var type = context.App.type.list[new global::app.type.@this(Owner ?? "binary", IsEmpty ? null : Name, template: template), context];
+        var type = context.App.type.list[new global::app.type.@this(Owner?.Name ?? "binary", IsEmpty ? null : Name, template: template), context];
         return await type.Create(raw, context, name, origin);
     }
 
@@ -277,9 +268,9 @@ public class @this : global::app.type.@this
         global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
         => _encode != null ? _encode(stream, data, context, view, encoding, ct)
-            : !IsEmpty ? context.App.type.list[Owner ?? "binary"].kind.Encode(stream, data, context, view, encoding, ct)
+            : !IsEmpty ? (Owner ?? context.App.type.list["binary"]).kind.Encode(stream, data, context, view, encoding, ct)
             : global::System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.@this(
-                $"nothing writes {Owner ?? "binary"} content", "NoEncoder", 400)));
+                $"nothing writes {Owner?.Name ?? "binary"} content", "NoEncoder", 400)));
 
     /// <summary>What characters of this kind stand for, opened when they are needed — a text of kind json walked by
     /// <c>%x.a%</c> is the json its characters are — or, as a failed Data, why they don't read as this kind. Null when
