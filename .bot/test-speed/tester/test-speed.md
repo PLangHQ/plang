@@ -155,6 +155,42 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 18. A small app end to end: birth → load goal → run → dispose, ~1.5 ms and ~290 KB
+
+Measured by looping a real plang test as an app per run (`new app` + `Testing()`, `app.goal.Load`, `goal.Start`, dispose),
+the shape a server making an app per request has; median of 200 – 300 after 20 warm. Start of this round (load ~5) → now
+(load 14 – 16, so the "now" times are if anything high):
+
+| app | total | memory (birth + load + run) |
+|---|---|---|
+| Condition (6 steps, 2 sub-goals) | 6.1 ms → **1.4 – 1.5 ms** | ~780 KB → **~290 KB** |
+| ListOps2 (9 steps) | 6.3 – 7.1 ms → **1.5 – 1.6 ms** | ~800 KB → **~295 KB** |
+| ForeachDictionary (loop) | 9.4 ms → **2.9 – 3.0 ms** | ~1,030 KB → **~500 KB** |
+| File (15 steps, real disk) | 8.9 – 9.3 ms → **3.4 – 3.5 ms** | ~1,130 KB → **~490 KB** |
+
+| change | what it saved |
+|---|---|
+| **Goals shared** (`goal/program`): a `.pr` is read once per code + folder by a private reader app; every app adds that goal to its own list and runs its own load events. A stat (modified + size) keeps it fresh. An app building, or reading through its own file system (a build's overlay), reads its own | load 2.1 ms / 223 KB → ~0.2 ms / 25 KB |
+| an action asks the asker's app for its module (events bound on `%!app.module[…]%` are that app's), but only once that app has made its modules — before, nothing can be bound on them | keeps sharing correct without making every app's catalog |
+| class facts once per process: choice sets (name, `choice<T>` form, `Choices`, template families' class walk), action properties (nullability, `[Default]`, `IDefault` getter — the default itself is still made per property, an llm conversation is mutable), setting paths, the setting index (it made every type entry in each app), setting defaults' reflection | birth 111 → 56 KB, run −60 KB |
+| a type found by name through the type list's index, not a walk of every type (`variable.set` asked per step) | −6% run allocation |
+| module by name walked by position; step/action loops on `CountRaw` (no plang number per check); `goal.PrPath` kept with its path | small |
+| the code registry makes an interface's built-in when that interface is first asked, not all 17 | birth 61 → 41 KB |
+| call frames make their id, tags, names, errors and children when first used | −50 KB run |
+| **a list's positional reads (`list[i]`, `CountRaw`) read its snapshot, not its lock** — the shared catalog was read under a lock at every event level of every action | the largest time cut of the round (3.2 → 1.5 ms) |
+| an in-memory store nothing has written answers reads empty without opening SQLite (every test app read its settings from an empty database) | −20% run CPU |
+
+Checks: C# green except Wire's six `carried` (baseline); plang `--test` the same 11 names on every step (diffed). The
+sharing was validated by `plang --test` itself: every test is its own app, run in parallel, all sharing goals.
+
+**What sharing does not cover yet:** a binding on a goal *object* (level 1 of goal/step events, `on goal X …`) is on the
+shared object, so it would reach every app running that program; the goal's type entries are the reader app's. Neither
+showed in the suites; both need a decision if per-app goal-object bindings are a thing.
+
+**Left:** ~290 KB per small app; about 40% of the remaining CPU is GC safepoints, so allocation is still the lever.
+Largest: data carriers per action (`Data` + its type's `Empty` closure), call frames and their AsyncLocal copies,
+settings built per app (`setting.Apply`, `Make`), a `stat` per goal load (freshness), `size` items made by `Stat`.
+
 ## 17. The memory's table and path's schemes: a birth at ~18.4 KB
 
 | change | birth alone (4,000 traced) |
