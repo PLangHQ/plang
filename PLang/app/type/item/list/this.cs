@@ -597,14 +597,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>
-    /// The CLR exit door. A <b>compatible</b> target (<c>List&lt;object?&gt;</c>,
-    /// <c>object</c>, <c>IList</c>) gets the backing itself — same instance, O(1),
-    /// and a Data / item slot (a signed <c>signature</c>, a number wrapper) rides
-    /// intact: the list's CLR IS its backing, nothing is unwrapped. A <b>different</b>
-    /// typed target (<c>List&lt;T&gt;</c>, an array, a record) is a real conversion —
-    /// peel each element to its raw form, then convert (a named row keeps identity).
-    /// A signed value never rides a typed numeric/record list, so the wrong-unwrap of
-    /// a value with no raw form (a signature) can't happen on this path.
+    /// The CLR exit door: a C# list of its own, never this list's rows. A collection target
+    /// (<c>List&lt;object?&gt;</c>, <c>List&lt;T&gt;</c>, an array, <c>IList</c>) gets each row lowered as C# reads it —
+    /// a raw slot as it is, a Data or an item through its own lowering. A non-collection target (a string, a record
+    /// built off the wire) is a real conversion — each element peeled to its raw form, then converted (a named row
+    /// keeps identity). A signed value never rides a typed numeric/record list, so the wrong-unwrap of a value with no
+    /// raw form (a signature) can't happen on this path.
     /// </summary>
     // A typed plang list (list<T>) asked of a plain list is this list re-tagged by list<T>'s own Create: its rows
     // move in as they are, each read as T when taken out, the list holding the app's {list, T} type.
@@ -616,9 +614,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     internal override object? Clr(System.Type target)
     {
-        // All-raw backing IS the raw form the caller wants → hand it back (O(1)).
-        if (!_hasWrapped && target.IsInstanceOfType(_items)) return _items;
-
         // A CLR collection target: each row lowers ITSELF to the element type (terminal —
         // a scalar row hits ChangeType, a nested container its own Clr), assembled into
         // the target's shape. A mutable list/array/IList fills directly; a read-only domain

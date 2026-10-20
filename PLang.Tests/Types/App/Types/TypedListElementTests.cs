@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Types;
 /// A typed list (<c>list&lt;path&gt;</c>) holds its rows as they came in and knows its kind; a row is made its element
 /// type's value at each read — by index or by walking — and nothing is written back, so a list read and saved untouched
 /// is unchanged. Its count makes nothing, and a row that makes no path fails where it is read. Nothing fires for an
-/// element: the list's birth is the event, its elements are part of it.
+/// element: the list's birth is the event, its elements are part of it. Lowered to C#, a list is a C# list of its own.
 /// </summary>
 public class TypedListElementTests
 {
@@ -92,5 +92,18 @@ public class TypedListElementTests
         var bad = await files.Get("1");
 
         await bad.IsFailure();
+    }
+
+    [Test]
+    public async Task LoweredToCSharp_IsAListOfItsOwn()
+    {
+        var rows = new List<object?> { "a", "b" };
+        var list = List(await (await Ctx.App.type.list["list"].Create(rows, Ctx)).Value());
+
+        var lowered = list.Clr<List<object?>>()!;
+        lowered.Add("c");
+
+        await Assert.That(lowered).IsNotSameReferenceAs(rows);
+        await Assert.That(list.CountRaw).IsEqualTo(2);
     }
 }

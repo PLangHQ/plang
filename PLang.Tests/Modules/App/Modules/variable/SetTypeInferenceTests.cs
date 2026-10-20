@@ -98,11 +98,10 @@ public class SetTypeInferenceTests
     }
 
     // A CLR list is aliased as the new list's backing — no JSON walk, no copy. The
-    // value door answers the native list.@this; the CLR exit door hands the SAME
-    // List<object?> instance back as long as the list was only read (every slot
-    // still raw).
+    // value door answers the native list.@this; the CLR exit door hands back a C# list
+    // of its own, each row lowered as it is read.
     [Test]
-    public async Task Set_ListValue_AliasesSourceInstance()
+    public async Task Set_ListValue_LowersToAListOfItsOwn()
     {
         var context = _app.actor.list.User.Context;
         var src = new List<object?> { "a", "b" };
@@ -112,8 +111,9 @@ public class SetTypeInferenceTests
         var stored = await context.Variable.Get("list");
         var lst = (await stored.Value()) as global::app.type.item.list.@this;
         await Assert.That(lst).IsNotNull();
-        // The CLR exit door returns the aliased backing itself — same ref, O(1).
-        await Assert.That(ReferenceEquals(lst!.Clr<List<object?>>(), src)).IsTrue();
+        var lowered = lst!.Clr<List<object?>>()!;
+        await Assert.That(ReferenceEquals(lowered, src)).IsFalse();
+        await Assert.That(lowered).IsEquivalentTo(src);
     }
 
     // No copy at set: a later in-place edit of the SOURCE list is visible through
