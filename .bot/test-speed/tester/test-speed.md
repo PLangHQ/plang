@@ -155,6 +155,33 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 11. Locked core opened (Ingi: nothing merges from here): a birth at ~175 µs
+
+Units from here on: µs (1 ms = 1,000 µs; 1 µs = 1,000 ns).
+
+| step | what changed |
+|---|---|
+| `assembly` off the app root | the app's `assembly` parameter goes to the type root; the type list holds the facts (`type.list.Code`) |
+| readers shared | the facts' reader tables (folders' readers + closed sets' + subclasses') shared by every app; runtime tables made on first registration |
+| format pairs shared | the facts list the `format/` pairs, made once; a pair list no longer walks the assembly |
+| modules lazy | the app's ~40 modules made when a module is first asked |
+| channel settings lazy | `Direction`, `Buffer`, `Mime` made when read (three class-built values per channel before) |
+| code registry tables lazy | its three dictionaries made on first use |
+| `Data.Properties` lazy | every value carried an empty bag; now made when asked, `HasProperties` for the wire writer |
+| naming path | owner of a raw C# shape found via facts (only it made); no closure per `PlangName` call |
+| fresh facts | reader facts 1,410 → 395 µs; kinds facts 343 → 252 KB |
+
+**Birth now** (`new app` alone, 3 runs × 100, load ~8): shared **~175 µs** median (min ~146 µs), ~160 KB with
+`Testing()` + `Dispose` (~63 KB for the birth itself by allocation trace). Fresh (cold facts, the CLI): ~4.1 ms.
+C# green but Wire's six; plang 277 / 11, the same 11. Sweep: Types 7.9 s, Data 7.3, Runtime 9.9, Wire 15.3,
+Modules 20.7.
+
+**What's left of a cold start (~4 ms, warm JIT):** attribute scans over the ~950 written classes — `type` 1,812 µs
+(`GetTypes`, names, each type's statics), `format` 888 µs, `choice` 629 µs, `module` 762 µs, `kinds` 1,222 µs (an
+instance per kind class to learn its keys). By reflection these are near their floor. **The design that removes them**:
+the source generator (it already sees every class) emits the code's facts at compile time — the types, formats,
+choice sets, kind classes and their keys, actions, readers, pairs — so a cold start reads a table, not the assembly.
+
 ## 10. Type entries made on first ask: a birth at 0.3 ms, ~95 KB
 
 Allocation sampling with call stacks (4,000 shared births) pointed at:

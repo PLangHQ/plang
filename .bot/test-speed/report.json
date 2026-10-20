@@ -5,7 +5,7 @@
       "id": "c4e2a9f1-3b7d-4f60-8e15-2a9d6c0b7e43",
       "bot": "tester",
       "timestamp_start": "2026-10-20T09:30:00Z",
-      "timestamp_end": "2026-10-20T21:00:00Z",
+      "timestamp_end": "2026-10-20T23:00:00Z",
       "intent": "Carry decision 157 (format binds its own encode/decode) onto the test-speed playground branch and continue test-speed work there.",
       "before": {
         "assumptions": "157 was built and verified on item-doors (C# green but Wire's six; plang 277/11) but the hook refused the tester's source commit there.",
@@ -95,12 +95,29 @@
           "category": "code",
           "confidence": "medium",
           "context": "Allocation stacks: kept store on first add; built-in code providers on first ask; class name/formats in identity cache; type entries on first ask via a private Fill() hook in the list base (locked core, private); facts getters field-check first. Birth 0.3 ms / ~95 KB shared. C# green but Wire six; plang 277/11."
+        },
+        {
+          "paths": [
+            "PLang/app/this.cs",
+            "PLang/app/type/list/Registry.cs",
+            "PLang/app/type/reader/this.cs",
+            "PLang/app/type/kind/pair/list/this.cs",
+            "PLang/app/module/this.cs",
+            "PLang/app/channel/this.cs",
+            "PLang/app/module/code/this.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/assembly/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Locked core opened on the playground: assembly off app root; readers and pairs shared via facts; modules, channel settings, code tables, Data.Properties lazy; owner lookup via facts; leaner fresh facts. Shared birth ~175 us; fresh ~4.1 ms. C# green but Wire six; plang 277/11."
         }
       ],
       "after": {
         "status": "157 committed on test-speed",
         "health": "C# green but Wire's six baseline; plang 277/11",
-        "notes": "Birth 0.3 ms / ~95 KB shared, ~6 ms fresh. test-speed.md sections 9-10."
+        "notes": "Birth ~175 us shared, ~4.1 ms fresh. Next idea for cold start: generator emits the code facts."
       }
     }
   ]
