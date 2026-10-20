@@ -136,6 +136,71 @@ public sealed class @this
                     readers.GetValueOrDefault($"{clr.Namespace}.serializer")?.GetConstructor(System.Type.EmptyTypes));
     }
 
+    /// <summary>A reader the code ships in a type's <c>serializer</c> folder: the name of the type it reads (the word
+    /// its folder's type goes by, else the folder's last segment) and either how its token reader is made (an instance
+    /// class, its kind its own) or its whole-payload read — a static <c>Read(raw, kind, ReadContext)</c> bound once —
+    /// under the kind its class name says (<c>Default</c> any kind).</summary>
+    internal sealed record Reader(string Type, string Kind, System.Reflection.ConstructorInfo? Made,
+        global::app.type.reader.@this.Read? Read);
+
+    private Reader[]? _reader;
+    /// <summary>The readers the code ships, each type's from its serializer folder.</summary>
+    internal System.Collections.Generic.IReadOnlyList<Reader> reader
+        => System.Threading.LazyInitializer.EnsureInitialized(ref _reader, ref _gate, () => Readers().ToArray());
+
+    private System.Collections.Generic.IEnumerable<Reader> Readers()
+    {
+        // the words the item classes of each namespace declare ([PlangType]) — a folder whose @this is no type reads
+        // the one type its classes declare by word (a module's: [PlangType("ask")] in app.module.output)
+        var words = Classes.Where(clr => clr.Namespace != null && typeof(global::app.type.item.@this).IsAssignableFrom(clr))
+            .GroupBy(clr => clr.Namespace!)
+            .ToDictionary(group => group.Key, group => group
+                .Select(clr => System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(clr, inherit: false)?.Name)
+                .Where(word => !string.IsNullOrEmpty(word)).Distinct().ToList());
+        foreach (var clr in Classes)
+        {
+            if (!clr.IsClass || clr.Namespace is not { } ns || !ns.EndsWith(".serializer", System.StringComparison.Ordinal)) continue;
+            var head = ns[..ns.LastIndexOf(".serializer", System.StringComparison.Ordinal)];
+            var lastDot = head.LastIndexOf('.');
+            if (lastDot < 0) continue;
+            var type = global::app.type.item.@this.NameOf(Clr, head)
+                       ?? (words.GetValueOrDefault(head) is [var word] ? word : null)
+                       ?? head[(lastDot + 1)..].TrimStart('@');
+            if (!clr.IsAbstract && !clr.IsGenericTypeDefinition && typeof(global::app.type.reader.ITypeReader).IsAssignableFrom(clr)
+                && clr.GetConstructor(System.Type.EmptyTypes) is { } made)
+            {
+                yield return new Reader(type, "", made, null);
+                continue;
+            }
+            if (!clr.IsAbstract || !clr.IsSealed) continue; // a static class
+            if (clr.GetMethod("Read", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                    | System.Reflection.BindingFlags.FlattenHierarchy) is { } read
+                && read.GetParameters() is { Length: 3 } parameters && parameters[2].ParameterType == typeof(global::app.type.reader.ReadContext))
+                yield return new Reader(type, clr.Name.Equals("Default", System.StringComparison.Ordinal)
+                        ? global::app.type.reader.@this.AnyKind : clr.Name.ToLowerInvariant(),
+                    null, Bound(read));
+        }
+    }
+
+    // A static Read bound into the delegate once: called directly, never through reflection per read. A Read whose
+    // shape the delegate can't take as it is (another first parameter) is called through Invoke, its own exception
+    // rethrown as thrown.
+    private static global::app.type.reader.@this.Read Bound(System.Reflection.MethodInfo read)
+    {
+        if (read.ReturnType.IsClass && read.GetParameters()[0].ParameterType == typeof(object)
+            && read.GetParameters()[1].ParameterType == typeof(string))
+            return read.CreateDelegate<global::app.type.reader.@this.Read>();
+        return (raw, kind, context) =>
+        {
+            try { return read.Invoke(null, [raw, kind, context]); }
+            catch (System.Reflection.TargetInvocationException thrown) when (thrown.InnerException != null)
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(thrown.InnerException).Throw();
+                throw;
+            }
+        };
+    }
+
     /// <summary>What the code gives one type as its kinds, in the order the type holds them: its kind classes, the
     /// formats its class declares, its element kinds (a list's), the closed sets (choice's), its family subclasses.</summary>
     internal sealed class Owned

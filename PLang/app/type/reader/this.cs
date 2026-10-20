@@ -158,18 +158,6 @@ public sealed class @this
         _runtimeTyped[(typeName, kind)] = reader;
     }
 
-    // The word of the one item type the namespace declares by its word ([PlangType]); null when it declares none, or more.
-    private static string? Declared(Assembly assembly, string @namespace)
-    {
-        var words = assembly.GetTypes()
-            .Where(t => t.Namespace == @namespace && typeof(global::app.type.item.@this).IsAssignableFrom(t))
-            .Select(t => t.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false)?.Name)
-            .Where(w => !string.IsNullOrEmpty(w))
-            .Distinct()
-            .ToList();
-        return words.Count == 1 ? words[0] : null;
-    }
-
     private void EnsureInitialized()
     {
         if (_initialized) return;
@@ -182,68 +170,25 @@ public sealed class @this
         }
     }
 
+    // An assembly's readers, as its code's facts list them (read once for every app made from them): each token
+    // reader made for this registry, each whole-payload read shared.
     private void IndexAssembly(Assembly assembly)
     {
-        foreach (var type in assembly.GetTypes())
-        {
-            if (!type.IsClass) continue;
-            if (string.IsNullOrEmpty(type.Namespace)) continue;
-            if (!type.Namespace!.EndsWith(".serializer", System.StringComparison.Ordinal)) continue;
-
-            // namespace shape: <the type's namespace>.serializer — the reader is its type's, registered under
-            // the name that type goes by (its word, else its namespace). A module's serializer folder reads the one
-            // type the module declares by its word ([PlangType("ask")] in app.module.output); a folder with no such
-            // type registers under its last segment.
-            var ns = type.Namespace;
-            var pivot = ns.LastIndexOf(".serializer", System.StringComparison.Ordinal);
-            var head = ns[..pivot];
-            var lastDot = head.LastIndexOf('.');
-            if (lastDot < 0) continue;
-            var typeName = global::app.type.item.@this.NameOf(assembly, head) ?? Declared(assembly, head) ?? head[(lastDot + 1)..].TrimStart('@');
-
-            // The typed (ITypeReader) pull reader — an instance class whose own Kind
-            // names the (type, kind) variant. Registered into the token-stream table;
-            // the static Default.Read branch below registers the whole-payload decode.
-            // A type may ship both (its wire read and its content decode).
-            if (!type.IsAbstract && !type.IsGenericTypeDefinition
-                && typeof(ITypeReader).IsAssignableFrom(type)
-                && type.GetConstructor(System.Type.EmptyTypes) is { } ctor)
+        foreach (var reader in (_code?.Invoke(assembly) ?? new global::app.assembly.@this(assembly)).reader)
+            if (reader.Made is { } made)
             {
-                var instance = (ITypeReader)ctor.Invoke(null);
-                _generatedTyped[(typeName, instance.Kind)] = instance;
-                continue;
+                var instance = (ITypeReader)made.Invoke(null);
+                _generatedTyped[(reader.Type, instance.Kind)] = instance;
             }
-
-            if (!type.IsAbstract || !type.IsSealed) continue; // static class
-
-            // file/class name maps to kind/format token; "Default" → wildcard.
-            var kind = type.Name.Equals("Default", System.StringComparison.Ordinal)
-                ? AnyKind
-                : type.Name.ToLowerInvariant();
-
-            // READ — static Read(object raw, string? kind, ReadContext).
-            var method = type.GetMethod("Read",
-                BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-            if (method is not null
-                && method.GetParameters() is { Length: 3 } parameters
-                && parameters[2].ParameterType == typeof(ReadContext))
-            {
-                // Reflection wraps a thrown exception in TargetInvocationException;
-                // unwrap so callers (source.Value's parse-failure catch) see the real
-                // JsonException/FormatException and author their own error, rather than
-                // a reflection wrapper leaking to the courier.
-                Read del = (raw, k, ctx) =>
-                {
-                    try { return method.Invoke(null, new object?[] { raw, k, ctx }); }
-                    catch (System.Reflection.TargetInvocationException tie) when (tie.InnerException != null)
-                    {
-                        System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(tie.InnerException).Throw();
-                        throw; // unreachable — Throw() always rethrows
-                    }
-                };
-                _generated[(typeName, kind)] = del;
-            }
-        }
+            else _generated[(reader.Type, reader.Kind)] = reader.Read!;
     }
 
+    // The code's facts for an assembly — the ones the type list was born holding; null reads them here.
+    private readonly System.Func<Assembly, global::app.assembly.@this>? _code;
+
+    public @this() { }
+
+    /// <summary>A registry that reads each assembly's readers from <paramref name="code"/>: the code's facts, read once
+    /// for every app.</summary>
+    internal @this(System.Func<Assembly, global::app.assembly.@this> code) => _code = code;
 }

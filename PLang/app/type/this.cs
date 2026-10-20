@@ -100,22 +100,19 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// never loops a walk.</summary>
     protected virtual global::app.type.kind.@this BornKind() => new global::app.type.kind.empty.@this(this);
 
-    /// <summary>The kind a value class declares for <paramref name="name"/> — or its own format for the empty
-    /// name — read from the class's <c>[Format]</c>: the facts (MIME, extension, whether it is characters) a
-    /// value carries without asking the app, a kind of <paramref name="owner"/>, the class-built type asking. Null
-    /// when the class declares no such format, so the caller keeps the bare by-name kind. Only a class-built type
-    /// asks; it goes with the implicit-conversion branch.</summary>
-    private static global::app.type.kind.@this? KindOfClass(System.Type clr, string? name, @this owner)
+    /// <summary>The format this type's class declares by <paramref name="name"/> — its own for the empty name — read
+    /// from the class's <c>[Format]</c>: the facts (MIME, extension, whether it is characters) a value carries without
+    /// asking the app, a kind of this type. Null when the class declares no such format (or this type has no class).
+    /// Only a class-built type asks (its kind is not an app's); it goes with the implicit-conversion branch.</summary>
+    internal global::app.type.kind.@this? Declared(string name)
     {
-        var wanted = name ?? "";
-        global::app.Attributes.FormatAttribute? format = null;
+        if (ClrType is not { } clr || !typeof(item.@this).IsAssignableFrom(clr)) return null;
         foreach (var attribute in clr.GetCustomAttributes(typeof(global::app.Attributes.FormatAttribute), inherit: false))
-            if (attribute is global::app.Attributes.FormatAttribute fmt
-                && string.Equals(fmt.Name, wanted, System.StringComparison.OrdinalIgnoreCase)) { format = fmt; break; }
-        if (format == null) return null;
-        var facts = (global::app.type.kind.@this)System.Activator.CreateInstance(
-            typeof(global::app.type.kind.format.@this<>).MakeGenericType(clr), format, owner)!;
-        return wanted.Length == 0 ? new global::app.type.kind.empty.@this(owner, facts) : facts;
+            if (attribute is global::app.Attributes.FormatAttribute format
+                && string.Equals(format.Name, name, System.StringComparison.OrdinalIgnoreCase))
+                return (global::app.type.kind.@this)System.Activator.CreateInstance(
+                    typeof(global::app.type.kind.format.@this<>).MakeGenericType(clr), format, this)!;
+        return null;
     }
 
     /// <summary>
@@ -759,12 +756,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>A type built from a C# class where no app is in reach — the class-built fallbacks (the C# operator
     /// births, error, event): its kind carries its class's [Format] facts, read from the class, so the value's own
-    /// type answers its MIME / extension / text without asking an app. A class that declares no such format keeps the
-    /// bare by-name kind. Goes with the implicit-conversion branch, when every value is born from its app's list.</summary>
+    /// type answers its MIME / extension / text without asking an app — a named kind now, its own format when its kind
+    /// is first asked (most values never ask). A class that declares no such format keeps the bare by-name kind. Goes
+    /// with the implicit-conversion branch, when every value is born from its app's list.</summary>
     internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
         : this(name, clrType, kind, strict, template, known: true)
     {
-        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType) && KindOfClass(clrType, kind, this) is { } declared)
+        if (!string.IsNullOrEmpty(kind) && Declared(kind) is { } declared)
             _kind = declared;
     }
 

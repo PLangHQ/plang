@@ -31,7 +31,8 @@ public sealed class @this : global::app.type.kind.@this
     }
 
     // The kinds the code gives the type, held the first time any of its kinds is asked: a type nothing asks for its
-    // kinds never makes them. The list the type is an entry of holds them; any other type holds what it was given.
+    // kinds never makes them. The list the type is an entry of holds them; a type built from its class in no list
+    // (a C# operator's birth) takes the format its class declares as its own; any other holds what it was given.
     private void Ready()
     {
         if (System.Threading.Volatile.Read(ref _ready) == 2) return;
@@ -39,7 +40,8 @@ public sealed class @this : global::app.type.kind.@this
         {
             if (_ready != 0) return;
             _ready = 1;
-            _owner.Types?.Enlist(_owner);
+            if (_owner.Types is { } list) list.Enlist(_owner);
+            else _format ??= _owner.Declared("");
             System.Threading.Volatile.Write(ref _ready, 2);
         }
     }
