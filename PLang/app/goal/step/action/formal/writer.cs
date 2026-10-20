@@ -84,6 +84,10 @@ public sealed class Writer : IWriter
 
     public void Decimal(decimal value) { Element(); _out.Append(value.ToString(CultureInfo.InvariantCulture)); }
     public void String(string value) { Element(); Quote(value); }
+
+    // formal's view is Store for the record layout, never because it writes plang's store: characters nobody should
+    // see stay masked
+    public void Sensitive(string characters) => String("****");
     public void DateTime(System.DateTime value) => String(value.ToString("O", CultureInfo.InvariantCulture));
     public void DateTimeOffset(System.DateTimeOffset value) => String(value.ToString("O", CultureInfo.InvariantCulture));
     /// <summary>A length of time in ISO 8601 (<c>"PT5S"</c>) — the form the duration type teaches and reads, bare

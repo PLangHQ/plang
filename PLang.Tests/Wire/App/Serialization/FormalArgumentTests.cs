@@ -36,6 +36,17 @@ public class FormalArgumentTests : System.IAsyncDisposable
         await Assert.That(rows.Select(r => r.Name).ToArray()).IsEquivalentTo(new[] { "to", "subject" });
     }
 
+    // formal writes a step's look, never plang's store: characters nobody should see stay masked
+    [Test] public async Task ASensitiveValue_InFormal_IsMasked()
+    {
+        var writer = new global::app.goal.step.action.formal.Writer(Ctx);
+
+        await new global::app.type.item.sensitive.@this("s3cret", app.type.list["sensitive"]).Output(writer);
+
+        await Assert.That(writer.ToString()).Contains("****");
+        await Assert.That(writer.ToString()).DoesNotContain("s3cret");
+    }
+
     // a slot that holds objects keeps them: only a slot that declares its elements are arguments reads records as them
     [Test, Skip("red until the slot declares its elements (185 major 2): today a list of one-key objects reads as arguments")]
     public async Task AListOfOneKeyObjects_InASlotOfObjects_StaysObjects()
