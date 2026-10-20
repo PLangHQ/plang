@@ -46,14 +46,14 @@ public class DurationKindTests : System.IAsyncDisposable
     public async Task TheSameSpanInTwoStandards_IsEqual()
         => await Assert.That(Duration.Resolve("30s", Ctx)!.Equals(Duration.Resolve("PT30S", Ctx))).IsTrue();
 
-    // `as iso`: the declared type names the kind, and the same span is written in it.
+    // `as iso`: the declared type names the kind, and a span is made by it, written in it.
     [Test]
     public async Task AKindAskedFor_ConvertsTheSpanToIt()
     {
         var carrier = new global::app.data.@this("d", context: Ctx);
         var declared = new global::app.type.@this("duration", "iso");
 
-        var converted = Duration.Create("30s", declared, carrier)!;
+        var converted = Duration.Create(System.TimeSpan.FromSeconds(30), declared, carrier)!;
 
         await Assert.That(await Written(converted)).IsEqualTo("PT30S");
         await Assert.That(converted.Value).IsEqualTo(System.TimeSpan.FromSeconds(30));

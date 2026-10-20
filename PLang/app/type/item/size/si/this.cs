@@ -14,7 +14,11 @@ public sealed class @this : size.@this, global::app.type.item.ICreate<@this>
     protected override string[] Units => units;
 
     /// <summary>A count, or a text in SI units, as an SI size born holding <paramref name="declared"/>; a text in
-    /// another standard declines (<c>null</c>).</summary>
+    /// another standard is refused, naming how SI is written.</summary>
     public static new @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
-        => declared is { } type && Bytes(raw, step, units) is { } count ? new(count, type) : null;
+    {
+        if (declared is { } type && Bytes(raw, step, units) is { } count) return new(count, type);
+        Refuse(raw, "si", "100 MB", data);
+        return null;
+    }
 }

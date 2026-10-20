@@ -44,6 +44,14 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
             _ => null,
         };
 
+    /// <summary>A standard refuses a text in another form, naming itself and how it is written
+    /// (<c>'30s' is not a duration in iso (iso is written PT30S)</c>); anything else declines unnamed.</summary>
+    protected static void Refuse(object? raw, string standard, string written, global::app.data.@this data)
+    {
+        if ((raw is global::app.type.item.@this leaf ? leaf.Clr<object>() : raw) is string text)
+            data.Fail(new global::app.error.@this($"'{text}' is not a duration in {standard} ({standard} is written {written})", "DurationParseFailed", 400));
+    }
+
     /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan is born short; a string (30s, ISO-8601
     /// <c>PT30S</c> or .NET <c>00:00:30</c>, via <see cref="Resolve"/>) is the standard it is written in, as
     /// <paramref name="context"/>'s types hold them; anything else declines (<c>null</c>). A text-wrapped literal
@@ -64,14 +72,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// on <paramref name="data"/> (a bad string vs a wrong type).</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Create(value, data.Context) is { } built)
-        {
-            // asked for in a standard (`as iso`): the same span, made by that standard, through the app's entry for it
-            if (declared?.kind is { IsEmpty: false } asked && !string.Equals(asked.Name, built.Type.kind.Name, System.StringComparison.OrdinalIgnoreCase)
-                && data.Context.App.type.list["duration"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
-                return data.Context.App.type.list[new global::app.type.@this("duration", standard.Name), data.Context].Make(built.Value, data) as @this;
-            return built;
-        }
+        // asked for in a standard (`as iso`): that standard makes it, from a span or a text in its own form only
+        if (declared?.kind is { IsEmpty: false } asked && data.Context.App.type.list["duration"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
+            return data.Context.App.type.list[new global::app.type.@this("duration", standard.Name), data.Context].Make(value, data) as @this;
+        if (Create(value, data.Context) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as duration — expected a number and its unit (30s, 200ms, 5m), ISO-8601 (PT30S) or .NET format (00:00:30).", "DurationParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to duration.", "DurationConversionFailed", 400));

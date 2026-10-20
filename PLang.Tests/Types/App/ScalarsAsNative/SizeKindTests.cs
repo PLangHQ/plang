@@ -79,14 +79,14 @@ public class SizeKindTests : System.IAsyncDisposable
         await Assert.That(Size.Create(100_000_000L, app.actor.list.User.Context).Text).IsEqualTo("95.4 MiB");
     }
 
-    // `as si`: the declared type names the kind, and the same bytes are written in it.
+    // `as si`: the declared type names the kind, and a count is made by it, written in it.
     [Test]
     public async Task AKindAskedFor_WritesTheBytesInIt()
     {
         await using var app = new global::app.@this("/app").Testing();
         var carrier = new global::app.data.@this("s", context: app.actor.list.User.Context);
 
-        var converted = Size.Create("100 MiB", new global::app.type.@this("size", "si"), carrier)!;
+        var converted = Size.Create(104_857_600L, new global::app.type.@this("size", "si"), carrier)!;
 
         await Assert.That(converted.Text).IsEqualTo("104.9 MB");
         await Assert.That(converted.Value).IsEqualTo(104_857_600L);

@@ -1553,6 +1553,7 @@ abstract class app.type.item.duration.this : app.type.item.this, System.IEquatab
   override Rank : System.Int32 { get; }
   protected abstract Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
+  protected static Refuse(System.Object raw, System.String standard, System.String written, app.data.this data) : System.Void
   protected static Span(System.Object raw, System.Func<System.String, System.Nullable<System.TimeSpan>> read) : System.Nullable<System.TimeSpan>
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.duration.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.duration.this
@@ -2535,6 +2536,7 @@ abstract class app.type.item.size.this : app.type.item.this, System.IEquatable<a
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected static Bytes(System.Object raw, System.Int64 step, System.String[] units) : System.Nullable<System.Int64>
+  protected static Refuse(System.Object raw, System.String standard, System.String written, app.data.this data) : System.Void
   static Create(System.Int64 bytes, app.actor.context.this context) : app.type.item.size.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.size.this
   static Resolve(System.String raw, app.actor.context.this context) : app.type.item.size.this

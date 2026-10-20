@@ -69,14 +69,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <paramref name="data"/> (a bad string vs a wrong type).</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Read(value, data.Context) is { } built)
-        {
-            // asked for in a standard (`as si`): the same bytes, made by that one
-            if (declared?.kind is { IsEmpty: false } asked && !string.Equals(asked.Name, built.Type.kind.Name, System.StringComparison.OrdinalIgnoreCase)
-                && data.Context.App.type.list["size"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
-                return Of(built.Value, standard, data);
-            return built;
-        }
+        // asked for in a standard (`as si`): that standard makes it, from a count or a text in its own form only
+        if (declared?.kind is { IsEmpty: false } asked && data.Context.App.type.list["size"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
+            return data.Context.App.type.list[new global::app.type.@this("size", standard.Name), data.Context].Make(value, data) as @this;
+        if (Read(value, data.Context) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot read '{s}' as a size — expected a number and its unit: IEC (500 KiB, 95.4 MiB) or SI (512 kB, 100 MB).", "SizeParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to size.", "SizeConversionFailed", 400));
@@ -94,6 +90,14 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
             string text => Bytes(text, step, units),
             _ => null,
         };
+
+    /// <summary>A standard refuses a text in another form, naming itself and how it is written
+    /// (<c>'100 MiB' is not a size in si (si is written 100 MB)</c>); anything else declines unnamed.</summary>
+    protected static void Refuse(object? raw, string standard, string written, global::app.data.@this data)
+    {
+        if ((raw is global::app.type.item.@this leaf ? leaf.Clr<object>() : raw) is string text)
+            data.Fail(new global::app.error.@this($"'{text}' is not a size in {standard} ({standard} is written {written})", "SizeParseFailed", 400));
+    }
 
     // the bytes a text in that standard is
     private static long? Bytes(string text, long step, string[] units)

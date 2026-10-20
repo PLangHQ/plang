@@ -14,10 +14,12 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
     }
 
     /// <summary>A span, or a text in .NET's form, as a dotnet duration born holding <paramref name="declared"/>; a text
-    /// in another form declines (<c>null</c>).</summary>
+    /// in another form is refused, naming how dotnet is written.</summary>
     public static new @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
-        return declared is { } type && Span(raw, Read) is { } value ? new(value, type) : null;
+        if (declared is { } type && Span(raw, Read) is { } value) return new(value, type);
+        Refuse(raw, "dotnet", "00:00:30", data);
+        return null;
 
         static System.TimeSpan? Read(string text)
             => text.Contains(':') && System.TimeSpan.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, out var read)

@@ -14,10 +14,12 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
     }
 
     /// <summary>A span, or a text in ISO 8601, as an iso duration born holding <paramref name="declared"/>; a text in
-    /// another form declines (<c>null</c>).</summary>
+    /// another form is refused, naming how iso is written.</summary>
     public static new @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
-        return declared is { } type && Span(raw, Read) is { } value ? new(value, type) : null;
+        if (declared is { } type && Span(raw, Read) is { } value) return new(value, type);
+        Refuse(raw, "iso", "PT30S", data);
+        return null;
 
         static System.TimeSpan? Read(string s)
         {

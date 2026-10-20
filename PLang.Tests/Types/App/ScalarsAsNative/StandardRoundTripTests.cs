@@ -48,13 +48,38 @@ public class StandardRoundTripTests : System.IAsyncDisposable
         await Assert.That(await Ctx.Written(value)).IsEqualTo(text);
     }
 
+    // a standard reads only its own form: a text in another is refused, naming the standard and how it is written
+    [Test]
+    [Arguments("duration", "iso", "30s", "'30s' is not a duration in iso (iso is written PT30S)")]
+    [Arguments("size", "si", "100 MiB", "'100 MiB' is not a size in si (si is written 100 MB)")]
+    public async Task AText_InAnotherStandard_IsRefused_NamingTheDeclaredOne(string family, string standard, string text, string message)
+    {
+        System.Exception? refused = null;
+        try { Ctx.App.type.list[new global::app.type.@this(family, standard), Ctx].Make(Ctx.Text(text), Ctx); }
+        catch (System.Exception thrown) { refused = thrown; }
+
+        await Assert.That(refused).IsNotNull();
+        await Assert.That(refused!.Message).Contains(message);
+    }
+
+    [Test]
+    [Arguments("duration", "iso", "PT30S")]
+    [Arguments("size", "si", "104.9 MB")]
+    public async Task AText_InTheDeclaredStandard_StillMakes(string family, string standard, string text)
+    {
+        var value = Ctx.App.type.list[new global::app.type.@this(family, standard), Ctx].Make(Ctx.Text(text), Ctx);
+
+        await Assert.That(value.Type.kind.Name).IsEqualTo(standard);
+        await Assert.That(await Ctx.Written(value)).IsEqualTo(text);
+    }
+
     // a value made in a standard holds the app's own entry for it, never a type object of its own
     [Test]
     public async Task AStandardsValue_HoldsTheAppsEntryForIt()
     {
         var count = global::app.type.item.size.@this.Create(2048, Ctx);
         var carrier = new global::app.data.@this("d", context: Ctx);
-        var asked = global::app.type.item.duration.@this.Create("30s", new global::app.type.@this("duration", "iso"), carrier)!;
+        var asked = global::app.type.item.duration.@this.Create("PT30S", new global::app.type.@this("duration", "iso"), carrier)!;
 
         await Assert.That(ReferenceEquals(count.Type, Ctx.App.type.list[new global::app.type.@this("size", "iec"), Ctx])).IsTrue();
         await Assert.That(ReferenceEquals(asked.Type, Ctx.App.type.list[new global::app.type.@this("duration", "iso"), Ctx])).IsTrue();
