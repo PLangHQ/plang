@@ -31,6 +31,19 @@ public class ImageHoldsItsDeclaredTypeTests
         await Assert.That(type.Strict).IsTrue();
     }
 
+    // A path-backed image reads nothing at the set: a strict kind waits for the bytes' first load, so the set is clean
+    // whatever the file holds (here it doesn't exist).
+    [Test] public async Task SetAPathAsImageGifStrict_ReadsNothing_HoldsGif()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        var ctx = app.actor.list.User.Context;
+
+        var type = await Set("photo.png", app.type.list[new global::app.type.@this("image", "gif", strict: true), ctx], app, ctx);
+
+        await Assert.That(type.kind.Name).IsEqualTo("gif");
+        await Assert.That(type.Strict).IsTrue();
+    }
+
     [Test] public async Task SetAPngAsImageStrict_HoldsTheExtensionsKind_Strict()
     {
         await using var app = new global::app.@this("/test").Testing();

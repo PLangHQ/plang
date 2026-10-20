@@ -288,9 +288,10 @@ public partial class Set : IContext, IScope, IKeep
             // An already-loaded value (read-lift, raw bytes in hand) validates
             // now; a lazy path-backed value defers — its own load enforces (e.g.
             // image.BytesAsync throws on mismatch). Raw byte[] slots are handled
-            // separately above via the IKindValidatable probe.
+            // separately above via the IKindValidatable probe. The value is reached as it is in
+            // memory, never opened: opening a path-backed image would load its bytes here.
             if (type.Strict && !type.kind.IsEmpty
-                && (await typedData.Value()) is global::app.data.IStrictKindEnforcer enforcer)
+                && typedData.Peek() is global::app.data.IStrictKindEnforcer enforcer)
             {
                 enforcer.RequireStrictKind(type.kind.Name);
                 if (enforcer.CheckStrictKind() is { ok: false } mismatch)
