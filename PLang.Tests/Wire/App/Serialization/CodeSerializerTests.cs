@@ -9,12 +9,14 @@ namespace PLang.Tests.App.Serialization;
 
 public class CodeSerializerTests
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+
     private sealed class CaptureWriter : global::app.type.format.IWriter
     {
-        public string Format { get; }
+        public global::app.type.kind.@this Kind { get; }
         public object? Last { get; private set; }
         public string LastMethod { get; private set; } = "";
-        public CaptureWriter(string format) { Format = format; }
+        public CaptureWriter(global::app.type.kind.@this kind) { Kind = kind; }
         public void Null() { }
         public void Bool(bool v) { }
         public void Int(int v) { }
@@ -42,7 +44,7 @@ public class CodeSerializerTests
     [Test] public async Task Code_DefaultFormat_EmitsStringSource()
     {
         var c = new code("hello", "text");
-        var w = new CaptureWriter("json");
+        var w = new CaptureWriter(app.type.list["item"].kind["json"]!);
         c.Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(w.Last).IsEqualTo("hello");
@@ -54,7 +56,7 @@ public class CodeSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
+            var w = new global::app.type.item.kind.json.Writer(utf, app.type.list, view: global::app.View.Out);
             w.Value(new code("Console.WriteLine();", "csharp"));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -63,7 +65,7 @@ public class CodeSerializerTests
 
     [Test] public async Task Code_PlangFormat_WritesSource()
     {
-        var w = new CaptureWriter("plang");
+        var w = new CaptureWriter(app.type.list["wire"].kind["plang"]!);
         new code("print(1)", "python").Write(w);
         await Assert.That(w.Last).IsEqualTo("print(1)");
     }
@@ -72,7 +74,7 @@ public class CodeSerializerTests
     {
         // text Format writes the plain source — no HTML wrap (the HTML
         // writer is a follow-up).
-        var w = new CaptureWriter("text");
+        var w = new CaptureWriter(app.type.list["text"].kind);
         new code("body", "text").Write(w);
         await Assert.That(w.Last).IsEqualTo("body");
         await Assert.That(((string)w.Last!).Contains("<pre>") || ((string)w.Last!).Contains("<code>")).IsFalse();

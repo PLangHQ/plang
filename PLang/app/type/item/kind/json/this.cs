@@ -21,7 +21,8 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
 
     /// <summary>A json writer — plain json, or plang's schema-on json — writes json: json content goes into it
     /// as the token it already is.</summary>
-    public override bool Owns(global::app.type.format.IWriter writer) => writer.Format is "plang" or "json";
+    public override bool Owns(global::app.type.format.IWriter writer)
+        => ReferenceEquals(writer.Kind, this) || writer.Kind is global::app.type.item.wire.kind.plang.@this;
 
     /// <summary>A test run's report in json: the run's tests, written as json.</summary>
     public override string? Report => "results.json";
@@ -53,7 +54,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         {
             var face = view ?? global::app.View.Out;
             await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions { Encoder = _encoder });
-            await data.Output(new global::app.type.item.kind.json.Writer(utf8, face, emitsSchema: false), face, context);
+            await data.Output(new global::app.type.item.kind.json.Writer(utf8, context.App.type.list, face, emitsSchema: false), face, context);
             await utf8.FlushAsync(ct);
             return context.Ok();
         }

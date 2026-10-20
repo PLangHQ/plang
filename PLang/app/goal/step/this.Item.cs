@@ -65,7 +65,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         using var stream = new System.IO.MemoryStream();
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(stream))
-            await row.Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out), global::app.View.Out, context);
+            await row.Output(new global::app.type.item.kind.json.Writer(utf8, context.App.type.list, global::app.View.Out), global::app.View.Out, context);
         var bytes = stream.ToArray();
         var utf8Reader = new System.Text.Json.Utf8JsonReader(bytes);
         utf8Reader.Read();

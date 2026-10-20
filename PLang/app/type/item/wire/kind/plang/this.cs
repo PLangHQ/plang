@@ -46,7 +46,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
                 data = signed;
             }
             await using var utf8 = new Utf8JsonWriter(stream);
-            var writer = new global::app.type.item.kind.json.Writer(utf8, view, emitsSchema: true);
+            var writer = new global::app.type.item.kind.json.Writer(utf8, context.App.type.list, view, emitsSchema: true);
             if (data.Peek() is global::app.type.item.signature.@this sig)
                 await sig.Output(writer, view, context);
             else
@@ -123,5 +123,6 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
     /// <summary>Whether <paramref name="writer"/> writes this format — a captured slice rides verbatim into a json
     /// writer (schema on → "plang", off → "json"); any other writer is a different format, where the slice is
     /// decoded and the value writes itself.</summary>
-    public override bool Owns(global::app.type.format.IWriter writer) => writer.Format is "plang" or "json";
+    public override bool Owns(global::app.type.format.IWriter writer)
+        => ReferenceEquals(writer.Kind, this) || writer.Kind is global::app.type.item.kind.json.@this;
 }

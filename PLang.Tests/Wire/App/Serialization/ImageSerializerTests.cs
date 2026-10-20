@@ -12,10 +12,10 @@ public class ImageSerializerTests
 
     private sealed class CaptureWriter : global::app.type.format.IWriter
     {
-        public string Format { get; }
+        public global::app.type.kind.@this Kind { get; }
         public object? Last { get; private set; }
         public string LastMethod { get; private set; } = "";
-        public CaptureWriter(string format) { Format = format; }
+        public CaptureWriter(global::app.type.kind.@this kind) { Kind = kind; }
         public void Null() { LastMethod = "Null"; }
         public void Bool(bool v) { }
         public void Int(int v) { }
@@ -44,9 +44,16 @@ public class ImageSerializerTests
     [Test] public async Task Image_Loaded_WritesItsBytes_WhateverTheFormat()
     {
         await using var app = new global::app.@this("/test").Testing();
-        foreach (var format in new[] { "text", "json", "plang", "protobuf" })
+        var kinds = new[]
         {
-            var w = new CaptureWriter(format);
+            app.type.list["text"].kind,
+            app.type.list["item"].kind["json"]!,
+            app.type.list["wire"].kind["plang"]!,
+            app.type.list["list"].kind["formal"]!,
+        };
+        foreach (var kind in kinds)
+        {
+            var w = new CaptureWriter(kind);
             app.actor.list.User.Context.Image(PngBytes, "image/png").Write(w);
             await Assert.That(w.LastMethod).IsEqualTo("Bytes");
             await Assert.That(w.Last).IsEqualTo(PngBytes);
@@ -58,7 +65,7 @@ public class ImageSerializerTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.actor.list.User.Context);
-        var w = new CaptureWriter("text");
+        var w = new CaptureWriter(app.type.list["text"].kind);
         app.actor.list.User.Context.Image(p!, PngBytes).Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("Bytes");
         await Assert.That(w.Last).IsEqualTo(PngBytes);
@@ -69,7 +76,7 @@ public class ImageSerializerTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.actor.list.User.Context);
-        var w = new CaptureWriter("json");
+        var w = new CaptureWriter(app.type.list["item"].kind["json"]!);
         app.actor.list.User.Context.Image(p!).Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That((string)w.Last!).Contains("photo.png");
@@ -84,7 +91,7 @@ public class ImageSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
+            var w = new global::app.type.item.kind.json.Writer(utf, app.type.list, view: global::app.View.Out);
             w.Value(img);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());

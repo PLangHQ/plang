@@ -78,7 +78,7 @@ public class Stage3_PathDemolitionTests
             var p = new global::app.type.item.path.file.@this(loc, pathApp.actor.list.User.Context.App.type.list[new global::app.type.@this("path", "file"), pathApp.actor.list.User.Context]) { Raw = loc };
             using var ms = new MemoryStream();
             using var jw = new Utf8JsonWriter(ms);
-            p.Write(new global::app.type.item.kind.json.Writer(jw));
+            p.Write(new global::app.type.item.kind.json.Writer(jw, pathApp.type.list));
             jw.Flush();
             await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo($"\"{loc}\"").Because(loc);
         }
@@ -274,7 +274,7 @@ public class Stage3_PathDemolitionTests
         var p = new global::app.type.item.path.file.@this("docs/readme.md", pathApp.actor.list.User.Context.App.type.list[new global::app.type.@this("path", "file"), pathApp.actor.list.User.Context]) { Raw = "docs/readme.md" };
         using var ms = new MemoryStream();
         using var jw = new Utf8JsonWriter(ms);
-        p.Write(new global::app.type.item.kind.json.Writer(jw));
+        p.Write(new global::app.type.item.kind.json.Writer(jw, pathApp.type.list));
         jw.Flush();
         await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo("\"docs/readme.md\"");
     }

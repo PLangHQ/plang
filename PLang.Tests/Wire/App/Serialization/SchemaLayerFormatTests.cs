@@ -14,12 +14,12 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
 
     // Render a value through the json IWriter exactly as the wire writer's
     // value-slot dispatch does (case item.@this v: v.Write(this)).
-    private static string Render(global::app.type.item.@this value)
+    private string Render(global::app.type.item.@this value)
     {
         using var ms = new MemoryStream();
         using (var jw = new System.Text.Json.Utf8JsonWriter(ms))
         {
-            var writer = new global::app.type.item.kind.json.Writer(jw);
+            var writer = new global::app.type.item.kind.json.Writer(jw, app.type.list);
             writer.Value(value);
         }
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());

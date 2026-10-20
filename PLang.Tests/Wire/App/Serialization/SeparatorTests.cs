@@ -20,14 +20,14 @@ public class SeparatorTests
     {
         var written = offers.Select(offer =>
         {
-            var writer = new global::app.goal.step.action.formal.Writer();
+            var writer = new global::app.goal.step.action.formal.Writer(context.App.type.list);
             offer.Write(writer);
             return writer.ToString();
         }).ToList();
         var shown = offers.Select(offer =>
         {
             using var stream = new System.IO.MemoryStream();
-            offer.Write(new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture));
+            offer.Write(new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture, context.App.type.list));
             return System.Text.Encoding.UTF8.GetString(stream.ToArray());
         }).ToList();
         return (written, shown);
@@ -86,7 +86,7 @@ public class SeparatorTests
     private static string Written(global::app.type.item.separator.@this separator, global::app.actor.context.@this context)
     {
         using var stream = new System.IO.MemoryStream();
-        separator.Write(new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture));
+        separator.Write(new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture, context.App.type.list));
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 

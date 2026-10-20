@@ -221,7 +221,7 @@ public sealed class @this
             // a capture's options aren't the step's to give: none is held to it
             if (built.Count > 0 && !built.Any(IsCapture) && built.All(a => a[property.Name] == null) && !property.IsDefault(value))
             {
-                var option = new global::app.goal.step.action.formal.Writer();
+                var option = new global::app.goal.step.action.formal.Writer(built[0].Module.App.type.list);
                 option.Option(property.Name, value);
                 refused.Add($"step {i}'s {name} leaves out {property.Name}, which the decider says the step gives: write {option}");
             }
@@ -382,7 +382,7 @@ public sealed class @this
         foreach (var (key, (property, value)) in _option)
             if (key.StartsWith(asked, StringComparison.Ordinal))
             {
-                var writer = new global::app.goal.step.action.formal.Writer();
+                var writer = new global::app.goal.step.action.formal.Writer(action.Module.App.type.list);
                 writer.Option(property.Name, value);
                 chosen.Add((property, writer.ToString()));
             }
@@ -426,7 +426,7 @@ public sealed class @this
     {
         using var stream = new System.IO.MemoryStream();
         offer.Write(new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8,
-            context.Setting.Of<global::app.setting.@this>().Culture));
+            context.Setting.Of<global::app.setting.@this>().Culture, context.App.type.list));
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 

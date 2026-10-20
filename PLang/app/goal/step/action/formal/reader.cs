@@ -451,7 +451,7 @@ public sealed class Reader
         {
             using var ms = new System.IO.MemoryStream();
             using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
-                new global::app.type.item.variable.serializer.Entry().Write(new global::app.type.item.kind.json.Writer(utf8), variables);
+                new global::app.type.item.variable.serializer.Entry().Write(new global::app.type.item.kind.json.Writer(utf8, _context.App.type.list), variables);
             return Encoding.UTF8.GetString(ms.ToArray());
         }
 

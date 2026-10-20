@@ -22,9 +22,9 @@ public class PickOptionTests : System.IAsyncDisposable
     private static Dictionary<string, object?> Yes(double score) => new() { ["type"] = "noul", ["noul"] = score };
 
     // each offer as it writes itself into a formal line
-    private static List<string> Formal(IReadOnlyList<global::app.type.item.@this> offers) => offers.Select(o =>
+    private List<string> Formal(IReadOnlyList<global::app.type.item.@this> offers) => offers.Select(o =>
     {
-        var writer = new global::app.goal.step.action.formal.Writer();
+        var writer = new global::app.goal.step.action.formal.Writer(_app.type.list);
         o.Write(writer);
         return writer.ToString();
     }).ToList();
@@ -275,10 +275,10 @@ public class PickOptionTests : System.IAsyncDisposable
 
         await Assert.That(one.Single()).IsSameReferenceAs(global::app.type.item.given.@this.Instance);
         await Assert.That(many.Single()).IsSameReferenceAs(global::app.type.item.given.@this.Instance);
-        var line = new global::app.goal.step.action.formal.Writer();
+        var line = new global::app.goal.step.action.formal.Writer(_app.type.list);
         line.Option("Permission", one.Single());
         await Assert.That(line.ToString()).IsEqualTo("Permission");
-        var valued = new global::app.goal.step.action.formal.Writer();
+        var valued = new global::app.goal.step.action.formal.Writer(_app.type.list);
         valued.Option("Template", (await _app.Module("file")["read"]!["Template"]!.Type.Offers(step)).First());
         await Assert.That(valued.ToString()).StartsWith("Template=\"");
     }

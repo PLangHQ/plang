@@ -8,6 +8,8 @@ namespace PLang.Tests.App.Serialization;
 // AcceptTheFixture.
 public class VariableListTwinTests
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+
     private const string Pinned = "PLang.Tests/Wire/App/Serialization/formal_golden.json";
 
     [Test]
@@ -79,7 +81,7 @@ public class VariableListTwinTests
         foreach (var kv in obj) foreach (var r in Rows(kv.Value)) yield return r;
     }
 
-    private static string? Expected(JsonObject row)
+    private string? Expected(JsonObject row)
     {
         var type = (JsonObject)row["type"]!;
         var holds = type["template"] != null || type["name"]?.GetValue<string>() == "variable";
@@ -91,7 +93,7 @@ public class VariableListTwinTests
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms,
                    new System.Text.Json.JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
             new global::app.type.item.variable.serializer.Entry().Write(
-                new global::app.type.item.kind.json.Writer(utf8), found.DistinctBy(v => v.Text).ToList());
+                new global::app.type.item.kind.json.Writer(utf8, app.type.list), found.DistinctBy(v => v.Text).ToList());
         return JsonNode.Parse(ms.ToArray())!.ToJsonString();
     }
 

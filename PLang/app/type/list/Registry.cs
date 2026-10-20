@@ -305,10 +305,14 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         foreach (var t in classes)
         {
             // each format a type's class declares, a kind of that type — written by the class's own encode, read by
-            // its own decode when it has one
-            if (t.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false)
-                && global::app.type.item.@this.NameOf(t) is { } reads && named.GetValueOrDefault(reads) is { } declaring)
+            // its own decode when it has one. The type is found as the list finds any class's: by its name, else as
+            // the list names the class (a list of actions is a list); a declared format no type reads is plang broken
+            if (t.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false))
             {
+                if ((named.GetValueOrDefault(global::app.type.item.@this.NameOf(t)) ?? named.GetValueOrDefault(PlangName(t).Name))
+                    is not { } declaring)
+                    return new error.@this($"{t.FullName} declares a format, but no type reads it — it is no type of its own "
+                        + "and the list names none for it.", "TypeLoadFormat", 400);
                 var encode = Encoder(t);
                 var decode = Decoder(t);
                 // each format is a kind<declaring-type> — one concrete class over the declaring type (774)

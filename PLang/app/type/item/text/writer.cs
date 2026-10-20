@@ -23,17 +23,21 @@ public sealed class Writer : global::app.type.format.IWriter
     private Utf8JsonWriter? _utf8;
     private int _depth;                                          // open object/array nesting
     private readonly global::app.type.item.culture.@this _culture;
+    private readonly global::app.type.list.@this _types;
 
     /// <summary>A writer of text into <paramref name="stream"/>, its numbers read as <paramref name="culture"/>
-    /// reads them (the asker's <c>%!app.setting.culture%</c>).</summary>
-    public Writer(Stream stream, Encoding encoding, global::app.type.item.culture.@this culture)
+    /// reads them (the asker's <c>%!app.setting.culture%</c>); its kind is text's own format, among
+    /// <paramref name="types"/>.</summary>
+    public Writer(Stream stream, Encoding encoding, global::app.type.item.culture.@this culture, global::app.type.list.@this types)
     {
         _stream = stream;
         _encoding = encoding;
         _culture = culture;
+        _types = types;
+        Kind = types["text"].kind;
     }
 
-    public string Format => "text";
+    public global::app.type.kind.@this Kind { get; }
 
     private void Bare(string text) => _stream.Write(_encoding.GetBytes(text));
 
@@ -42,7 +46,7 @@ public sealed class Writer : global::app.type.format.IWriter
     // EITHER a bare top-level scalar OR structural json, never interleaved.
     private global::app.type.item.kind.json.Writer Structural()
         => _json ??= new global::app.type.item.kind.json.Writer(
-               _utf8 = new Utf8JsonWriter(_stream), emitsSchema: false);
+               _utf8 = new Utf8JsonWriter(_stream), _types, emitsSchema: false);
 
     // Scalars: bare at the top, json (quoted / comma-joined) when nested inside an open structure.
     public void Null() { if (_depth > 0) Structural().Null(); }

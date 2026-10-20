@@ -19,10 +19,11 @@ namespace app.goal.step.action.formal;
 /// </summary>
 public sealed class Writer : IWriter
 {
-    /// <summary>The format token owners branch on.</summary>
+    /// <summary>The format's name: list's <c>formal</c>.</summary>
     public const string Token = "formal";
 
-    public string Format => Token;
+    /// <summary>List's <c>formal</c> — what a list of actions is written as.</summary>
+    public global::app.type.kind.@this Kind { get; }
 
     private readonly StringBuilder _out = new();
 
@@ -30,7 +31,15 @@ public sealed class Writer : IWriter
     private enum Frame { Top, Array, Dict, Rows, Call, Actions, Body, Record }
     private readonly Stack<(Frame Kind, int Count)> _frames = new();
 
-    public Writer() => _frames.Push((Frame.Top, 0));
+    /// <summary>A formal writer, its kind found among <paramref name="types"/>.</summary>
+    public Writer(global::app.type.list.@this types) : this(types["list"].kind[Token]!) { }
+
+    // a writer of the same kind as one in hand (an option's value, written apart)
+    private Writer(global::app.type.kind.@this kind)
+    {
+        Kind = kind;
+        _frames.Push((Frame.Top, 0));
+    }
 
     /// <summary>The formal written so far.</summary>
     public override string ToString() => _out.ToString();
@@ -88,7 +97,7 @@ public sealed class Writer : IWriter
     /// fill — when its value writes nothing (<c>Permission</c>: the step gives it, the writer fills it).</summary>
     public void Option(string name, global::app.type.item.@this value)
     {
-        var written = new Writer();
+        var written = new Writer(Kind);
         value.Write(written);
         Element();
         _out.Append(name);

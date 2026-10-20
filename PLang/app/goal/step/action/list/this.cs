@@ -13,6 +13,9 @@ namespace app.goal.step.action.list;
 /// the coverage-key <see cref="IndexOf"/> (items are responsible for themselves — Rule 5). Twin of
 /// <see cref="app.goal.step.list.@this"/>.
 /// </summary>
+// formal — the actions written as calls — is a format of list (a list of actions is what its reader makes), so the
+// kind is {list, formal}; its encode and decode are this class's: decoding formal makes an action list
+[global::app.Attributes.Format(global::app.goal.step.action.formal.Writer.Token, Text = true)]
 public sealed class @this : global::app.type.item.list.@this<Action>, global::app.type.item.ICreate<@this>
 {
     // Two ways to be born: EMPTY (callers Add each action in — the reader, Nest), or ADOPT a list

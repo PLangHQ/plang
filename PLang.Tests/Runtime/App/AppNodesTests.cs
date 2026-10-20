@@ -84,7 +84,7 @@ public class AppNodesTests
         {
             using var ms = new System.IO.MemoryStream();
             await using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
-                await user.call.Output(new global::app.type.item.kind.json.Writer(utf8, view), view, user);
+                await user.call.Output(new global::app.type.item.kind.json.Writer(utf8, user.App.type.list, view), view, user);
             return System.Text.Encoding.UTF8.GetString(ms.ToArray());
         }
 

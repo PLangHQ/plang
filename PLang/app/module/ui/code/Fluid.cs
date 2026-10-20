@@ -339,7 +339,7 @@ public class Fluid : ITemplate
 
         // plang's text writer over the stream, its numbers in the render's culture
         private global::app.type.item.text.Writer Writer(Stream into)
-            => new(into, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture);
+            => new(into, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture, context.App.type.list);
 
         /// <summary>Whether the value is true — its own truthiness (0, "", false and null are not).</summary>
         public override bool ToBooleanValue() => item.IsTruthy();

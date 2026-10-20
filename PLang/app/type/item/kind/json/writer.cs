@@ -19,14 +19,18 @@ public sealed class Writer : IWriter
     private readonly app.View _view;
     private readonly bool _emitsSchema;
 
-    public Writer(Utf8JsonWriter writer, app.View view = app.View.Out, bool emitsSchema = false)
+    /// <summary>A json writer over <paramref name="writer"/>, its kind found among <paramref name="types"/>: plang's
+    /// own (wire's <c>plang</c>) while it carries the schema layer, else item's <c>json</c> — that choice goes when
+    /// plang has its own writer.</summary>
+    public Writer(Utf8JsonWriter writer, global::app.type.list.@this types, app.View view = app.View.Out, bool emitsSchema = false)
     {
         _writer = writer;
         _view = view;
         _emitsSchema = emitsSchema;
+        Kind = emitsSchema ? types["wire"].kind["plang"]! : types["item"].kind["json"]!;
     }
 
-    public string Format => _emitsSchema ? "plang" : "json";
+    public global::app.type.kind.@this Kind { get; }
 
     /// <summary>The plang wire carries the @schema/type envelope; plain json is bare.</summary>
     public bool EmitsSchema => _emitsSchema;

@@ -10,12 +10,14 @@ namespace PLang.Tests.App.Serialization;
 
 public class NumberSerializerTests
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+
     private sealed class CaptureWriter : global::app.type.format.IWriter
     {
-        public string Format { get; }
+        public global::app.type.kind.@this Kind { get; }
         public object? Last { get; private set; }
         public string LastMethod { get; private set; } = "";
-        public CaptureWriter(string format) { Format = format; }
+        public CaptureWriter(global::app.type.kind.@this kind) { Kind = kind; }
         public void Null() { LastMethod = "Null"; Last = null; }
         public void Bool(bool v) { LastMethod = "Bool"; Last = v; }
         public void Int(int v) { LastMethod = "Int"; Last = v; }
@@ -42,7 +44,7 @@ public class NumberSerializerTests
 
     [Test] public async Task Number_KindInt_Default_EmitsWriterInt()
     {
-        var w = new CaptureWriter("json");
+        var w = new CaptureWriter(app.type.list["item"].kind["json"]!);
         ((number)(7)).Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("Int");
         await Assert.That(w.Last).IsEqualTo(7);
@@ -50,7 +52,7 @@ public class NumberSerializerTests
 
     [Test] public async Task Number_KindLong_Default_EmitsWriterLong()
     {
-        var w = new CaptureWriter("json");
+        var w = new CaptureWriter(app.type.list["item"].kind["json"]!);
         ((number)(7L)).Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("Long");
         await Assert.That(w.Last).IsEqualTo(7L);
@@ -58,7 +60,7 @@ public class NumberSerializerTests
 
     [Test] public async Task Number_KindDecimal_Default_EmitsWriterDecimal()
     {
-        var w = new CaptureWriter("json");
+        var w = new CaptureWriter(app.type.list["item"].kind["json"]!);
         ((number)(3.14m)).Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("Decimal");
         await Assert.That(w.Last).IsEqualTo(3.14m);
@@ -66,7 +68,7 @@ public class NumberSerializerTests
 
     [Test] public async Task Number_KindDouble_Default_EmitsWriterDouble()
     {
-        var w = new CaptureWriter("json");
+        var w = new CaptureWriter(app.type.list["item"].kind["json"]!);
         ((number)(2.5)).Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("Double");
         await Assert.That(w.Last).IsEqualTo(2.5);
@@ -74,7 +76,7 @@ public class NumberSerializerTests
 
     [Test] public async Task Number_KindFloat_Default_EmitsWriterFloat()
     {
-        var w = new CaptureWriter("json");
+        var w = new CaptureWriter(app.type.list["item"].kind["json"]!);
         ((number)(2.5f)).Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("Float");
         await Assert.That(w.Last).IsEqualTo(2.5f);
@@ -86,7 +88,7 @@ public class NumberSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
+            var w = new global::app.type.item.kind.json.Writer(utf, app.type.list, view: global::app.View.Out);
             w.Value(((number)(42)));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -96,7 +98,7 @@ public class NumberSerializerTests
     [Test] public async Task Number_TextWriter_WritesSameAsEveryFormat()
     {
         // A number writes the same primitive whatever the writer's Format.
-        var w = new CaptureWriter("text");
+        var w = new CaptureWriter(app.type.list["text"].kind);
         ((number)(7)).Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("Int");
     }
@@ -107,7 +109,7 @@ public class NumberSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
+            var w = new global::app.type.item.kind.json.Writer(utf, app.type.list, view: global::app.View.Out);
             w.Value(((number)(0.1m)));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());

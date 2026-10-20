@@ -18,12 +18,11 @@ namespace app.type.format;
 public interface IWriter
 {
     /// <summary>
-    /// Short format token — <c>"json"</c>, <c>"plang"</c>, <c>"text"</c>,
-    /// <c>"protobuf"</c>, … A value's own <c>Write</c> branches on this when it
-    /// renders differently per format (e.g. image: base64 vs text label).
-    /// Each <see cref="IWriter"/> impl returns its own constant token — a format, never a mime.
+    /// The kind this writer writes — its output kind (item's <c>json</c>, wire's <c>plang</c>, text's own format,
+    /// list's <c>formal</c>): the app's own kind object, never a name. What a value looks like in it is the kind's
+    /// to say, not the value's.
     /// </summary>
-    string Format { get; }
+    global::app.type.kind.@this Kind { get; }
 
     /// <summary>
     /// Whether this format carries the Data self-describing layer: <c>@schema</c> +

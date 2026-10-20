@@ -8,18 +8,20 @@ namespace PLang.Tests.App.Serialization;
 
 public class IWriterFormatTests
 {
-    private static global::app.type.item.kind.json.Writer MakeJsonWriter(System.IO.Stream stream)
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+
+    private global::app.type.item.kind.json.Writer MakeJsonWriter(System.IO.Stream stream)
     {
         var utf = new Utf8JsonWriter(stream);
-        return new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
+        return new global::app.type.item.kind.json.Writer(utf, app.type.list, view: global::app.View.Out);
     }
 
     [Test]
-    public async Task JsonWriter_Format_IsJsonToken()
+    public async Task JsonWriter_Kind_IsJsonKind()
     {
         using var ms = new System.IO.MemoryStream();
         var w = MakeJsonWriter(ms);
-        await Assert.That(w.Format).IsEqualTo("json");
+        await Assert.That(w.Kind.Name).IsEqualTo("json");
     }
 
     // Placeholders for PlangWriter / TextWriter Format-token tests were removed;

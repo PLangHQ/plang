@@ -997,6 +997,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   goal : app.type.node.current.this<app.goal.this, app.goal.list.this> { get; }
   module : app.module.this { get; }
   override IsLeaf : System.Boolean { get; }
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   parent : app.parent.this { get; }
   protected override Clone() : app.type.item.this
   shortcut : app.type.node.this<app.shortcut.this, app.shortcut.list.this> { get; }
@@ -1105,9 +1106,9 @@ interface app.type.format.IWriter
   abstract EndRecord() : System.Void
   abstract Enum(System.Enum value) : System.Void
   abstract Float(System.Single value) : System.Void
-  abstract Format : System.String { get; }
   abstract Guid(System.Guid value) : System.Void
   abstract Int(System.Int32 value) : System.Void
+  abstract Kind : app.type.kind.this { get; }
   abstract Long(System.Int64 value) : System.Void
   abstract Name(System.String name) : System.Void
   abstract Null() : System.Void
@@ -1787,9 +1788,9 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   EndRecord(app.data.this record) : System.Void
   Enum(System.Enum value) : System.Void
   Float(System.Single value) : System.Void
-  Format : System.String { get; }
   Guid(System.Guid value) : System.Void
   Int(System.Int32 value) : System.Void
+  Kind : app.type.kind.this { get; }
   Long(System.Int64 value) : System.Void
   Name(System.String name) : System.Void
   Null() : System.Void
@@ -1799,7 +1800,7 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   String(System.String value) : System.Void
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void
-  ctor(System.Text.Json.Utf8JsonWriter writer, app.View view = …, System.Boolean emitsSchema = …)
+  ctor(System.Text.Json.Utf8JsonWriter writer, app.type.list.this types, app.View view = …, System.Boolean emitsSchema = …)
 
 class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>
   ctor(app.type.this owner)
@@ -2647,9 +2648,9 @@ class app.type.item.text.Writer : app.type.format.IWriter
   EndRecord() : System.Void
   Enum(System.Enum value) : System.Void
   Float(System.Single value) : System.Void
-  Format : System.String { get; }
   Guid(System.Guid value) : System.Void
   Int(System.Int32 value) : System.Void
+  Kind : app.type.kind.this { get; }
   Long(System.Int64 value) : System.Void
   Name(System.String name) : System.Void
   Null() : System.Void
@@ -2657,7 +2658,7 @@ class app.type.item.text.Writer : app.type.format.IWriter
   String(System.String value) : System.Void
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void
-  ctor(System.IO.Stream stream, System.Text.Encoding encoding, app.type.item.culture.this culture)
+  ctor(System.IO.Stream stream, System.Text.Encoding encoding, app.type.item.culture.this culture, app.type.list.this types)
 
 enum app.type.item.text.empty [Choice, PlangType]
   static const drop : app.type.item.text.empty

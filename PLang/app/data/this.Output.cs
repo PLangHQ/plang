@@ -35,7 +35,7 @@ public partial class @this
     {
         using var bytes = new System.IO.MemoryStream();
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(bytes))
-            await Output(new global::app.type.item.kind.json.Writer(utf8, view, emitsSchema: true), view, context, layer: true);
+            await Output(new global::app.type.item.kind.json.Writer(utf8, context.App.type.list, view, emitsSchema: true), view, context, layer: true);
         return global::app.module.crypto.type.hash.@this.Of(bytes.ToArray(), kind);
     }
 

@@ -290,7 +290,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
-        if (_formats.TryGetValue(writer.Format, out var serializer))
+        if (_formats.TryGetValue(writer.Kind.Name, out var serializer))
         {
             await serializer.Output(this, writer, mode, context);
             return;

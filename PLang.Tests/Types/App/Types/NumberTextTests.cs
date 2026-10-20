@@ -32,11 +32,11 @@ public class NumberTextTests
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
-    private static string Json(number value)
+    private string Json(number value)
     {
         using var ms = new System.IO.MemoryStream();
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
-            value.Write(new global::app.type.item.kind.json.Writer(utf8, emitsSchema: false));
+            value.Write(new global::app.type.item.kind.json.Writer(utf8, _app.type.list, emitsSchema: false));
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
