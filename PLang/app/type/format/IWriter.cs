@@ -68,9 +68,9 @@ public interface IWriter
     /// </summary>
     void Raw(string value) => String(value);
 
-    /// <summary>Characters nobody should see (a key, a password). Shown, they are <c>****</c>; a writer of plang's own
-    /// store keeps them whole.</summary>
-    void Sensitive(string characters) => String("****");
+    /// <summary>Characters nobody should see (a key, a password), as the writer's view shows them: <c>****</c>, and whole
+    /// in plang's own store.</summary>
+    void Sensitive(string characters) => String(View.Sensitive(characters));
 
     /// <summary>
     /// Characters that are content of a format — a text of kind <paramref name="kind"/> (json, md, …). A writer the

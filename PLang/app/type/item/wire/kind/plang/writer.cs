@@ -35,11 +35,11 @@ public sealed class Writer : global::app.type.format.IWriter
             _json.Name(global::app.data.@this.WireSchema);
             _json.String(global::app.data.@this.WireSchemaData);
         }
-        // a Data's name is plang's own store's (a server's binding label is not API surface)
-        if (View == global::app.View.Store)
+        // the name the record shows under, as the view says
+        if (View.Name(record) is { } name)
         {
             _json.Name("name");
-            _json.String(record.Name);
+            _json.String(name);
         }
         if ((record.Error?.Type ?? record.Type) is { IsNull: false } type)
         {
@@ -69,9 +69,6 @@ public sealed class Writer : global::app.type.format.IWriter
         }
         _json.EndObject();
     }
-
-    // a sensitive value is kept whole in plang's own store, and shown masked in every other view
-    public void Sensitive(string characters) => _json.String(View == global::app.View.Store ? characters : "****");
 
     public void Null() => _json.Null();
     public void Bool(bool value) => _json.Bool(value);

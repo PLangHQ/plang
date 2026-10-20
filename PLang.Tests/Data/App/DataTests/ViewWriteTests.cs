@@ -78,6 +78,80 @@ public class ViewWriteTests : System.IAsyncDisposable
         await Assert.That(dump).Contains("\"value\":30");
     }
 
+    // only a name that reads nothing is not set: a value that resolves to a failure is shown as that error
+    [Test] public async Task ADump_ShowsAValueThatResolvesToAFailure_AsItsError()
+    {
+        await Ctx.Variable.Set("bad", Ctx.Error(new global::app.error.@this("the price feed is down", "FeedDown", 503)));
+
+        var dump = await Written(Template("%bad%"), global::app.View.Debug, "json");
+
+        await Assert.That(dump).Contains("\"written\":\"%bad%\"");
+        await Assert.That(dump).Contains("the price feed is down");
+        await Assert.That(dump).DoesNotContain("not set");
+    }
+
+    // a value whose diagnostics throw on read
+    private sealed class Faulty : global::app.type.item.@this
+    {
+        public Faulty(global::app.type.@this type) : base(type) { }
+
+        [global::app.Debug] public string Probe => throw new System.InvalidOperationException("the probe broke");
+
+        protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        {
+            writer.BeginObject();
+            await writer.View.Own(this, writer);
+            writer.EndObject();
+        }
+    }
+
+    [Test] public async Task ADump_ShowsADiagnosticThatThrows_AsItsError_AndGoesOn()
+    {
+        var faulty = new global::app.data.@this("f", new Faulty(_app.type.list["item"]), context: Ctx);
+
+        var dump = await Written(faulty, global::app.View.Debug, "json");
+
+        await Assert.That(dump).Contains("\"probe\":");
+        await Assert.That(dump).Contains("the probe broke");
+    }
+
+    // characters nobody should see: whole in plang's own store, whichever format writes it; **** in every other view
+    [Test]
+    [Arguments("Store", "plang", "s3cret")]
+    [Arguments("Store", "json", "s3cret")]
+    [Arguments("Out", "plang", "****")]
+    [Arguments("Out", "json", "****")]
+    [Arguments("Debug", "json", "****")]
+    public async Task ASensitiveValue_IsShownAsTheViewShowsIt(string view, string format, string shown)
+    {
+        var secret = new global::app.data.@this("key", new global::app.type.item.sensitive.@this("s3cret", _app.type.list["sensitive"]), context: Ctx);
+
+        var written = await Written(secret, View(view), format);
+
+        await Assert.That(written).Contains($"\"{shown}\"");
+        if (shown == "****") await Assert.That(written).DoesNotContain("s3cret");
+    }
+
+    // a Data's name is plang's own store's: kept there, never shown on the wire
+    [Test]
+    [Arguments("Store", true)]
+    [Arguments("Out", false)]
+    public async Task ARecordsName_IsKeptOnlyInTheStore(string view, bool named)
+    {
+        var data = new global::app.data.@this("label", global::app.type.item.@this.Create("Ada", Ctx), context: Ctx);
+
+        var written = await Written(data, View(view), "plang");
+
+        await Assert.That(written.Contains("\"name\":\"label\"")).IsEqualTo(named);
+    }
+
+    private static global::app.View View(string name) => name switch
+    {
+        "Store" => global::app.View.Store,
+        "Out" => global::app.View.Out,
+        _ => global::app.View.Debug,
+    };
+
     [Test] public async Task TheStore_KeepsAValueAsWritten()
     {
         await Ctx.Variable.Set("name", global::app.type.item.@this.Create("Ada", Ctx));

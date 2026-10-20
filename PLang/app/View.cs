@@ -32,6 +32,13 @@ public abstract class View
     /// <summary>Whether a shown <paramref name="property"/> writes <c>****</c> in place of its value.</summary>
     internal abstract bool Masks(System.Reflection.PropertyInfo property);
 
+    /// <summary>Characters nobody should see (a key, a password), as this view shows them: <c>****</c>.</summary>
+    internal virtual string Sensitive(string characters) => "****";
+
+    /// <summary>The name <paramref name="record"/> shows under in this view, or none: a Data's name is plang's own store's
+    /// (a server's binding label is not API surface).</summary>
+    internal virtual string? Name(global::app.data.@this record) => null;
+
     /// <summary>Whether <paramref name="type"/> declares what it shows in this view: any wire tag, or (in a dump) a
     /// <c>[Debug]</c> member.</summary>
     internal virtual bool Declares(System.Type type) => Tagged(type);
@@ -101,6 +108,10 @@ public abstract class View
 
         // nothing is hidden from plang's own store
         internal override bool Masks(System.Reflection.PropertyInfo property) => false;
+
+        internal override string Sensitive(string characters) => characters;
+
+        internal override string? Name(global::app.data.@this record) => record.Name;
 
         internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => Written(value, writer);
@@ -174,29 +185,47 @@ public abstract class View
             foreach (var property in value.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
             {
                 if (!Is<DebugAttribute>(property) || Is<OutAttribute>(property) || Is<StoreAttribute>(property)
-                    || property.GetIndexParameters().Length > 0 || property.GetValue(value) is not { } member) continue;
+                    || property.GetIndexParameters().Length > 0) continue;
+                // a member that fails to read shows its error: a dump never ends on one
+                object? member;
+                global::app.error.@this? failed = null;
+                try { member = property.GetValue(value); }
+                catch (System.Reflection.TargetInvocationException thrown) { member = null; failed = global::app.error.@this.FromException(thrown.InnerException ?? thrown); }
+                if (member is null && failed is null) continue;
                 writer.Name(System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Text.Json.Serialization.JsonPropertyNameAttribute>(property)?.Name
                     ?? System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(property.Name));
                 // a plang value is itself; a C# value is the plang value it makes
-                await global::app.type.item.@this.Create(member, writer.Context).Output(writer);
+                if (failed != null) await failed.Output(writer);
+                else await global::app.type.item.@this.Create(member, writer.Context).Output(writer);
             }
         }
 
-        // as written, and beside it what it resolves to with its type, or that it is not set
+        // as written, and beside it what it resolves to with its type; that it is not set, when a name it names reads
+        // nothing; or the error it resolves to, as itself
         internal override async System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
         {
             writer.BeginObject();
             writer.Name("written");
             await Written(value, writer);
-            writer.Name("value");
-            // a dump never ends the program it watches: a name that reads nothing is not set, however it says so
-            global::app.data.@this? used;
+            // a dump never ends the program it watches: a failure to resolve is shown, never thrown
+            global::app.data.@this used;
             try { used = await Settled(new global::app.data.@this("", value, context: writer.Context)); }
-            catch (global::app.error.AppException) { used = null; }
-            if (used is not { IsInitialized: true, Success: true }) writer.String("not set");
+            catch (global::app.error.AppException failed) { used = writer.Context.Error(failed.Error); }
+            var unread = !used.IsInitialized || used.Error is { Key: "VariableNotFound" };
+            if (unread)
+            {
+                writer.Name("value");
+                writer.String("not set");
+            }
+            else if (used.Error is { } error)
+            {
+                writer.Name("error");
+                await error.Output(writer);
+            }
             else
             {
                 var resolved = await used.Value();
+                writer.Name("value");
                 await Written(resolved, writer);
                 // the type as the format writes one (text its word, json and plang its identity)
                 writer.Name("type");

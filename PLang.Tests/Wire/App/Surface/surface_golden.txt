@@ -2971,7 +2971,6 @@ class app.type.item.wire.kind.plang.Writer : app.type.format.IWriter
   Name(System.String name) : System.Void
   Null() : System.Void
   Raw(System.String value) : System.Void
-  Sensitive(System.String characters) : System.Void
   String(System.String value) : System.Void
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void
@@ -2990,7 +2989,6 @@ class app.type.item.wire.kind.plang.this : app.type.kind.this<app.type.item.wire
 
 class app.type.item.wire.template : app.type.item.wire.this
   ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable, System.Boolean built = …)
-  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 class app.type.item.wire.this : app.type.item.source [PlangType]
   ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …)
@@ -3039,7 +3037,6 @@ class app.type.kind.this : app.type.this
   override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
   override ToString() : System.String
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
-  protected override Write(app.type.item.text.Writer writer) : System.Threading.Tasks.ValueTask
   protected virtual Owner : app.type.this { get; }
   type(app.actor.context.this context) : app.type.this
   virtual Carries(System.Type clr) : System.Boolean
