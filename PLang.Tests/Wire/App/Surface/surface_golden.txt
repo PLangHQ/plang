@@ -3251,7 +3251,7 @@ class app.type.table.this : app.type.item.this, app.type.item.IEncode<app.type.t
   static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
 
 class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, app.type.item.IList<app.type.this, app.type.list.this>, app.type.item.ILoad<app.type.this>, app.type.item.IMatch<app.type.this> [PlangType]
-  Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; init; }
+  Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   ConstructorSignature : System.String { get; init; }
   Create(System.Object raw, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   Create(System.Object raw, app.actor.context.this context, System.String name, app.type.item.path.this origin = …) : System.Threading.Tasks.ValueTask<app.data.this>
@@ -3259,7 +3259,7 @@ class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, 
   Empty(app.actor.context.this context) : app.type.item.this
   Example(app.actor.context.this context) : app.type.item.prose.this [LlmBuilder]
   Guide(app.actor.context.this context) : app.type.item.file.this [LlmBuilder]
-  Internal : System.Boolean { get; init; }
+  Internal : System.Boolean { get; }
   Is(System.String typeName) : System.Boolean
   Is(app.type.this other) : System.Boolean
   IsRecord : System.Boolean { get; }

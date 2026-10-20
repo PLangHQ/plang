@@ -170,26 +170,45 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// (a goal, an item, a host) answers its typed null: still null, still this type.</summary>
     public item.@this Empty(global::app.actor.context.@this context)
     {
-        if (_empty is { } made) return made();
+        if (_answers?.Empty is { } made) return made();
         var clr = ClrType;
         const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
             | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
         // a value class born holding its type is handed this one (an empty list<goal> holds {list, goal})
-        _empty = clr == null || !typeof(item.@this).IsAssignableFrom(clr) || clr.IsAbstract || clr.ContainsGenericParameters
+        System.Func<item.@this> making = clr == null || !typeof(item.@this).IsAssignableFrom(clr) || clr.IsAbstract || clr.ContainsGenericParameters
             ? () => new item.@null.@this(this)
             : clr.GetConstructor(any, [typeof(@this)]) is { } typed ? () => (item.@this)typed.Invoke([this])
             : clr.GetConstructor(any, System.Type.EmptyTypes) is { } empty ? () => (item.@this)empty.Invoke(null)
             : () => new item.@null.@this(this);
         // an empty value no holder's change can reach (its Copy is itself — a null, 0, "") is one value, its type's
         // own: the app's null is one per app; a container's empty is made fresh for each holder
-        var first = _empty();
-        if (ReferenceEquals(first.Copy(), first)) _empty = () => first;
+        var first = making();
+        Answered.Empty = ReferenceEquals(first.Copy(), first) ? () => first : making;
         return first;
     }
 
-    // How this type makes its empty value — its class's constructor, found once (every value-less Data asks); for an
-    // empty value that can be shared, that one value.
-    private System.Func<item.@this>? _empty;
+    /// <summary>What a type works out when first asked and keeps for its next ask — how it makes its empty value and a
+    /// value from another, whether it is made from a name, its wire shape and constructor signature — and the
+    /// properties it was given. Made the first time any is asked: a type nothing asks of these (most type objects: the
+    /// one a value is born holding) carries none.</summary>
+    private sealed class Answers
+    {
+        // how this type makes its empty value — its class's constructor, found once; for one that can be shared, it
+        public System.Func<item.@this>? Empty;
+        // the bound birth thunk: the closed generic (or the decline)
+        public System.Func<object?, @this, global::app.data.@this, item.@this?>? Lift;
+        // the closed family thunk the record reader asks
+        public System.Func<object?, @this, global::app.data.@this, item.@this?>? Construct;
+        // the class's answer to whether a value of another type is made into this one
+        public System.Func<@this, bool>? Takes;
+        public bool? IsName;
+        public property.list.@this? Property;
+        public string? Shape;
+        public string? ConstructorSignature;
+    }
+
+    private Answers? _answers;
+    private Answers Answered => _answers ?? System.Threading.Interlocked.CompareExchange(ref _answers, new Answers(), null) ?? _answers;
 
 
     /// <summary>
@@ -224,9 +243,6 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// as the <c>item</c> apex. A TYPE-SYSTEM concern, not serialization — json
     /// converts its own tokens then calls here for the leaves.
     /// </summary>
-    // The bound birth thunk: the closed generic (or the decline), bound on first use (Make) — a non-ICreate entity
-    // (primitive/host name) binds a null-thunk so the collection perimeter falls to the next rung.
-    private System.Func<object?, @this, global::app.data.@this, item.@this?>? _lift;
 
     /// <summary>
     /// A program value of this type is born: <paramref name="raw"/> made into it, through this type's
@@ -463,9 +479,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     // The birth build — THIS type makes itself from a value, as it declares (its kind, its template), for the
     // binding data (a decline lands on data.Fail). The closed thunk (or the decline) is bound on first use: a type
-    // nothing is made of never binds one.
+    // nothing is made of never binds one. A non-ICreate entity (primitive/host name) binds a null-thunk so the
+    // collection perimeter falls to the next rung.
     internal item.@this? Make(object? raw, global::app.data.@this data)
-        => (_lift ??= Creatable is { } clr
+        => (Answered.Lift ??= Creatable is { } clr
             ? _open.MakeGenericMethod(clr).CreateDelegate<System.Func<object?, @this, global::app.data.@this, item.@this?>>()
             : static (_, _, _) => null)(raw, this, data);
 
@@ -475,26 +492,18 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // Create is handed THIS as the declaration, so the base's Create makes the subclass by its declared.ClrType.
     // Only the record reader asks this (decision 789); the general Make stays on the EXACT <see cref="Creatable"/>
     // so its CLR-value fallback (the `Make(item.Create(raw))` rung) keeps converging and never recurses. The
-    // closed family thunk is a fact of the class — bound once, on first use, like <see cref="_lift"/>.
+    // closed family thunk is a fact of the class — bound once, on first use, like Make's.
     internal item.@this? Construct(object? raw, global::app.data.@this data)
-    {
-        _construct ??= CreatableFamily is { } clr
+        => (Answered.Construct ??= CreatableFamily is { } clr
             ? _open.MakeGenericMethod(clr).CreateDelegate<System.Func<object?, @this, global::app.data.@this, item.@this?>>()
-            : static (_, _, _) => null;
-        return _construct(raw, this, data);
-    }
-
-    private System.Func<object?, @this, global::app.data.@this, item.@this?>? _construct;
+            : static (_, _, _) => null)(raw, this, data);
 
     /// <summary>Is a value of <paramref name="other"/>, declared this type, made into it — this type's class's own
-    /// answer, asked without making (a path declared a file is; a dict declared a list is not).</summary>
+    /// answer, asked without making (a path declared a file is; a dict declared a list is not), bound on first ask.</summary>
     internal bool Takes(@this other)
-        => (_takes ??= Creatable is { } clr
+        => (Answered.Takes ??= Creatable is { } clr
             ? _taking.MakeGenericMethod(clr).CreateDelegate<System.Func<@this, bool>>()
             : static _ => false)(other);
-
-    // the class's answer, bound on first ask
-    private System.Func<@this, bool>? _takes;
 
     private static bool Takes<T>(@this other)
         where T : item.@this, global::app.type.item.ICreate<T>
@@ -502,10 +511,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>A value of this type is a name — this type's class's own answer (<c>ICreate.IsName</c>), read once. A
     /// family held by its open class (<c>choice&lt;&gt;</c> for a set the registry doesn't hold) names nothing.</summary>
-    internal bool IsName => _isName ??= Creatable is { ContainsGenericParameters: false } clr
+    internal bool IsName => Answered.IsName ??= Creatable is { ContainsGenericParameters: false } clr
         && (bool)_naming.MakeGenericMethod(clr).Invoke(null, null)!;
-
-    private bool? _isName;
 
     private static bool Named<T>() where T : item.@this, global::app.type.item.ICreate<T> => T.IsName;
 
@@ -637,9 +644,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public property.list.@this? Property
     {
         get => OwnProperty ?? kind.OwnProperty ?? (Member is { Count: > 0 } member ? member : null);
-        init => _property = value;
+        init => Answered.Property = value;
     }
-    private property.list.@this? _property;
 
     // A kind answers its own fact through these hooks, else the type falls back to its Family's STORED
     // field (never the virtual — a kind's Family is its parent entry, so reading the field terminates;
@@ -661,20 +667,18 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// class declares it is offered (a permission: that the step gives one), else the kind's answer: a closed set its
     /// options, any other the step's own variables. The type <c>type</c> offers the types it is born among first.</summary>
     public virtual async System.Threading.Tasks.ValueTask<IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step)
-        => Family._offer is { } declared ? declared
+        => Family.Offered is { } declared ? declared
             : Family._types is { } types ? [.. await types.Offers(step), .. await kind.Offers(step)]
             : await kind.Offers(step);
-    private IReadOnlyList<item.@this>? _offer;
     // The types the type `type` is born among — its values, what a type slot is offered; null for any other type.
     private list.@this? _types;
 
     /// <summary>Whether what this type offers is all a value of it can be — its kind says (a choice's options, a bool's
     /// pair); offers its class declares are a convenience, never closed.</summary>
-    public virtual bool IsClosed => Family._offer is null && kind.IsClosed;
+    public virtual bool IsClosed => Family.Offered is null && kind.IsClosed;
 
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
-    public string? Shape { get => Family._shape ??= Family.Form; init => _shape = value; }
-    private string? _shape;
+    public string? Shape { get => Family.Answered.Shape ??= Family.Form; init => Answered.Shape = value; }
 
     /// <summary>A value of this type is written as an object: a record (its builder properties, no shape of its own),
     /// or a type that declares the object shape (limit, permission).</summary>
@@ -683,11 +687,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>Constructor signature for scalar types (<c>"name: shape"</c>).</summary>
     public string? ConstructorSignature
     {
-        get => Family._constructorSignature ??= Family.Source is { } source && Family._list is { } list
+        get => Family.Answered.ConstructorSignature ??= Family.Source is { } source && Family._list is { } list
             ? $"{source.Name}: {list.Face(source.ParameterType)}" : null;
-        init => _constructorSignature = value;
+        init => Answered.ConstructorSignature = value;
     }
-    private string? _constructorSignature;
 
     /// <summary>Where this type's teaching lives — <c>/system/type/&lt;name&gt;/</c>, its family's (a kinded type's facts
     /// are its family's), each read through the path's gate as the asker.</summary>
@@ -721,14 +724,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The other names this type answers to (<c>string</c> for text, <c>map</c> for dict),
     /// declared by its class as a static <c>Alias</c>. Never null.</summary>
     [JsonIgnore]
-    public IReadOnlyList<string> Alias { get => OwnAlias ?? kind.OwnAlias ?? Family._alias; init => _alias = value; }
-    private IReadOnlyList<string> _alias = [];
+    public IReadOnlyList<string> Alias => OwnAlias ?? kind.OwnAlias ?? Family._code?.Alias ?? [];
 
     /// <summary>The C# shapes this type owns (<c>int</c> → number, kind int), declared by its class
     /// as a static <c>OwnedClrTypes</c>: a raw C# value of one of them is a value of this type.</summary>
     [JsonIgnore]
-    internal IReadOnlyList<global::app.type.convert.OwnedClr> Owned { get => Family._owned; init => _owned = value; }
-    private IReadOnlyList<global::app.type.convert.OwnedClr> _owned = [];
+    internal IReadOnlyList<global::app.type.convert.OwnedClr> Owned => Family._code?.Owned ?? [];
 
     /// <summary>Whether a raw C# value of <paramref name="clr"/> is a value of this type — one of its
     /// <see cref="Owned"/> shapes, an assignable one owning every subclass too.</summary>
@@ -745,8 +746,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// other fact: its own, else its kind's, else its family's. It stays in the types — naming answers
     /// it — and stays out of their face.</summary>
     [JsonIgnore]
-    public bool Internal { get => OwnInternal ?? kind.OwnInternal ?? Family._internal; init => _internal = value; }
-    private bool _internal;
+    public bool Internal => OwnInternal ?? kind.OwnInternal ?? Family._code?.Internal ?? false;
 
     /// <summary>A type built from a C# class where no app is in reach — the class-built fallbacks (the C# operator
     /// births, error, event): its kind carries its class's [Format] facts, read from the class, so the value's own
@@ -806,15 +806,18 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// list it is in (see above).</summary>
     internal @this(global::app.assembly.@this.Type code, list.@this? types) : this(code.Name, code.Class, null, false, null, known: true)
     {
-        Alias = code.Alias;
-        Owned = code.Owned;
-        Internal = code.Internal;
-        _claims = code.Claims;
+        _code = code;
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         if (types == null || code.Class == typeof(@this)) return;
-        _offer = code.Offer;
         _list = types;
     }
+
+    // What the code's facts say of this type's class — its aliases, the C# shapes it owns, whether plang keeps it, what
+    // it is offered, every name it answers to — read through, never copied; null for a type made otherwise.
+    private readonly global::app.assembly.@this.Type? _code;
+
+    // What the class declares it is offered — a type in a list's (the facts' Offer), null for any other.
+    private IReadOnlyList<item.@this>? Offered => _list != null ? _code?.Offer : null;
 
     // The list this type is in — its facts name their property types through it; null for a type that is its
     // identity alone.
@@ -828,7 +831,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // reads its members from too. A class under it that is no kind of its own (an error's subclass) is read by its
     // value through its own class's list, but offered here as this type's. Empty for a type that is its identity alone.
     private property.list.@this Member
-        => _property ?? Family._property
+        => _answers?.Property ?? Family._answers?.Property
            ?? ((Family._list is { } list && (ClrType ?? Family.ClrType) is { } clr) ? list.Member(clr) : new());
 
     // What the class's Resolve takes first — a scalar is made from it; null when the class resolves nothing.
@@ -865,7 +868,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>Every name this type answers to — its name, its namespace, its aliases; what no other type
     /// may claim.</summary>
-    internal string[] Claims => _claims ??= Claiming().ToArray();
+    internal string[] Claims => _code?.Claims ?? (_claims ??= Claiming().ToArray());
 
     // the names this type answers to — as the code's facts read them for a type made from them, else read on first ask
     private string[]? _claims;
