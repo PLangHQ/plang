@@ -52,7 +52,7 @@ public class AppFactsTests
     [Test] public async Task AStoreThatCantOpen_AnswersWhy()
     {
         await using var app = global::PLang.Tests.Session.App("/app").Testing();
-        using var nowhere = new global::app.store.sqlite.@this(null, () => null, app.actor.list.System.Context);
+        using var nowhere = new global::app.store.sqlite.@this((global::app.type.item.path.@this?)null, () => null, app.actor.list.System.Context);
 
         var set = await nowhere.Set("t", "k", app.actor.list.System.Context.Ok("v"));
 

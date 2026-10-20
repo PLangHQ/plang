@@ -61,6 +61,22 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         => _permission ?? System.Threading.Interlocked.CompareExchange(ref _permission, new permission.@this(this), null) ?? _permission;
     private permission.@this? _permission;
 
+    /// <summary>The verbs this actor's standing grant on the runtime's shared os folder gives — every actor reads and runs
+    /// there; the system also writes. Its permission view holds the grant from when it is made; set on a view already
+    /// made, the grant is replaced now.</summary>
+    internal global::app.type.item.permission.Verb[] Standing
+    {
+        get => _standing;
+        set
+        {
+            _standing = value;
+            _permission?.Stand(value);
+        }
+    }
+    private global::app.type.item.permission.Verb[] _standing = Reads;
+    private static readonly global::app.type.item.permission.Verb[] Reads =
+        [global::app.type.item.permission.Verb.read, global::app.type.item.permission.Verb.execute];
+
     private readonly global::app.channel.list.@this _channels;
 
     /// <summary>

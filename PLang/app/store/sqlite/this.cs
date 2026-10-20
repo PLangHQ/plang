@@ -17,8 +17,9 @@ public sealed class @this : global::app.store.@this
 
     protected override string Kind => "sqlite";
 
-    // Where the database lives: in memory under the name this answers at the first verb, else in this file.
-    private readonly global::app.type.item.path.@this? _file;
+    // Where the database lives: in memory under the name this answers at the first verb, else in this file — found
+    // when the store opens (an app that stores nothing never resolves its path).
+    private readonly System.Func<global::app.type.item.path.@this?> _file;
     private readonly System.Func<string?> _memory;
     // The store's own context — system-owned. Its result Data is born from it, and its rows are written
     // and read (verified) with it.
@@ -39,6 +40,10 @@ public sealed class @this : global::app.store.@this
     /// the store opens (null: the file). Nothing is opened here — the first verb opens it.
     /// </summary>
     public @this(global::app.type.item.path.@this? file, System.Func<string?> memory, actor.context.@this context)
+        : this(() => file, memory, context) { }
+
+    /// <summary>A store in the file <paramref name="file"/> finds when the store opens — or in memory, as above.</summary>
+    internal @this(System.Func<global::app.type.item.path.@this?> file, System.Func<string?> memory, actor.context.@this context)
         : base(context.App.type.list[new global::app.type.@this("store", "sqlite"), context])
     {
         _file = file;
@@ -51,7 +56,7 @@ public sealed class @this : global::app.store.@this
     /// Different names produce isolated databases.
     /// </summary>
     public static @this InMemory(string name, actor.context.@this context)
-        => new @this(null, () => name, context);
+        => new @this((global::app.type.item.path.@this?)null, () => name, context);
 
     // The database, opened once — every verb awaits the same open.
     private Task<string> Opened()
@@ -73,19 +78,19 @@ public sealed class @this : global::app.store.@this
             _sentinel.Open();
             return memory;
         }
-        if (_file == null)
+        if (_file() is not { } file)
             throw new InvalidOperationException("a sqlite store needs a file or a name in memory");
 
         // Take-over API: authorize before passing .Absolute. Out-of-root paths the actor hasn't granted
         // fail the open — sqlite never sees them.
-        var auth = await _file.Authorize(global::app.type.item.permission.Verb.write, Context);
+        var auth = await file.Authorize(global::app.type.item.permission.Verb.write, Context);
         if (!auth.Success) throw new global::app.error.AppException(auth.Error!);
-        if (_file.Parent is { } parent)
+        if (file.Parent is { } parent)
             await parent.Mkdir(Context);
 
         var connectionString = new SqliteConnectionStringBuilder
         {
-            DataSource = _file.Absolute,
+            DataSource = file.Absolute,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared
         }.ToString();
