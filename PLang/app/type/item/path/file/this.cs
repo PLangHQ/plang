@@ -72,7 +72,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         if (global::app.type.item.path.scheme.@this.ParseScheme(rawPath).Equals("file", StringComparison.OrdinalIgnoreCase)
             && Uri.TryCreate(rawPath, UriKind.Absolute, out var url) && url.IsFile)
             return new @this(Canonicalize(url.LocalPath), context);
-        var type = context.App.type.list[new global::app.type.@this("path", "file"), context];
+        var type = FileType(context.App);
 
         var resolved = rawPath;
 

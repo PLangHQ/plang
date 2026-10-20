@@ -32,8 +32,7 @@ public sealed partial class @this
         if (string.IsNullOrWhiteSpace(path))
             throw new ArgumentException("path cannot be empty", nameof(path));
 
-        var rootAbsolutePath = PathHelper.GetFullPath(app.AbsolutePath).AdjustPathToOs()
-            .TrimEnd(PathHelper.DirectorySeparatorChar);
+        var rootAbsolutePath = Roots(app).Root;
         var osAbsolutePath = app.OsAbsolutePath;
 
         if (IsOsRooted(path))
@@ -58,7 +57,9 @@ public sealed partial class @this
         // of the places it names, the first that is there; else the first whose folder is there (a new file lands
         // beside its siblings); else where it was written
         var places = Places(path, app);
-        var file = app.type.list[new global::app.type.@this("path", "file"), app.actor.list.System.Context];
+        // one place (any path outside /system/) is where it was written, whatever is there: nothing to look at
+        if (places.Count == 1) return path;
+        var file = FileType(app);
         return places.FirstOrDefault(Present) ?? places.FirstOrDefault(Housed) ?? path;
 
         // Where a /system/ path is found is decided on the app's disk: the runtime's own files are never a build's.
@@ -75,15 +76,32 @@ public sealed partial class @this
     // The /system/ overlay, stated once: an absolute under the app's /system/ or the os's names both, the app's first.
     private static IReadOnlyList<string> Places(string absolute, global::app.@this app)
     {
-        var separator = PathHelper.DirectorySeparatorChar;
-        var own = PathHelper.GetFullPath(app.AbsolutePath).AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
-        var os = PathHelper.GetFullPath(app.OsAbsolutePath).AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
+        var (_, own, os) = Roots(app);
         if (absolute.StartsWith(own, StringComparison.OrdinalIgnoreCase))
             return [absolute, PathHelper.GetFullPath(os + absolute[own.Length..])];
         if (absolute.StartsWith(os, StringComparison.OrdinalIgnoreCase))
             return [PathHelper.GetFullPath(own + absolute[os.Length..]), absolute];
         return [absolute];
     }
+
+    // An app's root as its paths are anchored to it, and the two system folders (its own and the os's) — its folder
+    // says them, so they are worked out once per folder, not at every path.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string Root, string Own, string Os)> Anchors = new();
+
+    private static (string Root, string Own, string Os) Roots(global::app.@this app)
+        => Anchors.GetOrAdd(app.AbsolutePath, static (folder, os) =>
+        {
+            var separator = PathHelper.DirectorySeparatorChar;
+            var root = PathHelper.GetFullPath(folder).AdjustPathToOs().TrimEnd(separator);
+            return (root, root + separator + "system" + separator,
+                PathHelper.GetFullPath(os).AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator);
+        }, app.OsAbsolutePath);
+
+    // The app's {path, file} type, found once per app (a path is resolved at every file step).
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<global::app.@this, global::app.type.@this> Files = new();
+
+    internal static global::app.type.@this FileType(global::app.@this app)
+        => Files.GetValue(app, static a => a.type.list[new global::app.type.@this("path", "file"), a.actor.list.System.Context]);
 
     /// <summary>True for an OS-absolute path — <c>//x</c> on Unix, <c>C:\</c> on Windows.</summary>
     private static bool IsOsRooted(string path)

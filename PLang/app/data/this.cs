@@ -208,15 +208,20 @@ public partial class @this
     [Out, Store]
     public virtual Properties Properties
     {
-        get => _properties ?? System.Threading.Interlocked.CompareExchange(ref _properties, new Properties(), null) ?? _properties;
+        get => _properties
+            // a typed view shares its binding's bag: the binding's, made when either first asks
+            ?? (_bagOf is { } of ? System.Threading.Interlocked.CompareExchange(ref _properties, of.Properties, null) ?? _properties
+                : System.Threading.Interlocked.CompareExchange(ref _properties, new Properties(), null) ?? _properties);
         set => _properties = value;
     }
     // the bag, made when first asked (most values never carry a property); held by reference — a copy shares it — so
     // the first made is the one kept
     private Properties? _properties;
+    // the binding a typed view was made over before either had a bag: its bag is the view's
+    private @this? _bagOf;
 
     /// <summary>Whether this Data carries any property — asked without making the bag.</summary>
-    internal virtual bool HasProperties => _properties is { Count: > 0 };
+    internal virtual bool HasProperties => _properties is { Count: > 0 } || _bagOf?.HasProperties == true;
 
 
     [JsonConstructor]
@@ -644,9 +649,11 @@ public partial class @this
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties,
             IsInitialized = IsInitialized,
         };
+        // one bag for both handles — this one's when it has one, else this binding's when either first asks
+        if (_properties != null) view._properties = _properties;
+        else view._bagOf = this;
         view._item = _item;
         if (_error != null) view.Fail(_error);
         return view;
