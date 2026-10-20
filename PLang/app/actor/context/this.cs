@@ -15,7 +15,10 @@ namespace app.actor.context;
 /// </summary>
 public sealed class @this : IDisposable
 {
-    private readonly ConcurrentDictionary<string, object> _data = new(StringComparer.OrdinalIgnoreCase);
+    // What a run keeps on its context by key, made at the first write; held by reference, the first made kept.
+    private ConcurrentDictionary<string, object>? _data;
+    private ConcurrentDictionary<string, object> Items
+        => _data ?? Interlocked.CompareExchange(ref _data, new(StringComparer.OrdinalIgnoreCase), null) ?? _data;
     private bool _disposed;
 
     /// <summary>
@@ -67,9 +70,10 @@ public sealed class @this : IDisposable
     /// of its own — so a deadline pushed here is this run's alone.
     /// </summary>
     public CancellationToken CancellationToken =>
-        _cancellationStack.Count > 0 ? _cancellationStack.Peek().Token : (_cts?.Token ?? CancellationToken.None);
+        _cancellationStack is { Count: > 0 } pushed ? pushed.Peek().Token : (_cts?.Token ?? CancellationToken.None);
     private CancellationTokenSource? _cts;
-    private readonly Stack<CancellationTokenSource> _cancellationStack = new();
+    // the deadlines pushed, made at the first push (one flow at a time runs here)
+    private Stack<CancellationTokenSource>? _cancellationStack;
 
     /// <summary>The context a task this context starts runs in, on <paramref name="runner"/>: its own calls, whose first
     /// frame keeps every write the task makes and reads through to this context's frames and memory, live; its own
@@ -80,12 +84,12 @@ public sealed class @this : IDisposable
     /// <summary>
     /// Pushes a timeout CTS so all sub-calls use it. Used by the timeout.after modifier.
     /// </summary>
-    public void PushCancellation(CancellationTokenSource cts) => _cancellationStack.Push(cts);
+    public void PushCancellation(CancellationTokenSource cts) => (_cancellationStack ??= new()).Push(cts);
 
     /// <summary>
     /// Pops the timeout CTS, restoring the previous cancellation token.
     /// </summary>
-    public void PopCancellation() { if (_cancellationStack.Count > 0) _cancellationStack.Pop(); }
+    public void PopCancellation() { if (_cancellationStack is { Count: > 0 } pushed) pushed.Pop(); }
 
     /// <summary>
     /// Parent context (if this is a child execution).
@@ -211,13 +215,13 @@ public sealed class @this : IDisposable
     /// </summary>
     public object? this[string key]
     {
-        get => _data.TryGetValue(key, out var value) ? value : null;
+        get => _data != null && _data.TryGetValue(key, out var value) ? value : null;
         set
         {
             if (value == null)
-                _data.TryRemove(key, out _);
+                _data?.TryRemove(key, out _);
             else
-                _data[key] = value;
+                Items[key] = value;
         }
     }
 
@@ -226,7 +230,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public T? Get<T>(string key)
     {
-        if (_data.TryGetValue(key, out var value) && value is T typed)
+        if (_data != null && _data.TryGetValue(key, out var value) && value is T typed)
             return typed;
         return default;
     }
@@ -237,15 +241,15 @@ public sealed class @this : IDisposable
     public void Set<T>(string key, T value)
     {
         if (value == null)
-            _data.TryRemove(key, out _);
+            _data?.TryRemove(key, out _);
         else
-            _data[key] = value;
+            Items[key] = value;
     }
 
     /// <summary>
     /// Checks if a key exists.
     /// </summary>
-    public bool ContainsKey(string key) => _data.ContainsKey(key);
+    public bool ContainsKey(string key) => _data?.ContainsKey(key) ?? false;
 
     /// <summary>
     /// Gets the module-scoped static dictionary for the given module namespace.
@@ -255,7 +259,7 @@ public sealed class @this : IDisposable
     public ConcurrentDictionary<string, object?> GetModuleStatic(string moduleNamespace)
     {
         var key = $"__static_{moduleNamespace}__";
-        return (ConcurrentDictionary<string, object?>)_data.GetOrAdd(key,
+        return (ConcurrentDictionary<string, object?>)Items.GetOrAdd(key,
             _ => new ConcurrentDictionary<string, object?>(StringComparer.OrdinalIgnoreCase));
     }
 
@@ -286,9 +290,9 @@ public sealed class @this : IDisposable
         };
         clone._setting = _setting?.Clone();
 
-        foreach (var kvp in _data)
+        foreach (var kvp in _data ?? [])
         {
-            clone._data[kvp.Key] = kvp.Value;
+            clone.Items[kvp.Key] = kvp.Value;
         }
 
         return clone;
@@ -296,7 +300,10 @@ public sealed class @this : IDisposable
 
     // --- Data wrapper cache for structural types (Goal, Step, Action) ---
     // Per-execution: same domain object → same Data wrapper within this context.
-    private readonly ConcurrentDictionary<object, data.@this> _wrapperCache = new();
+    // Made at the first wrapper asked for; held by reference, the first made kept.
+    private ConcurrentDictionary<object, data.@this>? _wrapperCache;
+    private ConcurrentDictionary<object, data.@this> Wrappers
+        => _wrapperCache ?? Interlocked.CompareExchange(ref _wrapperCache, new(), null) ?? _wrapperCache;
 
     /// <summary>
     /// Gets or creates a cached Data&lt;T&gt; wrapper for a structural domain object.
@@ -304,28 +311,32 @@ public sealed class @this : IDisposable
     /// </summary>
     public data.@this<T> GetOrCreate<T>(T key, Func<data.@this<T>> factory) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        var data = _wrapperCache.GetOrAdd(key, _ => factory());
+        var data = Wrappers.GetOrAdd(key, _ => factory());
         return (data.@this<T>)data;
     }
 
     // The bindings running in this context's current flow: a binding doesn't fire inside its own handler, while a
     // parallel flow on the same context (its own async flow) fires it too. Set per flow: a flow forked from one
-    // running a binding inherits the set, and leaving a handler restores what the flow held before it.
-    private readonly AsyncLocal<System.Collections.Immutable.ImmutableHashSet<object>?> _runningBindings = new();
+    // running a binding inherits the set, and leaving a handler restores what the flow held before it. The flow slot is
+    // made when a binding first runs here; held by reference, the first made kept.
+    private AsyncLocal<System.Collections.Immutable.ImmutableHashSet<object>?>? _runningBindings;
+    private AsyncLocal<System.Collections.Immutable.ImmutableHashSet<object>?> Running
+        => _runningBindings ?? Interlocked.CompareExchange(ref _runningBindings, new(), null) ?? _runningBindings;
 
     /// <summary>True, marking it running in this flow, when <paramref name="binding"/> is not already running in it.</summary>
     internal bool TryEnterEvent(object binding)
     {
-        var running = _runningBindings.Value ?? System.Collections.Immutable.ImmutableHashSet.Create<object>(ReferenceEqualityComparer.Instance);
+        var slot = Running;
+        var running = slot.Value ?? System.Collections.Immutable.ImmutableHashSet.Create<object>(ReferenceEqualityComparer.Instance);
         if (running.Contains(binding)) return false;
-        _runningBindings.Value = running.Add(binding);
+        slot.Value = running.Add(binding);
         return true;
     }
 
     /// <summary>Marks <paramref name="binding"/> as no longer running in this flow.</summary>
     internal void ExitEvent(object binding)
     {
-        if (_runningBindings.Value is { } running) _runningBindings.Value = running.Remove(binding);
+        if (_runningBindings is { Value: { } running } slot) slot.Value = running.Remove(binding);
     }
 
     /// <summary>
@@ -352,13 +363,14 @@ public sealed class @this : IDisposable
         _cts = null;
 
         // Dispose any disposable items in the dictionary
-        foreach (var value in _data.Values)
+        if (_data is not { } held) return;
+        foreach (var value in held.Values)
         {
             if (value is IDisposable disposable)
             {
                 disposable.Dispose();
             }
         }
-        _data.Clear();
+        held.Clear();
     }
 }

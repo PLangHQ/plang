@@ -155,6 +155,22 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 16. Nodes, kinds' keys, a context's tables: a birth at ~21.5 KB
+
+| change | birth alone (4,000 traced) |
+|---|---|
+| start (§15) | ~29.8 KB |
+| an empty kind's key tables made whole, at their size, at the first key looked up after kinds came in — not grown and re-made per kind added (`kind.Key` puts one kind in, no LINQ iterators) | ~28.2 KB |
+| a node (`app.goal`, `app.variable`, …) finds its concept's type when first asked; its settings class is read once per class (was `GetInterfaces()` per node per birth); its list made once without a `Lazy` + closure | ~25.8 KB |
+| a context's keyed values, wrapper cache, deadline stack and running-bindings slot, and an actor's channel table, made when first used | **~21.5 KB** |
+
+Birth + test mode + dispose: 117 → 110 KB. Times not taken: load 12 – 18 during the runs (shared median 92 – 217 µs,
+noise). C#: green except Wire's six `carried` (baseline). plang: the same 11 names as before §15.
+
+Left (~21.5 KB): type entries made on the asks of the birth (~7.5%: `actor`, `actor.list`, the store's, the call
+list's…), the type list's own tables and its `_born` array (~4%), empty kinds made for full types (`BornKind`, ~3.7%),
+`list`'s kinds enlisted because `actor.list` asks for `list<actor>` (its key lookup), the variable store's dictionary.
+
 ## 15. System variables made on first ask: a birth at ~88 µs, ~30 KB
 
 `Now`, `NowUtc`, `GUID`, `MyIdentity`, `Identity` (every memory) and `!app`, `!context` (a context's own) are one

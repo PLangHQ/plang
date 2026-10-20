@@ -165,6 +165,20 @@ public class @this : global::app.type.@this
     /// <summary>The keys this kind answers to as its type holds it: its name, its own aliases, its MIMEs.</summary>
     internal System.Collections.Generic.IEnumerable<string> Keys => Own.Prepend(Name).Concat(Mime);
 
+    /// <summary>Puts this kind in <paramref name="keys"/> under every key it answers to (<see cref="Keys"/>) that
+    /// holds none yet, and in <paramref name="extensions"/> under each extension without its dot.</summary>
+    internal void Key(System.Collections.Generic.Dictionary<string, @this> keys,
+        System.Collections.Generic.Dictionary<string, @this> extensions)
+    {
+        keys.TryAdd(Name, this);
+        foreach (var alias in Own) keys.TryAdd(alias, this);
+        foreach (var mime in Mime) keys.TryAdd(mime, this);
+        foreach (var extension in Extension) extensions.TryAdd(extension.TrimStart('.'), this);
+    }
+
+    // How many keys and extensions Key puts this kind under, at most.
+    internal (int Keys, int Extensions) Count => (1 + Own.Count + Mime.Count, Extension.Count);
+
     /// <summary>The type this kind is a kind of — the app's entry it was born holding: the type whose class
     /// declares it as a format (png is image's, md text's), or whose kind class it is (number's precisions are
     /// number's, json/list/dict/<c>*</c> are item's). Null for a kind of a name no type holds.</summary>

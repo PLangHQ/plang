@@ -15,7 +15,8 @@ namespace app.channel.list;
 /// </summary>
 public sealed class @this : global::app.type.item.@this, IAsyncDisposable
 {
-    private readonly ConcurrentDictionary<string, channel.@this> _channels = new(StringComparer.OrdinalIgnoreCase);
+    // The channels by name, made when the channels are first used; held by reference, the first made kept.
+    private ConcurrentDictionary<string, channel.@this>? _channels;
     private readonly app.@this _app;
 
     /// <summary>
@@ -67,15 +68,18 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     {
         get
         {
+            var channels = _channels
+                ?? System.Threading.Interlocked.CompareExchange(ref _channels, new(StringComparer.OrdinalIgnoreCase), null)
+                ?? _channels;
             if (System.Threading.Volatile.Read(ref _standard) != 0)
-                lock (_channels)
+                lock (channels)
                     if (_standard == 1)
                     {
                         _standard = 2;
                         global::app.@this.WireConsoleChannels(Actor!, interactiveInput: false);
                         System.Threading.Volatile.Write(ref _standard, 0);
                     }
-            return _channels;
+            return channels;
         }
     }
 
@@ -189,8 +193,9 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        foreach (var channel in _channels.Values)
+        if (_channels is not { } channels) return;
+        foreach (var channel in channels.Values)
             await channel.DisposeAsync();
-        _channels.Clear();
+        channels.Clear();
     }
 }

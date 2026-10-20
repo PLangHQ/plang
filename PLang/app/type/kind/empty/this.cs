@@ -11,9 +11,10 @@ public sealed class @this : global::app.type.kind.@this
     private readonly global::app.type.@this _owner;
     private readonly System.Collections.Generic.List<global::app.type.kind.@this> _kinds = new();
     // The held kinds by every key each answers to (Names): its name, its aliases, its MIMEs — and apart, by its
-    // extensions without the dot — the first kind that answers, in the order they came. Made as a kind comes in
-    // (Add), so a key finds its kind in one look, never by asking each kind in turn; none while the type holds no kind
-    // (a type object made for a value, the common case, never pays for one).
+    // extensions without the dot — the first kind that answers, in the order they came. Made whole, at its size, the
+    // first time a key is looked up after kinds came in (Add drops it), so a key finds its kind in one look, never by
+    // asking each kind in turn; none while nothing looks a key up (a type object made for a value, the common case,
+    // and a type whose kinds are only walked, never pay for one).
     private System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _keys;
     private System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _extensions;
     private readonly object _gate = new();
@@ -118,10 +119,13 @@ public sealed class @this : global::app.type.kind.@this
             // parameters, else as an extension
             var semicolon = name.IndexOf(';');
             lock (_gate)
+            {
+                Keyed();
                 return name.StartsWith('.') ? _extensions?.GetValueOrDefault(name[1..])
                        : _keys?.GetValueOrDefault(name)
                          ?? (semicolon >= 0 ? _keys?.GetValueOrDefault(name[..semicolon].Trim()) : null)
                          ?? _extensions?.GetValueOrDefault(name);
+            }
         }
     }
 
@@ -163,30 +167,31 @@ public sealed class @this : global::app.type.kind.@this
         lock (_gate)
         {
             if (kind.IsEmpty) { _format = kind; return; }
-            // a kind of the same name replaced: its keys go with it, so every held kind is keyed again; else the new
-            // kind's keys join the ones already held (the first that answers keeps a key)
-            var replaced = false;
+            // a kind of the same name is replaced; the keys are made again at the next look
             for (var at = _kinds.Count - 1; at >= 0; at--)
                 if (string.Equals(_kinds[at].Name, kind.Name, System.StringComparison.OrdinalIgnoreCase))
-                {
                     _kinds.RemoveAt(at);
-                    replaced = true;
-                }
-            if (replaced || _keys == null)
-            {
-                _keys = new(System.StringComparer.OrdinalIgnoreCase);
-                _extensions = new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var held in _kinds) Key(held);
-            }
             _kinds.Add(kind);
-            Key(kind);
+            _keys = null;
+            _extensions = null;
         }
     }
 
-    // Keys one held kind by every key it answers to, and apart by its extensions without the dot (under the gate).
-    private void Key(global::app.type.kind.@this kind)
+    // Makes the keys of the held kinds, when they are not made (under the gate): the first kind that answers keeps a key.
+    private void Keyed()
     {
-        foreach (var key in kind.Keys) _keys!.TryAdd(key, kind);
-        foreach (var extension in kind.Extension) _extensions!.TryAdd(extension.TrimStart('.'), kind);
+        if (_keys != null || _kinds.Count == 0) return;
+        int keys = 0, extensions = 0;
+        foreach (var kind in _kinds)
+        {
+            var (k, e) = kind.Count;
+            keys += k;
+            extensions += e;
+        }
+        var keyed = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(keys, System.StringComparer.OrdinalIgnoreCase);
+        var extended = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(extensions, System.StringComparer.OrdinalIgnoreCase);
+        foreach (var kind in _kinds) kind.Key(keyed, extended);
+        _extensions = extended;
+        _keys = keyed;
     }
 }
