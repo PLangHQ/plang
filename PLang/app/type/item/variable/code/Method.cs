@@ -39,7 +39,7 @@ public sealed class Method : Hop
         {
             writer.BeginObject();
             writer.Name("type");
-            value.Type.Write(writer);
+            await pair.Output(value.Type, writer, mode, context);
             writer.Name("value");
             await pair.Output(value, writer, mode, context);
             if (value.HasVariable)

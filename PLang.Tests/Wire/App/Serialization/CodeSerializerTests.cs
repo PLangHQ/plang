@@ -30,7 +30,7 @@ public class CodeSerializerTests
         public void Guid(System.Guid v) { }
         public void Enum(System.Enum v) { }
         public void Decimal(decimal v) { }
-        public void Bytes(byte[] v) { }
+        public void Bytes(byte[] v, global::app.type.kind.@this kind) { }
         public void BeginArray(int c) { }
         public void BeginObject() { LastMethod = "BeginObject"; }
         public void Name(string n) { LastMethod = "Name"; Last = n; }

@@ -31,7 +31,7 @@ public class NumberSerializerTests
         public void Guid(System.Guid v) { LastMethod = "Guid"; Last = v; }
         public void Enum(System.Enum v) { LastMethod = "Enum"; Last = v; }
         public void Decimal(decimal v) { LastMethod = "Decimal"; Last = v; }
-        public void Bytes(byte[] v) { LastMethod = "Bytes"; Last = v; }
+        public void Bytes(byte[] v, global::app.type.kind.@this kind) { LastMethod = "Bytes"; Last = v; }
         public void BeginArray(int c) { }
         public void BeginObject() { LastMethod = "BeginObject"; }
         public void Name(string n) { LastMethod = "Name"; Last = n; }

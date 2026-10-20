@@ -76,8 +76,12 @@ public sealed class Writer : global::app.type.format.IWriter
     public void TimeSpan(System.TimeSpan value) { if (_depth > 0) Structural().TimeSpan(value); else Bare(value.ToString("c")); }
     public void Guid(System.Guid value) { if (_depth > 0) Structural().Guid(value); else Bare(value.ToString()); }
     public void Enum(System.Enum value) { if (_depth > 0) Structural().Enum(value); else Bare(value.ToString()); }
-    // Bytes read as text are noise: the text form of a byte payload is its size.
-    public void Bytes(byte[] value) { if (_depth > 0) Structural().String($"[{value.Length} bytes]"); else Bare($"[{value.Length} bytes]"); }
+    // A text's bytes are the text they spell; any other bytes read as text are noise: their text form is their size.
+    public void Bytes(byte[] value, global::app.type.kind.@this kind)
+    {
+        var text = kind.IsText ? Encoding.UTF8.GetString(value) : $"[{value.Length} bytes]";
+        if (_depth > 0) Structural().String(text); else Bare(text);
+    }
 
     // Structure: always json; flush the buffered json when the outermost closes.
     public void BeginArray(int count) { Structural().BeginArray(count); _depth++; }
@@ -108,11 +112,10 @@ public sealed class Writer : global::app.type.format.IWriter
             case System.TimeSpan ts: TimeSpan(ts); return;
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
-            case byte[] bytes: Bytes(bytes); return;
-            // a plang value is never handed here: it writes itself through its own Output
-            default:                                    // a C# collection → json content
+            case byte[] bytes: Bytes(bytes, _types[typeof(global::app.type.item.binary.@this)].kind); return;
+            // a plang value is never handed here, nor a collection: each writes itself through its own Output
+            default:
                 Structural().Value(normalized);
-                _utf8!.Flush();
                 return;
         }
     }

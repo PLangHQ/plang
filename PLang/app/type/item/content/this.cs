@@ -137,16 +137,13 @@ public abstract class @this : global::app.type.item.@this
         return sample.Success ? null : sample.Error;
     }
 
-    /// <summary>A reference writes its own form (<see cref="Write"/>) in every view.</summary>
+    /// <summary>A reference writes its content once sampled, as the bytes of its format — the writer decides how
+    /// they look; unsampled, its location.</summary>
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
         if (!IsLoaded) { writer.String(ToString()); return default; }
-        // content already in the writer's own format (json into json) is a token of it, relayed verbatim — until the
-        // identity pair relays a value's written form
-        if (_format != null && _format.Owns(writer)) writer.Raw(Bytes);
-        else if (_format is { IsText: true }) writer.String(ContentText());
-        else writer.Bytes(Bytes);
+        writer.Bytes(Bytes, _format ?? Type.kind);
         return default;
     }
 }
