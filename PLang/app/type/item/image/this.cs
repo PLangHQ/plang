@@ -146,7 +146,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>The ICreate courier face — pass-through / byte[] via the core; a string is a path,
-    /// made by path's own courier, and the image is held over it, holding the type its extension names (a
+    /// made by path's own courier, and the image is held over it, holding the type it was declared as when the
+    /// declaration says something (<c>as image/gif</c>, <c>as image strict</c>), else the type its extension names (a
     /// <c>.png</c> is <c>image&lt;png&gt;</c>), else the plain image type. A non-string source declines silently;
     /// a location path declines (an unregistered scheme, an empty one) lands its reason on <paramref name="data"/>.
     /// A strict declaration (<c>as image/png strict</c>) is the image's own: imprinted at birth, checked now when
@@ -157,7 +158,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         var image = Create(value, context)
             ?? (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string
                 && global::app.type.item.path.@this.Create(value, null, data) is { } path
-                    ? new @this(path, path.Kind(context) is { } named && named.Is("image") ? named : context.App.type.list[typeof(@this)])
+                    ? new @this(path, declared is { } type && (type.Strict || !type.kind.IsEmpty) ? type
+                        : path.Kind(context) is { } named && named.Is("image") ? named : context.App.type.list[typeof(@this)])
                     : null);
         if (image == null || declared is not { Strict: true, kind.IsEmpty: false }) return image;
         image.RequireStrictKind(declared.kind.Name);
