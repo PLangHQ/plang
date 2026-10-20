@@ -163,6 +163,10 @@ private change removes it.
 | a memory's own table made at its first write (`Store`); a read of an empty memory makes nothing | ~20.1 KB |
 | path's schemes (`file`, `http`, `https`) are kind classes (`path/scheme/file`, `http`, `https`), made when path's kinds are first asked, as `number.kind.int` is. Before, every birth added three schemes, and adding them made path hold all its kinds | **~18.4 KB** |
 
+Timed against §15 (`692f4c990`) back to back under the same heavy load (18 – 25), 3 × 100 each: shared birth median
+**100 – 141 µs vs 182 – 193 µs**, min **63 – 71 µs vs 100 – 103 µs**; fresh about the same (noise). A quiet-machine
+median should land near ~60 – 70 µs (§15 measured ~88 at load ~9).
+
 Surface move re-pinned on the playground: the three scheme classes added; `scheme.@this` unsealed (sealing isn't
 pinned). C#: green except Wire's six `carried`. plang: the same 11 names.
 
