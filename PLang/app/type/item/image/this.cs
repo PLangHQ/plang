@@ -88,7 +88,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         // An image not read writes where it is — never empty bytes.
         if (_bytes == null && Path != null) { await writer.Kind.pair.Output(Path, writer, mode, context); return; }
-        writer.Bytes(Bytes);
+        writer.Bytes(Bytes, Type.kind);
     }
 
     /// <summary>Opened to be written out: a path-backed image loads its bytes through its own door (as the

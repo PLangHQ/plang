@@ -362,16 +362,9 @@ public class source : @this
     {
         if (Type.Template == null || mode == global::app.View.Store || context?.Variable == null || _value is not string template)
         {
-            // Content whose declared kind is the writer's own format is already a token of it — relayed
-            // verbatim, whether held as its text or its bytes (the writer validates it) — until the identity pair
-            // relays a value's written form.
-            if (Type.kind.Owns(writer))
-            {
-                if (_value is byte[] token) writer.Raw(token);
-                else writer.Raw(_value.ToString() ?? "");
-                return;
-            }
-            if (_value is byte[] b) { writer.Bytes(b); return; }
+            // The raw is content of its declared kind, as bytes or as characters: the writer decides how it looks
+            // (into a writer of the kind's own format, verbatim).
+            if (_value is byte[] b) { writer.Bytes(b, Type.kind); return; }
             // A whole %ref% in a slot not typed text is the variable itself (`Value: item = %!data%`); inside a
             // text it stays the text it is (`"Total: %x%"`).
             if (Type.Template != null && IsVariable && !Type.Is("text"))
@@ -379,7 +372,7 @@ public class source : @this
                 await writer.Kind.pair.Output(_variable[0], writer, mode, context);
                 return;
             }
-            writer.String(_value.ToString() ?? "");
+            writer.Content(_value.ToString() ?? "", Type.kind);
             return;
         }
         if (IsVariable)

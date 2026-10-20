@@ -1094,7 +1094,7 @@ interface app.type.format.IWriter
   abstract BeginObject() : System.Void
   abstract BeginRecord(app.data.this record) : System.Void
   abstract Bool(System.Boolean value) : System.Void
-  abstract Bytes(System.Byte[] value) : System.Void
+  abstract Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
   abstract DateTime(System.DateTime value) : System.Void
   abstract DateTimeOffset(System.DateTimeOffset value) : System.Void
   abstract Decimal(System.Decimal value) : System.Void
@@ -1116,7 +1116,6 @@ interface app.type.format.IWriter
   virtual Content(System.String value, app.type.kind.this kind) : System.Void
   virtual EmitsSchema : System.Boolean { get; }
   virtual Given() : System.Void
-  virtual Raw(System.Byte[] value) : System.Void
   virtual Raw(System.String value) : System.Void
   virtual Sensitive(System.String characters) : System.Void
   virtual Variable(System.String name) : System.Void
@@ -1769,7 +1768,7 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   BeginObject() : System.Void
   BeginRecord(app.data.this record) : System.Void
   Bool(System.Boolean value) : System.Void
-  Bytes(System.Byte[] value) : System.Void
+  Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
   DateTime(System.DateTime value) : System.Void
   DateTimeOffset(System.DateTimeOffset value) : System.Void
   Decimal(System.Decimal value) : System.Void
@@ -1786,7 +1785,6 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   Long(System.Int64 value) : System.Void
   Name(System.String name) : System.Void
   Null() : System.Void
-  Raw(System.Byte[] value) : System.Void
   Raw(System.String value) : System.Void
   Sensitive(System.String characters) : System.Void
   String(System.String value) : System.Void
@@ -2623,7 +2621,7 @@ class app.type.item.text.Writer : app.type.format.IWriter
   BeginObject() : System.Void
   BeginRecord(app.data.this record) : System.Void
   Bool(System.Boolean value) : System.Void
-  Bytes(System.Byte[] value) : System.Void
+  Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
   DateTime(System.DateTime value) : System.Void
   DateTimeOffset(System.DateTimeOffset value) : System.Void
   Decimal(System.Decimal value) : System.Void

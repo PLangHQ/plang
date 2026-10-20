@@ -47,7 +47,13 @@ public interface IWriter
     void Guid(System.Guid value);
     void Enum(System.Enum value);
     void Decimal(decimal value);
-    void Bytes(byte[] value);
+
+    /// <summary>
+    /// Bytes of <paramref name="kind"/> — what they are (an image's format, json content, a text, plain bytes). The
+    /// writer decides how they look: a writer the kind owns takes them as a token of its own format, as they are;
+    /// any other writes them its own way (json base64 or the text they spell, text their size or their text).
+    /// </summary>
+    void Bytes(byte[] value, global::app.type.kind.@this kind);
 
     /// <summary>
     /// Emit content already valid in the target format, verbatim — a source value's
@@ -57,10 +63,6 @@ public interface IWriter
     /// Default falls back to a quoted string for writers that have no verbatim concept.
     /// </summary>
     void Raw(string value) => String(value);
-
-    /// <summary>The same verbatim emit for content held as its UTF-8 bytes. Default falls back to bytes for
-    /// writers that have no verbatim concept.</summary>
-    void Raw(byte[] value) => Bytes(value);
 
     /// <summary>Characters nobody should see (a key, a password). Shown, they are <c>****</c>; a writer of plang's own
     /// store keeps them whole.</summary>

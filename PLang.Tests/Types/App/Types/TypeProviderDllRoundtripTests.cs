@@ -56,7 +56,7 @@ public class TypeProviderDllRoundtripTests : System.IAsyncDisposable
         public void Guid(System.Guid v) { Captured = v.ToString(); }
         public void Enum(System.Enum v) { Captured = v.ToString(); }
         public void Decimal(decimal v) { Captured = v.ToString(); }
-        public void Bytes(byte[] v) { Captured = System.Convert.ToBase64String(v); }
+        public void Bytes(byte[] v, global::app.type.kind.@this kind) { Captured = System.Convert.ToBase64String(v); }
         public void BeginArray(int c) { }
         public void BeginObject() { }
         public void Name(string n) { }

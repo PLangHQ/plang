@@ -82,7 +82,9 @@ public sealed class Writer : IWriter
     public void TimeSpan(System.TimeSpan value) => String(System.Xml.XmlConvert.ToString(value));
     public void Guid(System.Guid value) => String(value.ToString());
     public void Enum(System.Enum value) => String(value.ToString());
-    public void Bytes(byte[] value) => String(System.Convert.ToBase64String(value));
+    /// <summary>A text's bytes are the text they spell; any other bytes are base64.</summary>
+    public void Bytes(byte[] value, global::app.type.kind.@this kind)
+        => String(kind.IsText ? System.Text.Encoding.UTF8.GetString(value) : System.Convert.ToBase64String(value));
 
     /// <summary>Verbatim — content already formal (a %variable% written bare).</summary>
     public void Raw(string value) { Element(); _out.Append(value); }
@@ -175,7 +177,7 @@ public sealed class Writer : IWriter
             case double d: Double(d); return;
             case decimal m: Decimal(m); return;
             case string s: String(s); return;
-            case byte[] bytes: Bytes(bytes); return;
+            case byte[] bytes: String(System.Convert.ToBase64String(bytes)); return;
             default:
                 throw new global::app.data.NormalizeException(
                     $"formal.Writer received a value of type {normalized.GetType().FullName} that has no formal form.",

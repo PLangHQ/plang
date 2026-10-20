@@ -17,6 +17,7 @@ public sealed class Writer : IWriter
     private readonly Utf8JsonWriter _writer;
     private readonly app.View _view;
     private readonly bool _emitsSchema;
+    private readonly global::app.type.kind.@this _binary;   // the kind of bytes handed as a C# byte[]: plain bytes
 
     /// <summary>A json writer over <paramref name="writer"/>, its kind found among <paramref name="types"/>: plang's
     /// own (wire's <c>plang</c>) while it carries the schema layer, else item's <c>json</c> — that choice goes when
@@ -27,6 +28,7 @@ public sealed class Writer : IWriter
         _view = view;
         _emitsSchema = emitsSchema;
         Kind = emitsSchema ? types["wire"].kind["plang"]! : types["item"].kind["json"]!;
+        _binary = types[typeof(global::app.type.item.binary.@this)].kind;
     }
 
     public global::app.type.kind.@this Kind { get; }
@@ -45,15 +47,20 @@ public sealed class Writer : IWriter
     public void Sensitive(string characters) => String(_view == app.View.Store ? characters : "****");
     // Verbatim — raw json (object/number) rides inline, unquoted.
     public void Raw(string value) => _writer.WriteRawValue(value);
-    // Verbatim from UTF-8 bytes — validated as json the same way (invalid bytes or json throw).
-    public void Raw(byte[] value) => _writer.WriteRawValue(value);
     public void DateTime(System.DateTime value) => _writer.WriteStringValue(value);
     public void DateTimeOffset(System.DateTimeOffset value) => _writer.WriteStringValue(value);
     public void TimeSpan(System.TimeSpan value) => _writer.WriteStringValue(value.ToString("c"));
     public void Guid(System.Guid value) => _writer.WriteStringValue(value);
     public void Enum(System.Enum value) => _writer.WriteStringValue(value.ToString());
     public void Decimal(decimal value) => _writer.WriteNumberValue(value);
-    public void Bytes(byte[] value) => _writer.WriteBase64StringValue(value);
+    // Bytes of a kind json owns are a json token already, relayed verbatim (validated: invalid json throws); a text's
+    // bytes are the text they spell; any other bytes are base64.
+    public void Bytes(byte[] value, global::app.type.kind.@this kind)
+    {
+        if (kind.Owns(this)) _writer.WriteRawValue(value);
+        else if (kind.IsText) _writer.WriteStringValue(System.Text.Encoding.UTF8.GetString(value));
+        else _writer.WriteBase64StringValue(value);
+    }
 
     public void BeginArray(int count) => _writer.WriteStartArray();
     public void EndArray() => _writer.WriteEndArray();
@@ -93,7 +100,7 @@ public sealed class Writer : IWriter
             case System.TimeSpan ts: TimeSpan(ts); return;
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
-            case byte[] bytes: Bytes(bytes); return;
+            case byte[] bytes: Bytes(bytes, _binary); return;
             // A plang value is never handed here: it writes itself through its own Output.
             case System.Collections.IEnumerable list:
                 BeginArray(-1);

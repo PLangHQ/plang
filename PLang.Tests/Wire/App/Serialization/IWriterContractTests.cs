@@ -109,7 +109,8 @@ public class IWriterContractTests : System.IAsyncDisposable
     [Test] public async Task JsonWriter_Bytes_EmitsBase64String()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.type.item.kind.json.Writer(jw, app.type.list).Bytes(new byte[] { 1, 2, 3 });
+        new global::app.type.item.kind.json.Writer(jw, app.type.list)
+            .Bytes(new byte[] { 1, 2, 3 }, app.type.list[typeof(global::app.type.item.binary.@this)].kind);
         var s = Flush(jw, ms);
         await Assert.That(s).IsEqualTo("\"AQID\"");
     }
