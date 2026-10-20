@@ -63,11 +63,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// on <see cref="channel.type.goal.@this.IsExecuting"/> — the registry's <c>Get</c>
     /// treats an executing goal-channel as not-found.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.channel.list.@this Channel => _channels;
 
     private readonly global::app.task.list.@this _tasks;
 
     /// <summary>The tasks this actor runs — the goal calls made in parallel on it, each listed while it runs.</summary>
+    [global::app.LlmBuilder]
     public global::app.task.list.@this Task => _tasks;
 
     /// <summary>

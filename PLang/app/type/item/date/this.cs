@@ -53,6 +53,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return null;
     }
 
+    [global::app.LlmBuilder]
     public int Year => Value.Year;
     public int Month => Value.Month;
     public int Day => Value.Day;

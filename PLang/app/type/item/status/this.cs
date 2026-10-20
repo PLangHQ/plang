@@ -13,7 +13,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Shape => "object";
 
     /// <summary>The code — <c>%!error.status.code%</c>.</summary>
-    [Out, Store] public global::app.type.item.number.@this Code { get; }
+    [Out, Store, LlmBuilder] public global::app.type.item.number.@this Code { get; }
 
     /// <summary>The reason, in words — the code's standard one unless whoever answered gave its own (an http
     /// server's reason phrase).</summary>

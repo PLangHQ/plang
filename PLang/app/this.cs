@@ -105,7 +105,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// When the app was first created — its identity's, else this run's start (an app with no identity yet is
     /// being created now).
     /// </summary>
-    [global::app.Store]
+    [global::app.Store, global::app.LlmBuilder]
     public global::app.type.item.datetime.@this Created { get; internal set; }
 
     /// <summary>
@@ -168,11 +168,13 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// When the app was started.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.datetime.@this StartedAt { get; }
 
     /// <summary>
     /// How long the app has been running.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.duration.@this Uptime
         => global::app.type.item.duration.@this.Create(DateTimeOffset.UtcNow - StartedAt.Value, actor.list.System.Context)!;
 
@@ -186,6 +188,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// The app's module — <c>%!app.module%</c>: an empty module whose <c>list</c> is every module the app loads,
     /// registering their actions; <c>Get(name)</c> is one module as a result.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.module.@this module { get; }
 
     /// <summary>
@@ -199,6 +202,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// reading: every goal through <c>All()</c>, the goal a call names through <c>Find</c>),
     /// <c>Get(address)</c> is one goal as a result, <c>current</c> the running one, <c>type</c> the goal type.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.type.node.current.@this<Goal, global::app.goal.list.@this> goal { get; }
 
     /// <summary>
@@ -218,6 +222,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// app — actors share it; its owners keep their tables (<c>settings</c>, setup's steps, the LLM cache, …).
     /// Born with the app and opened at its first verb, so an app that never touches it pays for no SQLite file.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.store.@this store { get; }
 
     /// <summary>
@@ -231,19 +236,22 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// the run's setting, report and session), <c>Get(address)</c> is one test as a result, <c>current</c> the test
     /// the asker is running. The app is testing while the list's session is open.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.type.node.current.@this<global::app.test.@this, global::app.test.list.@this> test { get; }
 
     /// <summary>
     /// The app's errors — <c>%!app.error%</c>, the one in play: <c>current</c> is the error in play (the asker's call
     /// stack's, not yet handled), <c>list</c> every error on the asker's call stack, handled or not.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.type.node.current.@this<global::app.error.@this, global::app.error.list.@this> error { get; }
 
     /// <summary>
     /// The app's variables — <c>%!app.variable%</c>, the asker's memory (navigation's context): <c>.user</c> one
     /// variable in it. C# has no asker here: it uses <c>context.Variable</c>, and <c>app.variable.list</c> says so.
     /// </summary>
-    public global::app.type.node.@this<global::app.type.item.variable.@this, global::app.type.item.list.@this<global::app.type.item.variable.@this>> variable { get; }
+    [global::app.LlmBuilder]
+    public global::app.type.node.@this<global::app.type.item.variable.@this, global::app.type.item.list.@this<global::app.type.item.variable.@this>> variable{ get; }
 
     /// <summary>
     /// The app's shortcuts — <c>%!app.shortcut%</c>: its <c>list</c> is the app's shortcuts, each a goal under a
@@ -256,6 +264,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// Build mode controller. null = off; non-null = on (born under --build).
     /// When present, actors use in-memory datasources.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.module.build.@this? Build { get; set; }
 
     /// <summary>What this App is doing — derived from what it holds: building when it has a Build,
@@ -271,16 +280,19 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// identity, MIME and extension, and the kinds), <c>Get(name)</c> is one type as a result. A file format is a
     /// kind of the type that reads it.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.type.node.root.@this type { get; }
 
     /// <summary>The app that started this plang — <c>%!app.parent%</c>: its goals are called like this app's
     /// (<c>call goal Claude in %!app.parent%</c>), and run there.</summary>
+    [global::app.LlmBuilder]
     public global::app.parent.@this parent { get; } = new();
 
     /// <summary>
     /// The app's actors — <c>%!app.actor%</c>, the one the asker acts as: its <c>list</c> is the app's two actors,
     /// System and User; <c>Get(name)</c> is one as a result, <c>current</c> the one the asker acts as.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.type.node.current.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
 
     // The types a step and an action start through, and a channel writes, reads and asks through — the type

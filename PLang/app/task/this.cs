@@ -22,16 +22,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public global::app.goal.@this Goal => _run.Goal;
 
     /// <summary>Which task it is among its actor's — <c>%!app.actor.current.task[id]%</c>.</summary>
-    [Out] public global::app.type.item.text.@this Id
+    [Out, global::app.LlmBuilder] public global::app.type.item.text.@this Id
         => new(_run.Id, _run.Actor.App.type.list[typeof(global::app.type.item.text.@this)]);
 
     /// <summary>Whether its run has ended (it has left its actor's list by then).</summary>
-    [Out] public global::app.type.item.@bool.@this Ended
+    [Out, global::app.LlmBuilder] public global::app.type.item.@bool.@this Ended
         => new(_run.Ended, _run.Actor.App.type.list[typeof(global::app.type.item.@bool.@this)]);
 
     /// <summary>Every task written where this one is, in the order written — the last this one.</summary>
     /// <remarks>JsonIgnore: the list holds this task itself, so a dump writing it would never end.</remarks>
     [System.Text.Json.Serialization.JsonIgnore]
+    [global::app.LlmBuilder]
     public global::app.type.item.list.@this list
         => new(Written.Cast<global::app.type.item.@this>(), _run.Actor.App.type.list["list"]);
 

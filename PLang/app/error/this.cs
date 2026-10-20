@@ -53,12 +53,16 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     }
 
     public string Id { get; }
+    [global::app.LlmBuilder]
     public string Message { get; }
+    [global::app.LlmBuilder]
     public string Key { get; }
     /// <summary>The outcome's code and its reason — <c>%!error.status%</c>, <c>%!error.status.code%</c>.</summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.status.@this Status { get; }
     /// <summary>How the programmer fixes it. Born with the error, or attached when a handler re-raises
     /// it (<c>- throw %!error%, fix suggestion %fix%</c>) — the same error, now with its fix.</summary>
+    [global::app.LlmBuilder]
     public string? FixSuggestion { get; internal set; }
     public string? HelpfulLinks { get; init; }
     public DateTime CreatedUtc { get; }
@@ -66,6 +70,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     internal Exception? Exception { get; init; }
     /// <summary>The C# exception behind the error as text — its C# type, its message and where it was thrown
     /// (<c>%!error.trace%</c>); null when no exception is behind it.</summary>
+    [global::app.LlmBuilder]
     public string? Trace => Exception is { } ex ? $"{ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace}" : null;
     /// <summary>
     /// Arbitrary structured context about the failure. Providers attach things
@@ -73,6 +78,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// to PLang goals via %!error.Details.KEY% so error handlers can report
     /// rich context without the provider having to extend the error class.
     /// </summary>
+    [global::app.LlmBuilder]
     public Dictionary<string, object?>? Details { get; set; }
     /// <summary>
     /// Snapshot of the parameters as they arrived at the failing handler — the .pr
@@ -91,12 +97,14 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <see cref="Message"/> (the human line) and <see cref="Details"/> (provider
     /// diagnostic context).
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.data.@this<global::app.type.item.list.@this>? Data { get; init; }
 
     /// <summary>The errors that CAUSED this one — empty when nothing did. "file.read is not valid"
     /// holds the missing parameters that made it so; an error raised while handling another holds
     /// that one. Never null, so a reader never guards before walking it. <c>init</c> so a producer
     /// can hand the causes in whole: <c>new ActionError(…) { Action = this, list = causes }</c>.</summary>
+    [global::app.LlmBuilder]
     public List<Error> list { get; init; } = new();
 
     /// <summary>The error writes itself, in every view — its flat wire shape: what it is (id, message, key, status,
@@ -142,7 +150,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// reading twice returns the same Data. An error with no context was not raised inside a run:
     /// there is nothing to resume, so it has no callback — a <c>NoCallback</c> error, not a throw.
     /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore, global::app.LlmBuilder]
     public global::app.data.@this<global::app.snapshot.@this> Callback
     {
         get
@@ -159,12 +167,16 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         }
     }
     public Action? Action { get; set; }
+    [global::app.LlmBuilder]
     public Step? Step { get; set; }
+    [global::app.LlmBuilder]
     public Goal? Goal { get; set; }
+    [global::app.LlmBuilder]
     public IReadOnlyList<Call> CallFrames { get; set; } = Array.Empty<Call>();
     /// <summary>The variables as they were when the error happened — each variable's Data whole,
     /// keyed by name (<c>%!error.Variables.foo%</c>). Captured by the frame that records the error, when the
     /// error keeps them (<see cref="Keeps"/>); null otherwise (variables can hold secrets).</summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.dict.@this? Variables { get; set; }
 
     /// <summary>True when this error is that nobody could answer an ask (a closed input) — a consent asked of no one

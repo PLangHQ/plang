@@ -89,6 +89,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// Every error observed this run at every frame (handled or unhandled). Survives Pop.
     /// See <see cref="global::app.error.list.@this"/> for thread-safety + lifecycle.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.error.list.@this Audit { get; }
 
     /// <summary>
@@ -101,6 +102,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// <summary>
     /// The current Call in this async context. Null when no Push has happened on this branch.
     /// </summary>
+    [global::app.LlmBuilder]
     public call.@this? Current => _current.Value;
 
     /// <summary>The goal in play on this branch (<c>%!goal%</c>) — the current frame's; null before any frame is
@@ -114,6 +116,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// <summary>The frame of the goal run in play (<c>%!callStack.Scope%</c>) — the nearest frame outward from
     /// <see cref="Current"/> pushed for a goal itself (a goal, no step). Its steps' frames come and go inside
     /// it; what lives for the goal's run (its tags) lives here. Null outside any goal.</summary>
+    [global::app.LlmBuilder]
     public call.@this? Scope
     {
         get

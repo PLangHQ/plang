@@ -117,7 +117,7 @@ public partial class @this : global::app.type.item.note.IAbout
     bool global::app.type.item.note.IAbout.Names(string name) => this[name] is not null;
 
     /// <summary>The action's examples — {Name}.examples.md.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.item.file.@this Examples => _examples ??= new(Module.Folder.Combine($"{Name}.examples.md"), App!.actor.list.System.Context!);
 
     /// <summary>The action's guide — {Name}.guide.md: prose for a learner, shown on the module's page after the

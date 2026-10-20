@@ -17,7 +17,7 @@ public sealed class @this : global::app.type.item.@this
     /// Ticks make file listings sort by build order; the guid suffix prevents
     /// collisions when two contexts are constructed in the same tick.
     /// </summary>
-    [global::app.Out, global::app.Debug]
+    [global::app.Out, global::app.Debug, global::app.LlmBuilder]
     public global::app.type.item.text.@this Id { get; }
 
     /// <summary>

@@ -45,13 +45,14 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     [global::app.Debug] public global::app.type.item.choice.@this<ChannelDirection> Direction { get; init; } = ChannelDirection.Bidirectional;
 
     /// <summary>Buffer size in bytes. Stream-backed channels honour; Goal channel ignores. Default 4096.</summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.number.@this Buffer { get; init; } = 4096;
 
     /// <summary>I/O timeout. JSON wire shape is ISO 8601 (e.g. "PT30S") via custom converter. Default 30s.</summary>
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);
 
     /// <summary>MIME type that drives serializer selection. Default "text/plain".</summary>
-    [global::app.Debug] public global::app.type.item.text.@this Mime { get; init; } = "text/plain";
+    [global::app.Debug, global::app.LlmBuilder] public global::app.type.item.text.@this Mime { get; init; } = "text/plain";
 
     /// <summary>Text encoding name. Default "utf-8".</summary>
     public string Encoding { get; init; } = "utf-8";

@@ -53,6 +53,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return null;
     }
 
+    [global::app.LlmBuilder]
     public int Hour => Value.Hour;
     public int Minute => Value.Minute;
     public int Second => Value.Second;

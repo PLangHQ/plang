@@ -86,7 +86,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public required global::app.goal.@this Goal { get; init; }
 
     /// <summary>The test's goal, by name — the report's reference to it.</summary>
-    [Out] public string Name => Goal.Name;
+    [Out, LlmBuilder] public string Name => Goal.Name;
 
     /// <summary>The test's goal file.</summary>
     [Out] public global::app.type.item.path.@this? Path => Goal.Path;
@@ -97,14 +97,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Lifecycle status: Ready/Stale/Skipped after discovery,
     /// Pass/Fail/Timeout after execution. A closed set — stays a C# enum, rides
     /// the wire as its name (like <c>Goal.Visibility</c>).</summary>
-    [Out] public Status Status { get; set; } = Status.Ready;
+    [Out, LlmBuilder] public Status Status { get; set; } = Status.Ready;
 
     /// <summary>Human-readable reason for a non-Ready discovery status (e.g., "no .pr", "rebuild needed").</summary>
-    [Out] public global::app.type.item.text.@this? StatusReason { get; set; }
+    [Out, LlmBuilder] public global::app.type.item.text.@this? StatusReason { get; set; }
 
     /// <summary>The test's tags: the goal's own (test.tag) ∪ the capabilities its reached
     /// actions require. Set by <see cref="app.test.list.@this.Create"/>.</summary>
-    [Out] public global::app.type.item.list.@this<global::app.type.item.tag.@this> Tags { get; }
+    [Out, LlmBuilder] public global::app.type.item.list.@this<global::app.type.item.tag.@this> Tags { get; }
 
     // --- Execution (empty until the test runs) ---
 
@@ -112,7 +112,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [Out] public global::app.type.item.duration.@this Duration { get; private set; } = System.TimeSpan.Zero;
 
     /// <summary>Error captured on fail/error. Carries AssertionError.Variables on assertion failures.</summary>
-    [Out] public global::app.error.@this? Error { get; private set; }
+    [Out, LlmBuilder] public global::app.error.@this? Error { get; private set; }
 
     /// <summary>Text produced via the output channel during execution. Rendered on failure
     /// when verbose is off. Named Stdout (not Output) — Output is the wire-write method.</summary>

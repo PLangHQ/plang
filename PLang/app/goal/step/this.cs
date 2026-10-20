@@ -32,6 +32,7 @@ public sealed partial class @this
     /// build's code (goal.Merge). A cached step is not asked again — not of the decider, not of the
     /// LLM — and its code stands. Build-time only.</summary>
     [JsonIgnore]
+    [LlmBuilder]
     public bool IsCached => PriorText != null && PriorText == Text && Code.Count > 0;
 
     // an action call at the start of the text: module.action(
@@ -102,7 +103,7 @@ public sealed partial class @this
     /// <summary>The goal this step belongs to — a BIRTH FACT. The reader constructs the goal shell
     /// first and hands it to each step at construction, so this is set once and never reassigned.
     /// <c>init</c> is the enforcement: there is no stamping it in afterwards, and no repair getter.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.goal.@this Goal { get; init; } = null!;
     /// <summary>A step starts through the step type's events, then its own.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch

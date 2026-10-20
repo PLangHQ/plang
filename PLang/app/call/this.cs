@@ -88,10 +88,12 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
 
     /// <summary>The goal in play at this frame — the goal a goal's frame runs, or the one its step or action is in.
     /// Null for an action composed in C#, which holds no step.</summary>
+    [global::app.LlmBuilder]
     public virtual global::app.goal.@this? Goal { get; }
 
     /// <summary>The step in play at this frame — the step a step's frame runs, or the action's. Null in a goal's
     /// own frame and for an action composed in C#.</summary>
+    [global::app.LlmBuilder]
     public virtual global::app.goal.step.@this? Step { get; }
 
     /// <summary>The action this frame runs. Null in a goal's or a step's frame.</summary>
@@ -109,6 +111,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// Sync parent in this execution chain — whatever AsyncLocal.Current was at Push time.
     /// Walk this for the "stack trace" view.
     /// </summary>
+    [global::app.LlmBuilder]
     public @this? Caller { get; }
 
     /// <summary>
@@ -166,6 +169,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// Free-form tags written through <see cref="Tag"/> — a plang dict, read as any dict
     /// (<c>%!callStack.Current.Caller.Tags.foo%</c>). Always allocated, so no lazy-init race.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.dict.@this Tags { get; }
 
     // Parallel branches tag one caller's frame; the frame serializes the merge into its dict.
@@ -349,6 +353,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// (only itself), <c>Root.Children[0].Depth == 2</c>, etc. A birth fact: one more than its
     /// caller's. PLang tests can <c>assert %!callStack.Current.Depth% equals 2</c>.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.number.@this Depth => _depth;
 
     /// <summary>The frame records an error against itself — the one door. Stamps what the error does

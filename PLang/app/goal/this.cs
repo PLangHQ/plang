@@ -46,7 +46,7 @@ public sealed partial class @this
     }
 
     private global::app.goal.step.list.@this _step;
-    [Store, Debug, Default]
+    [Store, LlmBuilder, Debug, Default]
     public global::app.goal.step.list.@this Step
     {
         // A plain slot. Every step in it was born knowing this goal — the reader constructs the
@@ -56,7 +56,7 @@ public sealed partial class @this
     }
 
     /// <summary>The goals written after this one in its file; each knows this goal as its parent.</summary>
-    [Store, Debug, Default]
+    [Store, LlmBuilder, Debug, Default]
     public child.@this Child { get; }
 
     /// <summary>A file's first goal is public; the goals under it are private to it.</summary>
@@ -82,7 +82,7 @@ public sealed partial class @this
     internal global::app.parent.@this? Elsewhere { get; init; }
 
     /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file.</summary>
-    [Store, Debug]
+    [Store, Debug, LlmBuilder]
     public global::app.type.item.path.@this? Path { get => Parent?.Path ?? _path; set => _path = value; }
     private global::app.type.item.path.@this? _path;
 
@@ -292,7 +292,7 @@ public sealed partial class @this
     /// <summary>The goal is cached: its source is the one its <see cref="Cache"/> was built from (every
     /// step as written, in order, and the same sub-goals), every step is cached (none reopened), and so
     /// is every sub-goal. A cached goal isn't built again — its cache stands.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public bool IsCached => Cache != null && Cache.Hash == Hash && Cache.Child.CountRaw == Child.CountRaw
         && Step.IsCached && Child.Items().All(g => g.IsCached);
 

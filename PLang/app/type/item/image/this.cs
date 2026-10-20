@@ -78,7 +78,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The image's mime — asked of its kind (the kind carries its format's MIME), so there is one
     /// source: the image's own type. An image with no kind is opaque bytes.</summary>
-    [global::app.Out, global::app.Store]
+    [global::app.Out, global::app.Store, global::app.LlmBuilder]
     public string Mime => Type.kind.Mime is { Count: > 0 } m ? m[0] : "application/octet-stream";
 
     /// <summary>An image writes its own form in every view; it never loads while it

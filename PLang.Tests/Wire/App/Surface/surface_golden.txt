@@ -76,10 +76,10 @@ class app.call.isolated.this : app.call.binding.this
 
 class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   At(System.Collections.Generic.IReadOnlyList<app.call.this> chainBottomFirst) : app.snapshot.ISnapshot
-  Audit : app.error.list.this { get; }
+  Audit : app.error.list.this { get; } [LlmBuilder]
   BottomFrame : app.call.Position { get; }
   Capture(app.snapshot.this s) : System.Void
-  Current : app.call.this { get; }
+  Current : app.call.this { get; } [LlmBuilder]
   Diff : app.type.item.bool.this { get; }
   DiffScope(app.type.item.variable.list.this variables) : System.IDisposable
   Error : app.error.this { get; }
@@ -98,7 +98,7 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
   RestoredChain : System.Collections.Generic.IReadOnlyList<app.call.Position> { get; }
   Root : app.call.this { get; }
-  Scope : app.call.this { get; }
+  Scope : app.call.this { get; } [LlmBuilder]
   Section : System.String { get; }
   SetFormat(app.type.kind.this format) : System.Boolean
   Setting : app.call.setting.this { get; }
@@ -131,11 +131,11 @@ class app.call.setting.this : app.type.item.setting.this
 
 class app.call.this : app.type.item.this, System.IAsyncDisposable
   Action : app.goal.step.action.this { get; }
-  Caller : app.call.this { get; }
+  Caller : app.call.this { get; } [LlmBuilder]
   Chain : System.Collections.Generic.IReadOnlyList<app.call.this> { get; }
   Children : app.call.child.list.this { get; }
   CompletedAt : app.type.item.datetime.this { get; }
-  Depth : app.type.item.number.this { get; }
+  Depth : app.type.item.number.this { get; } [LlmBuilder]
   Diffs : app.call.diff.this { get; }
   DisposeAsync() : System.Threading.Tasks.ValueTask
   Duration : app.type.item.duration.this { get; }
@@ -156,13 +156,13 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable
   StartedAt : app.type.item.datetime.this { get; }
   Supplies(app.goal.step.action.this call, System.String name) : System.Boolean
   Tag(app.type.item.dict.this tags, app.actor.context.this context) : System.Void
-  Tags : app.type.item.dict.this { get; }
+  Tags : app.type.item.dict.this { get; } [LlmBuilder]
   TryGet(System.String name, app.data.this& value) : System.Boolean
   override IsLeaf : System.Boolean { get; }
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
-  virtual Goal : app.goal.this { get; }
-  virtual Step : app.goal.step.this { get; }
+  virtual Goal : app.goal.this { get; } [LlmBuilder]
+  virtual Step : app.goal.step.this { get; } [LlmBuilder]
 
 enum app.channel.ChannelDirection [Choice, PlangType]
   static const Bidirectional : app.channel.ChannelDirection
@@ -193,14 +193,14 @@ class app.channel.list.this : app.type.item.this, System.IAsyncDisposable
 
 abstract class app.channel.this : app.type.item.this, System.IAsyncDisposable, System.IDisposable [PlangType]
   Actor : app.actor.this { get; }
-  Buffer : app.type.item.number.this { get; init; }
+  Buffer : app.type.item.number.this { get; init; } [LlmBuilder]
   Channels : app.channel.list.this { get; }
   Created : System.DateTime { get; }
   Direction : app.type.item.choice.this<app.channel.ChannelDirection> { get; init; } [Debug]
   Encoding : System.String { get; init; }
   Encryption : System.String { get; init; }
   IsOpen : System.Boolean { get; set; }
-  Mime : app.type.item.text.this { get; init; } [Debug]
+  Mime : app.type.item.text.this { get; init; } [Debug, LlmBuilder]
   Name : System.String { get; init; } [Debug]
   Signing : System.String { get; init; }
   Timeout : System.TimeSpan { get; init; }
@@ -948,7 +948,7 @@ class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.thi
   Notes : app.type.item.file.this { get; }
   Register(System.String module, System.String actionName, System.Type type) : System.Void
   Remove(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.Boolean>
-  list : app.type.item.list.this<app.module.this> { get; }
+  list : app.type.item.list.this<app.module.this> { get; } [LlmBuilder]
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override Get(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsLeaf : System.Boolean { get; }
@@ -958,10 +958,10 @@ class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.thi
 
 class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnapshot, app.type.item.setting.ISetting<app.setting.this>
   AbsolutePath : System.String { get; }
-  Build : app.module.build.this { get; set; }
+  Build : app.module.build.this { get; set; } [LlmBuilder]
   Cache : app.module.cache.ICache { get; }
   Code : app.module.code.this { get; }
-  Created : app.type.item.datetime.this { get; } [Store]
+  Created : app.type.item.datetime.this { get; } [LlmBuilder, Store]
   Debug : app.module.debug.this { get; set; }
   DisposeAsync() : System.Threading.Tasks.ValueTask
   Environment(app.actor.context.this context) : app.type.item.text.this [LlmBuilder]
@@ -984,30 +984,30 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   SnapshotToWire(app.snapshot.this s) : System.Threading.Tasks.Task<System.String>
   Start() : System.Threading.Tasks.Task<app.data.this>
   Start(app.goal.this goal, app.actor.context.this context, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
-  StartedAt : app.type.item.datetime.this { get; }
+  StartedAt : app.type.item.datetime.this { get; } [LlmBuilder]
   Updated : app.type.item.datetime.this { get; } [Store]
-  Uptime : app.type.item.duration.this { get; }
+  Uptime : app.type.item.duration.this { get; } [LlmBuilder]
   Version : System.String { get; } [Store]
-  actor : app.type.node.current.this<app.actor.this, app.actor.list.this> { get; }
+  actor : app.type.node.current.this<app.actor.this, app.actor.list.this> { get; } [LlmBuilder]
   call(app.actor.context.this context) : app.call.list.this [LlmBuilder]
   ctor(System.String absolutePath, System.String environment = …, System.Boolean autoWireConsoleChannels = …)
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
-  error : app.type.node.current.this<app.error.this, app.error.list.this> { get; }
+  error : app.type.node.current.this<app.error.this, app.error.list.this> { get; } [LlmBuilder]
   event(app.actor.context.this context) : app.data.this [LlmBuilder]
-  goal : app.type.node.current.this<app.goal.this, app.goal.list.this> { get; }
-  module : app.module.this { get; }
+  goal : app.type.node.current.this<app.goal.this, app.goal.list.this> { get; } [LlmBuilder]
+  module : app.module.this { get; } [LlmBuilder]
   override IsLeaf : System.Boolean { get; }
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  parent : app.parent.this { get; }
+  parent : app.parent.this { get; } [LlmBuilder]
   protected override Clone() : app.type.item.this
   shortcut : app.type.node.this<app.shortcut.this, app.shortcut.list.this> { get; }
   static WireConsoleChannels(app.actor.this actor, System.Boolean interactiveInput) : System.Void
   static WireDefaultConsoleChannels(app.actor.this actor) : System.Void
-  store : app.store.this { get; }
-  test : app.type.node.current.this<app.test.this, app.test.list.this> { get; }
+  store : app.store.this { get; } [LlmBuilder]
+  test : app.type.node.current.this<app.test.this, app.test.list.this> { get; } [LlmBuilder]
   trace(app.actor.context.this context) : app.actor.context.trace.this [LlmBuilder]
-  type : app.type.node.root.this { get; }
-  variable : app.type.node.this<app.type.item.variable.this, app.type.item.list.this<app.type.item.variable.this>> { get; }
+  type : app.type.node.root.this { get; } [LlmBuilder]
+  variable : app.type.node.this<app.type.item.variable.this, app.type.item.list.this<app.type.item.variable.this>> { get; } [LlmBuilder]
 
 class app.type.clr.this : app.type.item.this, app.type.item.ICreate<app.type.clr.this> [PlangType]
   Enumerate(app.actor.context.this context) : System.Collections.Generic.IEnumerable<app.data.this>
@@ -1405,7 +1405,7 @@ class app.type.item.date.this : app.type.item.this, System.IEquatable<app.type.i
   Equals(app.type.item.date.this other) : System.Boolean
   Month : System.Int32 { get; }
   Value : System.DateOnly { get; }
-  Year : System.Int32 { get; }
+  Year : System.Int32 { get; } [LlmBuilder]
   ctor(System.DateOnly value, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
@@ -1626,7 +1626,7 @@ class app.type.item.image.this : app.type.item.this, app.data.IKindValidatable, 
   Bytes : System.Byte[] { get; } [Out, Store]
   CheckStrictKind() : System.Nullable<System.ValueTuple<System.Boolean, System.String>>
   Height : System.Int32 { get; }
-  Mime : System.String { get; } [Out, Store]
+  Mime : System.String { get; } [LlmBuilder, Out, Store]
   Path : app.type.item.path.this { get; init; } [LlmBuilder, Out, Store]
   RequireStrictKind(System.String kind) : System.Void
   ValidateKind(System.Object value, System.String requiredKind) : System.ValueTuple<System.Boolean, System.String>
@@ -2583,7 +2583,7 @@ class app.type.item.source : app.type.item.this
   protected override Clone() : app.type.item.this
 
 class app.type.item.status.this : app.type.item.this, app.type.item.ICreate<app.type.item.status.this> [PlangType]
-  Code : app.type.item.number.this { get; } [Out, Store]
+  Code : app.type.item.number.this { get; } [LlmBuilder, Out, Store]
   IsNotFound : System.Boolean { get; }
   Ok : app.type.item.bool.this { get; }
   Text : app.type.item.text.this { get; } [Out, Store]
@@ -2772,7 +2772,7 @@ class app.type.item.time.serializer.Reader : app.type.reader.ITypeReader
 class app.type.item.time.this : app.type.item.this, System.IEquatable<app.type.item.time.this>, app.type.item.ICreate<app.type.item.time.this> [PlangType]
   AreEqual(System.Object other) : System.Boolean
   Equals(app.type.item.time.this other) : System.Boolean
-  Hour : System.Int32 { get; }
+  Hour : System.Int32 { get; } [LlmBuilder]
   Minute : System.Int32 { get; }
   Second : System.Int32 { get; }
   Value : System.TimeOnly { get; }
@@ -3309,28 +3309,63 @@ class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, 
 
 type action
   .name : text
+  .examples : file
 
 type actor
+  .channel : app.channel.list
+  .task : app.task.list
 
 type app
   .name : text
+  .created : datetime
   .environment : text
   .call : app.call.list
   .trace : app.actor.context.trace
   .data : item
   .event : item
+  .startedAt : datetime
+  .uptime : duration
+  .module : module
+  .goal : node
+  .store : store
+  .test : node
+  .error : node
+  .variable : node
+  .build : clr
+  .type : app.type.node.root
+  .parent : app.parent
+  .actor : node
 
 type app.actor.context.trace
+  .id : text
 
 type app.actor.permission.setting
 
 type app.call
+  .goal : goal
+  .step : step
+  .caller : app.call
+  .tags : dict
+  .depth : number
 
 type app.call.binding
+  .goal : goal
+  .step : step
+  .caller : app.call
+  .tags : dict
+  .depth : number
 
 type app.call.isolated
+  .goal : goal
+  .step : step
+  .caller : app.call
+  .tags : dict
+  .depth : number
 
 type app.call.list
+  .audit : list<error>
+  .current : app.call
+  .scope : app.call
 
 type app.call.setting
 
@@ -3341,18 +3376,32 @@ type app.call.setting.frame
 type app.channel.list
 
 type app.channel.type.file
+  .buffer : number
+  .mime : text
 
 type app.channel.type.goal
+  .buffer : number
+  .mime : text
 
 type app.channel.type.message
+  .buffer : number
+  .mime : text
 
 type app.channel.type.noop
+  .buffer : number
+  .mime : text
 
 type app.channel.type.session
+  .buffer : number
+  .mime : text
 
 type app.channel.type.stream
+  .buffer : number
+  .mime : text
 
 type app.channel.type.test
+  .buffer : number
+  .mime : text
 
 type app.event.binding
 
@@ -3407,6 +3456,7 @@ type app.setting
 type app.store.sqlite
 
 type app.task.list
+  .list : list<task>
 
 type app.test.setting
 
@@ -3444,11 +3494,14 @@ type browser
   .running : bool
 
 type channel
+  .buffer : number
+  .mime : text
 
 type choice
 
 type clause
   .name : text
+  .examples : file
 
 type clipboard
 
@@ -3466,6 +3519,7 @@ type culture
 type cursor
 
 type date
+  .year : number
 
 type datetime
   .year : number
@@ -3500,6 +3554,19 @@ type element
 type entity
 
 type error
+  .message : text
+  .key : text
+  .status : status
+  .fixSuggestion : text
+  .trace : text
+  .details : dict<clr>
+  .data : list
+  .list : list<error>
+  .callback : snapshot
+  .step : step
+  .goal : goal
+  .callFrames : list<app.call>
+  .variables : dict
 
 type event
 
@@ -3511,7 +3578,11 @@ type given
 type goal
   .name : text
   .comment : text
+  .step : list<step>
+  .child : list<goal>
   .visibility : choice<visibility>
+  .path : path
+  .isCached : bool
 
 type guid
 
@@ -3527,6 +3598,7 @@ type identity
   .created : datetime
 
 type image
+  .mime : text
   .path : path
 
 type input
@@ -3535,6 +3607,7 @@ type item
 
 type keep
   .name : text
+  .examples : file
 
 type key
   .list : list<text>
@@ -3550,6 +3623,7 @@ type list
 
 type loop
   .name : text
+  .examples : file
 
 type message
   .role : text
@@ -3559,6 +3633,7 @@ type message
 type modifier
 
 type module
+  .list : list<module>
 
 type node
 
@@ -3619,13 +3694,16 @@ type size
 type snapshot
 
 type status
+  .code : number
 
 type step
   .index : number
   .text : text
+  .isCached : bool
   .line : clr
   .comment : text
   .intent : text
+  .goal : goal
 
 type store
 
@@ -3634,8 +3712,16 @@ type table
 type tag
 
 type task
+  .id : text
+  .ended : bool
+  .list : list
 
 type test
+  .name : text
+  .status : clr
+  .statusReason : text
+  .tags : list<tag>
+  .error : error
 
 type text
   .length : number
@@ -3648,6 +3734,7 @@ type text
   .grepCount(pattern: text) : number
 
 type time
+  .hour : number
 
 type timing
 

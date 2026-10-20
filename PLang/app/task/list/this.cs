@@ -16,6 +16,7 @@ public sealed class @this : global::app.type.item.@this
     internal @this(global::app.actor.@this actor) => _actor = actor;
 
     /// <summary>The tasks running now — each as it was started.</summary>
+    [global::app.LlmBuilder]
     public IEnumerable<task.@this> list => _running.Values;
 
     /// <summary>A task running <paramref name="run"/> for <paramref name="goal"/>: listed, then started; it leaves the
