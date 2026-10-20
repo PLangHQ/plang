@@ -53,6 +53,32 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
         Actor = actor;
     }
 
+    // Whether this actor's standard channels (output, error, input, on the console) are still to be wired: 0 none to
+    // wire (none asked, or wired), 1 asked, 2 being wired (a registration on this thread sees those wired so far).
+    private int _standard;
+
+    /// <summary>This actor's standard channels — output, error and input on the console, the input an empty one (an ad-hoc
+    /// app is no terminal's owner) — wired when the channels are first used, not now: an app whose actor never writes
+    /// makes none. A channel registered before then keeps its name.</summary>
+    internal void Standard() => System.Threading.Interlocked.CompareExchange(ref _standard, 1, 0);
+
+    // The channels, the standard ones wired first when they are still to be.
+    private ConcurrentDictionary<string, channel.@this> Held
+    {
+        get
+        {
+            if (System.Threading.Volatile.Read(ref _standard) != 0)
+                lock (_channels)
+                    if (_standard == 1)
+                    {
+                        _standard = 2;
+                        global::app.@this.WireConsoleChannels(Actor!, interactiveInput: false);
+                        System.Threading.Volatile.Write(ref _standard, 0);
+                    }
+            return _channels;
+        }
+    }
+
     /// <summary>
     /// Boot invariant: every name in <see cref="Defaults"/> must be registered.
     /// Returns Ok or a Data error with key <c>MissingRequiredChannelAtBoot</c>.
@@ -64,7 +90,7 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
         var context = Actor?.Context ?? _app.actor.list.System.Context;
         foreach (var name in Defaults)
         {
-            if (!_channels.ContainsKey(name))
+            if (!Held.ContainsKey(name))
                 return context.Error(new ServiceError(
                     $"Channel '{name}' not registered. Default channels ({string.Join(", ", Defaults)}) must be wired before goals run.",
                     "MissingRequiredChannelAtBoot", 500));
@@ -95,12 +121,12 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     /// channels stay visible.
     /// </summary>
     public channel.@this? Get(string name)
-        => _channels.TryGetValue(name, out var channel) && channel.Available ? channel : null;
+        => Held.TryGetValue(name, out var channel) && channel.Available ? channel : null;
 
     public void Register(channel.@this channel)
     {
         Adopt(channel);
-        _channels[channel.Name] = channel;
+        Held[channel.Name] = channel;
     }
 
     /// <summary>Registers <paramref name="channel"/> in place of the one by its name, which is disposed after — one
@@ -109,7 +135,7 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     {
         Adopt(channel);
         channel.@this? old = null;
-        _channels.AddOrUpdate(channel.Name, channel, (_, previous) => { old = previous; return channel; });
+        Held.AddOrUpdate(channel.Name, channel, (_, previous) => { old = previous; return channel; });
         if (old != null && !ReferenceEquals(old, channel)) await old.DisposeAsync();
     }
 
@@ -128,13 +154,13 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
             return context.Error(new ServiceError(
                 $"Channel '{name}' is a default channel and cannot be removed (use channel.set to replace its backing).",
                 "ChannelInvariantViolation", 400));
-        if (!_channels.TryRemove(name, out var channel))
+        if (!Held.TryRemove(name, out var channel))
             return context.Error(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404));
         await channel.DisposeAsync();
         return context.Ok();
     }
 
-    public bool Contains(string name) => _channels.ContainsKey(name);
+    public bool Contains(string name) => Held.ContainsKey(name);
 
     // --- Stage 3 accessor surface ---
 
@@ -145,12 +171,12 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     /// <summary>The open channel of the C# class <paramref name="clrType"/>, whatever name it is under;
     /// null when there is none. What a channel IS, beside where it writes (its name).</summary>
     public channel.@this? this[System.Type clrType]
-        => _channels.Values.FirstOrDefault(c => c.IsOpen && clrType.IsInstanceOfType(c));
+        => Held.Values.FirstOrDefault(c => c.IsOpen && clrType.IsInstanceOfType(c));
 
     /// <summary>Enumerate registered channels.</summary>
-    public IEnumerable<channel.@this> list => _channels.Values;
+    public IEnumerable<channel.@this> list => Held.Values;
 
-    public IEnumerable<string> ChannelNames => _channels.Keys;
+    public IEnumerable<string> ChannelNames => Held.Keys;
 
     /// <summary>One step down: the list's own members first, then a channel by name —
     /// <c>%!app.actor["user"].channel.output%</c> is the channel a program binds its events on.</summary>

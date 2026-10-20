@@ -399,10 +399,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // The one interactive owner — the CLI (Executor) — constructs with
         // autoWireConsoleChannels:false and calls WireDefaultConsoleChannels
         // itself to bind real stdin.
+        // Wired when an actor's channels are first used, not at birth.
         if (autoWireConsoleChannels)
         {
-            WireConsoleChannels(actor.list.System, interactiveInput: false);
-            WireConsoleChannels(actor.list.User, interactiveInput: false);
+            actor.list.System.Channel.Standard();
+            actor.list.User.Channel.Standard();
         }
     }
 
