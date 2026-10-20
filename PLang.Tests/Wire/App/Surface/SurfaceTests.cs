@@ -46,7 +46,7 @@ public class SurfaceTests
                 lines.Add($"  .{p.Name}{Arguments(p)} : {p.Type}");
         }
         foreach (var module in os.module.list.Items().OrderBy(m => m.Name, System.StringComparer.Ordinal))
-            foreach (var action in module.ActionNames.OrderBy(a => a, System.StringComparer.Ordinal))
+            foreach (var action in module.Action.Items().Select(named => named.Name).OrderBy(a => a, System.StringComparer.Ordinal))
             {
                 lines.Add("");
                 lines.Add($"action {module.Name}.{action}");

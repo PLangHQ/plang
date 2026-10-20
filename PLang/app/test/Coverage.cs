@@ -155,7 +155,7 @@ public sealed class Coverage
         var universeCount = 0;
         foreach (var module in modules.Items().OrderBy(m => m.Name))
         {
-            foreach (var action in module.ActionNames.OrderBy(a => a))
+            foreach (var action in module.Action.Items().Select(each => each.Name).OrderBy(a => a))
             {
                 universeCount++;
                 var hit = observed.Contains((module.Name, action)) ? "x" : " ";

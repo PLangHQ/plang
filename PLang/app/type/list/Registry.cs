@@ -275,7 +275,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         // each kind class, born holding the entry of the type it is a kind of (the T of its kind<T>)
         foreach (var kind in code.kind)
             if (named.GetValueOrDefault(kind.Owner) is { } owner)
-                Hold((global::app.type.kind.@this)kind.Made.Invoke([owner]));        // each format a type's class declares, a kind of that type (whether the class writes and reads it itself
+                Hold((global::app.type.kind.@this)kind.Made.Invoke([owner]));
+        // each format a type's class declares, a kind of that type (whether the class writes and reads it itself
         // is the format's own question). The type is found as the list finds any class's: by its name, else as
         // the list names the class (a list of actions is a list); a declared format no type reads is plang broken
         foreach (var format in code.format)
@@ -290,7 +291,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         // a list's element kinds, made as a list names its element (list<path>)
         if (code.Clr == typeof(global::app.type.item.list.@this).Assembly
             && named.GetValueOrDefault(global::app.type.item.@this.NameOf(typeof(global::app.type.item.list.@this))) is { } list)
-            Hold(new global::app.type.item.list.kind.@this(list, this));        // each class marked a choice ([Choice]) is the closed set a choice<T> draws on, a kind of choice, with its reader
+            Hold(new global::app.type.item.list.kind.@this(list, this));
+        // each class marked a choice ([Choice]) is the closed set a choice<T> draws on, a kind of choice, with its reader
         foreach (var choice in code.choice)
         {
             if (global::app.type.item.choice.set.@this.For(choice.Class, this) is not { } set)
@@ -304,7 +306,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             Hold(set);
             // the closed reader for this set, made from its name
             Reader.Register("choice", set.Name, (global::app.type.reader.ITypeReader)choice.Reader.Invoke([set.Name]));
-        }        // each class under a family that has kinds ([Kinds]) is one of its kinds, by its own name — but a class named as
+        }
+        // each class under a family that has kinds ([Kinds]) is one of its kinds, by its own name — but a class named as
         // its family (a typed list, a class of settings: the family holds those its own way) and a kind the family
         // already holds (path's schemes, file and http).
         foreach (var subclass in code.subclass)
@@ -318,7 +321,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 // family's value, not the subclass's. Its namespace-keyed auto-registration is never consulted.
                 if (subclass.Reader is { } reader)
                     Reader.Register(subclass.Family, subclass.Kind, (global::app.type.reader.ITypeReader)reader.Invoke(null));
-            }        return null;
+            }
+        return null;
     }
 
     // The name a class's type goes by (its declared word, else its namespace), or null when it is no type

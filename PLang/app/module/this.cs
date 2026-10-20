@@ -50,13 +50,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// naturally without reaching for <c>.Name</c>.</summary>
     public override string ToString() => Name;
 
-    // The module's actions — ITS OWN storage, filled as each one registers. One map, because the
-    // ROLE is decided once, here: an action whose handler is a clause (IClause — on.error, on.cache,
-    // on.timeout) is minted as the clause subtype at registration, so "the type IS the role" needs no
-    // second home and no flag; a program action is made by its catalog element (Program).
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, global::app.goal.step.action.@this> _action
-        = new(System.StringComparer.OrdinalIgnoreCase);
-
     /// <summary>The app's module — empty, holding every module the app loads.</summary>
     internal @this(global::app.@this app) : base(app.type.list[typeof(@this)])
     {
@@ -64,14 +57,40 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _app = app;
         _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
         _registering = new object();
-        // the built-in actions, as plang's code says them (read once for every app made from it)
-        foreach (var action in app.assembly.action) Of(action.Module).Add(action.Name, action.Class, action.Cacheable);
+        // the built-in modules, as plang's code says them (read once for every app made from it); each makes its
+        // actions when it is first asked for them
+        foreach (var module in app.assembly.module) _modules.Add(new @this(module.Name, this, module.Action));
     }
 
-    internal @this(string name, @this root) : base(root.Type)
+    internal @this(string name, @this root, System.Collections.Generic.IReadOnlyList<global::app.assembly.@this.Action>? born = null)
+        : base(root.Type)
     {
         Name = name;
         _root = root;
+        _born = born ?? [];
+    }
+
+    // The actions the code gave this module at its birth — made into the module's actions on the first ask.
+    private readonly System.Collections.Generic.IReadOnlyList<global::app.assembly.@this.Action> _born = [];
+
+    // The module's actions, made on the first ask; held and compared by reference (a program binds events on an
+    // action), so the first made is the one kept.
+    private global::app.type.item.list.@this<global::app.goal.step.action.@this>? _action;
+
+    /// <summary>The module's actions — step actions and clauses alike (the type IS the role: an action whose handler is
+    /// a clause is made the clause subtype, so the role needs no flag). Made from the module's action classes when
+    /// first asked. Filterable by the list module, renderable by templates.</summary>
+    [LlmBuilder]
+    public global::app.type.item.list.@this<global::app.goal.step.action.@this> Action
+    {
+        get
+        {
+            if (_action is { } held) return held;
+            var made = new global::app.type.item.list.@this<global::app.goal.step.action.@this>(
+                _born.Select(action => (global::app.type.item.@this)Made(action.Name, action.Class, action.Cacheable)),
+                App.type.list[typeof(global::app.type.item.list.@this<global::app.goal.step.action.@this>)]);
+            return System.Threading.Interlocked.CompareExchange(ref _action, made, null) ?? made;
+        }
     }
 
     // The app's module: this one, or the one holding it.
@@ -110,11 +129,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public int Discover(Assembly assembly, string? baseNamespace = null)
     {
         int count = 0;
-        foreach (var action in new global::app.assembly.@this(assembly).Actions(baseNamespace ?? "app.module"))
-        {
-            Of(action.Module).Add(action.Name, action.Class, action.Cacheable);
-            count++;
-        }
+        foreach (var module in new global::app.assembly.@this(assembly).Under(baseNamespace ?? "app.module"))
+            foreach (var action in module.Action)
+            {
+                Of(module.Name).Add(action.Name, action.Class, action.Cacheable);
+                count++;
+            }
         return count;
     }
 
@@ -142,13 +162,26 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Takes one action: its catalog action, born from its class as the subtype the class says it is (a
     /// clause when it is an <see cref="IClause"/>, a loop when it is an <see cref="ILoop"/>, a keep when it is an
     /// <see cref="IKeep"/>), holding the class. The module is the only thing that ever adds to its own contents.</summary>
+    /// An action of the same name is replaced.
     internal void Add(string actionName, System.Type clr, bool cacheable)
     {
-        // The catalog action carries the [Action] cache flag (read off the attribute, its single source) so the
-        // teaching template can tag [no-cache].
+        var made = Made(actionName, clr, cacheable);
+        lock (Root._registering!)
+        {
+            var index = Action.Items().Select((action, at) => (action, at))
+                .FirstOrDefault(each => string.Equals(each.action.Name, actionName, System.StringComparison.OrdinalIgnoreCase));
+            if (index.action != null) Action.RemoveAt(index.at);
+            Action.Add(made);
+        }
+    }
+
+    // The catalog action for one action class. It carries the [Action] cache flag (read off the attribute, its single
+    // source) so the teaching template can tag [no-cache].
+    private global::app.goal.step.action.@this Made(string actionName, System.Type clr, bool cacheable)
+    {
         var types = App.type.list;
         // The catalog action is born with its class's properties, reflected on first read.
-        _action[actionName] =
+        return
             typeof(global::app.module.IClause).IsAssignableFrom(clr)
                 ? new global::app.goal.step.action.clause.@this(types)
                     { Module = this, Name = actionName, Cacheable = cacheable, Class = clr, Property = new(this, actionName) }
@@ -162,16 +195,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 { Module = this, Name = actionName, Cacheable = cacheable, Class = clr, Property = new(this, actionName) };
     }
 
-    /// <summary>The module's actions as the NATIVE plang list — step actions and clauses alike (the type
-    /// IS the role). Filterable by the list module, renderable by templates.</summary>
-    [LlmBuilder]
-    public global::app.type.item.list.@this Action
-        => new(_action.Values.Select(a => (object?)a).ToList(), App.type.list["list"]);
-
-    /// <summary>Select one catalog element by action name — a step action or a clause; the type answers
+    /// <summary>Select one of the module's actions by its name — a step action or a clause; the type answers
     /// the role. Null when the name isn't in this module.</summary>
     public global::app.goal.step.action.@this? this[string actionName]
-        => _action.TryGetValue(actionName, out var action) ? action : null;
+    {
+        get
+        {
+            // walked by position: every action a step runs is selected here, so the walk allocates nothing
+            var action = Action;
+            for (int at = 0, count = action.CountRaw; at < count; at++)
+                if (string.Equals(action[at].Name, actionName, System.StringComparison.OrdinalIgnoreCase)) return action[at];
+            return null;
+        }
+    }
 
     /// <summary>One step by dot: the module's own members first (<c>.name</c>, <c>.list</c>, <c>.action</c>, …), then
     /// one of its children by name — <c>%!module.file.read%</c> is the catalog action a program binds events on. An
@@ -204,7 +240,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal global::app.goal.step.action.@this? this[System.Type clr]
         => _root == null
             ? list.Items().Select(module => module[clr]).FirstOrDefault(action => action != null)
-            : _action.Values.FirstOrDefault(action => action.Class == clr);
+            : Action.Items().FirstOrDefault(action => action.Class == clr);
 
     /// <summary>The class that runs one of this module's actions — its catalog action's.</summary>
     internal System.Type? Handler(string actionName) => this[actionName]?.Class;
@@ -215,17 +251,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             ? (ICodeGenerated)System.Activator.CreateInstance(clr, context)!
             : null;
 
-    internal bool Contains(string actionName) => _action.ContainsKey(actionName);
-
-    /// <summary>The names this module answers to — its own keys.</summary>
-    internal IEnumerable<string> ActionNames => _action.Keys;
-
-    internal int Count => _action.Count;
-
     /// <summary>Sheds every action this module owns. Unregistering a module must be authoritative
     /// even for code already holding the element (a revoked DLL's actions must stop resolving), and
     /// only the module can empty itself.</summary>
-    internal void Clear() => _action.Clear();
+    internal void Clear()
+    {
+        lock (Root._registering!)
+            for (var at = Action.CountRaw - 1; at >= 0; at--) Action.RemoveAt(at);
+    }
 
     /// <summary>Where the modules' teaching markdown lives — <c>/system/modules</c>, resolved through
     /// <c>path.Resolve</c> so every read passes <c>AuthGate</c> (FilePath redirects <c>/system/*</c> to the

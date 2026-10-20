@@ -63,7 +63,7 @@ public class LibrariesTests : System.IAsyncDisposable
         modulesHost.module.Register("custom", "alpha", typeof(MockHandler));
         modulesHost.module.Register("custom", "beta", typeof(MockHandler));
 
-        var actions = modulesHost.Module("custom").ActionNames.ToList();
+        var actions = modulesHost.Module("custom").Action.Items().Select(named => named.Name).ToList();
 
         await Assert.That(actions).Contains("alpha");
         await Assert.That(actions).Contains("beta");
@@ -74,7 +74,7 @@ public class LibrariesTests : System.IAsyncDisposable
     {
         await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
 
-        var actions = modulesHost.Module("nonexistent_xyz_123").ActionNames.ToList();
+        var actions = modulesHost.Module("nonexistent_xyz_123").Action.Items().Select(named => named.Name).ToList();
 
         await Assert.That(actions.Count).IsEqualTo(0);
     }
@@ -245,12 +245,12 @@ public class LibrariesTests : System.IAsyncDisposable
     {
         await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
         var modules = modulesHost.module.list;
-        var countBefore = modules.Items().Sum(m => m.Count);
+        var countBefore = modules.Items().Sum(m => m.Action.CountRaw);
 
         modulesHost.module.Register("custom", "one", typeof(MockHandler));
         modulesHost.module.Register("custom", "two", typeof(MockHandler));
 
-        await Assert.That(modules.Items().Sum(m => m.Count)).IsEqualTo(countBefore + 2);
+        await Assert.That(modules.Items().Sum(m => m.Action.CountRaw)).IsEqualTo(countBefore + 2);
     }
 
     [Test]
@@ -307,7 +307,7 @@ public class LibrariesTests : System.IAsyncDisposable
         modulesHost.module.Register("variable", "set", typeof(MockHandler)); // overwrites
         modulesHost.module.Register("variable", "custom_action", typeof(MockHandler)); // new
 
-        var actions = modulesHost.Module("variable").ActionNames.ToList();
+        var actions = modulesHost.Module("variable").Action.Items().Select(named => named.Name).ToList();
 
         await Assert.That(actions).Contains("set");
         await Assert.That(actions).Contains("custom_action");

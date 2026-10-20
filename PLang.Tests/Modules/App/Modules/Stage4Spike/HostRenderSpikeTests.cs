@@ -157,7 +157,7 @@ public class HostRenderSpikeTests
         // Real catalog action elements ride as raw POCOs (clr) in a native list —
         // the shape 4a's app.module surface will answer.
         var subset = new[] { "file", "variable" }
-            .SelectMany(m => app.Module(m).ActionNames.Select(a => (global::app.goal.step.action.@this)app.Module(m)[a]!))
+            .SelectMany(m => app.Module(m).Action.Items().Select(named => named.Name).Select(a => (global::app.goal.step.action.@this)app.Module(m)[a]!))
             .ToList();
         var actions = new ItemList(new List<object?>(subset.Cast<object?>()), app.type.list["list"]);
         ctx.Variable.Set(new Data("actions", actions, context: ctx));

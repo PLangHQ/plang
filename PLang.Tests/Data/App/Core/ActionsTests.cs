@@ -323,7 +323,7 @@ public class ActionsTests : System.IAsyncDisposable
 
         foreach (var module in modules.Items())
         {
-            foreach (var actionName in module.ActionNames)
+            foreach (var actionName in module.Action.Items().Select(named => named.Name))
             {
                 actions.Add(new global::app.goal.step.action.@this(app.type.list)
                 {

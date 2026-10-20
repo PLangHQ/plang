@@ -47,7 +47,7 @@ public class ModuleAddTests
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
-            var countBefore = app.module.list.Items().Sum(m => m.Count);
+            var countBefore = app.module.list.Items().Sum(m => m.Action.CountRaw);
             var result = await add.Start();
 
             await result.IsSuccess();

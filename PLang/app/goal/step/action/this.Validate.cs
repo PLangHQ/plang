@@ -23,7 +23,7 @@ public partial class @this
         var element = Module[Name];
         if (element == null)
         {
-            var sorted = Utils.StringDistance.OrderBySimilarity(Name, Module.ActionNames);
+            var sorted = Utils.StringDistance.OrderBySimilarity(Name, Module.Action.Items().Select(action => action.Name));
             causes.Add(new global::app.error.@this(
                 $"{Module}.{Name}: module '{Module}' exists but action '{Name}' not found. " +
                 $"Did you mean: {string.Join(", ", sorted.Take(5))}?",

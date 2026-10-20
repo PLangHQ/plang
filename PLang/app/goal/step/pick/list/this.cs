@@ -474,8 +474,7 @@ public sealed class @this
     private List<global::app.goal.step.action.@this> Branch(global::app.actor.context.@this context)
     {
         var condition = _modules["condition"];
-        return condition.ActionNames.OrderBy(a => a, StringComparer.Ordinal)
-            .Select(a => condition[a]!).Where(a => a.IsBranch).ToList();
+        return condition.Action.Items().OrderBy(a => a.Name, StringComparer.Ordinal).Where(a => a.IsBranch).ToList();
     }
 
     // ---------------------------------------------------------------- what stage 1 means
@@ -537,7 +536,7 @@ public sealed class @this
         foreach (var m in Asked(context))
         {
             var module = _modules[m];
-            string? action = module.Count == 1 ? module.ActionNames.Single() : _choice.GetValueOrDefault(m).Action;
+            string? action = module.Action.CountRaw == 1 ? module.Action.Items().Single().Name : _choice.GetValueOrDefault(m).Action;
             if (action == null) continue;
             var name = $"{m}.{action}";
             var asked = yesNo.Contains(m);
@@ -592,18 +591,18 @@ public sealed class @this
         foreach (var m in asked)
         {
             var module = _modules[m];
-            if (module.Count == 1) continue;   // one action: nothing to decide
+            if (module.Action.CountRaw == 1) continue;   // one action: nothing to decide
             questions.Add(new question.@this
             {
                 Id = Key(m), Kind = Kind.Action, Module = module,
-                Option = module.ActionNames.OrderBy(a => a, StringComparer.Ordinal).Select(a => module[a]!).ToList(),
+                Option = module.Action.Items().OrderBy(a => a.Name, StringComparer.Ordinal).ToList(),
             });
         }
         // the options whose notes ask: of each action certain from stage 1, and of every action of each module asked
         // its action here (a one-action module's one) — answered beside it; the starting line uses an answer only
         // when its action ends up certain
         var actions = _items.Where(p => p.Score is { } s && s >= (number)Near).Select(p => Catalog(p.Name, context))
-            .Concat(asked.SelectMany(m => _modules[m].ActionNames.Select(a => _modules[m][a])))
+            .Concat(asked.SelectMany(m => _modules[m].Action.Items()))
             .Where(a => a != null).Select(a => a!).Distinct();
         foreach (var action in actions)
         {

@@ -14,7 +14,7 @@ public class NameSlotDefaultTests
         var failed = new List<string>();
 
         foreach (var module in app.module.list.Items())
-            foreach (var name in module.ActionNames.ToList())
+            foreach (var name in module.Action.Items().Select(named => named.Name).ToList())
             {
                 var element = module[name]!;
                 foreach (var slot in element.Property.Where(p => p.Type.Name == "variable" && p.HasDefault))

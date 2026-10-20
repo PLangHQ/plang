@@ -7265,9 +7265,9 @@
           "split": "Split a string into a list using a separator (default comma); the empty pieces are kept unless the step drops them (Empty=drop)"
         }
       },
-      "s12_@option.list.split.Separator": {
+      "s12_@option.list.join.Separator": {
         "type": "choice",
-        "instructions": "Step 12 is `add %goal.Name% to %traceGoals%`. what does the step split on — a named separator (line — also `lines`/`newline` —, comma, tab, space, semicolon) or one of the step's variables?",
+        "instructions": "Step 12 is `add %goal.Name% to %traceGoals%`. what does the step join with — a named separator (line, comma, tab, space, semicolon) or one of the step's variables?",
         "criteria": {
           "line": null,
           "comma": null,
@@ -7279,9 +7279,9 @@
           "none": null
         }
       },
-      "s12_@option.list.join.Separator": {
+      "s12_@option.list.split.Separator": {
         "type": "choice",
-        "instructions": "Step 12 is `add %goal.Name% to %traceGoals%`. what does the step join with — a named separator (line, comma, tab, space, semicolon) or one of the step's variables?",
+        "instructions": "Step 12 is `add %goal.Name% to %traceGoals%`. what does the step split on — a named separator (line — also `lines`/`newline` —, comma, tab, space, semicolon) or one of the step's variables?",
         "criteria": {
           "line": null,
           "comma": null,
@@ -12241,9 +12241,9 @@
           "none": null
         }
       },
-      "s1_@option.list.split.Separator": {
+      "s1_@option.list.join.Separator": {
         "type": "choice",
-        "instructions": "Step 1 is `count %order.items%, write to %itemCount%`. what does the step split on — a named separator (line — also `lines`/`newline` —, comma, tab, space, semicolon) or one of the step's variables?",
+        "instructions": "Step 1 is `count %order.items%, write to %itemCount%`. what does the step join with — a named separator (line, comma, tab, space, semicolon) or one of the step's variables?",
         "criteria": {
           "line": null,
           "comma": null,
@@ -12255,9 +12255,9 @@
           "none": null
         }
       },
-      "s1_@option.list.join.Separator": {
+      "s1_@option.list.split.Separator": {
         "type": "choice",
-        "instructions": "Step 1 is `count %order.items%, write to %itemCount%`. what does the step join with — a named separator (line, comma, tab, space, semicolon) or one of the step's variables?",
+        "instructions": "Step 1 is `count %order.items%, write to %itemCount%`. what does the step split on — a named separator (line — also `lines`/`newline` —, comma, tab, space, semicolon) or one of the step's variables?",
         "criteria": {
           "line": null,
           "comma": null,
@@ -12500,9 +12500,9 @@
           "split": "Split a string into a list using a separator (default comma); the empty pieces are kept unless the step drops them (Empty=drop)"
         }
       },
-      "s8_@option.list.split.Separator": {
+      "s8_@option.list.join.Separator": {
         "type": "choice",
-        "instructions": "Step 8 is `if %order.note% does not start with \"#\", add %order.note% to %notes%`. what does the step split on — a named separator (line — also `lines`/`newline` —, comma, tab, space, semicolon) or one of the step's variables?",
+        "instructions": "Step 8 is `if %order.note% does not start with \"#\", add %order.note% to %notes%`. what does the step join with — a named separator (line, comma, tab, space, semicolon) or one of the step's variables?",
         "criteria": {
           "line": null,
           "comma": null,
@@ -12514,9 +12514,9 @@
           "none": null
         }
       },
-      "s8_@option.list.join.Separator": {
+      "s8_@option.list.split.Separator": {
         "type": "choice",
-        "instructions": "Step 8 is `if %order.note% does not start with \"#\", add %order.note% to %notes%`. what does the step join with — a named separator (line, comma, tab, space, semicolon) or one of the step's variables?",
+        "instructions": "Step 8 is `if %order.note% does not start with \"#\", add %order.note% to %notes%`. what does the step split on — a named separator (line — also `lines`/`newline` —, comma, tab, space, semicolon) or one of the step's variables?",
         "criteria": {
           "line": null,
           "comma": null,

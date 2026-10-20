@@ -304,7 +304,7 @@ public class PickListTests
             await using var os = global::PLang.Tests.Session.App(root).Testing();
             var context = os.actor.list.User.Context;
             foreach (var module in os.module.list.Items())
-                foreach (var action in module.ActionNames)
+                foreach (var action in module.Action.Items().Select(named => named.Name))
                 {
                     var folder = System.IO.Path.Combine(modules, module.Name);
                     System.IO.Directory.CreateDirectory(folder);

@@ -224,6 +224,18 @@ ProcessFile
 
 `inbox/` held `a.csv`, `b.csv` and `notes.txt`. Printed `Processing: inbox/a.csv`, `Processing: inbox/b.csv` — `notes.txt` is skipped, so you can see `matching "*.csv"` doing its work.
 
+## copy
+Copy a file or folder from Source to Destination, optionally overwriting and including subfolders
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Source | the first path, inline | path | yes | — | the file or folder to copy from |
+| Destination | `to '<path>'` | path | yes | — | where the copy goes |
+| Overwrite | `overwrite` | bool | no | false | replace the destination if it already exists |
+| Subfolder | (on by default) | choice<subfolder> | no | include | when copying a folder, copy its sub-folders too |
+
+**Returns:** the destination path.
+
 ## delete
 Delete a file or directory at Path, optionally recursively; nothing there is NotFound
 
@@ -234,15 +246,40 @@ Delete a file or directory at Path, optionally recursively; nothing there is Not
 
 **Returns:** the deleted path.
 
-## copy
-Copy a file or folder from Source to Destination, optionally overwriting and including subfolders
+## exists
+Check whether a file or directory exists at Path — what "if '<file>' exists" or "when the file is there" asks — returning the path, whose truthiness is its existence, to feed a condition
+
+- check if file.txt exists, write to %fileInfo%
+- if 'list.json' exists, write out "there"
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
-| Source | the first path, inline | path | yes | — | the file or folder to copy from |
-| Destination | `to '<path>'` | path | yes | — | where the copy goes |
+| Path | `check if '<path>' exists` | path | yes | — | the file or folder to check for |
+
+**Returns:** the path itself; whether it exists is the value's truthiness, so `if %x% is true` probes it (a filesystem stat, or an HTTP HEAD for a URL) at the moment you test it.
+
+## list
+List files in a directory matching an optional glob pattern, optionally recursing into subdirectories
+
+- list files in docs/ recursive, write to %files%
+- list files in %folder%
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Path | the folder, inline | path | yes | — | the folder to list |
+| Pattern | `matching '<glob>'` | text | no | * | which files come back, as a glob |
+| Recursive | `recursive` | bool | no | false | whether sub-folders are searched too |
+
+**Returns:** a list of `path` values.
+
+## move
+Move or rename a file from Source to Destination, optionally overwriting the target
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Source | the first path, inline | path | yes | — | the file or folder to move from |
+| Destination | `to '<path>'` | path | yes | — | where it moves to (this renames it) |
 | Overwrite | `overwrite` | bool | no | false | replace the destination if it already exists |
-| Subfolder | (on by default) | choice<subfolder> | no | include | when copying a folder, copy its sub-folders too |
 
 **Returns:** the destination path.
 
@@ -292,18 +329,6 @@ Trace: %!trace.id%
 
 `%name%` is filled; `%!trace.id%` is left exactly as written.
 
-## exists
-Check whether a file or directory exists at Path — what "if '<file>' exists" or "when the file is there" asks — returning the path, whose truthiness is its existence, to feed a condition
-
-- check if file.txt exists, write to %fileInfo%
-- if 'list.json' exists, write out "there"
-
-| Property | How you say it | Type | Required | Default | What it changes |
-|----------|----------------|------|----------|---------|-----------------|
-| Path | `check if '<path>' exists` | path | yes | — | the file or folder to check for |
-
-**Returns:** the path itself; whether it exists is the value's truthiness, so `if %x% is true` probes it (a filesystem stat, or an HTTP HEAD for a URL) at the moment you test it.
-
 ## save
 Write Value to a file at Path, creating directories as needed. Saving a `%!x.setting%` setting (`save %!llm.setting%`) is not this: that is setting.save.
 
@@ -313,31 +338,6 @@ Write Value to a file at Path, creating directories as needed. Saving a `%!x.set
 | Value | the content, inline | item | yes | — | what to write |
 
 **Returns:** the path that was written.
-
-## list
-List files in a directory matching an optional glob pattern, optionally recursing into subdirectories
-
-- list files in docs/ recursive, write to %files%
-- list files in %folder%
-
-| Property | How you say it | Type | Required | Default | What it changes |
-|----------|----------------|------|----------|---------|-----------------|
-| Path | the folder, inline | path | yes | — | the folder to list |
-| Pattern | `matching '<glob>'` | text | no | * | which files come back, as a glob |
-| Recursive | `recursive` | bool | no | false | whether sub-folders are searched too |
-
-**Returns:** a list of `path` values.
-
-## move
-Move or rename a file from Source to Destination, optionally overwriting the target
-
-| Property | How you say it | Type | Required | Default | What it changes |
-|----------|----------------|------|----------|---------|-----------------|
-| Source | the first path, inline | path | yes | — | the file or folder to move from |
-| Destination | `to '<path>'` | path | yes | — | where it moves to (this renames it) |
-| Overwrite | `overwrite` | bool | no | false | replace the destination if it already exists |
-
-**Returns:** the destination path.
 ```
 
 ## Golden output — condition module
@@ -398,6 +398,24 @@ Compare two values with an operator and write the boolean result to a variable
 
 **Returns:** a `bool`.
 
+## else
+Fallback branch that executes when all preceding if/elseif conditions are false
+
+**Returns:** a `bool`.
+
+## elseif
+Additional condition branch evaluated when the preceding if condition is false
+
+- else if %a% > 5, write 'mid'
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Left | the value right after `else if` | item | yes | — | the value tested, the same as condition.if's |
+| Operator | `>`, `is`, `contains`, `is empty`, … (as in if) | choice<operator> | no | — | the comparison, the same as condition.if's |
+| Right | the value after the operator | item | no | — | what Left is compared to, the same as condition.if's |
+
+**Returns:** a `bool`.
+
 ## if
 Evaluate a condition and execute the then-branch actions; pair with elseif/else for full branching
 
@@ -415,24 +433,6 @@ Evaluate a condition and execute the then-branch actions; pair with elseif/else 
 | Left | the value right after `if` | item | yes | — | the value tested |
 | Operator | `>`, `is`, `is not`, `contains`, `starts with`, `is empty`, `is in […]`, `is a <type>`, … | choice<operator> | no | — | the comparison, a choice<operator> |
 | Right | the value after the operator | item | no | — | what Left is compared to |
-
-**Returns:** a `bool`.
-
-## elseif
-Additional condition branch evaluated when the preceding if condition is false
-
-- else if %a% > 5, write 'mid'
-
-| Property | How you say it | Type | Required | Default | What it changes |
-|----------|----------------|------|----------|---------|-----------------|
-| Left | the value right after `else if` | item | yes | — | the value tested, the same as condition.if's |
-| Operator | `>`, `is`, `contains`, `is empty`, … (as in if) | choice<operator> | no | — | the comparison, the same as condition.if's |
-| Right | the value after the operator | item | no | — | what Left is compared to, the same as condition.if's |
-
-**Returns:** a `bool`.
-
-## else
-Fallback branch that executes when all preceding if/elseif conditions are false
 
 **Returns:** a `bool`.
 ```
@@ -527,6 +527,15 @@ A screen's facts read with a dot:
 - `%screen.Verbose%` — whether it narrates what happens to its windows; `set %screen.verbose% to true` turns it on (its notes go to the debug output under `--debug`, else the error output, never to a goal).
 - `%screen.element["#sel"]%` — one of its elements, picked by selector, to bind on its events.
 
+## close
+Close a screen window
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Screen | close screen %screen% | screen | yes | — | the screen to close, from screen.open |
+
+**Returns:** nothing.
+
 ## draw
 Draw a frame in a screen: a JSON frame line {"frame":"<base64>",…} (what browser OnFrame gives) or an image; other lines are ignored
 
@@ -539,26 +548,16 @@ Draw a frame in a screen: a JSON frame line {"frame":"<base64>",…} (what brows
 
 **Returns:** nothing; it draws the frame into the screen.
 
-## send
-Give PlangOS's screen one line of JSON: an input event from the host (mouse, key, text, clipboard) or a command for one of its windows
+## listen
+Let PlangOS's screen take this app's input itself: each line the host sends (mouse, key, text) goes straight to the screen, no goal per line; returns when the input ends
 
-- send %!data% to %screen%
-
-| Property | How you say it | Type | Required | Default | What it changes |
-|----------|----------------|------|----------|---------|-----------------|
-| Data | send <data> | item | yes | — | one line of JSON for the screen: an input event (`{"mouse":…}`, `{"key":…}`, `{"text":…}`, `{"clipboard":…}`) or a window command (`{"window":"focus|minimize|maximize|restore|close","id":…}`) |
-| Screen | to %screen% | screen | yes | — | the screen to give it to, from screen.open |
-
-**Returns:** nothing on success; a ScreenNotOpen error when the screen isn't open.
-
-## close
-Close a screen window
+- the screen %screen% listens to the input
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
-| Screen | close screen %screen% | screen | yes | — | the screen to close, from screen.open |
+| Screen | the screen %screen% listens | screen | yes | — | the screen that takes this app's input directly, line by line, from screen.open |
 
-**Returns:** nothing.
+**Returns:** nothing; it returns when the input ends (the host closed it).
 
 ## open
 Open a window to draw frames in; returns the screen at once; each mouse/keyboard event calls OnInput with `%!data%` = one JSON line; closing the window calls OnClose
@@ -577,16 +576,17 @@ Open a window to draw frames in; returns the screen at once; each mouse/keyboard
 
 **Returns:** the screen, held so later steps draw into it (draw … on %screen%).
 
-## listen
-Let PlangOS's screen take this app's input itself: each line the host sends (mouse, key, text) goes straight to the screen, no goal per line; returns when the input ends
+## send
+Give PlangOS's screen one line of JSON: an input event from the host (mouse, key, text, clipboard) or a command for one of its windows
 
-- the screen %screen% listens to the input
+- send %!data% to %screen%
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
-| Screen | the screen %screen% listens | screen | yes | — | the screen that takes this app's input directly, line by line, from screen.open |
+| Data | send <data> | item | yes | — | one line of JSON for the screen: an input event (`{"mouse":…}`, `{"key":…}`, `{"text":…}`, `{"clipboard":…}`) or a window command (`{"window":"focus|minimize|maximize|restore|close","id":…}`) |
+| Screen | to %screen% | screen | yes | — | the screen to give it to, from screen.open |
 
-**Returns:** nothing; it returns when the input ends (the host closed it).
+**Returns:** nothing on success; a ScreenNotOpen error when the screen isn't open.
 ```
 
 ## Generation rules

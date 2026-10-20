@@ -30,7 +30,7 @@ public class @this : global::app.type.item.setting.@this
         if (Option(key) != null) return await base.Set(key, isIndex, value, context);
         var module = await context.App.module.Get(Module, context);
         if (!module.Success || await module.Value() is not { } found
-            || !found.ActionNames.Any(name => found[name]?.Property[key] != null))
+            || !found.Action.Items().Any(action => action.Property[key] != null))
             return context.Error(new global::app.error.@this($"module '{Module}' has no option '{key}'", "NoOption", 404));
         await Write(key, value, context);
         return context.Ok(this);

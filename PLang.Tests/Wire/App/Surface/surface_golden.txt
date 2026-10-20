@@ -937,7 +937,7 @@ class app.module.list.query : app.module.IClass, app.module.ICodeGenerated, app.
   protected Error(app.error.this error) : app.data.this
 
 class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.this>, app.type.item.ILoad<app.module.this>, app.type.item.IMatch<app.module.this> [PlangType]
-  Action : app.type.item.list.this { get; } [LlmBuilder]
+  Action : app.type.item.list.this<app.goal.step.action.this> { get; } [LlmBuilder]
   Description : app.type.item.file.this { get; } [LlmBuilder]
   Discover(System.Reflection.Assembly assembly, System.String baseNamespace = …) : System.Int32
   Get(System.String name, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this<app.module.this>>
@@ -3682,8 +3682,8 @@ type modifier
 
 type module
   .name : text
+  .action : list<action>
   .list : list<module>
-  .action : list
   .description : file
   .notes : file
   .guide : file

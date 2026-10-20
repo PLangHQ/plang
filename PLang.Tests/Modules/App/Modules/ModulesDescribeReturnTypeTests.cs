@@ -109,7 +109,7 @@ public class ModulesDescribeReturnTypeTests
     public async Task Return_AllCatalogRows_HaveAValue()
     {
         var catalog = _app.module.list.Items()
-            .SelectMany(m => m.ActionNames.Select(a => m[a]!));
+            .SelectMany(m => m.Action.Items().Select(named => named.Name).Select(a => m[a]!));
         var missing = catalog.Where(a => a.Return == null)
                              .Select(a => $"{a.Module}.{a.Name}")
                              .ToList();

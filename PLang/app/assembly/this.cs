@@ -127,19 +127,26 @@ public sealed class @this
     /// may be cached.</summary>
     internal readonly record struct Action(string Module, string Name, System.Type Class, bool Cacheable);
 
-    private Action[]? _action;
-    /// <summary>The action classes under <c>app.module</c> — plang's built-ins.</summary>
-    internal System.Collections.Generic.IReadOnlyList<Action> action => _action ??= Actions("app.module").ToArray();
+    /// <summary>A module the code holds: its name and its action classes, in the order the code lists them.</summary>
+    internal sealed record Module(string Name, System.Collections.Generic.IReadOnlyList<Action> Action);
 
-    /// <summary>The action classes under <paramref name="baseNamespace"/>.</summary>
-    internal System.Collections.Generic.IEnumerable<Action> Actions(string baseNamespace)
+    private Module[]? _module;
+    /// <summary>The modules of plang's built-in actions (the classes under <c>app.module</c>), in the order their
+    /// first action comes.</summary>
+    internal System.Collections.Generic.IReadOnlyList<Module> module => _module ??= Under("app.module").ToArray();
+
+    /// <summary>The modules under <paramref name="baseNamespace"/>: each the namespace segment after it, holding the
+    /// action classes there, in the order their first action comes.</summary>
+    internal System.Collections.Generic.IEnumerable<Module> Under(string baseNamespace)
     {
+        var action = new System.Collections.Generic.List<Action>();
         foreach (var clr in Classes)
         {
             if (clr.IsAbstract || !typeof(global::app.module.ICodeGenerated).IsAssignableFrom(clr)) continue;
             if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.ActionAttribute>(clr) is not { } attr) continue;
             if (clr.Namespace == null || !clr.Namespace.StartsWith(baseNamespace + ".")) continue;
-            yield return new Action(clr.Namespace[(baseNamespace.Length + 1)..], attr.Name ?? clr.Name.ToLowerInvariant(), clr, attr.Cacheable);
+            action.Add(new Action(clr.Namespace[(baseNamespace.Length + 1)..], attr.Name ?? clr.Name.ToLowerInvariant(), clr, attr.Cacheable));
         }
+        return action.GroupBy(each => each.Module).Select(group => new Module(group.Key, group.ToArray()));
     }
 }
