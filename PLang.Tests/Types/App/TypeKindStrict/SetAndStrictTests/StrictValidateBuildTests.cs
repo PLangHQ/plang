@@ -78,4 +78,21 @@ public class StrictValidateBuildTests
         var result = await Handler(GifBytes, Type("image", null, true)).Validate();
         await Assert.That(result).IsNull();
     }
+
+    // The build reads the step's line and validates it: a literal value is the line's own slice (undecoded), and a
+    // type with a kind AND strict probes it — read with the asker's context (`as decimal strict`, `as image/gif strict`).
+    [Test]
+    [Arguments("\"1.5\"", "{\"name\": \"number\", \"kind\": \"decimal\", \"strict\": true}")]
+    [Arguments("\"photo.png\"", "{\"name\": \"image\", \"kind\": \"gif\", \"strict\": true}")]
+    public async Task Validate_ALineWithAKindAndStrict_Builds(string value, string type)
+    {
+        var ctx = _app.actor.list.User.Context;
+        var step = new global::app.goal.step.@this(_app.type.list) { Text = "set n strict" };
+        var line = (global::app.goal.step.action.list.@this)new global::app.goal.step.action.formal.Reader(step, _app.module.list)
+            .Read($"variable.set(Name=%n%, Value={value}, Type={type})", ctx).Peek()!;
+
+        var invalid = await line.Validate(ctx);
+
+        await Assert.That(invalid).IsNull();
+    }
 }

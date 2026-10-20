@@ -40,10 +40,11 @@ public partial class Set : IContext, IScope, IKeep
         // CLR-facing machinery).
         // Strict kind enforcement at build for literals: the user-named type entity (a type, not a
         // string) against the literal's content. %var% values defer to Run. The raw face is read only
-        // here, where a strict type asks for it.
+        // here, where a strict type asks for it — through the value's Data, which decodes the line's own
+        // slice with its context.
         if (Type?.Peek() is global::app.type.@this t && t.Strict && !t.kind.IsEmpty && !Value.HasVariable
-            && Value.Peek() is { } peeked
-            && (peeked is global::app.type.item.@this value ? value.Backing : peeked) is { } valueBacking)
+            && await Value.Value() is { } held
+            && (held is global::app.type.item.@this value ? value.Backing : held) is { } valueBacking)
         {
             var clr = t.ClrType;
             if (clr != null && typeof(global::app.data.IKindValidatable).IsAssignableFrom(clr))
