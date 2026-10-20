@@ -96,4 +96,37 @@ public class StrictValidateBuildTests
 
         await Assert.That(invalid).IsNull();
     }
+
+    // a literal is made as the type its step declares at build: one that doesn't make it is the step's error, with the
+    // type's own reason, so the LLM is asked to fix the step
+    [Test]
+    [Arguments("\"30s\"", "{\"name\": \"duration\", \"kind\": \"iso\"}", "'30s' is not a duration in iso (iso is written PT30S)")]
+    [Arguments("\"100 MiB\"", "{\"name\": \"size\", \"kind\": \"si\"}", "'100 MiB' is not a size in si (si is written 100 MB)")]
+    public async Task Validate_ALiteralThatDoesntMakeItsDeclaredType_IsRefused(string value, string type, string message)
+    {
+        var ctx = _app.actor.list.User.Context;
+        var step = new global::app.goal.step.@this(_app.type.list) { Text = "set d" };
+        var read = await new global::app.goal.step.action.formal.Reader(step, _app.module.list)
+            .Read($"variable.set(Name=%d%, Value={value}, Type={type})", ctx);
+        var line = (global::app.goal.step.action.list.@this)read.Peek()!;
+
+        var invalid = await line.Validate(ctx);
+
+        await Assert.That(invalid).IsNotNull();
+        await Assert.That(invalid!.Message).Contains(message);
+    }
+
+    [Test]
+    [Arguments("\"PT30S\"", "{\"name\": \"duration\", \"kind\": \"iso\"}")]
+    [Arguments("\"104.9 MB\"", "{\"name\": \"size\", \"kind\": \"si\"}")]
+    public async Task Validate_ALiteralThatMakesItsDeclaredType_Builds(string value, string type)
+    {
+        var ctx = _app.actor.list.User.Context;
+        var step = new global::app.goal.step.@this(_app.type.list) { Text = "set d" };
+        var read = await new global::app.goal.step.action.formal.Reader(step, _app.module.list)
+            .Read($"variable.set(Name=%d%, Value={value}, Type={type})", ctx);
+        var line = (global::app.goal.step.action.list.@this)read.Peek()!;
+
+        await Assert.That(await line.Validate(ctx)).IsNull();
+    }
 }

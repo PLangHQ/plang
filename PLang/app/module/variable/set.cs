@@ -68,10 +68,13 @@ public partial class Set : IContext, IScope, IKeep
             }
         }
 
-        // Real content truth has two owners, both elsewhere: the strict-kind probe above
-        // (magic bytes, at build) and the first-touch parse at runtime (strict at the load
-        // seam). A declared-but-unparsed value (a source) is valid by construction — nothing
-        // has become anything yet — so there is no build-time type-match check to make here.
+        // A literal is made as the type the step declares, here at build: one that doesn't make it (`"30s" as iso
+        // duration`) is the step's error, with the type's own reason, so the LLM fixes the step. A %var% defers to Run.
+        if (Type?.Peek() is global::app.type.@this declared && !Value.HasVariable && await Value.Value() is { } literal)
+        {
+            try { Context.App.type.list[declared, Context].Make(literal, Context); }
+            catch (global::app.error.AppException refused) { return refused.Error; }
+        }
         return null;
     }
 
