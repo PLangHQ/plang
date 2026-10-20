@@ -84,24 +84,23 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         }
     }
 
-    // The startup scan: every item class in Assemblies comes in under its name, then each gets its
-    // facts once every name is known (a fact names its property types), then each type takes its
-    // kinds. A clash here is plang's own.
+    // The startup scan: every item class in Assemblies comes in under its name, then each type takes its kinds; a
+    // type's facts are read when first asked, once every name is known (a fact names its property types). A clash
+    // here is plang's own.
     private void Load()
     {
         if (_loaded) return;
         lock (_lock)
         {
             if (_loaded) return;
+            // each type is made holding this list, its facts read when asked; the type `type` is made holding this
+            // list as its values
             foreach (var assembly in Assemblies)
                 foreach (var clr in assembly.GetTypes())
-                    if (NameOf(clr) is { } name) base.Add(new global::app.type.@this(name, clr, null));
-            // the type `type` is made holding this list: its values are these types
-            var faceted = Items().Select(t => t.ClrType == typeof(global::app.type.@this)
-                ? new global::app.type.@this(this)
-                : new global::app.type.@this(t.Name, t.ClrType!, this)).ToArray();
-            while (CountRaw > 0) RemoveAt(0);
-            foreach (var type in faceted) base.Add(type);
+                    if (NameOf(clr) is { } name)
+                        base.Add(clr == typeof(global::app.type.@this)
+                            ? new global::app.type.@this(this)
+                            : new global::app.type.@this(name, clr, this));
             // plang's own assemblies: a refusal here is plang broken
             foreach (var assembly in Assemblies)
                 if (Enlist(assembly) is { } refused) throw new InvalidOperationException(refused.Message);
@@ -163,15 +162,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             Load();
             if (Items().FirstOrDefault(t => t.Names(claimed)) is { } owner && owner.ClrType == clr)
                 return context.Ok(owner);
-            var named = new global::app.type.@this(claimed, clr, null);
-            if (Clash(named) is { } clash) return context.Error(clash);
-            // Its own name first, so its facts can name a property of its own type.
-            base.Add(named);
-            _named = null;   // the set changed: the names are made again on the next ask
             var added = new global::app.type.@this(claimed, clr, this);
-            RemoveAt(CountRaw - 1);
+            if (Clash(added) is { } clash) return context.Error(clash);
             base.Add(added);
-            _named = null;
+            _named = null;   // the set changed: the names are made again on the next ask
             return context.Ok(added);
         }
     }

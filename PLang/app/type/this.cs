@@ -634,7 +634,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     }
 
     // --- The facts ---
-    // Set by app.type when it builds a full type; a value's bare type carries none. Navigation
+    // Read from its class the first time each is asked, by a type the list holds; a value's bare type carries none. Navigation
     // (%x!type.Description%) answers them through the full type — see Get below. The wire form is
     // Write's {name, kind?, strict?, template?}; these never ride it. A kinded type ({text, md}) holds
     // its family's entry and reads every fact through it: one set of facts per class.
@@ -647,7 +647,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The type's properties — a record's fields, a scalar's navigable members; each a
     /// named slot carrying its type. Null when the type declares none. A record is a type with
     /// properties and no <see cref="Shape"/>.</summary>
-    public property.list.@this? Property { get => OwnProperty ?? kind.OwnProperty ?? Family._property; init => _property = value; }
+    public property.list.@this? Property
+    {
+        get => OwnProperty ?? kind.OwnProperty ?? (Family.Member is { Count: > 0 } member ? member : null);
+        init => _property = value;
+    }
     private property.list.@this? _property;
 
     // A kind answers its own fact through these hooks, else the type falls back to its Family's STORED
@@ -682,7 +686,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public virtual bool IsClosed => Family._offer is null && kind.IsClosed;
 
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
-    public string? Shape { get => Family._shape; init => _shape = value; }
+    public string? Shape { get => Family._shape ??= Family.Form; init => _shape = value; }
     private string? _shape;
 
     /// <summary>A value of this type is written as an object: a record (its builder properties, no shape of its own),
@@ -690,7 +694,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public bool IsRecord => Shape is null ? Property != null : Shape == "object";
 
     /// <summary>Constructor signature for scalar types (<c>"name: shape"</c>).</summary>
-    public string? ConstructorSignature { get => Family._constructorSignature; init => _constructorSignature = value; }
+    public string? ConstructorSignature
+    {
+        get => Family._constructorSignature ??= Family.Source is { } source && Family._in is { } types
+            ? $"{source.Name}: {types.Face(source.ParameterType)}" : null;
+        init => _constructorSignature = value;
+    }
     private string? _constructorSignature;
 
     /// <summary>Where this type's teaching lives — <c>/system/type/&lt;name&gt;/</c>, its family's (a kinded type's facts
@@ -792,12 +801,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     internal @this(System.Type clr, string? kind = null) : this(item.@this.NameOf(clr), clr, kind) { }
 
     /// <summary>
-    /// The type a class defines: its name, its C# class, its aliases and owned C# shapes, and — when
-    /// <paramref name="types"/> is given — the facts the class declares: a closed set's options, a
-    /// scalar's wire shape and constructor, a record's <c>[LlmBuilder]</c> properties, its static
-    /// <c>Description</c> and <c>Example</c>. The facts name property types through
-    /// <paramref name="types"/>, so they are read once every type's name is known; without it the
-    /// type is its identity alone.
+    /// The type a class defines: its name, its C# class, its aliases and owned C# shapes, what it declares it is
+    /// offered, and — when <paramref name="types"/> is given — the list it is in, through which its other facts are
+    /// read when first asked (a scalar's wire shape and constructor, a record's <c>[LlmBuilder]</c> properties): a
+    /// fact names its property types, so it is read once every type's name is known. Without the list the type is
+    /// its identity alone.
     /// </summary>
     internal @this(string name, System.Type clr, list.@this? types) : this(name, clr, null, false, null, known: true)
     {
@@ -808,70 +816,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                                                | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(null) is true;
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         if (types == null || clr == typeof(@this)) return;
-
         _offer = Declared<IReadOnlyList<item.@this>>("Offer");
-        if (global::app.type.item.choice.set.@this.For(clr, types) is { } set)
-        {
-            Values = set.Values;
-            return;
-        }
-
-        var shape = Declared<string>("Shape");
-        string? signature = null, derived = null;
-        if (clr.GetMethod("Resolve", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-                ?.GetParameters() is [var first, ..])
-        {
-            derived = types.Face(first.ParameterType);
-            signature = $"{first.Name}: {derived}";
-        }
-
-        var property = new property.list.@this();
-        // Every member the class marks plang's, listed where it is declared. A method that asks only for its asker's
-        // context is read as a property (%p.relative%); any other is called with its arguments (%x.replace("a", "b")%).
-        var methods = new Queue<System.Reflection.MethodInfo>(clr.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void))
-            .OrderBy(m => m.MetadataToken));
-        foreach (var prop in clr.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-        {
-            if (!prop.CanRead || prop.Name == "EqualityContract") continue;
-            if (!System.Attribute.IsDefined(prop, typeof(global::app.LlmBuilderAttribute))) continue;
-            while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
-                && m.MetadataToken < prop.GetMethod!.MetadataToken)
-                property.Add(Member(methods.Dequeue()));
-            property.Add(types.Property(prop.Name, prop.PropertyType, owner: Name));
-        }
-        while (methods.TryDequeue(out var m)) property.Add(Member(m));
-
-        // A method as the catalog lists it: what it answers (an asynchronous one, what its task completes with), and —
-        // unless it asks only for its asker — what it is called with. The asker's context and a cancellation are the
-        // runtime's to give, never a step's argument.
-        property.@this Member(System.Reflection.MethodInfo m)
-        {
-            var answers = m.ReturnType is { IsGenericType: true } task
-                          && (task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
-                              || task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.ValueTask<>))
-                ? task.GenericTypeArguments[0] : m.ReturnType;
-            // a member answering through a Data (so a failure rides it) answers what the Data holds
-            if (answers is { IsGenericType: true } data && data.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
-                answers = data.GenericTypeArguments[0];
-            var parameters = m.GetParameters();
-            if (parameters is [{ ParameterType: var only }] && only == typeof(actor.context.@this))
-                return types.Property(m.Name, answers, owner: Name);
-            return types.Property(m.Name, answers, parameters
-                .Where(p => p.ParameterType != typeof(actor.context.@this) && p.ParameterType != typeof(System.Threading.CancellationToken))
-                .Select(p => types.Property(p.Name!, p.ParameterType, optional: p.IsOptional))
-                .ToList(), owner: Name);
-        }
-
-        // A scalar has a constructor, a declared wire shape, or is a named type with no builder
-        // properties (a domain wrapper around a primitive); a record has builder properties.
-        if (signature != null || shape != null || property.Count == 0)
-        {
-            Shape = derived ?? shape ?? "string";
-            ConstructorSignature = signature;
-            Property = property.Count > 0 ? property : null;
-        }
-        else Property = property;
+        _in = types;
 
         T? Declared<T>(string member) where T : class
         {
@@ -880,6 +826,76 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             return p?.GetValue(null) as T;
         }
     }
+
+    // The list this type is in — its facts name their property types through it; null for a type that is its
+    // identity alone.
+    private readonly list.@this? _in;
+
+    // The members the class marks plang's ([LlmBuilder]), listed where they are declared — read on the first ask
+    // and kept: the first list made is the one every asker gets. Empty for a type that is its identity alone.
+    private property.list.@this Member
+    {
+        get
+        {
+            if (_property is { } read) return read;
+            var made = new property.list.@this();
+            if (_in is { } types && ClrType is { } clr)
+            {
+                // A method that asks only for its asker's context is read as a property (%p.relative%); any other is
+                // called with its arguments (%x.replace("a", "b")%).
+                var methods = new Queue<System.Reflection.MethodInfo>(clr.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                    .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void))
+                    .OrderBy(m => m.MetadataToken));
+                foreach (var prop in clr.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                {
+                    if (!prop.CanRead || prop.Name == "EqualityContract") continue;
+                    if (!System.Attribute.IsDefined(prop, typeof(global::app.LlmBuilderAttribute))) continue;
+                    while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
+                        && m.MetadataToken < prop.GetMethod!.MetadataToken)
+                        made.Add(Method(methods.Dequeue()));
+                    made.Add(types.Property(prop.Name, prop.PropertyType, owner: Name));
+                }
+                while (methods.TryDequeue(out var m)) made.Add(Method(m));
+
+                // A method as the catalog lists it: what it answers (an asynchronous one, what its task completes
+                // with), and — unless it asks only for its asker — what it is called with. The asker's context and a
+                // cancellation are the runtime's to give, never a step's argument.
+                property.@this Method(System.Reflection.MethodInfo m)
+                {
+                    var answers = m.ReturnType is { IsGenericType: true } task
+                                  && (task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
+                                      || task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.ValueTask<>))
+                        ? task.GenericTypeArguments[0] : m.ReturnType;
+                    // a member answering through a Data (so a failure rides it) answers what the Data holds
+                    if (answers is { IsGenericType: true } data && data.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
+                        answers = data.GenericTypeArguments[0];
+                    var parameters = m.GetParameters();
+                    if (parameters is [{ ParameterType: var only }] && only == typeof(actor.context.@this))
+                        return types.Property(m.Name, answers, owner: Name);
+                    return types.Property(m.Name, answers, parameters
+                        .Where(p => p.ParameterType != typeof(actor.context.@this) && p.ParameterType != typeof(System.Threading.CancellationToken))
+                        .Select(p => types.Property(p.Name!, p.ParameterType, optional: p.IsOptional))
+                        .ToList(), owner: Name);
+                }
+            }
+            return System.Threading.Interlocked.CompareExchange(ref _property, made, null) ?? made;
+        }
+    }
+
+    // What the class's Resolve takes first — a scalar is made from it; null when the class resolves nothing.
+    private System.Reflection.ParameterInfo? Source
+        => ClrType?.GetMethod("Resolve", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            ?.GetParameters() is [var first, ..] ? first : null;
+
+    // The shape a scalar is written in: what its Resolve takes, else the one its class declares, else — a named type
+    // with no builder properties (a domain wrapper around a primitive) — a string; null for a record (builder
+    // properties, no shape of its own) and for a type that is its identity alone.
+    private string? Form
+        => _in is not { } types ? null
+            : Source is { } source ? types.Face(source.ParameterType)
+            : ClrType!.GetProperty("Shape", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                  | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null) as string
+              ?? (Member.Count == 0 ? "string" : null);
 
     /// <summary>
     /// The type <c>type</c>, made by the list of <paramref name="types"/> for its own entry. A type's values are the
