@@ -33,7 +33,16 @@ Decisions are numbered per branch in `.bot/item-doors/architect/summary.md`.
   empty by default; `EmitsSchema` gone; plang writes with its own writer (`wire/kind/plang/writer.cs`), json.Writer is
   item's json only.
 
+- **Stage 4, a plang value read as tokens (fe0b854e7; 133, 135, 136)**: `type/format/item/reader.cs` walks a value
+  (leaf / sequence / members); `item.Read` reads every value as tokens by the target type's reader, `item.Set` asks
+  `Reader.Reader` (own reader, else `Record`). Eight pure record readers deleted (Record makes them); the list reader's
+  elements go through `Reader.Reader` (a `list<message>` holds messages). A step's `code` takes actions only (any
+  other value: `NotAnAction`); the json round trip (`FromJson`) is gone. `IReader.Format` removed. The json helper and
+  the list's elements stay json-bound on purpose (lazy children, 135).
+
 ## Next
+- #4 (a type's members through `type.Property`): `property.Write` reads the value through `Reader.Reader` — the
+  item.Set lowering's first real user.
 - JSON Schema as pairs (129 #2) waits on Ingi: `pair.list[System.Type]`, `json.Writer(utf8, kind)`,
   `[Format("schema")]` on type. The llm table (#3) waits on the llm-writer merge.
 - **(c2) the identity pair** — waits on Ingi's yes to the `Written` virtual on item. With it: wire's two Owns sites
