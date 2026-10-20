@@ -45,11 +45,11 @@ public sealed class @this : global::app.type.item.text.@this, global::app.type.i
 
     /// <summary>A separator passes through; a text that is exactly a named separator's name is that separator
     /// (whatever case), else its characters as written — from a literal and from a variable's value alike.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this separator) return separator;
         if (((raw as global::app.type.item.@this)?.ToString() ?? raw as string) is not { } text) return null;
-        var type = declared is { kind.IsEmpty: false } ? declared : data.Context.App.type.list[typeof(@this)];
+        type = type is { kind.IsEmpty: false } ? type : data.Context.App.type.list[typeof(@this)];
         return Names.TryGetValue(text, out var chars) ? new @this(text, chars, type) : new @this(text, type);
     }
 }

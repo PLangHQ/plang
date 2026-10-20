@@ -13,11 +13,11 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
         return default;
     }
 
-    /// <summary>A span, or a text in .NET's form, as a dotnet duration born holding <paramref name="declared"/>; a text
+    /// <summary>A span, or a text in .NET's form, as a dotnet duration born holding <paramref name="type"/>; a text
     /// in another form is refused, naming how dotnet is written.</summary>
-    public static new @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static new @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
-        if (declared is { } type && Span(raw, Read) is { } value) return new(value, type);
+        if (type is not null && Measure(raw, Read) is { } value) return new(value, type);
         Refuse(raw, "dotnet", "00:00:30", data);
         return null;
 

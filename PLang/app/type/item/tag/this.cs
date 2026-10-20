@@ -38,11 +38,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>The ICreate courier face — delegates to the pure core; on decline names the reason.</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         if (value is @this self) return self;
         // made by the type that asks; with none (a read that names no app) no tag is made
-        if (declared is { } type && Create(value, type) is { } built) return built;
+        if (type is not null && Create(value, type) is { } built) return built;
         data.Fail(new global::app.error.@this(
             $"Cannot make a tag from {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name ?? "null")} — expected a non-empty label.",
             "TagConversionFailed", 400));

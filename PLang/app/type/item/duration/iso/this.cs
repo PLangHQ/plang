@@ -13,11 +13,11 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
         return default;
     }
 
-    /// <summary>A span, or a text in ISO 8601, as an iso duration born holding <paramref name="declared"/>; a text in
+    /// <summary>A span, or a text in ISO 8601, as an iso duration born holding <paramref name="type"/>; a text in
     /// another form is refused, naming how iso is written.</summary>
-    public static new @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static new @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
-        if (declared is { } type && Span(raw, Read) is { } value) return new(value, type);
+        if (type is not null && Measure(raw, Read) is { } value) return new(value, type);
         Refuse(raw, "iso", "PT30S", data);
         return null;
 

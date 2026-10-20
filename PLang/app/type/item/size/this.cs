@@ -30,7 +30,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     protected abstract string[] Units { get; }
 
     /// <summary>Its text in its standard — <c>95.4 MiB</c>, <c>100 MB</c>; <c>%s.text%</c>.</summary>
-    public string Text => Form(Step, Units);
+    public string Text => Spell(Step, Units);
 
     /// <summary>A size writes its text in the standard it is: <c>100 MB</c> stays <c>100 MB</c>.</summary>
     protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
@@ -67,10 +67,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
 
     /// <summary>The ICreate courier face — a count is made by the asker's standard; on decline lands the reason on
     /// <paramref name="data"/> (a bad string vs a wrong type).</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         // asked for in a standard (`as si`): that standard makes it, from a count or a text in its own form only
-        if (declared?.kind is { IsEmpty: false } asked && data.Context.App.type.list["size"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
+        if (type?.kind is { IsEmpty: false } asked && data.Context.App.type.list["size"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
             return data.Context.App.type.list[new global::app.type.@this("size", standard.Name), data.Context].Make(value, data) as @this;
         if (Read(value, data.Context) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
@@ -82,12 +82,12 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>The bytes <paramref name="raw"/> is in the standard whose units, smallest first, are
     /// <paramref name="units"/>, one of the smallest <paramref name="step"/> bytes: a count is itself; a text a number
     /// and one of its units, its case ignored; null when it is neither.</summary>
-    protected static long? Bytes(object? raw, long step, string[] units)
+    protected static long? Count(object? raw, long step, string[] units)
         => (raw is global::app.type.item.@this leaf ? leaf.Clr<object>() : raw) switch
         {
             long bytes => bytes,
             int bytes => bytes,
-            string text => Bytes(text, step, units),
+            string text => Count(text, step, units),
             _ => null,
         };
 
@@ -100,7 +100,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     }
 
     // the bytes a text in that standard is
-    private static long? Bytes(string text, long step, string[] units)
+    private static long? Count(string text, long step, string[] units)
     {
         var form = System.Text.RegularExpressions.Regex.Match(text.Trim(), @"^(\d+(?:\.\d+)?)\s*([a-z]+)$",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
@@ -114,7 +114,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
 
     // its value written in the standard whose units are these: its largest unit that is at least one, with one decimal
     // at most (95.4 MiB, 100 MB); under the smallest unit, bytes (512 B)
-    private string Form(long step, string[] units)
+    private string Spell(long step, string[] units)
     {
         decimal amount = Value;
         var unit = -1;

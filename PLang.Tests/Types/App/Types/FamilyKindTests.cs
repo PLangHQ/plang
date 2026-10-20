@@ -43,7 +43,7 @@ namespace PLang.Tests.App.Types.Gadget
     [global::app.Attributes.PlangType("gadget"), global::app.Attributes.Kinds]
     public class Gadget : global::app.type.item.@this, global::app.type.item.ICreate<Gadget>
     {
-        public static Gadget? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data) => raw as Gadget;
+        public static Gadget? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw as Gadget;
     }
 
     /// <summary>A gadget's kind, by its name.</summary>

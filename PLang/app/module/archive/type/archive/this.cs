@@ -68,11 +68,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>An archive passes through; a file path is an archive resting there, its format the one declared
     /// (<c>as tar.gz</c>), else the one its name ends in; a dict is what an archive wrote of itself
     /// (<c>{value, held}</c>, its format the declared kind).</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this archive) return archive;
         var formats = data.Context?.App.type.list["archive"].kind;
-        var named = declared?.kind is { IsEmpty: false } asked ? formats?[asked.Name] as kind.@this : null;
+        var named = type?.kind is { IsEmpty: false } asked ? formats?[asked.Name] as kind.@this : null;
         if (raw is global::app.type.item.file.@this { Path: File referenced }) raw = referenced;
         if (raw is global::app.type.item.text.@this written && data.Context is { } reader) raw = global::app.type.item.path.@this.Resolve(written.ToString(), reader);
         if (raw is File at && data.Context is { } asker) return new @this(at, named, asker);

@@ -33,7 +33,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>A directory is made from its path, born holding the app's type; anything else declines.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data) => raw switch
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw switch
     {
         @this self => self,
         global::app.type.item.path.@this path => new @this(path, data.Context!.App.type.list[typeof(@this)]),

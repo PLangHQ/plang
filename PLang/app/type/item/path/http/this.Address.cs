@@ -9,7 +9,7 @@ public sealed partial class @this : global::app.type.item.ICreate<@this>
     /// <summary>A written url made an http path: absolute (http or https), or a bare host — <c>https://</c> is
     /// assumed. A relative url (a leading <c>/</c>) needs a base to join (<see cref="Address"/>): alone it is
     /// NoBaseUrl; any other scheme is InvalidUrlScheme.</summary>
-    public static new @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static new @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         if (value is @this self) return self;
         if (value is null or global::app.type.item.@null.@this) return null;

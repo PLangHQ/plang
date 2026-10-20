@@ -31,7 +31,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override string ToString() => Masked;
 
     /// <summary>A sensitive value passes through; a text or characters become one, born holding the app's type.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data) => raw switch
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw switch
     {
         @this sensitive => sensitive,
         global::app.type.item.@this { RawText: { } text } => new @this(text, data.Context!.App.type.list[typeof(@this)]),

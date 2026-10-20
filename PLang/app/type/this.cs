@@ -35,16 +35,16 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>
     public static list.@this List(global::app.@this app) => new();
 
-    /// <summary>The type's identity — <c>{name, kind?, strict?, template?}</c>: what a type is written as in json and
-    /// plang (a Data's and a property row's type slot, a type held as a value). A nested kind is written as its own
+    /// <summary>Writes the type's identity — <c>{name, kind?, strict?, template?}</c>: what a type is written as in json
+    /// and plang (a Data's and a property row's type slot, a type held as a value). A nested kind is written as its own
     /// identity, not as a kind held as a value (its name).</summary>
-    private protected void Identity(global::app.type.format.IWriter writer)
+    private protected void Identify(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
         // a kind nests (774): a kind that is itself kinded writes as the object it is ({list, kind: {list, kind:
         // path}}), so read and write are symmetric; a plain kind writes its name.
-        if (!kind.IsEmpty) { writer.Name("kind"); if (kind.kind.IsEmpty) writer.String(kind.Name); else kind.Identity(writer); }
+        if (!kind.IsEmpty) { writer.Name("kind"); if (kind.kind.IsEmpty) writer.String(kind.Name); else kind.Identify(writer); }
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
         if (Template != null) { writer.Name("template"); writer.String(Template.Name); }
         writer.EndObject();
@@ -53,7 +53,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>A type is its identity, in every format it has no look of its own for.</summary>
     protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        Identity(writer);
+        Identify(writer);
         return default;
     }
 
@@ -255,7 +255,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>A type is made from what names it, among the app's types: a type passes; a text is the type it names
     /// (<c>path</c>); a dict describes one (<c>{name: "number", kind: "int", strict: true}</c>). Anything else declines.</summary>
-    public static @this? Create(object? raw, @this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, @this? type, global::app.data.@this data)
     {
         if (raw is @this self) return self;
         var context = data.Context!;
@@ -476,12 +476,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     // The one-shot binder: on first use it swaps the field for the closed thunk (or the decline) and forwards,
     // so every later door call is a bare invocation.
-    private item.@this? Bind(object? raw, @this declared, global::app.data.@this data)
+    private item.@this? Bind(object? raw, @this type, global::app.data.@this data)
     {
         _lift = Creatable is { } clr
             ? _open.MakeGenericMethod(clr).CreateDelegate<System.Func<object?, @this, global::app.data.@this, item.@this?>>()
             : static (_, _, _) => null;
-        return _lift(raw, declared, data);
+        return _lift(raw, type, data);
     }
 
     // Construct a value of this type from <paramref name="raw"/> THROUGH the ICreate&lt;T&gt; family its class
@@ -570,9 +570,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     // The generic thunk: the raw rides into the type's own birth, as this type declares it — unless the value
     // refuses to become one (a raw C# value, lifted here, is no item and refuses nothing).
-    private static item.@this? Create<T>(object? raw, @this declared, global::app.data.@this data)
+    private static item.@this? Create<T>(object? raw, @this type, global::app.data.@this data)
         where T : item.@this, global::app.type.item.ICreate<T>
-        => raw is item.@this value && value.Refuses(declared, data) ? null : T.Create(raw, declared, data);
+        => raw is item.@this value && value.Refuses(type, data) ? null : T.Create(raw, type, data);
 
     private static readonly System.Reflection.MethodInfo _open = System.Array.Find(
         typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),

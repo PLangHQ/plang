@@ -51,7 +51,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _ => null,
     };
 
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
         if (Create(raw) is { } made) return made;
         data.Fail(new global::app.error.@this("a clipboard holds what was copied: a text, or a value", "ClipboardInvalid", 400));

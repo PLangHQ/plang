@@ -33,11 +33,11 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
         return default;
     }
 
-    /// <summary>A span, or a text in the short form, as a short duration born holding <paramref name="declared"/>; a
+    /// <summary>A span, or a text in the short form, as a short duration born holding <paramref name="type"/>; a
     /// text in another form is refused, naming how short is written.</summary>
-    public static new @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static new @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
-        if (declared is { } type && Span(raw, Read) is { } value) return new(value, type);
+        if (type is not null && Measure(raw, Read) is { } value) return new(value, type);
         Refuse(raw, "short", "30s", data);
         return null;
 

@@ -69,7 +69,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <c>Clr</c>, as a dict does its own list form; any other value is a list of one, as the list's reader reads one
     /// value — never lowered to a list it has no form of. Uses <c>data.Context</c> for the born-with-context
     /// construction.</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? value, global::app.type.@this? type, Data data)
     {
         if (value is @this self) return self;
         // a raw value (the string a setting's json carried) is born as its plang value first: a sequence is a list
@@ -81,14 +81,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
         // the list the slot declares is the app's list type (the type that made this ask); else the app's — asked only
         // when a list is made
-        global::app.type.@this type() => declared?.Is("list") == true ? declared : data.Context.App.type.list["list"];
-        if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this(type());
+        global::app.type.@this Of() => type?.Is("list") == true ? type : data.Context.App.type.list["list"];
+        if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this(Of());
         // Never route a list.@this through reflection (it has no parameterless ctor); the item owns its own
         // conversion.
         // a C# carrier holds a native sequence, and a dict has a list form of its own: each re-tags through its Clr
         if (value is global::app.type.clr.@this or global::app.type.item.dict.@this)
             return ((global::app.type.item.@this)value).Clr(typeof(@this), data.Context) as @this;
-        return value is global::app.type.item.@this { IsNull: false } one ? new @this(new[] { one }, type()) : null;
+        return value is global::app.type.item.@this { IsNull: false } one ? new @this(new[] { one }, Of()) : null;
     }
 
     /// <summary>Builds from a sequence of native plang VALUES — each stored as itself, preserving

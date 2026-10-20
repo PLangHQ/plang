@@ -61,7 +61,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>A status is made from its code, or from a dict of its members (<c>{code: 404}</c> — a text left out
     /// is the code's standard reason); anything else declines with why.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
         if (Create(raw) is { } made) return made;
         if (raw is global::app.type.item.dict.@this dict)

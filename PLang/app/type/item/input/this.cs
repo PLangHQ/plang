@@ -54,7 +54,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// back from its line.</summary>
     public static @this? Create(object? raw) => raw as @this;
 
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
         if (raw is @this input) return input;
         data.Fail(new global::app.error.@this("an input is made by a screen (a mouse, a key, typed text, back/forward/reload), or read from its line", "InputInvalid", 400));

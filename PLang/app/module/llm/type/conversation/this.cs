@@ -34,7 +34,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// continue that names no response, declines with why — or from the response it continues
     /// (<c>Conversation=%answer%</c>). Whether that is an llm answer is known only when the query reads it, so the query
     /// says so then.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
         if (raw is @this conversation) return conversation;
         if (raw is not global::app.type.item.dict.@this dict) return new @this(data);

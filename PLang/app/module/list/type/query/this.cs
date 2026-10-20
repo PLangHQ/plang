@@ -58,7 +58,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
 
     /// <summary>A query is made from a dict: the list of its clauses, in the order written — one clause is a list of
     /// one. A key that is no clause, or a clause that doesn't read, declines with why, naming the clause.</summary>
-    public static @this? Create(object? query, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? query, global::app.type.@this? type, Data data)
     {
         if (query is @this already) return already;
         if (query is global::app.type.item.dict.@this dict) return list.@this.Create(dict, data);

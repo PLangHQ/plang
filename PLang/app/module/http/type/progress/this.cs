@@ -37,7 +37,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override bool IsLeaf => false;
 
     /// <summary>A progress is reported by a transfer, never made from a value.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this progress) return progress;
         data.Fail(new global::app.error.@this("a progress is reported by a download or an upload, never made from a value",

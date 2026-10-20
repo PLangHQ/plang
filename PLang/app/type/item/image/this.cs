@@ -146,7 +146,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// a location path declines (an unregistered scheme, an empty one) lands its reason on <paramref name="data"/>.
     /// A strict declaration (<c>as image/png strict</c>) is the image's own: imprinted at birth, checked now when
     /// the bytes are in hand (a mismatch declines onto <paramref name="data"/>), else when they load.</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         var context = data.Context;
         var image = Create(value, context);
@@ -155,14 +155,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             // the kind as declared, else the extension's; strict as declared
             var types = context.App.type.list;
-            var named = declared is { kind.IsEmpty: false } ? declared
+            var named = type is { kind.IsEmpty: false } ? type
                 : path.Kind(context) is { } extension && extension.Is("image") ? extension : types[typeof(@this)];
-            image = new @this(path, declared is { Strict: true } && !named.Strict
+            image = new @this(path, type is { Strict: true } && !named.Strict
                 ? types[new global::app.type.@this(named.Name, named.kind.IsEmpty ? null : named.kind.Name, strict: true), context]
                 : named);
         }
-        if (image == null || declared is not { Strict: true, kind.IsEmpty: false }) return image;
-        image.RequireStrictKind(declared.kind.Name);
+        if (image == null || type is not { Strict: true, kind.IsEmpty: false }) return image;
+        image.RequireStrictKind(type.kind.Name);
         if (image.Mismatch() is { } refused) { data.Fail(refused); return null; }
         return image;
     }

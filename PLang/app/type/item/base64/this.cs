@@ -77,11 +77,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// any item is held whole and encodes at the Value door. The one exception is a string
     /// face holding a data-url — an explicit unwrap ask, not content to encode. A value that
     /// already IS base64 arrives typed via the reader, never through here.</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         // a base64 is held as it is when it already is the declared type, else born again holding it
-        if (value is @this self) return declared is null || self.Is(declared) ? self : new @this(self, declared);
-        if (declared is not { } type)
+        if (value is @this self) return type is null || self.Is(type) ? self : new @this(self, type);
+        if (type is null)
         {
             data.Fail(new global::app.error.@this("base64 is made only for a declared type.", "Base64ConversionFailed", 400));
             return null;

@@ -21,7 +21,7 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
     /// for the actor whose context it is born in: Name and Goal (a <c>goal.call</c>) are required; a setting not
     /// there keeps the channel's own default. Anything else declines; settings missing a required one decline
     /// naming it (<c>GoalChannelIncomplete</c>).</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this self) return self;
         var ctx = data.Context;

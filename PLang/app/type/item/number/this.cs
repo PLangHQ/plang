@@ -153,9 +153,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // ── THE COURIER — the declared kind lives here. With no declared kind it is the pure core; with
     //    one, the kind builds it (from the typed ask's item) and the courier owns the error channel
     //    (a thrown reason → data.Fail, PRESERVED, never swallowed). ──
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
-        var asked = (declared ?? data.Type).kind;
+        var asked = (type ?? data.Type).kind;
         var named = asked is { IsEmpty: false } k ? k.Name : null;
         // Pass-through — a number already of the declared kind (or with none declared) rides out as it is.
         if (raw is @this same && (named is null || string.Equals(same.Kind.Name, named, System.StringComparison.OrdinalIgnoreCase)))

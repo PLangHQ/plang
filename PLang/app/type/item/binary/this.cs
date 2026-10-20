@@ -182,11 +182,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
     /// on <paramref name="data"/> (a non-base64 string vs a wrong type).</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         // bytes are held as they are when they already are the declared type, else born again holding it
-        if (value is @this self) return declared is null || self.Is(declared) ? self : new @this(self.Value, declared);
-        if (declared is { } type && Create(value, type) is { } built) return built;
+        if (value is @this self) return type is null || self.Is(type) ? self : new @this(self.Value, type);
+        if (type is not null && Create(value, type) is { } built) return built;
         object? clr = (value as global::app.type.item.@this)?.Clr<object>() ?? value;
         data.Fail(clr is string
             ? new global::app.error.@this("Cannot parse string as binary — expected base64.", "BinaryParseFailed", 400)

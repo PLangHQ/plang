@@ -53,11 +53,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// class the declaration names, each of its options taken from the record. A stored row of an older shape — not
     /// this class's record — is <c>SettingsUnreadable</c>: pre-1.0 there is no reader for it, so it is fixed by
     /// hand, deleted and set again.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this setting) return setting;
         if (raw is global::app.type.item.dict.@this record
-            && declared?.ClrType is { IsAbstract: false } clr && typeof(@this).IsAssignableFrom(clr)
+            && type?.ClrType is { IsAbstract: false } clr && typeof(@this).IsAssignableFrom(clr)
             && clr != typeof(@this))
         {
             var fresh = (@this)System.Activator.CreateInstance(clr, data.Context.App.type.list[clr])!;
@@ -76,7 +76,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         {
             // a record declared the base setting with a kind is an older-shape row ({setting, kind: <path>}),
             // whose key is the path its kind names — no reader for it pre-1.0, so it is fixed by hand (loud)
-            if (declared?.kind is { IsEmpty: false } k) { data.Fail(Unreadable(k.Name, null)); return null; }
+            if (type?.kind is { IsEmpty: false } k) { data.Fail(Unreadable(k.Name, null)); return null; }
             // a bare base setting (a node — a module/action with no class of its own) is not made FROM a record;
             // it reads as absent, as the base setting read did before 789. A clean decline (no Fail) that the
             // record reader answers with the null value, never the loud SettingsUnreadable.

@@ -32,7 +32,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override bool IsLeaf => false;
 
     /// <summary>Made from what an archive wrote of it — <c>{type, name}</c>.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this held) return held;
         if (raw is global::app.type.item.dict.@this dict && data.Context is { } context)

@@ -37,10 +37,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>The culture a value names; a name no culture has is refused on <paramref name="data"/>.</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         if (value is @this self) return self;
-        if (declared is { } type && Create(value, type) is { } culture) return culture;
+        if (type is not null && Create(value, type) is { } culture) return culture;
         data.Fail(new global::app.error.@this(
             $"'{(value as global::app.type.item.@this)?.Clr<object>() ?? value}' is no culture — a culture is named as is-IS or en-US.",
             "UnknownCulture", 400));

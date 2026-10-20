@@ -56,10 +56,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>A parallel passes through; true is parallel at its default, false is not parallel; a number is how
     /// many at once; <c>{cpu: 2}</c> says it.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this parallel) return parallel;
-        var type = data.Context!.App.type.list[typeof(@this)];
+        type = data.Context!.App.type.list[typeof(@this)];
         var value = raw is global::app.type.item.@this item && item is not global::app.type.item.dict.@this ? item.Clr<object>() : raw;
         switch (value)
         {

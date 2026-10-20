@@ -76,10 +76,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The ICreate courier face — construction with a binding. Delegates to the pure core;
     /// on a decline it lands the reason on <paramref name="data"/> (a text that didn't parse vs a
     /// wrong type). A value is born holding the declared type, else the app's bool.</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         if (value is @this self) return self;
-        if (Create(value, declared ?? data.Context.App.type.list[typeof(@this)]) is { } built) return built;
+        if (Create(value, type ?? data.Context.App.type.list[typeof(@this)]) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as bool — expected true or false.", "BoolParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to bool.", "BoolConversionFailed", 400));

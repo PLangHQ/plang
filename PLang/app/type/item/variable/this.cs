@@ -182,7 +182,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// NAMES a thing — it is born from its text at the wire boundary, never converted from a value.
     /// Anything but a variable is a decline.
     /// </summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this v) return v;
         data.Fail(new global::app.error.@this(

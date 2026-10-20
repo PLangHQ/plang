@@ -128,7 +128,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The birth: a digest passes through; a text is read as a digest's text — hex (two characters a byte),
     /// else base64, an algorithm it names a kind of hash (one that names no kind, <c>md5:…</c>, is refused, naming the
     /// kinds); a digest whose text names no algorithm has none, and a comparison asks by bytes.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         @this? digest;
         try { digest = Digest(raw, length: null, data.Context); }

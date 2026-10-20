@@ -103,10 +103,10 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
 
     /// <summary>The courier — converts Parse's throw to data.Fail with the option list;
     /// declines fail typed. A value is born holding the declared type, else the app's for its set.</summary>
-    public static @this<T>? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this<T>? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this<T> self) return self;
-        var type = declared ?? data.Context.App.type.list[typeof(@this<T>)];
+        type ??= data.Context.App.type.list[typeof(@this<T>)];
         try { if (Create(raw, type) is { } made) return made; }
         catch (System.FormatException ex)
         {

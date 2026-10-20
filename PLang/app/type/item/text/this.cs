@@ -104,11 +104,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The ICreate courier face — delegates to the pure core; a value with no textual form
     /// declines with the reason on <paramref name="data"/>. text's kind is a hint (extension), not a
     /// construction switch, so the core needs no kind.</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         // a text is held as it is when it already is the declared type, else born again holding it
-        if (value is @this self) return declared is null || self.Is(declared) ? self : new @this(self, declared);
-        if (Create(value, declared ?? data.Context.App.type.list[typeof(@this)]) is { } built) return built;
+        if (value is @this self) return type is null || self.Is(type) ? self : new @this(self, type);
+        if (Create(value, type ?? data.Context.App.type.list[typeof(@this)]) is { } built) return built;
         data.Fail(new global::app.error.@this(
             $"Cannot bind a {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to text — it has no textual form.", "TypeConversionFailed", 400));
         return null;

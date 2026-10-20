@@ -95,14 +95,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// through its kind, so <c>{item, kind: json}</c> holds its characters until used and is not text. A
     /// kindless item is the interface default (pass-through, a container deserializes itself, else declined).
     /// Only item's family comes here — a number or duration kind (decimal, iso) is its own family's birth.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         // item makes its OWN — a value already an item, its own kinds ({item, kind: json}), a container that
         // deserializes itself. A declaration whose class is ANOTHER type is not item's to make: it reaches item
         // only because that type's most-derived ICreate is item (a {table, xlsx}, whose table ships no reader),
         // and item declines so the owner's own Create or the default's CreateItemDeclined answers — never item
         // passing a stray text or re-sourcing the same bytes through as that other type.
-        if (declared is { } other && other.ClrType is { } clr && clr != typeof(@this))
+        if (type is { } other && other.ClrType is { } clr && clr != typeof(@this))
         {
             data.Fail(new global::app.error.@this(
                 $"%{data.Name}% is declared {other.Name} — item cannot make a {other.Name} from a {(raw as @this)?.Type.Name ?? raw?.GetType().Name}.",
@@ -111,7 +111,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         }
         // The lazy-kind rebirth is for item's own kinds ({item, kind: json}): its characters ride to a fresh
         // source read through the kind.
-        if (declared is { } d && !d.kind.IsEmpty && raw is @this leaf && leaf.RawText is { } chars)
+        if (type is { } d && !d.kind.IsEmpty && raw is @this leaf && leaf.RawText is { } chars)
             return d.Make(chars, data.Context);
         if (raw is @this self) return self;
         if (raw is global::app.type.item.dict.@this or global::app.type.item.list.@this

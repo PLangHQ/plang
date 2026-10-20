@@ -61,20 +61,20 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     /// <summary>A <c>list&lt;T&gt;</c> is a RE-TAG of a list, not an element walk: wrap the
     /// list's rows as-is. Each row converts to <typeparamref name="T"/> only when taken out
     /// (<c>row.Value&lt;T&gt;()</c>) — O(1) here, no per-element conversion.</summary>
-    public static new @this<T>? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static new @this<T>? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         if (value is @this<T> already) return already;
         // the app's {list, T} type, with the template a re-tagged list carries
-        global::app.type.@this type(global::app.type.item.template.kind.@this? template)
+        global::app.type.@this Of(global::app.type.item.template.kind.@this? template)
             => data.Context.App.type.list[new global::app.type.@this("list",
                 typeof(T) == typeof(global::app.type.item.@this) ? null : NameOf(typeof(T)), false, template), data.Context];
-        if (value is @this list) return new @this<T>(list, type(list.Type.Template));
+        if (value is @this list) return new @this<T>(list, Of(list.Type.Template));
         // A raw container lifts to a base list first, then re-tags; one value is a list of one, as the list's reader
         // reads it.
         return global::app.type.item.@this.Create((value as global::app.type.item.@this)?.Clr<object>() ?? value, data.Context) switch
         {
-            @this lifted => new @this<T>(lifted, type(lifted.Type.Template)),
-            { IsNull: false } one => new @this<T>(new[] { one }, type(null)),
+            @this lifted => new @this<T>(lifted, Of(lifted.Type.Template)),
+            { IsNull: false } one => new @this<T>(new[] { one }, Of(null)),
             _ => null,
         };
     }

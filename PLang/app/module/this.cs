@@ -18,7 +18,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal override global::app.type.item.kept.list.@this Kept => _kept;
 
     /// <summary>A module is registered from its actions' classes, never made from a value.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this module) return module;
         data.Fail(new global::app.error.@this(

@@ -41,11 +41,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
     /// on <paramref name="data"/> (a bad ISO string vs a wrong type).</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         if (value is @this self) return self;
         // made by the type that asks; with none (a read that names no app) no time is made
-        if (declared is { } type && Create(value, type) is { } built) return built;
+        if (type is not null && Create(value, type) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as time — expected ISO HH:mm:ss.", "TimeParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to time.", "TimeConversionFailed", 400));

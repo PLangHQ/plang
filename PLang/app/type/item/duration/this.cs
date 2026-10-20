@@ -36,7 +36,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
 
     /// <summary>The span <paramref name="raw"/> is in a standard whose text <paramref name="read"/> reads: a span is
     /// itself, a text what the standard reads of it; null when it is neither.</summary>
-    protected static System.TimeSpan? Span(object? raw, System.Func<string, System.TimeSpan?> read)
+    protected static System.TimeSpan? Measure(object? raw, System.Func<string, System.TimeSpan?> read)
         => (raw is global::app.type.item.@this leaf ? leaf.Clr<object>() : raw) switch
         {
             System.TimeSpan given => given,
@@ -80,10 +80,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
 
     /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
     /// on <paramref name="data"/> (a bad string vs a wrong type).</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         // asked for in a standard (`as iso`): that standard makes it, from a span or a text in its own form only
-        if (declared?.kind is { IsEmpty: false } asked && data.Context.App.type.list["duration"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
+        if (type?.kind is { IsEmpty: false } asked && data.Context.App.type.list["duration"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
             return data.Context.App.type.list[new global::app.type.@this("duration", standard.Name), data.Context].Make(value, data) as @this;
         if (Create(value, data.Context) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)

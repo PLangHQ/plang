@@ -29,7 +29,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A modifier passes; anything else declines — a modifier is made with the input it was held for.</summary>
     public static @this? Create(object? raw) => raw as @this;
 
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this modifier) return modifier;
         data.Fail(new global::app.error.@this("a modifier is made with the input it was held for (alt, ctrl, meta, shift)", "ModifierInvalid", 400));
