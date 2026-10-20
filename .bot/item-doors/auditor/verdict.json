@@ -1,6 +1,6 @@
 {
   "status": "fail",
-  "summary": "Keep the branch, don't start over. Stages 1, 2, 4 and 1b need a fix at the root; 3 and 5 stay (5 with two fixes before merge). 1 critical (a write through a read list row is silently lost), plus majors: a type looked up by building one from names (~100 sites), the door as a second method guarded by PLNG006, a nested record read that crashes, unmarked os members, a broken step's Error rebuilt from strings, Fluid hiding errors.",
+  "summary": "Door reshape re-check (184): it holds — every value writes itself, no kind writes, the pairs and PLNG006 are gone, .pr bytes unmoved — but two majors remain before merge: the wire template still decides kept-or-used itself (a Debug dump of a container template isn't as written), and the formal reader reads any one-key dict list in a plain list slot as named arguments.",
   "next_bot": "coder",
-  "next_scope": "Ingi decides per stage from .bot/item-doors/auditor/audit.md. Before merge: F4, F5, F7, F9, F11, F8 guard. At the root: F2 (a list lookup by names), F3 (the door as a template method; locked, Ingi), F6 (158 c2), F1/F10 (finish stage 1)."
+  "next_scope": "Before merge: R1 (wire/template.cs:21: a template writes as written; using it is the view's), R2 (formal/reader.cs:360: the slot, not the literal's shape, says it takes arguments; locked type system, so a proposal to Ingi, scoped guard until then). With F2 at the root (Ingi): R3 (size/duration make a standard's value by a type built from names). Minor: R4–R8 (.bot/item-doors/auditor/reshape.md). Still open from audit.md: F2, F3's naming round, F6 (158 c2), F1/F10."
 }
