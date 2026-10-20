@@ -30,7 +30,7 @@ Decide
 
 - set %stage% = 3
 - render template "/system/builder/llm/templates/decider3.template", write to %questions%
-- if %questions% contains "@kindof"
+- if %questions% contains "@strict"
     - llm.decider State=%state%, Question=%questions%, write to %answer%
     - build.pick Goal=%goal%, Answer=%answer%, Popular=%decider.popular%
 

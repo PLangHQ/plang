@@ -182,6 +182,7 @@ public sealed class @this
             else if (id.StartsWith("@also.", StringComparison.Ordinal)) _also[id["@also.".Length..]] = noul;
             else if (id.StartsWith(OptionKey, StringComparison.Ordinal)) await Choose(id[OptionKey.Length..], await Choice(a, context), context);
             else if (id.StartsWith(KindKey, StringComparison.Ordinal)) Refine(id[KindKey.Length..], await Choice(a, context), context);
+            else if (id.StartsWith(StrictKey, StringComparison.Ordinal)) Tighten(id[StrictKey.Length..], noul, context);
             else if (Branch(context).Any(b => $"{b.Module.Name}.{b.Name}" == id)) _branch[id] = noul;
             else if (id.Contains('.')) _named[id] = noul;
             else _choice[id] = (await Choice(a, context), a.Get<number>("confidence", context));
@@ -553,6 +554,9 @@ public sealed class @this
     // (or, for a generic, the element) the next exchange picks.
     private const string KindKey = "@kindof.";
 
+    // A strict follow-up's id: @strict.{module}.{action}.{option} — a yes/no that sets the Option's type strict.
+    private const string StrictKey = "@strict.";
+
     private async Task<List<question.@this>> Questions(IEnumerable<string> popular, global::app.actor.context.@this context)
     {
         var questions = new List<question.@this>();
@@ -610,10 +614,19 @@ public sealed class @this
         // kind already picked (a non-empty kind) ends it; a type with no program-named kind is not asked.
         foreach (var (key, (property, value)) in _option)
         {
-            // only a slot that holds a type (a coercion: variable.set's Type, …) carries a kind
+            // only a slot that holds a type (a coercion: variable.set's Type, …) carries a kind or strict
             if (property.Type.ClrType != typeof(global::app.type.@this)) continue;
-            // the pick is the type by its name (stage 2) or the kinded type (after a refine); a kind already set ends it
+            // the pick is the type by its name (stage 2) or the refined type (after a refine)
             var picked = Picked(value, context);
+            // strict: a yes/no asked for any type coercion not yet strict — the step may mark a coercion strict with
+            // or without a kind (`as image strict`), so it is asked independent of the kind
+            if (!picked.Strict)
+                questions.Add(new question.@this
+                {
+                    Id = Key($"{StrictKey}{key}"), Kind = Kind.Strict,
+                    Action = Catalog(key[..key.LastIndexOf('.')], context), Property = property, Of = picked.Name,
+                });
+            // the kind: asked only while the kind is still empty and the type offers program-named kinds
             if (!picked.kind.IsEmpty) continue;
             var kinds = await KindsOffered(picked, context);
             if (kinds.Count == 0) continue;
@@ -651,7 +664,19 @@ public sealed class @this
     {
         if (kind is null || kind == question.@this.None || !_option.TryGetValue(key, out var option)) return;
         var picked = Picked(option.Value, context);
-        var kinded = context.App.type.list[new global::app.type.@this(picked.Name, kind), context];
+        // keep a strict already set by the strict follow-up (the two answers ride the same stage-3 exchange)
+        var kinded = context.App.type.list[new global::app.type.@this(picked.Name, kind, picked.Strict), context];
         _option[key] = (option.Property, kinded);
+    }
+
+    // The strict follow-up's answer: a yes (noul at the possible floor or more) makes the Option's type strict, born
+    // through the type's constructor, keeping whatever kind a kind follow-up has already set. A no leaves it as is.
+    private void Tighten(string key, number? noul, global::app.actor.context.@this context)
+    {
+        if (noul is not { } yes || !(yes >= (number)Possible) || !_option.TryGetValue(key, out var option)) return;
+        var picked = Picked(option.Value, context);
+        var strict = context.App.type.list[
+            new global::app.type.@this(picked.Name, picked.kind.IsEmpty ? null : picked.kind.Name, true), context];
+        _option[key] = (option.Property, strict);
     }
 }
