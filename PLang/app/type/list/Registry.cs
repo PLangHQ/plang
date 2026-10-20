@@ -63,43 +63,26 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         => new(Types.Where(t => !t.Internal).Select(t => t.Name).Distinct(StringComparer.OrdinalIgnoreCase)
             .Select(name => (global::app.type.item.@this)new global::app.type.item.text.@this(name, this["text"])).ToList());
 
-    // Every name a type answers to — its word, its namespace, its aliases, case aside (type.Names) — to the type,
-    // the first that answers, as the walk found it. The guard keeps a name to one class. Made on first ask and made
-    // again after the set changes (the scan, an added type, a replaced one), so it always answers as the walk would.
-    private volatile IReadOnlyDictionary<string, global::app.type.@this>? _named;
+    // Every name a type answers to — its word, its namespace, its aliases, case aside (type.Names) — to the type, the
+    // first that answers, as the set stands. The guard keeps it: every type that comes in passes the guard, which
+    // checks its names here and records them, so a name is one class's and a lookup by name never walks the set. A
+    // snapshot, replaced whole on each add, so a reader never sees one half made.
+    private volatile System.Collections.Immutable.ImmutableDictionary<string, global::app.type.@this> _named
+        = System.Collections.Immutable.ImmutableDictionary.Create<string, global::app.type.@this>(StringComparer.OrdinalIgnoreCase);
 
-    private IReadOnlyDictionary<string, global::app.type.@this> Named => _named ?? Index();
-
-    private IReadOnlyDictionary<string, global::app.type.@this> Index()
+    private System.Collections.Immutable.ImmutableDictionary<string, global::app.type.@this> Named
     {
-        lock (_lock)
+        get
         {
             Load();
-            if (_named is { } made) return made;
-            var named = new Dictionary<string, global::app.type.@this>(StringComparer.OrdinalIgnoreCase);
-            foreach (var type in Items())
-                foreach (var claim in type.Claims)
-                    named.TryAdd(claim, type);
-            return _named = named;
+            return _named;
         }
     }
 
     // Every type's class to the type, the first that has it, as the set stands (naming reads the set while the scan
-    // fills it). Made on first ask and made again after the set changes, beside the names, so a lookup by class never
-    // walks the set.
-    private volatile IReadOnlyDictionary<System.Type, global::app.type.@this>? _classed;
-
-    private IReadOnlyDictionary<System.Type, global::app.type.@this> Classed
-    {
-        get
-        {
-            if (_classed is { } made) return made;
-            var classed = new Dictionary<System.Type, global::app.type.@this>();
-            foreach (var type in Items())
-                if (type.ClrType is { } clr) classed.TryAdd(clr, type);
-            return _classed = classed;
-        }
-    }
+    // fills it). Kept by the guard beside the names, so a lookup by class never walks the set.
+    private volatile System.Collections.Immutable.ImmutableDictionary<System.Type, global::app.type.@this> _classed
+        = System.Collections.Immutable.ImmutableDictionary<System.Type, global::app.type.@this>.Empty;
 
     // The startup scan: every item class in Assemblies comes in under its name, then each type takes its kinds; a
     // type's facts are read when first asked, once every name is known (a fact names its property types). A clash
@@ -122,20 +105,24 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             foreach (var assembly in Assemblies)
                 if (Enlist(assembly) is { } refused) throw new InvalidOperationException(refused.Message);
             if (Guard() is { } clash) throw new InvalidOperationException(clash.Message);
-            _named = null;   // the set changed: the names and the classes are made again on the next ask
-            _classed = null;
             _loaded = true;
         }
     }
 
     /// <summary>The guard every slot passes: the types hold types, and every name a type answers to — its
     /// word, its namespace, its aliases — names one class. Only plang's own code reaches the slots around
-    /// <see cref="Add(System.Type, actor.context.@this, string?)"/>, so a refusal here is plang broken, and throws.</summary>
+    /// <see cref="Add(System.Type, actor.context.@this, string?)"/>, so a refusal here is plang broken, and throws.
+    /// A type it lets in is recorded by its names and its class, the first that holds each keeping it.</summary>
     protected override void Admit(object? slot)
     {
         if (slot is not global::app.type.@this type)
             throw new InvalidOperationException($"the types hold types, not {slot?.GetType().Name ?? "null"}.");
         if (Clash(type) is { } clash) throw new InvalidOperationException(clash.Message);
+        var named = _named;
+        foreach (var claim in type.Claims)
+            if (!named.ContainsKey(claim)) named = named.Add(claim, type);
+        _named = named;
+        if (type.ClrType is { } clr && !_classed.ContainsKey(clr)) _classed = _classed.Add(clr, type);
     }
 
     // One name, one class: the first name <paramref name="type"/> answers to — its word, its namespace, its
@@ -143,7 +130,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private error.@this? Clash(global::app.type.@this type)
     {
         foreach (var claim in type.Claims)
-            if (Items().FirstOrDefault(t => t.Names(claim)) is { } owner && owner.ClrType != type.ClrType)
+            if (_named.GetValueOrDefault(claim) is { } owner && owner.ClrType != type.ClrType)
                 return new error.@this(
                     $"type name '{claim}' is claimed by both {owner.ClrType?.FullName} and {type.ClrType?.FullName} — one name, one class.",
                     "TypeLoadCollision", 400);
@@ -183,8 +170,6 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             var added = new global::app.type.@this(claimed, clr, this);
             if (Clash(added) is { } clash) return context.Error(clash);
             base.Add(added);
-            _named = null;   // the set changed: the names and the classes are made again on the next ask
-            _classed = null;
             return context.Ok(added);
         }
     }
@@ -309,13 +294,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     // no closed set); null when every kind is held.
     private error.@this? Enlist(Assembly assembly)
     {
-        // the assembly's classes, read once for every pass below; the types by every name they answer to, the first
-        // that answers, as the walk finds them (the types don't change while their kinds are enlisted)
+        // the assembly's classes, read once for every pass below; the types by every name they answer to, as the guard
+        // keeps them (the types don't change while their kinds are enlisted)
         var classes = assembly.GetTypes();
-        var named = new Dictionary<string, global::app.type.@this>(StringComparer.OrdinalIgnoreCase);
-        foreach (var type in Items())
-            foreach (var claim in type.Claims)
-                named.TryAdd(claim, type);
+        var named = _named;
         // each kind class, born holding the entry of the type it is a kind of (the T of its kind<T>)
         foreach (var t in classes)
             if (typeof(global::app.type.kind.@this).IsAssignableFrom(t) && t is { IsAbstract: false, ContainsGenericParameters: false }

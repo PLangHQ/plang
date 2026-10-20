@@ -253,7 +253,7 @@ public sealed partial class @this
             return ("choice", options.IsEnum && options.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false) is null
                 ? null
                 : global::app.type.item.choice.set.@this.For(options, this)?.Name ?? options.Name);
-        if (typeof(app.type.item.@this).IsAssignableFrom(type) && Classed.GetValueOrDefault(type) is { } own)
+        if (typeof(app.type.item.@this).IsAssignableFrom(type) && _classed.GetValueOrDefault(type) is { } own)
             return (own.Name, null);
         // the app's node for a concept (node<goal>, its current node) is a node
         if (typeof(app.type.node.@this).IsAssignableFrom(type)) return ("node", null);
