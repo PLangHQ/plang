@@ -91,4 +91,13 @@ making what it doesn't need:
 | a module's catalog action made on first ask (name → class stays eager) | ~5 ms | private to `module` |
 | **left eager** | **~4 – 5 ms** | GetTypes + NameOf + name index + format attributes + the rest of the app |
 
-Ingi's 5 ms holds on paper. Not settled: which of these Ingi takes, and the choice mark's shape.
+Ingi's 5 ms holds on paper.
+
+**Ingi's yes (2026-10-20): all four** — mark choice sets; type facts on first ask (one pass of entries);
+formats' encode/decode and subclass kinds on first ask (the `[Format]` attribute still read eagerly for the
+MIME/extension index and `Guard`); a module's catalog action on first ask (name → class eager). Each test keeps
+its own fresh app — no pool, no statics.
+
+Open for the architect: the choice mark is a new attribute on the locked type system — its shape and the
+surface re-pin go under a decision. Then a birth is re-profiled against the ~5 ms target (the profiler is kept
+outside the tree; it re-applies as temporary marks).
