@@ -696,8 +696,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>Constructor signature for scalar types (<c>"name: shape"</c>).</summary>
     public string? ConstructorSignature
     {
-        get => Family._constructorSignature ??= Family.Source is { } source && Family._in is { } types
-            ? $"{source.Name}: {types.Face(source.ParameterType)}" : null;
+        get => Family._constructorSignature ??= Family.Source is { } source && Family._list is { } list
+            ? $"{source.Name}: {list.Face(source.ParameterType)}" : null;
         init => _constructorSignature = value;
     }
     private string? _constructorSignature;
@@ -817,7 +817,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         if (types == null || clr == typeof(@this)) return;
         _offer = Declared<IReadOnlyList<item.@this>>("Offer");
-        _in = types;
+        _list = types;
 
         T? Declared<T>(string member) where T : class
         {
@@ -829,7 +829,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     // The list this type is in — its facts name their property types through it; null for a type that is its
     // identity alone.
-    private readonly list.@this? _in;
+    private readonly list.@this? _list;
 
     // The members the class marks plang's ([LlmBuilder]), listed where they are declared — read on the first ask
     // and kept: the first list made is the one every asker gets. Empty for a type that is its identity alone.
@@ -839,7 +839,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         {
             if (_property is { } read) return read;
             var made = new property.list.@this();
-            if (_in is { } types && ClrType is { } clr)
+            if (_list is { } list && ClrType is { } clr)
             {
                 // A method that asks only for its asker's context is read as a property (%p.relative%); any other is
                 // called with its arguments (%x.replace("a", "b")%).
@@ -853,7 +853,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                     while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
                         && m.MetadataToken < prop.GetMethod!.MetadataToken)
                         made.Add(Method(methods.Dequeue()));
-                    made.Add(types.Property(prop.Name, prop.PropertyType, owner: Name));
+                    made.Add(list.Property(prop.Name, prop.PropertyType, owner: Name));
                 }
                 while (methods.TryDequeue(out var m)) made.Add(Method(m));
 
@@ -871,10 +871,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                         answers = data.GenericTypeArguments[0];
                     var parameters = m.GetParameters();
                     if (parameters is [{ ParameterType: var only }] && only == typeof(actor.context.@this))
-                        return types.Property(m.Name, answers, owner: Name);
-                    return types.Property(m.Name, answers, parameters
+                        return list.Property(m.Name, answers, owner: Name);
+                    return list.Property(m.Name, answers, parameters
                         .Where(p => p.ParameterType != typeof(actor.context.@this) && p.ParameterType != typeof(System.Threading.CancellationToken))
-                        .Select(p => types.Property(p.Name!, p.ParameterType, optional: p.IsOptional))
+                        .Select(p => list.Property(p.Name!, p.ParameterType, optional: p.IsOptional))
                         .ToList(), owner: Name);
                 }
             }
@@ -891,8 +891,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // with no builder properties (a domain wrapper around a primitive) — a string; null for a record (builder
     // properties, no shape of its own) and for a type that is its identity alone.
     private string? Form
-        => _in is not { } types ? null
-            : Source is { } source ? types.Face(source.ParameterType)
+        => _list is not { } list ? null
+            : Source is { } source ? list.Face(source.ParameterType)
             : ClrType!.GetProperty("Shape", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
                   | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null) as string
               ?? (Member.Count == 0 ? "string" : null);

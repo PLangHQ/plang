@@ -239,7 +239,6 @@ public sealed partial class @this
     // kind; a C# shape a type owns is that type (int → number); a raw CLR type no plang type owns is clr.
     private (string Name, string? Kind) PlangName(System.Type type)
     {
-        var types = Items().ToArray();
         type = Nullable.GetUnderlyingType(type) ?? type;
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(data.@this<>))
             type = type.GetGenericArguments()[0];
@@ -254,15 +253,15 @@ public sealed partial class @this
             return ("choice", options.IsEnum && options.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false) is null
                 ? null
                 : global::app.type.item.choice.set.@this.For(options, this)?.Name ?? options.Name);
-        if (typeof(app.type.item.@this).IsAssignableFrom(type) && Array.Find(types, t => t.ClrType == type) is { } own)
+        if (typeof(app.type.item.@this).IsAssignableFrom(type) && Classed.GetValueOrDefault(type) is { } own)
             return (own.Name, null);
         // the app's node for a concept (node<goal>, its current node) is a node
         if (typeof(app.type.node.@this).IsAssignableFrom(type)) return ("node", null);
         // a kind of a family: the family, with the kind whose values are this class (a setting class)
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && FamilyName(type) is { } family)
-            return (family, Array.Find(types, t => t.Names(family))?.kind[type]?.Name);
+            return (family, Items().FirstOrDefault(t => t.Names(family))?.kind[type]?.Name);
         // An item class is named by its own class above; a raw C# shape by the type that owns it.
-        if (Array.Find(types, t => t.Owns(type)) is { } owner)
+        if (Items().FirstOrDefault(t => t.Owns(type)) is { } owner)
             return (owner.Name, null);
         if (ContainerFamily(type) is { } fam) return (fam.Family, Face(PlangName(fam.Element)));
         return ("clr", null);

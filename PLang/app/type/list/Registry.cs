@@ -84,6 +84,23 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         }
     }
 
+    // Every type's class to the type, the first that has it, as the set stands (naming reads the set while the scan
+    // fills it). Made on first ask and made again after the set changes, beside the names, so a lookup by class never
+    // walks the set.
+    private volatile IReadOnlyDictionary<System.Type, global::app.type.@this>? _classed;
+
+    private IReadOnlyDictionary<System.Type, global::app.type.@this> Classed
+    {
+        get
+        {
+            if (_classed is { } made) return made;
+            var classed = new Dictionary<System.Type, global::app.type.@this>();
+            foreach (var type in Items())
+                if (type.ClrType is { } clr) classed.TryAdd(clr, type);
+            return _classed = classed;
+        }
+    }
+
     // The startup scan: every item class in Assemblies comes in under its name, then each type takes its kinds; a
     // type's facts are read when first asked, once every name is known (a fact names its property types). A clash
     // here is plang's own.
@@ -105,7 +122,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             foreach (var assembly in Assemblies)
                 if (Enlist(assembly) is { } refused) throw new InvalidOperationException(refused.Message);
             if (Guard() is { } clash) throw new InvalidOperationException(clash.Message);
-            _named = null;   // the set changed: the names are made again on the next ask
+            _named = null;   // the set changed: the names and the classes are made again on the next ask
+            _classed = null;
             _loaded = true;
         }
     }
@@ -165,7 +183,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             var added = new global::app.type.@this(claimed, clr, this);
             if (Clash(added) is { } clash) return context.Error(clash);
             base.Add(added);
-            _named = null;   // the set changed: the names are made again on the next ask
+            _named = null;   // the set changed: the names and the classes are made again on the next ask
+            _classed = null;
             return context.Ok(added);
         }
     }
