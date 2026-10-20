@@ -155,6 +155,32 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 20. The opportunities list, worked: a small app at ~1.1 ms and ~195 KB
+
+3 runs × 300 per app, load 10 – 12 (steadier than the rounds before). Memory = allocated over the app's life.
+
+| app | median | fastest | memory (birth / load / run) | §19 → now |
+|---|---|---|---|---|
+| Condition | **1.05 – 1.12 ms** | 0.87 ms | **~197 KB** (40 / 7 / 147) | 253 → 197 KB |
+| ListOps2 | **1.21 – 1.27 ms** | 0.98 ms | **~210 KB** (40 / 7 / 160) | 263 → 210 KB |
+| ForeachDictionary | **2.40 – 2.43 ms** | 1.82 ms | **~355 KB** (40 / 7 / 305) | 439 → 355 KB |
+| File (real disk) | **2.98 – 3.19 ms** | 2.23 ms | **~339 KB** (40 / 7 / 290) | 420 → 339 KB |
+
+| # | change |
+|---|---|
+| 1 | settings `Get` skips `Load()` once every scope's rows are read (Ingi: settings are still read per app — only the repeat call goes) |
+| 2 | a catalog action keeps its handler **shell** (made by reflection per action before); the generated `Resolve` reads only what it is handed and makes the run's own instance. `LibrariesTests` now pins that each *run* resolves a new instance (all callers go through `Resolve`) |
+| 3 | generated handler slots are made when first read, not by field initializers (C# runs them before `Resolve`'s object initializer, so each slot's fallback was made and dropped); a nullable slot keeps its initializer — null set on it is a value |
+| 4 | `property.list[name]`, `action.Instance` and `type.list.Full` without per-call closures |
+| 5 | path resolution: the app's anchors once per folder, the `{path, file}` type once per app, and **no stat for a path outside `/system/`** (one place: the answer is the path whatever is there) |
+| 6 | a typed view (`Data.As`) shares its binding's property bag without making it |
+| 8 | `action.Attempt` / `DispatchAsync` are `ValueTask` (no Task per synchronous attempt); public `Start`s stay `Task` |
+| 11 | a shared goal checked against its file is fresh for 1 s before the next stat (load 24 → 7 KB) |
+
+Not done: **#7** (one frame per action) is a stated design — `on.error` recovers inside the frame that failed; **#9**
+(share the type list across apps) is a design step — the type entries carry app-level events, and the context-held
+bindings of §19 are the shape that would let them be shared; **#10** (settings across apps) — Ingi: read per app.
+
 ## 19. Fewer allocations per action; a run's bindings on a shared goal are its context's
 
 Small app, Condition: run 224 → **186 KB** (≈ 251 KB end to end, was ~290). Times not comparable this round (load 10 –

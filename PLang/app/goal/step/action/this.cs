@@ -229,7 +229,8 @@ public partial class @this
     /// every after still runs on it. A retry (<c>on.error</c>) is another attempt in the same frame — a fresh
     /// deadline, a fresh cache lookup.
     /// </summary>
-    internal async Task<global::app.data.@this> Attempt(actor.context.@this context)
+    // A ValueTask: an attempt that finishes without waiting (most do) makes no Task for its answer.
+    internal async ValueTask<global::app.data.@this> Attempt(actor.context.@this context)
     {
         var answer = await on.start.Before(this, context);
         global::app.data.@this data;
@@ -307,7 +308,7 @@ public partial class @this
     /// detects the timeout via CTS state + failed result; this catch is the safety net for a handler
     /// that bubbles it differently. Step.Start's catch DOES exclude OCE — that asymmetry is intentional.</para>
     /// </summary>
-    private async Task<global::app.data.@this> DispatchAsync(
+    private async ValueTask<global::app.data.@this> DispatchAsync(
         actor.context.@this context, global::app.call.@this call)
     {
         // Uniform dispatch: always resolve the shell + run Resolve (the seam). A C#-composed
