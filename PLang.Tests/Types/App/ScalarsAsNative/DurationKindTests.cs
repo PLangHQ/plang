@@ -32,10 +32,16 @@ public class DurationKindTests : System.IAsyncDisposable
 
     [Test]
     [Arguments(3600, "1h")]
-    [Arguments(90, "90s")]
-    [Arguments(1.5, "1500ms")]
+    [Arguments(90, "1m30s")]
+    [Arguments(1.5, "1.5s")]
+    [Arguments(0.2, "200ms")]
+    [Arguments(30, "30s")]
+    [Arguments(300, "5m")]
+    [Arguments(172800, "2d")]
+    [Arguments(183600, "2d3h")]
+    [Arguments(83.456, "1m23.456s")]
     [Arguments(0, "0s")]
-    public async Task ASpanMadeWithNoText_IsShort_InItsLargestWholeUnit(double seconds, string text)
+    public async Task ASpanMadeWithNoText_IsShort_InEachOfItsUnits(double seconds, string text)
         => await Assert.That(await Written(Ctx.Duration(System.TimeSpan.FromSeconds(seconds)))).IsEqualTo(text);
 
     [Test]
@@ -57,5 +63,34 @@ public class DurationKindTests : System.IAsyncDisposable
 
         await Assert.That(await Written(converted)).IsEqualTo("PT30S");
         await Assert.That(converted.Value).IsEqualTo(System.TimeSpan.FromSeconds(30));
+    }
+
+    // a measured span, as a step's run is timed: each of its units, its seconds with their fraction
+    [Test]
+    public async Task AMeasuredSpan_WritesEachOfItsUnits()
+        => await Assert.That(await Written(Duration.Create(System.TimeSpan.Parse("00:01:23.456", System.Globalization.CultureInfo.InvariantCulture), Ctx)))
+            .IsEqualTo("1m23.456s");
+
+    // the short form reads each of its units, summed
+    [Test]
+    [Arguments("1h30m", 90 * 60.0)]
+    [Arguments("1m23.456s", 83.456)]
+    [Arguments("2d3h", 183600.0)]
+    public async Task AShortText_ReadsEachOfItsUnits(string text, double seconds)
+        => await Assert.That(Duration.Resolve(text, Ctx)!.Value).IsEqualTo(System.TimeSpan.FromSeconds(seconds));
+
+    // a span with no form of its own is made in the standard the setting names
+    [Test]
+    public async Task TheSetting_NamesTheStandardOfASpanWithNoForm()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var context = app.actor.list.User.Context;
+        var set = await new global::app.type.item.variable.parser.@this("%!app.type.duration.setting.standard%", context.App.type.list).Variable.Single()
+            .Set(context.Ok(context.Text("iso")), context);
+        await set.IsSuccess();
+
+        var span = Duration.Create(System.TimeSpan.Parse("00:01:23.456", System.Globalization.CultureInfo.InvariantCulture), context);
+
+        await Assert.That(await context.Written(span)).IsEqualTo("PT1M23.456S");
     }
 }

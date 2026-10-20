@@ -1,7 +1,8 @@
 namespace app.type.item.duration.@short;
 
-/// <summary>A span in the short form a step says — a number and its unit: <c>200ms</c>, <c>30s</c>, <c>5m</c>,
-/// <c>1h</c>, <c>1d</c>. It writes itself in its largest whole unit (90s stays <c>90s</c>, 3600s is <c>1h</c>).</summary>
+/// <summary>A span in the short form a step says — each unit it has and its number, largest first, as Go writes one:
+/// <c>30s</c>, <c>5m</c>, <c>1h30m</c>, <c>2d3h</c>, <c>1m23.456s</c>; under a second, its milliseconds (<c>200ms</c>).
+/// A unit it has none of is left out (90s is <c>1m30s</c>, 3600s is <c>1h</c>).</summary>
 public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A span born holding <paramref name="type"/>, the app's <c>{duration, short}</c>.</summary>
@@ -13,13 +14,22 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
 
     protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        var ticks = Value.Ticks;
-        writer.String(ticks == 0 ? "0s"
-            : ticks % System.TimeSpan.TicksPerDay == 0 ? $"{ticks / System.TimeSpan.TicksPerDay}d"
-            : ticks % System.TimeSpan.TicksPerHour == 0 ? $"{ticks / System.TimeSpan.TicksPerHour}h"
-            : ticks % System.TimeSpan.TicksPerMinute == 0 ? $"{ticks / System.TimeSpan.TicksPerMinute}m"
-            : ticks % System.TimeSpan.TicksPerSecond == 0 ? $"{ticks / System.TimeSpan.TicksPerSecond}s"
-            : $"{Value.TotalMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture)}ms");
+        var span = Value.Duration();
+        var sign = Value < System.TimeSpan.Zero ? "-" : "";
+        if (span == System.TimeSpan.Zero) writer.String("0s");
+        else if (span < System.TimeSpan.FromSeconds(1))
+            writer.String(sign + span.TotalMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture) + "ms");
+        else
+        {
+            var written = new System.Text.StringBuilder(sign);
+            if (span.Days > 0) written.Append(span.Days).Append('d');
+            if (span.Hours > 0) written.Append(span.Hours).Append('h');
+            if (span.Minutes > 0) written.Append(span.Minutes).Append('m');
+            var seconds = span.Ticks % System.TimeSpan.TicksPerMinute;
+            if (seconds > 0)
+                written.Append(((decimal)seconds / System.TimeSpan.TicksPerSecond).ToString("0.#######", System.Globalization.CultureInfo.InvariantCulture)).Append('s');
+            writer.String(written.ToString());
+        }
         return default;
     }
 
@@ -31,11 +41,18 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
         Refuse(raw, "short", "30s", data);
         return null;
 
+        // each of its units and their number, in any order they're written (1h30m, 1m23.456s, 200ms), summed
         static System.TimeSpan? Read(string text)
-            => System.Text.RegularExpressions.Regex.Match(text, @"^(-?\d+(?:\.\d+)?)\s*(ms|s|m|h|d)$",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase) is { Success: true } form
-                ? Unit(double.Parse(form.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture), form.Groups[2].Value)
-                : null;
+        {
+            var form = System.Text.RegularExpressions.Regex.Match(text, @"^(-?)(?:(\d+(?:\.\d+)?)\s*(ms|d|h|m|s)\s*)+$",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (!form.Success) return null;
+            var span = System.TimeSpan.Zero;
+            for (var i = 0; i < form.Groups[2].Captures.Count; i++)
+                span += Unit(double.Parse(form.Groups[2].Captures[i].Value, System.Globalization.CultureInfo.InvariantCulture),
+                    form.Groups[3].Captures[i].Value);
+            return form.Groups[1].Value == "-" ? -span : span;
+        }
 
         static System.TimeSpan Unit(double amount, string unit) => unit.ToLowerInvariant() switch
         {

@@ -39,8 +39,8 @@ public class FrameKindTests : System.IAsyncDisposable
         await Assert.That(item.Step).IsSameReferenceAs(frame.Step);
         await Assert.That(item.Goal).IsSameReferenceAs(frame.Goal);
         await Assert.That(frame.Children).Contains(item);
-        await Assert.That(item.Duration).IsNull();
-        await Assert.That(frame.Duration).IsNotNull();
+        await Assert.That(item.Duration(Ctx)).IsNull();
+        await Assert.That(frame.Duration(Ctx)).IsNotNull();
         await Assert.That(stack.Scope).IsNotSameReferenceAs(item);
     }
 

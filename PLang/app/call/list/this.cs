@@ -48,25 +48,22 @@ public sealed partial class @this : global::app.type.item.@this
     private readonly Func<global::app.actor.setting.@this> _settings;
 
     // The app's types, handed to each frame at its push: the frame's own (a call, a binding, an isolated call), its
-    // start and end (datetime), how long it ran (duration, in the standard that type holds), and its tags (dict).
+    // start and end (datetime), and its tags (dict).
     private readonly global::app.type.@this _call;
     private readonly global::app.type.@this _binding;
     private readonly global::app.type.@this _isolated;
     private readonly global::app.type.@this _datetime;
-    private readonly global::app.type.@this _duration;
     private readonly global::app.type.@this _dict;
 
     /// <summary>A context's calls, of the app's <paramref name="types"/>, reading what they capture through its
-    /// <paramref name="settings"/>; <paramref name="audit"/> is where every error they observe is kept. How long a
-    /// frame ran is a value of the <paramref name="duration"/> type.</summary>
-    public @this(global::app.type.list.@this types, global::app.type.@this duration,
+    /// <paramref name="settings"/>; <paramref name="audit"/> is where every error they observe is kept.</summary>
+    public @this(global::app.type.list.@this types,
         Func<global::app.actor.setting.@this> settings, global::app.error.list.@this audit) : base(types[typeof(@this)])
     {
         _call = types[typeof(call.@this)];
         _binding = types[typeof(call.binding.@this)];
         _isolated = types[typeof(call.isolated.@this)];
         _datetime = types[typeof(global::app.type.item.datetime.@this)];
-        _duration = duration;
         _dict = types[typeof(global::app.type.item.dict.@this)];
         _settings = settings;
         Audit = audit;
@@ -216,14 +213,14 @@ public sealed partial class @this : global::app.type.item.@this
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
     /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
     public call.@this Push(IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? held = null)
-        => Enter(new call.binding.@this(_binding, _current.Value, this, _datetime, _duration, _dict, names, held));
+        => Enter(new call.binding.@this(_binding, _current.Value, this, _datetime, _dict, names, held));
 
     /// <summary>Pushes a frame with memory of its own, born with <paramref name="names"/>: every write under it stays
     /// in it (a tool's goal, a shortcut's). A task's run starts its chain with one whose <paramref name="caller"/> is
     /// the frame its caller was in — reads fall through to the caller's frames and memory.</summary>
     public call.@this Isolate(IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? held = null,
         call.@this? caller = null)
-        => Enter(new call.isolated.@this(_isolated, caller ?? _current.Value, this, _datetime, _duration, _dict, names, held));
+        => Enter(new call.isolated.@this(_isolated, caller ?? _current.Value, this, _datetime, _dict, names, held));
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
     public call.@this Push(global::app.goal.step.@this step) => Push(step.Goal, step, null, null);
@@ -242,7 +239,7 @@ public sealed partial class @this : global::app.type.item.@this
         if (caller != null && caller.Depth >= MaxDepth)
             throw new CallStackOverflowException(MaxDepth);
 
-        return Enter(new call.@this(_call, goal, step, action, caller, this, _datetime, _duration, _dict, caller, variables ?? Variables, names));
+        return Enter(new call.@this(_call, goal, step, action, caller, this, _datetime, _dict, caller, variables ?? Variables, names));
     }
 
     // The frame becomes current: it joins its caller's children (Children owns its own lock + FIFO eviction), and a

@@ -143,10 +143,9 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     public child.list.@this Children { get; }
 
     // --- Timing tier (null when Flags.Timing off) ---
-    // The app's types its push handed: its times are values of them — when it ran (datetime), and how long
-    // (duration, written in the kind that type holds).
+    // The app's type its push handed: when it ran is a value of it (datetime). How long is made as its asker's setting
+    // says a span is.
     private readonly global::app.type.@this _datetime;
-    private readonly global::app.type.@this _duration;
 
     /// <summary>When it was pushed. Null when the Timing flag was off at Push.</summary>
     public global::app.type.item.datetime.@this? StartedAt => _startedAt is { } started ? new(started, _datetime) : null;
@@ -155,8 +154,10 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     public global::app.type.item.datetime.@this? CompletedAt => _completedAt is { } completed ? new(completed, _datetime) : null;
 
     /// <summary>Wall time this frame has run — while in flight (an after-binding runs inside the frame) and, once
-    /// popped, its whole duration. Null when the Timing flag was off at Push.</summary>
-    public global::app.type.item.duration.@this? Duration => _stopwatch is { } watch ? new global::app.type.item.duration.@short.@this(watch.Elapsed, _duration) : null;
+    /// popped, its whole duration — made in the standard its asker's setting names. Null when the Timing flag was off
+    /// at Push.</summary>
+    public global::app.type.item.duration.@this? Duration(global::app.actor.context.@this context)
+        => _stopwatch is { } watch ? global::app.type.item.duration.@this.Create(watch.Elapsed, context) : null;
 
     // --- Diff tier (null when Flags.Diff off) ---
     /// <summary>
@@ -208,7 +209,6 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         @this? caller,
         global::app.call.list.@this stack,
         global::app.type.@this datetime,
-        global::app.type.@this duration,
         global::app.type.@this dict,
         @this? previousCurrent,
         Variables? diffSource,
@@ -226,7 +226,6 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         _diffSource = diffSource;
         _for = held;
         _datetime = datetime;
-        _duration = duration;
         Tags = new global::app.type.item.dict.@this(dict);
         Errors =new global::app.error.list.@this(stack.Audit.Type);
         Children = new child.list.@this(stack);

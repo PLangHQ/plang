@@ -76,7 +76,7 @@ public class FramesTests
         _app.type.list["step"].Own().Bind("start", global::app.@event.When.after, (item, _, c) =>
         {
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
-                took.Add(c.call.Current?.Duration);
+                took.Add(c.call.Current?.Duration(c)?.Value);
             return Task.FromResult(c.Ok());
         }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
 

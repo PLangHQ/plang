@@ -10,9 +10,9 @@ namespace app.call.binding;
 public class @this : call.@this
 {
     internal @this(global::app.type.@this type, call.@this? caller, list.@this stack, global::app.type.@this datetime,
-        global::app.type.@this duration, global::app.type.@this dict,
+        global::app.type.@this dict,
         IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? held)
-        : base(type, null, null, null, caller, stack, datetime, duration, dict, stack.Current, null, names, held) { }
+        : base(type, null, null, null, caller, stack, datetime, dict, stack.Current, null, names, held) { }
 
     /// <summary>Its caller's goal — it stands where its caller stands.</summary>
     public override global::app.goal.@this? Goal => Caller?.Goal;

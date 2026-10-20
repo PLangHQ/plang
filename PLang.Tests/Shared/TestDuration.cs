@@ -5,6 +5,5 @@ namespace PLang.Tests;
 public static class TestDuration
 {
     public static global::app.type.item.duration.@this Duration(this global::app.actor.context.@this context, System.TimeSpan span)
-        => global::app.type.item.duration.@this.Create(span, context)
-           ?? throw new System.InvalidOperationException($"{span} made no duration");
+        => global::app.type.item.duration.@this.Create(span, context);
 }

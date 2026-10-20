@@ -59,10 +59,10 @@ public class DurationWrapperTests : IAsyncDisposable
     [Test]
     public async Task Duration_BareSerialize_InItsKind_RoundTrips()
     {
-        // A span made with no text is short, written bare in its largest whole unit, and reads back as itself.
+        // A span made with no text is short, written bare in each of its units, and reads back as itself.
         var d = Context.Duration(System.TimeSpan.FromMinutes(90));
         var text = await Context.Written(d);
-        await Assert.That(text).IsEqualTo("90m");
+        await Assert.That(text).IsEqualTo("1h30m");
         await Assert.That(Duration.Resolve(text, Context)!.Value).IsEqualTo(d.Value);
     }
 

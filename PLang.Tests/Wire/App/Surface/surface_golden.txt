@@ -103,7 +103,7 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Tags : app.type.item.bool.this { get; }
   Timing : app.type.item.bool.this { get; }
   Variables : app.type.item.variable.list.this { get; }
-  ctor(app.type.list.this types, app.type.this duration, System.Func<app.actor.setting.this> settings, app.error.list.this audit)
+  ctor(app.type.list.this types, System.Func<app.actor.setting.this> settings, app.error.list.this audit)
   override IsLeaf : System.Boolean { get; }
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
@@ -135,7 +135,7 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable
   Depth : app.type.item.number.this { get; } [LlmBuilder]
   Diffs : app.call.diff.this { get; } [LlmBuilder]
   DisposeAsync() : System.Threading.Tasks.ValueTask
-  Duration : app.type.item.duration.this { get; }
+  Duration(app.actor.context.this context) : app.type.item.duration.this
   Error : app.error.this { get; }
   Errors : app.error.list.this { get; } [LlmBuilder]
   Event : app.data.this { get; }
@@ -1531,12 +1531,17 @@ class app.type.item.duration.serializer.Reader : app.type.reader.ITypeReader
   Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
   ctor()
 
+class app.type.item.duration.setting.this : app.type.item.setting.this
+  Standard : app.type.item.choice.this<app.type.kind.this<app.type.item.duration.this>> { get; set; } [Default, Out, Store]
+  ctor(app.type.this type)
+  static Internal : System.Boolean { get; }
+
 class app.type.item.duration.short.this : app.type.item.duration.this, app.type.item.ICreate<app.type.item.duration.short.this>
   ctor(System.TimeSpan value, app.type.this type)
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.duration.short.this
 
-abstract class app.type.item.duration.this : app.type.item.this, System.IEquatable<app.type.item.duration.this>, app.type.item.ICreate<app.type.item.duration.this> [Kinds, PlangType]
+abstract class app.type.item.duration.this : app.type.item.this, System.IEquatable<app.type.item.duration.this>, app.type.item.ICreate<app.type.item.duration.this>, app.type.item.setting.ISetting<app.type.item.duration.setting.this> [Choice, Kinds, PlangType]
   AreEqual(System.Object other) : System.Boolean
   Days(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
   Equals(app.type.item.duration.this other) : System.Boolean
@@ -1557,6 +1562,7 @@ abstract class app.type.item.duration.this : app.type.item.this, System.IEquatab
   protected static Span(System.Object raw, System.Func<System.String, System.Nullable<System.TimeSpan>> read) : System.Nullable<System.TimeSpan>
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.duration.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.duration.this
+  static Create(System.TimeSpan span, app.actor.context.this context) : app.type.item.duration.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
   static Resolve(System.String raw, app.actor.context.this context) : app.type.item.duration.this
   static Shape : System.String { get; }
@@ -3459,6 +3465,8 @@ type app.task.list
   .list : list<task>
 
 type app.test.setting
+
+type app.type.item.duration.setting
 
 type app.type.item.input.modifier.list
   .list : list<modifier>

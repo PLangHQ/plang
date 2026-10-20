@@ -15,9 +15,9 @@ namespace app.type.item.duration;
 /// the empty-is-falsy convention of the other scalars. The bare wire form is
 /// ISO-8601 (<see cref="ToString"/>).</para>
 /// </summary>
-[global::app.Attributes.PlangType("duration"), global::app.Attributes.Kinds]
+[global::app.Attributes.PlangType("duration"), global::app.Attributes.Kinds, global::app.Attributes.Choice]
 public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
-    System.IEquatable<@this>
+    global::app.type.item.setting.ISetting<setting.@this>, System.IEquatable<@this>
 {
     public static string Shape => "string";
 
@@ -52,7 +52,17 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
             data.Fail(new global::app.error.@this($"'{text}' is not a duration in {standard} ({standard} is written {written})", "DurationParseFailed", 400));
     }
 
-    /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan is born short; a string (30s, ISO-8601
+    /// <summary>A span with no form of its own (how long a step ran), made by the standard its asker's setting names
+    /// (<c>short</c> unless set), through the app's entry for it.</summary>
+    public static @this Create(System.TimeSpan span, global::app.actor.context.@this context)
+    {
+        var standard = context.Setting.Of<setting.@this>().Standard.Value;
+        return context.App.type.list[new global::app.type.@this("duration", standard.Name), context]
+                   .Make(span, new global::app.data.@this("", context: context)) as @this
+               ?? throw new System.InvalidOperationException($"the duration standard {standard.Name} made no span of {span}.");
+    }
+
+    /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan is made in its asker's standard; a string (30s, ISO-8601
     /// <c>PT30S</c> or .NET <c>00:00:30</c>, via <see cref="Resolve"/>) is the standard it is written in, as
     /// <paramref name="context"/>'s types hold them; anything else declines (<c>null</c>). A text-wrapped literal
     /// unwraps through <c>Clr&lt;object&gt;()</c>. Shared by the ICreate courier and comparison coercion.</summary>
@@ -62,7 +72,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
         return value switch
         {
-            System.TimeSpan ts => new @short.@this(ts, context.App.type.list[new global::app.type.@this("duration", "short"), context]),
+            System.TimeSpan ts => Create(ts, context),
             string s => Resolve(s, context),
             _ => null,
         };

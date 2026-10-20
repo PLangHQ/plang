@@ -180,7 +180,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         [
             context.App.type.list["step"].Own().Bind("start", global::app.@event.When.after, (item, _, ctx) =>
             {
-                if (item is global::app.goal.step.@this step && Own(step) && ctx.call.Current?.Duration is { } elapsed)
+                if (item is global::app.goal.step.@this step && Own(step) && ctx.call.Current?.Duration(ctx) is { } elapsed)
                     Timings.Add(new global::app.test.timing.@this { Step = step, Elapsed = elapsed });
                 return System.Threading.Tasks.Task.FromResult(ctx.Ok());
             }, context.Actor, global::app.@event.binding.Scope.actor),
