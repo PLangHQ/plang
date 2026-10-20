@@ -25,10 +25,9 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
     public override bool Compressible => true;
 
     public override async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? asked = null,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
     {
-        var view = asked ?? global::app.View.Out;   // its own face: the transport's
         try
         {
             // Sign-if-missing at the I/O boundary: a Data crossing in a real actor scope rides in ONE signature
@@ -67,11 +66,9 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
     /// without a signature is refused. A Data carries its own facts, so a <paramref name="template"/> and an
     /// <paramref name="origin"/> ask nothing of it.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
-        global::app.actor.context.@this context, string name = "", global::app.View? view = null,
+        global::app.actor.context.@this context, global::app.View view, string name = "",
         System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
     {
-        // read as what crosses between actors, unless the asker reads its own store
-        view ??= global::app.View.Out;
         try
         {
             if (raw.Length == 0) return context.Ok();

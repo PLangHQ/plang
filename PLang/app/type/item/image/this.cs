@@ -31,7 +31,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// through its own door). Any other value asks image to be born from it (a binding on image create or a
     /// provider may answer); when nothing makes an image of it, an error.</summary>
     public static async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
     {
         var value = await data.Value();

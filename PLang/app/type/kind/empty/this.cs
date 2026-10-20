@@ -39,19 +39,22 @@ public sealed class @this : global::app.type.kind.@this
     public override bool Compressible => _format?.Compressible ?? false;
     public override bool IsText => _format?.IsText ?? false;
 
+    /// <summary>The type's own format's view (a .pr's is Store); a type with none crosses to others.</summary>
+    public override global::app.View View => _format?.View ?? base.View;
+
     /// <summary>The type's own format writes it (<c>.pr</c> for goal); a type with none writes nothing.</summary>
     public override System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
         => _format != null ? _format.Encode(stream, data, context, view, encoding, ct)
             : base.Encode(stream, data, context, view, encoding, ct);
 
     /// <summary>The type's own format reads it (<c>.pr</c> for goal); a type with none has its content born lazily.</summary>
     public override System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
-        global::app.actor.context.@this context, string name = "", global::app.View? view = null,
+        global::app.actor.context.@this context, global::app.View view, string name = "",
         System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
-        => _format != null ? _format.Decode(raw, context, name, view, ct, template, origin)
-            : base.Decode(raw, context, name, view, ct, template, origin);
+        => _format != null ? _format.Decode(raw, context, view, name, ct, template, origin)
+            : base.Decode(raw, context, view, name, ct, template, origin);
 
     /// <summary>What a value of the type can be in <paramref name="step"/>: its own kind's answer when it has one (a
     /// conversation offers only what can continue one), else the step's variables.</summary>

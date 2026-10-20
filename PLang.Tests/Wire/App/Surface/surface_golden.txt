@@ -1808,7 +1808,7 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
 class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>
   ctor(app.type.this owner)
   override Compressible : System.Boolean { get; }
-  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
+  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override IsText : System.Boolean { get; }
   override Load(System.Object raw, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.data.this>
@@ -2980,8 +2980,8 @@ class app.type.item.wire.kind.plang.this : app.type.kind.this<app.type.item.wire
   Read(app.type.item.source source, app.type.reader.ReadContext ctx) : app.type.item.this
   ctor(app.type.this owner)
   override Compressible : System.Boolean { get; }
-  override Decode(System.Byte[] raw, app.actor.context.this context, System.String name = …, app.View view = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
-  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View asked = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
+  override Decode(System.Byte[] raw, app.actor.context.this context, app.View view, System.String name = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
+  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Owns(app.type.format.IWriter writer) : System.Boolean
@@ -2999,8 +2999,8 @@ class app.type.kind.empty.this : app.type.kind.this
   ctor(app.type.this owner, app.type.kind.this format = …)
   override Coin(System.String name) : app.type.kind.this
   override Compressible : System.Boolean { get; }
-  override Decode(System.Byte[] raw, app.actor.context.this context, System.String name = …, app.View view = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
-  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
+  override Decode(System.Byte[] raw, app.actor.context.this context, app.View view, System.String name = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
+  override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override IsClosed : System.Boolean { get; }
   override IsText : System.Boolean { get; }
@@ -3008,6 +3008,7 @@ class app.type.kind.empty.this : app.type.kind.this
   override Item[System.Type] : app.type.kind.this { get; }
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
+  override View : app.View { get; }
   override list(app.actor.context.this context) : app.type.kind.list.this
   protected override BornKind() : app.type.kind.this
   protected override Owner : app.type.this { get; }
@@ -3025,6 +3026,8 @@ class app.type.kind.subclass.this<T> : app.type.kind.this<T>
   override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
 
 class app.type.kind.this : app.type.this
+  Decode(System.Byte[] raw, app.actor.context.this context, System.String name = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
+  Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   IsEmpty : System.Boolean { get; }
   ctor(System.String name)
   ctor(System.String name, app.type.this owner)
@@ -3045,9 +3048,9 @@ class app.type.kind.this : app.type.this
   virtual Compressible : System.Boolean { get; }
   virtual Convert(app.data.this source, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.data.this>
   virtual Data(System.String name, System.Object node, app.data.this parent, app.actor.context.this ctx) : app.data.this
-  virtual Decode(System.Byte[] raw, app.actor.context.this context, System.String name = …, app.View view = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
+  virtual Decode(System.Byte[] raw, app.actor.context.this context, app.View view, System.String name = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
   virtual Descend(System.Object obj, System.String key, System.Boolean isIndex, app.actor.context.this ctx) : System.ValueTuple<System.Boolean, System.Object>
-  virtual Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view = …, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
+  virtual Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   virtual Enumerate(System.Object obj, app.actor.context.this ctx) : System.Collections.Generic.IEnumerable<app.data.this>
   virtual Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   virtual IsSequence(System.Object host) : System.Boolean
@@ -3063,6 +3066,7 @@ class app.type.kind.this : app.type.this
   virtual Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.actor.context.this context) : System.Object
   virtual Report : System.String { get; }
   virtual Set(System.Object host, System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.type.item.this>
+  virtual View : app.View { get; }
   virtual list(app.actor.context.this context) : app.type.kind.list.this
 
 class app.type.kind.this+Decoder : System.MulticastDelegate
@@ -3184,7 +3188,7 @@ class app.type.reader.ReadContext : System.IEquatable<app.type.reader.ReadContex
   Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; init; }
   Verify : System.Boolean { get; init; }
   View : app.View { get; init; }
-  ctor(app.actor.context.this Context, app.type.item.template.kind.this Template = …, app.View View = …, System.Boolean Verify = …, System.Boolean DeferVerify = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> Variable = …, app.type.item.path.this Origin = …, System.Boolean IsBuilt = …)
+  ctor(app.actor.context.this Context, app.type.item.template.kind.this Template = …, System.Boolean Verify = …, System.Boolean DeferVerify = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> Variable = …, app.type.item.path.this Origin = …, System.Boolean IsBuilt = …)
 
 class app.type.reader.this
   Assemblies : System.Collections.Generic.List<System.Reflection.Assembly> { get; }

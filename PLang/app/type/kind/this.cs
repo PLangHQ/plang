@@ -29,10 +29,13 @@ public class @this : global::app.type.@this
     // How the owning type reads this format — its class's IDecode, bound when the kind was made; null for a type
     // whose content is born lazily.
     private readonly Decoder? _decode;
+    // The view content of this format is written and read in when no one says: plang's own store for a format plang
+    // keeps (a .pr), else what crosses to others.
+    private readonly global::app.View _view = global::app.View.Out;
 
     /// <summary>How a type writes its formats: the value a Data holds onto a stream, in a view.</summary>
     public delegate global::System.Threading.Tasks.Task<global::app.data.@this> Encoder(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct);
 
     /// <summary>How a type reads its formats: content of one, made into a value of the type.</summary>
@@ -69,9 +72,14 @@ public class @this : global::app.type.@this
         _extension = format.Extension;
         _compressible = format.Compressible;
         _text = format.Text;
+        _view = format.Store ? global::app.View.Store : global::app.View.Out;
         _encode = encode;
         _decode = decode;
     }
+
+    /// <summary>The view content of this format is written and read in when its asker names none: Store for a format
+    /// plang keeps (a <c>.pr</c>), Out for every other.</summary>
+    public virtual global::app.View View => _view;
 
 
     /// <summary>The MIMEs content of this kind arrives as — each a bare media type.</summary>
@@ -248,8 +256,14 @@ public class @this : global::app.type.@this
     /// born a template (a file read with its variables resolved). Content read off a file is born knowing it
     /// (<paramref name="origin"/>); null for content with no location.
     /// </summary>
+    public global::System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
+        global::app.actor.context.@this context, string name = "",
+        System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
+        => Decode(raw, context, View, name, ct, template, origin);
+
+    /// <summary>The decode door, read as written for <paramref name="view"/>.</summary>
     public virtual async global::System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
-        global::app.actor.context.@this context, string name = "", global::app.View? view = null,
+        global::app.actor.context.@this context, global::app.View view, string name = "",
         System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
     {
         // a type that reads this format itself makes the value now (a .pr into a goal)
@@ -264,10 +278,16 @@ public class @this : global::app.type.@this
     /// type that declares the format writes it (bound once, when the kind was made); a kind whose content is
     /// written its own way overrides it (json, plang's transport). A kind with no writer of its own (one coined
     /// for an extension: <c>.xyz</c>) writes as its family writes; a family with no format answers an error.
-    /// With no <paramref name="view"/> the format writes its own face (a .pr its Store face).
+    /// With no view named, the format writes in its own (<see cref="View"/>: a .pr in Store).
     /// </summary>
+    public global::System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context,
+        System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
+        => Encode(stream, data, context, View, encoding, ct);
+
+    /// <summary>The encode door, written in <paramref name="view"/>.</summary>
     public virtual global::System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
         => _encode != null ? _encode(stream, data, context, view, encoding, ct)
             : !IsEmpty ? (Owner ?? context.App.type.list["binary"]).kind.Encode(stream, data, context, view, encoding, ct)

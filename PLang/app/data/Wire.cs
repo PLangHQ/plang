@@ -116,7 +116,7 @@ public class Wire
             var jr = new global::app.type.item.kind.json.Reader(reader, buffer);
             // _context is non-null (born-in-ctor); the Store read routes through the typed wire
             // reader that binds nested typed entries.
-            var ctx = new global::app.type.reader.ReadContext(_context, _template, View, _verify, _deferVerify);
+            var ctx = new global::app.type.reader.ReadContext(_context, _template, _verify, _deferVerify) { View = View };
             var bodyData = global::app.data.schema.@this.Instance.Reader(schema).Read(ref jr, ctx);
             reader = jr.Inner;
             return bodyData;

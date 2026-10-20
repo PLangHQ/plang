@@ -47,14 +47,13 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     /// <summary>json content written: the value alone, as json — no Data around it (the type is inferred on
     /// read). The value writes itself through the json writer.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
     {
         try
         {
-            var face = view ?? global::app.View.Out;
             await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions { Encoder = _encoder });
-            await data.Output(new global::app.type.item.kind.json.Writer(utf8, face, context));
+            await data.Output(new global::app.type.item.kind.json.Writer(utf8, view, context));
             await utf8.FlushAsync(ct);
             return context.Ok();
         }

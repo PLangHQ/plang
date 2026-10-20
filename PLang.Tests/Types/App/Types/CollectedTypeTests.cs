@@ -62,13 +62,15 @@ public class CollectedTypeTests
     }
 
     // The faces: what a program sees when it writes a type out.
-    private static async Task<string> Out(global::app.@this app, global::app.type.item.@this value,
-        global::app.View? view = null)
+    private static Task<string> Out(global::app.@this app, global::app.type.item.@this value)
+        => Out(app, value, global::app.View.Out);
+
+    private static async Task<string> Out(global::app.@this app, global::app.type.item.@this value, global::app.View view)
     {
         var buffer = new System.IO.MemoryStream();
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(buffer))
         {
-            var json = new global::app.type.item.kind.json.Writer(utf8, view ?? global::app.View.Out, app.actor.list.User.Context);
+            var json = new global::app.type.item.kind.json.Writer(utf8, view, app.actor.list.User.Context);
             await value.Output(json);
         }
         return System.Text.Encoding.UTF8.GetString(buffer.ToArray());

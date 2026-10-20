@@ -179,7 +179,7 @@ public sealed class @this : screen.@this
     {
         // the Data writes itself as text (a dict as its json): one line for the display
         using var written = new MemoryStream();
-        await Text.Encode(written, line, context, null, null, CancellationToken.None);
+        await Text.Encode(written, line, context, global::app.View.Out, null, CancellationToken.None);
         Wayland.Input(Originated(Encoding.UTF8.GetString(written.ToArray()), line.Context ?? context));
         return context.Ok();
     }

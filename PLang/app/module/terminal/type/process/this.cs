@@ -100,7 +100,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             else
             {
                 using var written = new MemoryStream();
-                await Text.Encode(written, context.Ok(value), context, null, null, CancellationToken.None);
+                await Text.Encode(written, context.Ok(value), context, global::app.View.Out, null, CancellationToken.None);
                 line = Encoding.UTF8.GetString(written.ToArray()).ReplaceLineEndings(" ");
             }
         }

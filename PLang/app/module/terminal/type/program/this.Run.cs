@@ -82,7 +82,7 @@ public sealed partial class @this
             else
             {
                 using var written = new MemoryStream();
-                await Text.Encode(written, context.Ok(given), context, null, null, CancellationToken.None);
+                await Text.Encode(written, context.Ok(given), context, global::app.View.Out, null, CancellationToken.None);
                 input = Encoding.UTF8.GetString(written.ToArray());
             }
         }

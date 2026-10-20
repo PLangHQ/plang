@@ -22,8 +22,6 @@ namespace app.type.reader;
 public sealed record ReadContext(
     global::app.actor.context.@this Context,
     global::app.type.item.template.kind.@this? Template = null,
-    // what the bytes were written for; null is what crosses to others (Out)
-    global::app.View? View = null,
     // Verify a signed (@schema:signature) Data on read. The OUTER transport read verifies; a NESTED
     // reconstruction sets false — an inner Data is already covered by the outer signature.
     bool Verify = true,
@@ -44,4 +42,8 @@ public sealed record ReadContext(
     global::app.type.item.path.@this? Origin = null,
     // The bytes are the build's own (a goal's .pr, the build reading its answer): a template born under
     // this read holds every variable its row lists. False everywhere else — fail closed.
-    bool IsBuilt = false);
+    bool IsBuilt = false)
+{
+    /// <summary>What the bytes were written for: what crosses to others, unless the read names plang's own store.</summary>
+    public global::app.View View { get; init; } = global::app.View.Out;
+}

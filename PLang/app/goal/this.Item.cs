@@ -5,7 +5,7 @@ namespace app.goal;
 // The goal owns its wire: Output writes itself token by token (each field a plang type that writes
 // itself — path, choice, the step/goal children), its serializer/Reader.cs reads itself back.
 [global::app.Attributes.PlangType("goal")]
-[global::app.Attributes.Format("", "application/plang-goal", ".pr")]
+[global::app.Attributes.Format("", "application/plang-goal", ".pr", Store = true)]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, global::app.goal.list.@this>, global::app.type.item.IEncode<@this>,
@@ -17,14 +17,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>
     /// The <c>.pr</c> form: the value written bare in plang's schema writer — a goal (or any program value:
-    /// app.pr) writes its own structure, no Data around it, unsigned. Its own face is Store — a .pr is what
-    /// plang keeps. Indented, every character as itself (a file is not a page), ending with a new line.
+    /// app.pr) writes its own structure, no Data around it, unsigned, in <paramref name="view"/> (its format's own is
+    /// Store: a .pr is what plang keeps). Indented, every character as itself (a file is not a page), ending with a
+    /// new line.
     /// </summary>
     public static async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? asked,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
     {
-        var view = asked ?? global::app.View.Store;
         if (data.Peek() is not global::app.type.item.@this item)
             return context.Error(new global::app.error.@this($"%{data.Name}% holds no value to write as a .pr", "NothingToWrite", 400));
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(stream, new System.Text.Json.JsonWriterOptions

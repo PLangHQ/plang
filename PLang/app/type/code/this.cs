@@ -30,7 +30,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 {
     /// <summary>Code's formats are text: written as text writes.</summary>
     public static System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
         => global::app.type.item.text.@this.Encode(stream, data, context, view, encoding, ct);
 
