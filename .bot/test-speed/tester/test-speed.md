@@ -155,6 +155,30 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 24. Birth and frame trims — diminishing returns
+
+A bare app sharing its types (a server's request app: no test session), born and disposed, 4,000 traced: **7.2 → 5.8 KB**.
+Test-mode birth (the serial harness): 24.2 → 22.8 KB. The run is unchanged.
+
+| change | |
+|---|---|
+| the app's `Id` (a Guid string and its slice), its folder's name and its start as a datetime value made when first read | most request apps read none |
+| `app.parent`'s waiting calls (a concurrent dictionary) made at the first call to a parent | almost no app has a parent |
+| `type.list.Full` makes a classless kind (`{store, sqlite}`) only when it first makes the full type, not at every ask; the store asks by name and kind | |
+| a frame keeps the history setting it read at its push; its end doesn't ask the settings again | per frame |
+
+Tried and reverted: the call list holding its context instead of three makers — `NoItem_DeclaresAContextFieldOrProperty`
+refuses an item holding a context, and the call list is an item (the closures are how it reaches one without holding it).
+
+Looked at and left: **lazy cancellation sources** — a context's source is linked to its actor's when the context is born;
+every action reads the token, so it would be made at the first action anyway, saving one source only for a context
+nothing runs in (~3% of a bare birth) at a real cost in disposal subtlety. **`!data`** — with nothing bound, its write is
+a guard, a frame-chain lookup and a dictionary write; a special path for one name is a fork. **The frame's "current"
+restore** — one AsyncLocal write per frame, which an async method's own return would restore anyway; removing it is only
+sound for frames pushed and ended in one async method, and a frame doesn't know that.
+
+What is left is mostly by design: one frame and two AsyncLocal writes per action, a handler and its carriers per run.
+
 ## 23. One type list per code, shared by the apps born to share it
 
 **What it is.** `new app(root, assembly: code, shareTypes: true)` takes the one type list every app made from `code`
