@@ -37,7 +37,6 @@ public ref struct Reader : IReader
     [System.Diagnostics.CodeAnalysis.UnscopedRef]
     internal ref Utf8JsonReader Inner => ref _r;
 
-    public string Format => "json";
 
     public TokenKind Peek() => _r.TokenType switch
     {

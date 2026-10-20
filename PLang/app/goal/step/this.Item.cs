@@ -24,11 +24,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A structure, never a single-token leaf.</summary>
     public override bool IsLeaf => false;
 
-    /// <summary>The step takes its own children. A write to <c>code</c> — the builder handing over
-    /// what it just compiled — is the step CONSTRUCTING those actions, not a slot assignment: each one
-    /// is born holding this step, the same birth fact a .pr load gives them. The rows ride the action's
-    /// own reader, so the wire shape lives in one place. Every other key falls to the reflected
-    /// default.</summary>
+    /// <summary>The step takes its own children. A write to <c>code</c> is the step taking the actions it is
+    /// handed — actions, each the step's own; any other value is refused with why, the step's code as it was (the
+    /// builder writes code in formal, read into actions). Every other key falls to the reflected default.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
         string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
@@ -38,42 +36,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         var binding = value as global::app.data.@this;
         var incoming = binding != null ? await binding.Value() : value as global::app.type.item.@this;
 
-        // The reader is born holding THIS step, so every action it makes is born holding it too —
-        // the value bridges its own format, the reader carries the parent. Nothing is stamped.
-        var reader = new global::app.goal.step.action.serializer.Reader(this);
         var node = new global::app.goal.step.action.list.@this(_code.Type);
         foreach (var row in Rows(incoming, context))
-            if (row is global::app.goal.step.action.@this built) node.Add(built);
-            // a value that bridges its own format (a clr(json) element) reads through the action reader directly
-            else if (row.Read(reader, null, context) is global::app.goal.step.action.@this made) node.Add(made);
-            // a parsed plang container (a {item, json} the builder navigated to a dict/list) writes itself as
-            // json and the one action reader reads those tokens — the action's wire shape stays in one reader
-            else if ((row is global::app.type.item.dict.@this or global::app.type.item.list.@this)
-                     && await FromJson(row, reader, context) is global::app.goal.step.action.@this fromPlang) node.Add(fromPlang);
-            else throw new global::app.error.AppException(
-                $"cannot build an action from a {row.Type.Name} — an action reads from its own wire shape.", "NotAnAction", 400);
+            node.Add(row as global::app.goal.step.action.@this ?? throw new global::app.error.AppException(
+                new global::app.error.@this($"a step's code is actions; a {row.Type.Name} is not one — the builder writes code in formal",
+                    "NotAnAction", 400)));
         _code = node;
         return this;
-    }
-
-    // A parsed plang container writes itself as json, and the action reader (born with this step) reads those
-    // tokens — the same wire shape a .pr holds. (Branch A will give the reader a structural reader over a plang
-    // value, so this round-trip goes; today the value's only container serializer is its async json Output.)
-    private async System.Threading.Tasks.ValueTask<global::app.goal.step.action.@this?> FromJson(
-        global::app.type.item.@this row, global::app.goal.step.action.serializer.Reader reader,
-        global::app.actor.context.@this context)
-    {
-        using var stream = new System.IO.MemoryStream();
-        await using (var utf8 = new System.Text.Json.Utf8JsonWriter(stream))
-        {
-            var json = new global::app.type.item.kind.json.Writer(utf8, context.App.type.list);
-            await json.Kind.pair.Output(row, json, global::app.View.Out, context);
-        }
-        var bytes = stream.ToArray();
-        var utf8Reader = new System.Text.Json.Utf8JsonReader(bytes);
-        utf8Reader.Read();
-        var tokens = new global::app.type.item.kind.json.Reader(utf8Reader, bytes);
-        return reader.Read(ref tokens, null, new global::app.type.reader.ReadContext(context)) as global::app.goal.step.action.@this;
     }
 
     /// <summary>The rows of an incoming action write. A several-valued write enumerates ITSELF — a

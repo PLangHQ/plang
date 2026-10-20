@@ -41,13 +41,6 @@ public enum TokenKind
 /// </summary>
 public interface IReader
 {
-    /// <summary>
-    /// Short format token — <c>"json"</c>, <c>"csv"</c>, <c>"protobuf"</c>, …
-    /// The read-side mirror of <see cref="IWriter.Format"/>. A type's read
-    /// branches on this when it decodes differently per format.
-    /// </summary>
-    string Format { get; }
-
     /// <summary>The kind of the value token the reader is currently positioned at — branch on it.</summary>
     TokenKind Peek();
 

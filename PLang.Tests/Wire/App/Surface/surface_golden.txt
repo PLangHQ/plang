@@ -1075,7 +1075,6 @@ interface app.type.format.IReader
   abstract EndArray() : System.Void
   abstract EndObject() : System.Void
   abstract Float() : System.Single
-  abstract Format : System.String { get; }
   abstract Guid() : System.Guid
   abstract Int() : System.Int32
   abstract Long() : System.Int64
@@ -1127,6 +1126,32 @@ enum app.type.format.TokenKind
   static const Object : app.type.format.TokenKind
   static const String : app.type.format.TokenKind
 
+struct app.type.format.item.Reader : app.type.format.IReader
+  BeginArray() : System.Void
+  BeginObject() : System.Void
+  Bool() : System.Boolean
+  Bytes() : System.Byte[]
+  DateTime() : System.DateTime
+  DateTimeOffset() : System.DateTimeOffset
+  Decimal() : System.Decimal
+  Double() : System.Double
+  EndArray() : System.Void
+  EndObject() : System.Void
+  Float() : System.Single
+  Guid() : System.Guid
+  Int() : System.Int32
+  Long() : System.Int64
+  NextElement() : System.Boolean
+  NextName(System.String& name) : System.Boolean
+  Null() : System.Boolean
+  Number() : System.Object
+  Peek() : app.type.format.TokenKind
+  RawValue() : System.Byte[]
+  Skip() : System.Void
+  String() : System.String
+  TimeSpan() : System.TimeSpan
+  ctor(app.type.item.this value, app.actor.context.this context)
+
 class app.type.format.plang : app.type.format.IOutput
   Output(app.type.item.this value, app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   ctor()
@@ -1143,7 +1168,6 @@ struct app.type.format.value.Reader : app.type.format.IReader
   EndArray() : System.Void
   EndObject() : System.Void
   Float() : System.Single
-  Format : System.String { get; }
   Guid() : System.Guid
   Int() : System.Int32
   Long() : System.Int64
@@ -1745,7 +1769,6 @@ struct app.type.item.kind.json.Reader : app.type.format.IReader
   EndArray() : System.Void
   EndObject() : System.Void
   Float() : System.Single
-  Format : System.String { get; }
   Guid() : System.Guid
   Int() : System.Int32
   Long() : System.Int64
@@ -2558,11 +2581,6 @@ class app.type.item.source : app.type.item.this
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; }
   protected override Clone() : app.type.item.this
-
-class app.type.item.status.serializer.Reader : app.type.reader.ITypeReader
-  Kind : System.String { get; }
-  Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
-  ctor()
 
 class app.type.item.status.this : app.type.item.this, app.type.item.ICreate<app.type.item.status.this> [PlangType]
   Code : app.type.item.number.this { get; } [Out, Store]

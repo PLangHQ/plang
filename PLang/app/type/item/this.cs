@@ -218,21 +218,25 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             throw new System.NotSupportedException($"%…% ({Type.Name}) cannot take a child '{key}'");
         if (value is @this iv && !prop.PropertyType.IsInstanceOfType(value))
         {
-            // The declared type reads ITSELF from the value's kind — the same reader a .pr uses. The
-            // entity names WHICH reader (list<action> → the "list" reader) and the element kind
-            // ("action") so a list reader loops the element's reader (goal.call rides @schema:data).
-            // A value with no format to bridge (item.Read → null) keeps the Clr path.
+            // The declared type reads the value — the same reader a .pr uses: its own, else as a record its
+            // Create makes. The entity names WHICH reader (list<action> → the "list" reader) and the element
+            // kind ("action") so a list reader loops the element's reader (goal.call rides @schema:data).
             var entity = context.App.type.list[prop.PropertyType];
-            var reader = entity != null ? context.App.type.list.Reader.Typed(entity.Name, null) : null;
-            var read = reader != null ? iv.Read(reader, entity!.kind.IsEmpty ? null : entity.kind.Name, context) : null;
-            // The generic "list" reader produces a base list (its elements already read through their
-            // own reader). A typed node slot (list<action>)
-            // adopts those rows into ITS type: same rows, the declared container. No type-switch — any
-            // list<T> slot materializes the same way.
-            if (read is global::app.type.item.list.@this made && !prop.PropertyType.IsInstanceOfType(made)
-                && typeof(global::app.type.item.list.@this).IsAssignableFrom(prop.PropertyType))
-                read = (@this?)System.Activator.CreateInstance(prop.PropertyType, made);
-            value = read ?? iv.Clr(prop.PropertyType, context);
+            if (entity != null)
+            {
+                var read = iv.Read(context.App.type.list.Reader.Reader(entity.Name, null, context),
+                    entity.kind.IsEmpty ? null : entity.kind.Name, context);
+                // The generic "list" reader produces a base list (its elements already read through their
+                // own reader). A typed node slot (list<action>)
+                // adopts those rows into ITS type: same rows, the declared container. No type-switch — any
+                // list<T> slot materializes the same way.
+                if (read is global::app.type.item.list.@this made && !prop.PropertyType.IsInstanceOfType(made)
+                    && typeof(global::app.type.item.list.@this).IsAssignableFrom(prop.PropertyType))
+                    read = (@this?)System.Activator.CreateInstance(prop.PropertyType, made);
+                value = read;
+            }
+            // a C# slot no plang type names: lowered at the reflection boundary, until a member writes itself
+            else value = iv.Clr(prop.PropertyType, context);
         }
         prop.SetValue(this, value);
         return this;
@@ -706,16 +710,18 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal T? Clr<T>() => (T?)Clr(typeof(T));
 
     /// <summary>
-    /// A value that arrived in a FORMAT (a <c>clr</c> carrier holding json/md/…) reads ITSELF into
-    /// the declared type through <paramref name="reader"/> — the same reader a <c>.pr</c> uses. The
-    /// value's kind owns the format→stream bridge; the type reads its own structure (so a nested
-    /// <c>goal.call</c> param rides <c>@schema:data</c> and dispatches). <paramref name="kind"/> is the
-    /// declared type's element kind (<c>list&lt;action&gt;</c> → <c>action</c>) so a list reader loops
-    /// the element's reader. Most items carry no format to bridge and decline (null → the caller's
-    /// <c>Clr</c> path).
+    /// This value read as another type, by that type's <paramref name="reader"/> — the same reader a <c>.pr</c>
+    /// uses: the value is read as tokens (a dict an object, a list an array, a leaf its token), so a dict
+    /// handed to a record's slot is the record its own reader makes. <paramref name="kind"/> is the declared
+    /// type's element kind (<c>list&lt;action&gt;</c> → <c>action</c>), so a list reader loops the element's
+    /// reader. A value that arrived in a format (a <c>clr</c> carrier holding json) bridges its format instead.
     /// </summary>
     internal virtual object? Read(global::app.type.reader.ITypeReader reader, string? kind,
-                                  global::app.actor.context.@this context) => null;
+                                  global::app.actor.context.@this context)
+    {
+        var tokens = new global::app.type.format.item.Reader(this, context);
+        return reader.Read(ref tokens, kind, new global::app.type.reader.ReadContext(context));
+    }
 
     /// <summary>
     /// The value's raw face for templates and CLR-facing probes (kind probes, ctor matching): a LEAF
