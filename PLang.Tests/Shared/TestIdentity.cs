@@ -20,21 +20,24 @@ public sealed class TestIdentity : global::app.module.identity.code.IIdentity
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    private static readonly Identity _shared = MakeShared();
+    // one keypair for every test (generating one is the slow part); each app gets its identity holding that app's type
+    private static readonly (string PublicKey, string PrivateKey) _keys = Keys();
 
-    private static Identity MakeShared()
+    private static (string, string) Keys()
     {
         var (kp, _) = new global::app.module.signing.code.Ed25519().GenerateKeyPair();
-        return new Identity("default")
-        {
-            PublicKey = kp!.PublicKey,
-            PrivateKey = kp.PrivateKey,
-            IsDefault = true,
-            Created = System.DateTimeOffset.FromUnixTimeSeconds(0),
-        };
+        return (kp!.PublicKey, kp.PrivateKey);
     }
 
-    private static IdData Ok(global::app.module.IContext a) => a.Context.Ok<Identity>(_shared);
+    private static Identity Shared(global::app.type.list.@this types) => new("default", types[typeof(Identity)])
+    {
+        PublicKey = _keys.PublicKey,
+        PrivateKey = _keys.PrivateKey,
+        IsDefault = true,
+        Created = System.DateTimeOffset.FromUnixTimeSeconds(0),
+    };
+
+    private static IdData Ok(global::app.module.IContext a) => a.Context.Ok<Identity>(Shared(a.Context.App.type.list));
 
     public Task<IdData> GetAsync(global::app.module.identity.Get action) => Task.FromResult(Ok(action));
     public Task<IdData> GetOrCreateDefaultAsync(global::app.module.IContext action) => Task.FromResult(Ok(action));
@@ -47,6 +50,6 @@ public sealed class TestIdentity : global::app.module.identity.code.IIdentity
 
     public Task<global::app.data.@this<global::app.type.item.list.@this<Identity>>> ListAsync(global::app.module.identity.list action)
         => Task.FromResult(action.Context.Ok<global::app.type.item.list.@this<Identity>>(
-            new global::app.type.item.list.@this<Identity>(new global::app.data.@this[] { action.Context.Ok<Identity>(_shared) },
+            new global::app.type.item.list.@this<Identity>(new global::app.data.@this[] { action.Context.Ok<Identity>(Shared(action.Context.App.type.list)) },
                 action.Context.App.type.list[typeof(global::app.type.item.list.@this<Identity>)])));
 }

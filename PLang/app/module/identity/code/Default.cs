@@ -321,7 +321,7 @@ public sealed class Default : IIdentity
 
         var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
 
-        var identity = new Identity(name)
+        var identity = new Identity(name, app.type.list[typeof(Identity)])
         {
             PublicKey = keys!.PublicKey,
             PrivateKey = keys.PrivateKey,

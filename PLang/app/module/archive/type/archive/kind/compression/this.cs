@@ -34,13 +34,14 @@ public abstract class @this : kind.@this
         (global::app.data.@this result, string held, string? name) packed;
         await using (var writer = Writer(into, Of(level)))
             packed = await value.Pack(self, writer, context);
-        return packed.result.Success ? (packed.result, new held.@this(packed.held, packed.name)) : (packed.result, null);
+        return packed.result.Success
+            ? (packed.result, new held.@this(context.App.type.list[typeof(held.@this)], packed.held, packed.name)) : (packed.result, null);
     }
 
     internal override async Task<global::app.data.@this> Unpack(System.IO.Stream from, held.@this? held, File? into,
         global::app.type.item.size.@this max, global::app.actor.context.@this context)
     {
-        held ??= new held.@this("file");
+        held ??= new held.@this(context.App.type.list[typeof(held.@this)], "file");
         try
         {
             await using var read = new cap.@this(max).Over(Reader(from));

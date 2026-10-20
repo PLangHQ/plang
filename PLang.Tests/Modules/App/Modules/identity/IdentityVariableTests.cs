@@ -30,7 +30,7 @@ public class IdentityDataTests
         catch { /* best effort cleanup */ }
     }
 
-    private Identity CreateTestIdentity() => new("test")
+    private Identity CreateTestIdentity() => new("test", _app.type.list[typeof(global::app.module.identity.Identity)])
     {
         PublicKey = "dGVzdHB1YmxpY2tleQ",
         PrivateKey = "dGVzdHByaXZhdGVrZXk=",

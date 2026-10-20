@@ -45,7 +45,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         _at = at;
         var name = at.Name.ToString();
-        Held = new held.@this("file", format?.Suffix is { } end && name.EndsWith(end, StringComparison.OrdinalIgnoreCase) ? name[..^end.Length] : name);
+        Held = new held.@this(context.App.type.list[typeof(held.@this)], "file", format?.Suffix is { } end && name.EndsWith(end, StringComparison.OrdinalIgnoreCase) ? name[..^end.Length] : name);
     }
 
     /// <summary>Its format, when known — its type's kind; an archive at rest named by no format and no suffix is

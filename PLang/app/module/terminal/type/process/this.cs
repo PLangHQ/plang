@@ -17,6 +17,9 @@ namespace app.module.terminal.type.process;
 [PlangType("process")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
+    /// <summary>A started program, born holding <paramref name="type"/> — the app's process.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
     /// <summary>The program's full path.</summary>
     [LlmBuilder, Out] public string Program { get; set; } = "";
 

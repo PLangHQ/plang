@@ -18,7 +18,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("identity", kind), ctx.Context]);
         reader.BeginObject();
-        var id = new global::app.module.identity.Identity();
+        var id = new global::app.module.identity.Identity(ctx.Context.App.type.list[typeof(global::app.module.identity.Identity)]);
         while (reader.NextName(out var name))
         {
             switch (name.ToLowerInvariant())

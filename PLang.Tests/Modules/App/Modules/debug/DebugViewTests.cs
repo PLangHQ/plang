@@ -42,7 +42,7 @@ public class DebugViewTests : System.IAsyncDisposable
         {
             Name = "Identity",
             Type = Ctx.App.type.list["identity"],
-            Value = new global::app.module.identity.Identity("k") { PrivateKey = "the-private-key" },
+            Value = new global::app.module.identity.Identity("k", Ctx.App.type.list[typeof(global::app.module.identity.Identity)]) { PrivateKey = "the-private-key" },
         });
         var goal = Make.Goal(Ctx, "Start", "/Start.goal", Make.Step("read a.txt", action));
 

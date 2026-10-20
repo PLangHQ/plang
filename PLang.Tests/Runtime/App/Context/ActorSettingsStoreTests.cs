@@ -77,7 +77,7 @@ public class ActorSettingsStoreTests
         await using var engine = new global::app.@this(_testDir).TestSigning();
         engine.test.list.Open();
 
-        var original = new global::app.module.identity.Identity("work")
+        var original = new global::app.module.identity.Identity("work", engine.type.list[typeof(global::app.module.identity.Identity)])
             { PublicKey = "pub-abc", PrivateKey = "priv-xyz", IsDefault = true };
         await engine.store.Set("identity", "work",
             new Data("work", original, context: engine.actor.list.User.Context));

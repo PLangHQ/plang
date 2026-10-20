@@ -25,6 +25,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary><paramref name="moved"/> bytes of <paramref name="total"/>, received or <paramref name="sent"/>, written in
     /// the asker's size standard.</summary>
     public @this(long moved, long? total, bool sent, global::app.actor.context.@this context)
+        : base(context.App.type.list[typeof(@this)])
     {
         var size = new global::app.type.item.size.@this(moved, context);
         if (sent) Sent = size;

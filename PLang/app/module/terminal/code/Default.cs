@@ -58,7 +58,7 @@ public sealed class Default : ITerminal
             var channel = os.Pipe is { } pair
                 ? new global::app.channel.type.stream.@this("pipe", pair, ownsStream: true) { Framed = true, Actor = context.Actor! }
                 : null;
-            return Task.FromResult(context.Ok<Process>(new Process
+            return Task.FromResult(context.Ok<Process>(new Process(context.App.type.list[typeof(Process)])
             {
                 Program = file.Absolute, Id = os.Id, Os = os, pipe = channel,
                 Plang = program.SpeaksPlang(context),

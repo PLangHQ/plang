@@ -29,7 +29,7 @@ public class Stage7_AppServicesTests
     public async Task Service_Identity_NavigatesToAppSystemIdentity()
     {
         await using var app = new global::app.@this("/tmp/s7c").Testing();
-        app.actor.list.System.Identity = new global::app.module.identity.Identity { Name = "system-id" };
+        app.actor.list.System.Identity = new global::app.module.identity.Identity(app.type.list[typeof(global::app.module.identity.Identity)]) { Name = "system-id" };
         var s = app.Services.New(parent: app.actor.list.User);
         await Assert.That(s.Identity).IsEqualTo(app.actor.list.System.Identity);
     }

@@ -245,7 +245,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     {
         var gzip = (global::app.module.archive.type.archive.kind.@this)_app.type.list["archive"].kind["gzip"]!;
         var ctx = _app.actor.list.User.Context;
-        var archive = new global::app.module.archive.type.archive.@this([1, 2], new global::app.module.archive.type.archive.held.@this("file"),
+        var archive = new global::app.module.archive.type.archive.@this([1, 2], new global::app.module.archive.type.archive.held.@this(_app.type.list[typeof(global::app.module.archive.type.archive.held.@this)], "file"),
             ctx.App.type.list[new global::app.type.@this("archive", gzip.Name), ctx]);
         await Assert.That(IsTrue(await EvalIf(archive, "is", "gzip"))).IsTrue();
     }

@@ -137,7 +137,7 @@ public class ArchiveActionTests : IDisposable
     {
         var gzipKind = (Kind)_app.type.list["archive"].kind["gzip"]!;
         var archive = new Archive([0xFF, 0xFE, 0x00, 0x42],
-            new global::app.module.archive.type.archive.held.@this("data"),
+            new global::app.module.archive.type.archive.held.@this(_app.type.list[typeof(global::app.module.archive.type.archive.held.@this)], "data"),
             Ctx.App.type.list[new global::app.type.@this("archive", gzipKind.Name), Ctx]);
 
         var restored = await Unpack(archive);
@@ -201,7 +201,7 @@ public class ArchiveActionTests : IDisposable
             zip.Write("escaped?"u8);
         var gzipKind = (Kind)_app.type.list["archive"].kind["gzip"]!;
         var archive = new Archive(gz.ToArray(),
-            new global::app.module.archive.type.archive.held.@this("file", "../../escape.txt"),
+            new global::app.module.archive.type.archive.held.@this(_app.type.list[typeof(global::app.module.archive.type.archive.held.@this)], "file", "../../escape.txt"),
             Ctx.App.type.list[new global::app.type.@this("archive", gzipKind.Name), Ctx]);
 
         var unpacked = await Unpack(archive, into: "/out/deep");

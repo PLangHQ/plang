@@ -11,8 +11,9 @@ namespace app.module.identity;
 [PlangType("identity")]
 public sealed class Identity : global::app.type.item.@this, global::app.type.item.ICreate<Identity>
 {
-    public Identity() { }
-    public Identity(string name) { Name = name; }
+    /// <summary>An identity, born holding <paramref name="type"/> — the app's identity.</summary>
+    public Identity(global::app.type.@this type) : base(type) { }
+    public Identity(string name, global::app.type.@this type) : base(type) { Name = name; }
 
     /// <summary>Identity name (e.g., "default", "work").</summary>
     [LlmBuilder, Out, Store] public string Name { get; set; } = "Identity";

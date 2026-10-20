@@ -38,7 +38,7 @@ public class ActorIdentityTests : System.IAsyncDisposable
     [Test]
     public async Task AnActorWithAnIdentity_ActsForIt_ItsKeyReadUrlSafe()
     {
-        _app.actor.list.User.Identity = new Identity("caller") { PublicKey = "ab+c/d==" };
+        _app.actor.list.User.Identity = new Identity("caller", _app.type.list[typeof(global::app.module.identity.Identity)]) { PublicKey = "ab+c/d==" };
 
         var identity = await _app.actor.list.User.Context.Variable.Get("Identity");
 
@@ -83,7 +83,7 @@ public class ActorIdentityTests : System.IAsyncDisposable
     public async Task ALaterBornActor_ActsForItsIdentity_AndMyIdentityIsTheApps()
     {
         await using var born = new global::app.actor.@this("Service", _app, fallback: _app.actor.list.System);
-        born.Identity = new Identity("caller") { PublicKey = "ab+c/d==" };
+        born.Identity = new Identity("caller", _app.type.list[typeof(global::app.module.identity.Identity)]) { PublicKey = "ab+c/d==" };
         var mine = (await (await _app.actor.list.System.Context.Variable.Get("MyIdentity")).Value()) as Identity;
 
         var identity = await born.Context.Variable.Get("Identity");

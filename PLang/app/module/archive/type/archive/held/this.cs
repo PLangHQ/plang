@@ -19,7 +19,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Its name, when it has one — a file's or a folder's.</summary>
     [Out, Store] public global::app.type.item.text.@this? Name { get; }
 
-    public @this(string of, string? name = null)
+    /// <summary>What an archive holds, born holding <paramref name="type"/> — the app's held.</summary>
+    public @this(global::app.type.@this type, string of, string? name = null) : base(type)
     {
         Of = of;
         Name = name;
@@ -43,7 +44,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                     case "type": of = entry.Peek()?.ToString(); break;
                     case "name": name = entry.Peek()?.ToString(); break;
                 }
-            if (of != null) return new @this(of, name);
+            if (of != null) return new @this(context.App.type.list[typeof(@this)], of, name);
         }
         data.Fail(new global::app.error.@this("what an archive holds is {type, name}", "HeldInvalid", 400));
         return null;

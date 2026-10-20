@@ -52,7 +52,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_ExcludedFromJsonStreamSerializer()
     {
-        var identity = new Identity
+        var identity = new Identity(_app.type.list[typeof(global::app.module.identity.Identity)])
         {
             Name = "test",
             PublicKey = "pubkey123",
@@ -72,7 +72,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_IncludedInRawJsonSerializer()
     {
-        var identity = new Identity
+        var identity = new Identity(_app.type.list[typeof(global::app.module.identity.Identity)])
         {
             Name = "test",
             PublicKey = "pubkey123",
@@ -105,7 +105,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_DiagnosticOutput_MasksValueAsAsterisks()
     {
-        var identity = new Identity
+        var identity = new Identity(_app.type.list[typeof(global::app.module.identity.Identity)])
         {
             Name = "test",
             PublicKey = "pubkey123",
@@ -127,7 +127,7 @@ public class SensitivePropertyFilterTests
     {
         var held = new Dictionary<string, object?>
         {
-            ["id"] = new Identity { Name = "test", PublicKey = "pubkey123", PrivateKey = "secret456" },
+            ["id"] = new Identity(_app.type.list[typeof(global::app.module.identity.Identity)]) { Name = "test", PublicKey = "pubkey123", PrivateKey = "secret456" },
         };
 
         var json = await global::app.type.item.@this.Create(held, _app.actor.list.User.Context).Debug(_app.actor.list.User.Context);
@@ -142,7 +142,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_CamelCaseIndented_KeepsSensitiveData()
     {
-        var identity = new Identity
+        var identity = new Identity(_app.type.list[typeof(global::app.module.identity.Identity)])
         {
             Name = "test",
             PublicKey = "pubkey123",
