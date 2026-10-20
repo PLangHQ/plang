@@ -116,6 +116,24 @@ public class SetTypeInferenceTests
         await Assert.That(lowered).IsEquivalentTo(src);
     }
 
+    // A row is made at its read and nothing is written back, so a write through a row that was read
+    // (`set %rows[0].name% = "x"`) must still reach the list: the next read sees it.
+    [Test]
+    public async Task Set_ThroughARowThatWasRead_ReachesTheList()
+    {
+        var context = _app.actor.list.User.Context;
+        var rows = new List<object?> { new Dictionary<string, object?> { ["name"] = "a" } };
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%rows%", "variable"), ("value", rows)).Start(context)).IsSuccess();
+        var row = new global::app.type.item.variable.parser.@this("%rows[0].name%", _app.type.list).Variable[0];
+        await Assert.That((await (await row.Start(context)).Value())?.ToString()).IsEqualTo("a");
+
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%rows[0].name%", "variable"), ("value", "x")).Start(context)).IsSuccess();
+
+        await Assert.That((await (await row.Start(context)).Value())?.ToString()).IsEqualTo("x");
+    }
+
     // No copy at set: a later in-place edit of the SOURCE list is visible through
     // the plang variable (proof the backing was aliased, never walked/copied).
     [Test]
