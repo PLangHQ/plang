@@ -69,7 +69,7 @@
     },
     {
       "index": 1,
-      "text": "ui.render(Template=%template%, Parameter={error: %error%}); on.error(Status=404, Recovery=[goal.call(Name=\"Fallback\")], RetryCount=1, Order=\"GoalFirst\"); variable.set(Name=%text%, Value=%!data%)",
+      "text": "ui.render(Template=%template%, Parameter=[{error: %error%}]); on.error(Status=404, Recovery=[goal.call(Name=\"Fallback\")], RetryCount=1, Order=\"GoalFirst\"); variable.set(Name=%text%, Value=%!data%)",
       "line": {
         "number": 6
       },
@@ -461,5 +461,5 @@
   ],
   "visibility": "Public",
   "file": "Show.goal",
-  "hash": "e6c3d12d2266b134d8832f25c7ffc65a3b5942df9d81df3de2b585d501434710"
+  "hash": "9c3a3d37ce5140a0c3482fc0e6243e181873329f38634fed0794eafcd895390c"
 }

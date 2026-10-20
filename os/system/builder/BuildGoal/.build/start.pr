@@ -88,7 +88,7 @@
     },
     {
       "index": 1,
-      "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"goalHeader\", goal: %goal%})",
+      "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter=[{kind: \"goalHeader\"}, {goal: %goal%}])",
       "line": {
         "number": 8
       },
@@ -429,7 +429,7 @@
     },
     {
       "index": 6,
-      "text": "loop.foreach(Collection=%parentGoal.Child%); goal.call(Name=\"BuildSubGoal\", Parameter={subGoal: %item%})",
+      "text": "loop.foreach(Collection=%parentGoal.Child%); goal.call(Name=\"BuildSubGoal\", Parameter=[{subGoal: %item%}])",
       "line": {
         "number": 14
       },
@@ -1482,7 +1482,7 @@
       "step": [
         {
           "index": 0,
-          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"properties-rejected\", errorMessage: %!error.Message%})",
+          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter=[{kind: \"properties-rejected\"}, {errorMessage: %!error.Message%}])",
           "line": {
             "number": 46
           },
@@ -1837,7 +1837,7 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "af8263debe8f0348988028702a76d5cb83a8f623bea932fb2a1ebb8d4c0df019"
+      "hash": "e9b2807de804b0710c38caf425fb8683b0e7dfe9aedb310821f16f516c16d8fc"
     },
     {
       "name": "ConfirmNumbers",
@@ -2301,7 +2301,7 @@
         },
         {
           "index": 1,
-          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"subGoalHeader\", goal: %goal%})",
+          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter=[{kind: \"subGoalHeader\"}, {goal: %goal%}])",
           "line": {
             "number": 66
           },
@@ -2797,7 +2797,7 @@
         },
         {
           "index": 7,
-          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"subGoalDone\", goal: %goal%, subgoalMs: %subgoalMs%})",
+          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter=[{kind: \"subGoalDone\"}, {goal: %goal%}, {subgoalMs: %subgoalMs%}])",
           "line": {
             "number": 72
           },
@@ -2827,7 +2827,7 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "0e7b5b2dc2bb626ea03d2fccbcb0fe1c543d91c667a12de0e82b5c70eee4c9b2"
+      "hash": "4fe7554c34575f62d38ab9013f1418b490a0e83732d5718ffb5751463497457f"
     },
     {
       "name": "SourceError",
@@ -3215,7 +3215,7 @@
       "step": [
         {
           "index": 0,
-          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"goalError\", goal: %goal%, errorMessage: %!error.Message%, fix: %!error.FixSuggestion%})",
+          "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter=[{kind: \"goalError\"}, {goal: %goal%}, {errorMessage: %!error.Message%}, {fix: %!error.FixSuggestion%}])",
           "line": {
             "number": 87
           },
@@ -3446,7 +3446,7 @@
       ],
       "child": [],
       "visibility": "Private",
-      "hash": "e990e47c7227adab84f076feea61f7331cfaf03b628969906a6e4334e576c743"
+      "hash": "9249c2e38915dfaf758dc5b40c16a87c478bd2258358a473919065d4c2347997"
     },
     {
       "name": "LeaveBroken",
@@ -3519,5 +3519,5 @@
   ],
   "visibility": "Public",
   "file": "Start.goal",
-  "hash": "0034dfbc398479278a9f646a27773cb3f546d19e9ef2ff80d90ab084cd23910f"
+  "hash": "50f4ed7b476d8ee4c2658925484456af10b849b55bcdb8a9d8597ed57ae27664"
 }

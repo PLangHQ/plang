@@ -415,7 +415,7 @@
     },
     {
       "index": 7,
-      "text": "loop.foreach(Collection=%goals%); goal.call(Name=\"/system/builder/BuildGoal\", Parameter={goal: %item%})",
+      "text": "loop.foreach(Collection=%goals%); goal.call(Name=\"/system/builder/BuildGoal\", Parameter=[{goal: %item%}])",
       "line": {
         "number": 16
       },
@@ -689,5 +689,5 @@
   "child": [],
   "visibility": "Public",
   "file": "Build.goal",
-  "hash": "85835f25b47a66ee42bfd9d81253f1fd9dc9dfcf2a915aa583509a6a6574d480"
+  "hash": "d765336ae00bb15b0cf653f06e9700ea9afe411f83921fc680fc92c798b895fa"
 }

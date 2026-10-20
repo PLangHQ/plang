@@ -358,7 +358,7 @@
     },
     {
       "index": 4,
-      "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"goal-properties\", goal: %goal%})",
+      "text": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter=[{kind: \"goal-properties\"}, {goal: %goal%}])",
       "line": {
         "number": 18
       },
@@ -389,5 +389,5 @@
   "child": [],
   "visibility": "Public",
   "file": "Properties.goal",
-  "hash": "72d6b766e6b3a6e77bfcb72d32a58ab6e0846578159a7b925c582e89da511a46"
+  "hash": "c0fb2506438e024d5bd4832a7a7b038bdfcfcafcd551d169eab45cb93ef1d573"
 }

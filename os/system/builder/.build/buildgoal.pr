@@ -4,7 +4,7 @@
   "step": [
     {
       "index": 0,
-      "text": "goal.call(Name=\"/system/builder/BuildGoal/Start\", Parameter={goal: %goal%})",
+      "text": "goal.call(Name=\"/system/builder/BuildGoal/Start\", Parameter=[{goal: %goal%}])",
       "line": {
         "number": 4
       },
@@ -35,5 +35,5 @@
   "child": [],
   "visibility": "Public",
   "file": "BuildGoal.goal",
-  "hash": "06f1ec115e98b5c04bcb43105997b0bee0fb370e289aa203c0ddb4b22f4dbcb0"
+  "hash": "93cb68495a9518cf20db20a67b3717b6cb03750deaccab0c5f349bff970b6c72"
 }
