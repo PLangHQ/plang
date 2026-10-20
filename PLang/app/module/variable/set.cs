@@ -21,7 +21,7 @@ public partial class Set : IContext, IScope, IKeep
     public async Task Scope()
     {
         var name = await Name.Value();
-        if (name == null || name.Code.Count != 1 || name.Code.Root.Name.StartsWith('!')) return;
+        if (name == null || name.Code.CountRaw != 1 || name.Code.Root.Name.StartsWith('!')) return;
         if (Value.IsVariable)
         {
             if (await Value.Follow(Context) is { IsInitialized: true } known) await name.Set(known, Context);
@@ -36,7 +36,7 @@ public partial class Set : IContext, IScope, IKeep
     // action's parameter, never what the variable is called); a write deeper in hands Value to its container, which
     // holds it under its own key.
     private data.@this Binding(global::app.type.item.variable.@this name)
-        => name.Code.Count == 1 ? Value.Copy(name.Code.Root.Name) : Value;
+        => name.Code.CountRaw == 1 ? Value.Copy(name.Code.Root.Name) : Value;
 
     /// <summary>Build-time judgement of my own properties, read as authored — Peek, never the
     /// value door: a %var% is unknown at build and defers to Run.</summary>

@@ -147,7 +147,7 @@ public sealed class @this : IDisposable
         // Stamp context on Variables (propagates to all existing Data)
         Variable.Context = this;
         // a frame's values are the app's types; how long it ran is written short
-        call = new(app.type.list, () => app.type.list[new global::app.type.@this("duration", "short"), this],
+        call = new(app.type.list, () => app.type.list.Of("duration", "short"),
             () => Setting, () => new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
 
         // The memory holds %!app% and %!context%, made when first asked for. The goal, step, error, test and channels

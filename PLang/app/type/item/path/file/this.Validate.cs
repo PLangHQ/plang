@@ -101,7 +101,7 @@ public sealed partial class @this
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<global::app.@this, global::app.type.@this> Files = new();
 
     internal static global::app.type.@this FileType(global::app.@this app)
-        => Files.GetValue(app, static a => a.type.list[new global::app.type.@this("path", "file"), a.actor.list.System.Context]);
+        => Files.GetValue(app, static a => a.type.list.Of("path", "file"));
 
     /// <summary>True for an OS-absolute path — <c>//x</c> on Unix, <c>C:\</c> on Windows.</summary>
     private static bool IsOsRooted(string path)
