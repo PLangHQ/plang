@@ -27,7 +27,8 @@ public class Stage3_PathDemolitionTests
         var perm = new global::app.type.item.permission.@this(
             "User", context.Url(url).Absolute,
             global::app.type.item.permission.@this.AllVerbs,
-            global::app.type.item.permission.Match.exact);
+            global::app.type.item.permission.Match.exact,
+            context.App.type.list[typeof(global::app.type.item.permission.@this)]);
         await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", perm, context: context), persist: true);
     }
 
@@ -186,7 +187,7 @@ public class Stage3_PathDemolitionTests
         await using var _ = app;
         Directory.CreateDirectory(Path.Combine(dir, "docs"));
         File.WriteAllText(Path.Combine(dir, "docs", "a.txt"), "x");
-        var directory = new global::app.type.item.directory.@this(context.File(Path.Combine(dir, "docs")));
+        var directory = new global::app.type.item.directory.@this(context.File(Path.Combine(dir, "docs")), context.App.type.list[typeof(global::app.type.item.directory.@this)]);
 
         using var ms = new MemoryStream();
         await app.actor.list.User.Context.Format("application/plang").Encode(ms, new Data("d", directory, context: context), context, global::app.View.Store);

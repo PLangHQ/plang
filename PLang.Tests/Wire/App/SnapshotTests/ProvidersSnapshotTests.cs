@@ -68,7 +68,8 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         };
         var permission = new global::app.type.item.permission.@this(
             Actor: dst.actor.list.User.Name, Path: resolved.Absolute, Verbs: verbs,
-            Match: global::app.type.item.permission.Match.exact);
+            Match: global::app.type.item.permission.Match.exact,
+            dst.type.list[typeof(global::app.type.item.permission.@this)]);
         await dst.actor.list.User.Permission.Add(
             new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: dst.actor.list.User.Context), persist: false);
         await dst.Restore(snap, dst.actor.list.User.Context);

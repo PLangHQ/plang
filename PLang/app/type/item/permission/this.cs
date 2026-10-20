@@ -58,7 +58,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [Out, Store] public IReadOnlySet<Verb> Verbs { get; }
     [Out, Store] public Match Match { get; }
 
-    public @this(string Actor, string Path, IReadOnlySet<Verb> Verbs, Match Match)
+    /// <summary>A grant, born holding <paramref name="type"/> — the app's permission.</summary>
+    public @this(string Actor, string Path, IReadOnlySet<Verb> Verbs, Match Match, global::app.type.@this type) : base(type)
     {
         this.Actor = Actor;
         this.Path = Path;
@@ -70,9 +71,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static IReadOnlySet<Verb> AllVerbs { get; } =
         new HashSet<Verb> { Verb.read, Verb.write, Verb.delete, Verb.execute };
 
-    /// <summary>A request for a single verb against one resource.</summary>
-    public static @this Request(string actor, string path, Verb verb, Match match = Match.exact)
-        => new(actor, path, new HashSet<Verb> { verb }, match);
+    /// <summary><paramref name="actor"/>'s request for a single verb against one resource.</summary>
+    public static @this Request(global::app.actor.@this actor, string path, Verb verb, Match match = Match.exact)
+        => new(actor.Name, path, new HashSet<Verb> { verb }, match, actor.App.type.list[typeof(@this)]);
 
     // Value equality — two grants for the same actor/path/verb-set/match are
     // equal, which the permission-table dedup + the round-trip test rely on.
@@ -187,6 +188,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 if (entry.Peek() is Text t && System.Enum.TryParse<Verb>(t.ToString(), ignoreCase: true, out var v))
                     verbs.Add(v);
 
-        return new @this(actor, path, verbs, match);
+        return new @this(actor, path, verbs, match, context!.App.type.list[typeof(@this)]);
     }
 }

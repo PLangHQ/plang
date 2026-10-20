@@ -71,7 +71,8 @@ public class ProviderModuleTests
             Actor: _app.actor.list.System.Name,
             Path: resolved.Absolute,
             Verbs: verbs,
-            Match: global::app.type.item.permission.Match.exact);
+            Match: global::app.type.item.permission.Match.exact,
+            _app.type.list[typeof(global::app.type.item.permission.@this)]);
         var data = new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: Ctx);
         await _app.actor.list.System.Permission.Add(data, persist: true);
     }

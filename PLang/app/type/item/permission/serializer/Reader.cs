@@ -39,6 +39,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             }
         }
         reader.EndObject();
-        return new global::app.type.item.permission.@this(actor, path, verbs, match);
+        return new global::app.type.item.permission.@this(actor, path, verbs, match,
+            ctx.Context.App.type.list[typeof(global::app.type.item.permission.@this)]);
     }
 }

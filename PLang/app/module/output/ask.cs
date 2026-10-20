@@ -63,7 +63,8 @@ public partial class ask : IContext
         var answer = await Answer();
         if (!answer.Success || !answer.IsInitialized || !await Sensitive.ToBooleanAsync()
             || answer.Peek() is global::app.type.item.sensitive.@this) return answer;
-        return Context.Ok(new global::app.type.item.sensitive.@this((await answer.Value())?.ToString() ?? ""));
+        return Context.Ok(new global::app.type.item.sensitive.@this((await answer.Value())?.ToString() ?? "",
+            Context.App.type.list[typeof(global::app.type.item.sensitive.@this)]));
     }
 
     private async Task<data.@this> Answer()

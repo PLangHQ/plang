@@ -15,11 +15,14 @@ public class PermissionAllowsTests
     private static System.Collections.Generic.IReadOnlySet<Verb> Verbs(Verb? verb) =>
         verb is { } v ? new System.Collections.Generic.HashSet<Verb> { v } : Permission.AllVerbs;
 
+    // Grants are born holding the app's permission type; one shared host supplies that type list.
+    private static readonly global::app.@this TypeHost = new global::app.@this("/test").Testing();
+
     private static Permission Grant(string path, Match match, Verb? verb = null) =>
-        new("user", path, Verbs(verb), match);
+        new("user", path, Verbs(verb), match, TypeHost.type.list[typeof(Permission)]);
 
     private static Permission Request(string path, Verb? verb = null) =>
-        new("user", path, Verbs(verb), Match.exact);
+        new("user", path, Verbs(verb), Match.exact, TypeHost.type.list[typeof(Permission)]);
 
     [Test] public async Task ExactMatch_EqualPath_Allows()
     {
@@ -60,8 +63,8 @@ public class PermissionAllowsTests
 
     [Test] public async Task SameRecordShape_GrantRoleAndRequestRole_BothLegible()
     {
-        var grant = new Permission("user", "/apps/*/file.txt", global::app.type.item.permission.@this.AllVerbs, Match.glob);
-        var request = new Permission("user", "/apps/Email/file.txt", global::app.type.item.permission.@this.AllVerbs, Match.exact);
+        var grant = new Permission("user", "/apps/*/file.txt", global::app.type.item.permission.@this.AllVerbs, Match.glob, TypeHost.type.list[typeof(Permission)]);
+        var request = new Permission("user", "/apps/Email/file.txt", global::app.type.item.permission.@this.AllVerbs, Match.exact, TypeHost.type.list[typeof(Permission)]);
         await Assert.That(grant.Allows(request)).IsTrue();
     }
 
@@ -71,7 +74,7 @@ public class PermissionAllowsTests
         // serializer's persistence path), not raw STJ — the grant owns its wire form.
         await using var app = new global::app.@this("/test").TestSigning();
         var ctx = app.actor.list.User.Context;
-        var original = new Permission("user", "/p", global::app.type.item.permission.@this.AllVerbs, Match.glob);
+        var original = new Permission("user", "/p", global::app.type.item.permission.@this.AllVerbs, Match.glob, app.type.list[typeof(Permission)]);
         var data = new global::app.data.@this<Permission>("", original, context: ctx);
         var plang = ctx.Format("application/plang");
         var stored = plang.Store(data, ctx);

@@ -25,7 +25,8 @@ public class HttpPathTests
         var perm = new global::app.type.item.permission.@this(
             "User", context.Url(url).Absolute,
             global::app.type.item.permission.@this.AllVerbs,
-            global::app.type.item.permission.Match.exact);
+            global::app.type.item.permission.Match.exact,
+            app.type.list[typeof(global::app.type.item.permission.@this)]);
         await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", perm, context: context), persist: true);
     }
 

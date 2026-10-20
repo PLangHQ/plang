@@ -1045,7 +1045,7 @@ class app.type.code.serializer.Reader : app.type.reader.ITypeReader
 class app.type.code.this : app.type.item.this, app.type.item.IEncode<app.type.code.this> [Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, Format, PlangType]
   Language : System.String { get; } [Out, Store]
   Source : System.String { get; } [Out, Store]
-  ctor(System.String source, System.String language)
+  ctor(System.String source, System.String language, app.type.this type)
   override AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
@@ -1508,14 +1508,14 @@ class app.type.item.directory.this : app.type.item.this, app.type.item.ICreate<a
   List(app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.list.this<app.type.item.path.this>>>
   Listed : app.type.item.list.this<app.type.item.path.this> { get; }
   Path : app.type.item.path.this { get; } [LlmBuilder, Out, Store]
-  ctor(app.type.item.path.this path)
+  ctor(app.type.item.path.this path, app.type.this type)
   override AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   override Contains(app.data.this needle) : System.Threading.Tasks.ValueTask<System.Boolean>
   override Open(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.error.this>
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
-  static Create(System.Object raw) : app.type.item.directory.this
+  static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.directory.this
   static Shape : System.String { get; }
   static Takes(app.type.this other) : System.Boolean
   static Type : System.Collections.Generic.IReadOnlyList<System.Type> { get; }
@@ -2184,12 +2184,12 @@ class app.type.item.parallel.serializer.Reader : app.type.reader.ITypeReader
 
 class app.type.item.parallel.this : app.type.item.this, app.type.item.ICreate<app.type.item.parallel.this> [PlangType]
   Cpu : app.type.item.number.this { get; } [Out, Store]
-  ctor(System.Nullable<System.Int64> cpu = …)
+  ctor(app.type.this type, System.Nullable<System.Int64> cpu = …)
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.parallel.this
-  static Off : app.type.item.parallel.this { get; }
+  static Off(app.type.this type) : app.type.item.parallel.this
   static Shape : System.String { get; }
 
 enum app.type.item.path.Entry
@@ -2405,14 +2405,14 @@ class app.type.item.permission.this : app.type.item.this, app.type.item.ICreate<
   Match : app.type.item.permission.Match { get; } [Out, Store]
   Path : System.String { get; } [Out, Store]
   Verbs : System.Collections.Generic.IReadOnlySet<app.type.item.permission.Verb> { get; } [Out, Store]
-  ctor(System.String Actor, System.String Path, System.Collections.Generic.IReadOnlySet<app.type.item.permission.Verb> Verbs, app.type.item.permission.Match Match)
+  ctor(System.String Actor, System.String Path, System.Collections.Generic.IReadOnlySet<app.type.item.permission.Verb> Verbs, app.type.item.permission.Match Match, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   static AllVerbs : System.Collections.Generic.IReadOnlySet<app.type.item.permission.Verb> { get; }
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.permission.this
   static Offer : System.Collections.Generic.IReadOnlyList<app.type.item.this> { get; }
-  static Request(System.String actor, System.String path, app.type.item.permission.Verb verb, app.type.item.permission.Match match = …) : app.type.item.permission.this
+  static Request(app.actor.this actor, System.String path, app.type.item.permission.Verb verb, app.type.item.permission.Match match = …) : app.type.item.permission.this
   static Shape : System.String { get; }
 
 class app.type.item.prose.this : app.type.item.this
@@ -2431,7 +2431,7 @@ class app.type.item.sensitive.serializer.Reader : app.type.reader.ITypeReader
   ctor()
 
 class app.type.item.sensitive.this : app.type.item.this, app.type.item.ICreate<app.type.item.sensitive.this> [PlangType]
-  ctor(System.String characters)
+  ctor(System.String characters, app.type.this type)
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
   override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask

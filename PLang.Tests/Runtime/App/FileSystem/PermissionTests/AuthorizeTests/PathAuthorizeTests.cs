@@ -59,8 +59,8 @@ public class PathAuthorizeTests
         var path = app.actor.list.User.Context.File("/p");
 
         // Pre-seed a grant covering the request.
-        var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
-        var grantData = new global::app.data.@this<PermissionRecord>("", grant, context: context);
+        var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, app.type.list[typeof(PermissionRecord)]);
+        var grantData =new global::app.data.@this<PermissionRecord>("", grant, context: context);
         await app.actor.list.User.Permission.Add(grantData, persist: true);
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
@@ -84,7 +84,7 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         var path = app.actor.list.User.Context.File("/p");
-        var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
+        var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, app.type.list[typeof(PermissionRecord)]);
         await app.actor.list.User.Permission.Add(new global::app.data.@this<PermissionRecord>("", grant, context: app.actor.list.User.Context), persist: false);
         app.actor.list.System.Channel.Register(new CannedAnswerChannel(new[] { "n" }, app.actor.list.System.Context));
 
@@ -255,7 +255,8 @@ public class PathAuthorizeTests
 
     [Test] public async Task PermissionDenied_Error_RoundTripsThroughErrorShape()
     {
-        var perm = new PermissionRecord("user", "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
+        var app = NewApp();
+        var perm = new PermissionRecord("user", "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, app.type.list[typeof(PermissionRecord)]);
         var err = new global::app.error.PermissionDenied(perm);
         await Assert.That(err.Key).IsEqualTo("PermissionDenied");
         await Assert.That(err.Status.Code.ToInt32()).IsEqualTo(403);

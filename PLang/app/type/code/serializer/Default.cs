@@ -11,6 +11,6 @@ public static class Default
     {
         if (raw is not (string or byte[])) return raw;
         string source = new global::app.type.item.text.@this(raw, ctx.Context.App.type.list[typeof(global::app.type.item.text.@this)]).ToString();
-        return new global::app.type.code.@this(source, kind ?? "text");
+        return new global::app.type.code.@this(source, kind ?? "text", ctx.Context.App.type.list[typeof(global::app.type.code.@this)]);
     }
 }

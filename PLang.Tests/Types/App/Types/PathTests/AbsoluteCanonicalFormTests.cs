@@ -95,8 +95,8 @@ public class AbsoluteCanonicalFormTests
         var filePath = FilePath.Resolve("/home/data.json", context);
         var httpPath = context.Url("https://api.example.com/data.json");
 
-        var grant = new PermissionRecord("User", filePath.Absolute, global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
-        var request = new PermissionRecord("User", httpPath.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, MatchMode.exact);
+        var grant = new PermissionRecord("User", filePath.Absolute, global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, context.App.type.list[typeof(PermissionRecord)]);
+        var request = new PermissionRecord("User", httpPath.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, MatchMode.exact, context.App.type.list[typeof(PermissionRecord)]);
 
         await Assert.That(grant.Allows(request)).IsFalse();
     }
@@ -106,8 +106,8 @@ public class AbsoluteCanonicalFormTests
         var (_, context) = MakeApp();
         var request = context.Url("https://api.example.com/users");
 
-        var grant = new PermissionRecord("User", "https://api.example.com/*", global::app.type.item.permission.@this.AllVerbs, MatchMode.glob);
-        var req = new PermissionRecord("User", request.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, MatchMode.exact);
+        var grant = new PermissionRecord("User", "https://api.example.com/*", global::app.type.item.permission.@this.AllVerbs, MatchMode.glob, context.App.type.list[typeof(PermissionRecord)]);
+        var req = new PermissionRecord("User", request.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, MatchMode.exact, context.App.type.list[typeof(PermissionRecord)]);
 
         await Assert.That(grant.Allows(req)).IsTrue();
     }

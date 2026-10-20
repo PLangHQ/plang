@@ -42,7 +42,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     [global::app.Out, global::app.Store]
     public string Language { get; }
 
-    public @this(string source, string language)
+    /// <summary>A snippet of <paramref name="language"/>, born holding <paramref name="type"/> — the app's code.</summary>
+    public @this(string source, string language, global::app.type.@this type) : base(type)
     {
         Source = source ?? "";
         Language = string.IsNullOrEmpty(language) ? "text" : language;

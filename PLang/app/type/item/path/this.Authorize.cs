@@ -65,7 +65,7 @@ public partial class @this
     }
 
     protected permission.@this BuildRequest(actor.@this actor, Verb verb) =>
-        permission.@this.Request(actor.Name, Absolute, verb, MatchMode.exact);
+        permission.@this.Request(actor, Absolute, verb, MatchMode.exact);
 
     // In-root is under the app's own folder. The os folder is never in-root, even when an app is rooted there: what an
     // actor may do there is its standing grants (every actor reads and runs; only the system writes).

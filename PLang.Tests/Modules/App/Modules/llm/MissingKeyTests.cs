@@ -65,7 +65,7 @@ public class MissingKeyTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        await ctx.Variable.Set(new global::app.data.@this("pw", new global::app.type.item.sensitive.@this(Pasted), context: ctx));
+        await ctx.Variable.Set(new global::app.data.@this("pw", new global::app.type.item.sensitive.@this(Pasted, app.type.list[typeof(global::app.type.item.sensitive.@this)]), context: ctx));
 
         var set = Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "shown", "variable"), ("Value", "password: %pw%"));
         await (await set.Start(ctx)).IsSuccess();

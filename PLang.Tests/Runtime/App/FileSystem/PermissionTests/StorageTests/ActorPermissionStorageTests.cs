@@ -26,7 +26,7 @@ public class ActorPermissionStorageTests
         global::app.@this app, string actor, string path, Verb? verb = null, MatchMode match = MatchMode.exact)
     {
         var verbs = verb is { } v ? new System.Collections.Generic.HashSet<Verb> { v } : PermissionRecord.AllVerbs;
-        var p = new PermissionRecord(actor, path, verbs, match);
+        var p = new PermissionRecord(actor, path, verbs, match, app.type.list[typeof(PermissionRecord)]);
         return new global::app.data.@this<PermissionRecord>("", p, context: app.actor.list.User.Context);
     }
 
@@ -192,7 +192,7 @@ public class ActorPermissionStorageTests
         var grant = Grant(app, app.actor.list.User.Name, "/p");
         // Tamper the path post-signing — signature no longer covers payload.
         var tampered = new global::app.data.@this<PermissionRecord>("",
-            new PermissionRecord(app.actor.list.User.Name, "/different", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact), context: app.actor.list.User.Context);
+            new PermissionRecord(app.actor.list.User.Name, "/different", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, app.type.list[typeof(PermissionRecord)]), context: app.actor.list.User.Context);
         await app.actor.list.User.Permission.Add(tampered, persist: true);
 
         var found = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/different"), global::app.type.item.permission.Verb.read);

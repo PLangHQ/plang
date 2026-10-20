@@ -39,7 +39,7 @@ public class ReferenceTests : System.IAsyncDisposable
         using var server = new HttpTestServer();
         var address = server.MapStoredBody(System.Text.Encoding.UTF8.GetBytes("{\"a\":1}"), "application/json");
         var grant = new global::app.type.item.permission.@this("User", Ctx.Url(address).Absolute,
-            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact);
+            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact, Ctx.App.type.list[typeof(global::app.type.item.permission.@this)]);
         await Ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: Ctx), persist: false);
 
         var url = new UrlValue(PathValue.Resolve(address, Ctx), Ctx);

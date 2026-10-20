@@ -21,7 +21,7 @@ public class UrlPlangContentTests
         var ctx = app.actor.list.User.Context;
         // the actor may read the url — the consent gate isn't what's under test
         var grant = new global::app.type.item.permission.@this("User", ctx.Url(url).Absolute,
-            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact);
+            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact, ctx.App.type.list[typeof(global::app.type.item.permission.@this)]);
         await ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: ctx), persist: true);
         var data = new global::app.data.@this("fetched",
             new global::app.type.item.url.@this(global::app.type.item.path.@this.Resolve(url, ctx)!, ctx), context: ctx);

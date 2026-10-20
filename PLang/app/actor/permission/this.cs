@@ -37,7 +37,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     {
         var grant = new Grant(_actor.Name,
             _actor.App.OsAbsolutePath + global::app.Utils.PathHelper.DirectorySeparatorChar + "**",
-            new HashSet<Verb>(verbs), MatchMode.glob);
+            new HashSet<Verb>(verbs), MatchMode.glob, _actor.App.type.list[typeof(Grant)]);
         var held = new global::app.data.@this<Grant>("", grant, context: _actor.Context);
         lock (_lock)
         {
@@ -94,8 +94,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     /// </summary>
     public async Task<global::app.data.@this?> Find(path requestPath, Verb verb)
     {
-        var request = Grant.Request(
-            _actor.Name, requestPath.Absolute, verb, MatchMode.exact);
+        var request = Grant.Request(_actor, requestPath.Absolute, verb, MatchMode.exact);
 
         // A grant read here is already trustworthy, so it is asked only whether it allows the request: a persisted
         // grant was verified at the I/O boundary on load (auto-verify-on-read peels + validates its signature

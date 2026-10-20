@@ -38,7 +38,8 @@ public class HttpPathRedirectTests
         var perm = new PathPermission(
             "User", context.Url(url).Absolute,
             global::app.type.item.permission.@this.AllVerbs,
-            PermMatch.exact);
+            PermMatch.exact,
+            context.App.type.list[typeof(PathPermission)]);
         await context.Actor!.Permission.Add(new global::app.data.@this<PathPermission>("", perm, context: context), persist: true);
     }
 

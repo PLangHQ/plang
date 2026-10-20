@@ -28,9 +28,9 @@ public class SelfWritingItemsTests : System.IAsyncDisposable
         await Assert.That(await Json(httpPath)).IsEqualTo("\"https://example.com/x/y.json\"");
         await Assert.That(await Json(new global::app.type.item.url.@this(httpPath, Ctx))).IsEqualTo("\"https://example.com/x/y.json\"");
         await Assert.That(await Json(new global::app.module.crypto.type.hash.@this(new byte[] { 1, 2, 3 }, (global::app.module.crypto.type.hash.kind.sha256.@this)Ctx.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["sha256"]!))).IsEqualTo("\"AQID\"");
-        await Assert.That(await Json(new global::app.type.code.@this("x = 1", "python"))).IsEqualTo("\"x = 1\"");
+        await Assert.That(await Json(new global::app.type.code.@this("x = 1", "python", Ctx.App.type.list[typeof(global::app.type.code.@this)]))).IsEqualTo("\"x = 1\"");
         await Assert.That(await Json(new global::app.type.item.permission.@this("user", "/docs/*",
-                new HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, global::app.type.item.permission.Match.glob)))
+                new HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, global::app.type.item.permission.Match.glob, Ctx.App.type.list[typeof(global::app.type.item.permission.@this)])))
             .IsEqualTo("{\"actor\":\"user\",\"path\":\"/docs/*\",\"match\":\"glob\",\"verbs\":[\"read\"]}");
         var hops = global::app.type.item.variable.@this.Resolve("%a.b%", Ctx).Code.Items().ToList();
         await Assert.That(await Json(hops[0])).IsEqualTo("{\"variable\":\"a\"}");

@@ -14,8 +14,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("parallel", kind), ctx.Context]);
+        var type = ctx.Context.App.type.list[typeof(global::app.type.item.parallel.@this)];
         if (reader.Peek() == global::app.type.format.TokenKind.Bool)
-            return reader.Bool() ? new global::app.type.item.parallel.@this() : global::app.type.item.parallel.@this.Off;
+            return reader.Bool() ? new global::app.type.item.parallel.@this(type) : global::app.type.item.parallel.@this.Off(type);
         long? cpu = null;
         reader.BeginObject();
         while (reader.NextName(out var name))
@@ -24,6 +25,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             else throw new System.FormatException($"parallel's one member is cpu (how many at once) — not {name}");
         }
         reader.EndObject();
-        return new global::app.type.item.parallel.@this(cpu);
+        return new global::app.type.item.parallel.@this(type, cpu);
     }
 }

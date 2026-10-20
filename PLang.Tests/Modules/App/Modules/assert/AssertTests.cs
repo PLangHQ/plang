@@ -45,7 +45,7 @@ public class AssertTests
     public async Task NotEquals_Failing_ShowsASensitiveValueMasked()
     {
         var (context, memory) = CreateContext();
-        await memory.Set(new Data("pw", new global::app.type.item.sensitive.@this("hunter2"), context: context));
+        await memory.Set(new Data("pw", new global::app.type.item.sensitive.@this("hunter2", context.App.type.list[typeof(global::app.type.item.sensitive.@this)]), context: context));
 
         var result = await Make.Action(context, "assert", "notEquals", ("Expected", "%pw%"), ("Actual", "%pw%")).Start(context);
 

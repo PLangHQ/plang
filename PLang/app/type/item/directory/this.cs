@@ -24,18 +24,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     private global::app.type.item.list.@this<global::app.type.item.path.@this>? _list;
 
-    public @this(global::app.type.item.path.@this path)
+    /// <summary>The directory at <paramref name="path"/>, born holding <paramref name="type"/> — the app's directory.</summary>
+    public @this(global::app.type.item.path.@this path, global::app.type.@this type) : base(type)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
         // Born from a path — its type in this value's history, so `is path` answers from the chain.
         history.Add(path);
     }
 
-    /// <summary>A directory is made from its path; anything else declines.</summary>
-    public static @this? Create(object? raw) => raw switch
+    /// <summary>A directory is made from its path, born holding the app's type; anything else declines.</summary>
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data) => raw switch
     {
         @this self => self,
-        global::app.type.item.path.@this path => new @this(path),
+        global::app.type.item.path.@this path => new @this(path, data.Context!.App.type.list[typeof(@this)]),
         _ => null,
     };
 

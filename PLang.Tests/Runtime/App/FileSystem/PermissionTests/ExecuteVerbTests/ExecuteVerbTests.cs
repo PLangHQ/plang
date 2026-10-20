@@ -86,7 +86,8 @@ public class ExecuteVerbTests
             Actor: app.actor.list.User.Name,
             Path: p.Absolute,
             Verbs: new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read },
-            Match: global::app.type.item.permission.Match.exact);
+            Match: global::app.type.item.permission.Match.exact,
+            app.type.list[typeof(global::app.type.item.permission.@this)]);
         var grantData = new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: app.actor.list.User.Context);
         await app.actor.list.User.Permission.Add(grantData, persist: true);
         // Execute should NOT be covered.
