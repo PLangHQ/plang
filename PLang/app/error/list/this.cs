@@ -22,18 +22,12 @@ public sealed class @this : global::app.type.item.list.@this<global::app.error.@
     public IEnumerator<global::app.error.@this> GetEnumerator() => Items().ToList().GetEnumerator();
 
     /// <summary>Written as its errors, each in its own face — in any format, bare json too.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
-
-    public override void Write(global::app.type.format.IWriter writer)
     {
         var errors = Items().ToArray();
         writer.BeginArray(errors.Length);
-        foreach (var error in errors) error.Write(writer);
+        foreach (var error in errors) await writer.Kind.pair.Output(error, writer, mode, context);
         writer.EndArray();
     }
 

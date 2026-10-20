@@ -5,13 +5,12 @@ namespace app.type.item.kind.json;
 
 /// <summary>
 /// JSON implementation of <see cref="IWriter"/> — wraps a
-/// <see cref="Utf8JsonWriter"/>. Emits the canonical Data wire envelope
-/// <c>{name, type, value, properties, signature}</c> for records, native JSON
-/// tokens for primitives, JSON arrays for lists.
+/// <see cref="Utf8JsonWriter"/>: native JSON tokens for primitives, JSON arrays
+/// and objects for structure.
 ///
-/// <para>The writer never reflects: each value writes itself through its own
-/// <c>Output</c>, and <see cref="Value"/> takes only the C# values of the tree
-/// contract (primitives / byte[] / Data / collections).</para>
+/// <para>The writer never reflects: each value (a Data's record too) writes itself
+/// through its own <c>Output</c>, and <see cref="Value"/> takes only the C# values of
+/// the tree contract (primitives / byte[] / C# collections).</para>
 /// </summary>
 public sealed class Writer : IWriter
 {
@@ -63,65 +62,11 @@ public sealed class Writer : IWriter
     public void Name(string name) => _writer.WritePropertyName(name);
     public void EndObject() => _writer.WriteEndObject();
 
-    /// <summary>
-    /// Opens the canonical Data envelope. <c>name</c> is always present;
-    /// <c>type</c> is written only when non-null; <c>value</c> is opened with
-    /// the property name and left for the caller's value-emission calls;
-    /// <c>properties</c> and <c>signature</c> are closed out by
-    /// <see cref="EndRecord"/>.
-    /// </summary>
-    public void BeginRecord(app.data.@this record)
-    {
-        _writer.WriteStartObject();
-        // @schema:data — every Data marks itself, nested ones too, so the read side
-        // recognizes a Data inside a value the same way as the top-level one.
-        _writer.WriteString(global::app.data.@this.WireSchema, global::app.data.@this.WireSchemaData);
-        // The binding label rides only on the Store view (.pr parameters bind by
-        // name); the outbound wire omits it — a server's variable name is not
-        // API surface a client should couple to.
-        if (_view == app.View.Store)
-            _writer.WriteString("name", record.Name);
+    /// <summary>A Data's record, in bare json: nothing of its own — bare json shows only the value.</summary>
+    public void BeginRecord(app.data.@this record) { }
 
-        // type — the structured entity {name, kind?, strict?} via the type's own
-        // converter, identical to the top-level envelope. A bare-string `type` is the
-        // OLD shape the reader now rejects; a nested record must match the top.
-        if (record.Type is { IsNull: false })
-        {
-            _writer.WritePropertyName("type");
-            // The type descriptor writes ITSELF ({name, kind?, strict?}) through this same
-            // writer — no STJ, no per-type converter, symmetric with every other value.
-            record.Type.Write(this);
-        }
-
-        _writer.WritePropertyName("value");
-    }
-
-    /// <summary>
-    /// Closes the canonical Data envelope, emitting the <c>properties</c>
-    /// sidecar (if non-empty) and the <c>signature</c> (if present). The
-    /// caller is responsible for invoking <see cref="Value"/> (or an
-    /// equivalent leaf method) between Begin and End so the value slot is
-    /// populated.
-    /// </summary>
-    public void EndRecord(app.data.@this record)
-    {
-        if (record.Properties.Count > 0)
-        {
-            _writer.WritePropertyName("properties");
-            _writer.WriteStartObject();
-            foreach (var kvp in record.Properties)
-            {
-                _writer.WritePropertyName(kvp.Key);
-                Value(kvp.Value);
-            }
-            _writer.WriteEndObject();
-        }
-
-        // Signing is no longer a Data property — a signed payload is a `signature`
-        // layer wrapping the data record (emitted hoisted at the wire boundary),
-        // not a `signature` field inside the envelope.
-        _writer.WriteEndObject();
-    }
+    /// <summary>A Data's record closes: nothing of its own in bare json.</summary>
+    public void EndRecord(app.data.@this record) { }
 
     void IWriter.EndRecord() => throw new System.InvalidOperationException(
         "JsonWriter.EndRecord requires the Data record reference — call EndRecord(Data) instead.");
@@ -149,44 +94,7 @@ public sealed class Writer : IWriter
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
             case byte[] bytes: Bytes(bytes); return;
-            case app.data.@this nested:
-                BeginRecord(nested);
-                Value(nested.Peek());
-                EndRecord(nested);
-                return;
-            case app.type.item.dict.@this dict:
-                // The native object shape: a json-object value and a raw infra
-                // dict both converge here. Emit as a
-                // JSON object keyed by entry name, including the empty case so a
-                // record-with-no-properties round-trips as `{}` not `[]`. The
-                // writer disambiguates object-vs-array by value type: `dict`→`{}`,
-                // any other IEnumerable→`[]`. The writer knows no context, so it writes the stored
-                // slots as they are: a stored Data's value, or the raw CLR value itself.
-                _writer.WriteStartObject();
-                foreach (var key in dict.KeyNames)
-                {
-                    _writer.WritePropertyName(key);
-                    Value(dict.Stored(key) is app.data.@this d ? d.Peek() : dict.Stored(key));
-                }
-                _writer.WriteEndObject();
-                return;
-            case app.type.item.list.@this nativeList:
-                // The native list shape. On the wire each element self-describes —
-                // Value(item) routes an element Data through the record arm, so a
-                // signed element carries its envelope. Disambiguated by wrapper
-                // type from dict (`{}`); a bare IEnumerable still falls to `[]` below. A stored Data
-                // rides as its record; a raw slot as the CLR value it is (the writer knows no context).
-                BeginArray(nativeList.CountRaw);
-                foreach (var slot in nativeList.Slots()) Value(slot);
-                EndArray();
-                return;
-            // A value renders itself — leaves (text/number/bool/date-family/…) and
-            // structured types (path/file/url/code/directory/image) own their wire
-            // form via Write (OBP Rule 9: the value owns the mapping, the writer
-            // never type-switches per type). dict/list are matched above by their
-            // own cases. A type that reaches here without a Write override throws
-            // loudly from the base — the build gate forbids that for value types.
-            case app.type.item.@this v: v.Write(this); return;
+            // A plang value is never handed here: it writes itself through its own Output.
             case System.Collections.IEnumerable list:
                 BeginArray(-1);
                 foreach (var item in list) Value(item);

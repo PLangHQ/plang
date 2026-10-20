@@ -90,7 +90,7 @@ public class IfHandlerTests : IDisposable
     {
         var ctx = _app.actor.list.User.Context;
         var output = await Written("if true, write true-branch",
-            ctx.Action("condition.if(Left=true, Operator=\"==\", Right=true) { output.write(Data=\"true-branch\") }"));
+            await ctx.Action("condition.if(Left=true, Operator=\"==\", Right=true) { output.write(Data=\"true-branch\") }"));
         await Assert.That(output).IsEqualTo("true-branch" + System.Environment.NewLine);
     }
 
@@ -99,7 +99,7 @@ public class IfHandlerTests : IDisposable
     {
         var ctx = _app.actor.list.User.Context;
         var output = await Written("if false, write should-not-appear",
-            ctx.Action("condition.if(Left=false, Operator=\"==\", Right=true) { output.write(Data=\"should-not-appear\") }"));
+            await ctx.Action("condition.if(Left=false, Operator=\"==\", Right=true) { output.write(Data=\"should-not-appear\") }"));
         await Assert.That(output).IsEqualTo("");
     }
 
@@ -108,8 +108,8 @@ public class IfHandlerTests : IDisposable
     {
         var ctx = _app.actor.list.User.Context;
         var output = await Written("if 10 > 5 write then-branch, else write else-branch",
-            ctx.Action("condition.if(Left=10, Operator=\">\", Right=5) { output.write(Data=\"then-branch\") }"),
-            ctx.Action("condition.else() { output.write(Data=\"else-branch\") }"));
+            await ctx.Action("condition.if(Left=10, Operator=\">\", Right=5) { output.write(Data=\"then-branch\") }"),
+            await ctx.Action("condition.else() { output.write(Data=\"else-branch\") }"));
         await Assert.That(output).IsEqualTo("then-branch" + System.Environment.NewLine);
     }
 
@@ -118,8 +118,8 @@ public class IfHandlerTests : IDisposable
     {
         var ctx = _app.actor.list.User.Context;
         var output = await Written("if 3 > 5 write then-branch, else write else-branch",
-            ctx.Action("condition.if(Left=3, Operator=\">\", Right=5) { output.write(Data=\"then-branch\") }"),
-            ctx.Action("condition.else() { output.write(Data=\"else-branch\") }"));
+            await ctx.Action("condition.if(Left=3, Operator=\">\", Right=5) { output.write(Data=\"then-branch\") }"),
+            await ctx.Action("condition.else() { output.write(Data=\"else-branch\") }"));
         await Assert.That(output).IsEqualTo("else-branch" + System.Environment.NewLine);
     }
 
@@ -292,7 +292,7 @@ public class IfHandlerTests : IDisposable
     // template a built .pr holds (a %ref% source), not a value handed in from C#.
 
     private async Task<bool> Holds(string left, string op, string right = "")
-        => await Written($"if {left} {op}", _app.actor.list.User.Context.Action(
+        => await Written($"if {left} {op}", await _app.actor.list.User.Context.Action(
             $"condition.if(Left={left}, Operator=\"{op}\"{(right == "" ? "" : $", Right={right}")}) {{ output.write(Data=\"yes\") }}")) != "";
 
     private async Task Event() => await _app.actor.list.User.Context.Variable.Set("event", new Dictionary<string, object?> { ["mouse"] = 1 });
@@ -380,7 +380,7 @@ public class IfHandlerTests : IDisposable
     public async Task Ordering_AMissingProperty_IsVariableNotFound()
     {
         await Event();
-        var result = await RunStep("if %event.guest% > 5", _app.actor.list.User.Context.Action(
+        var result = await RunStep("if %event.guest% > 5", await _app.actor.list.User.Context.Action(
             "condition.if(Left=%event.guest%, Operator=\">\", Right=5) { output.write(Data=\"yes\") }"));
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
@@ -400,7 +400,7 @@ public class IfHandlerTests : IDisposable
             global::app.channel.list.@this.Output, written,
             ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
-        var result = await RunStep("write out %event.guest%", _app.actor.list.User.Context.Action(
+        var result = await RunStep("write out %event.guest%", await _app.actor.list.User.Context.Action(
             "output.write(Data=%event.guest%)"));
         var surfaced = result.Error?.Key == "VariableNotFound"
             || System.Text.Encoding.UTF8.GetString(written.ToArray()).Contains("\"VariableNotFound\"");
@@ -414,7 +414,7 @@ public class IfHandlerTests : IDisposable
         var ctx = _app.actor.list.User.Context;
         await ctx.Variable.Set("broken", new global::app.data.@this("broken", "{not json",
             ctx.App.type.list[new global::app.type.@this("dict", "json"), ctx], context: ctx));
-        var result = await RunStep("if %broken.a% is empty", ctx.Action(
+        var result = await RunStep("if %broken.a% is empty", await ctx.Action(
             "condition.if(Left=%broken.a%, Operator=\"isempty\") { output.write(Data=\"yes\") }"));
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("MaterializeFailed");

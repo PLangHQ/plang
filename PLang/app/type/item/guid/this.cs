@@ -23,7 +23,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
-    public override void Write(global::app.type.format.IWriter w) => w.Guid(Value);
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
+        global::app.actor.context.@this? context) { w.Guid(Value); return default; }
 
     /// <summary>Born holding the app's <c>guid</c> type its maker hands it.</summary>
     public @this(System.Guid value, global::app.type.@this type) : base(type) { Value = value; }

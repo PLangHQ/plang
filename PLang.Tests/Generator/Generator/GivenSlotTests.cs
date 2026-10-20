@@ -11,7 +11,7 @@ public class GivenSlotTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var context = app.actor.list.User.Context;
-        var result = await context.Action(step).Start(context);
+        var result = await (await context.Action(step)).Start(context);
         await result.IsSuccess();
         return ((await result.Value()) as global::app.type.item.list.@this)?.Count.ToString();
     }

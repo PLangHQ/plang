@@ -32,11 +32,14 @@ public class NumberTextTests
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
-    private string Json(number value)
+    private async Task<string> Json(number value)
     {
         using var ms = new System.IO.MemoryStream();
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
-            value.Write(new global::app.type.item.kind.json.Writer(utf8, _app.type.list, emitsSchema: false));
+        {
+            var writer = new global::app.type.item.kind.json.Writer(utf8, _app.type.list, emitsSchema: false);
+            await writer.Kind.pair.Output(value, writer, global::app.View.Store, Ctx);
+        }
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
@@ -55,7 +58,7 @@ public class NumberTextTests
 
     [Test]
     public async Task AProduct_AsJson_IsWhole()
-        => await Assert.That(Json(Product)).IsEqualTo("7.470000000000001");
+        => await Assert.That(await Json(Product)).IsEqualTo("7.470000000000001");
 
     [Test]
     public async Task AnIcelandicCulture_WritesItsSeparator()

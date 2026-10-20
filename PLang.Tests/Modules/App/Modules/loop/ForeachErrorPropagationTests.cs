@@ -67,7 +67,7 @@ public class ForeachErrorPropagationTests
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
         // Inner goal with a single step: a condition whose body calls a goal that doesn't exist
-        var innerCondAction = context.Action("condition.if(Left=true, Operator=\"==\", Right=true) { goal.call(Name=\"MissingGoal\") }");
+        var innerCondAction = await context.Action("condition.if(Left=true, Operator=\"==\", Right=true) { goal.call(Name=\"MissingGoal\") }");
         // Goal first, then its step — a step is born knowing its goal (Goal is init).
         var innerGoal = new Goal(_app.type.list)
         {

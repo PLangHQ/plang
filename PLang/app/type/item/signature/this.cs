@@ -171,11 +171,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         w.Name(global::app.data.@this.WireSchema); w.String(WireSchemaSignature);
         // `type` = the algorithm within this layer — uniform with every layer
         // ({@schema:archive, type:gzip}, {@schema:encryption, type:aes-…}).
-        w.Name("type"); Algorithm.Write(w);
-        w.Name("nonce"); Nonce.Write(w);
-        w.Name("created"); Created.Write(w);
-        if (_expires is { } exp) { w.Name("expires"); exp.Write(w); }
-        w.Name("identity"); Identity.Write(w);
+        var pair = w.Kind.pair;
+        w.Name("type"); await pair.Output(Algorithm, w, mode, context);
+        w.Name("nonce"); await pair.Output(Nonce, w, mode, context);
+        w.Name("created"); await pair.Output(Created, w, mode, context);
+        if (_expires is { } exp) { w.Name("expires"); await pair.Output(exp, w, mode, context); }
+        w.Name("identity"); await pair.Output(Identity, w, mode, context);
         // Contracts are bare strings on the wire (and in ToSigningBytes), not
         // data records — emit the strings directly.
         if (Contracts is not null)
@@ -191,41 +192,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         w.Name("type"); w.String(Hash.Algorithm?.Name ?? "");
         w.Name("value"); w.String(Hash.ToBase64());
         w.EndObject();
-        w.Name("signature"); Signature.Write(w);
+        w.Name("signature"); await pair.Output(Signature, w, mode, context);
         // The inner Data is a full layer-level payload (its own @schema:data).
         w.Name("value"); await Value.Output(w, mode, context, layer: true);
-        w.EndObject();
-    }
-
-    /// <summary>
-    /// Sync layer render for the STJ <see cref="global::app.data.Wire"/> write paths
-    /// (Serialize/Store/.pr) that cannot await <see cref="Output"/>. Same layout; the
-    /// inner <c>value</c> rides via the sync tree-walk. Retired once every write path
-    /// is on <see cref="Output"/> (then this and IWriter.Value both go).
-    /// </summary>
-    public override void Write(IWriter w)
-    {
-        w.BeginObject();
-        w.Name(global::app.data.@this.WireSchema); w.String(WireSchemaSignature);
-        w.Name("type"); Algorithm.Write(w);
-        w.Name("nonce"); Nonce.Write(w);
-        w.Name("created"); Created.Write(w);
-        if (_expires is { } exp) { w.Name("expires"); exp.Write(w); }
-        w.Name("identity"); Identity.Write(w);
-        if (Contracts is not null)
-        {
-            w.Name("contracts");
-            w.BeginArray(-1);
-            foreach (var c in ContractStrings()) w.String(c);
-            w.EndArray();
-        }
-        w.Name("hash");
-        w.BeginObject();
-        w.Name("type"); w.String(Hash.Algorithm?.Name ?? "");
-        w.Name("value"); w.String(Hash.ToBase64());
-        w.EndObject();
-        w.Name("signature"); Signature.Write(w);
-        w.Name("value"); w.Value(Value);
         w.EndObject();
     }
 

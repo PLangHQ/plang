@@ -14,13 +14,13 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
 
     // Render a value through the json IWriter exactly as the wire writer's
     // value-slot dispatch does (case item.@this v: v.Write(this)).
-    private string Render(global::app.type.item.@this value)
+    private async Task<string> Render(global::app.type.item.@this value)
     {
         using var ms = new MemoryStream();
         using (var jw = new System.Text.Json.Utf8JsonWriter(ms))
         {
-            var writer = new global::app.type.item.kind.json.Writer(jw, app.type.list);
-            writer.Value(value);
+            var writer = new global::app.type.item.kind.json.Writer(jw, app.type.list, emitsSchema: true);
+            await writer.Kind.pair.Output(value, writer, global::app.View.Out, app.actor.list.User.Context);
         }
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
@@ -38,7 +38,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
             hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), (global::app.module.crypto.type.hash.kind.keccak256.@this)app.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
             signature: new global::app.type.item.binary.@this(System.Convert.FromBase64String("c2ln"), app.type.list[typeof(global::app.type.item.binary.@this)]));
 
-        var json = Render(sig);
+        var json = await Render(sig);
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
@@ -77,7 +77,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
             hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, (global::app.module.crypto.type.hash.kind.keccak256.@this)app.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
             signature: new global::app.type.item.binary.@this(new byte[] { 0x01 }, app.type.list[typeof(global::app.type.item.binary.@this)]));
 
-        using var doc = JsonDocument.Parse(Render(sig));
+        using var doc = JsonDocument.Parse(await Render(sig));
         await Assert.That(doc.RootElement.TryGetProperty("expires", out _)).IsFalse();
         await Assert.That(doc.RootElement.TryGetProperty("contracts", out _)).IsFalse();
     }

@@ -112,7 +112,7 @@ public class ConditionHandlerTests : IDisposable
     {
         var ctx = _app.actor.list.User.Context;
         var output = await Written("if true, write true-branch",
-            ctx.Action("condition.if(Left=true, Operator=\"==\", Right=true) { output.write(Data=\"true-branch\") }"));
+            await ctx.Action("condition.if(Left=true, Operator=\"==\", Right=true) { output.write(Data=\"true-branch\") }"));
         await Assert.That(output).IsEqualTo("true-branch" + System.Environment.NewLine);
     }
 
@@ -121,8 +121,8 @@ public class ConditionHandlerTests : IDisposable
     {
         var ctx = _app.actor.list.User.Context;
         var output = await Written("if false write then-branch, else write else-branch",
-            ctx.Action("condition.if(Left=false, Operator=\"==\", Right=true) { output.write(Data=\"then-branch\") }"),
-            ctx.Action("condition.else() { output.write(Data=\"else-branch\") }"));
+            await ctx.Action("condition.if(Left=false, Operator=\"==\", Right=true) { output.write(Data=\"then-branch\") }"),
+            await ctx.Action("condition.else() { output.write(Data=\"else-branch\") }"));
         await Assert.That(output).IsEqualTo("else-branch" + System.Environment.NewLine);
     }
 }

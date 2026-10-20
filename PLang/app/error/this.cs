@@ -99,25 +99,19 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// can hand the causes in whole: <c>new ActionError(…) { Action = this, list = causes }</c>.</summary>
     public List<Error> list { get; init; } = new();
 
-    /// <summary>An error writes its own flat form (<see cref="Write"/>) in every view.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+    /// <summary>The error writes itself, in every view — its flat wire shape: what it is (id, message, key, status,
+    /// when, its fix and links) and the errors that caused it, each written through the writer's kind. What kind of
+    /// error it is, its key says. The live back-references that can't round-trip (Exception, Step, Goal, CallFrames)
+    /// are dropped — the snapshot's CallStack section carries the chain. Its reader (<c>error/serializer/Reader</c>)
+    /// reads it back.</summary>
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
-
-    /// <summary>The error renders itself — its flat wire shape: what it is (id, message, key, status, when, its
-    /// fix and links) and the errors that caused it, each writing itself. What kind of error it is, its key says.
-    /// The live back-references that can't round-trip (Exception, Step, Goal, CallFrames) are dropped — the
-    /// snapshot's CallStack section carries the chain. Its reader (<c>error/serializer/Reader</c>) reads it back.</summary>
-    public override void Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("id");          writer.String(Id);
         writer.Name("message");     writer.String(Message);
         writer.Name("key");         writer.String(Key);
-        writer.Name("status");      Status.Write(writer);
+        writer.Name("status");      await writer.Kind.pair.Output(Status, writer, mode, context);
         writer.Name("createdUtc");  writer.DateTime(CreatedUtc);
         if (FixSuggestion != null) { writer.Name("fixSuggestion"); writer.String(FixSuggestion); }
         if (HelpfulLinks != null)  { writer.Name("helpfulLinks");  writer.String(HelpfulLinks); }
@@ -126,8 +120,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         {
             writer.Name("list");
             writer.BeginArray(list.Count);
-            foreach (var c in list)
-                ((global::app.type.item.@this)c).Write(writer); // each error is an item — it writes itself
+            foreach (var c in list) await writer.Kind.pair.Output(c, writer, mode, context);
             writer.EndArray();
         }
         writer.EndObject();

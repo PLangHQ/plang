@@ -53,20 +53,10 @@ public class @this : global::app.type.item.source
     private protected global::app.type.item.@this Decoded(actor.context.@this context)
         => (Type.kind is { IsEmpty: false } ? context.App.type.list.Kind(Type, context).Parse(Raw, context) : null) ?? Read(context);
 
-    // A wire writes verbatim ONLY into its own format (a byte-identical relay of the captured
-    // slice). Any other writer is a USE — decoding needs a context, which this context-free door
-    // does not have: a foreign writer reaches a wire through Output.
-    public override void Write(global::app.type.format.IWriter w)
-    {
-        if (_reader.Owns(w)) { w.Raw((string)Raw); return; }
-        throw new System.InvalidOperationException(
-            "an undecoded wire writes into a foreign format through Output(writer, mode, context) — decoding needs the caller's context.");
-    }
-
-    // Output is the SHAPE-AWARE door. A wire wrapping a STRUCTURE (dict/list/object) reports
-    // IsLeaf=true yet decodes to a non-leaf; Output lets the decoded value render itself through its
-    // OWN shape (a leaf via Write, a structure structurally). Own format still rides raw —
-    // byte-identical relay, signatures hold.
+    // A wire writes verbatim into its own format (a byte-identical relay of the captured slice, signatures
+    // hold) — until the identity pair relays a value's written form. Any other writer is a USE: the slice
+    // decodes with the caller's context, and the decoded value is written through the writer's kind (a
+    // structure structurally).
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)

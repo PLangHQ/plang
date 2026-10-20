@@ -45,25 +45,19 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
     internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
         global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own) => Set(parent, value, context);
 
-    /// <summary>A hop writes its own <c>.pr</c> form (<see cref="Write"/>) in every view.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+    /// <summary>Its <c>.pr</c> form, in every view: one object under its kind — <c>{"property": "address"}</c>.</summary>
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
-
-    /// <summary>Its <c>.pr</c> form: one object under its kind — <c>{"property": "address"}</c>.</summary>
-    public override void Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name(Kind);
-        Piece(writer);
+        await Piece(writer, mode, context);
         writer.EndObject();
     }
 
     /// <summary>What it writes under its kind.</summary>
-    protected abstract void Piece(global::app.type.format.IWriter writer);
+    protected abstract System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context);
 
     public override string ToString() => Text;
 }

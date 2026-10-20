@@ -99,10 +99,10 @@ public class OptionQuestionTests : System.IAsyncDisposable
             [$"s0_{action}"] = new Dictionary<string, object?> { ["type"] = "noul", ["noul"] = 0.99 },
             [$"s0_@option.{action}.{option}"] = new Dictionary<string, object?> { ["choice"] = chosen, ["confidence"] = 0.9 },
         }, Ctx), [], Ctx);
-        var read = new global::app.goal.step.action.formal.Reader(step, _app.module.list).Read(code, Ctx);
+        var read = await new global::app.goal.step.action.formal.Reader(step, _app.module.list).Read(code, Ctx);
         await read.IsSuccess();
 
-        var (refusals, _) = step.Pick.Agree((global::app.goal.step.action.list.@this)read.Peek()!);
+        var (refusals, _) = await step.Pick.Agree((global::app.goal.step.action.list.@this)read.Peek()!, Ctx);
 
         await Assert.That(refusals.Any(r => r.Contains($"leaves out {option}"))).IsEqualTo(refused);
     }

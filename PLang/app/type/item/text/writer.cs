@@ -109,13 +109,8 @@ public sealed class Writer : global::app.type.format.IWriter
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
             case byte[] bytes: Bytes(bytes); return;
-            // TOMBSTONE — a closing door, do NOT build on it. Value(item) is being retired:
-            // an item in hand is rendered by asking `item.Output`, never by handing the boxed
-            // item to a writer. This leaf arm (mirroring json.Writer's item arm) keeps existing
-            // Value(item) feeders green until they migrate to Output; it dies with piece (B) when
-            // that inventory empties. Value(object) narrows back to raw normalized CLR leaves.
-            case global::app.type.item.@this { IsLeaf: true } v: v.Write(this); return;
-            default:                                    // container / Data / enumerable → json content
+            // a plang value is never handed here: it writes itself through its own Output
+            default:                                    // a C# collection → json content
                 Structural().Value(normalized);
                 _utf8!.Flush();
                 return;

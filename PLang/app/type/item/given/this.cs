@@ -17,7 +17,8 @@ public sealed class @this : global::app.type.item.@this
     private @this() { }
 
     /// <summary>It is a slot still to fill; the writer says how one is written.</summary>
-    public override void Write(global::app.type.format.IWriter w) => w.Given();
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
+        global::app.actor.context.@this? context) { w.Given(); return default; }
 
     public override string ToString() => "given";
 }

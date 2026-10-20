@@ -51,14 +51,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>The hash renders itself as its base64 digest — uniform across
     /// formats (the algorithm rides as the value's kind on the type envelope).</summary>
-    public override void Write(global::app.type.format.IWriter writer) => writer.String(ToBase64());
-
-    /// <summary>A hash writes its own form — its base64 digest (<see cref="Write"/>) — in every view.</summary>
+    /// <summary>A hash writes its own form — its base64 digest — in every view.</summary>
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        writer.String(ToBase64());
+        return default;
     }
 
     /// <summary>The hash of <paramref name="bytes"/> by <paramref name="algorithm"/> — the kind of hash digests them

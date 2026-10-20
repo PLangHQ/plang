@@ -35,7 +35,7 @@ public sealed class Reader
     private readonly global::app.type.item.list.@this<global::app.module.@this> _modules;
 
     /// <summary>Born with the step it reads for and the modules its actions are picked from
-    /// (<c>app.module.list</c>); the read stays synchronous.</summary>
+    /// (<c>app.module.list</c>).</summary>
     public Reader(global::app.goal.step.@this step, global::app.type.item.list.@this<global::app.module.@this> modules)
     {
         _step = step;
@@ -43,7 +43,7 @@ public sealed class Reader
     }
 
     /// <summary>The step's actions read from <paramref name="text"/> — Ok(action.list), or the error.</summary>
-    public global::app.data.@this Read(string text, global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task<global::app.data.@this> Read(string text, global::app.actor.context.@this context)
     {
         try
         {
@@ -51,7 +51,7 @@ public sealed class Reader
             cursor.Space();
             if (cursor.AtEnd) cursor.Fail("a step holds at least one action");
             var list = new global::app.goal.step.action.list.@this(context.App.type.list[typeof(global::app.goal.step.action.list.@this)]);
-            foreach (var action in cursor.Actions(null)) list.Add(action);
+            foreach (var action in await cursor.Actions(null)) list.Add(action);
             return context.Ok(list);
         }
         catch (Invalid invalid)
@@ -153,10 +153,10 @@ public sealed class Reader
 
         /// <summary>action { ";" action } — up to <paramref name="closing"/> or the end. A clause is a clause of
         /// the action before it in the same list, and follows it there.</summary>
-        public List<global::app.goal.step.action.@this> Actions(string? closing)
+        public async System.Threading.Tasks.Task<List<global::app.goal.step.action.@this>> Actions(string? closing)
         {
             var actions = new List<global::app.goal.step.action.@this>();
-            Attach(actions, Action());
+            Attach(actions, await Action());
             while (!(closing != null ? Peek(closing) : AtEnd))
             {
                 if (!Peek(";"))
@@ -166,7 +166,7 @@ public sealed class Reader
                     Fail(closing != null ? $"expected `;` or `{closing}`" : "expected `;` or the end of the step");
                 }
                 Take(";");
-                Attach(actions, Action());
+                Attach(actions, await Action());
             }
             return actions;
         }
@@ -185,7 +185,7 @@ public sealed class Reader
             => _modules.Items().FirstOrDefault(m => string.Equals(m.Name, name, System.StringComparison.OrdinalIgnoreCase));
 
         // action = module "." name "(" rows ")" [ "{" actions "}" ] — the action, and where it starts
-        private (global::app.goal.step.action.@this Action, int At) Action()
+        private async System.Threading.Tasks.Task<(global::app.goal.step.action.@this Action, int At)> Action()
         {
             Space();
             var start = _pos;
@@ -222,7 +222,7 @@ public sealed class Reader
                 {
                     WrittenType(prop, "list<action>");
                     Take("=");
-                    var written = Value(null);
+                    var written = await Value(null);
                     if (written.Items == null || written.Items.Count == 0 || written.Items.Any(i => i.Action == null))
                         Fail($"`{prop}` is a list of actions: [goal.call(Name=\"X\")]", at);
                     var actions = new global::app.goal.step.action.list.@this(_context.App.type.list[typeof(global::app.goal.step.action.list.@this)]);
@@ -230,7 +230,7 @@ public sealed class Reader
                     action.Property.Add(new global::app.type.property.@this { Name = prop, Type = declared.Type, Value = actions });
                     continue;
                 }
-                var (row, frozen) = Row(prop, declared!);
+                var (row, frozen) = await Row(prop, declared!);
                 (frozen ? action.Default : action.Property).Add(row);
             }
             Take(")");
@@ -255,7 +255,7 @@ public sealed class Reader
                 // written on this step's line
                 var child = new global::app.goal.step.@this(_context.App.type.list) { Goal = _step.Goal, Line = _step.Line };
                 var body = new Cursor(_text, child, _context, _index, _modules) { _pos = _pos };
-                var bodyActions = body.Actions("}");
+                var bodyActions = await body.Actions("}");
                 _pos = body._pos;
                 child.Text = _text[bodyStart.._pos].Trim();
                 Take("}");
@@ -282,7 +282,7 @@ public sealed class Reader
         private static string Face(global::app.type.@this type)
             => type.kind.IsEmpty ? type.Name : $"{type.Name}<{type.kind.Name}>";
 
-        private (global::app.type.property.@this Row, bool Frozen) Row(string prop, global::app.type.property.@this declared)
+        private async System.Threading.Tasks.Task<(global::app.type.property.@this Row, bool Frozen)> Row(string prop, global::app.type.property.@this declared)
         {
             var declaredFace = Face(declared.Type);
             var written = WrittenType(prop, declaredFace);
@@ -328,7 +328,7 @@ public sealed class Reader
                 _pos += span.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(span), System.Text.Json.JsonValueKind.String);
             }
-            else value = Value(Face(declared.Type));
+            else value = await Value(Face(declared.Type));
 
             var raw = value.Json != null && value.Kind == System.Text.Json.JsonValueKind.String
                 ? System.Text.Json.JsonSerializer.Deserialize<string>(value.Json) : null;
@@ -356,7 +356,7 @@ public sealed class Reader
             if (value.Action != null) born = value.Action;
             // argument rows are named rows, each value its own (a %x% row value is born a template on
             // its own): the rows are never rendered as one list, which would drop their names
-            else if (declared.Type.Name == "list" && value.Entries != null) born = Born(type, Arguments(value), marks: false);
+            else if (declared.Type.Name == "list" && value.Entries != null) born = Born(type, await Arguments(value), marks: false);
             else if (value.Entries != null && value.Entries.Any(e => e.Type != null))
             { Fail($"`{prop}` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments", at); return default; }
             else born = Born(type, Json(value));
@@ -429,29 +429,31 @@ public sealed class Reader
         // type, else the literal's own.
         // Each argument is its own row; one the programmer wrote with a %variable% is marked a template
         // on its row, as a top-level row is (Born) — the mark is born here, at build.
-        private string Arguments(Literal v)
+        private async System.Threading.Tasks.Task<string> Arguments(Literal v)
         {
-            var rows = v.Entries!.Select(e =>
+            var rows = new List<string>();
+            foreach (var e in v.Entries!)
             {
                 var json = Json(e.Value);
                 var variables = Variables(json).DistinctBy(x => x.Text).ToList();
-                return "{\"name\":" + System.Text.Json.JsonSerializer.Serialize(e.Key)
+                rows.Add("{\"name\":" + System.Text.Json.JsonSerializer.Serialize(e.Key)
                     + ",\"type\":{\"name\":" + System.Text.Json.JsonSerializer.Serialize(TypeName(e.Type ?? LiteralType(e.Value)))
                     + (TypeKind(e.Type ?? LiteralType(e.Value)) is { } k ? ",\"kind\":" + System.Text.Json.JsonSerializer.Serialize(k) : "")
                     + (variables.Count > 0 ? ",\"template\":\"plang\"" : "")
                     + "},\"value\":" + json
-                    + (variables.Count > 0 ? ",\"variable\":" + Json(variables) : "")
-                    + "}";
-            });
+                    + (variables.Count > 0 ? ",\"variable\":" + await Json(variables) : "")
+                    + "}");
+            }
             return "[" + string.Join(",", rows) + "]";
         }
 
         // A row's variable list as the .pr writes it.
-        private string Json(IReadOnlyList<global::app.type.item.variable.@this> variables)
+        private async System.Threading.Tasks.Task<string> Json(IReadOnlyList<global::app.type.item.variable.@this> variables)
         {
             using var ms = new System.IO.MemoryStream();
             using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
-                new global::app.type.item.variable.serializer.Entry().Write(new global::app.type.item.kind.json.Writer(utf8, _context.App.type.list), variables);
+                await new global::app.type.item.variable.serializer.Entry().Write(
+                    new global::app.type.item.kind.json.Writer(utf8, _context.App.type.list), variables, global::app.View.Store, _context);
             return Encoding.UTF8.GetString(ms.ToArray());
         }
 
@@ -473,7 +475,7 @@ public sealed class Reader
 
         // ---------------------------------------------------------------- values
 
-        private Literal Value(string? declared)
+        private async System.Threading.Tasks.Task<Literal> Value(string? declared)
         {
             Space();
             if (_pos >= _text.Length) Fail("expected a value");
@@ -505,7 +507,7 @@ public sealed class Reader
                 {
                     if (AtEnd) Fail("a list is not closed: expected `]`");
                     if (items.Count > 0) Take(",");
-                    items.Add(Value(null));
+                    items.Add(await Value(null));
                 }
                 Take("]");
                 return new Literal { Items = items };
@@ -522,7 +524,7 @@ public sealed class Reader
                     string key;
                     if (_pos < _text.Length && _text[_pos] == '"')
                     {
-                        var k = Value(null);
+                        var k = await Value(null);
                         key = System.Text.Json.JsonSerializer.Deserialize<string>(k.Json!)!;
                     }
                     else key = Key();
@@ -536,7 +538,7 @@ public sealed class Reader
                         type = typed.Groups[1].Value;
                         _pos += typed.Length;
                     }
-                    entries.Add((key, type, Value(null)));
+                    entries.Add((key, type, await Value(null)));
                 }
                 Take("}");
                 return new Literal { Entries = entries };
@@ -552,7 +554,7 @@ public sealed class Reader
             {
                 // an action held as a value stands alone: a modifier there has no action before it
                 var held = new List<global::app.goal.step.action.@this>();
-                Attach(held, Action());
+                Attach(held, await Action());
                 return new Literal { Action = held[0] };
             }
             if (Match(@"[A-Za-z_/][\w./-]*") is { } bare) Fail($"a text must be in quotes: write \"{bare}\", not {bare}");

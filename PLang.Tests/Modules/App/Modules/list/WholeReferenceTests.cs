@@ -11,26 +11,26 @@ public class WholeReferenceTests
     [After(Test)]
     public async Task Dispose() => await _app.DisposeAsync();
 
-    private global::app.data.@this Slot(string formal, string name)
+    private async Task<global::app.data.@this> Slot(string formal, string name)
     {
         var ctx = _app.actor.list.User.Context;
-        return ctx.Action(formal)[name]!.Data(ctx);
+        return (await ctx.Action(formal))[name]!.Data(ctx);
     }
 
     [Test]
     public async Task AListSlotHoldingOneWholeReference_IsThatReference()
-        => await Assert.That(Slot("list.query(List=%people%, Query={order: \"age\"})", "List").IsVariable).IsTrue();
+        => await Assert.That((await Slot("list.query(List=%people%, Query={order: \"age\"})", "List")).IsVariable).IsTrue();
 
     // the property's value as the program holds it — what the builder asks
     [Test]
     public async Task AListPropertyHoldingOneWholeReference_IsThatReference()
     {
-        var value = _app.actor.list.User.Context.Action("list.query(List=%people%, Query={order: \"age\"})")["List"]!.Value;
+        var value = (await _app.actor.list.User.Context.Action("list.query(List=%people%, Query={order: \"age\"})"))["List"]!.Value;
         await Assert.That(value?.GetType().FullName).IsNotNull();
         await Assert.That(value!.IsVariable).IsTrue();
     }
 
     [Test]
     public async Task AListSlotHoldingAListLiteral_IsNoReference()
-        => await Assert.That(Slot("list.query(List=[1, 2], Query={order: \"age\"})", "List").IsVariable).IsFalse();
+        => await Assert.That((await Slot("list.query(List=[1, 2], Query={order: \"age\"})", "List")).IsVariable).IsFalse();
 }

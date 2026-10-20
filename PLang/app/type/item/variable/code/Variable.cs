@@ -15,7 +15,8 @@ public sealed class Variable : Hop
     /// app's or a binding's.</summary>
     internal override bool IsOwn => !Name.StartsWith('!');
 
-    protected override void Piece(global::app.type.format.IWriter writer) => writer.String(Name);
+    protected override System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context) { writer.String(Name); return default; }
 
     /// <summary>What the name holds. A <c>!</c> name the memory doesn't bind is the app's shortcut by that name
     /// (<c>%!goal%</c>: what its goal answers for this asker), else the app's member (<c>%!build%</c> while

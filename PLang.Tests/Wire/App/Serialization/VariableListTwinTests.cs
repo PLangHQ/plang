@@ -21,7 +21,7 @@ public class VariableListTwinTests
             foreach (var row in Rows(JsonNode.Parse(entry.GetProperty("pr").GetRawText())))
             {
                 rows++;
-                var expected = Expected(row);
+                var expected = await Expected(row);
                 var written = row["variable"]?.ToJsonString();
                 if (expected != written)
                     differ.Add($"{entry.GetProperty("goal").GetString()}[{entry.GetProperty("index").GetInt32()}] {row["name"]}: pinned {written ?? "(none)"}, C# {expected ?? "(none)"}");
@@ -39,7 +39,7 @@ public class VariableListTwinTests
         foreach (var entry in pinned)
             foreach (var row in Rows(entry!["pr"]).ToList())
             {
-                if (Expected(row) is { } list) row["variable"] = JsonNode.Parse(list);
+                if (await Expected(row) is { } list) row["variable"] = JsonNode.Parse(list);
                 else row.Remove("variable");
             }
         Fixture.Write(Pinned, pinned);
@@ -81,7 +81,7 @@ public class VariableListTwinTests
         foreach (var kv in obj) foreach (var r in Rows(kv.Value)) yield return r;
     }
 
-    private string? Expected(JsonObject row)
+    private async Task<string?> Expected(JsonObject row)
     {
         var type = (JsonObject)row["type"]!;
         var holds = type["template"] != null || type["name"]?.GetValue<string>() == "variable";
@@ -92,8 +92,9 @@ public class VariableListTwinTests
         using var ms = new System.IO.MemoryStream();
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms,
                    new System.Text.Json.JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
-            new global::app.type.item.variable.serializer.Entry().Write(
-                new global::app.type.item.kind.json.Writer(utf8, app.type.list), found.DistinctBy(v => v.Text).ToList());
+            await new global::app.type.item.variable.serializer.Entry().Write(
+                new global::app.type.item.kind.json.Writer(utf8, app.type.list), found.DistinctBy(v => v.Text).ToList(),
+                global::app.View.Store, app.actor.list.User.Context);
         return JsonNode.Parse(ms.ToArray())!.ToJsonString();
     }
 

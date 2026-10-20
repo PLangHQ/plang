@@ -11,7 +11,7 @@ public class QuotedOperandTests
         var ctx = app.actor.list.User.Context;
         var goal = global::app.goal.@this.Parse("Start\n- if \"= %oldHash%\" is \"= %hash%\", set %same% = true\n",
             global::app.type.item.path.@this.Resolve("/Start.goal", ctx), ctx)!;
-        var read = new global::app.goal.step.action.formal.Reader(goal.Step[0], ctx.App.module.list)
+        var read = await new global::app.goal.step.action.formal.Reader(goal.Step[0], ctx.App.module.list)
             .Read("condition.if(Left=\"= %oldHash%\", Operator=\"==\", Right=\"= %hash%\") { variable.set(Name=%same%, Value=true) }", ctx);
         await read.IsSuccess();
         goal.Step[0].Code = (global::app.goal.step.action.list.@this)read.Peek()!;

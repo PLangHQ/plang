@@ -25,7 +25,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>A sensitive value says what it is; the writer says how it shows — whole in plang's own store, masked
     /// elsewhere.</summary>
-    public override void Write(global::app.type.format.IWriter w) => w.Sensitive(Characters);
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
+        global::app.actor.context.@this? context) { w.Sensitive(Characters); return default; }
 
     public override string ToString() => Masked;
 

@@ -14,10 +14,6 @@ public sealed class template : @this
         : base(slice, type, reader, variable, built) { }
 
     // A template renders with the caller's context: there is no context-free write of it.
-    public override void Write(global::app.type.format.IWriter w)
-        => throw new System.InvalidOperationException(
-            "a template writes through Output(writer, mode, context) — rendering needs the caller's context.");
-
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)

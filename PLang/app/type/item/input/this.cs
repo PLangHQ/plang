@@ -43,11 +43,12 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     private protected abstract void Applied(ITarget target);
 
     /// <summary>Its members, then the stamp, inside the object the variant opens.</summary>
-    private protected void WriteStamp(global::app.type.format.IWriter writer)
+    private protected async System.Threading.Tasks.ValueTask WriteStamp(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
     {
         if (Stamp is not { } t) return;
         writer.Name("t");
-        t.Write(writer);
+        await writer.Kind.pair.Output(t, writer, mode, context);
     }
 
     /// <summary>An input passes; anything else declines — an input is made by what saw it happen (a screen), or read

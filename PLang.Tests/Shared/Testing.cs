@@ -42,10 +42,10 @@ public static class AppTesting
     /// <summary>The action <paramref name="formal"/> reads as (<c>file.read(Path="a.txt")</c>) — built as the
     /// builder builds one: the step notation's reader, over this app's modules, for a step of its own. Its
     /// <c>Start(context)</c> runs it as plang does. A line the reader refuses is the test's own mistake: thrown.</summary>
-    public static global::app.goal.step.action.@this Action(this global::app.actor.context.@this context, string formal)
+    public static async System.Threading.Tasks.Task<global::app.goal.step.action.@this> Action(this global::app.actor.context.@this context, string formal)
     {
         var step = new global::app.goal.step.@this(context.App.type.list) { Text = formal };
-        var read = new global::app.goal.step.action.formal.Reader(step, context.App.module.list).Read(formal, context);
+        var read = await new global::app.goal.step.action.formal.Reader(step, context.App.module.list).Read(formal, context);
         if (!read.Success) throw new System.InvalidOperationException($"'{formal}' does not read: {read.Error!.Message}");
         return ((global::app.goal.step.action.list.@this)read.Peek())[0];
     }

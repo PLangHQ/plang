@@ -47,7 +47,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return null;
     }
 
-    public override void Write(global::app.type.format.IWriter w) => w.String(Name);
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
+        global::app.actor.context.@this? context) { w.String(Name); return default; }
 
     public override string ToString() => Name;
 }

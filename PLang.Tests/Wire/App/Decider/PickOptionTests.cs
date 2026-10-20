@@ -22,12 +22,17 @@ public class PickOptionTests : System.IAsyncDisposable
     private static Dictionary<string, object?> Yes(double score) => new() { ["type"] = "noul", ["noul"] = score };
 
     // each offer as it writes itself into a formal line
-    private List<string> Formal(IReadOnlyList<global::app.type.item.@this> offers) => offers.Select(o =>
+    private async Task<List<string>> Formal(IReadOnlyList<global::app.type.item.@this> offers)
     {
-        var writer = new global::app.goal.step.action.formal.Writer(_app.type.list);
-        o.Write(writer);
-        return writer.ToString();
-    }).ToList();
+        var lines = new List<string>();
+        foreach (var o in offers)
+        {
+            var writer = new global::app.goal.step.action.formal.Writer(_app.type.list);
+            await writer.Kind.pair.Output(o, writer, global::app.View.Store, Ctx);
+            lines.Add(writer.ToString());
+        }
+        return lines;
+    }
 
     // what a type offers for a step: a closed set its options (each a choice); any other the step's own variables, each once
     [Test]
@@ -39,8 +44,8 @@ public class PickOptionTests : System.IAsyncDisposable
 
         var options = await template.Offers(step);
         await Assert.That(options.All(o => o is global::app.type.item.choice.IChoice)).IsTrue();
-        await Assert.That(Formal(options)).Contains("\"plang\"");
-        await Assert.That(Formal(await item.Offers(step))).IsEquivalentTo(new[] { "%person%", "%value%", "%field%" });
+        await Assert.That(await Formal(options)).Contains("\"plang\"");
+        await Assert.That(await Formal(await item.Offers(step))).IsEquivalentTo(new[] { "%person%", "%value%", "%field%" });
     }
 
     // a goal is offered what any open type is — the step's variables; never the goals it could call, which goal.call
@@ -53,7 +58,7 @@ public class PickOptionTests : System.IAsyncDisposable
 
         var offers = await _app.Module("goal")["call"]!["Name"]!.Type.Offers(goal.Step[0]);
 
-        await Assert.That(Formal(offers)).IsEquivalentTo(new[] { "%m%" });
+        await Assert.That(await Formal(offers)).IsEquivalentTo(new[] { "%m%" });
     }
 
     // a conversation is offered only what can continue one: a variable the build's walk knows as a list is left out (no
@@ -75,8 +80,8 @@ public class PickOptionTests : System.IAsyncDisposable
         await answered.Step.Scope(Ctx);
 
         // the step's own write-to is all that's left, and the pick never offers where the answer goes: only none
-        await Assert.That(Formal(await conversation.Offers(listed.Step[1]))).IsEquivalentTo(new[] { "%answer%" });
-        await Assert.That(Formal(await conversation.Offers(answered.Step[1]))).IsEquivalentTo(new[] { "%a%" });
+        await Assert.That(await Formal(await conversation.Offers(listed.Step[1]))).IsEquivalentTo(new[] { "%answer%" });
+        await Assert.That(await Formal(await conversation.Offers(answered.Step[1]))).IsEquivalentTo(new[] { "%a%" });
 
         // a dict can be a conversation (its members), so one set from a dict is offered
         var dicted = Make.Goal(Ctx, "Dict", "/Dict.goal",
@@ -84,7 +89,7 @@ public class PickOptionTests : System.IAsyncDisposable
                 ("Value", new Dictionary<string, object?> { ["mood"] = "calm" }))),
             Make.Step("ask llm \"go on\", conversation %c%", 0));
         await dicted.Step.Scope(Ctx);
-        await Assert.That(Formal(await conversation.Offers(dicted.Step[1]))).IsEquivalentTo(new[] { "%c%" });
+        await Assert.That(await Formal(await conversation.Offers(dicted.Step[1]))).IsEquivalentTo(new[] { "%c%" });
     }
 
     // a bool is a closed pair: offered true and false, never the step's variable; a formal true still reads
@@ -93,8 +98,8 @@ public class PickOptionTests : System.IAsyncDisposable
     {
         var step = Step("set default %flag% = true");
 
-        var offers = Formal(await _app.Module("variable")["set"]!["Default"]!.Type.Offers(step));
-        var read = new global::app.goal.step.action.formal.Reader(step, _app.module.list)
+        var offers = await Formal(await _app.Module("variable")["set"]!["Default"]!.Type.Offers(step));
+        var read = await new global::app.goal.step.action.formal.Reader(step, _app.module.list)
             .Read("variable.set(Name=%flag%, Value=true, Default=true)", Ctx);
 
         await Assert.That(offers).IsEquivalentTo(new[] { "true", "false" });
@@ -105,7 +110,7 @@ public class PickOptionTests : System.IAsyncDisposable
     [Test]
     public async Task ATypeOffersThePlangTypeNames()
     {
-        var offers = Formal(await _app.Module("variable")["set"]!["Type"]!.Type.Offers(Step("set %p% = \"a.txt\" as path")));
+        var offers = await Formal(await _app.Module("variable")["set"]!["Type"]!.Type.Offers(Step("set %p% = \"a.txt\" as path")));
 
         await Assert.That(offers).Contains("\"path\"");
         await Assert.That(offers).Contains("\"text\"");
@@ -122,7 +127,7 @@ public class PickOptionTests : System.IAsyncDisposable
             ("s0_@option.variable.set.Type", Choice("path"))), [], Ctx);
 
         await Assert.That(set.Pick.Formal!).Contains("Type=\"path\"");
-        var read = new global::app.goal.step.action.formal.Reader(set, _app.module.list)
+        var read = await new global::app.goal.step.action.formal.Reader(set, _app.module.list)
             .Read(set.Pick.Formal!.Replace("Name, Value", "Name=%p%, Value=\"a.txt\""), Ctx);
         await read.IsSuccess();
     }
@@ -150,9 +155,9 @@ public class PickOptionTests : System.IAsyncDisposable
             var step = Step(text);
             await step.Pick.Take(Answer(actions.Select(a => ($"s0_{a}", (object)Yes(0.99))).ToArray()), [], Ctx);
             await step.Pick.Take(Answer(options), [], Ctx);
-            var read = new global::app.goal.step.action.formal.Reader(step, _app.module.list).Read(formal, Ctx);
+            var read = await new global::app.goal.step.action.formal.Reader(step, _app.module.list).Read(formal, Ctx);
             await read.IsSuccess();
-            return step.Pick.Agree((global::app.goal.step.action.list.@this)read.Peek()!).Refused;
+            return (await step.Pick.Agree((global::app.goal.step.action.list.@this)read.Peek()!, Ctx)).Refused;
         }
         const string retry = "read 'x.txt', on error retry 2 times, then call Rollback";
         string[] readAndRetry = ["file.read", "on.error"];
@@ -189,9 +194,9 @@ public class PickOptionTests : System.IAsyncDisposable
         await step.Pick.Take(Answer(("s0_goal.call", Yes(0.93)), ("s0_file.read", Yes(0.81))), [], Ctx);
         var reader = new global::app.goal.step.action.formal.Reader(step, _app.module.list);
 
-        var named = reader.Read("""goal.call(Name="Show", Path="x.txt")""", Ctx);
-        var plain = reader.Read("""goal.call(Name="Show", Window="w")""", Ctx);
-        var retried = reader.Read("""file.read(Path="x.txt"); goal.call(Name="Show")""", Ctx);
+        var named = await reader.Read("""goal.call(Name="Show", Path="x.txt")""", Ctx);
+        var plain = await reader.Read("""goal.call(Name="Show", Window="w")""", Ctx);
+        var retried = await reader.Read("""file.read(Path="x.txt"); goal.call(Name="Show")""", Ctx);
 
         await named.IsFailure();
         await Assert.That(named.Error!.Message).Contains("`goal.call` has no property `Path`");
@@ -220,18 +225,18 @@ public class PickOptionTests : System.IAsyncDisposable
 
         // an answer for the capture's Type, had one come back, holds nothing: the Type-less capture is agreed
         await capture.Pick.Take(Answer(("s0_@option.variable.set.Type", Choice("number"))), [], Ctx);
-        var read = new global::app.goal.step.action.formal.Reader(capture, _app.module.list)
+        var read = await new global::app.goal.step.action.formal.Reader(capture, _app.module.list)
             .Read("""math.random(Min=1, Max=100); variable.set(Name=%rand%, Value=%!data%)""", Ctx);
         await read.IsSuccess();
-        var refused = capture.Pick.Agree((global::app.goal.step.action.list.@this)read.Peek()!).Refused;
+        var refused = (await capture.Pick.Agree((global::app.goal.step.action.list.@this)read.Peek()!, Ctx)).Refused;
         await Assert.That(refused.Any(r => r.Contains("Type"))).IsFalse();
 
         // a set's own Type, answered, is held: left out, it is refused
         await set.Pick.Take(Answer(("s0_@option.variable.set.Type", Choice("number"))), [], Ctx);
-        var typeless = new global::app.goal.step.action.formal.Reader(set, _app.module.list)
+        var typeless = await new global::app.goal.step.action.formal.Reader(set, _app.module.list)
             .Read("""variable.set(Name=%x%, Value="5")""", Ctx);
         await typeless.IsSuccess();
-        var held = set.Pick.Agree((global::app.goal.step.action.list.@this)typeless.Peek()!).Refused;
+        var held = (await set.Pick.Agree((global::app.goal.step.action.list.@this)typeless.Peek()!, Ctx)).Refused;
         await Assert.That(held.Any(r => r.Contains("leaves out Type"))).IsTrue();
     }
 
@@ -276,10 +281,10 @@ public class PickOptionTests : System.IAsyncDisposable
         await Assert.That(one.Single()).IsSameReferenceAs(global::app.type.item.given.@this.Instance);
         await Assert.That(many.Single()).IsSameReferenceAs(global::app.type.item.given.@this.Instance);
         var line = new global::app.goal.step.action.formal.Writer(_app.type.list);
-        line.Option("Permission", one.Single());
+        await line.Option("Permission", one.Single(), ctx);
         await Assert.That(line.ToString()).IsEqualTo("Permission");
         var valued = new global::app.goal.step.action.formal.Writer(_app.type.list);
-        valued.Option("Template", (await _app.Module("file")["read"]!["Template"]!.Type.Offers(step)).First());
+        await valued.Option("Template", (await _app.Module("file")["read"]!["Template"]!.Type.Offers(step)).First(), ctx);
         await Assert.That(valued.ToString()).StartsWith("Template=\"");
     }
 

@@ -95,10 +95,11 @@ public sealed class Writer : IWriter
 
     /// <summary>An option as a starting line writes it: <c>Template="plang"</c>, or its bare name — a slot still to
     /// fill — when its value writes nothing (<c>Permission</c>: the step gives it, the writer fills it).</summary>
-    public void Option(string name, global::app.type.item.@this value)
+    public async System.Threading.Tasks.ValueTask Option(string name, global::app.type.item.@this value,
+        global::app.actor.context.@this? context)
     {
         var written = new Writer(Kind);
-        value.Write(written);
+        await Kind.pair.Output(value, written, global::app.View.Store, context);
         Element();
         _out.Append(name);
         if (written._out.Length > 0) _out.Append('=').Append(written._out);
@@ -175,8 +176,6 @@ public sealed class Writer : IWriter
             case decimal m: Decimal(m); return;
             case string s: String(s); return;
             case byte[] bytes: Bytes(bytes); return;
-            case global::app.data.@this nested: Value(nested.Peek()); return;
-            case global::app.type.item.@this v: v.Write(this); return;
             default:
                 throw new global::app.data.NormalizeException(
                     $"formal.Writer received a value of type {normalized.GetType().FullName} that has no formal form.",

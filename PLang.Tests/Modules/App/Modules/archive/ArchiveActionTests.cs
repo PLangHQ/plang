@@ -98,10 +98,10 @@ public class ArchiveActionTests : IDisposable
                 app.type.list.Stamp("text/plain", ctx), context: ctx));
 
             // as a step runs them: the value read from %original%, the archive kept in %archived% and read from there
-            var packed = await ctx.Action("archive.pack(Value=%original%)").Start(ctx);
+            var packed = await (await ctx.Action("archive.pack(Value=%original%)")).Start(ctx);
             await packed.IsSuccess();
             await ctx.Variable.Set("archived", packed);
-            var restored = await ctx.Action("archive.unpack(Value=%archived%)").Start(ctx);
+            var restored = await (await ctx.Action("archive.unpack(Value=%archived%)")).Start(ctx);
 
             await restored.IsSuccess();
             await Assert.That((await restored.Value())?.ToString()).IsEqualTo("The quick brown fox jumps over the lazy dog.");

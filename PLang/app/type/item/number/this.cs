@@ -50,7 +50,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The exact boxed CLR numeric value (int, uint, BigInteger, Half, decimal, …).</summary>
     public object BoxedValue => _value;
     public override bool IsLeaf => true;
-    public override void Write(global::app.type.format.IWriter w) => Type.kind.Write(this, w);
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
+        global::app.actor.context.@this? context) { Type.kind.Write(this, w); return default; }
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
 

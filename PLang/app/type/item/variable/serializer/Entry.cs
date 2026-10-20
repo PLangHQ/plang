@@ -9,7 +9,8 @@ namespace app.type.item.variable.serializer;
 /// </summary>
 public sealed class Entry
 {
-    public void Write(global::app.type.format.IWriter writer, IReadOnlyList<variable.@this> variables)
+    public async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer, IReadOnlyList<variable.@this> variables,
+        global::app.View mode, global::app.actor.context.@this? context)
     {
         writer.BeginArray(variables.Count);
         foreach (var v in variables)
@@ -18,7 +19,7 @@ public sealed class Entry
             writer.Name("text");
             writer.String(v.Text);
             writer.Name("code");
-            v.Code.Write(writer);
+            await writer.Kind.pair.Output(v.Code, writer, mode, context);
             writer.EndObject();
         }
         writer.EndArray();

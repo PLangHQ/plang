@@ -55,16 +55,13 @@ public sealed class @this : global::app.type.item.@this
             : await base.Get(parent, key);
 
     /// <summary>The line's form: its code.</summary>
-    public override void Write(global::app.type.format.IWriter writer) => writer.Int(Code);
-
-    /// <summary>Shown, it is the whole list, by name.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+    /// <summary>Shown, it is the whole list, by name. (An input's line carries its <see cref="Code"/>.)</summary>
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
         writer.BeginArray(_held.Length);
-        foreach (var modifier in _held) modifier.Write(writer);
+        foreach (var modifier in _held) await writer.Kind.pair.Output(modifier, writer, mode, context);
         writer.EndArray();
-        return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
     public override string ToString() => string.Join(",", _held.Select(m => m.ToString()));

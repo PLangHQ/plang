@@ -16,5 +16,6 @@ public sealed class Money : global::app.type.item.@this
 
     public Money(decimal amount, string currency) { Amount = amount; Currency = currency; }
 
-    public override void Write(global::app.type.format.IWriter writer) => writer.String($"{Currency} {Amount}");
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context) { writer.String($"{Currency} {Amount}"); return default; }
 }

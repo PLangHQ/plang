@@ -19,7 +19,8 @@ public abstract class @this : global::app.type.item.@this, System.IDisposable
     /// <summary>A store is written as what it is, its kind — never its tables.</summary>
     public override bool IsLeaf => true;
 
-    public override void Write(global::app.type.format.IWriter writer) => writer.String(Kind);
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context) { writer.String(Kind); return default; }
 
     public override string ToString() => Kind;
 

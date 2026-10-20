@@ -25,8 +25,5 @@ public sealed class @this : query.@this
 
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
-    {
-        _on.Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
+        => writer.Kind.pair.Output(_on, writer, mode, context);
 }

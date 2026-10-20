@@ -128,14 +128,6 @@ public abstract class @this : global::app.type.item.@this
     /// text, any other as its bytes — the format says which. An unsampled reference renders its location:
     /// writing it out is not consent to read it.
     /// </summary>
-    public override void Write(global::app.type.format.IWriter writer)
-    {
-        if (!IsLoaded) { writer.String(ToString()); return; }
-        // content already in the writer's own format (json into json) is a token of it, relayed verbatim
-        if (_format != null && _format.Owns(writer)) writer.Raw(Bytes);
-        else if (_format is { IsText: true }) writer.String(ContentText());
-        else writer.Bytes(Bytes);
-    }
 
     /// <summary>Opened to be written out: the content is sampled through the location's gate, so its write is
     /// the content, not the location.</summary>
@@ -149,7 +141,12 @@ public abstract class @this : global::app.type.item.@this
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        if (!IsLoaded) { writer.String(ToString()); return default; }
+        // content already in the writer's own format (json into json) is a token of it, relayed verbatim — until the
+        // identity pair relays a value's written form
+        if (_format != null && _format.Owns(writer)) writer.Raw(Bytes);
+        else if (_format is { IsText: true }) writer.String(ContentText());
+        else writer.Bytes(Bytes);
+        return default;
     }
 }

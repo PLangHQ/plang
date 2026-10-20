@@ -88,8 +88,9 @@ public class StrictValidateBuildTests
     {
         var ctx = _app.actor.list.User.Context;
         var step = new global::app.goal.step.@this(_app.type.list) { Text = "set n strict" };
-        var line = (global::app.goal.step.action.list.@this)new global::app.goal.step.action.formal.Reader(step, _app.module.list)
-            .Read($"variable.set(Name=%n%, Value={value}, Type={type})", ctx).Peek()!;
+        var read = await new global::app.goal.step.action.formal.Reader(step, _app.module.list)
+            .Read($"variable.set(Name=%n%, Value={value}, Type={type})", ctx);
+        var line = (global::app.goal.step.action.list.@this)read.Peek()!;
 
         var invalid = await line.Validate(ctx);
 

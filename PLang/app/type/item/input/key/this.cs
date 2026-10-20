@@ -48,24 +48,20 @@ public sealed class @this : input.@this
 
     private protected override void Applied(ITarget target) => target.Key(this);
 
-    public override void Write(global::app.type.format.IWriter writer)
-    {
-        writer.BeginObject();
-        writer.Name("key"); writer.String(Down.Value ? "down" : "up");
-        writer.Name("sc"); Scancode.Write(writer);
-        writer.Name("ext"); Extended.Write(writer);
-        writer.Name("vk"); Vk.Write(writer);
-        writer.Name("name");
-        if (Name is { } name) name.Write(writer); else writer.Null();
-        writer.Name("mods"); Modifier.Write(writer);
-        WriteStamp(writer);
-        writer.EndObject();
-    }
-
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        var pair = writer.Kind.pair;
+        writer.BeginObject();
+        writer.Name("key"); writer.String(Down.Value ? "down" : "up");
+        writer.Name("sc"); await pair.Output(Scancode, writer, mode, context);
+        writer.Name("ext"); await pair.Output(Extended, writer, mode, context);
+        writer.Name("vk"); await pair.Output(Vk, writer, mode, context);
+        writer.Name("name");
+        if (Name is { } name) await pair.Output(name, writer, mode, context); else writer.Null();
+        // the line carries the modifiers held as their code
+        writer.Name("mods"); writer.Int(Modifier.Code);
+        await WriteStamp(writer, mode, context);
+        writer.EndObject();
     }
 }

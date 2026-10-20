@@ -127,7 +127,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             // a step written in formal is its own line: read as written, whatever the answer says
             string? line = step.IsFormal ? step.Text : null;
             if (line == null && !lines.TryGetValue(i, out line)) { Refuse(i, $"step {i} (\"{step.Text}\") has no entry"); continue; }
-            var formal = new global::app.goal.step.action.formal.Reader(step, modules).Read(line, context);
+            var formal = await new global::app.goal.step.action.formal.Reader(step, modules).Read(line, context);
             if (!formal.Success && step.IsFormal)
             {
                 Refuse(i, $"step {i} is written in formal and does not read: {formal.Error!.FixSuggestion ?? formal.Error.Message}");
@@ -206,7 +206,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 foreach (var cause in failed.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
             // a step written in formal was asked of no decider: there are no picks to agree with
             var (disagree, warnings) = step.IsFormal
-                ? (new List<string>(), new List<global::app.warning.@this>()) : step.Pick.Agree(actions);
+                ? (new List<string>(), new List<global::app.warning.@this>()) : await step.Pick.Agree(actions, context);
             foreach (var why in disagree) Refuse(i, why);
             foreach (var declined in await step.Scope(scratch)) Refuse(i, $"step {i} (\"{step.Text}\") — {declined.Message}");
             if (refused.ContainsKey(i) || asked) step.Code = new global::app.goal.step.action.list.@this(step.Code.Type);   // open again

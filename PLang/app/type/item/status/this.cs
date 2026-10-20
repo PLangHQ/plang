@@ -88,24 +88,18 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Writes itself as its code when its text is the code's standard reason (it says nothing more —
     /// <c>404</c>), else as its dict (<c>{code, text}</c>, a server's own reason).</summary>
-    public override void Write(global::app.type.format.IWriter writer)
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
     {
         if (Text.ToString() == Microsoft.AspNetCore.WebUtilities.ReasonPhrases.GetReasonPhrase(Code.ToInt32()))
         {
-            Code.Write(writer);
+            await writer.Kind.pair.Output(Code, writer, mode, context);
             return;
         }
         writer.BeginObject();
-        writer.Name("code"); Code.Write(writer);
-        writer.Name("text"); Text.Write(writer);
+        writer.Name("code"); await writer.Kind.pair.Output(Code, writer, mode, context);
+        writer.Name("text"); await writer.Kind.pair.Output(Text, writer, mode, context);
         writer.EndObject();
-    }
-
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
     public override bool Equals(object? obj) => obj is @this other && Code.Equals(other.Code);

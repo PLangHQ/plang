@@ -28,7 +28,8 @@ public sealed class @this : global::app.type.item.text.@this, global::app.type.i
     public string Characters => ToString();
 
     /// <summary>A named separator writes its name (<c>line</c>), any other its characters — read back the same.</summary>
-    public override void Write(global::app.type.format.IWriter w) => w.String(_name ?? ToString());
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
+        global::app.actor.context.@this? context) { w.String(_name ?? ToString()); return default; }
 
     /// <summary>What a separator can be in a step, as the decider is offered it: the named separators. Any
     /// characters are allowed too, so the set is open (the formal reader never refuses a literal against it). A

@@ -50,31 +50,27 @@ public sealed class @this : input.@this
 
     private protected override void Applied(ITarget target) => target.Mouse(this);
 
-    public override void Write(global::app.type.format.IWriter writer)
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
     {
+        var pair = writer.Kind.pair;
         writer.BeginObject();
-        writer.Name("mouse"); Action.Write(writer);
-        writer.Name("x"); X.Write(writer);
-        writer.Name("y"); Y.Write(writer);
+        writer.Name("mouse"); await pair.Output(Action, writer, mode, context);
+        writer.Name("x"); await pair.Output(X, writer, mode, context);
+        writer.Name("y"); await pair.Output(Y, writer, mode, context);
         if (Action.Value == global::app.type.item.input.mouse.Gesture.wheel)
         {
-            writer.Name("dx"); Dx.Write(writer);
-            writer.Name("dy"); Dy.Write(writer);
+            writer.Name("dx"); await pair.Output(Dx, writer, mode, context);
+            writer.Name("dy"); await pair.Output(Dy, writer, mode, context);
         }
         else
         {
-            writer.Name("button"); Button.Write(writer);
-            writer.Name("clicks"); Clicks.Write(writer);
+            writer.Name("button"); await pair.Output(Button, writer, mode, context);
+            writer.Name("clicks"); await pair.Output(Clicks, writer, mode, context);
         }
-        writer.Name("mods"); Modifier.Write(writer);
-        WriteStamp(writer);
+        // the line carries the modifiers held as their code
+        writer.Name("mods"); writer.Int(Modifier.Code);
+        await WriteStamp(writer, mode, context);
         writer.EndObject();
-    }
-
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 }

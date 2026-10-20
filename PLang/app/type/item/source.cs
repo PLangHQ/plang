@@ -349,41 +349,12 @@ public class source : @this
     public override bool IsLeaf => true;
 
     /// <summary>
-    /// A content source's raw is ALWAYS its own content — a <c>string</c> (text, a template's
-    /// authored <c>%ref%</c>, a path, a scalar's text) or a <c>byte[]</c> blob; never a
-    /// structured value (a dict/list is held native, a still-encoded slice is a
-    /// <see cref="wire.@this"/>). So the content writes itself directly: into a writer of its declared
-    /// kind's own format (json content into json) verbatim, otherwise bytes as bytes and a string
-    /// quoted. No materialize-on-write — there is nothing structured here to render, and a
-    /// mime-named type (<c>text/plain</c>, <c>binary</c>) has no (type, kind) reader to parse
-    /// through. (A <see cref="wire.@this"/> overrides this to write its slice verbatim.)
-    /// </summary>
-    public override void Write(global::app.type.format.IWriter w)
-    {
-        // Content whose declared kind is the writer's own format is already a token of it — relayed
-        // verbatim, whether held as its text or its bytes (the writer validates it).
-        if (Type.kind.Owns(w))
-        {
-            if (_value is byte[] token) w.Raw(token);
-            else w.Raw(_value.ToString() ?? "");
-            return;
-        }
-        if (_value is byte[] b) { w.Bytes(b); return; }
-        // A whole %ref% in a slot not typed text is the variable itself (`Value: item = %!data%`); inside a
-        // text it stays the text it is (`"Total: %x%"`).
-        if (Type.Template != null && IsVariable && !Type.Is("text"))
-        {
-            _variable[0].Write(w);
-            return;
-        }
-        w.String(_value.ToString() ?? "");
-    }
-
-    /// <summary>
     /// A template source renders when it is written out, as a template text does: a whole
     /// <c>%ref%</c> writes the bound value itself, a partial template writes its rendered text. A
     /// plain source, and every source in the Store view (a <c>.pr</c> keeps the authored <c>%ref%</c>),
-    /// relays its raw form verbatim.
+    /// writes its raw content directly — a <c>string</c> or a <c>byte[]</c>, never a structured value: into a
+    /// writer of its declared kind's own format (json content into json) verbatim, otherwise bytes as bytes and a
+    /// string quoted. No materialize-on-write. (A <see cref="wire.@this"/> writes its slice its own way.)
     /// </summary>
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
@@ -391,7 +362,24 @@ public class source : @this
     {
         if (Type.Template == null || mode == global::app.View.Store || context?.Variable == null || _value is not string template)
         {
-            Write(writer);
+            // Content whose declared kind is the writer's own format is already a token of it — relayed
+            // verbatim, whether held as its text or its bytes (the writer validates it) — until the identity pair
+            // relays a value's written form.
+            if (Type.kind.Owns(writer))
+            {
+                if (_value is byte[] token) writer.Raw(token);
+                else writer.Raw(_value.ToString() ?? "");
+                return;
+            }
+            if (_value is byte[] b) { writer.Bytes(b); return; }
+            // A whole %ref% in a slot not typed text is the variable itself (`Value: item = %!data%`); inside a
+            // text it stays the text it is (`"Total: %x%"`).
+            if (Type.Template != null && IsVariable && !Type.Is("text"))
+            {
+                await writer.Kind.pair.Output(_variable[0], writer, mode, context);
+                return;
+            }
+            writer.String(_value.ToString() ?? "");
             return;
         }
         if (IsVariable)

@@ -53,7 +53,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public string Text => _kind.Text(Value);
 
     /// <summary>A size writes its text in its own kind: <c>100 MB</c> stays <c>100 MB</c>.</summary>
-    public override void Write(global::app.type.format.IWriter w) => w.Content(Text, _kind);
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter w, global::app.View mode,
+        global::app.actor.context.@this? context) { w.Content(Text, _kind); return default; }
 
     /// <summary>THE PURE CORE — a <c>size</c> passes through; a whole number is a count of bytes; a string reads in the
     /// standard its suffix names (<see cref="Resolve"/>); anything else declines (<c>null</c>).</summary>

@@ -31,11 +31,12 @@ public sealed partial class @this : global::app.type.item.@this
     public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
+        var pair = writer.Kind.pair;
         writer.BeginObject();
-        if (Current is { } current) { writer.Name("current"); await current.Output(writer, mode, context); }
-        if (Scope is { } scope) { writer.Name("scope"); await scope.Output(writer, mode, context); }
+        if (Current is { } current) { writer.Name("current"); await pair.Output(current, writer, mode, context); }
+        if (Scope is { } scope) { writer.Name("scope"); await pair.Output(scope, writer, mode, context); }
         writer.Name("audit");
-        Audit.Write(writer);
+        await pair.Output(Audit, writer, mode, context);
         writer.EndObject();
     }
 

@@ -96,13 +96,21 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     public override string ToString() => Path.ToString();
 
-    /// <summary>A directory writes its own form (<see cref="Write"/>) in every view; it never lists while it
-    /// writes.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+    /// <summary>A directory writes itself, in every view, as a flat listing of its children's locations — never their
+    /// contents; an unlisted directory writes its location. It never lists while it writes.</summary>
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        var listed = Listed;
+        if (listed == null) { writer.String(ToString()); return; }
+        writer.BeginArray(listed.CountRaw);
+        foreach (var slot in listed.Slots())
+        {
+            var entry = slot is global::app.data.@this d ? d.Peek() : slot;
+            if (entry is global::app.type.item.path.@this p) await writer.Kind.pair.Output(p, writer, mode, context);
+            else writer.String(entry?.ToString() ?? "");
+        }
+        writer.EndArray();
     }
 
     /// <summary>Opened to be written out: the directory lists its children (as the writer, past the path's auth
@@ -113,22 +121,4 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return listed.Success ? null : listed.Error;
     }
 
-    /// <summary>
-    /// The directory renders itself as a FLAT LISTING of its children's
-    /// locations, never their contents. An unlisted directory renders its
-    /// location (the reference face).
-    /// </summary>
-    public override void Write(global::app.type.format.IWriter writer)
-    {
-        var listed = Listed;
-        if (listed == null) { writer.String(ToString()); return; }
-        writer.BeginArray(listed.CountRaw);
-        foreach (var slot in listed.Slots())
-        {
-            var entry = slot is global::app.data.@this d ? d.Peek() : slot;
-            if (entry is global::app.type.item.path.@this p) p.Write(writer);
-            else writer.String(entry?.ToString() ?? "");
-        }
-        writer.EndArray();
-    }
 }

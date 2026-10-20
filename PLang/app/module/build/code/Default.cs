@@ -279,7 +279,7 @@ public class Default : IBuilder
                     return new global::app.error.ValidationError(
                         $"step {step.Index}: {act.Module!.Name}.{act.Name} answers a new value and changes nothing — give it a destination (`…, write to %result%`); a literal or %!system% input has no name to write the answer back to.",
                         "NoWriteBackTarget");
-                var read = new global::app.goal.step.action.formal.Reader(step, modules)
+                var read = await new global::app.goal.step.action.formal.Reader(step, modules)
                     .Read($"variable.set(Name={target.Text}, Value=%!data%)", context);
                 if (!read.Success) return read.Error;
                 // right after the action, not at the step's end: a later output/write in the step would otherwise

@@ -134,7 +134,7 @@ public partial class @this
             if (mode == View.Store && _item.HasVariable)
             {
                 writer.Name("variable");
-                new global::app.type.item.variable.serializer.Entry().Write(writer, _item.Variable);
+                await new global::app.type.item.variable.serializer.Entry().Write(writer, _item.Variable, mode, context);
             }
 
             // properties — nested object, omitted when empty.

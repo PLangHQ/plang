@@ -124,14 +124,14 @@ public class IWriterContractTests : System.IAsyncDisposable
         await Assert.That(Flush(jw, ms)).IsEqualTo("[1,2,3]");
     }
 
-    [Test] public async Task JsonWriter_BeginRecord_EndRecord_EmitDataRecordShape()
+    // A Data's record is its own: it writes itself, on plang's writer, the name only in the Store view.
+    [Test] public async Task JsonWriter_DataRecord_WritesItsShape()
     {
+        var context = app.actor.list.User.Context;
         var (jw, ms) = MakeWriter();
-        var w = new global::app.type.item.kind.json.Writer(jw, app.type.list);
-        var record = new global::app.data.@this("hello", "world", context: app.actor.list.User.Context);
-        w.BeginRecord(record);
-        w.String("world");
-        w.EndRecord(record);
+        var w = new global::app.type.item.kind.json.Writer(jw, app.type.list, emitsSchema: true);
+        var record = new global::app.data.@this("hello", "world", context: context);
+        await record.Output(w, global::app.View.Out, context);
         var s = Flush(jw, ms);
         // the binding label rides only on the Store view; Out omits it. (Check the ROOT
         // for a `name` binding — the structured `type:{name,…}` sub-object legitimately
@@ -141,24 +141,21 @@ public class IWriterContractTests : System.IAsyncDisposable
         await Assert.That(s).Contains("\"value\":\"world\"");
 
         var (jw2, ms2) = MakeWriter();
-        var w2 = new global::app.type.item.kind.json.Writer(jw2, app.type.list, view: global::app.View.Store);
-        w2.BeginRecord(record);
-        w2.String("world");
-        w2.EndRecord(record);
+        var w2 = new global::app.type.item.kind.json.Writer(jw2, app.type.list, view: global::app.View.Store, emitsSchema: true);
+        await record.Output(w2, global::app.View.Store, context);
         await Assert.That(Flush(jw2, ms2)).Contains("\"name\":\"hello\"");
     }
 
-    [Test] public async Task JsonWriter_NestedArrayInsideRecord_RoundTrips()
+    [Test] public async Task JsonWriter_ListInsideRecord_WritesItsArray()
     {
+        var context = app.actor.list.User.Context;
         var (jw, ms) = MakeWriter();
-        var w = new global::app.type.item.kind.json.Writer(jw, app.type.list);
-        var record = new global::app.data.@this("nums", new List<int> { 1, 2 }, context: app.actor.list.User.Context);
-        w.BeginRecord(record);
-        w.BeginArray(2);
-        w.Int(1); w.Int(2);
-        w.EndArray();
-        w.EndRecord(record);
-        var s = Flush(jw, ms);
-        await Assert.That(s).Contains("\"value\":[1,2]");
+        var w = new global::app.type.item.kind.json.Writer(jw, app.type.list, emitsSchema: true);
+        var record = new global::app.data.@this("nums", new List<int> { 1, 2 }, context: context);
+        await record.Output(w, global::app.View.Out, context);
+        // each element writes itself as plang does: its type and its value
+        using var d = System.Text.Json.JsonDocument.Parse(Flush(jw, ms));
+        var items = d.RootElement.GetProperty("value").EnumerateArray().Select(e => e.GetProperty("value").GetInt32()).ToList();
+        await Assert.That(items).IsEquivalentTo(new List<int> { 1, 2 });
     }
 }

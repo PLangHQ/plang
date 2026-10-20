@@ -254,7 +254,7 @@ public class PickListTests
             context.Variable.Set(new global::app.data.@this("goal", goal, context: context));
             context.Variable.Set(new global::app.data.@this("answer", Answer(entry.GetProperty("answer1"), context), context: context));
             context.Variable.Set(new global::app.data.@this("popular", Popular(), context: context));
-            await (await context.Action("build.pick(Goal=%goal%, Answer=%answer%, Popular=%popular%)").Start(context)).IsSuccess();
+            await (await (await context.Action("build.pick(Goal=%goal%, Answer=%answer%, Popular=%popular%)")).Start(context)).IsSuccess();
             var question = await Rendered("decider2.template", (await context.Variable.Get("goal")).Peek() as global::app.goal.@this ?? goal, context);
             differ.AddRange(Differ(entry.GetProperty("goal").GetString()!, question, entry.GetProperty("question2")));
         }

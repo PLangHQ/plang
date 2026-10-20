@@ -43,10 +43,12 @@ public sealed class @this : global::app.type.item.@this
             : await base.Get(parent, key);
 
     /// <summary>A key writes the first key's name; a dict with none writes null.</summary>
-    public override void Write(global::app.type.format.IWriter writer)
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
     {
         if (First is { } name) writer.String(name);
         else writer.Null();
+        return default;
     }
 
     public override string ToString() => First ?? "";

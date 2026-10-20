@@ -68,8 +68,5 @@ public sealed class @this : global::app.type.item.@this
         global::app.View mode, global::app.actor.context.@this? context)
         => writer.String(context == null ? "" : await Text(context));
 
-    /// <summary>Written without an asker, it has nothing read yet: it is written through <see cref="Output"/>.</summary>
-    public override void Write(global::app.type.format.IWriter w) => w.String("");
-
     public override bool IsTruthy() => _pieces.Count > 0;
 }

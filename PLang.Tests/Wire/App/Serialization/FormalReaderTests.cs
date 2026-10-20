@@ -9,7 +9,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     private readonly global::app.@this app = new global::app.@this("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private global::app.data.@this Read(string formal, out global::app.goal.step.@this step)
+    private Task<global::app.data.@this> Read(string formal, out global::app.goal.step.@this step)
     {
         var goal = FormalWriterTests.Goal(app.actor.list.User.Context);
         step = new global::app.goal.step.@this(app.type.list) { Goal = goal };
@@ -30,7 +30,7 @@ public class FormalReaderTests : System.IAsyncDisposable
         {
             var input = entry.GetProperty(key).GetString()!;
             var expected = entry.GetProperty("formal").GetString();
-            var read = Read(input, out _);
+            var read = await Read(input, out _);
             var at = $"{entry.GetProperty("goal").GetString()}[{entry.GetProperty("index").GetInt32()}]";
             if (!read.Success) { differ.Add($"{at} does not parse: {read.Error!.Message}\n  {input}"); continue; }
             var written = await Written(read);
@@ -49,11 +49,11 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AnActionSlot_GivenAName_IsRefused()
     {
-        var read = Read("channel.set(Name=\"builder\", Goal=\"BuilderChannel\")", out _);
+        var read = await Read("channel.set(Name=\"builder\", Goal=\"BuilderChannel\")", out _);
 
         await read.IsFailure();
         await Assert.That(read.Error!.Message).Contains("`Goal` takes an action");
-        await Read("channel.set(Name=\"builder\", Goal=goal.call(Name=\"BuilderChannel\"))", out _).IsSuccess();
+        await (await Read("channel.set(Name=\"builder\", Goal=goal.call(Name=\"BuilderChannel\"))", out _)).IsSuccess();
     }
 
     // An http header's name holds a hyphen: a dict's key written bare may hold one (the educator's `X-Probe: "x"`),
@@ -61,18 +61,18 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task ADictKeyWrittenBare_MayHoldAHyphen_AndWritesBackQuoted()
     {
-        var read = Read("http.request(Url=\"https://httpbin.org/anything\", Header={X-Probe: \"x\", Authorization: \"Bearer 1\"})", out _);
+        var read = await Read("http.request(Url=\"https://httpbin.org/anything\", Header={X-Probe: \"x\", Authorization: \"Bearer 1\"})", out _);
 
         await read.IsSuccess();
         var written = await Written(read);
         await Assert.That(written).Contains("\"X-Probe\": \"x\"");
-        await Assert.That(await Written(Read(written, out _))).IsEqualTo(written);
+        await Assert.That(await Written(await Read(written, out _))).IsEqualTo(written);
     }
 
     [Test]
     public async Task Clauses_AreTheActionsSiblings_InTheOrderWritten_AndWriteBackSo()
     {
-        var read = Read("file.read(Path=\"a.txt\"); on.timeout(After=\"00:00:00.1000000\"); on.error(Recovery=[goal.call(Name=\"Fix\")]); on.cache(Duration=\"00:05:00\")", out _);
+        var read = await Read("file.read(Path=\"a.txt\"); on.timeout(After=\"00:00:00.1000000\"); on.error(Recovery=[goal.call(Name=\"Fix\")]); on.cache(Duration=\"00:05:00\")", out _);
 
         await read.IsSuccess();
         var code = (global::app.goal.step.action.list.@this)read.Peek()!;
@@ -88,7 +88,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AClausesDuration_WrittenIso_ReadsToItsLength()
     {
-        var read = Read("file.read(Path=\"a.txt\"); on.timeout(After=\"PT0.1S\"); on.cache(Duration=\"PT5M\")", out _);
+        var read = await Read("file.read(Path=\"a.txt\"); on.timeout(After=\"PT0.1S\"); on.cache(Duration=\"PT5M\")", out _);
 
         await read.IsSuccess();
         var code = ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToList();
@@ -105,7 +105,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AListOfDicts_ReadsAsAValue_ForAListOption()
     {
-        var read = Read("llm.query(Message=[{Role: \"system\", Content: \"be brief\"}, {Role: \"user\", Content: \"hi\"}])", out _);
+        var read = await Read("llm.query(Message=[{Role: \"system\", Content: \"be brief\"}, {Role: \"user\", Content: \"hi\"}])", out _);
 
         await read.IsSuccess();
     }
@@ -126,7 +126,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AnEventWrittenAsAValue_IsRefused_SayingItsPath()
     {
-        var read = Read("on.event(Event=\"/events/Runtime/DebugErrorInIde\", When=after, Action=goal.call(Name=\"Y\"))", out _);
+        var read = await Read("on.event(Event=\"/events/Runtime/DebugErrorInIde\", When=after, Action=goal.call(Name=\"Y\"))", out _);
         var ctx = app.actor.list.User.Context;
         var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
             global::PLang.Tests.Shared.Make.Step("on", ((global::app.goal.step.action.list.@this)read.Peek()!)[0])));
@@ -145,7 +145,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AnEventByItsPath_ReadsThePr_AndBinds()
     {
-        var read = Read("on.event(Event=%!app.type.path.on.create%, When=after, Action=goal.call(Name=\"Y\"))", out _);
+        var read = await Read("on.event(Event=%!app.type.path.on.create%, When=after, Action=goal.call(Name=\"Y\"))", out _);
         var ctx = app.actor.list.User.Context;
         var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
             global::PLang.Tests.Shared.Make.Step("on", ((global::app.goal.step.action.list.@this)read.Peek()!)[0])));
@@ -250,7 +250,7 @@ public class FormalReaderTests : System.IAsyncDisposable
         var ctx = app.actor.list.User.Context;
         async Task<string> Row(string type)
         {
-            var read = Read($"variable.set(Name=%p%, Value=\"a.txt\", Type={type})", out _);
+            var read = await Read($"variable.set(Name=%p%, Value=\"a.txt\", Type={type})", out _);
             await read.IsSuccess();
             var goal = global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
                 global::PLang.Tests.Shared.Make.Step("set", ((global::app.goal.step.action.list.@this)read.Peek()!)[0]));
@@ -269,7 +269,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     public async Task ASetsTypeBuiltAsADictOrAText_StillSetsThatType(string rowType, string rowValue)
     {
         var ctx = app.actor.list.User.Context;
-        var read = Read("variable.set(Name=%p%, Value=\"a.txt\", Type=\"path\")", out _);
+        var read = await Read("variable.set(Name=%p%, Value=\"a.txt\", Type=\"path\")", out _);
         var built = global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
             global::PLang.Tests.Shared.Make.Step("set", ((global::app.goal.step.action.list.@this)read.Peek()!)[0]));
         var pr = (await ctx.Pr(built)).Replace(
@@ -289,7 +289,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     public async Task AListSlotGivenAModule_Walks_NeverACast()
     {
         var ctx = app.actor.list.User.Context;
-        var read = Read("goal.call(Name=\"Page\", Parameter=%!app.module.file%)", out _);
+        var read = await Read("goal.call(Name=\"Page\", Parameter=%!app.module.file%)", out _);
         await read.IsSuccess();
         var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
         var goal = global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal", global::PLang.Tests.Shared.Make.Step("call", action));
@@ -305,7 +305,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     public async Task AGoalCallGivenAModuleForItsParameters_IsRefused_SayingTheForm()
     {
         var ctx = app.actor.list.User.Context;
-        var read = Read("goal.call(Name=\"Page\", Parameter=%!app.module.file%)", out _);
+        var read = await Read("goal.call(Name=\"Page\", Parameter=%!app.module.file%)", out _);
         var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
         global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal", global::PLang.Tests.Shared.Make.Step("call", action));
 
@@ -320,7 +320,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     public async Task AGoalCallsNamedRows_OrNone_Pass(string parameter)
     {
         var ctx = app.actor.list.User.Context;
-        var read = Read($"goal.call(Name=\"Page\", Parameter={parameter})", out _);
+        var read = await Read($"goal.call(Name=\"Page\", Parameter={parameter})", out _);
         var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
         global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal", global::PLang.Tests.Shared.Make.Step("call", action));
 
@@ -331,7 +331,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AChoiceSlotGivenAVariable_Reads_TheRunChecksWhatItHolds()
     {
-        var read = Read("crypto.hash(Data=\"x\", Algorithm=%alg%)", out _);
+        var read = await Read("crypto.hash(Data=\"x\", Algorithm=%alg%)", out _);
         await read.IsSuccess();
 
         var ctx = app.actor.list.User.Context;
@@ -346,12 +346,12 @@ public class FormalReaderTests : System.IAsyncDisposable
     // the builder's own: its query's Cache is the build's setting, by its path
     [Test]
     public async Task AChoiceSlotGivenASettingPath_Reads()
-        => await Read("llm.query(Message=[{Role: \"user\", Content: \"x\"}], Cache=%!build.setting.cache%)", out _).IsSuccess();
+        => await (await Read("llm.query(Message=[{Role: \"user\", Content: \"x\"}], Cache=%!build.setting.cache%)", out _)).IsSuccess();
 
     // a property of the one action a formal line reads, through a real .pr load
     private async Task<global::app.data.@this> Slot(string formal, string property)
     {
-        var read = Read(formal, out _);
+        var read = await Read(formal, out _);
         await read.IsSuccess();
         var ctx = app.actor.list.User.Context;
         var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
@@ -365,7 +365,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     {
         var formal = "llm.query(Message=[{Role: \"user\", Content: \"again\"}], Conversation={continue: %answer%})";
 
-        var written = await Written(Read(formal, out _));
+        var written = await Written(await Read(formal, out _));
 
         await Assert.That(written).Contains("%answer%");
         await Assert.That(written).DoesNotContain("null");
@@ -388,7 +388,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     // llm.query's Conversation as written, through a real .pr load, with %answer% set
     private async Task<global::app.data.@this> Continuing(string written)
     {
-        var read = Read("llm.query(Message=[{Role: \"user\", Content: \"again\"}], Conversation=" + written + ")", out _);
+        var read = await Read("llm.query(Message=[{Role: \"user\", Content: \"again\"}], Conversation=" + written + ")", out _);
         await read.IsSuccess();
         var ctx = app.actor.list.User.Context;
         var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
@@ -400,7 +400,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task GoalCallsParameters_WrittenAsAListOfDicts_AreRefused()
     {
-        var read = Read("goal.call(Name=\"X\", Parameter=[{kind: \"a\"}])", out _);
+        var read = await Read("goal.call(Name=\"X\", Parameter=[{kind: \"a\"}])", out _);
 
         await read.IsFailure();
         await Assert.That(read.Error!.Message).Contains("arguments are written as one dict");
@@ -409,7 +409,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AClause_LeadingTheStep_IsRefused()
     {
-        var read = Read("on.error(Ignore=true)", out _);
+        var read = await Read("on.error(Ignore=true)", out _);
 
         await read.IsFailure();
         await Assert.That(read.Error!.Message).Contains("is a clause of the action before it");
@@ -421,7 +421,7 @@ public class FormalReaderTests : System.IAsyncDisposable
         var goal = FormalWriterTests.Goal(app.actor.list.User.Context);
         var step = new global::app.goal.step.@this(app.type.list) { Goal = goal, Line = new() { Number = 12, Indent = 1 } };
 
-        var read = new global::app.goal.step.action.formal.Reader(step, app.actor.list.User.Context.App.module.list).Read(
+        var read = await new global::app.goal.step.action.formal.Reader(step, app.actor.list.User.Context.App.module.list).Read(
             "condition.if(Left=%n%, Operator=\"<\", Right=5) { goal.return() }", app.actor.list.User.Context);
 
         await read.IsSuccess();
@@ -433,7 +433,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task TwoOnErrorClauses_KeepTheOrderWritten()
     {
-        var read = Read("file.read(Path=\"a.txt\"); on.timeout(After=\"00:00:00.1000000\"); on.error(Status=404, Recovery=[goal.call(Name=\"Missing\")]); on.error(Recovery=[goal.call(Name=\"Fix\")])", out _);
+        var read = await Read("file.read(Path=\"a.txt\"); on.timeout(After=\"00:00:00.1000000\"); on.error(Status=404, Recovery=[goal.call(Name=\"Missing\")]); on.error(Recovery=[goal.call(Name=\"Fix\")])", out _);
 
         await read.IsSuccess();
         await Assert.That(Clauses(read)).IsEqualTo("on.timeout, on.error(404), on.error");
@@ -455,11 +455,18 @@ public class FormalReaderTests : System.IAsyncDisposable
             .RootElement.EnumerateArray().ToList();
 
     // What the reader answers for an input that must not read: its message (null when it reads).
-    private string? Refusal(string input) => Read(input, out _) is { Success: false } read ? read.Error!.Message : null;
+    private async Task<string?> Refusal(string input)
+    {
+        var read = await Read(input, out _);
+        return read.Success ? null : read.Error!.Message;
+    }
 
     // What the reader makes of an input written bare: the formal it writes back, or why it refuses.
     private async Task<string> Reread(string input)
-        => Read(input, out _) is { Success: true } read ? await Written(read) : Read(input, out _).Error!.Message;
+    {
+        var read = await Read(input, out _);
+        return read.Success ? await Written(read) : read.Error!.Message;
+    }
 
     // Every pinned error (formal_errors.json) is the reader's message, line and column for its input.
     [Test]
@@ -470,7 +477,7 @@ public class FormalReaderTests : System.IAsyncDisposable
         {
             var input = c.GetProperty("input").GetString()!;
             var expected = c.GetProperty("message").GetString();
-            var message = Refusal(input);
+            var message = await Refusal(input);
             if (message != expected) differ.Add($"{input.Replace("\n", "\\n")}\n  pinned: {expected}\n  c#:     {message}");
         }
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
@@ -500,7 +507,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     {
         var errors = Fixture.Read(ErrorsPinned).AsArray();
         var errorCases = Cases(ErrorsPinned);
-        for (int i = 0; i < errorCases.Count; i++) errors[i]!["message"] = Refusal(errorCases[i].GetProperty("input").GetString()!);
+        for (int i = 0; i < errorCases.Count; i++) errors[i]!["message"] = await Refusal(errorCases[i].GetProperty("input").GetString()!);
         Fixture.Write(ErrorsPinned, errors);
 
         var bare = Fixture.Read(BarePinned).AsArray();
@@ -514,7 +521,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AnEmptyBody_Reads_AndTheChainCheckRefusesIt_SayingWhereTheBodyGoes()
     {
-        var read = Read("condition.if(Left=%a%, Operator=\"isempty\") { }; condition.else() { output.write(Data=\"x\") }", out var step);
+        var read = await Read("condition.if(Left=%a%, Operator=\"isempty\") { }; condition.else() { output.write(Data=\"x\") }", out var step);
         await read.IsSuccess();
         foreach (var a in ((global::app.goal.step.action.list.@this)read.Peek()!).Items()) step.Code.Add(a);
 
@@ -528,7 +535,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AnError_IsReturned_KeyedFormalInvalid_WithTheFix()
     {
-        var read = Read("file.read(Pth=\"x\")", out _);
+        var read = await Read("file.read(Pth=\"x\")", out _);
         await Assert.That(read.Success).IsFalse();
         await Assert.That(read.Error!.Key).IsEqualTo("FormalInvalid");
         await Assert.That(read.Error.FixSuggestion).IsEqualTo("`file.read` has no property `Pth` (it has Path, Template, Type)");
@@ -538,7 +545,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     public async Task EveryAction_IsBornHoldingTheStep_ClausesKeepTheOrderWritten()
     {
         // two on.error clauses: B is written first, so B is asked first
-        var read = Read("goal.call(Name=\"X\"); on.error(Key=\"B\", Recovery=[goal.call(Name=\"RB\")]); on.error(Key=\"A\", Recovery=[goal.call(Name=\"RA\")])", out var step);
+        var read = await Read("goal.call(Name=\"X\"); on.error(Key=\"B\", Recovery=[goal.call(Name=\"RB\")]); on.error(Key=\"A\", Recovery=[goal.call(Name=\"RA\")])", out var step);
         var actions = ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToList();
         var call = actions[0];
         await Assert.That(call.Name).IsEqualTo("call");
@@ -554,7 +561,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AFrozenDefault_IsTheActionsDefault_WrittenBackWithQuestionEquals()
     {
-        var read = Read("goal.return(Depth: number ?= 1)", out _);
+        var read = await Read("goal.return(Depth: number ?= 1)", out _);
         await Assert.That(read.Success).IsTrue();
         await Assert.That(await Written(read)).IsEqualTo("goal.return(Depth: number ?= 1)");
     }

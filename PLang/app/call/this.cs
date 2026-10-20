@@ -39,8 +39,8 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         if (_startedAt is { } started) { writer.Name("startedAt"); writer.DateTimeOffset(started); }
         if (_stopwatch is { } watch) { writer.Name("duration"); writer.TimeSpan(watch.Elapsed); }
         writer.Name("handled"); writer.Bool(_handled);
-        if (Tags.CountRaw > 0) { writer.Name("tags"); await Tags.Output(writer, mode, context); }
-        if (Errors.Newest != null) { writer.Name("errors"); Errors.Write(writer); }
+        if (Tags.CountRaw > 0) { writer.Name("tags"); await writer.Kind.pair.Output(Tags, writer, mode, context); }
+        if (Errors.Newest != null) { writer.Name("errors"); await writer.Kind.pair.Output(Errors, writer, mode, context); }
         if (Caller != null) { writer.Name("caller"); writer.String(Caller._id); }
         if (Children.Count > 0)
         {

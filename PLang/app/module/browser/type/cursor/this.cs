@@ -15,18 +15,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Its CSS name.</summary>
     [Out] public global::app.type.item.text.@this Css => _css;
 
-    public override void Write(global::app.type.format.IWriter writer)
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
     {
         writer.BeginObject();
         writer.Name("cursor"); writer.String(_css);
         writer.EndObject();
-    }
-
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        return default;
     }
 
     public override string ToString() => _css;

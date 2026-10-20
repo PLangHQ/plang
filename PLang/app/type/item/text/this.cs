@@ -268,8 +268,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
         => IsVariable ? await _variable[0].Start(ctx) : null;
 
-    public override void Write(global::app.type.format.IWriter w) => w.String(_value);
-
     // What the characters stand for, as their kind opens them (a text of kind json: the json value) — opened at the
     // first navigation, not before, and kept; the text stays the text it is. Only what opened is kept: it holds no
     // context, so every asker navigates it with their own.

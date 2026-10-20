@@ -83,11 +83,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>An image writes its own form (<see cref="Write"/>) in every view; it never loads while it
     /// writes.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        // An image not read writes where it is — never empty bytes.
+        if (_bytes == null && Path != null) { await writer.Kind.pair.Output(Path, writer, mode, context); return; }
+        writer.Bytes(Bytes);
     }
 
     /// <summary>Opened to be written out: a path-backed image loads its bytes through its own door (as the
@@ -103,13 +104,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// The image writes its bytes; each writer shows them in its own way. An image not read yet writes its
     /// path.
     /// </summary>
-    public override void Write(global::app.type.format.IWriter writer)
-    {
-        // An image not read writes where it is — never empty bytes.
-        if (_bytes == null && Path != null) { Path.Write(writer); return; }
-        writer.Bytes(Bytes);
-    }
-
 
     /// <summary>
     /// Source path. Set for a path-backed image (content lazy-loads from here)

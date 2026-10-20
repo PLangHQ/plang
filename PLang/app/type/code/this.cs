@@ -54,13 +54,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override string ToString() => Source;
 
     /// <summary>The code renders itself as its source text — uniform across formats.</summary>
-    public override void Write(global::app.type.format.IWriter writer) => writer.String(Source);
-
-    /// <summary>Code writes its own form — its source (<see cref="Write"/>) — in every view.</summary>
+    /// <summary>Code writes its own form — its source — in every view.</summary>
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        writer.String(Source);
+        return default;
     }
 }

@@ -173,7 +173,7 @@ public sealed class @this : global::app.type.item.note.IAbout
         if (mode == global::app.View.Store && Value is { HasVariable: true } held)
         {
             writer.Name("variable");
-            new global::app.type.item.variable.serializer.Entry().Write(writer, held.Variable);
+            await new global::app.type.item.variable.serializer.Entry().Write(writer, held.Variable, mode, context);
         }
         if (Properties.Count > 0)
         {

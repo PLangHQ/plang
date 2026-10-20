@@ -1024,7 +1024,6 @@ class app.type.clr.this : app.type.item.this, app.type.item.ICreate<app.type.clr
   override Peek() : System.Object
   override Set(System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override ToString() : System.String
-  override Write(app.type.format.IWriter writer) : System.Void
   protected override Clone() : app.type.item.this
   protected override Setting(app.data.this parent) : System.Threading.Tasks.ValueTask<app.data.this>
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.clr.this
@@ -1050,7 +1049,6 @@ class app.type.code.this : app.type.item.this, app.type.item.IEncode<app.type.co
   override AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
-  override Write(app.type.format.IWriter writer) : System.Void
   static DetectLanguage(System.String source) : System.String
   static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
   static Resolve(System.String raw, app.actor.context.this context) : app.type.code.this
@@ -1207,7 +1205,6 @@ class app.type.item.base64.this : app.type.item.this, app.type.item.ICreate<app.
   override RawText : System.String { get; }
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw, app.type.this type, app.actor.context.this context) : app.type.item.base64.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.base64.this
@@ -1226,11 +1223,11 @@ class app.type.item.binary.this : app.type.item.this, app.type.item.ICreate<app.
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Pour(System.IO.Stream into, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   override Rank : System.Int32 { get; }
   override RawBytes : System.Byte[] { get; }
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   static Create(System.Object raw, app.type.this type) : app.type.item.binary.this
@@ -1261,9 +1258,9 @@ class app.type.item.bool.this : app.type.item.this, System.IEquatable<app.type.i
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   static Create(System.Object raw, app.type.this type) : app.type.item.bool.this
@@ -1311,9 +1308,9 @@ class app.type.item.choice.this<T> : app.type.item.this, app.type.item.ICreate<a
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.choice.this<T>
   static Create(System.Object raw, app.type.this type) : app.type.item.choice.this<T>
@@ -1336,7 +1333,6 @@ class app.type.item.clipboard.this : app.type.item.this, app.type.item.ICreate<a
   override IsLeaf : System.Boolean { get; }
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
-  override Write(app.type.format.IWriter writer) : System.Void
   static Create(System.Object raw) : app.type.item.clipboard.this
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.clipboard.this
   static Shape : System.String { get; }
@@ -1364,15 +1360,14 @@ abstract class app.type.item.content.this : app.type.item.this [PlangType]
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
-  override Write(app.type.format.IWriter writer) : System.Void
   protected virtual Format(app.data.this read, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.kind.this>
   static Internal : System.Boolean { get; }
 
 class app.type.item.culture.this : app.type.item.this, app.type.item.ICreate<app.type.item.culture.this> [PlangType]
   Name : System.String { get; }
   override IsLeaf : System.Boolean { get; }
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   static Create(System.Object raw, app.type.this type) : app.type.item.culture.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.culture.this
   static Shape : System.String { get; }
@@ -1393,9 +1388,9 @@ class app.type.item.date.this : app.type.item.this, System.IEquatable<app.type.i
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw, app.type.this type) : app.type.item.date.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.date.this
@@ -1428,9 +1423,9 @@ class app.type.item.datetime.this : app.type.item.this, System.IEquatable<app.ty
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw, app.type.this type) : app.type.item.datetime.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.datetime.this
@@ -1441,9 +1436,9 @@ class app.type.item.datetime.this : app.type.item.this, System.IEquatable<app.ty
 class app.type.item.dict.key.this : app.type.item.this [PlangType]
   list(app.actor.context.this context) : app.type.item.list.this<app.type.item.text.this> [LlmBuilder]
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
-  override Write(app.type.format.IWriter writer) : System.Void
   static Internal : System.Boolean { get; }
 
 static class app.type.item.dict.serializer.Default
@@ -1498,7 +1493,6 @@ class app.type.item.directory.this : app.type.item.this, app.type.item.ICreate<a
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
-  override Write(app.type.format.IWriter writer) : System.Void
   static Create(System.Object raw) : app.type.item.directory.this
   static Shape : System.String { get; }
   static Takes(app.type.this other) : System.Boolean
@@ -1540,8 +1534,8 @@ class app.type.item.duration.this : app.type.item.this, System.IEquatable<app.ty
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.duration.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.duration.this
@@ -1559,8 +1553,8 @@ class app.type.item.file.this : app.type.item.content.this, app.type.item.ICreat
   static Takes(app.type.this other) : System.Boolean
 
 class app.type.item.given.this : app.type.item.this [PlangType]
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   static Internal : System.Boolean { get; }
   static readonly Instance : app.type.item.given.this
 
@@ -1581,9 +1575,9 @@ class app.type.item.guid.this : app.type.item.this, System.IEquatable<app.type.i
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw, app.type.this type) : app.type.item.guid.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.guid.this
@@ -1623,7 +1617,6 @@ class app.type.item.image.this : app.type.item.this, app.data.IKindValidatable, 
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override RawBytes : System.Byte[] { get; }
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
-  override Write(app.type.format.IWriter writer) : System.Void
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.image.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.image.this
   static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
@@ -1647,7 +1640,6 @@ class app.type.item.input.key.this : app.type.item.input.this
   Vk : app.type.item.number.this { get; } [Out]
   ctor(app.type.list.this types, System.Boolean down, System.UInt32 scancode, System.Boolean extended = …, System.Int32 vk = …, System.String name = …, app.type.item.input.modifier.list.this modifier = …, System.Nullable<System.Int64> stamp = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  override Write(app.type.format.IWriter writer) : System.Void
 
 class app.type.item.input.modifier.list.this : app.type.item.this
   list(app.actor.context.this context) : app.type.item.list.this<app.type.item.input.modifier.this> [LlmBuilder]
@@ -1655,15 +1647,14 @@ class app.type.item.input.modifier.list.this : app.type.item.this
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
-  override Write(app.type.format.IWriter writer) : System.Void
   static Internal : System.Boolean { get; }
 
 class app.type.item.input.modifier.this : app.type.item.this, app.type.item.ICreate<app.type.item.input.modifier.this> [PlangType]
   override Equals(System.Object other) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
-  override Write(app.type.format.IWriter writer) : System.Void
   static Create(System.Object raw) : app.type.item.input.modifier.this
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.input.modifier.this
   static Internal : System.Boolean { get; }
@@ -1693,7 +1684,6 @@ class app.type.item.input.mouse.this : app.type.item.input.this
   Y : app.type.item.number.this { get; } [Out]
   ctor(app.type.list.this types, app.type.item.input.mouse.Gesture action, System.Int32 x, System.Int32 y, app.type.item.input.mouse.Button button = …, System.Int32 clicks = …, System.Int32 dx = …, System.Int32 dy = …, app.type.item.input.modifier.list.this modifier = …, System.Nullable<System.Int64> stamp = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  override Write(app.type.format.IWriter writer) : System.Void
 
 enum app.type.item.input.navigate.Direction [Choice, PlangType]
   static const back : app.type.item.input.navigate.Direction
@@ -1704,7 +1694,6 @@ class app.type.item.input.navigate.this : app.type.item.input.this
   To : app.type.item.choice.this<app.type.item.input.navigate.Direction> { get; } [Out]
   ctor(app.type.list.this types, app.type.item.input.navigate.Direction to, System.Nullable<System.Int64> stamp = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  override Write(app.type.format.IWriter writer) : System.Void
 
 class app.type.item.input.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
@@ -1715,7 +1704,6 @@ class app.type.item.input.text.this : app.type.item.input.this
   Typed : app.type.item.text.this { get; } [Out]
   ctor(app.type.list.this types, System.String typed, System.Nullable<System.Int64> stamp = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  override Write(app.type.format.IWriter writer) : System.Void
 
 abstract class app.type.item.input.this : app.type.item.this, app.type.item.ICreate<app.type.item.input.this> [Kinds, PlangType]
   Apply(app.type.item.input.ITarget target) : System.Void
@@ -1974,9 +1962,9 @@ class app.type.item.null.this : app.type.item.this, app.type.item.ICreate<app.ty
   override IsLeaf : System.Boolean { get; }
   override IsNull : System.Boolean { get; }
   override IsTruthy() : System.Boolean
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static IsNullValue(System.Object value) : System.Boolean
   static Shape : System.String { get; }
@@ -2150,9 +2138,9 @@ class app.type.item.number.this : app.type.item.this, System.IComparable, System
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected override IsKind(System.String name) : System.Boolean
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw) : app.type.item.number.this
@@ -2184,7 +2172,6 @@ class app.type.item.parallel.this : app.type.item.this, app.type.item.ICreate<ap
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  override Write(app.type.format.IWriter w) : System.Void
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.parallel.this
   static Off : app.type.item.parallel.this { get; }
   static Shape : System.String { get; }
@@ -2353,7 +2340,6 @@ abstract class app.type.item.path.this : app.type.item.this, app.type.item.ICrea
   override GetHashCode() : System.Int32
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected AuthGate(app.type.item.permission.Verb verb, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   protected BuildRequest(app.actor.this actor, app.type.item.permission.Verb verb) : app.type.item.permission.this
   protected IsInRoot(app.actor.context.this context) : System.Boolean
@@ -2406,8 +2392,7 @@ class app.type.item.permission.this : app.type.item.this, app.type.item.ICreate<
   ctor(System.String Actor, System.String Path, System.Collections.Generic.IReadOnlySet<app.type.item.permission.Verb> Verbs, app.type.item.permission.Match Match)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
-  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  override Write(app.type.format.IWriter w) : System.Void
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   static AllVerbs : System.Collections.Generic.IReadOnlySet<app.type.item.permission.Verb> { get; }
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.permission.this
   static Offer : System.Collections.Generic.IReadOnlyList<app.type.item.this> { get; }
@@ -2422,7 +2407,6 @@ class app.type.item.prose.this : app.type.item.this
   override IsTruthy() : System.Boolean
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
-  override Write(app.type.format.IWriter w) : System.Void
   static Internal : System.Boolean { get; }
 
 class app.type.item.sensitive.serializer.Reader : app.type.reader.ITypeReader
@@ -2434,8 +2418,8 @@ class app.type.item.sensitive.this : app.type.item.this, app.type.item.ICreate<a
   ctor(System.String characters)
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.sensitive.this
   static Shape : System.String { get; }
 
@@ -2447,7 +2431,7 @@ class app.type.item.separator.serializer.Reader : app.type.reader.ITypeReader
 class app.type.item.separator.this : app.type.item.text.this, app.type.item.ICreate<app.type.item.separator.this>
   Characters : System.String { get; }
   ctor(System.String characters, app.type.this type)
-  override Write(app.type.format.IWriter w) : System.Void
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.separator.this
   static Offer : System.Collections.Generic.IReadOnlyList<app.type.item.this> { get; }
 
@@ -2519,7 +2503,6 @@ class app.type.item.signature.this : app.type.item.this, app.type.item.ICreate<a
   override IsTruthy() : System.Boolean
   override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   static Shape : System.String { get; }
   static const WireSchemaSignature : System.String
 
@@ -2556,9 +2539,9 @@ class app.type.item.size.this : app.type.item.this, System.IEquatable<app.type.i
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw) : app.type.item.size.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.size.this
@@ -2581,7 +2564,6 @@ class app.type.item.source : app.type.item.this
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; }
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Clone() : app.type.item.this
 
 class app.type.item.status.serializer.Reader : app.type.reader.ITypeReader
@@ -2600,7 +2582,6 @@ class app.type.item.status.this : app.type.item.this, app.type.item.ICreate<app.
   override IsLeaf : System.Boolean { get; }
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
-  override Write(app.type.format.IWriter writer) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw) : app.type.item.status.this
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.status.this
@@ -2623,9 +2604,9 @@ class app.type.item.tag.this : app.type.item.this, System.IEquatable<app.type.it
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw, app.type.this type) : app.type.item.tag.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.tag.this
@@ -2716,7 +2697,6 @@ class app.type.item.text.this : app.type.item.this, System.IEquatable<app.type.i
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; }
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Alias : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   static Create(System.Object raw, app.type.this type) : app.type.item.text.this
@@ -2774,7 +2754,6 @@ abstract class app.type.item.this : app.data.IBooleanResolvable, app.type.item.I
   virtual Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   virtual Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; }
   virtual Where(app.type.item.text.this field, app.data.Operator op, app.data.this value, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
-  virtual Write(app.type.format.IWriter writer) : System.Void
 
 class app.type.item.time.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
@@ -2792,9 +2771,9 @@ class app.type.item.time.this : app.type.item.this, System.IEquatable<app.type.i
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
   override IsLeaf : System.Boolean { get; }
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   static Create(System.Object raw, app.type.this type) : app.type.item.time.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.time.this
@@ -2864,8 +2843,7 @@ abstract class app.type.item.variable.code.Hop : app.type.item.this, app.type.it
   ctor(System.String text)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
-  override Write(app.type.format.IWriter writer) : System.Void
-  protected abstract Piece(app.type.format.IWriter writer) : System.Void
+  protected abstract Piece(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   virtual Set(app.data.this parent, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
 
 class app.type.item.variable.code.Index : app.type.item.variable.code.Hop
@@ -2873,28 +2851,28 @@ class app.type.item.variable.code.Index : app.type.item.variable.code.Hop
   override Kind : System.String { get; }
   override Set(app.data.this parent, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   override Start(app.data.this previous, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-  protected override Piece(app.type.format.IWriter writer) : System.Void
+  protected override Piece(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
 
 class app.type.item.variable.code.Method : app.type.item.variable.code.Hop
   Name : System.String { get; }
   Parameter : app.type.item.list.this { get; }
   override Kind : System.String { get; }
   override Start(app.data.this previous, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-  protected override Piece(app.type.format.IWriter writer) : System.Void
+  protected override Piece(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
 
 class app.type.item.variable.code.Property : app.type.item.variable.code.Hop
   Name : System.String { get; }
   override Kind : System.String { get; }
   override Set(app.data.this parent, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   override Start(app.data.this previous, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-  protected override Piece(app.type.format.IWriter writer) : System.Void
+  protected override Piece(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
 
 class app.type.item.variable.code.Variable : app.type.item.variable.code.Hop
   Name : System.String { get; }
   override Kind : System.String { get; }
   override Set(app.data.this parent, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   override Start(app.data.this previous, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-  protected override Piece(app.type.format.IWriter writer) : System.Void
+  protected override Piece(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
 
 class app.type.item.variable.code.this : app.type.item.list.this<app.type.item.variable.code.Hop>
   Ensure(System.Func<System.Threading.Tasks.ValueTask<app.data.this>> value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
@@ -2903,7 +2881,6 @@ class app.type.item.variable.code.this : app.type.item.list.this<app.type.item.v
   Set(System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   Start(app.actor.context.this context, app.data.this from = …) : System.Threading.Tasks.ValueTask<app.data.this>
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  override Write(app.type.format.IWriter writer) : System.Void
 
 class app.type.item.variable.list.this : app.snapshot.ISnapshot
   Capture(app.snapshot.this s) : System.Void
@@ -2944,7 +2921,7 @@ class app.type.item.variable.parser.this
 
 class app.type.item.variable.serializer.Entry
   Read(app.type.item.kind.json.Reader& reader, app.type.reader.ReadContext ctx) : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this>
-  Write(app.type.format.IWriter writer, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variables) : System.Void
+  Write(app.type.format.IWriter writer, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variables, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   ctor()
 
 class app.type.item.variable.serializer.Reader : app.type.reader.ITypeReader
@@ -2970,10 +2947,10 @@ class app.type.item.variable.this : app.type.item.this, app.type.item.ICreate<ap
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsLeaf : System.Boolean { get; }
   override IsVariable : System.Boolean { get; }
+  override Output(app.type.format.IWriter w, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
   override Value(app.data.this data) : System.Threading.Tasks.ValueTask<app.type.item.this>
   override Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; }
-  override Write(app.type.format.IWriter w) : System.Void
   protected override Level(System.Int32 depth, app.actor.context.this context) : app.type.item.this
   static Convert(System.Object value, System.String kind, app.actor.context.this context) : app.data.this
   static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.variable.this
@@ -2994,13 +2971,11 @@ class app.type.item.wire.kind.plang.this : app.type.kind.this<app.type.item.wire
 class app.type.item.wire.template : app.type.item.wire.this
   ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable, System.Boolean built = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
-  override Write(app.type.format.IWriter w) : System.Void
 
 class app.type.item.wire.this : app.type.item.source [PlangType]
   ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …)
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override RawText : System.String { get; }
-  override Write(app.type.format.IWriter w) : System.Void
   static Internal : System.Boolean { get; }
 
 class app.type.kind.empty.this : app.type.kind.this
@@ -3279,7 +3254,6 @@ class app.type.this : app.type.item.this, app.type.item.ICreate<app.type.this>, 
   override IsNull : System.Boolean { get; }
   override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   override ToString() : System.String
-  override Write(app.type.format.IWriter writer) : System.Void
   protected override Setting(app.data.this parent) : System.Threading.Tasks.ValueTask<app.data.this>
   protected virtual BornKind() : app.type.kind.this
   protected virtual OwnAlias : System.Collections.Generic.IReadOnlyList<System.String> { get; }

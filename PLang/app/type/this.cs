@@ -35,10 +35,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>
     public static list.@this List(global::app.@this app) => new();
 
-    /// <summary>Self-write: the type entity's <c>{name, kind?, strict?, template?}</c> identity — the
-    /// shape Data writes for its <c>type</c> slot (<c>json.Writer.BeginRecord</c>), and a type held
-    /// as a value in every view but Out (a <c>.pr</c> row holding a type stays its identity).</summary>
-    public override void Write(global::app.type.format.IWriter writer)
+    /// <summary>The type's identity — <c>{name, kind?, strict?, template?}</c>: what a type is in plang's own output kind
+    /// (its pair writes it: a Data's and a property row's type slot), and a type held as a value in every view but Out
+    /// (a <c>.pr</c> row holding a type stays its identity).</summary>
+    internal void Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);

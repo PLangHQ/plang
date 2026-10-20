@@ -108,7 +108,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.Name("line"); Line.Output(writer);
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
         writer.Name("code");
-        await Code.Output(writer, mode, context);   // the action.list writes its own bare array
+        await writer.Kind.pair.Output(Code, writer, mode, context);   // the action.list writes its own bare array
         if (Intent != null) { writer.Name("intent"); writer.String(Intent); }
         if (Source != null) { writer.Name("source"); writer.String(Source); }
         if (Warning.Count > 0)
@@ -126,7 +126,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
         // a step the build could not fix: its error writes itself, as it does everywhere — the goal it belongs to does
         // not start
-        if (Error != null) { writer.Name("error"); Error.Write(writer); }
+        if (Error != null) { writer.Name("error"); await writer.Kind.pair.Output(Error, writer, mode, context); }
         writer.EndObject();
     }
 }

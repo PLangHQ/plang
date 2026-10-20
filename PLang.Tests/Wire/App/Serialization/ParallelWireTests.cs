@@ -18,7 +18,7 @@ public class ParallelWireTests
         var context = os.actor.list.User.Context;
         var goal = global::app.goal.@this.Parse("Start\n- foreach %orders% in parallel, call Ship\n",
             global::app.type.item.path.@this.Resolve("/Start.goal", context), context)!;
-        var read = new global::app.goal.step.action.formal.Reader(goal.Step[0], context.App.module.list)
+        var read = await new global::app.goal.step.action.formal.Reader(goal.Step[0], context.App.module.list)
             .Read($"loop.foreach(Collection=%orders%, Parallel={parallel}); goal.call(Name=\"Ship\")", context);
         await read.IsSuccess();
         goal.Step[0].Code = (global::app.goal.step.action.list.@this)read.Peek()!;

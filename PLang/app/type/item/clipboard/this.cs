@@ -39,15 +39,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         writer.BeginObject();
         writer.Name("clipboard");
-        await _content.Output(writer, mode, context);
-        writer.EndObject();
-    }
-
-    public override void Write(global::app.type.format.IWriter writer)
-    {
-        writer.BeginObject();
-        writer.Name("clipboard");
-        _content.Write(writer);
+        await writer.Kind.pair.Output(_content, writer, mode, context);
         writer.EndObject();
     }
 

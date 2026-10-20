@@ -39,19 +39,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Its wire form, read back by its reader as itself: <c>false</c> when it is off, else <c>{cpu: n}</c> with
     /// the count the program said, or <c>{}</c> when it said none — so a built program takes the cores of the machine
     /// it runs on, not the one it was built on.</summary>
-    public override void Write(global::app.type.format.IWriter w)
-    {
-        if (!_on) { w.Bool(false); return; }
-        w.BeginObject();
-        if (_cpu is { } cpu) { w.Name("cpu"); w.Long(cpu); }
-        w.EndObject();
-    }
-
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        if (!_on) { writer.Bool(false); return default; }
+        writer.BeginObject();
+        if (_cpu is { } cpu) { writer.Name("cpu"); writer.Long(cpu); }
+        writer.EndObject();
+        return default;
     }
 
     /// <summary>Whether it runs in parallel.</summary>

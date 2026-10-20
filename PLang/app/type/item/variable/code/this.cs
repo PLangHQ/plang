@@ -10,19 +10,13 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
     internal @this(System.Collections.Generic.IEnumerable<Hop> hops, global::app.type.@this type) : base(hops, type) { }
 
     /// <summary>Its <c>.pr</c> form: the hops in order, each under its kind.</summary>
-    public override void Write(global::app.type.format.IWriter writer)
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
     {
         var hops = Items().ToList();
         writer.BeginArray(hops.Count);
-        foreach (var hop in hops) hop.Write(writer);
+        foreach (var hop in hops) await writer.Kind.pair.Output(hop, writer, mode, context);
         writer.EndArray();
-    }
-
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
     /// <summary>The root: the name the value lives under in memory.</summary>

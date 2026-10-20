@@ -84,11 +84,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// tried to serialize it as a leaf; name the carried type so the producer is findable.
     /// (The clr's structured wire form is <see cref="Output"/>, which reflects the host.)
     /// </summary>
-    public override void Write(global::app.type.format.IWriter writer)
-        => throw new System.NotSupportedException(
-            $"clr carrier wrapping '{Value.GetType().FullName}' reached the wire as a leaf — "
-            + "it has no plang type to render itself. Wrap it in a real item type, or fix the producer that parked it in a clr.");
-
     /// <summary>
     /// The carrier navigates its host by asking its own <see cref="Kind"/> — the json kind
     /// walks a JsonElement, the <c>*</c> kind reflects a POCO. A key is a member.

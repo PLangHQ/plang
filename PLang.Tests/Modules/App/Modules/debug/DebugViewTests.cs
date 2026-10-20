@@ -13,7 +13,7 @@ public class DebugViewTests : System.IAsyncDisposable
     public async Task AGoalHoldingAnAction_Writes_NamingItsModule()
     {
         var goal = Make.Goal(Ctx, "Start", "/Start.goal",
-            Make.Step("read a.txt", Ctx.Action("file.read(Path=\"a.txt\")")));
+            Make.Step("read a.txt", await Ctx.Action("file.read(Path=\"a.txt\")")));
 
         var written = await goal.Debug(Ctx);
 
@@ -26,7 +26,7 @@ public class DebugViewTests : System.IAsyncDisposable
     public async Task AParameterNamingAnUnsetVariable_IsShownAsWritten()
     {
         var goal = Make.Goal(Ctx, "Start", "/Start.goal",
-            Make.Step("assert %refused% is true", Ctx.Action("assert.isTrue(Value=%refused%)")));
+            Make.Step("assert %refused% is true", await Ctx.Action("assert.isTrue(Value=%refused%)")));
 
         var written = await goal.Debug(Ctx);
 
@@ -37,7 +37,7 @@ public class DebugViewTests : System.IAsyncDisposable
     [Test]
     public async Task ASensitiveValueInAParameter_StaysMasked()
     {
-        var action = Ctx.Action("file.read(Path=\"a.txt\")");
+        var action = await Ctx.Action("file.read(Path=\"a.txt\")");
         action.Property.Set(new global::app.type.property.@this
         {
             Name = "Identity",
@@ -68,7 +68,7 @@ public class DebugViewTests : System.IAsyncDisposable
     public async Task AGoalDump_ShowsAStepsLineAndWarning()
     {
         var goal = Make.Goal(Ctx, "Start", "/Start.goal",
-            Make.Step("read a.txt", Ctx.Action("file.read(Path=\"a.txt\")")));
+            Make.Step("read a.txt", await Ctx.Action("file.read(Path=\"a.txt\")")));
         goal.Step[0].Line = new() { Number = 7, Indent = 1 };
         goal.Step[0].Warning.Add(new global::app.warning.@this { Key = "Unsure", Message = "maybe file.read" });
 

@@ -20,7 +20,7 @@ public class TemplateSourceSignedRoundTripTests
             await ctx.Variable.Set("original", new global::app.data.@this("original", "The quick brown fox",
                 app.type.list.Stamp("text/plain", ctx), context: ctx));
             // the Data a step's `Value=%original%` slot holds: a source, the template %original%
-            var slot = ctx.Action("archive.pack(Value=%original%)").Property["Value"]!.Data(ctx);
+            var slot = (await ctx.Action("archive.pack(Value=%original%)")).Property["Value"]!.Data(ctx);
             var plang = app.type.list["wire"].kind["plang"]!;
 
             using var wire = new System.IO.MemoryStream();

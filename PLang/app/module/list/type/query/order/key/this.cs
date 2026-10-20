@@ -52,11 +52,12 @@ public sealed class @this
 
     /// <summary>Writes the key as <c>{field, desc}</c>, its field as written; a key with no field writes only its
     /// desc.</summary>
-    internal void Output(global::app.type.format.IWriter writer)
+    internal async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
     {
         writer.BeginObject();
         if (_field != null) { writer.Name("field"); writer.String(_field.Peek().ToString() ?? ""); }
-        writer.Name("desc"); _desc.Write(writer);
+        writer.Name("desc"); await writer.Kind.pair.Output(_desc, writer, mode, context);
         writer.EndObject();
     }
 }

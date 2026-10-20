@@ -12,18 +12,12 @@ public sealed class @this : input.@this
 
     private protected override void Applied(ITarget target) => target.Text(this);
 
-    public override void Write(global::app.type.format.IWriter writer)
-    {
-        writer.BeginObject();
-        writer.Name("text"); Typed.Write(writer);
-        WriteStamp(writer);
-        writer.EndObject();
-    }
-
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        writer.BeginObject();
+        writer.Name("text"); await writer.Kind.pair.Output(Typed, writer, mode, context);
+        await WriteStamp(writer, mode, context);
+        writer.EndObject();
     }
 }

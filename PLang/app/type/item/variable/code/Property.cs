@@ -16,7 +16,8 @@ public sealed class Property : Hop
 
     public override string Kind => "property";
 
-    protected override void Piece(global::app.type.format.IWriter writer) => writer.String(Name);
+    protected override System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context) { writer.String(Name); return default; }
 
     internal bool IsBinding => Name.StartsWith('!');
 

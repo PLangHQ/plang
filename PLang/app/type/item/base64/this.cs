@@ -139,8 +139,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     public override bool IsLeaf => true;
-    public override void Write(global::app.type.format.IWriter w) => w.String(_value ?? "");
-
     /// <summary>A base64 still holding its source encodes it through its own door (<see cref="Value"/>) before it
     /// writes: a template writes <c>%b64%</c> in place through here, never through the Value door. The encode
     /// needs the caller's context; an encode that fails is refused, not written as an empty payload.</summary>
@@ -154,7 +152,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             await Value(encoding);
             if (encoding.Error is { } failed) throw new global::app.error.AppException(failed);
         }
-        Write(writer);
+        writer.String(_value ?? "");
     }
 
     public override string ToString() => _value ?? "";

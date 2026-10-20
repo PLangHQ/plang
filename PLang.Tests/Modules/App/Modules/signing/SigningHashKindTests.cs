@@ -69,7 +69,7 @@ public class SigningHashKindTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var hashed = await ctx.Action("crypto.hash(Data=\"hello\", Algorithm=\"sha256\")").Start(ctx);
+        var hashed = await (await ctx.Action("crypto.hash(Data=\"hello\", Algorithm=\"sha256\")")).Start(ctx);
         await hashed.IsSuccess();
 
         var verify = new global::app.module.crypto.Verify(ctx) { Data = ctx.Ok("hello"), Hash = hashed };

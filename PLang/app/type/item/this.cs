@@ -846,18 +846,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         => (await context.App.type.list["wire"].kind["plang"]!.Encode(into, self, context, ct: context.CancellationToken), "data", null);
 
     /// <summary>
-    /// Write this value into the format-neutral <see cref="global::app.type.format.IWriter"/>.
-    /// A value writes WHAT it is through the writer's primitives (String, Number, Bytes, …);
-    /// the writer — the formatter — decides HOW each primitive looks in its format.
-    /// Neither asks about the other: no <c>writer.Format</c> in a value, no value type in a writer.
-    /// Only leaves are asked (Normalize routes non-leaves through their own branches);
-    /// the default throws so a missing override is loud.
-    /// </summary>
-    public virtual void Write(global::app.type.format.IWriter writer)
-        => throw new System.NotSupportedException(
-            $"{GetType().Name} has no bare wire form — it is not a leaf value.");
-
-    /// <summary>
     /// This value as a diagnostic shows it — an assertion message, a test report line, a debug dump. A leaf
     /// answers its text; a structure writes itself through the json writer in the Debug view, where a
     /// <c>[Sensitive]</c> member shows masked: a reader tells "not set" from "set but hidden", and never sees
@@ -877,25 +865,19 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     }
 
     /// <summary>
-    /// The item writes ITSELF to the wire — one async pass that merges flatten
-    /// (the old Normalize) and render (Write), resolving lazily as it reaches each
-    /// node. The default: a leaf emits its bare wire form via <see cref="Write"/>; a structure writes its
-    /// face for the view through the reflection kind (its tagged members; a type that declares none is
-    /// refused on the wire and named in a dump). A structure with a flat form of its own says so by
-    /// writing itself (error, path, permission, …). Containers and references override: dict/list walk +
-    /// await children, variable resolves itself, clr reflects its host. No intermediate tree, no
-    /// pre-resolve walk; <c>await</c>s happen here, between the writer's synchronous buffer writes.
+    /// The item writes ITSELF — the one door for writing: a value writes what it is through the writer's primitives
+    /// (String, Number, Bytes, …), and the writer decides how each looks in its kind. Every value with a form of its
+    /// own (a leaf's one token, a structure's flat shape: error, path, permission, …) overrides this; a member is
+    /// written through the writer's kind (<c>writer.Kind.pair.Output(member, …)</c>). The default is a structure's
+    /// face for the view, through the reflection kind (its tagged members; a type that declares none is refused on the
+    /// wire and named in a dump). Resolved lazily as it reaches each node; <c>await</c>s happen here, between the
+    /// writer's synchronous buffer writes.
     /// </summary>
     public virtual System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
-    {
-        if (!IsLeaf)
-            return (context?.App.type.list["item"].kind["*"] as global::app.type.item.kind.reflection.@this
-                    ?? global::app.type.item.kind.reflection.@this.Fallback).Output(this, writer, mode, context);
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
+        => (context?.App.type.list["item"].kind["*"] as global::app.type.item.kind.reflection.@this
+            ?? global::app.type.item.kind.reflection.@this.Fallback).Output(this, writer, mode, context);
 
     /// <summary>
     /// Reflective Output for a STRUCTURAL item — writes its tagged property bag, the View selecting

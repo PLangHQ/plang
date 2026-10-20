@@ -139,19 +139,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>A grant writes its own form (<see cref="Write"/>) in every view.</summary>
-    public override System.Threading.Tasks.ValueTask Output(IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
-
     /// <summary>
-    /// The grant owns its wire form: <c>{actor, path, match, verbs:[…]}</c>. No
+    /// The grant owns its wire form: <c>{actor, path, match, verbs:[…]}</c>, in every view. No
     /// reflection — the writer never type-switches on it (OBP Rule 9). Symmetric
     /// with <see cref="Create"/>.
     /// </summary>
-    public override void Write(IWriter w)
+    public override System.Threading.Tasks.ValueTask Output(IWriter w,
+        global::app.View mode, global::app.actor.context.@this? context)
     {
         w.BeginObject();
         w.Name("actor"); w.String(Actor);
@@ -162,6 +156,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         foreach (var v in Verbs) w.String(v.ToString());
         w.EndArray();
         w.EndObject();
+        return default;
     }
 
     /// <summary>
