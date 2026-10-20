@@ -308,17 +308,6 @@ public class @this : global::app.type.@this
     protected internal override global::System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
         => Write((global::app.type.format.IWriter)writer);
 
-    /// <summary>Writes <paramref name="value"/>, a value of this kind, in this kind's own form — a kind is a type, and
-    /// writes the values of it (a duration's <c>short</c> writes <c>30s</c>, its <c>iso</c> <c>PT30S</c>). A kind
-    /// with no form of its own writes none.</summary>
-    public virtual void Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
-        => throw new System.NotSupportedException($"kind '{Name}' has no form to write a value in");
-
-    /// <summary>Write a host value OF this kind to the wire — json emits raw json, <c>*</c>
-    /// reflects a POCO's tagged fields. The carrier delegates its <c>Output</c> here.</summary>
-    public virtual global::System.Threading.Tasks.ValueTask Output(object obj, global::app.type.format.IWriter writer)
-        => throw new System.NotSupportedException($"kind '{Name}' cannot write itself");
-
     /// <summary>A kind held AS A VALUE lowers to its name — its value IS the subtype word ("md",
     /// "decimal"), so a text coercion and <c>%x!type.kind% equals "md"</c> read it as that name.
     /// Navigation reaches the rest (.name, .list). Other targets fall to the base.</summary>
@@ -340,29 +329,6 @@ public class @this : global::app.type.@this
     /// that is not a format has nothing to bridge and declines (null → the caller's Clr path).</summary>
     public virtual object? Read(object obj, global::app.type.reader.ITypeReader reader, string? kind,
                                 global::app.actor.context.@this context) => null;
-
-    // OBPV — carry marked, collapse after the restructure compiles: this is a verb+noun name
-    // AND a type-switch fork standing in for a value's own self-write. Fix: a reflected value
-    // writes itself via `new Data(name, value, ctx).Output(...)` — Data.Output already emits bare
-    // vs its record by the writer's record door (BeginRecord), not by value type, so
-    // the switch below should dissolve. (todos.md 2026-07-09)
-    protected async global::System.Threading.Tasks.ValueTask WriteReflected(global::app.type.format.IWriter writer, object value)
-    {
-        switch (value)
-        {
-            case global::app.type.item.@this item: await item.Output(writer); break;
-            case global::app.data.@this d: await d.Output(writer); break;
-            case string s: writer.String(s); break;
-            // A raw C# scalar the writer renders (number/bool/date/enum/…). Everything else —
-            // a collection OR an object — writes through ITS kind (IDictionary → object, IList /
-            // any sequence → array, an object → the * kind's declared-face Output). One rule, no
-            // categories: the kind decides; an undeclared plang type is the view's to answer.
-            default:
-                if (value.GetType().IsClass) await writer.Context.App.type.list.Kind(value.GetType()).Output(value, writer);
-                else writer.Value(value);
-                break;
-        }
-    }
 
     public override string ToString() => Name;
 

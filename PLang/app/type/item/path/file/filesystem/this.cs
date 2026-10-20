@@ -111,7 +111,7 @@ public class @this
         if (IsFile(p))
         {
             var info = new System.IO.FileInfo(p.Absolute);
-            return new StatInfo(Exists: true, IsFile: true, Size: new global::app.type.item.size.@this(info.Length, context),
+            return new StatInfo(Exists: true, IsFile: true, Size: global::app.type.item.size.@this.Create(info.Length, context),
                 Modified: info.LastWriteTimeUtc);
         }
         if (IsFolder(p))

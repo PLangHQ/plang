@@ -3,7 +3,7 @@ namespace app.type.item.kind.list;
 /// <summary>
 /// The list kind — a raw CLR <see cref="System.Collections.IList"/> host (a POCO's
 /// <c>List&lt;Step&gt;</c>, <c>List&lt;action&gt;</c>, …). Owns index-descend (<c>goal.Step[0]</c>),
-/// element-enumeration (foreach), and array-Output. Claims <see cref="System.Collections.IList"/>
+/// element-enumeration (foreach). Claims <see cref="System.Collections.IList"/>
 /// by assignable match, so any concrete list resolves here (exact ClrForm wins first, so
 /// <c>JsonElement</c> stays json).
 /// </summary>
@@ -71,15 +71,6 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
 
     /// <summary>A CLR collection holds its children by position.</summary>
     public override bool IsSequence(object host) => true;
-
-    // A collection writes as an array of self-writes — each element through its own kind.
-    public override async global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.type.format.IWriter writer)
-    {
-        writer.BeginArray(-1);
-        foreach (var el in (System.Collections.IEnumerable)obj) if (el != null) await WriteReflected(writer, el);
-        writer.EndArray();
-    }
 
     // The OUTBOUND convert: list knows how to build itself FROM a json source (a clr(json) array →
     // native list), reusing the universal DOM narrower (item.serializer.json.Parse) — mirrors the

@@ -100,7 +100,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         return new(new global::app.type.clr.@this(host, ctx));
     }
 
-    // The inverse of Output: build a host CLR object by reflecting its [Store] props and pulling
+    // The inverse of item's tagged write: build a host CLR object by reflecting its [Store] props and pulling
     // each off the format-agnostic reader (wire order drives, unknown names skip, missing names
     // keep the property default). A collection host (List<action>) reads as an
     // array of its element; List<Data> props hand their bytes to the @schema:data reader
@@ -295,43 +295,5 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
                 && i.GetGenericArguments()[0] == typeof(global::app.data.@this))
                 return true;
         return false;
-    }
-
-    // The inverse of Read: reflect the object's tagged props and write each under its WIRE name
-    // (the [JsonPropertyName]/camelCase form Read matches on and STJ round-trips), nulls omitted.
-    // Serves hosts and foreign POCOs alike — the one object-Output path (a collection host writes
-    // through the list kind's array-Output).
-    public override async global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.type.format.IWriter writer)
-    {
-        var type = obj.GetType();
-        // The DECLARED-face rule. A tagged type renders exactly its face for the view (cycles
-        // [JsonIgnore]-disciplined). A type in OUR assembly that declares no face for the view (a
-        // context, a callstack, an actor) is the view's to answer: the wire and the store refuse it,
-        // naming it; a dump writes it by name, never walked. An untagged FOREIGN type (a plang-blind
-        // library DTO) can't declare, so it dumps transparently.
-        if (type.Assembly == typeof(global::app.type.kind.@this).Assembly && !writer.View.Declares(type))
-        {
-            writer.View.Undeclared(obj, writer);
-            return;
-        }
-
-        writer.BeginObject();
-        foreach (var entry in Tagged.PropertiesFor(type, writer.View))
-        {
-            if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
-            object? value;
-            try { value = entry.Property.GetValue(obj); }
-            catch (System.Exception ex)
-            {
-                throw new global::app.data.OutputException(
-                    $"Output failed reading {obj.GetType().Name}.{entry.Property.Name}: {ex.Message}",
-                    "OutputGetterThrew", ex);
-            }
-            if (value == null) continue;   // nulls omitted (WhenWritingNull)
-            writer.Name(entry.WireName);
-            await WriteReflected(writer, value);
-        }
-        writer.EndObject();
     }
 }

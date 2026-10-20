@@ -12,5 +12,5 @@ public sealed class @this : global::app.type.item.setting.@this
 
     /// <summary>The standard a counted size is written in — <c>iec</c> (1024: 95.4 MiB) or <c>si</c> (1000: 100 MB).</summary>
     [Out, Store, global::app.module.Default("iec")]
-    public global::app.type.item.choice.@this<kind.@this> Standard { get; set; } = null!;
+    public global::app.type.item.choice.@this<global::app.type.kind.@this<size.@this>> Standard { get; set; } = null!;
 }

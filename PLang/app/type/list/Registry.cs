@@ -337,10 +337,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                         $"choice set name '{set.Name}' is claimed by both {taken.Of(null)?.GetGenericArguments()[0].FullName} and {t.FullName} — one name, one set.",
                         "TypeLoadCollision", 400);
                 Hold(set);
-                // the closed reader for this set — one reflective instantiation, then typed reads.
+                // the closed reader for this set, over the class its members are — one reflective instantiation, then
+                // typed reads.
                 Reader.Register("choice", set.Name,
                     (global::app.type.reader.ITypeReader)Activator.CreateInstance(
-                        typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(t), set.Name)!);
+                        typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(set.Of(null)!.GetGenericArguments()[0]), set.Name)!);
             }
         }
         // each class under a family that has kinds ([Kinds]) is one of its kinds, by its own name — but a class named as

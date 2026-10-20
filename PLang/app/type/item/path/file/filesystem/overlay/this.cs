@@ -154,7 +154,7 @@ public sealed class @this : filesystem.@this
         lock (_lock)
         {
             if (_files.TryGetValue(p.Absolute, out var content))
-                return new StatInfo(Exists: true, IsFile: true, Size: new global::app.type.item.size.@this(content.Length, context),
+                return new StatInfo(Exists: true, IsFile: true, Size: global::app.type.item.size.@this.Create(content.Length, context),
                     Modified: DateTime.UtcNow);
             if (Holds(p.Absolute)) return new StatInfo(Exists: true, IsFile: false, Modified: DateTime.UtcNow);
             if (Gone(p.Absolute)) return new StatInfo(Exists: false);

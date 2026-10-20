@@ -50,7 +50,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The exact boxed CLR numeric value (int, uint, BigInteger, Half, decimal, …).</summary>
     public object BoxedValue => _value;
     public override bool IsLeaf => true;
-    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { Type.kind.Write(this, w); return default; }
+    /// <summary>A number writes its own value, the C# number it is held as; the writer decides how that looks (a
+    /// 128-bit integer past json's range as its digits).</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.Value(_value); return default; }
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
 

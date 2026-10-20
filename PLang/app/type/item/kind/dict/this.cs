@@ -5,7 +5,7 @@ namespace app.type.item.kind.dict;
 /// <summary>
 /// The dict kind — a raw CLR <see cref="System.Collections.IDictionary"/> host (a POCO's
 /// <c>Dictionary&lt;string,string&gt;</c>). Owns key-descend (<c>%config.settings.foo%</c>),
-/// entry-enumeration, and object-Output. Also owns the
+/// and entry-enumeration. Also owns the
 /// OUTBOUND convert: <c>dict</c> knows how to build itself FROM a json source, so <c>%x% as
 /// dict</c> (a clr(json) → native dict) is here, not on json — reusing the universal DOM
 /// narrower (<c>item.serializer.json.Parse</c>). Claims <c>IDictionary</c> by assignable match.
@@ -32,19 +32,6 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     {
         foreach (System.Collections.DictionaryEntry e in (System.Collections.IDictionary)obj)
             yield return Data(e.Key.ToString() ?? "", e.Value, null, ctx);
-    }
-
-    public override async global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.type.format.IWriter writer)
-    {
-        writer.BeginObject();
-        foreach (System.Collections.DictionaryEntry e in (System.Collections.IDictionary)obj)
-        {
-            writer.Name(e.Key.ToString() ?? "");
-            if (e.Value is { } v) await WriteReflected(writer, v);
-            else writer.Value(null);
-        }
-        writer.EndObject();
     }
 
     public override async global::System.Threading.Tasks.ValueTask<global::app.data.@this> Convert(

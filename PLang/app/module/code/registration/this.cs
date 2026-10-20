@@ -18,10 +18,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A structure, not a single-token leaf.</summary>
     public override bool IsLeaf => false;
 
-    /// <summary>Self-write: the tagged fields, the View selecting the set.</summary>
-    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-        => OutputTagged(writer);
-
     /// <summary>AssemblyQualifiedName of the provider interface — the identity that has to survive
     /// across processes.</summary>
     [Store, Out]

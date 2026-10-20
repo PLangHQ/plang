@@ -10,6 +10,7 @@ namespace PLang.Generators.Diagnostics;
 /// marked is one whose options no app knows. Fires at every named <c>app.type.item.choice.@this&lt;T&gt;</c> whose
 /// <c>T</c> is a class that doesn't carry <c>app.Attributes.ChoiceAttribute</c> — in plang and in any program built
 /// with this generator. A generic <c>T</c> (the choice's own code) and an unbound <c>choice&lt;&gt;</c> are not a use.
+/// A choice of a value family's kinds (<c>choice&lt;kind&lt;size&gt;&gt;</c>) draws on the family, which carries the mark.
 /// </summary>
 public static class Plng005
 {
@@ -39,13 +40,19 @@ public static class Plng005
             || choice.TypeArguments[0] is not INamedTypeSymbol set
             || choice.OriginalDefinition.ToDisplayString() != "app.type.item.choice.@this<T>")
             return null;
-        if (set.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == "app.Attributes.ChoiceAttribute")) return null;
+        if (Marked(set)) return null;
+        // a choice of a value family's kinds (kind<size>) draws on the family, marked
+        if (set.OriginalDefinition.ToDisplayString() == "app.type.kind.@this<T>"
+            && set.TypeArguments[0] is INamedTypeSymbol family && Marked(family)) return null;
 
         var span = ctx.Node.GetLocation().GetLineSpan();
         return new Finding(filePath, span.StartLinePosition.Line, span.StartLinePosition.Character,
             span.EndLinePosition.Line, span.EndLinePosition.Character,
             $"choice<{set.Name}> draws on '{set.ToDisplayString()}', which isn't marked [Choice] — mark the set a choice draws on");
     }
+
+    private static bool Marked(INamedTypeSymbol set)
+        => set.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == "app.Attributes.ChoiceAttribute");
 
     public static void Register(IncrementalGeneratorInitializationContext context)
     {

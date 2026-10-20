@@ -33,7 +33,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// carries it, and asks it to navigate.
     /// </summary>
     /// <remarks>JsonIgnore: navigation metadata, not the carrier's wire shape — the clr
-    /// renders its HOST (via <see cref="Output"/>), not its own kind. Reflecting it would
+    /// renders its HOST (via <see cref="Host"/>), not its own kind. Reflecting it would
     /// pull the generic JSON serializer into the kind token's context-dependent accessors.</remarks>
     [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.kind.@this Kind { get; }
@@ -78,12 +78,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// would walk the whole App graph and overflow.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
 
-    /// <summary>
-    /// A clr carrier has no bare wire form — it is the rung-2 "I don't have a plang type"
-    /// parking spot. Reaching here means a producer parked a non-item CLR object in a clr and
-    /// tried to serialize it as a leaf; name the carried type so the producer is findable.
-    /// (The clr's structured wire form is <see cref="Output"/>, which reflects the host.)
-    /// </summary>
     /// <summary>
     /// The carrier navigates its host by asking its own <see cref="Kind"/> — the json kind
     /// walks a JsonElement, the <c>*</c> kind reflects a POCO. A key is a member.
@@ -185,10 +179,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         obj is Clr other ? Equals(Value, other.Value) : Equals(Value, obj);
     public override int GetHashCode() => Value.GetHashCode();
 
-    /// <summary>
-    /// The carrier writes its HOST by asking its <see cref="Kind"/> — the json kind emits raw json
-    /// (no <c>valueKind</c> BCL leak), the <c>*</c> kind reflects a POCO's <c>[Out]</c> fields.
-    /// </summary>
-    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-        => Kind.Output(Value, writer);
+    /// <summary>The carrier writes its host: the host's tagged members are what item's general write shows.</summary>
+    private protected override object Host => Value;
 }

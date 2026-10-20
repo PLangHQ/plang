@@ -55,7 +55,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     {
         var stat = await Stat(context);
         if (!stat.Success || stat.Exits) return data.@this<global::app.type.item.size.@this>.From(stat);
-        return context.Ok((await stat.Value())?.Size ?? new global::app.type.item.size.@this(0, context));
+        return context.Ok((await stat.Value())?.Size ?? global::app.type.item.size.@this.Create(0, context));
     }
 
     /// <summary>

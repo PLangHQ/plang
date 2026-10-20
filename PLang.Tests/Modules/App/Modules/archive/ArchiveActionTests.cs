@@ -54,7 +54,7 @@ public class ArchiveActionTests : IDisposable
             Value = global::app.data.@this<Archive>.From(new global::app.data.@this("archive", archive, context: Ctx)),
             Into = into == null ? null : At(into),
             Format = format == null ? null : Format(format),
-            Max = max == null ? global::app.data.@this<global::app.type.item.size.@this>.Uninitialized("max", Ctx) : new global::app.type.item.size.@this(max.Value, Ctx),
+            Max = max == null ? global::app.data.@this<global::app.type.item.size.@this>.Uninitialized("max", Ctx) : global::app.type.item.size.@this.Create(max.Value, Ctx),
         };
         await action.Attach(null, Ctx);
         return await action.Start();

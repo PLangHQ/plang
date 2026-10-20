@@ -59,5 +59,5 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
     /// content.</summary>
     public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.size.@this>> Size(global::app.actor.context.@this context)
         => Path is global::app.type.item.path.file.@this fp ? await fp.Size(context)
-            : context.Ok(new global::app.type.item.size.@this(0, context));
+            : context.Ok(global::app.type.item.size.@this.Create(0, context));
 }

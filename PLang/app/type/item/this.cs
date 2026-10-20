@@ -845,13 +845,44 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// The value's own write, in every format it has no look of its own for: what it is, through the writer's
     /// primitives (String, Number, Bytes, …); the writer decides how each looks. Every value with a form of its own (a
     /// leaf's one token, a structure's flat shape: error, path, permission, …) overrides this. The default is a
-    /// structure's face for the writer's view, through the reflection kind (its tagged members; a type that declares none
-    /// is the view's to answer). Resolved lazily as it reaches each node; <c>await</c>s happen here, between the writer's
-    /// synchronous buffer writes.
+    /// structure's face for the writer's view: the tagged members of its <see cref="Host"/>, each under its wire name
+    /// and nulls left out, each member's value written as the plang value it is. A type of plang's own that declares no
+    /// face for the view (a context, a callstack) is the view's to answer: the wire and the store refuse it, a dump
+    /// names it. A foreign type can't declare, so it shows all its members. Resolved lazily as it reaches each node;
+    /// <c>await</c>s happen here, between the writer's synchronous buffer writes.
     /// </summary>
-    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-        => (writer.Context.App.type.list["item"].kind["*"] as global::app.type.item.kind.reflection.@this
-            ?? global::app.type.item.kind.reflection.@this.Fallback).Output(this, writer);
+    protected internal virtual async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    {
+        var host = Host;
+        var type = host.GetType();
+        if (type.Assembly == typeof(@this).Assembly && !writer.View.Declares(type))
+        {
+            writer.View.Undeclared(host, writer);
+            return;
+        }
+        writer.BeginObject();
+        foreach (var entry in global::app.type.item.kind.reflection.Tagged.PropertiesFor(type, writer.View))
+        {
+            if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
+            object? value;
+            try { value = entry.Property.GetValue(host); }
+            catch (System.Exception ex)
+            {
+                throw new global::app.data.OutputException(
+                    $"Output failed reading {type.Name}.{entry.Property.Name}: {ex.Message}", "OutputGetterThrew", ex);
+            }
+            if (value == null) continue;
+            writer.Name(entry.WireName);
+            // a member holding a Data writes it whole; any other is the plang value it is
+            if (value is global::app.data.@this data) await data.Output(writer);
+            else await Create(value, writer.Context).Output(writer);
+        }
+        writer.EndObject();
+    }
+
+    /// <summary>The object whose tagged members the general write shows: the value itself, or the C# object a carrier
+    /// holds.</summary>
+    private protected virtual object Host => this;
 
     /// <summary>How this value looks in text, where it looks different there (a type is its word); by default its own
     /// write.</summary>
@@ -862,62 +893,4 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// own write.</summary>
     protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.goal.step.action.formal.Writer writer)
         => Write((global::app.type.format.IWriter)writer);
-
-    /// <summary>
-    /// Reflective Output for a STRUCTURAL item — writes its tagged property bag, the View selecting
-    /// the attribute set (<see cref="global::app.type.item.kind.reflection.Tagged"/>:
-    /// <c>Out→[Out]</c>, <c>Store→[Store]</c>, <c>Debug→all</c>). Each property value writes ITSELF:
-    /// an <see cref="@this"/> via its own <see cref="Output"/>, a raw C# scalar via the writer, a
-    /// sequence as an array. The general-object wire form; leaves and special shapes
-    /// (dict/list/clr/…) override <see cref="Output"/> directly. Replaces <c>NormalizeObject</c>.
-    /// </summary>
-    [System.Obsolete("Superseded by the reflection (*) kind's Output — do not add new callers.")]
-    protected async System.Threading.Tasks.ValueTask OutputTagged(global::app.type.format.IWriter writer)
-    {
-        writer.BeginObject();
-        foreach (var entry in global::app.type.item.kind.reflection.Tagged.PropertiesFor(GetType(), writer.View))
-        {
-            if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
-            var value = entry.Property.GetValue(this);
-            if (value == null) continue;   // nulls omitted (WhenWritingNull)
-            writer.Name(entry.WireName);
-            await WriteReflected(writer, value);
-        }
-        writer.EndObject();
-    }
-
-    // Writes a value reflected off a property: a plang value writes itself (Output), a sequence
-    // becomes an array of self-writes, a raw C# scalar goes through the writer. This is the
-    // reflection→wire boundary — C# primitives can't write themselves, so the writer renders them.
-    private static async System.Threading.Tasks.ValueTask WriteReflected(global::app.type.format.IWriter writer, object value)
-    {
-        switch (value)
-        {
-            // A plang value writes itself.
-            case @this item: await item.Output(writer); break;
-            // A Data-typed property (action.parameters) self-writes too — async, so it routes here,
-            // NOT through writer.Value (sync, peels to the OLD Peek().Write path).
-            case global::app.data.@this d: await d.Output(writer); break;
-            // BRIDGE: a raw C# collection (goal.steps / action.modifiers / action.parameters, until
-            // those become item.@this lists) writes as an array of self-writes. Deleted once they are items.
-            case System.Collections.IEnumerable seq when value is not (string or byte[]):
-                writer.BeginArray(-1);
-                foreach (var el in seq) if (el != null) await WriteReflected(writer, el);
-                writer.EndArray();
-                break;
-            // A domain HOST riding an [Out] property (test.Goal) — not writer vocabulary. This is the
-            // reflection→wire boundary, so it lifts the host to its plang value, which renders its own tagged face
-            // ([Out]/[Sensitive] discipline intact). Writer-vocabulary scalars (string/int/date/…) keep the writer's
-            // rendering.
-            default:
-                if (value is not System.IConvertible
-                    && writer.Context.App.type.list[value.GetType()].ClrType == typeof(global::app.type.clr.@this))
-                {
-                    await global::app.type.item.@this.Create(value, writer.Context).Output(writer);
-                    break;
-                }
-                writer.Value(value); break;
-        }
-    }
-
 }

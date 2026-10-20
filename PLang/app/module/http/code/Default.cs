@@ -287,7 +287,7 @@ public sealed class Default : IHttp
             totalRead += bytesRead;
             if (totalRead > maxBytes)
                 return context.Error<global::app.type.item.binary.@this>(new ServiceError(
-                    $"Response body exceeds maximum size of {(new global::app.type.item.size.@this(maxBytes, context))}",
+                    $"Response body exceeds maximum size of {(global::app.type.item.size.@this.Create(maxBytes, context))}",
                     "ResponseTooLarge", 413));
             limited.Write(buffer, 0, bytesRead);
 

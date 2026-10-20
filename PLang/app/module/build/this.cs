@@ -17,7 +17,7 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
 
     // .pr writes go through goal.Output (Store view) via the channel serializer; [Store] filtering
     // lives in the Output path (Tagged.PropertiesFor selects [Store] for View.Store; goal/step/action
-    // reflect via OutputTagged).
+    // write their own forms, the rest through item's tagged walk).
 
     public @this(actor.context.@this context)
     {

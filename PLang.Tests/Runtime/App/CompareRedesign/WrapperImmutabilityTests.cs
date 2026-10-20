@@ -27,6 +27,9 @@ public class WrapperImmutabilityTests
         typeof(global::app.type.item.datetime.@this),
         typeof(global::app.type.item.time.@this),
         typeof(global::app.type.item.duration.@this),
+        typeof(global::app.type.item.duration.@short.@this),   // duration's standards are its subclasses, each sealed
+        typeof(global::app.type.item.duration.iso.@this),
+        typeof(global::app.type.item.duration.dotnet.@this),
         typeof(global::app.type.item.@null.@this),
     };
 
@@ -80,8 +83,10 @@ public class WrapperImmutabilityTests
         // A subclass could add mutable state and flow through the same shared slots — so a wrapper is sealed,
         // EXCEPT text: decision 788 unsealed it to be the base for value-subclass kinds (separator). Those
         // kinds carry the same immutability contract (the field/property tests above cover separator), and
-        // they are themselves sealed, so the "no mutable state via a subclass" guarantee still holds.
-        var offenders = Wrappers.Where(w => !w.IsSealed && w != typeof(global::app.type.item.text.@this))
+        // they are themselves sealed, so the "no mutable state via a subclass" guarantee still holds. Duration is
+        // abstract the same way: its standards (short, iso, dotnet) are its sealed subclasses.
+        var offenders = Wrappers.Where(w => !w.IsSealed && w != typeof(global::app.type.item.text.@this)
+                && w != typeof(global::app.type.item.duration.@this))
             .Select(w => w.FullName).ToList();
         await Assert.That(offenders).IsEmpty();
     }

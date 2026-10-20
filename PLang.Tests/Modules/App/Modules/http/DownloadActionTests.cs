@@ -117,7 +117,7 @@ public class DownloadActionTests
             Unsigned = (global::app.type.item.@bool.@this)true,
             Path = to == null ? null : Ctx.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve(to, Ctx)),
             Hash = hash == null ? null : global::app.data.@this<global::app.module.crypto.type.hash.@this>.From(new global::app.data.@this("Hash", hash, context: Ctx)),
-            MaxDownloadSize = new global::app.type.item.size.@this(max ?? 100 * 1024 * 1024, Ctx),
+            MaxDownloadSize = global::app.type.item.size.@this.Create(max ?? 100 * 1024 * 1024, Ctx),
             OnProgress = progress ? new global::app.data.@this<global::app.goal.step.action.@this>("", global::PLang.Tests.Shared.Make.Call(Ctx, "Progressed"), context: Ctx) : null,
         };
         await action.Attach(null, Ctx);

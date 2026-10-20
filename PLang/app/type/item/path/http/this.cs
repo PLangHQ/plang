@@ -270,7 +270,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             return context.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(
                 Exists: true,
                 IsFile: true,
-                Size: resp.Content.Headers.ContentLength is { } length ? new global::app.type.item.size.@this(length, context) : null,
+                Size: resp.Content.Headers.ContentLength is { } length ? global::app.type.item.size.@this.Create(length, context) : null,
                 Modified: resp.Content.Headers.LastModified?.UtcDateTime));
         }
         catch (System.Exception ex) when (IsNetworkError(ex))

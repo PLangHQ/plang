@@ -6,8 +6,4 @@ public sealed class MaskedItem : global::app.type.item.@this
 {
     [global::app.Out, global::app.Store] public string? key { get; init; }
     [global::app.Out, global::app.Masked, global::app.Store] public object? value { get; init; }
-
-    /// <summary>A structural item — its tagged fields ride the wire.</summary>
-    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-        => OutputTagged(writer);
 }

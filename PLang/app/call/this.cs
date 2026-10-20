@@ -156,7 +156,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
 
     /// <summary>Wall time this frame has run — while in flight (an after-binding runs inside the frame) and, once
     /// popped, its whole duration. Null when the Timing flag was off at Push.</summary>
-    public global::app.type.item.duration.@this? Duration => _stopwatch is { } watch ? new(watch.Elapsed, _duration) : null;
+    public global::app.type.item.duration.@this? Duration => _stopwatch is { } watch ? new global::app.type.item.duration.@short.@this(watch.Elapsed, _duration) : null;
 
     // --- Diff tier (null when Flags.Diff off) ---
     /// <summary>

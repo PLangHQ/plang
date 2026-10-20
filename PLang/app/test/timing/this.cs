@@ -21,8 +21,4 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [Out] public string Text => Step.Text;
 
     [Out] public required global::app.type.item.duration.@this Elapsed { get; init; }
-
-    /// <summary>Self-write: a structural item — its tagged [Out] fields ride the wire.</summary>
-    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-        => OutputTagged(writer);
 }

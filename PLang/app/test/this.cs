@@ -227,11 +227,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private static readonly System.Text.RegularExpressions.Regex Ansi =
         new(@"\x1B\[[0-?]*[ -/]*[@-~]", System.Text.RegularExpressions.RegexOptions.Compiled);
 
-    /// <summary>Self-write: a test is a structural item — its tagged [Out] fields ride the
-    /// wire (the report serializes it), no hand-mapped shape.</summary>
-    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-        => OutputTagged(writer);
-
     // --- Execution transitions ---
 
     /// <summary>Begins timing — the test's run begins.</summary>

@@ -15,8 +15,8 @@ namespace app.type.item.duration;
 /// the empty-is-falsy convention of the other scalars. The bare wire form is
 /// ISO-8601 (<see cref="ToString"/>).</para>
 /// </summary>
-[global::app.Attributes.PlangType("duration")]
-public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
+[global::app.Attributes.PlangType("duration"), global::app.Attributes.Kinds]
+public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
     public static string Shape => "string";
@@ -27,33 +27,24 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
 
-    /// <summary>A duration is written by its type's kind, the standard it is in: <c>30s</c> stays <c>30s</c>,
-    /// <c>PT5M</c> stays <c>PT5M</c>.</summary>
-    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { Type.kind.Write(this, w); return default; }
+    /// <summary>A duration writes itself in the standard it is: a <c>short</c> as <c>30s</c>, an <c>iso</c> as
+    /// <c>PT5M</c>, a <c>dotnet</c> as <c>00:05:00</c> — each standard a kind of duration, a class of its own.</summary>
+    protected internal abstract override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer);
 
-    /// <summary>A span born holding <paramref name="type"/> — the app's {duration, kind}, the standard it is written
-    /// in its type's kind.</summary>
-    public @this(System.TimeSpan value, global::app.type.@this type) : base(type) => Value = value;
-
-    // A span through the C# implicit conversion, written short: its type is built here, from its class and the short
-    // standard (a kind of the one class-built duration type), until the implicit-conversion branch removes that conversion.
-    private static readonly global::app.type.@this family = new("duration", typeof(@this));
-    private static readonly kind.@this @short = new kind.@short.@this(family);
-    private @this(System.TimeSpan value)
-        : base(new global::app.type.@this("duration", typeof(@this)) { kind = @short }) => Value = value;
+    /// <summary>A span born holding <paramref name="type"/> — the app's {duration, standard}.</summary>
+    protected @this(System.TimeSpan value, global::app.type.@this type) : base(type) => Value = value;
 
     /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan is born short; a string (30s, ISO-8601
-    /// <c>PT30S</c> or .NET <c>00:00:30</c>, via <see cref="Resolve"/>) parses in its own standard — each made with
-    /// the app's duration kinds, as <paramref name="context"/>'s types hold them; anything else declines
-    /// (<c>null</c>). A text-wrapped literal unwraps through <c>Clr&lt;object&gt;()</c>. Shared by the ICreate
-    /// courier and comparison coercion.</summary>
+    /// <c>PT30S</c> or .NET <c>00:00:30</c>, via <see cref="Resolve"/>) is the standard it is written in, as
+    /// <paramref name="context"/>'s types hold them; anything else declines (<c>null</c>). A text-wrapped literal
+    /// unwraps through <c>Clr&lt;object&gt;()</c>. Shared by the ICreate courier and comparison coercion.</summary>
     public static @this? Create(object? raw, global::app.actor.context.@this context)
     {
         if (raw is @this self) return self;
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
         return value switch
         {
-            System.TimeSpan ts => new @this(ts, context.App.type.list[new global::app.type.@this("duration", "short"), context]),
+            System.TimeSpan ts => new @short.@this(ts, context.App.type.list[new global::app.type.@this("duration", "short"), context]),
             string s => Resolve(s, context),
             _ => null,
         };
@@ -65,10 +56,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (Create(value, data.Context) is { } built)
         {
-            // asked for in a standard (`as iso`): the same span, written in that one
+            // asked for in a standard (`as iso`): the same span, made by that standard, the type its values are as a
+            // kind of the app's duration
             if (declared?.kind is { IsEmpty: false } asked && !string.Equals(asked.Name, built.Type.kind.Name, System.StringComparison.OrdinalIgnoreCase)
-                && data.Context.App.type.list["duration"].kind[asked.Name] is not null)
-                return new @this(built.Value, data.Context.App.type.list[new global::app.type.@this("duration", asked.Name), data.Context]);
+                && data.Context.App.type.list["duration"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
+                return new global::app.type.@this(standard.Owner!, standard, false, null).Make(built.Value, data) as @this;
             return built;
         }
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
@@ -80,7 +72,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // Both directions are lossless; the wrapper owns its conversions. TimeSpan is a
     // value type so `d == null` is unambiguous (matches only @this==@this).
     public static implicit operator System.TimeSpan(@this d) => d.Value;
-    public static implicit operator @this(System.TimeSpan t) => new(t);
+    public static implicit operator @this(System.TimeSpan t) => new @short.@this(t);
 
     public static bool operator ==(@this? a, @this? b) => a is null ? b is null : a.Equals(b);
     public static bool operator !=(@this? a, @this? b) => !(a == b);

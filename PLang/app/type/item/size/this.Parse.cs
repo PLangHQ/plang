@@ -1,25 +1,22 @@
 namespace app.type.item.size;
 
 /// <summary>
-/// String → size. Each standard reads its own suffixes (<c>kind/iec</c> KiB MiB…, <c>kind/si</c> kB MB…, any case); the
-/// suffixes don't overlap, so the text names its kind and the size is born with it. A number with no unit, or with
-/// <c>B</c>, is a count of bytes: written in its asker's standard, or the setting's default with no asker.
+/// String → size. Each standard is a kind of size and a class of its own, reading its own suffixes (<c>iec</c> KiB
+/// MiB…, <c>si</c> kB MB…, any case); the suffixes don't overlap, so the text names its standard and the size is born
+/// that one. A number with no unit, or with <c>B</c>, is a count of bytes, made by its asker's standard. The standards
+/// asked are the app's own kinds of size, each through its own type's make.
 /// </summary>
-public sealed partial class @this
+public abstract partial class @this
 {
-    public static @this? Resolve(string raw, global::app.actor.context.@this? context)
+    public static @this? Resolve(string raw, global::app.actor.context.@this context)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
         raw = raw.Trim();
         var count = System.Text.RegularExpressions.Regex.Match(raw, @"^(\d+)\s*(?:b|bytes?)?$",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        if (count.Success && long.TryParse(count.Groups[1].Value, out var bytes))
-            return context != null ? new @this(bytes, context) : new @this(bytes);
-        // the app's standards when there is an asker, else the class-built ones
-        var standards = context?.App.type.list[typeof(@this)].kind is global::app.type.kind.empty.@this root
-            ? root.Kinds.OfType<kind.@this>() : Standards;
-        foreach (var standard in standards)
-            if (standard.Bytes(raw) is { } inIt) return new @this(inIt, standard);
+        if (count.Success && long.TryParse(count.Groups[1].Value, out var bytes)) return Create(bytes, context);
+        foreach (var type in context.App.type.list["size"].kind.list(context).Items())
+            if (type.Make(raw, new global::app.data.@this("", context: context)) is @this size) return size;
         return null;
     }
 }

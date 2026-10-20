@@ -27,10 +27,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public @this(long moved, long? total, bool sent, global::app.actor.context.@this context)
         : base(context.App.type.list[typeof(@this)])
     {
-        var size = new global::app.type.item.size.@this(moved, context);
+        var size = global::app.type.item.size.@this.Create(moved, context);
         if (sent) Sent = size;
         else Received = size;
-        Total = total is { } all ? new global::app.type.item.size.@this(all, context) : null;
+        Total = total is { } all ? global::app.type.item.size.@this.Create(all, context) : null;
         Percent = total is > 0 ? (global::app.type.item.number.@this)decimal.Round(moved * 100m / total.Value, 1) : null;
     }
 

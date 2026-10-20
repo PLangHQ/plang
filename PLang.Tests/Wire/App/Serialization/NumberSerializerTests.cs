@@ -4,9 +4,8 @@ using number = global::app.type.item.number.@this;
 namespace PLang.Tests.App.Serialization;
 
 // plang-types — Stage 3
-// A number writes itself — writer.Int/Long/Decimal/Double/Float by Kind. Uniform across
-// formats: number renders the same in every writer (the IWriter primitive vocabulary is
-// the cross-format contract).
+// A number writes itself — writer.Value with the value its precision holds (an int, a long, a decimal, …); the
+// writer decides how each looks. Uniform across formats: a number hands every writer the same value.
 
 public class NumberSerializerTests
 {
@@ -39,47 +38,47 @@ public class NumberSerializerTests
         public void Name(string n) { LastMethod = "Name"; Last = n; }
         public void EndObject() { LastMethod = "EndObject"; }
         public void EndArray() { }
-        public void Value(object? normalized) { }
+        public void Value(object? normalized) { LastMethod = "Value"; Last = normalized; }
     }
 
-    [Test] public async Task Number_KindInt_Default_EmitsWriterInt()
+    [Test] public async Task Number_KindInt_Default_HandsTheWriterAnInt()
     {
         var w = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
         await ((number)(7)).Output(w);
-        await Assert.That(w.LastMethod).IsEqualTo("Int");
-        await Assert.That(w.Last).IsEqualTo(7);
+        await Assert.That(w.LastMethod).IsEqualTo("Value");
+        await Assert.That(w.Last).IsTypeOf<int>().And.IsEqualTo(7);
     }
 
-    [Test] public async Task Number_KindLong_Default_EmitsWriterLong()
+    [Test] public async Task Number_KindLong_Default_HandsTheWriterALong()
     {
         var w = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
         await ((number)(7L)).Output(w);
-        await Assert.That(w.LastMethod).IsEqualTo("Long");
-        await Assert.That(w.Last).IsEqualTo(7L);
+        await Assert.That(w.LastMethod).IsEqualTo("Value");
+        await Assert.That(w.Last).IsTypeOf<long>().And.IsEqualTo(7L);
     }
 
-    [Test] public async Task Number_KindDecimal_Default_EmitsWriterDecimal()
+    [Test] public async Task Number_KindDecimal_Default_HandsTheWriterADecimal()
     {
         var w = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
         await ((number)(3.14m)).Output(w);
-        await Assert.That(w.LastMethod).IsEqualTo("Decimal");
-        await Assert.That(w.Last).IsEqualTo(3.14m);
+        await Assert.That(w.LastMethod).IsEqualTo("Value");
+        await Assert.That(w.Last).IsTypeOf<decimal>().And.IsEqualTo(3.14m);
     }
 
-    [Test] public async Task Number_KindDouble_Default_EmitsWriterDouble()
+    [Test] public async Task Number_KindDouble_Default_HandsTheWriterADouble()
     {
         var w = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
         await ((number)(2.5)).Output(w);
-        await Assert.That(w.LastMethod).IsEqualTo("Double");
-        await Assert.That(w.Last).IsEqualTo(2.5);
+        await Assert.That(w.LastMethod).IsEqualTo("Value");
+        await Assert.That(w.Last).IsTypeOf<double>().And.IsEqualTo(2.5);
     }
 
-    [Test] public async Task Number_KindFloat_Default_EmitsWriterFloat()
+    [Test] public async Task Number_KindFloat_Default_HandsTheWriterAFloat()
     {
         var w = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
         await ((number)(2.5f)).Output(w);
-        await Assert.That(w.LastMethod).IsEqualTo("Float");
-        await Assert.That(w.Last).IsEqualTo(2.5f);
+        await Assert.That(w.LastMethod).IsEqualTo("Value");
+        await Assert.That(w.Last).IsTypeOf<float>().And.IsEqualTo(2.5f);
     }
 
     [Test] public async Task Number_Wire_RoundTrip_PreservesValueAndKind()
@@ -97,10 +96,10 @@ public class NumberSerializerTests
 
     [Test] public async Task Number_TextWriter_WritesSameAsEveryFormat()
     {
-        // A number writes the same primitive whatever the writer's Format.
+        // A number hands every writer the same value, whatever its format.
         var w = new CaptureWriter(app.type.list["text"].kind, app.actor.list.System.Context);
         await ((number)(7)).Output(w);
-        await Assert.That(w.LastMethod).IsEqualTo("Int");
+        await Assert.That(w.LastMethod).IsEqualTo("Value");
     }
 
     [Test] public async Task Number_Decimal_ShortestRoundTrip_NoTrailingZeros()
