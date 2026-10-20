@@ -67,7 +67,10 @@ public class CollectedTypeTests
     {
         var buffer = new System.IO.MemoryStream();
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(buffer))
-            await value.Output(new global::app.type.item.kind.json.Writer(utf8, app.type.list, view), view, app.actor.list.User.Context);
+        {
+            var json = new global::app.type.item.kind.json.Writer(utf8, app.type.list, view);
+            await json.Kind.pair.Output(value, json, view, app.actor.list.User.Context);
+        }
         return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
     }
 

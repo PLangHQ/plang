@@ -323,7 +323,10 @@ public class Fluid : ITemplate
         public override string ToStringValue()
         {
             using var written = new MemoryStream();
-            var output = item.Output(Writer(written), global::app.View.Out, context);
+            var text = Writer(written);
+            // liquid asks for the text synchronously (ToStringValue has no async form), so the write is never awaited
+            // here: one that hasn't completed at once is refused
+            var output = text.Kind.pair.Output(item, text, global::app.View.Out, context);
             if (!output.IsCompletedSuccessfully)
                 throw new System.NotSupportedException("a template shows a value whose output waits on I/O — read it first");
             return System.Text.Encoding.UTF8.GetString(written.ToArray());
@@ -333,7 +336,8 @@ public class Fluid : ITemplate
             System.Globalization.CultureInfo cultureInfo)
         {
             using var written = new MemoryStream();
-            await item.Output(Writer(written), global::app.View.Out, context);
+            var text = Writer(written);
+            await text.Kind.pair.Output(item, text, global::app.View.Out, context);
             writer.Write(encoder.Encode(System.Text.Encoding.UTF8.GetString(written.ToArray())));
         }
 
