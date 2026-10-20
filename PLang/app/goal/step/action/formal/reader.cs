@@ -353,13 +353,14 @@ public sealed class Reader
             var face = declaredFace != "item" ? declaredFace : written ?? LiteralType(value);
             var type = _context.App.type.list[new global::app.type.@this(TypeName(face), TypeKind(face)), _context];
             global::app.type.item.@this born;
+            // a slot whose elements are records ([Records]: goal.call's Parameter) reads each a record, its name, its type
+            // and its value (a %x% value born a template on its own): never rendered as one list, which would drop
+            // their names. Any other slot is what the step wrote: a list of objects stays a list of objects
+            var holdsRecords = declared.Member?.IsDefined(typeof(global::app.Attributes.RecordsAttribute), inherit: false) == true;
             if (value.Action != null) born = value.Action;
-            // a list of arguments is a list of records, each its name, its type and its value (a %x% value born a
-            // template on its own): never rendered as one list, which would drop their names. In a list of a kind
-            // (llm.query's list<message>) or an open slot, `[{Role: "user", …}]` stays a list of dicts
-            else if (declared.Type.Name == "list" && value.Items is { Count: > 0 } records && records.All(r => r.Entries is [_]))
+            else if (holdsRecords && value.Items is { } records && records.All(r => r.Entries is [_]))
                 born = Born(type, await Arguments(records), marks: false);
-            else if (declared.Type.Name == "list" && value.Entries != null)
+            else if (holdsRecords && !value.IsVariable)
             { Fail($"`{prop}` takes a list of arguments, each a record: {prop}=[{{name: type = value}}, {{other: type = %x%}}]", at); return default; }
             else if (value.Entries != null && value.Entries.Any(e => e.Type != null))
             { Fail($"`{prop}` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments", at); return default; }

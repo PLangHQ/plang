@@ -17,6 +17,7 @@ public partial class call : IContext
 
     /// <summary>The arguments — one named row each, as for <c>goal.call</c>; the function gets them as
     /// one object, a property per name.</summary>
+    [global::app.Attributes.Records]
     public partial data.@this<global::app.type.item.list.@this>? Parameter { get; init; }
 
     /// <summary>The window: one from <c>window.open</c>, <c>%browser.desktop%</c>, or its id on the screen (with Browser).</summary>

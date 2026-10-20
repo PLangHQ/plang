@@ -10,6 +10,7 @@ public partial class Render : IContext
     public partial data.@this<global::app.type.item.text.@this> Template { get; init; }
 
     /// <summary>Explicit parameters that override Variables in the template.</summary>
+    [global::app.Attributes.Records]
     public partial data.@this<global::app.type.item.list.@this>? Parameter { get; init; }
 
     /// <summary>

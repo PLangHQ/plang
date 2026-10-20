@@ -19,6 +19,7 @@ public partial class Call : IContext
 
     /// <summary>The parameters — one named, typed row each, bound as a variable of that name in the
     /// called goal.</summary>
+    [global::app.Attributes.Records]
     public partial data.@this<global::app.type.item.list.@this>? Parameter { get; init; }
 
     /// <summary>
