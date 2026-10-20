@@ -520,6 +520,42 @@
         "health": "keep the branch; fix at the root in stages 1, 2 pairs, 2 wire, 5 and two patches",
         "notes": "verdict fail"
       }
+    },
+    {
+      "id": "6ffb5e98-2b0d-47d3-ae3e-269e79dd4992",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-20T18:11:49Z",
+      "intent": "Independent OBP re-check of the door reshape (decision 184)",
+      "before": {
+        "assumptions": "Claims 167-183 are unverified until read in code",
+        "risk": "Large diff (172 files); mechanical conversions may hide forks"
+      },
+      "plan": ".bot/item-doors/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/View.cs",
+            "PLang/app/type/item/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/kind/this.cs",
+            "PLang/app/goal/step/action/formal/writer.cs",
+            "PLang/app/type/item/size/this.cs",
+            "PLang/app/type/item/duration/this.cs",
+            "PLang/app/type/item/wire/template.cs",
+            "PLang/app/type/item/wire/kind/plang/writer.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read-only OBP re-check of the door reshape 6ff57ceb4^..12fa4b1bd. Claims 167-183 checked in code; eight fix-at-root findings, four holds; new names listed. Auditor's report not read."
+        }
+      ],
+      "timestamp_end": "2026-10-20T18:17:16Z",
+      "after": {
+        "status": "report written: .bot/item-doors/codeanalyzer/v2/report.md",
+        "health": "shape holds; fix at the root: view asked from template/plang writer, kept-or-used in four holders, Own hook, kind undo, size/duration standards, tag predicate, CLR-number switch, view default",
+        "notes": "verdict fail; no build or test run by me"
+      }
     }
   ]
 }
