@@ -10,7 +10,15 @@ namespace app.goal.program;
 /// </summary>
 internal static class @this
 {
-    private sealed record Held(System.DateTime? Modified, long Size, global::app.goal.@this Goal);
+    private sealed record Held(System.DateTime? Modified, long Size, global::app.goal.@this Goal)
+    {
+        // when its file was last found unchanged (Environment.TickCount64)
+        public long Checked = System.Environment.TickCount64;
+    }
+
+    // How long a goal checked against its file is taken as fresh without asking the file again: a server loading the
+    // same goal per request stats it at most once in this window, and a changed .pr is read within it.
+    private const long Fresh = 1000;
 
     // the folder's reader, one per code and folder
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<(global::app.assembly.@this Code, string Root),
@@ -26,13 +34,20 @@ internal static class @this
         var context = app.actor.list.System.Context;
         if (app.Build != null || !ReferenceEquals(context.FileSystem, app.FileSystem)) return null;
 
-        var stat = await pr.Stat(context);
-        if (!stat.Success || await stat.Value() is not { Exists: true } found) return null;
         var code = app.type.list.Code;
         var key = (code, app.AbsolutePath, pr.ToString());
+        // checked within the window: the file is taken as it was
+        if (Goals.TryGetValue(key, out var recent) && System.Environment.TickCount64 - recent.Checked < Fresh)
+            return context.Ok(recent.Goal);
+
+        var stat = await pr.Stat(context);
+        if (!stat.Success || await stat.Value() is not { Exists: true } found) return null;
         var size = found.Size?.Value ?? -1;
         if (Goals.TryGetValue(key, out var held) && held.Modified == found.Modified && held.Size == size)
+        {
+            held.Checked = System.Environment.TickCount64;
             return context.Ok(held.Goal);
+        }
 
         var reader = Readers.GetOrAdd((code, app.AbsolutePath), static at => new(
             () => new global::app.@this(at.Root, autoWireConsoleChannels: false, assembly: at.Code),
