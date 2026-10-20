@@ -39,11 +39,11 @@ A value is written as the step writes it:
 
 In any `name=value` argument — a goal's parameters, a render's parameters, any action that takes named arguments — `name` is kept as the argument's name, even when it is a plang word such as `module`, `file` or `goal`, and even when the value is a variable of the same name: `error=%error%` → `{error: %error%}`, never a bare `%error%` with no name (a value with no name binds nothing). `name` is what reads the value (`%name%`); it is never a module or action of the step.
 
-The arguments a step passes to a goal are one dict in Parameter:
-  `call SendMail to=%email%, subject="Hi"` → goal.call(Name="SendMail", Parameter={to: %email%, subject: "Hi"})
+The arguments a step passes to a goal are a list in Parameter, each argument one record of its name and value:
+  `call SendMail to=%email%, subject="Hi"` → goal.call(Name="SendMail", Parameter=[{to: %email%}, {subject: "Hi"}])
 
 { } is a condition's body, and only a condition has one. Anything else is written one after the other:
-`foreach %list%, call X item=%item%` → loop.foreach(Collection=%list%); goal.call(Name="X", Parameter={item: %item%})
+`foreach %list%, call X item=%item%` → loop.foreach(Collection=%list%); goal.call(Name="X", Parameter=[{item: %item%}])
 A condition's body goes in its { }; the next branch of the same chain follows after ; :
   condition.if(Left=%n%, Operator="<", Right=5) { goal.return() }; condition.else() { output.write(Data="ok") }
 A clause (on.error, on.cache, on.timeout) comes right after the action it is a clause of; several stand in the
@@ -57,13 +57,13 @@ Common steps, and their formal:
   set %count% = 0                                 variable.set(Name=%count%, Value=0)
   set %total% = %a% + %b%                         math.add(A=%a%, B=%b%); variable.set(Name=%total%, Value=%!data%)
   set %d%(duration) = "PT5M"                      variable.set(Name=%d%, Value="PT5M", Type="duration")
-  call SendMail to=%email%, subject="Hi"          goal.call(Name="SendMail", Parameter={to: %email%, subject: "Hi"})
-  foreach %orders%, call Ship order=%item%        loop.foreach(Collection=%orders%); goal.call(Name="Ship", Parameter={order: %item%})
+  call SendMail to=%email%, subject="Hi"          goal.call(Name="SendMail", Parameter=[{to: %email%}, {subject: "Hi"}])
+  foreach %orders%, call Ship order=%item%        loop.foreach(Collection=%orders%); goal.call(Name="Ship", Parameter=[{order: %item%}])
   save %report% to file 'report.txt'              file.save(Path="report.txt", Value=%report%)
   if %age% >= 18, call Adult                      condition.if(Left=%age%, Operator=">=", Right=18) { goal.call(Name="Adult") }
   get https://example.com/rates, write to %rates% http.request(Url="https://example.com/rates"); variable.set(Name=%rates%, Value=%!data%)
   render "page.html", title=%title%, write to %html%
-                                                  ui.render(Template="page.html", Parameter={title: %title%}); variable.set(Name=%html%, Value=%!data%)
+                                                  ui.render(Template="page.html", Parameter=[{title: %title%}]); variable.set(Name=%html%, Value=%!data%)
   call Compile, on error call LogError            goal.call(Name="Compile"); on.error(Recovery=[goal.call(Name="LogError")])
 
 Rules

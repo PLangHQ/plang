@@ -246,7 +246,7 @@ public sealed class @this : global::app.type.item.note.IAbout
     /// angle brackets; the value writes itself.</summary>
     public async System.Threading.Tasks.ValueTask Row(global::app.goal.step.action.formal.Writer writer, bool frozen)
     {
-        writer.Row(Name, Type.kind.IsEmpty ? Type.Name : $"{Type.Name}<{Type.kind.Name}>", frozen);
+        writer.Row(Name, Type, frozen);
         if (Value is { } value) await value.Output(writer);
         else writer.Null();
     }

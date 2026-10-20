@@ -5,13 +5,13 @@ Start
 / A cached goal — the source its .pr was built from, every step and sub-goal cached — isn't built:
 / its cache stands.
 - if %goal.IsCached%, return %goal.Cache%
-- goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "goalHeader", goal: %goal%})
+- goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "goalHeader"}, {goal: %goal%}])
 - set %buildStart% = %Now.Ticks%
 - set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": "%goal.Name%", "subGoals": [], "durationMs": 0}
 - goal.call(Name="Compile"); on.error(Key="StepsRefused", Recovery=[goal.call(Name="LeaveBroken")]); on.error(Recovery=[goal.call(Name="HandleBuildFailure")])
 
 - set %parentGoal% = %goal%
-- loop.foreach(Collection=%parentGoal.Child%); goal.call(Name="BuildSubGoal", Parameter={subGoal: %item%})
+- loop.foreach(Collection=%parentGoal.Child%); goal.call(Name="BuildSubGoal", Parameter=[{subGoal: %item%}])
 - set %goal% = %parentGoal%
 
 - math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
@@ -43,7 +43,7 @@ Compile
 / Continue the conversation with them; only those steps are answered again, and the others keep the
 / code they took. The answer is read again here, so numbers it leaves to confirm are confirmed too.
 FixSteps
-- goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "properties-rejected", errorMessage: %!error.Message%})
+- goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "properties-rejected"}, {errorMessage: %!error.Message%}])
 - set %fixMessages% = [{"Role":"user", "Content":"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal."}]
 - llm.query(Message=%fixMessages%, Model="gpt-5.4-nano", Cache=%!build.setting.cache%, Conversation={continue: %answer%}); variable.set(Name=%answer%, Value=%!data%)
 - build.match(Goal=%goal%, Answer=%answer%); on.error(Recovery=[goal.call(Name="ConfirmNumbers")], Key="UnwrittenNumber")
@@ -63,13 +63,13 @@ ConfirmNumbers
 / Sub-goal recursion — the same three stages, attached to the parent trace.
 BuildSubGoal
 - set %goal% = %subGoal%
-- goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "subGoalHeader", goal: %goal%})
+- goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "subGoalHeader"}, {goal: %goal%}])
 - set %subgoalStart% = %Now.Ticks%
 - goal.call(Name="Compile"); on.error(Key="StepsRefused", Recovery=[goal.call(Name="LeaveBroken")]); on.error(Recovery=[goal.call(Name="HandleBuildFailure")])
 - add {goal: "%goal.Name%"} to %trace.subGoals%
 - math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
 - math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
-- goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "subGoalDone", goal: %goal%, subgoalMs: %subgoalMs%})
+- goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "subGoalDone"}, {goal: %goal%}, {subgoalMs: %subgoalMs%}])
 
 
 / The programmer's plang is wrong, not the LLM's answer, so nothing is retried. The LLM writes the
@@ -84,7 +84,7 @@ SourceError
 
 / Capture error onto trace, save, rethrow. No null-pass inference.
 HandleBuildFailure
-- goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "goalError", goal: %goal%, errorMessage: %!error.Message%, fix: %!error.FixSuggestion%})
+- goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "goalError"}, {goal: %goal%}, {errorMessage: %!error.Message%}, {fix: %!error.FixSuggestion%}])
 - set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "%goal.Name%"}
 - save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
 - throw %!error%

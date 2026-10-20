@@ -62,9 +62,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// example, alias, kind) are reached by navigation (<c>%!app.type.text.description%</c>).</summary>
     protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
     {
-        writer.String(kind.IsEmpty ? Name : $"{Name}<{kind.Name}>");
+        writer.String(Face);
         return default;
     }
+
+    /// <summary>The word a type goes by with its kind (<c>text</c>, <c>list&lt;path&gt;</c>): what text writes, and what a
+    /// formal row names its type by (<c>Path: path = …</c>).</summary>
+    internal string Face => kind.IsEmpty ? Name : $"{Name}<{kind.Name}>";
 
     /// <summary>The name the type goes by — the word its class declares (<c>text</c>), else its
     /// <see cref="Namespace"/>. What the wire, a <c>.pr</c> slot and the prompts write.</summary>
@@ -577,8 +581,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // The entity's face — a kinded type writes its kind in its name (number<decimal>, list<path>, text<md>),
     // a kindless one its name alone. The face is the type's own; which faces a prompt shows is the builder's
     // business, not ToString's. Templates and catalog text print this.
-    public override string ToString()
-        => kind.IsEmpty ? Name : $"{Name}<{kind.Name}>";
+    public override string ToString() => Face;
 
     /// <summary>
     /// Value equality — the entity is minted on ask now, so two asks yield two

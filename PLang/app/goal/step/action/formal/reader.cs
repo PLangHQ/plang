@@ -354,9 +354,13 @@ public sealed class Reader
             var type = _context.App.type.list[new global::app.type.@this(TypeName(face), TypeKind(face)), _context];
             global::app.type.item.@this born;
             if (value.Action != null) born = value.Action;
-            // argument rows are named rows, each value its own (a %x% row value is born a template on
-            // its own): the rows are never rendered as one list, which would drop their names
-            else if (declared.Type.Name == "list" && value.Entries != null) born = Born(type, await Arguments(value), marks: false);
+            // a list of arguments is a list of records, each its name, its type and its value (a %x% value born a
+            // template on its own): never rendered as one list, which would drop their names. In a list of a kind
+            // (llm.query's list<message>) or an open slot, `[{Role: "user", …}]` stays a list of dicts
+            else if (declared.Type.Name == "list" && value.Items is { Count: > 0 } records && records.All(r => r.Entries is [_]))
+                born = Born(type, await Arguments(records), marks: false);
+            else if (declared.Type.Name == "list" && value.Entries != null)
+            { Fail($"`{prop}` takes a list of arguments, each a record: {prop}=[{{name: type = value}}, {{other: type = %x%}}]", at); return default; }
             else if (value.Entries != null && value.Entries.Any(e => e.Type != null))
             { Fail($"`{prop}` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments", at); return default; }
             else born = Born(type, Json(value));
@@ -425,14 +429,14 @@ public sealed class Reader
             };
         }
 
-        // A dict handed to a list property is its argument rows, each typed like a property: the written
+        // A list of records handed to a list property is its arguments, each typed like a property: the written
         // type, else the literal's own.
         // Each argument is its own row; one the programmer wrote with a %variable% is marked a template
         // on its row, as a top-level row is (Born) — the mark is born here, at build.
-        private async System.Threading.Tasks.Task<string> Arguments(Literal v)
+        private async System.Threading.Tasks.Task<string> Arguments(List<Literal> records)
         {
             var rows = new List<string>();
-            foreach (var e in v.Entries!)
+            foreach (var e in records.Select(r => r.Entries![0]))
             {
                 var json = Json(e.Value);
                 var variables = Variables(json).DistinctBy(x => x.Text).ToList();
@@ -496,11 +500,6 @@ public sealed class Reader
             }
             if (c == '[')
             {
-                // argument rows written as a list — only where the slot takes rows (a list of nothing in
-                // particular, goal.call's Parameter); in a list of a kind (llm.query's list<message>) or an open
-                // slot, `[{Role: "user", …}]` is a list of dicts
-                if (declared == "list" && Match(@"\[\s*(\{\s*)?[A-Za-z_]\w*\s*[=:]") != null)
-                    Fail("arguments are written as one dict: Parameter={name: \"value\", other: %x%}");
                 _pos++;
                 var items = new List<Literal>();
                 while (!Peek("]"))

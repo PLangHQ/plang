@@ -479,7 +479,7 @@ public class MatchTests
         await Picked(goal, app.actor.list.System.Context, (4, "condition.if"), (4, "goal.call"));
 
         var result = await Match(goal,
-            "[4] condition.if(Left=%order.coupon%, Operator=isempty, Right=null) { } ; condition.else() { goal.call(Name=\"ApplyCoupon\", Parameter={code: %order.coupon%, order: %order%}) }",
+            "[4] condition.if(Left=%order.coupon%, Operator=isempty, Right=null) { } ; condition.else() { goal.call(Name=\"ApplyCoupon\", Parameter=[{code: %order.coupon%}, {order: %order%}]) }",
             app.actor.list.System.Context);
 
         await result.IsFailure();

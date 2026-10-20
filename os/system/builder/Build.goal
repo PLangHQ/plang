@@ -13,7 +13,7 @@ Build
 - build.load, write to %app%
 - build.goals path=%path%, write to %goals%
 - call EmitBuildEvent kind="goals-found", goals=%goals%
-- loop.foreach(Collection=%goals%); goal.call(Name="/system/builder/BuildGoal", Parameter={goal: %item%})
+- loop.foreach(Collection=%goals%); goal.call(Name="/system/builder/BuildGoal", Parameter=[{goal: %item%}])
 - build.unreached
 - save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'
 - build.appSave

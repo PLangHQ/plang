@@ -207,25 +207,42 @@ public sealed class Writer : IWriter
     }
 
     /// <summary>A row — a call's property or an argument: <c>Name: type = </c>, <c>?=</c> for a frozen
-    /// default; its value follows.</summary>
-    public void Row(string name, string type, bool frozen = false)
+    /// default; the type named by the word it goes by, its value following.</summary>
+    public void Row(string name, global::app.type.@this type, bool frozen = false)
     {
         if (_frames.Peek().Kind == Frame.Record) Close();
         var (kind, count) = _frames.Pop();
         if (count > 0) _out.Append(", ");
         _frames.Push((kind, count + 1));
-        _out.Append(name).Append(": ").Append(type).Append(frozen ? " ?= " : " = ");
+        _out.Append(name).Append(": ").Append(type.Face).Append(frozen ? " ?= " : " = ");
         Open(Frame.Record);
     }
 
-    /// <summary>Argument rows: <c>{kind: text = "x", path: item = %path%}</c>.</summary>
-    public void BeginRows() { Element(); _out.Append('{'); Open(Frame.Rows); }
+    // whether each Data written opened its record, so its end closes what it opened
+    private readonly Stack<bool> _records = new();
 
-    public void EndRows()
+    /// <summary>A Data that is an element of a sequence (an argument in a list) is its record:
+    /// <c>{name: type = value}</c>, its value following. A Data written after a name (a dict's entry) or with no name of
+    /// its own is its value alone.</summary>
+    public System.Threading.Tasks.ValueTask BeginRecord(global::app.data.@this record, bool layer)
     {
+        var opens = _frames.Peek().Kind == Frame.Array && !string.IsNullOrEmpty(record.Name);
+        _records.Push(opens);
+        if (!opens) return default;
+        Element();
+        _out.Append('{');
+        Open(Frame.Rows);
+        Row(record.Name, record.Type);
+        return default;
+    }
+
+    public System.Threading.Tasks.ValueTask EndRecord(global::app.data.@this record)
+    {
+        if (!_records.Pop()) return default;
         if (_frames.Peek().Kind == Frame.Record) Close();
         Close();
         _out.Append('}');
+        return default;
     }
 
     /// <summary>A sequence of actions: <c>a; b</c> — a step's, or a condition's body inside

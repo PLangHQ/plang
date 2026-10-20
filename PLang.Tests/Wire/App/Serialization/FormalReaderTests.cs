@@ -311,12 +311,12 @@ public class FormalReaderTests : System.IAsyncDisposable
 
         var refused = await action.Validate(ctx);
 
-        await Assert.That(refused?.Message).Contains("write each argument as the step names it, {<the name before =>: %!app.module.file%}");
+        await Assert.That(refused?.Message).Contains("write each argument as the step names it, [{<the name before =>: %!app.module.file%}]");
     }
 
     [Test]
-    [Arguments("{module: %!app.module.file%}")]
-    [Arguments("{}")]
+    [Arguments("[{module: %!app.module.file%}]")]
+    [Arguments("[]")]
     public async Task AGoalCallsNamedRows_OrNone_Pass(string parameter)
     {
         var ctx = app.actor.list.User.Context;
@@ -398,12 +398,12 @@ public class FormalReaderTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task GoalCallsParameters_WrittenAsAListOfDicts_AreRefused()
+    public async Task GoalCallsParameters_WrittenAsOneDict_AreRefused()
     {
-        var read = await Read("goal.call(Name=\"X\", Parameter=[{kind: \"a\"}])", out _);
+        var read = await Read("goal.call(Name=\"X\", Parameter={kind: \"a\"})", out _);
 
         await read.IsFailure();
-        await Assert.That(read.Error!.Message).Contains("arguments are written as one dict");
+        await Assert.That(read.Error!.Message).Contains("takes a list of arguments, each a record");
     }
 
     [Test]

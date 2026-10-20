@@ -1916,7 +1916,6 @@ class app.type.item.list.this : app.type.item.this, app.type.item.ICreate<app.ty
   override Where(app.type.item.text.this field, app.data.Operator op, app.data.this value, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   protected Slots() : System.Collections.Generic.IEnumerable<System.Object>
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  protected override Write(app.goal.step.action.formal.Writer writer) : System.Threading.Tasks.ValueTask
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected virtual Admit(System.Object slot) : System.Void
   protected virtual Admit(app.type.item.list.this other) : System.Void

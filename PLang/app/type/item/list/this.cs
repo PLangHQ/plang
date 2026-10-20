@@ -248,26 +248,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         writer.EndArray();
     }
 
-    /// <summary>A list in formal. A list whose every element is a NAMED Data is a list of arguments (goal.call's and
-    /// ui.render's <c>Parameter</c>): each is a row, written like a property — <c>{kind: text = "x", path: item = %path%}</c>.
-    /// Any other list is its elements: <c>[a, b]</c>.</summary>
-    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.goal.step.action.formal.Writer writer)
-    {
-        var items = Items(writer.Context).ToList();
-        if (items.Count > 0 && items.All(d => !string.IsNullOrEmpty(d.Name)))
-        {
-            writer.BeginRows();
-            foreach (var arg in items)
-            {
-                writer.Row(arg.Name, arg.Type.kind.IsEmpty ? arg.Type.Name : $"{arg.Type.Name}<{arg.Type.kind.Name}>");
-                await arg.Output(writer);
-            }
-            writer.EndRows();
-            return;
-        }
-        await Write((global::app.type.format.IWriter)writer);
-    }
-
     /// <summary>Iterates as (index, element) pairs — the list owns how it iterates.</summary>
     public override System.Collections.Generic.IEnumerable<(Data key, Data value)>
         EnumerateItems(global::app.actor.context.@this? context)

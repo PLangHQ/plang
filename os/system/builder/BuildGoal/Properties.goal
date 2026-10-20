@@ -15,4 +15,4 @@ Properties
 
 - llm.query Message=%messages%, Model="gpt-5.4-nano", cache=%!build.setting.cache%, write to %answer%
 
-- goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "goal-properties", goal: %goal%})
+- goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "goal-properties"}, {goal: %goal%}])

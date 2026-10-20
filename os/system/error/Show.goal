@@ -3,7 +3,7 @@
 / inside a handler; at the top level the app hands in the failed run's error.
 Show
 - set %template% = "/system/error/%error.status.code%.txt"
-- ui.render(Template=%template%, Parameter={error: %error%}); on.error(Status=404, Recovery=[goal.call(Name="Fallback")], RetryCount=1, Order="GoalFirst"); variable.set(Name=%text%, Value=%!data%)
+- ui.render(Template=%template%, Parameter=[{error: %error%}]); on.error(Status=404, Recovery=[goal.call(Name="Fallback")], RetryCount=1, Order="GoalFirst"); variable.set(Name=%text%, Value=%!data%)
 - write %text% to error channel
 
 / No template for this code: its family's — 400.txt below 500, 500.txt from 500 up.
