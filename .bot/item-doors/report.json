@@ -422,6 +422,72 @@
         "health": "C# green but six known snapshot reds; plang 277/11 same set.",
         "notes": "SettingCacheTests.ReadsBesideWrites flaky under load."
       }
+    },
+    {
+      "id": "56a22f2c-24e4-4e9d-9cf8-324344770d72",
+      "bot": "coder",
+      "timestamp_start": "2026-10-20T12:00:00Z",
+      "timestamp_end": "2026-10-20T23:00:00Z",
+      "intent": "145 family 2 (runtime structure born holding its type); stage 6 traced and shaped; #1b list rows and dict made at read, nothing written back.",
+      "before": {
+        "assumptions": "145 ruled the families; stage 6 per the plan record test/plan/item-doors/start.md.",
+        "risk": "Locked surfaces (channel base, type naming); hot-path cost of read-on-use settings; lost writes once rows are no longer kept."
+      },
+      "plan": ".bot/item-doors/coder/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/actor",
+            "PLang/app/call",
+            "PLang/app/channel/list",
+            "PLang/app/task",
+            "PLang/app/module/this.cs",
+            "PLang/app/shortcut",
+            "PLang/app/parent",
+            "PLang/app/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "21aabdef7: family 2 born with its type; call.list takes the type list. Channel types held (locked base ctor)."
+        },
+        {
+          "paths": [
+            ".bot/item-doors/coder/v5/plan.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "8cb7d7a6f: stage 6 trace; six decisions; 149 ruled 1, 4, 6; 2, 3, 5 to Ingi."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/list/this.cs",
+            "PLang/app/type/item/list/this.Generic.cs",
+            "PLang.Tests/Types/App/Types/TypedListElementTests.cs",
+            "PLang.Tests/Modules/App/Modules/variable/SetTypeInferenceTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "#1b: 0af5a0aef one Element door, 49fd9084e exit gone, 8a9e1e1da _hasWrapped gone, d2415292e row-write check."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/dict/this.cs",
+            "PLang.Tests/Types/App/Types/DictReadTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "152: dbda75ff3 Put names by Copy(key), 588b0102e Map(target) with comparer, 13925ec3e flag gone."
+        }
+      ],
+      "after": {
+        "status": "family 2, #1b and dict done; #6 waits on Ingi's 3.",
+        "health": "C# green except Wire's six known snapshot reds; plang 277 pass, the same 11 reds, 12 stale.",
+        "notes": "Open: channel types (Ingi), family 1 (Ingi), x's binding named 'value' via Make.Action (asked)."
+      }
     }
   ]
 }

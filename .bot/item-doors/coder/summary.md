@@ -62,10 +62,14 @@ Decisions are numbered per branch in `.bot/item-doors/architect/summary.md`.
   a write through a read row reaches the list (by sharing a raw dict; a future mutable `list<T>` would need the written
   path to put made containers back, which is backlogged).
 
+- **dict, the same rule (152; dbda75ff3, 588b0102e, 13925ec3e)**: a read changes nothing. `Put` holds a Data under its
+  key as `Data.Copy(key)` when the names differ, never renaming the caller's. Lowered to C#, a dict is a map of its
+  own: `Map(target)`, keyed by the dict's comparer, so keys stay case-insensitive. `object` gives the map whether or
+  not the dict holds Data. `_hasWrapped` is gone.
+
 ## Next
-- dict's `_hasWrapped` (the architect asked for the same rule as list): four differences raised before changing it —
-  the built map's comparer, the `object` target, no caller edits the result, and the name stamp on read (:127).
-- #6 builds once Ingi rules 3.
+- #6 builds once Ingi rules 3 (the address); 2 and 5 are his too.
+- Asked the architect: x's binding is named "value" after `set %x%` through `Make.Action` (test helper or the store?).
 - JSON Schema as pairs (129 #2) waits on Ingi: `pair.list[System.Type]`, `json.Writer(utf8, kind)`,
   `[Format("schema")]` on type. The llm table (#3) waits on the llm-writer merge.
 - **(c2) the identity pair** — waits on Ingi's yes to the `Written` virtual on item. With it: wire's two Owns sites
