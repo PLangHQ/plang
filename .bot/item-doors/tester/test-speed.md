@@ -101,3 +101,87 @@ its own fresh app — no pool, no statics.
 Open for the architect: the choice mark is a new attribute on the locked type system — its shape and the
 surface re-pin go under a decision. Then a birth is re-profiled against the ~5 ms target (the profiler is kept
 outside the tree; it re-applies as temporary marks).
+
+## 5. What was built (tester, 2026-10-20)
+
+Correction to §1: the list holds **~131 types**; ~3,340 is the number of **classes** a birth walks (the "3,280
+types" above came from a broken counter).
+
+| commit | what | birth median (load) | CPU / birth | alloc / birth |
+|---|---|---|---|---|
+| tip before (8378c1b1d + fix B) | — | 90 – 113 ms (~17) | — | 15.5 MB |
+| e92111cc4 | a choice set is marked `[Choice]`; PLNG005 at build for an unmarked one | 48 – 51 ms (~17) | — | 9.4 MB |
+| dd899b865 | a type's facts read from its class on first ask; one pass of entries | 34 – 37 ms (13 – 16) | — | 5.9 MB |
+| 328799fb1 | types found by their class through an index (was a copy + walk per lookup) | 28 – 32 ms (8 – 13) | 34 – 38 ms | 5.1 MB |
+| 81159279d | the guard keeps the names and classes; a clash is a lookup (Clash 2.5 → 0.8 ms) | 28 – 30 ms (9 – 11) | 33 – 35 ms | 5.1 MB |
+
+Dropped: **(4)** a module's catalog action on first ask — after the class index it saves ~2 ms and would hold the
+actions twice (architect, decision 118). **Subclass kinds on first ask** — measured: of their 3.6 ms, making the
+kinds and readers is ~0.6 ms; the rest is two walks of every class (the serializer-reader index 2.0 ms,
+`FamilyOf` 1.4 ms). Not worth a change. **(3)** formats binding their own encode/decode moves `kind`'s pinned
+constructors: waiting on Ingi (decision 113).
+
+### What's left, on 81159279d (~30 ms, load ~11)
+
+| part | ms | what it is |
+|---|---|---|
+| formats: bind encode/decode + make the kinds | 6.9 – 7.4 | (3), waiting |
+| `[Format]` + `[Choice]` checked on every class | 4.1 | a class walk |
+| module (class walk 1.8, 142 actions 2) | 3.6 – 3.9 | |
+| subclass kinds (2 class walks 3.4, making 0.6) | 3.6 | |
+| making the 131 entries (their `Alias`/`Owned`/`Internal`/`Offer` statics 3.0) | 3.4 – 3.8 | |
+| kind classes (a class walk) | 1.6 | |
+| choice sets | 1.6 | |
+| `NameOf` on every class | 1.4 | a class walk |
+| Clash 0.8, GetTypes 0.4, Guard 0.2, rest of the app 1.2 | 2.6 | |
+
+### The suites, re-timed on 81159279d (quiet machine, load ~2)
+
+| suite | mode | wall s | CPU s | before (§2, load ~5 – 10) |
+|---|---|---|---|---|
+| Types (876) | default (adaptive) | 14.6 | 55 | 39 wall / 154 CPU |
+| Types | serial | 26.8 | 29 | 79 wall / 84 CPU |
+| Modules (1,290) | default | 39.8 | 137 | — (dev.sh's ~43 s target, run 3 suites at once) |
+| Runtime (1,078) | default | 29.7 | 102 | — |
+
+Serial, a Types test now costs **33 ms CPU** (was 94). The morning's numbers were taken at higher load, so read
+the CPU column, which load moves least.
+
+With (3), a birth lands near **20 – 23 ms**. What is left then is mostly **each app walking the same ~3,340
+classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
+private change removes it.
+
+## 6. For Ingi: the code's facts, read once per process
+
+The 5 ms needs the class walk to happen once, not per app. Each test still gets a fresh app.
+
+**What is the same for every app in a process** (it comes from the code; the facts):
+- the classes the type list holds, each with its name and its identity statics (`Alias`, `Owned`, `Internal`,
+  `Offer`);
+- the kind classes and which type each is a kind of;
+- the `[Format]` classes, their formats and the type that reads them — and their bound encode/decode, which are
+  delegates to static methods (`T.Encode`), the same for every app;
+- the `[Choice]` classes; the subclass families (class → family, kind) and the reader each ships;
+- the action classes: module, action name, class, cacheable.
+
+**What stays per app** (made at its birth from the facts, as now, without reflection):
+- each type entry — an item, with its own `on` table (a program binds events on a type);
+- each kind object, born holding its owner entry (79) — format kinds, choice sets, subclass kinds, list kinds;
+- the reader registry (`type.list.Reader`), and each module's catalog actions (a program binds on them);
+- everything else in the app (actors, channels, store, goals) — untouched.
+
+**Who holds the facts** — not a static (Ingi's rule). `app.parent` is not a holder: it is the link to the app that
+started this process (a cross-process call), not an object in this one. The options:
+1. **The facts are a value the app is born with.** `new app(path, facts)` — the facts are one object (the code's
+   facts, say `app.code`'s or a `type.facts`), read from the assemblies by whoever makes apps, and handed to each.
+   Production makes one app per process (the CLI) and reads them once. A process that makes many — `plang --test`'s
+   child app per test, the C# tests — makes the facts once and hands them to each. The C# tests' 1,258 `new app(…)`
+   sites would go through one fixture (a per-session facts object), a mechanical change.
+2. **One app makes the others** (a session app): a test session holds one app and asks it for a fresh app
+   (`session.App(path)`), which takes the session's facts. Same per-test isolation; the facts' holder is an app.
+
+Either way the birth becomes: make ~131 entries + their kinds + 142 actions from in-memory facts. Estimate:
+**3 – 6 ms**.
+
+Not settled: which holder, and whether the facts are a new core member (an `app` constructor parameter or a
+`type` member is locked surface — a proposal to the architect, then Ingi).
