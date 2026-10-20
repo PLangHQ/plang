@@ -42,7 +42,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The hops that reach what the variable names, the root first.</summary>
     public code.@this Code { get; }
 
-    internal @this(string text, code.@this code)
+    internal @this(string text, code.@this code, global::app.type.@this type) : base(type)
     {
         Text = text;
         Code = code;
@@ -203,7 +203,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var raw = value as string
             ?? (value as global::app.type.item.@this)?.Clr<string>()
             ?? value?.ToString() ?? "";
-        var parser = new parser.@this(raw);
+        var parser = new parser.@this(raw, context.App.type.list);
         return parser.Whole is { } born ? context.Ok(born) : context.Error(parser.Error[0]);
     }
 
@@ -215,16 +215,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         // a row's list holds it already — as written (%x%) or as its bare name (x)
         if (given?.FirstOrDefault(v => v.Text == raw || v.Name == raw) is { } held) return held;
-        var parser = new parser.@this(raw);
+        var parser = new parser.@this(raw, context.App.type.list);
         return parser.Whole ?? throw new global::app.error.AppException(parser.Error[0].Message, "InvalidVariable", 400);
     }
 
     /// <summary>A variable born from its text, for direct C# composition (tests, App.Run):
-    /// <c>new variable("myList")</c> names <c>%myList%</c>.</summary>
-    public @this(string name) : this(new parser.@this(name).Whole
+    /// <c>new variable("myList", types)</c> names <c>%myList%</c>, born holding <paramref name="types"/>' variable.</summary>
+    public @this(string name, global::app.type.list.@this types) : this(new parser.@this(name, types).Whole
                                      ?? throw new System.ArgumentException($"'{name}' is not a variable name.", nameof(name))) { }
 
-    private @this(@this born) : this(born.Text, born.Code) { }
+    private @this(@this born) : this(born.Text, born.Code, born.Type) { }
 
     public override string ToString() => Name;
 

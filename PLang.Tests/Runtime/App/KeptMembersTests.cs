@@ -8,15 +8,15 @@ namespace PLang.Tests.App;
 /// </summary>
 public class KeptMembersTests
 {
-    private static global::app.type.item.variable.@this Variable(string path)
-        => new global::app.type.item.variable.parser.@this(path).Variable.Single();
+    private static global::app.type.item.variable.@this Variable(string path, global::app.type.list.@this types)
+        => new global::app.type.item.variable.parser.@this(path, types).Variable.Single();
 
     private static async Task<global::app.data.@this> Set(global::app.actor.context.@this ctx, string path, object? value)
-        => await Variable(path).Set(ctx.Ok(value), ctx);
+        => await Variable(path, ctx.App.type.list).Set(ctx.Ok(value), ctx);
 
     private static async Task<string?> Read(global::app.actor.context.@this ctx, string path)
     {
-        var read = await Variable(path).Start(ctx);
+        var read = await Variable(path, ctx.App.type.list).Start(ctx);
         return read.Success ? (await read.Value())?.ToString() : "refused: " + read.Error?.Key;
     }
 

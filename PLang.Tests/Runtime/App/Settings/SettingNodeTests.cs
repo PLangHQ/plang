@@ -9,7 +9,7 @@ public class SettingNodeTests
     private static string Path => new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Path;
 
     private static async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
-        => await new global::app.type.item.variable.parser.@this(text).Variable.Single().Start(ctx);
+        => await new global::app.type.item.variable.parser.@this(text, ctx.App.type.list).Variable.Single().Start(ctx);
 
     // set %!…diff% = true, then set %!…diff.deep% = true: the node is on, and so is its member.
     [Test] public async Task ANodeSetWholeAndByItsMembers_KeepsBoth()

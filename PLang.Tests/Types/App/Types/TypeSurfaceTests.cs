@@ -9,7 +9,7 @@ public class TypeSurfaceTests : System.IAsyncDisposable
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
-    private async Task<global::app.data.@this> Read(string path) => await new global::app.type.item.variable.@this(path).Start(Ctx);
+    private async Task<global::app.data.@this> Read(string path) => await new global::app.type.item.variable.@this(path, _app.type.list).Start(Ctx);
 
     [Test] public async Task APath_IsReadByNameStemParentAndMime()
     {

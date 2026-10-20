@@ -10,7 +10,7 @@ public sealed class Index : Hop
     /// <summary>The key: a number, a text, or a variable.</summary>
     public global::app.type.item.@this Key { get; }
 
-    internal Index(string text, global::app.type.item.@this key) : base(text) => Key = key;
+    internal Index(string text, global::app.type.item.@this key, global::app.type.@this type) : base(text, type) => Key = key;
 
     public override string Kind => "index";
 

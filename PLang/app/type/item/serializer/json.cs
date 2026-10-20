@@ -214,7 +214,7 @@ public partial class json
             var held = new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable);
             if (held.HasVariable) return held;
         }
-        else if (s.Contains('%') && new global::app.type.item.variable.parser.@this(s).Variable.Count > 0)
+        else if (s.Contains('%') && new global::app.type.item.variable.parser.@this(s, _context.App.type.list).Variable.Count > 0)
             return s;
         return new text.@this(s, _context.App.type.list[typeof(text.@this)]);
     }

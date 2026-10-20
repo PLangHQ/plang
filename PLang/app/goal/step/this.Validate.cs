@@ -45,8 +45,8 @@ public sealed partial class @this
         var problems = new List<string>();
         // a variable is the same one whatever its case, as the variable list compares names
         var comparer = global::app.type.item.variable.list.@this.Comparer;
-        var said = new global::app.type.item.variable.parser.@this(Text).Variable.Select(x => x.Text).Distinct(comparer).ToList();
-        var answered = new global::app.type.item.variable.parser.@this(written).Variable.Select(x => x.Text).Distinct(comparer).ToList();
+        var said = new global::app.type.item.variable.parser.@this(Text, context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
+        var answered = new global::app.type.item.variable.parser.@this(written, context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
         foreach (var v in said)
             if (!answered.Contains(v, comparer)) problems.Add($"step {Index}: {v} is in the step but not in your answer");
         // and the other way: a variable the answer names that the step's words don't is invented — a
@@ -55,7 +55,7 @@ public sealed partial class @this
             if (!v.StartsWith("%!") && !said.Contains(v, comparer)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
         // a %!…% the answer names that names nothing — no binding, shortcut, app member or module (%!photo.png%) —
         // reads nothing at run
-        foreach (var v in new global::app.type.item.variable.parser.@this(written).Variable.DistinctBy(x => x.Text))
+        foreach (var v in new global::app.type.item.variable.parser.@this(written, context.App.type.list).Variable.DistinctBy(x => x.Text))
             if (!await v.Code.Root.Names(context))
                 problems.Add($"step {Index}: {v.Text} names nothing plang has — a %!…% reads one of its own: %!data% (the last answer), a shortcut (%!goal%, %!step%, %!error%), %!app…%, or a module's (%!llm.setting.cache%)");
         // a quoted literal is held by one of the answer's values — each asked, as it answers for itself (a separator

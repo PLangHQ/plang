@@ -339,7 +339,7 @@ public sealed class Reader
             {
                 // a variable slot given the bare name ("path") names the same variable as %path%
                 if (raw != null && !raw.StartsWith('%')
-                    && new global::app.type.item.variable.parser.@this(raw).Whole is not null)
+                    && new global::app.type.item.variable.parser.@this(raw, _context.App.type.list).Whole is not null)
                     value = Scalar(System.Text.Json.JsonSerializer.Serialize($"%{raw}%"), System.Text.Json.JsonValueKind.String, variable: true);
                 else if (!value.IsVariable)
                     Fail($"`{prop}` names a variable: write it with its % signs", at);
@@ -397,7 +397,7 @@ public sealed class Reader
                 switch (element.ValueKind)
                 {
                     case System.Text.Json.JsonValueKind.String:
-                        found.AddRange(new global::app.type.item.variable.parser.@this(element.GetString()!).Variable);
+                        found.AddRange(new global::app.type.item.variable.parser.@this(element.GetString()!, _context.App.type.list).Variable);
                         break;
                     case System.Text.Json.JsonValueKind.Object:
                         foreach (var p in element.EnumerateObject().Reverse()) open.Push(p.Value);
@@ -489,7 +489,7 @@ public sealed class Reader
             }
             if (c == '%')
             {
-                var v = new global::app.type.item.variable.parser.@this(_text).Read(_pos);
+                var v = new global::app.type.item.variable.parser.@this(_text, _context.App.type.list).Read(_pos);
                 if (v == null) Fail(_text.AsSpan(_pos).StartsWith("%?") ? "a `?` is still there: fill it with the value the step gives" : "a %variable% is not closed");
                 _pos += v!.Text.Length;
                 return Scalar(System.Text.Json.JsonSerializer.Serialize(v.Text), System.Text.Json.JsonValueKind.String, variable: true);

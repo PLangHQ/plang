@@ -32,7 +32,7 @@ public sealed partial class @this
     /// store says is the wrong type.</summary>
     public async Task<List<global::app.error.@this>> Scope(global::app.actor.context.@this scratch)
     {
-        var variables = new global::app.type.item.variable.parser.@this(Text).Variable;
+        var variables = new global::app.type.item.variable.parser.@this(Text, scratch.App.type.list).Variable;
         // each %!…% names the settings class its longest path is — a fresh value of it (its defaults),
         // resolved through actor/setting's path index (the value holds its Path and its Rows)
         _setting = variables

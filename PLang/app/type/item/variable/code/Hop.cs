@@ -12,7 +12,7 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
     /// <c>.replace("-", " ")</c>.</summary>
     public string Text { get; }
 
-    protected Hop(string text) => Text = text;
+    protected Hop(string text, global::app.type.@this type) : base(type) => Text = text;
 
     /// <summary>The kind the <c>.pr</c> writes it under: <c>variable</c>, <c>property</c>,
     /// <c>index</c>, <c>method</c>.</summary>

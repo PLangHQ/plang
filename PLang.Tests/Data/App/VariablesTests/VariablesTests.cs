@@ -146,10 +146,10 @@ public class VariablesTests : System.IAsyncDisposable
         person.Set("Age", 30L);
         await stack.Set("person", person);
 
-        await new global::app.type.item.variable.@this("person.Name").Set("Jane", stack.Context);
+        await new global::app.type.item.variable.@this("person.Name", _app.type.list).Set("Jane", stack.Context);
 
         // The dict owns its own write; the round-trip read sees the change.
-        var result = await new global::app.type.item.variable.@this("person.Name").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("person.Name", _app.type.list).Start(stack.Context);
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
     }
 
@@ -163,10 +163,10 @@ public class VariablesTests : System.IAsyncDisposable
         var person = new PersonItem(_app.type.list[typeof(PersonItem)]) { Name = "John", Age = 30 };
         await stack.Set("person", person);
 
-        await new global::app.type.item.variable.@this("person.Name").Set("Jane", stack.Context);
+        await new global::app.type.item.variable.@this("person.Name", _app.type.list).Set("Jane", stack.Context);
 
         await Assert.That(person.Name).IsEqualTo("Jane");
-        var result = await new global::app.type.item.variable.@this("person.Name").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("person.Name", _app.type.list).Start(stack.Context);
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
     }
 
@@ -182,9 +182,9 @@ public class VariablesTests : System.IAsyncDisposable
         person.Set("Address", address);
         await stack.Set("person", person);
 
-        await new global::app.type.item.variable.@this("person.Address.City").Set("Shelbyville", stack.Context);
+        await new global::app.type.item.variable.@this("person.Address.City", _app.type.list).Set("Shelbyville", stack.Context);
 
-        var result = await new global::app.type.item.variable.@this("person.Address.City").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("person.Address.City", _app.type.list).Start(stack.Context);
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Shelbyville");
     }
 
@@ -196,10 +196,10 @@ public class VariablesTests : System.IAsyncDisposable
         person.Set("Name", "John");
         await stack.Set("person", person);
 
-        await new global::app.type.item.variable.@this("person.name").Set("Jane", stack.Context);
+        await new global::app.type.item.variable.@this("person.name", _app.type.list).Set("Jane", stack.Context);
 
         // The dict key is case-insensitive — the lowercase write hits "Name".
-        var result = await new global::app.type.item.variable.@this("person.Name").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("person.Name", _app.type.list).Start(stack.Context);
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
     }
 
@@ -212,9 +212,9 @@ public class VariablesTests : System.IAsyncDisposable
         user.Set("age", 30L);
         await stack.Set("user", user);
 
-        await new global::app.type.item.variable.@this("user.name").Set("Jane", stack.Context);
+        await new global::app.type.item.variable.@this("user.name", _app.type.list).Set("Jane", stack.Context);
 
-        var result = await new global::app.type.item.variable.@this("user.name").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("user.name", _app.type.list).Start(stack.Context);
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
     }
 
@@ -224,13 +224,13 @@ public class VariablesTests : System.IAsyncDisposable
         var stack = _app.actor.list.User.Context.Variable;
 
         // Root doesn't exist — creates a native dict and sets the property
-        await new global::app.type.item.variable.@this("nonexistent.prop").Set("value", stack.Context);
+        await new global::app.type.item.variable.@this("nonexistent.prop", _app.type.list).Set("value", stack.Context);
 
         var root = await stack.Get("nonexistent");
         await Assert.That(root).IsNotNull();
         await Assert.That((await root!.Value())).IsTypeOf<global::app.type.item.dict.@this>();
 
-        var prop = await new global::app.type.item.variable.@this("nonexistent.prop").Start(stack.Context);
+        var prop = await new global::app.type.item.variable.@this("nonexistent.prop", _app.type.list).Start(stack.Context);
         await Assert.That((await prop!.Value())?.ToString()).IsEqualTo("value");
     }
 
@@ -243,12 +243,12 @@ public class VariablesTests : System.IAsyncDisposable
         await stack.Set("person", person);
 
         // Street doesn't exist yet — the dict adds it.
-        await new global::app.type.item.variable.@this("person.Street").Set("Main 123", stack.Context);
+        await new global::app.type.item.variable.@this("person.Street", _app.type.list).Set("Main 123", stack.Context);
 
-        var result = await new global::app.type.item.variable.@this("person.Street").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("person.Street", _app.type.list).Start(stack.Context);
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Main 123");
         // Existing key still readable.
-        var name = await new global::app.type.item.variable.@this("person.Name").Start(stack.Context);
+        var name = await new global::app.type.item.variable.@this("person.Name", _app.type.list).Start(stack.Context);
         await Assert.That((await name!.Value())?.ToString()).IsEqualTo("John");
     }
 
@@ -261,9 +261,9 @@ public class VariablesTests : System.IAsyncDisposable
         await stack.Set("person", person);
 
         // Add via lowercase, read via mixed case.
-        await new global::app.type.item.variable.@this("person.street").Set("Main 123", stack.Context);
+        await new global::app.type.item.variable.@this("person.street", _app.type.list).Set("Main 123", stack.Context);
 
-        var result = await new global::app.type.item.variable.@this("person.Street").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("person.Street", _app.type.list).Start(stack.Context);
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Main 123");
     }
 
@@ -278,9 +278,9 @@ public class VariablesTests : System.IAsyncDisposable
         people.Add(_app.Data("", bob));
         await stack.Set("people", people);
 
-        await new global::app.type.item.variable.@this("people[1].Name").Set("Robert", stack.Context);
+        await new global::app.type.item.variable.@this("people[1].Name", _app.type.list).Set("Robert", stack.Context);
 
-        var result = await new global::app.type.item.variable.@this("people[1].Name").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("people[1].Name", _app.type.list).Start(stack.Context);
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Robert");
     }
 
@@ -299,9 +299,9 @@ public class VariablesTests : System.IAsyncDisposable
         await stack.Set("people", people);
         await stack.Set("idx", 0L);
 
-        await new global::app.type.item.variable.@this("people[idx].Name").Set("Alicia", stack.Context);
+        await new global::app.type.item.variable.@this("people[idx].Name", _app.type.list).Set("Alicia", stack.Context);
 
-        var result = await new global::app.type.item.variable.@this("people[0].Name").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("people[0].Name", _app.type.list).Start(stack.Context);
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Alicia");
     }
 
@@ -355,8 +355,8 @@ public class VariablesTests : System.IAsyncDisposable
         var data = new Dictionary<string, object?> { { "name", "John" }, { "age", 30 } };
         stack.Set("user", data);
 
-        var name = await new global::app.type.item.variable.@this("user.name").Start(stack.Context);
-        var age = await new global::app.type.item.variable.@this("user.age").Start(stack.Context);
+        var name = await new global::app.type.item.variable.@this("user.name", _app.type.list).Start(stack.Context);
+        var age = await new global::app.type.item.variable.@this("user.age", _app.type.list).Start(stack.Context);
 
         await Assert.That((await name!.Value())?.ToString()).IsEqualTo("John");
         await Assert.That((await age!.Value())?.ToString()).IsEqualTo("30");
@@ -392,7 +392,7 @@ public class VariablesTests : System.IAsyncDisposable
         };
         stack.Set("arr", arr);
 
-        var result = await new global::app.type.item.variable.@this("arr[0].id").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("arr[0].id", _app.type.list).Start(stack.Context);
 
         await Assert.That(result).IsNotNull();
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("42");
@@ -415,7 +415,7 @@ public class VariablesTests : System.IAsyncDisposable
         };
         stack.Set("list", list);
 
-        var result = await new global::app.type.item.variable.@this("list[0].items[0].val").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("list[0].items[0].val", _app.type.list).Start(stack.Context);
 
         await Assert.That(result).IsNotNull();
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("deep");
@@ -432,7 +432,7 @@ public class VariablesTests : System.IAsyncDisposable
         stack.Set("items", items);
         stack.Set("idx", 1);
 
-        var result = await new global::app.type.item.variable.@this("items[idx]").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("items[idx]", _app.type.list).Start(stack.Context);
 
         await Assert.That(result).IsNotNull();
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("one");
@@ -445,7 +445,7 @@ public class VariablesTests : System.IAsyncDisposable
         var items = new List<object> { "first", "second", "third" };
         stack.Set("items", items);
 
-        var result = await new global::app.type.item.variable.@this("items[1]").Start(stack.Context);
+        var result = await new global::app.type.item.variable.@this("items[1]", _app.type.list).Start(stack.Context);
 
         await Assert.That(result).IsNotNull();
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("second");
@@ -466,7 +466,7 @@ public class VariablesTests : System.IAsyncDisposable
         };
         stack.Set("data", data);
 
-        var name = await new global::app.type.item.variable.@this("data.users[1].name").Start(stack.Context);
+        var name = await new global::app.type.item.variable.@this("data.users[1].name", _app.type.list).Start(stack.Context);
 
         await Assert.That((await name!.Value())?.ToString()).IsEqualTo("Bob");
     }
@@ -834,9 +834,9 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "HandleFailure" });
         stack.Set("goal", goal);
 
-        var name0 = await new global::app.type.item.variable.@this("goal.Child[0].Name").Start(stack.Context);
-        var name1 = await new global::app.type.item.variable.@this("goal.Child[1].Name").Start(stack.Context);
-        var name2 = await new global::app.type.item.variable.@this("goal.Child[2].Name").Start(stack.Context);
+        var name0 = await new global::app.type.item.variable.@this("goal.Child[0].Name", _app.type.list).Start(stack.Context);
+        var name1 = await new global::app.type.item.variable.@this("goal.Child[1].Name", _app.type.list).Start(stack.Context);
+        var name2 = await new global::app.type.item.variable.@this("goal.Child[2].Name", _app.type.list).Start(stack.Context);
 
         await Assert.That(name0.IsInitialized).IsTrue();
         await Assert.That((await name0.Value())?.ToString()).IsEqualTo("ProcessGroup");
@@ -851,7 +851,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         var goal = new global::app.goal.@this(_app.type.list) { Name = "BuildGoal" };
         stack.Set("goal", goal);
 
-        var name = await new global::app.type.item.variable.@this("goal.Name").Start(stack.Context);
+        var name = await new global::app.type.item.variable.@this("goal.Name", _app.type.list).Start(stack.Context);
 
         await Assert.That(name.IsInitialized).IsTrue();
         await Assert.That((await name.Value())?.ToString()).IsEqualTo("BuildGoal");
@@ -866,7 +866,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         goal.Child.Add(new global::app.goal.@this(_app.type.list) { Name = "Sub2" });
         stack.Set("goal", goal);
 
-        var count = await new global::app.type.item.variable.@this("goal.Child.Count").Start(stack.Context);
+        var count = await new global::app.type.item.variable.@this("goal.Child.Count", _app.type.list).Start(stack.Context);
 
         await Assert.That(count.IsInitialized).IsTrue();
         await Assert.That((await count.Value())?.ToString()).IsEqualTo("2");
@@ -884,7 +884,7 @@ public class VariablesAccessorTests : System.IAsyncDisposable
 
         // Simulate what builder.merge does: set %goal.Step[0]% = newStep
         var newStep = new global::app.goal.step.@this(_app.type.list) { Index = 0, Text = "updated" };
-        new global::app.type.item.variable.@this("goal.Step[0]").Set(newStep, stack.Context);
+        new global::app.type.item.variable.@this("goal.Step[0]", _app.type.list).Set(newStep, stack.Context);
 
         // Goal should still be a Goal, not a dictionary — it is a plang item now (the
         // hosts-stay-hosts model was reversed), so it rides as ITSELF, not a clr carrier.
@@ -892,12 +892,12 @@ public class VariablesAccessorTests : System.IAsyncDisposable
         await Assert.That((await retrieved.Value())).IsTypeOf<global::app.goal.@this>();
 
         // Sub-goal names should survive
-        var subName = await new global::app.type.item.variable.@this("goal.Child[0].Name").Start(stack.Context);
+        var subName = await new global::app.type.item.variable.@this("goal.Child[0].Name", _app.type.list).Start(stack.Context);
         await Assert.That(subName.IsInitialized).IsTrue();
         await Assert.That((await subName.Value())?.ToString()).IsEqualTo("SubGoal");
 
         // Step should be updated
-        var stepText = await new global::app.type.item.variable.@this("goal.Step[0].Text").Start(stack.Context);
+        var stepText = await new global::app.type.item.variable.@this("goal.Step[0].Text", _app.type.list).Start(stack.Context);
         await Assert.That((await stepText.Value())?.ToString()).IsEqualTo("updated");
     }
 

@@ -20,7 +20,7 @@ public class GoalStepCountNavTests : System.IAsyncDisposable
         var stack = _app.actor.list.User.Context.Variable;
         stack.Set("goal", goal);
 
-        var count = await new global::app.type.item.variable.@this("goal.step.Count").Start(stack.Context);
+        var count = await new global::app.type.item.variable.@this("goal.step.Count", _app.type.list).Start(stack.Context);
 
         await Assert.That(count).IsNotNull();
         await Assert.That(count!.IsInitialized).IsTrue();

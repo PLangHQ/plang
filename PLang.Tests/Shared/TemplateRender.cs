@@ -11,7 +11,8 @@ public static class TemplateRender
     {
         using var ms = new System.IO.MemoryStream();
         var writer = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US", context.App.type.list[typeof(global::app.type.item.culture.@this)])!, context.App.type.list);
-        var text = new global::app.type.item.text.@this(template, new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this()));
+        var text = new global::app.type.item.text.@this(template,
+            context.App.type.list[new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()), context]);
         await writer.Kind.pair.Output(text, writer, global::app.View.Out, context);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }

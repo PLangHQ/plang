@@ -32,11 +32,11 @@ public class GoalAccessorTests
         app.goal.list.Add(Goal(app, "Show"));
         var context = app.actor.list.User.Context;
 
-        var goal = await new global::app.type.item.variable.parser.@this("%!app.goal[\"/show\"]%").Variable.Single().Start(context);
+        var goal = await new global::app.type.item.variable.parser.@this("%!app.goal[\"/show\"]%", context.App.type.list).Variable.Single().Start(context);
         await goal.IsSuccess();
         await Assert.That((await goal.Value() as global::app.goal.@this)!.Name).IsEqualTo("Show");
 
-        var module = await new global::app.type.item.variable.parser.@this("%!app.module[\"file\"]%").Variable.Single().Start(context);
+        var module = await new global::app.type.item.variable.parser.@this("%!app.module[\"file\"]%", context.App.type.list).Variable.Single().Start(context);
         await module.IsSuccess();
         await Assert.That((await module.Value() as global::app.module.@this)!.Name).IsEqualTo("file");
     }

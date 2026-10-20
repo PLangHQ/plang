@@ -28,7 +28,7 @@ public class PathAskerContextTests
     // A step's read: %name.member% through plang's own variable door, as the asker.
     private static async Task<string?> Read(global::app.actor.context.@this ctx, string variable)
     {
-        var read = await new global::app.type.item.variable.parser.@this(variable).Variable.Single().Start(ctx);
+        var read = await new global::app.type.item.variable.parser.@this(variable, ctx.App.type.list).Variable.Single().Start(ctx);
         return read.Success ? (await read.Value())?.ToString() : "refused: " + read.Error?.Key;
     }
 

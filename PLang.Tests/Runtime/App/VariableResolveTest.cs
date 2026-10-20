@@ -69,7 +69,7 @@ public class VariableResolveTest : System.IAsyncDisposable
 
         await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
-            Name = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("response"), context: context),
+            Name = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("response", context.App.type.list), context: context),
             Value = app.actor.list.User.Context.Ok("hello"),
         }, context).Start(context);
 

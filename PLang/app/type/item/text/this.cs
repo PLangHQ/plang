@@ -333,7 +333,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         _value = value ?? string.Empty;
         _variable = Type.Template == null ? []
             : variable is { } rows ? rows.Where(v => _value.Contains(v.Text, System.StringComparison.Ordinal)).DistinctBy(v => v.Text).ToList()
-            : new global::app.type.item.variable.parser.@this(_value).Variable;
+            : new global::app.type.item.variable.parser.@this(_value, Type.Types ?? throw new System.InvalidOperationException(
+                "a text template is born holding the app's type — a bare one holds no types to read its variables with")).Variable;
     }
 
     /// <summary>The empty text — what a text holds before anything is in it (type.Empty hands its type).</summary>

@@ -34,7 +34,7 @@ public class OutputAskRoutingTests
     {
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var answer = new global::app.type.item.variable.@this(ask.AnswerVariableName);
+        var answer = new global::app.type.item.variable.@this(ask.AnswerVariableName, context.App.type.list);
         await answer.Set("Alice", context);
 
         var handler = new ask(context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?", context: context) };

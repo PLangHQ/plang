@@ -55,7 +55,7 @@ public class AppRootTests
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
 
-        var parent = await new global::app.type.item.variable.@this("!app.parent").Start(ctx);
+        var parent = await new global::app.type.item.variable.@this("!app.parent", ctx.App.type.list).Start(ctx);
 
         await Assert.That(parent.Peek() is global::app.parent.@this).IsTrue();
     }

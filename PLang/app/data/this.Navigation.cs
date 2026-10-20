@@ -15,7 +15,7 @@ public partial class @this
     {
         if (string.IsNullOrEmpty(path))
             return this;
-        var parser = new global::app.type.item.variable.parser.@this(path);
+        var parser = new global::app.type.item.variable.parser.@this(path, _context!.App.type.list);
         if (parser.Path() is not { } code)
             return _context.Error(parser.Error[0]);
         return await code.Start(Context, this);

@@ -168,7 +168,7 @@ public class Stage6_ConsumersTests
         var list = new global::app.type.item.list.@this(ctx.App.type.list["list"]);
         list.Add(new Data("", dict, context: ctx));
         await ctx.Variable.Set("items", list);
-        var result = await new global::app.goal.step.action.@this(new global::app.module.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items"), context: ctx),
+        var result = await new global::app.goal.step.action.@this(new global::app.module.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items", ctx.App.type.list), context: ctx),
             Value = D(app, 99, "number"),
         }, ctx).Start(ctx);
         await result.IsSuccess();

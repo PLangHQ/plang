@@ -31,7 +31,7 @@ public class MissingKeyTests
 
         var first = await new global::app.module.llm.setting.@this(new global::app.type.@this(typeof(global::app.module.llm.setting.@this))) { Key = "" }.Asked(ctx);
         var again = await ctx.Setting.Of<global::app.module.llm.setting.@this>().Asked(ctx);
-        var stored = await new global::app.type.item.variable.@this("%!llm.setting.key%").Start(ctx);
+        var stored = await new global::app.type.item.variable.@this("%!llm.setting.key%", ctx.App.type.list).Start(ctx);
 
         await first.IsSuccess();
         await Assert.That((await first.Value())!.ToString()).IsEqualTo(Pasted);

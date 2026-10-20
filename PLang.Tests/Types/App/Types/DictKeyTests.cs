@@ -10,7 +10,7 @@ public class DictKeyTests : System.IAsyncDisposable
     private global::app.actor.context.@this Context => app.actor.list.User.Context;
 
     private async Task<global::app.data.@this> Read(string variable)
-        => await new global::app.type.item.variable.parser.@this(variable).Whole!.Start(Context);
+        => await new global::app.type.item.variable.parser.@this(variable, Context.App.type.list).Whole!.Start(Context);
 
     private global::app.type.item.dict.@this Person()
     {

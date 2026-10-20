@@ -764,14 +764,14 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task IsVariable_StandardVariable_ReturnsTrue()
     {
-        var d = _app.Data("x", new global::app.type.item.text.@this("%var%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
+        var d = _app.Data("x", new global::app.type.item.text.@this("%var%", _app.type.list[new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()), _app.actor.list.User.Context]));
         await Assert.That(d.IsVariable).IsTrue();
     }
 
     [Test]
     public async Task IsVariable_ShortName_ReturnsTrue()
     {
-        var d = _app.Data("x", new global::app.type.item.text.@this("%v%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
+        var d = _app.Data("x", new global::app.type.item.text.@this("%v%", _app.type.list[new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()), _app.actor.list.User.Context]));
         await Assert.That(d.IsVariable).IsTrue();
     }
 
@@ -815,21 +815,21 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task HasVariable_EmbeddedVariable_ReturnsTrue()
     {
-        var d = _app.Data("x", new global::app.type.item.text.@this("hello %name%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
+        var d = _app.Data("x", new global::app.type.item.text.@this("hello %name%", _app.type.list[new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()), _app.actor.list.User.Context]));
         await Assert.That(d.HasVariable).IsTrue();
     }
 
     [Test]
     public async Task HasVariable_MultipleVariables_ReturnsTrue()
     {
-        var d = _app.Data("x", new global::app.type.item.text.@this("%a% + %b%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
+        var d = _app.Data("x", new global::app.type.item.text.@this("%a% + %b%", _app.type.list[new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()), _app.actor.list.User.Context]));
         await Assert.That(d.HasVariable).IsTrue();
     }
 
     [Test]
     public async Task HasVariable_SingleVariable_ReturnsTrue()
     {
-        var d = _app.Data("x", new global::app.type.item.text.@this("%var%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())));
+        var d = _app.Data("x", new global::app.type.item.text.@this("%var%", _app.type.list[new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()), _app.actor.list.User.Context]));
         await Assert.That(d.HasVariable).IsTrue();
     }
 

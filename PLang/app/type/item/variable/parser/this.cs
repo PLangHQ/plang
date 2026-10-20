@@ -12,6 +12,7 @@ namespace app.type.item.variable.parser;
 public sealed class @this
 {
     private readonly string _text;
+    private readonly global::app.type.list.@this _types;
     private readonly List<global::app.error.@this> _error = [];
     private List<variable.@this>? _variable;
     private readonly System.Lazy<variable.@this?> _whole;
@@ -19,9 +20,12 @@ public sealed class @this
     // The cursor over the reference being read, and where its body ends (its closing %).
     private int _pos, _end;
 
-    public @this(string text)
+    /// <summary>A parser over <paramref name="text"/>; what it reads is born holding <paramref name="types"/>' own
+    /// types — the variable, each hop, the code they make.</summary>
+    public @this(string text, global::app.type.list.@this types)
     {
         _text = text ?? "";
+        _types = types;
         _whole = new(One);
     }
 
@@ -64,10 +68,10 @@ public sealed class @this
         return new code.@this(hops, Code);
     }
 
-    // Bare list types: the parser reads text alone (a text's own birth asks it) and holds no app to ask them of.
-    private global::app.type.@this Code
-        => new(typeof(global::app.type.item.list.@this), global::app.type.item.@this.NameOf(typeof(code.Hop)));
-    private global::app.type.@this List => new(typeof(global::app.type.item.list.@this));
+    // what the parser's reads are born holding: the app's own types
+    private global::app.type.@this Code => _types[typeof(code.@this)];
+    private global::app.type.@this List => _types[typeof(global::app.type.item.list.@this)];
+    private global::app.type.@this Hop<THop>() where THop : code.Hop => _types[typeof(THop)];
 
     /// <summary>The one variable the whole text is — written with its % signs (<c>%user.name%</c>), or a bare
     /// name (<c>user</c>, the form a name slot may carry) read as <c>%user%</c>. The one way a variable is made
@@ -79,7 +83,7 @@ public sealed class @this
     {
         if (!_text.StartsWith('%'))
         {
-            var named = new @this($"%{_text}%");
+            var named = new @this($"%{_text}%", _types);
             var whole = named.Whole;
             _error.AddRange(named.Error);
             return whole;
@@ -150,7 +154,7 @@ public sealed class @this
         if (bang) _pos++;
         var root = Name();
         if (root.Length == 0) return Fail(text, "it starts with a name");
-        hops.Add(new code.Variable(bang ? "!" + root : root));
+        hops.Add(new code.Variable(bang ? "!" + root : root, Hop<code.Variable>()));
 
         while (_pos < _end)
         {
@@ -166,7 +170,7 @@ public sealed class @this
                 return Fail(text, _pos < _end ? $"'{_text[_pos]}' can't follow '{_text[(at + 1)..start]}'" : "it ends early");
             hops.Add(hop);
         }
-        return new variable.@this(text, new code.@this(hops, Code));
+        return new variable.@this(text, new code.@this(hops, Code), _types[typeof(variable.@this)]);
     }
 
     private variable.@this? Fail(string text, string why)
@@ -196,12 +200,12 @@ public sealed class @this
     private code.Hop? Named(int start)
     {
         if (_pos < _end && _text[_pos] is '"' or '\'')
-            return Quoted() is { } key ? new code.Property(_text[start.._pos], key) : null;
+            return Quoted() is { } key ? new code.Property(_text[start.._pos], key, Hop<code.Property>()) : null;
         var name = Name();
         if (name.Length == 0) return null;
         if (_pos < _end && _text[_pos] == '(')
-            return Values() is { } values ? new code.Method(_text[start.._pos], name, values) : null;
-        return new code.Property(_text[start.._pos], name);
+            return Values() is { } values ? new code.Method(_text[start.._pos], name, values, Hop<code.Method>()) : null;
+        return new code.Property(_text[start.._pos], name, Hop<code.Property>());
     }
 
     // !name — the binding's own plane
@@ -209,7 +213,7 @@ public sealed class @this
     {
         _pos++;
         var name = Name();
-        return name.Length == 0 ? null : new code.Property(_text[start.._pos], "!" + name);
+        return name.Length == 0 ? null : new code.Property(_text[start.._pos], "!" + name, Hop<code.Property>());
     }
 
     // [0], ["k"], [idx], [%i%]
@@ -219,7 +223,7 @@ public sealed class @this
         var key = Value(bare: true);
         if (key == null || _pos >= _end || _text[_pos] != ']') return null;
         _pos++;
-        return new code.Index(_text[start.._pos], key);
+        return new code.Index(_text[start.._pos], key, Hop<code.Index>());
     }
 
     // (value, value, …) — each a literal or a variable
@@ -263,7 +267,7 @@ public sealed class @this
     // A reference written inside this one; the cursor continues after it.
     private variable.@this? Nested(int at)
     {
-        var inner = new @this(_text);
+        var inner = new @this(_text, _types);
         var found = inner.Read(at);
         _error.AddRange(inner._error);
         if (found != null) _pos = at + found.Text.Length;
@@ -281,7 +285,7 @@ public sealed class @this
             else if (_text[_pos] == ']') depth--;
             _pos++;
         }
-        var inner = new @this("%" + _text[start.._pos] + "%");
+        var inner = new @this("%" + _text[start.._pos] + "%", _types);
         var found = inner.Read(0);
         _error.AddRange(inner._error);
         return found;

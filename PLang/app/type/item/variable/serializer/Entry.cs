@@ -47,7 +47,8 @@ public sealed class Entry
             reader.EndObject();
             if (text == null || hops is not { Count: > 0 } || hops[0] is not code.Variable)
                 throw new global::app.error.PrFormatOutdatedException("a variable in the .pr is its text and its code, the root first", ctx.Origin);
-            read.Add(new variable.@this(text, new code.@this(hops, ctx.Context!.App.type.list[typeof(code.@this)])));
+            var types = ctx.Context!.App.type.list;
+            read.Add(new variable.@this(text, new code.@this(hops, types[typeof(code.@this)]), types[typeof(variable.@this)]));
         }
         reader.EndArray();
         return read;
@@ -64,18 +65,19 @@ public sealed class Entry
                 throw new global::app.error.PrFormatOutdatedException("a hop in the .pr names its kind", ctx.Origin);
             string? name = null;
             code.Hop hop;
+            var types = ctx.Context!.App.type.list;
             switch (kind)
             {
                 case "variable":
-                    hop = new code.Variable(reader.String());
+                    hop = new code.Variable(reader.String(), types[typeof(code.Variable)]);
                     break;
                 case "property":
                     name = reader.String();
-                    hop = new code.Property(name.StartsWith('!') ? name : "." + name, name);
+                    hop = new code.Property(name.StartsWith('!') ? name : "." + name, name, types[typeof(code.Property)]);
                     break;
                 case "index":
                     var key = Key(ref reader, ctx);
-                    hop = new code.Index($"[{(key is variable.@this v ? v.Text : key.ToString())}]", key);
+                    hop = new code.Index($"[{(key is variable.@this v ? v.Text : key.ToString())}]", key, types[typeof(code.Index)]);
                     break;
                 case "method":
                     name = reader.String();
@@ -86,7 +88,7 @@ public sealed class Entry
                     var rows = new global::app.data.reader.@this();
                     while (reader.NextElement()) values.Add(rows.Read(ref reader, ctx).Peek());
                     reader.EndArray();
-                    hop = new code.Method($".{name}(…)", name, new global::app.type.item.list.@this(values, ctx.Context!.App.type.list["list"]));
+                    hop = new code.Method($".{name}(…)", name, new global::app.type.item.list.@this(values, types["list"]), types[typeof(code.Method)]);
                     break;
                 default:
                     throw new global::app.error.PrFormatOutdatedException($"hop kind '{kind}' isn't in this .pr format", ctx.Origin);

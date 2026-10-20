@@ -120,7 +120,7 @@ public class FileHandlerTests : IDisposable
         var ctx = _app.actor.list.User.Context;
         var asText = new global::app.data.@this("type", _app.type.list["text"], context: ctx).As<global::app.type.@this>();
         var varPath = new global::app.data.@this("Path",
-            new global::app.type.item.text.@this("%somefile%", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this())),
+            new global::app.type.item.text.@this("%somefile%", _app.type.list[new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()), ctx]),
             context: ctx).As<global::app.type.item.path.@this>();
         await Assert.That(varPath.HasVariable).IsTrue();
         var build = await new Read(ctx) { Path = varPath, Type = asText }.Build();
@@ -559,7 +559,7 @@ public class FileHandlerTests : IDisposable
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(await fileObj!.AsBooleanAsync(_app.actor.list.User.Context)).IsTrue();
 
-        var existsData = await new global::app.type.item.variable.@this("fileResult.Exists").Start(context);
+        var existsData = await new global::app.type.item.variable.@this("fileResult.Exists", context.App.type.list).Start(context);
         await Assert.That(existsData).IsNotNull();
         await Assert.That((await existsData!.Value())?.ToString()).IsEqualTo("true");
 
@@ -590,7 +590,7 @@ public class FileHandlerTests : IDisposable
 
         await goalResult.IsSuccess();
 
-        var existsData = await new global::app.type.item.variable.@this("fileResult.Exists").Start(context);
+        var existsData = await new global::app.type.item.variable.@this("fileResult.Exists", context.App.type.list).Start(context);
         await Assert.That(existsData).IsNotNull();
         await Assert.That((await existsData!.Value())?.ToString()).IsEqualTo("false");
 

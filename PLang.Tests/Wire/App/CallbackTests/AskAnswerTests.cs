@@ -88,7 +88,7 @@ public class AskAnswerTests
         await Assert.That(pending.ShouldExit()).IsTrue();
         await Assert.That(pending.Snapshot).IsNotNull();
 
-        await new global::app.type.item.variable.@this(ask.AnswerVariableName).Set(ctx.Text("Ada"), ctx);
+        await new global::app.type.item.variable.@this(ask.AnswerVariableName, ctx.App.type.list).Set(ctx.Text("Ada"), ctx);
         var resumed = await Asked(ctx);
         await Assert.That(resumed.ShouldExit()).IsFalse();
         await Assert.That(resumed.Peek()).IsTypeOf<global::app.type.item.text.@this>();

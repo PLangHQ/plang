@@ -55,7 +55,7 @@ public class ModuleAccessorTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        var variable = new global::app.type.item.variable.parser.@this("%!app.module.list%").Variable.Single();
+        var variable = new global::app.type.item.variable.parser.@this("%!app.module.list%", app.type.list).Variable.Single();
         var read = await variable.Start(ctx);
         await read.IsSuccess();
         await Assert.That(read.Peek()).IsSameReferenceAs(app.module.list);

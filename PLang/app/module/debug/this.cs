@@ -337,10 +337,10 @@ public sealed class @this
             foreach (var p in action.Property)
                 if (p.Value is { } value)
                     foreach (var v in value.Variable)
-                        if (named.Add(v.Code.Root.Name)) shown.Add(new global::app.type.item.variable.@this(v.Code.Root.Name));
+                        if (named.Add(v.Code.Root.Name)) shown.Add(new global::app.type.item.variable.@this(v.Code.Root.Name, context.App!.type.list));
         if (context.App?.Debug is { } debug)
             foreach (var name in debug.Watched)
-                if (new global::app.type.item.variable.parser.@this(name).Whole is { } variable && named.Add(variable.Name))
+                if (new global::app.type.item.variable.parser.@this(name, context.App.type.list).Whole is { } variable && named.Add(variable.Name))
                     shown.Add(variable);
 
         if (shown.Count == 0) return;

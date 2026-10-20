@@ -51,7 +51,7 @@ namespace PLang
 			// the run's answer.
 			foreach (var (key, value) in parameters.Where(p => p.Key.StartsWith("!app.", StringComparison.OrdinalIgnoreCase)).ToList())
 			{
-				var written = await new global::app.type.item.variable.@this(key)
+				var written = await new global::app.type.item.variable.@this(key, app.type.list)
 					.Set(value, app.actor.list.System.Context);
 				if (!written.Success) return (null, written);
 			}

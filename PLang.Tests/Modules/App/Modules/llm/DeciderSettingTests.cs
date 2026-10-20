@@ -20,8 +20,8 @@ public class DeciderSettingTests : System.IAsyncDisposable
 
     private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
-    private static global::app.type.item.variable.@this Variable(string path)
-        => new global::app.type.item.variable.parser.@this(path).Variable.Single();
+    private global::app.type.item.variable.@this Variable(string path)
+        => new global::app.type.item.variable.parser.@this(path, _app.type.list).Variable.Single();
 
     private async Task Set(string path, string value)
         => await (await Variable(path).Set(Ctx.Ok((global::app.type.item.text.@this)value), Ctx)).IsSuccess();

@@ -108,7 +108,7 @@ public class SettingsDataTests
         }
 
         await using var again = new global::app.@this(_tempDir).TestSigning();
-        var read = await new global::app.type.item.variable.@this("!llm.setting.cache").Start(again.actor.list.System.Context);
+        var read = await new global::app.type.item.variable.@this("!llm.setting.cache", again.type.list).Start(again.actor.list.System.Context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("skip");
     }
 

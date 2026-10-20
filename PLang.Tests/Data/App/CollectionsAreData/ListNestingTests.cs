@@ -75,7 +75,7 @@ public class ListNestingTests : System.IAsyncDisposable
 
         var result = await new global::app.goal.step.action.@this(new global::app.module.list.Flatten(ctx)
         {
-            ListName = new global::app.type.item.variable.@this("l"),
+            ListName = new global::app.type.item.variable.@this("l", app.type.list),
         }, ctx).Start(ctx);
 
         await result.IsSuccess();
@@ -93,7 +93,7 @@ public class ListNestingTests : System.IAsyncDisposable
 
         var result = await new global::app.goal.step.action.@this(new global::app.module.list.Flatten(ctx)
         {
-            ListName = new global::app.type.item.variable.@this("l"),
+            ListName = new global::app.type.item.variable.@this("l", app.type.list),
         }, ctx).Start(ctx);
 
         await result.IsSuccess();

@@ -10,7 +10,7 @@ public class SizeKindTests : System.IAsyncDisposable
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static async Task<global::app.data.@this> Read(global::app.actor.context.@this context, string path)
-        => await new global::app.type.item.variable.parser.@this(path).Variable.Single().Start(context);
+        => await new global::app.type.item.variable.parser.@this(path, context.App.type.list).Variable.Single().Start(context);
 
     [Test]
     [Arguments("100 MB", "si", 100_000_000L)]
@@ -62,7 +62,7 @@ public class SizeKindTests : System.IAsyncDisposable
         await using var app = new global::app.@this("/app").Testing();
         var context = app.actor.list.User.Context;
 
-        var set = await new global::app.type.item.variable.parser.@this("%!app.type.size.setting.standard%").Variable.Single()
+        var set = await new global::app.type.item.variable.parser.@this("%!app.type.size.setting.standard%", context.App.type.list).Variable.Single()
             .Set(context.Ok(context.Text("si")), context);
         var standard = await Read(context, "%!app.type.size.setting.standard%");
 

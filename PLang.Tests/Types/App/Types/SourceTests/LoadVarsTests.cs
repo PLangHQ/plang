@@ -90,7 +90,7 @@ public class LoadVarsTests
         var read = await LoadVars(ctx, root, "data.json", "{\"b\":\"%!app.type.list.count%\"}");
         await ctx.Variable.Set("j", read);
 
-        var b = await new global::app.type.item.variable.@this("j.b").Start(ctx);
+        var b = await new global::app.type.item.variable.@this("j.b", ctx.App.type.list).Start(ctx);
         await Assert.That(await Text(b)).IsEqualTo("%!app.type.list.count%");
     }
 
@@ -153,7 +153,7 @@ public class LoadVarsTests
     {
         var (app, root, ctx) = await NewApp();
         await using var _ = app;
-        var count = await Text(await new global::app.type.item.variable.@this("!app.type.list.count").Start(ctx));
+        var count = await Text(await new global::app.type.item.variable.@this("!app.type.list.count", ctx.App.type.list).Start(ctx));
         var goal = Make.Goal(ctx, "G", "/g.goal",
             Make.Step("s",
                 Make.Action(ctx, "output", "write",

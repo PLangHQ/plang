@@ -4,7 +4,7 @@ namespace PLang.Tests.App;
 public class AppFactsTests
 {
     private static async Task<global::app.data.@this> Read(global::app.@this app, string path)
-        => await new global::app.type.item.variable.parser.@this(path).Variable.Single().Start(app.actor.list.User.Context);
+        => await new global::app.type.item.variable.parser.@this(path, app.type.list).Variable.Single().Start(app.actor.list.User.Context);
 
     [Test]
     [Arguments("%!app.created%", "datetime")]
@@ -66,7 +66,7 @@ public class AppFactsTests
         await using var app = new global::app.@this("/shopfolder").Testing();
         var user = app.actor.list.User.Context;
 
-        var set = await new global::app.type.item.variable.parser.@this("%!app.setting.name%").Variable.Single()
+        var set = await new global::app.type.item.variable.parser.@this("%!app.setting.name%", app.type.list).Variable.Single()
             .Set(user.Ok(user.Text("Shop")), user);
         var name = await Read(app, "%!app.name%");
 

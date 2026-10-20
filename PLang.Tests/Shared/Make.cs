@@ -172,7 +172,7 @@ public static class Make
         utf8.Read();
         var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
         var held = type.Read(ref reader, new global::app.type.reader.ReadContext(context, type.Template,
-            Variable: new global::app.type.item.variable.parser.@this(text).Variable, IsBuilt: true));
+            Variable: new global::app.type.item.variable.parser.@this(text, context.App.type.list).Variable, IsBuilt: true));
         return new global::app.data.@this(name, held, context: context);
     }
 

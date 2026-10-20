@@ -212,7 +212,7 @@ public partial class @this
     }
 
     // The variable named `name`, as its events are handed it.
-    private global::app.type.item.variable.@this Named(string name) => new parser.@this($"%{name}%").Variable.Single();
+    private global::app.type.item.variable.@this Named(string name) => new parser.@this($"%{name}%", _context.App.type.list).Variable.Single();
 
     /// <summary>What <paramref name="name"/> holds — or, when it holds nothing, the value
     /// <paramref name="value"/> gives birth to, stored under it in one step: runs asking at once all answer
@@ -388,7 +388,7 @@ public partial class @this
             foreach (var name in names)
                 // a name the parser doesn't read back whole (stored by C#, not written in plang) isn't
                 // one a program can name
-                if (new parser.@this(name).Whole is { } variable)
+                if (new parser.@this(name, _context.App.type.list).Whole is { } variable)
                     held.Add(variable);
             return held;
         }

@@ -21,7 +21,7 @@ public class DefaultSwitchTests
         => await (await Make.Action(ctx, "identity", action, properties).Start(ctx)).IsSuccess();
 
     private static async Task<string?> MyIdentityName(global::app.actor.context.@this ctx)
-        => (await (await new global::app.type.item.variable.@this("MyIdentity.Name").Start(ctx)).Value())?.ToString();
+        => (await (await new global::app.type.item.variable.@this("MyIdentity.Name", ctx.App.type.list).Start(ctx)).Value())?.ToString();
 
     private static int Defaults(global::app.@this app)
         => app.actor.list.System.Setting.Of<global::app.module.identity.setting.@this>().Identity

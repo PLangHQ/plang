@@ -71,7 +71,8 @@ public class source : @this
         // the variables written in it are read off its text face (a byte raw declared text is its UTF-8)
         var raw = Peek() as string;
         IReadOnlyList<global::app.type.item.variable.@this> written()
-            => raw != null ? new global::app.type.item.variable.parser.@this(raw).Variable : [];
+            => raw != null ? new global::app.type.item.variable.parser.@this(raw, type.Types ?? throw new System.InvalidOperationException(
+                   $"a {type.Name} template is born holding the app's type — a bare one holds no types to read its variables with")).Variable : [];
         // THE door for content from outside: what a template holds, by whose bytes these are. Decided ONCE,
         // here — a variable not held is never resolved; it stays as written everywhere downstream.
         IEnumerable<global::app.type.item.variable.@this> held =

@@ -319,7 +319,7 @@ public class ArchiveActionTests : IDisposable
     public async Task TheSettingsMax_AppliesWhenTheStepSaysNone()
     {
         var archive = (Archive)(await (await Pack(Text("big", new string('x', 10_000)))).Value())!;
-        await (await new global::app.type.item.variable.parser.@this("%!archive.setting.max%").Variable.Single()
+        await (await new global::app.type.item.variable.parser.@this("%!archive.setting.max%", Ctx.App.type.list).Variable.Single()
             .Set(Ctx.Ok(Ctx.Text("1 kB")), Ctx)).IsSuccess();
 
         var restored = await Unpack(archive);

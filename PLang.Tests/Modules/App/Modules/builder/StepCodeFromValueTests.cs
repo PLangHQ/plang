@@ -23,7 +23,7 @@ public class StepCodeFromValueTests : System.IAsyncDisposable
 
         var row = global::app.type.item.@this.Create(
             new Dictionary<string, object?> { ["module"] = "output", ["name"] = "write" }, context);
-        var set = await new global::app.type.item.variable.@this("goal.Step[0].Code").Set(
+        var set = await new global::app.type.item.variable.@this("goal.Step[0].Code", context.App.type.list).Set(
             new global::app.data.@this("code", new List<object?> { row }, context: context), context);
 
         await set.IsFailure();

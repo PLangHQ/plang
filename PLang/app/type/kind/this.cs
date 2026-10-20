@@ -159,7 +159,7 @@ public class @this : global::app.type.@this
     /// <summary>What a value of this kind can be in <paramref name="step"/>, as the decider is offered it: one of the
     /// step's own variables (<c>%field%</c>), each once. A closed set offers its options.</summary>
     public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
-        => new(new global::app.type.item.variable.parser.@this(step.Text).Variable
+        => new(new global::app.type.item.variable.parser.@this(step.Text, step.Type.Types!).Variable
             .DistinctBy(v => v.Text).Cast<global::app.type.item.@this>().ToList());
 
     /// <summary>Whether what this kind offers is all a value of it can be (a choice's options, a bool's true and

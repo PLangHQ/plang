@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Types;
 public class AppTypeListTests
 {
     private static async Task<global::app.data.@this> Read(global::app.@this app, string path)
-        => await new global::app.type.item.variable.parser.@this(path).Variable.Single().Start(app.actor.list.User.Context);
+        => await new global::app.type.item.variable.parser.@this(path, app.type.list).Variable.Single().Start(app.actor.list.User.Context);
 
     private static async Task<bool> Holds(global::app.@this app, string name)
     {

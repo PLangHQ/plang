@@ -51,7 +51,7 @@ public class SetTests
         var result = await action.Start(context);
 
         await result.IsSuccess();
-        var read = await new global::app.type.item.variable.@this("!build.setting.cache").Start(context);
+        var read = await new global::app.type.item.variable.@this("!build.setting.cache", context.App.type.list).Start(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("skip");
     }
 

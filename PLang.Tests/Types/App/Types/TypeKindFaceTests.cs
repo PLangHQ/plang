@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Types;
 public class TypeKindFaceTests
 {
     private static async Task<global::app.data.@this> Read(global::app.actor.context.@this ctx, string path)
-        => await new global::app.type.item.variable.@this(path).Start(ctx);
+        => await new global::app.type.item.variable.@this(path, ctx.App.type.list).Start(ctx);
 
     // Ruling 3: a kind answers its own, else its parent's. The decimal kind has no description of its
     // own, so it falls back to number's (its Family) — the same teaching the number type reads.

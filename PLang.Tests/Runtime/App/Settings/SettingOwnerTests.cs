@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Settings;
 public class SettingOwnerTests
 {
     private static async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
-        => await new global::app.type.item.variable.parser.@this(text).Variable.Single().Start(ctx);
+        => await new global::app.type.item.variable.parser.@this(text, ctx.App.type.list).Variable.Single().Start(ctx);
 
     // A plang `set` of a call stack option, through its owner (a call stack is an actor's), reaches the
     // stack that reads it on every push.
@@ -18,7 +18,7 @@ public class SettingOwnerTests
         var ctx = app.actor.list.User.Context;
         await Assert.That(app.actor.list.User.Context.call.Timing.Value).IsFalse();
 
-        var set = await new global::app.type.item.variable.parser.@this("%!app.actor[\"user\"].context.call.setting.timing%").Variable.Single()
+        var set = await new global::app.type.item.variable.parser.@this("%!app.actor[\"user\"].context.call.setting.timing%", ctx.App.type.list).Variable.Single()
             .Set(new global::app.data.@this("timing", true, context: ctx), ctx);
         await set.IsSuccess();
 

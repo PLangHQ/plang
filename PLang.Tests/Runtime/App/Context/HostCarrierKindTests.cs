@@ -38,7 +38,7 @@ public class HostCarrierKindTests
     }
 
     private Task<global::app.data.@this> Read(string name)
-        => new global::app.type.item.variable.@this(name).Start(_app.actor.list.User.Context).AsTask();
+        => new global::app.type.item.variable.@this(name, _app.type.list).Start(_app.actor.list.User.Context).AsTask();
 
     // %!call% is the context's own call list, of its own type — never a host carried inside an item.
     [Test]
@@ -80,7 +80,7 @@ public class HostCarrierKindTests
     public async Task Leaf_PeelsOffToRealItem_NotOpaqueItem()
     {
         // !app.Name is a string — it lands as the text family's item, never an item carrier.
-        var data = await new global::app.type.item.variable.@this("!app.Name").Start(_app.actor.list.User.Context);
+        var data = await new global::app.type.item.variable.@this("!app.Name", _app.type.list).Start(_app.actor.list.User.Context);
         await Assert.That(data).IsNotNull();
         await Assert.That(data!.Type.Name).IsEqualTo("text");
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("test");

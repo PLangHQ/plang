@@ -87,7 +87,7 @@ public class VariableListTwinTests
         var holds = type["template"] != null || type["name"]?.GetValue<string>() == "variable";
         if (!holds) return null;
         var found = new List<global::app.type.item.variable.@this>();
-        Strings(row["value"], s => found.AddRange(new global::app.type.item.variable.parser.@this(s).Variable));
+        Strings(row["value"], s => found.AddRange(new global::app.type.item.variable.parser.@this(s, app.type.list).Variable));
         if (found.Count == 0) return null;
         using var ms = new System.IO.MemoryStream();
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms,

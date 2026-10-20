@@ -290,11 +290,11 @@ public class DownloadActionTests
     [Test]
     public async Task Received_PrintsInTheSizeSettingsStandard()
     {
-        await (await new global::app.type.item.variable.parser.@this("%!app.type.size.setting.standard%").Variable.Single()
+        await (await new global::app.type.item.variable.parser.@this("%!app.type.size.setting.standard%", _app.type.list).Variable.Single()
             .Set(Ctx.Ok(Ctx.Text("si")), Ctx)).IsSuccess();
 
         await Download(new byte[3000], null, null, progress: true);
-        var received = await new global::app.type.item.variable.parser.@this("%progress.received%").Variable.Single().Start(Ctx);
+        var received = await new global::app.type.item.variable.parser.@this("%progress.received%", Ctx.App.type.list).Variable.Single().Start(Ctx);
 
         await Assert.That((await received.Value())?.ToString()).IsEqualTo("3 kB");
     }

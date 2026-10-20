@@ -37,7 +37,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { 42L, "two", "three" });
 
-        var action = new First(context) { ListName = new global::app.type.item.variable.@this("xs") };
+        var action = new First(context) { ListName = new global::app.type.item.variable.@this("xs", context.App.type.list) };
         await action.Attach(null, context);
         var result = await action.Start();
 
@@ -53,7 +53,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { "a", "b", "c" });
 
-        var action = new Get(context) { ListName = new global::app.type.item.variable.@this("xs"), Index = (global::app.type.item.number.@this)1 };
+        var action = new Get(context) { ListName = new global::app.type.item.variable.@this("xs", context.App.type.list), Index = (global::app.type.item.number.@this)1 };
         await action.Attach(null, context);
         var result = await action.Start();
 
@@ -68,7 +68,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { 1L, 2L, 3L });
 
-        var action = new Last(context) { ListName = new global::app.type.item.variable.@this("xs") };
+        var action = new Last(context) { ListName = new global::app.type.item.variable.@this("xs", context.App.type.list) };
         await action.Attach(null, context);
         var result = await action.Start();
 

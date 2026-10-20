@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Context;
 public class DataMemberTests
 {
     private static async Task<global::app.data.@this> Read(global::app.actor.context.@this ctx)
-        => await new global::app.type.item.variable.parser.@this("%!data%").Variable.Single().Start(ctx);
+        => await new global::app.type.item.variable.parser.@this("%!data%", ctx.App.type.list).Variable.Single().Start(ctx);
 
     private static async Task<global::app.data.@this> SetX(global::app.actor.context.@this ctx, int value)
         => await global::PLang.Tests.Shared.Make.Action(ctx, "variable", "set",

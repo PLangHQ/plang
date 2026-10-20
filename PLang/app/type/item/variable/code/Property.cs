@@ -12,7 +12,7 @@ public sealed class Property : Hop
     /// <summary>The member's name; a <c>!</c> first reads the binding.</summary>
     public string Name { get; }
 
-    internal Property(string text, string name) : base(text) => Name = name;
+    internal Property(string text, string name, global::app.type.@this type) : base(text, type) => Name = name;
 
     public override string Kind => "property";
 

@@ -68,7 +68,7 @@ public class PlangAssignabilityTests
         list.Add((global::app.type.item.text.@this)"a");
         list.Add((global::app.type.item.text.@this)"b");
         await ctx.Variable.Set("items", list);
-        var source = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items"), context: ctx);
+        var source = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items", _app.type.list), context: ctx);
 
         var items = new List<global::app.data.@this>();
         foreach (var (_, item) in await source.EnumerateItems()) items.Add(item);
@@ -87,7 +87,7 @@ public class PlangAssignabilityTests
         var list = new global::app.type.item.list.@this(_app.type.list["list"]);
         list.Add((global::app.type.item.text.@this)"a");
         await ctx.Variable.Set("items", list);
-        var source = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items"), context: ctx);
+        var source = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items", _app.type.list), context: ctx);
 
         global::app.type.item.list.@this? handed = null;
         var answer = await ((global::app.data.@this)source).Use<global::app.type.item.list.@this>(held => { handed = held; return Task.FromResult(ctx.Ok()); });

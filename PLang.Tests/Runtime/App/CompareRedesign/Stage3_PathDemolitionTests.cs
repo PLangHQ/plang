@@ -293,7 +293,7 @@ public class Stage3_PathDemolitionTests
         var result = await Read(context, context.File(Path.Combine(dir, "config.json")));
         await context.Variable.Set("config", result);
 
-        await new global::app.type.item.variable.@this("config.y").Set(1, context);
+        await new global::app.type.item.variable.@this("config.y", context.App.type.list).Set(1, context);
 
         var bound = await context.Variable.Get("config");
         await Assert.That(bound!.Type!.Is("dict")).IsTrue();

@@ -19,7 +19,7 @@ public class RemoveTests
         var (context, memory) = CreateContext();
         memory.Set("testVar", "testValue");
 
-        var action = new Remove(context) { Name = new app.type.item.variable.@this("testVar") };
+        var action = new Remove(context) { Name = new app.type.item.variable.@this("testVar", context.App.type.list) };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -31,7 +31,7 @@ public class RemoveTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Remove(context) { Name = new app.type.item.variable.@this("nonexistent") };
+        var action = new Remove(context) { Name = new app.type.item.variable.@this("nonexistent", context.App.type.list) };
         var result = await action.Start();
 
         await result.IsSuccess();

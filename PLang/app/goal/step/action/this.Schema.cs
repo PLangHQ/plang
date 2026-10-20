@@ -42,7 +42,7 @@ public partial class @this : global::app.type.item.note.IAbout
     [JsonIgnore]
     public IEnumerable<global::app.type.item.variable.@this> Bound
         => Property.Where(p => p.Type.IsName && p.Default?.ToString() is { Length: > 0 })
-            .Select(p => new global::app.type.item.variable.@this(p.Default!.ToString()!));
+            .Select(p => new global::app.type.item.variable.@this(p.Default!.ToString()!, App!.type.list));
 
     /// <summary>The property this action reads and answers a new value of, changing nothing (<c>list.query</c>'s
     /// <c>List</c>) — where a step with no destination writes the answer; null when the action has none.</summary>

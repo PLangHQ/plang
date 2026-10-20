@@ -62,7 +62,7 @@ public class Stage7_PathGrowthTests
         var (app, context, _) = MakeApp();
         await using var __ = app;
         var p = global::app.type.item.path.@this.Resolve("docs/readme.md", context);
-        var ext = await new global::app.type.item.variable.parser.@this("%p.extension%").Variable.Single()
+        var ext = await new global::app.type.item.variable.parser.@this("%p.extension%", app.type.list).Variable.Single()
             .Start(await Bound(context, "p", p));
         await Assert.That((await ext.Value())?.ToString()).IsEqualTo("md");
     }

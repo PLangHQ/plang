@@ -75,7 +75,7 @@ public class GoalCallResolutionTests
 
         var slot = new global::app.data.@this("", ctx.Text("Target"), context: ctx).As<PLangGoal>();
         var selected = await slot.Value();
-        var byApp = await new global::app.type.item.variable.@this("!app.goal[\"Target\"]").Start(ctx);
+        var byApp = await new global::app.type.item.variable.@this("!app.goal[\"Target\"]", _app.type.list).Start(ctx);
 
         await Assert.That(selected?.Name).IsEqualTo("Target");
         await Assert.That(births).IsEmpty();

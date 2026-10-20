@@ -831,6 +831,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // identity alone.
     private readonly list.@this? _list;
 
+    /// <summary>The app's type list this type is in — what a value holding it asks the app's other types of (a text
+    /// reading the variables it holds); null for a type that is its identity alone.</summary>
+    internal list.@this? Types => _list ?? Family._list;
+
     // The members of the class this type describes — the type list's one list per class, which a value of that class
     // reads its members from too. A class under it that is no kind of its own (an error's subclass) is read by its
     // value through its own class's list, but offered here as this type's. Empty for a type that is its identity alone.

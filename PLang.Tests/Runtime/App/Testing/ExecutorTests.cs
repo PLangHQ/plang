@@ -108,7 +108,7 @@ public class ExecutorTests
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.Build != null).IsTrue();
         // %!build.setting.cache% — what the builder's goals hand llm.query (`cache=%!build.setting.cache%`)
-        var cacheVar = await new global::app.type.item.variable.@this("!build.setting.cache").Start(engine.actor.list.User.Context);
+        var cacheVar = await new global::app.type.item.variable.@this("!build.setting.cache", engine.type.list).Start(engine.actor.list.User.Context);
         await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("use");
         await using var _ = engine;
     }
@@ -122,7 +122,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await using var _ = engine!;
-        var cacheVar = await new global::app.type.item.variable.@this("!build.setting.cache").Start(engine!.actor.list.User.Context);
+        var cacheVar = await new global::app.type.item.variable.@this("!build.setting.cache", engine!.type.list).Start(engine!.actor.list.User.Context);
         await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("skip");
     }
 

@@ -26,7 +26,7 @@ public static class TemplateStamp
             if (raw != null)
             {
                 // Leaf: a %ref% text is declared a template, so its value is born one.
-                if (new global::app.type.item.variable.parser.@this(raw).Variable.Count > 0)
+                if (new global::app.type.item.variable.parser.@this(raw, context.App.type.list).Variable.Count > 0)
                 {
                     var declared = context.App.type.list[new global::app.type.@this(p.Type.Name, p.Type.kind.Name, p.Type.Strict, new global::app.type.item.template.kind.plang.@this()), context];
                     properties.Set(new global::app.type.property.@this
@@ -61,11 +61,11 @@ public static class TemplateStamp
             {
                 // A build-time stamp with no .pr list: parse the content for its variables (896 allows this off
                 // the .pr-read path). The stamped text is born holding a {text, kind, template: plang} type.
-                var parsed = new global::app.type.item.variable.parser.@this(t.ToString()).Variable;
+                var parsed = new global::app.type.item.variable.parser.@this(t.ToString(), context.App.type.list).Variable;
                 return t.Type.Template == null && parsed.Count > 0
                     ? new global::app.type.item.text.@this(t.ToString(),
-                        new global::app.type.@this("text", typeof(global::app.type.item.text.@this),
-                            t.Type.kind.IsEmpty ? null : t.Type.kind.Name, false, new global::app.type.item.template.kind.plang.@this()),
+                        context.App.type.list[new global::app.type.@this("text", typeof(global::app.type.item.text.@this),
+                            t.Type.kind.IsEmpty ? null : t.Type.kind.Name, false, new global::app.type.item.template.kind.plang.@this()), context],
                         parsed)
                     : null;
             }
@@ -122,8 +122,8 @@ public static class TemplateStamp
     {
         switch (raw)
         {
-            case string s when new global::app.type.item.variable.parser.@this(s).Variable.Count > 0:
-                return new global::app.type.item.text.@this(s, new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this()));
+            case string s when new global::app.type.item.variable.parser.@this(s, context.App.type.list).Variable.Count > 0:
+                return new global::app.type.item.text.@this(s, context.App.type.list[new global::app.type.@this("text", typeof(global::app.type.item.text.@this), null, false, new global::app.type.item.template.kind.plang.@this()), context]);
 
             case IDictionary<string, object?> d:
             {

@@ -55,11 +55,11 @@ public class DebugViewTests : System.IAsyncDisposable
     [Test]
     public async Task TheModuleList_StillNavigates()
     {
-        var modules = await (await new global::app.type.item.variable.@this("!app.module.list").Start(Ctx)).Value();
+        var modules = await (await new global::app.type.item.variable.@this("!app.module.list", Ctx.App.type.list).Start(Ctx)).Value();
         await Assert.That(modules).IsAssignableTo<global::app.type.item.list.@this>();
         await Assert.That(((global::app.type.item.list.@this)modules!).Items(Ctx).Any()).IsTrue();
 
-        var file = await (await new global::app.type.item.variable.@this("!app.module.file").Start(Ctx)).Value();
+        var file = await (await new global::app.type.item.variable.@this("!app.module.file", Ctx.App.type.list).Start(Ctx)).Value();
         await Assert.That(file).IsTypeOf<global::app.module.@this>();
     }
 

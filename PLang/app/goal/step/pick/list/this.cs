@@ -108,7 +108,7 @@ public sealed class @this
     {
         var text = _step.Text;
         int from = 0;
-        foreach (var v in new global::app.type.item.variable.parser.@this(text).Variable)
+        foreach (var v in new global::app.type.item.variable.parser.@this(text, _step.Type.Types!).Variable)
         {
             from = text.IndexOf(v.Text, from, StringComparison.Ordinal) + v.Text.Length;
             yield return (v, from);
@@ -131,7 +131,7 @@ public sealed class @this
             if (!v.IsBare || AssignsOne.Match(_step.Text[end..]) is not { Success: true } m) continue;
             var value = m.Groups[1].Value;
             if (value.StartsWith('%')
-                && new global::app.type.item.variable.parser.@this(value).Whole is not { IsBare: true }) continue;
+                && new global::app.type.item.variable.parser.@this(value, _step.Type.Types!).Whole is not { IsBare: true }) continue;
             return (v.Text, value);
         }
         return null;

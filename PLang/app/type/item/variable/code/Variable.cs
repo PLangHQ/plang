@@ -7,7 +7,7 @@ public sealed class Variable : Hop
 {
     public string Name { get; }
 
-    internal Variable(string name) : base(name) => Name = name;
+    internal Variable(string name, global::app.type.@this type) : base(name, type) => Name = name;
 
     public override string Kind => "variable";
 

@@ -22,7 +22,7 @@ public class SettingRowTests
     }
 
     private static async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
-        => await new global::app.type.item.variable.parser.@this(text).Variable.Single().Start(ctx);
+        => await new global::app.type.item.variable.parser.@this(text, ctx.App.type.list).Variable.Single().Start(ctx);
 
     private static async Task<string?> Os(global::app.actor.context.@this ctx)
         => (await (await Read("%!app.goal.list.setting.os%", ctx)).Value())?.ToString();
