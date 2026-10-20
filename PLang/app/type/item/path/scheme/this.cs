@@ -2,11 +2,11 @@ namespace app.type.item.path.scheme;
 
 /// <summary>
 /// A path scheme ("file", "http", "https", …) — a kind of path, holding the factory that mints the
-/// corresponding <see cref="global::app.type.item.path.@this"/> subclass. Added to the app's kinds
-/// at App construction (built-in file/http/https); an assembly loaded via <c>code.load</c> adds its
-/// own. Per-App, so multi-App test harnesses add different schemes per App without bleed.
+/// corresponding <see cref="global::app.type.item.path.@this"/> subclass. The built-in ones are kind classes
+/// (<c>scheme/file</c>, <c>scheme/http</c>, <c>scheme/https</c>), made when path's kinds are first asked; an assembly
+/// loaded via <c>code.load</c> adds its own. Per-App, so multi-App test harnesses add different schemes per App without bleed.
 /// </summary>
-public sealed class @this : global::app.type.kind.@this<global::app.type.item.path.@this>
+public class @this : global::app.type.kind.@this<global::app.type.item.path.@this>
 {
     private readonly Func<string, actor.context.@this, global::app.type.item.path.@this> _factory;
 

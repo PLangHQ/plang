@@ -17,7 +17,11 @@ public partial class @this
     /// <c>%greeting%</c>).</summary>
     internal static readonly StringComparer Comparer = StringComparer.OrdinalIgnoreCase;
 
-    private readonly ConcurrentDictionary<string, data.@this> _variables = new(Comparer);
+    // What this memory holds by name, made at its first write (a memory nothing is set in holds none); held by
+    // reference, the first made kept.
+    private ConcurrentDictionary<string, data.@this>? _variables;
+    private ConcurrentDictionary<string, data.@this> Store
+        => _variables ?? System.Threading.Interlocked.CompareExchange(ref _variables, new(Comparer), null) ?? _variables;
     private actor.context.@this _context;
 
     /// <summary>How deep a chain of references this flow is resolving (a variable holding a variable…) —
@@ -89,17 +93,26 @@ public partial class @this
     /// asked for — what a context is born holding, before anything runs in it, so it is no set.</summary>
     internal void Born()
     {
-        lock (_variables)
+        if (_variables is not { } store)
         {
-            _variables.TryRemove("!app", out _);
-            _variables.TryRemove("!context", out _);
+            _unmade |= Held.Context;
+            return;
+        }
+        lock (store)
+        {
+            store.TryRemove("!app", out _);
+            store.TryRemove("!context", out _);
             _unmade |= Held.Context;
         }
     }
 
     // What `name` holds in this memory — a computed one made now, the first time it is asked for.
     private bool Find(string name, out data.@this held)
-        => _variables.TryGetValue(name, out held!) || (_unmade != 0 && Made(name, out held));
+    {
+        if (_variables is { } store && store.TryGetValue(name, out held!)) return true;
+        held = null!;
+        return _unmade != 0 && Made(name, out held);
+    }
 
     private bool Made(string name, out data.@this held)
     {
@@ -107,8 +120,9 @@ public partial class @this
         for (var at = 0; at < Computed.Length; at++)
         {
             if (!Comparer.Equals(Computed[at].Name, name)) continue;
-            lock (_variables) Make(at);
-            return _variables.TryGetValue(name, out held!);
+            var store = Store;
+            lock (store) Make(at);
+            return store.TryGetValue(name, out held!);
         }
         return false;
     }
@@ -117,7 +131,7 @@ public partial class @this
     private void Make(int at)
     {
         if ((_unmade & (1 << at)) == 0) return;
-        _variables.TryAdd(Computed[at].Name, Computed[at].Make(this));
+        Store.TryAdd(Computed[at].Name, Computed[at].Make(this));
         _unmade &= ~(1 << at);
     }
 
@@ -126,21 +140,22 @@ public partial class @this
     {
         get
         {
+            var store = Store;
             if (_unmade != 0)
-                lock (_variables)
+                lock (store)
                     for (var at = 0; at < Computed.Length; at++) Make(at);
-            return _variables;
+            return store;
         }
     }
 
     // Writes `value` under `name` straight into the memory (a clone, a projection): a computed one it names is made.
     private void Place(string name, data.@this value)
     {
-        _variables[name] = value;
+        Store[name] = value;
         if (_unmade == 0) return;
         for (var at = 0; at < Computed.Length; at++)
             if (Comparer.Equals(Computed[at].Name, name))
-                lock (_variables) _unmade &= ~(1 << at);
+                lock (Store) _unmade &= ~(1 << at);
     }
 
     /// <summary>
@@ -216,7 +231,7 @@ public partial class @this
 
             var had = Find(name, out var prev);
             var before = had ? prev!.Peek() : null;
-            _variables[name] = dv;
+            Store[name] = dv;
             return had && ReferenceEquals(prev, dv) ? (dv, false, null) : (dv, true, before);
         }
 
@@ -250,12 +265,12 @@ public partial class @this
             // into a value already captured elsewhere.
             var rebound = new data.@this(name, value, context: _context);
             var prevValue = existing.Peek();
-            _variables[name] = rebound;
+            Store[name] = rebound;
             return (rebound, true, prevValue);
         }
 
         var fresh = new data.@this(name, value, context: _context);
-        _variables[name] = fresh;
+        Store[name] = fresh;
         return (fresh, true, null);
     }
 
@@ -301,7 +316,7 @@ public partial class @this
 
         if (await Before(Events?.set, name, made) is { } refused) return refused;
         data.@this? stored = null;
-        var held = _variables.GetOrAdd(name, _ => stored = new data.@this(name, made, context: _context));
+        var held = Store.GetOrAdd(name, _ => stored = new data.@this(name, made, context: _context));
         return ReferenceEquals(held, stored) ? await After(name, null, held) : held;
     }
 
@@ -320,7 +335,7 @@ public partial class @this
         var copy = value.Copy();
         if (ReferenceEquals(copy, value)) return read;
         var own = new data.@this(name, copy, context: _context);
-        if (keeper == null) return _variables.GetOrAdd(name, own);
+        if (keeper == null) return Store.GetOrAdd(name, own);
         keeper.Set(name, own);
         return own;
     }
@@ -345,7 +360,7 @@ public partial class @this
         // Rebind — the same rebind Set does.
         var rebound = new data.@this(name, value, context: _context);
         if (frame != null) frame.Set(name, rebound);
-        else if (!_variables.TryUpdate(name, rebound, expected)) return await Get(name);
+        else if (!Store.TryUpdate(name, rebound, expected)) return await Get(name);
         return await After(name, expected.Peek(), rebound);
     }
 
@@ -424,7 +439,7 @@ public partial class @this
     {
         if (!Find(name, out var held)) return _context.NotFound(name);
         if (await Before(Events?.remove, name, held) is { } refused) return refused;
-        if (!_variables.TryRemove(name, out var removed)) return _context.NotFound(name);
+        if (!Store.TryRemove(name, out var removed)) return _context.NotFound(name);
         return Events?.remove is { after.Count: > 0 } remove ? await remove.After(Named(name), removed, _context) : removed;
     }
 
@@ -502,7 +517,7 @@ public partial class @this
 
         foreach (var key in toRemove)
         {
-            _variables.TryRemove(key, out _);
+            Store.TryRemove(key, out _);
         }
     }
 
@@ -540,7 +555,7 @@ public partial class @this
         foreach (var key in All.Keys)
         {
             if (!snapshot.Contains(key))
-                _variables.TryRemove(key, out _);
+                Store.TryRemove(key, out _);
         }
     }
 

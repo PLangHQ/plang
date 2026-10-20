@@ -2305,6 +2305,15 @@ class app.type.item.path.scheme.SchemeNotRegistered : app.error.AppException
   Scheme : System.String { get; }
   ctor(System.String scheme)
 
+class app.type.item.path.scheme.file.this : app.type.item.path.scheme.this
+  ctor(app.type.this owner)
+
+class app.type.item.path.scheme.http.this : app.type.item.path.scheme.this
+  ctor(app.type.this owner)
+
+class app.type.item.path.scheme.https.this : app.type.item.path.scheme.this
+  ctor(app.type.this owner)
+
 class app.type.item.path.scheme.this : app.type.kind.this<app.type.item.path.this>
   Create(System.String raw, app.actor.context.this context) : app.type.item.path.this
   ctor(System.String scheme, app.type.this owner, System.Func<System.String, app.actor.context.this, app.type.item.path.this> factory)

@@ -155,6 +155,17 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 17. The memory's table and path's schemes: a birth at ~18.4 KB
+
+| change | birth alone (4,000 traced) |
+|---|---|
+| start (§16) | ~21.5 KB |
+| a memory's own table made at its first write (`Store`); a read of an empty memory makes nothing | ~20.1 KB |
+| path's schemes (`file`, `http`, `https`) are kind classes (`path/scheme/file`, `http`, `https`), made when path's kinds are first asked, as `number.kind.int` is. Before, every birth added three schemes, and adding them made path hold all its kinds | **~18.4 KB** |
+
+Surface move re-pinned on the playground: the three scheme classes added; `scheme.@this` unsealed (sealing isn't
+pinned). C#: green except Wire's six `carried`. plang: the same 11 names.
+
 ## 16. Nodes, kinds' keys, a context's tables: a birth at ~21.5 KB
 
 | change | birth alone (4,000 traced) |
