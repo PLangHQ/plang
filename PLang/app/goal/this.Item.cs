@@ -34,7 +34,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                      }))
         {
             var writer = new global::app.type.item.kind.json.Writer(utf8, context.App.type.list, view, emitsSchema: true);
-            await item.Output(writer, view, context);
+            await writer.Kind.pair.Output(item, writer, view, context);
             await utf8.FlushAsync(ct);
         }
         stream.WriteByte((byte)'\n');
@@ -132,21 +132,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             await base.Output(writer, mode, context);
             return;
         }
+        var pair = writer.Kind.pair;
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
         if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
         writer.Name("step");
-        await Step.Output(writer, mode, context);   // the step.list writes its own bare array
+        await pair.Output(Step, writer, mode, context);   // the step.list writes its own bare array
         writer.Name("child");
         writer.BeginArray(Child.CountRaw);
-        foreach (var g in Child.Items()) await g.Output(writer, mode, context);
+        foreach (var g in Child.Items()) await pair.Output(g, writer, mode, context);
         writer.EndArray();
-        writer.Name("visibility"); await Visibility.Output(writer, mode, context);
+        writer.Name("visibility"); await pair.Output(Visibility, writer, mode, context);
         // only the goal file's name: where its .pr is found is where it is (a sub-goal is in its parent's file)
         if (Parent == null && Path != null) { writer.Name("file"); writer.String(Path.Name.ToString()); }
         if (Hash != null) { writer.Name("hash"); writer.String(Hash); }
         if (BuilderVersion != null) { writer.Name("builderVersion"); writer.String(BuilderVersion); }
-        if (Tag.CountRaw > 0) { writer.Name("tag"); await Tag.Output(writer, mode, context); }
+        if (Tag.CountRaw > 0) { writer.Name("tag"); await pair.Output(Tag, writer, mode, context); }
         writer.EndObject();
     }
 }

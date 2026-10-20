@@ -60,7 +60,7 @@ public class @this<T, L> : @this
     /// with no asker, the app's.</summary>
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
-        => (context != null ? Of(context) : list).Output(writer, mode, context);
+        => writer.Kind.pair.Output(context != null ? Of(context) : list, writer, mode, context);
 
     /// <summary>
     /// The one <paramref name="key"/> names — the first of <see cref="list"/> whose own

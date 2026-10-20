@@ -43,7 +43,7 @@ public sealed class computed : @this
     public override System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
-        => Compute(context ?? throw Contextless()).Output(writer, mode, context);
+        => writer.Kind.pair.Output(Compute(context ?? throw Contextless()), writer, mode, context);
 
     /// <summary>"In memory now" for a computed IS the current computation, which needs the
     /// asker's context to lift — its holder answers it (<c>DynamicData.Peek</c>).</summary>

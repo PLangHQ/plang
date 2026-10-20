@@ -72,7 +72,7 @@ public sealed class @this : query.@this
         foreach (var clause in _clause)
         {
             writer.Name(clause.Name);
-            await clause.Output(writer, mode, context);
+            await writer.Kind.pair.Output(clause, writer, mode, context);
         }
         writer.EndObject();
     }

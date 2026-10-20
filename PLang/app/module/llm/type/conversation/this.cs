@@ -66,7 +66,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (Continue != null)
         {
             writer.Name("continue");
-            await Continue.Peek().Output(writer, mode, context);
+            await writer.Kind.pair.Output(Continue.Peek(), writer, mode, context);
         }
         writer.EndObject();
     }

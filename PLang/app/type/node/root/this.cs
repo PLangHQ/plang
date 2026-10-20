@@ -34,7 +34,7 @@ public sealed class @this : global::app.type.node.@this<global::app.type.@this, 
     public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        if (context == null) { await list.Output(writer, mode, context); return; }
+        if (context == null) { await writer.Kind.pair.Output(list, writer, mode, context); return; }
         var types = list.Items().Where(t => !t.Internal).ToList();
         writer.BeginArray(types.Count);
         foreach (var type in types)
