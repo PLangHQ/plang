@@ -18,7 +18,7 @@ PickListTests (PLang.Tests/Wire/App/Decider/pick_golden.json).
 {%- if q.Of == "list" or q.Of == "dict" -%}
 {%- capture ask %}Step {{ s.Index }} is `{{ text }}`. It coerces to a {{ q.Of }}. A {{ q.Of }} of what type — which type are its elements? Answer none if the step names no element type.{% endcapture -%}
 {%- else -%}
-{%- capture ask %}Step {{ s.Index }} is `{{ text }}`. It coerces to `{{ q.Of }}`. Which kind of `{{ q.Of }}` does the step name? A word in the step, one of the kinds offered here, names that kind. It may be written joined to the type word by a slash (`<type>/<kind>`) — then the kind is the part after the slash — or sit beside the type word, in either order. None unless the step names one of these kinds; the type word alone (no kind word) names none.{% endcapture -%}
+{%- capture ask %}Step {{ s.Index }} is `{{ text }}`. It coerces to `{{ q.Of }}`. Which kind of `{{ q.Of }}` does the step name? A word in the step beside the type word — one of the kinds offered here — names that kind; the type word and the kind word can sit together, in either order. None unless the step names one of these kinds; the type word alone (no kind word) names none.{% endcapture -%}
 {%- endif -%}
 {{ sep }}
   {{ q.Id | json }}: {

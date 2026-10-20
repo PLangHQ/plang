@@ -14,13 +14,6 @@
           "name": "set",
           "property": [
             {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "a"
-            },
-            {
               "name": "Name",
               "type": {
                 "name": "variable"
@@ -38,11 +31,18 @@
               ]
             },
             {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "a"
+            },
+            {
               "name": "Type",
               "type": {
                 "name": "type"
               },
-              "value": "text"
+              "value": {"name":"text","kind":"md","strict":true}
             }
           ],
           "default": [
@@ -198,7 +198,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/app/type/kind/strict/SetAsTextSlashMarkdownStrictUnverifiable.test.goal",
-  "prPath": "/app/type/kind/strict/.build/setastextslashmarkdownstrictunverifiable.test.pr",
+  "file": "SetAsTextSlashMarkdownStrictUnverifiable.test.goal",
   "hash": "26d1e801d488597a66bc30b4324b3ea11fa833e804fb3141ffff1cd92830ccbc"
 }

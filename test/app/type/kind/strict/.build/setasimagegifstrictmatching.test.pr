@@ -42,7 +42,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "image"
+              "value": {"name":"image","kind":"gif","strict":true}
             }
           ],
           "default": [
@@ -152,7 +152,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/app/type/kind/strict/SetAsImageGifStrictMatching.test.goal",
-  "prPath": "/app/type/kind/strict/.build/setasimagegifstrictmatching.test.pr",
+  "file": "SetAsImageGifStrictMatching.test.goal",
   "hash": "99f32ff43f0bf5f7000ae19e5ceb5e20fd9ee42dc4328ff0062fc36ef1c181f7"
 }
