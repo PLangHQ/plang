@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Types.PathTests;
 public class PathAskerContextTests
 {
     private static global::app.@this NewApp() =>
-        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-asker-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     private static async Task<string?> Nav(global::app.data.@this d, string key) =>

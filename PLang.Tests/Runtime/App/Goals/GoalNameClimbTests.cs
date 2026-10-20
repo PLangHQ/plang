@@ -34,7 +34,7 @@ public class GoalNameClimbTests
         var dir = TempApp();
         try
         {
-            await using var app = new global::app.@this(dir).Testing();
+            await using var app = global::PLang.Tests.Session.App(dir).Testing();
             var caller = (global::app.goal.@this)(await (await app.goal.Load("/sub/Caller.goal")).Value())!;
 
             var found = await app.goal.list.Find(name, caller);
@@ -53,7 +53,7 @@ public class GoalNameClimbTests
         var dir = TempApp();
         try
         {
-            await using var app = new global::app.@this(dir).Testing();
+            await using var app = global::PLang.Tests.Session.App(dir).Testing();
             var caller = (global::app.goal.@this)(await (await app.goal.Load("/sub/Caller.goal")).Value())!;
 
             var found = await app.goal.list.Find("inner/Goal", caller);

@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Modules.condition;
 
 public class OperatorTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/optests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/tmp/optests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private Data D(object? value) => value == null ? new Data("", context: _app.actor.list.User.Context) : _app.actor.list.User.Context.Ok(value);

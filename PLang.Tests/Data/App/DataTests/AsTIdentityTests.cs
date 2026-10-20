@@ -20,7 +20,7 @@ public class AsTIdentityTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/app").Testing();
+    public void Setup() => _app = global::PLang.Tests.Session.App("/app").Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }

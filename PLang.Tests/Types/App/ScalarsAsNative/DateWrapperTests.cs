@@ -10,7 +10,7 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // this branch. OwnedClrTypes = DateOnly.
 public class DateWrapperTests : IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/app").Testing();
     public async ValueTask DisposeAsync() => await _app.DisposeAsync();
     // a date made by the app's type for it
     private DateT Date(int year, int month, int day) => new(new System.DateOnly(year, month, day), _app.type.list[typeof(DateT)]);
@@ -35,7 +35,7 @@ public class DateWrapperTests : IAsyncDisposable
     [Test]
     public async Task Date_Order_ChronologicalWithinDateOnly()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var d1 = Date(2024, 1, 1);
         var d2 = Date(2024, 1, 2);
         await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, d1, d2)).IsLessThan(0);

@@ -12,7 +12,7 @@ public class BrokenStepTests : System.IAsyncDisposable
     public BrokenStepTests()
     {
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_root, ".build"));
-        _loadApp = new global::app.@this(_root).Testing();
+        _loadApp = global::PLang.Tests.Session.App(_root).Testing();
     }
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _loadApp.DisposeAsync();
@@ -44,7 +44,7 @@ public class BrokenStepTests : System.IAsyncDisposable
     [Test]
     public async Task AStepThatStaysRefused_HoldsItsError_AndTheOthersKeepTheirCode()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
         var (goal, _) = await Built(os, OneBroken);
 
         // the step that built keeps its code and holds no error
@@ -63,7 +63,7 @@ public class BrokenStepTests : System.IAsyncDisposable
     [Test]
     public async Task TheRefusalOfAnAnswer_NamesTheGoalItIsAbout()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
         var goal = Parse(OneBroken, context);
 
@@ -79,7 +79,7 @@ public class BrokenStepTests : System.IAsyncDisposable
     [Test]
     public async Task AStepThatBuildsOnTheNextRead_LosesItsError()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
         var goal = Parse("Start\n- write out \"b\"\n", context);
 
@@ -104,7 +104,7 @@ public class BrokenStepTests : System.IAsyncDisposable
     [Test]
     public async Task ABrokenStep_IsWrittenAsError_AndReadBack()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
         var (built, context) = await Built(os, OneBroken);
 
         var pr = System.Text.Json.Nodes.JsonNode.Parse(await context.Pr(built))!;
@@ -132,7 +132,7 @@ public class BrokenStepTests : System.IAsyncDisposable
     [Test]
     public async Task AGoalWithABrokenStep_FailsToStart_BeforeStepOne_NamingThePathTheStepAndWhy()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
         var (built, buildContext) = await Built(os, OneBroken);
         var goal = await Reloaded(built, buildContext);
         var capture = new CapturedOutput(_loadApp);
@@ -159,7 +159,7 @@ public class BrokenStepTests : System.IAsyncDisposable
     [Test]
     public async Task AGoalWithoutABrokenStep_StillStarts()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
         var (built, buildContext) = await Built(os, "Start\n- output.write(Data=\"STEPONE\")\n");
         var goal = await Reloaded(built, buildContext);
         var capture = new CapturedOutput(_loadApp);
@@ -174,7 +174,7 @@ public class BrokenStepTests : System.IAsyncDisposable
     [Test]
     public async Task AGoalWithABrokenStep_IsNotRefusedAtSave_ButAStepWithNoCodeAndNoErrorStillIs()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
         var (goal, context) = await Built(os, OneBroken);
 
         // a broken step has no actions, and says why: that is its verdict, so the goal is saved with it
@@ -192,7 +192,7 @@ public class BrokenStepTests : System.IAsyncDisposable
     [Test]
     public async Task ABrokenStepWithStepsIndentedUnderIt_IsNotAFoldError_AndKeepsItsBlock()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var context = app.actor.list.System.Context;
         var goal = Make.Goal(context, "G",
             Make.Step("if %x% = 1"),
@@ -213,7 +213,7 @@ public class BrokenStepTests : System.IAsyncDisposable
     [Test]
     public async Task ABrokenStep_IsNotCached_SoTheNextBuildRetriesIt()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(Fixture.Root(), "os")).Testing().Building();
         var (goal, _) = await Built(os, OneBroken);
 
         // it has no code, so even with its text unchanged since the last build the cache must not skip it

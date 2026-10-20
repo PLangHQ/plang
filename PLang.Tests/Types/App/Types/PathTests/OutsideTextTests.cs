@@ -15,7 +15,7 @@ public class OutsideTextTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "paths-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root).Testing();
+        var app = global::PLang.Tests.Session.App(root).Testing();
         return (app, root, app.actor.list.User.Context);
     }
 

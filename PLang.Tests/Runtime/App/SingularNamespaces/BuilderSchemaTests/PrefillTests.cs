@@ -9,7 +9,7 @@ public class PrefillTests
     // The step's line once the decider marked these actions certain.
     private static async Task<string?> Line(string text, params string[] certain)
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var context = app.actor.list.System.Context;
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step(text));
         var answer = new Dictionary<string, object?>();

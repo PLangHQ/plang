@@ -6,7 +6,7 @@ namespace PLang.Tests.App.CompareRedesign;
 // — parse folds into the door. Read fires only behind an await on navigation.
 public class Stage2_ValueDoorTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/stage2vd-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/tmp/stage2vd-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private static global::app.@this NewApp(out string root)

@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Types;
 // fires once however many re-types it runs.
 public class CreateEventTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this(
+    private readonly global::app.@this app = global::PLang.Tests.Session.App(
         System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-create-event-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 

@@ -15,7 +15,7 @@ public class TagActionTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test").Testing();
+        _app = global::PLang.Tests.Session.App("/test").Testing();
     }
 
     [After(Test)]

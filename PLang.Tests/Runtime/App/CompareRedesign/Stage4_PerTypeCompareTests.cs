@@ -9,7 +9,7 @@ namespace PLang.Tests.App.CompareRedesign;
 // antisymmetry holds. Ordering math is sync — Stage 5 awaits the values.
 public class Stage4_PerTypeCompareTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.@this NewApp() => new(System.IO.Path.Combine(

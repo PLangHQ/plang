@@ -8,7 +8,7 @@ namespace PLang.Tests.App.CollectionsAreData;
 // rows and descend into list rows only; sort/reverse collapse to a flat list.
 public class RowModelTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/tmp/RowModelTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/tmp/RowModelTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private Data D(object? v) => app.Data("", v);

@@ -11,7 +11,7 @@ public class GoalPathTests
     // A goal built at /old, its .pr written by the build's own writer, then the folder moved to /new with its .build.
     private static async Task<string> BuiltThenMoved(string dir, params global::PLang.Tests.Shared.Make.StepDef[] steps)
     {
-        await using (var builder = new global::app.@this(dir).Testing())
+        await using (var builder = global::PLang.Tests.Session.App(dir).Testing())
         {
             var ctx = builder.actor.list.System.Context;
             System.IO.Directory.CreateDirectory(System.IO.Path.Combine(dir, "old"));
@@ -29,7 +29,7 @@ public class GoalPathTests
         var dir = await BuiltThenMoved(TempApp());
         try
         {
-            await using var app = new global::app.@this(dir).Testing();
+            await using var app = global::PLang.Tests.Session.App(dir).Testing();
 
             var loaded = await app.goal.Load("/new/Start.goal");
             var goal = (global::app.goal.@this)(await loaded.Value())!;
@@ -48,7 +48,7 @@ public class GoalPathTests
         var dir = await BuiltThenMoved(TempApp());
         try
         {
-            await using var app = new global::app.@this(dir).Testing();
+            await using var app = global::PLang.Tests.Session.App(dir).Testing();
 
             var first = await (await app.goal.Load("/new/Start.goal")).Value();
             var second = await (await app.goal.Load("/new/Start.goal")).Value();
@@ -62,7 +62,7 @@ public class GoalPathTests
     public async Task AMovedGoal_ReadsARelativeFile_InItsOwnFolder()
     {
         var dir = TempApp();
-        await using (var maker = new global::app.@this(dir).Testing())
+        await using (var maker = global::PLang.Tests.Session.App(dir).Testing())
         {
             var ctx = maker.actor.list.System.Context;
             var read = global::PLang.Tests.Shared.Make.Action(ctx, "file", "read", ("Path", "note.txt"));
@@ -75,7 +75,7 @@ public class GoalPathTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "old", "note.txt"), "where it was");
         try
         {
-            await using var app = new global::app.@this(dir).Testing();
+            await using var app = global::PLang.Tests.Session.App(dir).Testing();
             var user = app.actor.list.User.Context;
             var goal = (global::app.goal.@this)(await (await app.goal.Load("/new/Start.goal")).Value())!;
 
@@ -97,7 +97,7 @@ public class GoalPathTests
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "mine", "Show.goal"), "Show\n");
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "mine", ".build", "show.pr"),
                 """{"name":"Show","step":[],"path":"/system/error/Show.goal","prPath":"/system/error/.build/show.pr"}""");
-            await using var app = new global::app.@this(dir).Testing();
+            await using var app = global::PLang.Tests.Session.App(dir).Testing();
             var ctx = app.actor.list.User.Context;
 
             var goal = (global::app.goal.@this)(await (await app.goal.Load("/mine/Show.goal")).Value())!;
@@ -129,7 +129,7 @@ public class GoalPathTests
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "mine", "Show.goal"), "Show\n");
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "mine", ".build", "show.pr"),
                 $$"""{"name":"Show","step":[],"file":{{System.Text.Json.JsonSerializer.Serialize(file)}}}""");
-            await using var app = new global::app.@this(dir).Testing();
+            await using var app = global::PLang.Tests.Session.App(dir).Testing();
 
             var refused = false;
             string? message = null;
@@ -158,7 +158,7 @@ public class GoalPathTests
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "a", "Start.goal"), "Start\n");
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "a", ".build", "start.pr"),
                 """{"name":"Start","comment":"c","step":[],"child":[{"name":"Show","step":[],"path":"/a/Start.goal","prPath":"/a/.build/start.pr"}],"path":"/a/Start.goal","prPath":"/a/.build/start.pr"}""");
-            await using var app = new global::app.@this(dir).Testing();
+            await using var app = global::PLang.Tests.Session.App(dir).Testing();
 
             var goal = (global::app.goal.@this)(await (await app.goal.Load("/a/Start.goal")).Value())!;
 
@@ -175,7 +175,7 @@ public class GoalPathTests
     [Test]
     public async Task TheOsSystemFolder_AndWhatIsUnderIt_ReadAsSystem()
     {
-        await using var app = new global::app.@this(TempApp()).Testing();
+        await using var app = global::PLang.Tests.Session.App(TempApp()).Testing();
         var ctx = app.actor.list.System.Context;
         var system = System.IO.Path.Combine(app.OsAbsolutePath, "system");
 
@@ -192,7 +192,7 @@ public class GoalPathTests
         var dir = TempApp();
         try
         {
-            await using var app = new global::app.@this(dir).Testing();
+            await using var app = global::PLang.Tests.Session.App(dir).Testing();
             var ctx = app.actor.list.System.Context;
 
             var shown = await app.goal.list.Walk(null, ctx).FirstAsync(g => g.Name == "Show" && g.Path!.ToString()!.Contains("error"));

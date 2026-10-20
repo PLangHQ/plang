@@ -13,7 +13,7 @@ public class FullVarMatchTests
     [Test]
     public async Task FullVarMatch_StringRef_GetsVariableValue()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var result = await MatrixRunner.RunAsync<FullVarMatch>(app,
             parameters: new[] { ("path", (object?)"%path%") },
             variables: new Dictionary<string, object?> { ["path"] = "/tmp/x.txt" });
@@ -27,7 +27,7 @@ public class FullVarMatchTests
     [Test]
     public async Task FullVarMatch_VariableHoldsTypedData_UnwrapsCleanly()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         // Variables.Set wraps the value in Data; the variable's .Value should be unwrapped during As<T>.
         app.actor.list.User.Context.Variable.Set("count", 42);
         var result = await MatrixRunner.RunAsync<FullVarMatch>(app,
@@ -44,7 +44,7 @@ public class FullVarMatchTests
     [Skip("Resolution-error timing is owned by the eager dispatch-resolve; moves to handler .Value() with the pure-lazy source-gen refactor. See todos 2026-06-15.")]
     public async Task FullVarMatch_MissingVariable_ReturnsErrorOrNotFound()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var result = await MatrixRunner.RunAsync<FullVarMatch>(app,
             parameters: new[] { ("path", (object?)"%does_not_exist%") });
 
@@ -59,7 +59,7 @@ public class InterpolationTests
     [Test]
     public async Task Interpolation_PartialVar_CallsResolve()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var result = await MatrixRunner.RunAsync<Interpolation>(app,
             parameters: new[] { ("greeting", (object?)"Hello %name%") },
             variables: new Dictionary<string, object?> { ["name"] = "world" });
@@ -72,7 +72,7 @@ public class InterpolationTests
     [Test]
     public async Task Interpolation_MultipleVars_AllSubstituted()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var result = await MatrixRunner.RunAsync<Interpolation>(app,
             parameters: new[] { ("greeting", (object?)"%a% then %b% then %a%") },
             variables: new Dictionary<string, object?> { ["a"] = "first", ["b"] = "second" });
@@ -85,7 +85,7 @@ public class InterpolationTests
     [Test]
     public async Task Interpolation_NoVars_PassesThrough()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var result = await MatrixRunner.RunAsync<Interpolation>(app,
             parameters: new[] { ("greeting", (object?)"plain string") });
 
@@ -100,7 +100,7 @@ public class DeepResolutionListTests
     [Test]
     public async Task DeepResolutionList_NestedDict_SubstitutesInside()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var raw = new List<object?>
         {
             new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" }
@@ -120,7 +120,7 @@ public class DeepResolutionListTests
     [Test]
     public async Task DeepResolutionList_NestedListsAndDicts_FullyWalked()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var raw = new List<object?>
         {
             new Dictionary<string, object?>
@@ -152,7 +152,7 @@ public class DeepResolutionDictTests
     [Test]
     public async Task DeepResolutionDict_PrimitiveVar_Substituted()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var raw = new Dictionary<string, object?>
         {
             ["inner"] = "%x%",
@@ -174,7 +174,7 @@ public class DeepResolutionDictTests
     [Test]
     public async Task DeepResolutionDict_NestedList_FullyWalked()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var raw = new Dictionary<string, object?>
         {
             ["items"] = new List<object?> { "%a%", "%b%", "literal" }
@@ -200,7 +200,7 @@ public class ReResolveAcrossCallsTests
     [Test]
     public async Task ReResolveAcrossCalls_VarChangesBetween_PropertyPicksUpFreshValue()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
 
         app.actor.list.User.Context.Variable.Set("x", "first");
         var first = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
@@ -219,7 +219,7 @@ public class ReResolveAcrossCallsTests
     [Test]
     public async Task ReResolveAcrossCalls_SharedParameterData_RawValueUnchanged()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var sharedData = PLang.Tests.Shared.Make.Built(app.actor.list.User.Context, "value", "%x%");
 
         app.actor.list.User.Context.Variable.Set("x", "v1");
@@ -252,7 +252,7 @@ public class ReResolveAcrossCallsTests
     [Test]
     public async Task ReResolveAcrossCalls_LoopIteration_EachReadFresh()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var seen = new List<string?>();
         for (int i = 0; i < 3; i++)
         {
@@ -274,7 +274,7 @@ public class ConcurrentHandlersTests
     [Test]
     public async Task ConcurrentHandlers_ParallelExecuteAsync_NoSharedState()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         app.actor.list.User.Context.Variable.Set("x", "value");
 
         // Pre-register; run in parallel.
@@ -304,7 +304,7 @@ public class ConcurrentHandlersTests
     [Test]
     public async Task ConcurrentHandlers_ParallelAsT_ResolveConsistently()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         app.actor.list.User.Context.Variable.Set("x", "shared");
         var data = PLang.Tests.Shared.Make.Built(app.actor.list.User.Context, "v", "%x%");
 

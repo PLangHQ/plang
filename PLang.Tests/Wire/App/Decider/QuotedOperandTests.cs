@@ -7,7 +7,7 @@ public class QuotedOperandTests
     [Test]
     public async Task AQuotedOperandWithALeadingOperatorSymbol_StaysWhole_ThroughThePr_AndCompares()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var goal = global::app.goal.@this.Parse("Start\n- if \"= %oldHash%\" is \"= %hash%\", set %same% = true\n",
             global::app.type.item.path.@this.Resolve("/Start.goal", ctx), ctx)!;

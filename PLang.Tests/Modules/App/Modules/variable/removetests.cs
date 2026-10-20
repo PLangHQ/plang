@@ -9,7 +9,7 @@ public class RemoveTests
 {
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = new global::app.@this("/app").Testing();
+        var app = global::PLang.Tests.Session.App("/app").Testing();
         return (app.actor.list.User.Context, app.actor.list.User.Context.Variable);
     }
 

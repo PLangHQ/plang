@@ -5,7 +5,7 @@ public class CreateRefusalTests
 {
     [Test] public async Task Create_FromAValueNothingMakesItFrom_AnswersTypeConversionFailed()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-refuse-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var ctx = app.actor.list.User.Context;
 
@@ -17,7 +17,7 @@ public class CreateRefusalTests
 
     [Test] public async Task Create_ALiftThatDeclines_AnswersItsOwnKey()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-refuse-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var ctx = app.actor.list.User.Context;
 

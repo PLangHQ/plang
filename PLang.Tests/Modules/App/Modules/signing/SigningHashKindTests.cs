@@ -10,7 +10,7 @@ public class SigningHashKindTests
     private static async Task<(global::app.@this app, string root)> Signing()
     {
         var root = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_hashkind_" + Guid.NewGuid().ToString("N"))).FullName;
-        var app = new global::app.@this(root);
+        var app = global::PLang.Tests.Session.App(root);
         app.test.list.Open();
         app.TestIdentity();
         await Task.CompletedTask;
@@ -67,7 +67,7 @@ public class SigningHashKindTests
     [Test]
     public async Task CryptoVerify_OfASha256Hash_UsesItsOwnKind()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var hashed = await (await ctx.Action("crypto.hash(Data=\"hello\", Algorithm=\"sha256\")")).Start(ctx);
         await hashed.IsSuccess();

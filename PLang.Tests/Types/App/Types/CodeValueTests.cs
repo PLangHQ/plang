@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Types;
 
 public class CodeValueTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task Code_FromSourceAndLanguage_StoresBoth()
@@ -20,7 +20,7 @@ public class CodeValueTests : System.IAsyncDisposable
 
     [Test] public async Task Code_Resolve_String_DetectsLanguageOrDefaultsToText()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-code-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         await Assert.That(code.Resolve("using System;", app.actor.list.User.Context)!.Language).IsEqualTo("csharp");
         await Assert.That(code.Resolve("def foo:\n  print(1)", app.actor.list.User.Context)!.Language).IsEqualTo("python");

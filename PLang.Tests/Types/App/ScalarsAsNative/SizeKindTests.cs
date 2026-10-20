@@ -6,7 +6,7 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // names and writes back in it; a size made from a count is written in the standard its asker's setting names.
 public class SizeKindTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static async Task<global::app.data.@this> Read(global::app.actor.context.@this context, string path)
@@ -59,7 +59,7 @@ public class SizeKindTests : System.IAsyncDisposable
     [Test]
     public async Task TheSetting_NamesACountsStandard()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var context = app.actor.list.User.Context;
 
         var set = await new global::app.type.item.variable.parser.@this("%!app.type.size.setting.standard%", context.App.type.list).Variable.Single()
@@ -74,7 +74,7 @@ public class SizeKindTests : System.IAsyncDisposable
     [Test]
     public async Task WithNothingSet_ACountIsIec()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
 
         await Assert.That(new Size(100_000_000L, app.actor.list.User.Context).Text).IsEqualTo("95.4 MiB");
     }
@@ -83,7 +83,7 @@ public class SizeKindTests : System.IAsyncDisposable
     [Test]
     public async Task AKindAskedFor_WritesTheBytesInIt()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var carrier = new global::app.data.@this("s", context: app.actor.list.User.Context);
 
         var converted = Size.Create("100 MiB", new global::app.type.@this("size", "si"), carrier)!;
@@ -95,7 +95,7 @@ public class SizeKindTests : System.IAsyncDisposable
     [Test]
     public async Task ASize_ComparesWithANumber_AsBytes()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var context = app.actor.list.User.Context;
         var size = new global::app.data.@this("s", Size.Resolve("1 KiB", null)!, context: context);
 
@@ -110,7 +110,7 @@ public class SizeKindTests : System.IAsyncDisposable
         var root = System.IO.Directory.CreateTempSubdirectory("plang_size_").FullName;
         try
         {
-            await using var app = new global::app.@this(root).Testing();
+            await using var app = global::PLang.Tests.Session.App(root).Testing();
             var context = app.actor.list.User.Context;
             var file = (global::app.type.item.path.file.@this)global::app.type.item.path.@this.Resolve("/a.bin", context);
             await (await file.WriteBytes(new byte[2048], context)).IsSuccess();

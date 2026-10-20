@@ -10,7 +10,7 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // Bare wire form is ISO ("o").
 public class DateTimeWrapperTests : IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/app").Testing();
     public async ValueTask DisposeAsync() => await _app.DisposeAsync();
     private global::app.actor.context.@this Context => _app.actor.list.User.Context;
 
@@ -25,7 +25,7 @@ public class DateTimeWrapperTests : IAsyncDisposable
     [Test]
     public async Task DateTime_Order_ChronologicalUnderItem()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var earlier = new DateTimeT(System.DateTimeOffset.Parse("2024-01-01T00:00:00Z"), _app.type.list[typeof(global::app.type.item.datetime.@this)]);
         var later = new DateTimeT(System.DateTimeOffset.Parse("2024-06-01T00:00:00Z"), _app.type.list[typeof(global::app.type.item.datetime.@this)]);
         await Assert.That(CompareTestOps.OrdD(new Data("", earlier, context: Context), new Data("", later, context: Context))).IsLessThan(0);

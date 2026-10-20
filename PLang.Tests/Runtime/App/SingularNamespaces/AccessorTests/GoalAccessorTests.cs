@@ -14,7 +14,7 @@ public class GoalAccessorTests
 
     [Test] public async Task AppGoal_GetByAddress_ReturnsTheGoal()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var goal = Goal(app, "AlphaGoal");
         app.goal.list.Add(goal);
 
@@ -28,7 +28,7 @@ public class GoalAccessorTests
     // both read, as written, in a real App — a goal's key is its address, matched without case.
     [Test] public async Task PromptLineExamples_Resolve_AsWritten()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         app.goal.list.Add(Goal(app, "Show"));
         var context = app.actor.list.User.Context;
 
@@ -43,7 +43,7 @@ public class GoalAccessorTests
 
     [Test] public async Task AppGoal_GetOfUnknownAddress_IsNotFound()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
 
         var found = await app.goal.Get("/nope", app.actor.list.User.Context);
 
@@ -53,7 +53,7 @@ public class GoalAccessorTests
 
     [Test] public async Task AppGoalList_HoldsTheGoalsRead_AllLeavesOutSetup()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         app.goal.list.Add(Goal(app, "Public"));
         app.goal.list.Add(Goal(app, "Setup"));
 
@@ -66,7 +66,7 @@ public class GoalAccessorTests
 
     [Test] public async Task AppGoalCurrent_IsTheRunningGoal()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var context = app.actor.list.User.Context;
         var goal = Goal(app, "Running");
         await using var running = context.call.Push(goal);

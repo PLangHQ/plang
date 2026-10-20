@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Serialization;
 // object, an error its flat error shape.
 public class SelfWritingItemsTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/selfwrite-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/tmp/selfwrite-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;

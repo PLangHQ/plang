@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Types;
 
 public class ImageValueTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static readonly byte[] PngHeader = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
@@ -38,7 +38,7 @@ public class ImageValueTests : System.IAsyncDisposable
 
     [Test] public async Task Image_FromFileRead_PathReferencesSourceFile()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-img-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var raw = System.IO.Path.Combine(app.AbsolutePath, "photo.png");
         var p = global::app.type.item.path.@this.Resolve(raw, app.actor.list.User.Context);
@@ -49,7 +49,7 @@ public class ImageValueTests : System.IAsyncDisposable
 
     [Test] public async Task Image_PathBorn_JpegExtension_KindIsCanonicalJpg()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-img-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("photo.jpeg", app.actor.list.User.Context);
         var img = app.actor.list.User.Context.Image(p);

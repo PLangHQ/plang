@@ -41,7 +41,7 @@ public class ImageSerializerTests
     // The image states what it has; the format is not its question.
     [Test] public async Task Image_Loaded_WritesItsBytes_WhateverTheFormat()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var kinds = new[]
         {
             app.type.list["text"].kind,
@@ -60,7 +60,7 @@ public class ImageSerializerTests
 
     [Test] public async Task Image_LoadedWithPath_StillWritesItsBytes()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.actor.list.User.Context);
         var w = new CaptureWriter(app.type.list["text"].kind);
@@ -71,7 +71,7 @@ public class ImageSerializerTests
 
     [Test] public async Task Image_UnreadPathBacked_WritesItsPath()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.actor.list.User.Context);
         var w = new CaptureWriter(app.type.list["item"].kind["json"]!);
@@ -83,7 +83,7 @@ public class ImageSerializerTests
     [Test] public async Task Image_RoundTrip_JsonBase64_PreservesBytesAndMime()
     {
         // Write → base64 string. Round-trip back via image.FromBytes.
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var img = ctx.Image(PngBytes, "image/png");
         using var ms = new System.IO.MemoryStream();

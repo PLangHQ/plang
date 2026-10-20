@@ -15,14 +15,14 @@ namespace PLang.Tests.App.Types;
 /// </summary>
 public class ValueConversionHookTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static (global::app.@this app, global::app.actor.context.@this context) MakeApp()
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
-        var app = new global::app.@this(dir).Testing();
+        var app = global::PLang.Tests.Session.App(dir).Testing();
         return (app, app.actor.list.User.Context);
     }
 

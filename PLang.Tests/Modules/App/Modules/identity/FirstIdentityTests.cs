@@ -11,7 +11,7 @@ public class FirstIdentityTests
         try
         {
             // real signing and the real identity provider — the loop lives between them
-            await using var app = new global::app.@this(root);
+            await using var app = global::PLang.Tests.Session.App(root);
             var ctx = app.actor.list.User.Context;
 
             var gets = 0;

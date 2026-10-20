@@ -12,7 +12,7 @@ public class CurrentNodeTests
 
     [Test] public async Task Brackets_PickAnActorByName()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var user = await Read("%!app.actor[\"user\"]%", app.actor.list.System.Context);
         await Assert.That(user.Peek()).IsSameReferenceAs(app.actor.list.User);
     }
@@ -21,7 +21,7 @@ public class CurrentNodeTests
     // the running one.
     [Test] public async Task Dot_TheCurrentsMember_ItsTypeByType()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var goal = new global::app.goal.@this(ctx.App.type.list) { Name = "Checkout",
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
@@ -37,7 +37,7 @@ public class CurrentNodeTests
 
     [Test] public async Task Dot_WithNothingInside_IsNotFound()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var read = await Read("%!app.goal.Path%", app.actor.list.User.Context);
         await Assert.That(read.IsInitialized).IsFalse();
     }
@@ -45,7 +45,7 @@ public class CurrentNodeTests
     // The error node: its list is every error on the asker's call stack, one picked by its key in brackets.
     [Test] public async Task ErrorList_IsEveryErrorOnTheCallStack()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         ctx.call.Audit.Add(new global::app.error.@this("the disk is full", "DiskFull", 507));
         ctx.call.Audit.Add(new global::app.error.@this("quota reached", "Quota", 507));
@@ -58,7 +58,7 @@ public class CurrentNodeTests
 
     [Test] public async Task Error_WithNoneInPlay_HasNoCurrent()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var read = await Read("%!app.error.current%", app.actor.list.User.Context);
         await read.IsFailure();
         await Assert.That(read.Error!.Status.Code.ToInt32()).IsEqualTo(404);
@@ -68,7 +68,7 @@ public class CurrentNodeTests
     // members not the module's.
     [Test] public async Task Module_OwnListFirst_ThenAModuleByName()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         await Assert.That((await Read("%!module.list%", ctx)).Peek()).IsSameReferenceAs(app.module.list);
         var variable = await Read("%!module.variable%", ctx);
@@ -80,7 +80,7 @@ public class CurrentNodeTests
     // A module an app member shadows is reached by its file path.
     [Test] public async Task Module_ByItsPath_ReachesItsActionsSettings()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Setting.Set("variable.set.setting.name", ctx.Ok("%x%"));
         var read = await Read("%!module.variable.set.setting.name%", ctx);
@@ -89,7 +89,7 @@ public class CurrentNodeTests
 
     [Test] public async Task Type_PicksByName_ByDotOrBrackets()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var dot = await Read("%!app.type.goal%", ctx);
         var bracket = await Read("%!app.type[\"goal\"]%", ctx);

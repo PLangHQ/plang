@@ -7,7 +7,7 @@ public class TextParamTypeOnWireTests
 {
     [Test] public async Task TextParam_CarriesTypeOnWire()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-ptype-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var plang = app.actor.list.User.Context.Format("application/plang");
 

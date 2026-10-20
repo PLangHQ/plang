@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Serialization;
 // was asked to write — never just its value.
 public class FormatEncodeContractTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/tmp/FormatEncodeContractTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/tmp/FormatEncodeContractTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]

@@ -9,7 +9,7 @@ public class ActionParameterIndexTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/app").TestSigning();
+    public void Setup() => _app = global::PLang.Tests.Session.App("/app").TestSigning();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }

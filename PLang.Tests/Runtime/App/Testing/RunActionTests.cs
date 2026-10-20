@@ -26,7 +26,7 @@ public class RunActionTests
         // In-memory (Create) rooted at the temp dir — the fixtures are files on disk,
         // but the settings store needn't be. Create also spins up the test session
         // the runner accumulates into.
-        _app = new global::app.@this(_tempDir).Testing();
+        _app = global::PLang.Tests.Session.App(_tempDir).Testing();
     }
 
     [After(Test)]

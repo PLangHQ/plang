@@ -151,7 +151,8 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         foreach (var goal in test.Reach) Report.Coverage.Add(goal);
         if (test.Status == Status.Ready)
         {
-            await using var app = new global::app.@this(_app.AbsolutePath);
+            // born from the code this app was made from: plang's facts are read once for the whole run
+            await using var app = new global::app.@this(_app.AbsolutePath, assembly: _app.assembly);
             app.test.list.Open(test);
             Made?.Invoke(app);
             await test.Start(app, context);

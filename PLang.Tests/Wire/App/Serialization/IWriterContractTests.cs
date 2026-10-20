@@ -11,7 +11,7 @@ namespace PLang.Tests.App.Serialization;
 public class IWriterContractTests : System.IAsyncDisposable
 {
     // Born-with-context: serialized records are born from this app's user context.
-    private readonly global::app.@this app = new global::app.@this(
+    private readonly global::app.@this app = global::PLang.Tests.Session.App(
         "/tmp/iwriter-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 

@@ -23,7 +23,7 @@ public class Cut4_HttpBodyLazyMetadataEager
 
     private static async Task<(global::app.@this App, global::app.data.@this Result)> Get()
     {
-        var app = new global::app.@this(System.IO.Path.Combine(
+        var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-cut4-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var handler = new StubHandler
         {

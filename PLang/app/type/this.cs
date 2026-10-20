@@ -33,7 +33,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     item.IList<@this, list.@this>
 {
     /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>
-    public static list.@this List(global::app.@this app) => new();
+    public static list.@this List(global::app.@this app) => new(app.assembly);
 
     /// <summary>The type's identity — <c>{name, kind?, strict?, template?}</c>: what a type is in plang's own output kind
     /// (its pair writes it: a Data's and a property row's type slot), and a type held as a value in every view but Out
@@ -807,24 +807,20 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// fact names its property types, so it is read once every type's name is known. Without the list the type is
     /// its identity alone.
     /// </summary>
-    internal @this(string name, System.Type clr, list.@this? types) : this(name, clr, null, false, null, known: true)
-    {
-        Alias = Declared<IReadOnlyList<string>>("Alias") ?? [];
-        Owned = Declared<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
-        // declared by the class itself: a base that is internal (reference) leaves its subclasses (file, url) named
-        Internal = clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-                                               | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(null) is true;
-        // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
-        if (types == null || clr == typeof(@this)) return;
-        _offer = Declared<IReadOnlyList<item.@this>>("Offer");
-        _list = types;
+    internal @this(string name, System.Type clr, list.@this? types) : this(new global::app.assembly.@this.Type(name, clr), types) { }
 
-        T? Declared<T>(string member) where T : class
-        {
-            var p = clr.GetProperty(member, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-                                            | System.Reflection.BindingFlags.FlattenHierarchy);
-            return p?.GetValue(null) as T;
-        }
+    /// <summary>The type <paramref name="code"/> says its class is — its name, aliases, owned shapes, whether it is
+    /// plang's own, what it is offered — read from the class once for every app; with <paramref name="types"/>, the
+    /// list it is in (see above).</summary>
+    internal @this(global::app.assembly.@this.Type code, list.@this? types) : this(code.Name, code.Class, null, false, null, known: true)
+    {
+        Alias = code.Alias;
+        Owned = code.Owned;
+        Internal = code.Internal;
+        // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
+        if (types == null || code.Class == typeof(@this)) return;
+        _offer = code.Offer;
+        _list = types;
     }
 
     // The list this type is in — its facts name their property types through it; null for a type that is its

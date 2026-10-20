@@ -8,7 +8,7 @@ public class PrByteEqualTests
     [Test]
     public async Task EveryBuiltPr_WrittenOnce_ReadsAndWritesBackTheSameBytes()
     {
-        await using var app = new global::app.@this(Root).Testing();
+        await using var app = global::PLang.Tests.Session.App(Root).Testing();
         var context = app.actor.list.User.Context;
         var changed = new List<string>();
         foreach (var (relative, text) in Prs())
@@ -25,7 +25,7 @@ public class PrByteEqualTests
     [Test, Explicit]
     public async Task EveryBuiltPr_OnDisk_IsWhatTodaysWriterWrites()
     {
-        await using var app = new global::app.@this(Root).Testing();
+        await using var app = global::PLang.Tests.Session.App(Root).Testing();
         var context = app.actor.list.User.Context;
         var changed = new List<string>();
         foreach (var (relative, text) in Prs())

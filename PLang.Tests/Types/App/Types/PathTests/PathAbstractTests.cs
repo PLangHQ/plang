@@ -79,7 +79,7 @@ public class PathAbstractTests
 
     [Test] public async Task FilePath_Scheme_IsFile_And_Raw_RoundTrips()
     {
-        await using var pathApp = new global::app.@this("/test").Testing();
+        await using var pathApp = global::PLang.Tests.Session.App("/test").Testing();
         var p = new FilePath("/tmp/x.txt", pathApp.actor.list.User.Context.App.type.list[new global::app.type.@this("path", "file"), pathApp.actor.list.User.Context]) { Raw = "/tmp/x.txt" };
         await Assert.That(p.Scheme).IsEqualTo("file");
         await Assert.That(p.Raw).IsEqualTo("/tmp/x.txt");

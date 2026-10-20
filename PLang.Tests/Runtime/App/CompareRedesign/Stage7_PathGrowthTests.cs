@@ -11,7 +11,7 @@ public class Stage7_PathGrowthTests
     {
         var dir = Path.Combine(Path.GetTempPath(), "plang_st7pg_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
-        var app = new global::app.@this(dir).Testing();
+        var app = global::PLang.Tests.Session.App(dir).Testing();
         return (app, app.actor.list.User.Context, dir);
     }
 

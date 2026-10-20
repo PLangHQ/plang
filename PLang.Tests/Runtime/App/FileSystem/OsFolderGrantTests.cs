@@ -16,7 +16,7 @@ public class OsFolderGrantTests
     [Test]
     public async Task AUserReadsAndRunsTheOsFolder_Silently()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-os-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
         await (await Authorize(app, app.actor.list.User, Verb.read)).IsSuccess();
@@ -26,7 +26,7 @@ public class OsFolderGrantTests
     [Test]
     public async Task AUserWritingOrDeletingInTheOsFolder_IsRefused()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-os-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
         var write = await Authorize(app, app.actor.list.User, Verb.write);
@@ -40,7 +40,7 @@ public class OsFolderGrantTests
     [Test]
     public async Task TheSystemWritesInTheOsFolder()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-os-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
         await (await Authorize(app, app.actor.list.System, Verb.write)).IsSuccess();
@@ -53,7 +53,7 @@ public class OsFolderGrantTests
     [Test]
     public async Task ANewSystemFile_ResolvedIntoTheOsFolder_IsTheSystemsToWrite()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-os-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var folder = "grant-" + System.Guid.NewGuid().ToString("N")[..8];
         var system = System.IO.Path.Join(app.OsAbsolutePath, "system", folder);
@@ -76,8 +76,8 @@ public class OsFolderGrantTests
     [Test]
     public async Task AUserInsideTheOsApp_StillCantWriteTheOsFolder()
     {
-        await using var probe = new global::app.@this(System.IO.Path.GetTempPath()).Testing();
-        await using var app = new global::app.@this(probe.OsAbsolutePath).Testing();
+        await using var probe = global::PLang.Tests.Session.App(System.IO.Path.GetTempPath()).Testing();
+        await using var app = global::PLang.Tests.Session.App(probe.OsAbsolutePath).Testing();
 
         var write = await Authorize(app, app.actor.list.User, Verb.write);
 

@@ -10,25 +10,25 @@ public class KindCanonicalisationTests
 {
     [Test] public async Task Markdown_IsMd()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         await Assert.That(app.type.list["text"].kind["markdown"]!.Name).IsEqualTo("md");
     }
 
     [Test] public async Task Jpeg_IsJpg()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         await Assert.That(app.type.list["image"].kind["jpeg"]!.Name).IsEqualTo("jpg");
     }
 
     [Test] public async Task UnknownFrobnicate_IsItsOwnName()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         await Assert.That(app.type.list.Kind("text", "frobnicate").Name).IsEqualTo("frobnicate");
     }
 
     [Test] public async Task SpelledTypeKind_FindsTheFormat()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var type = app.type.list[new global::app.type.@this("image", "jpeg"), app.actor.list.User.Context];
         await Assert.That(type.kind.Name).IsEqualTo("jpg");
     }
@@ -36,7 +36,7 @@ public class KindCanonicalisationTests
     [Test] public async Task RegisteredFormat_AnswersToItsMimeAndExtensions()
     {
         // A format added at runtime is found by the same walk — nothing hand-written beside it.
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         app.type.list.Add(new global::app.type.kind.@this(
             new global::app.Attributes.FormatAttribute("frobx", "application/x-frobnicate", ".frobx", ".frob"), app.type.list["binary"]));
         await Assert.That(app.type.list.Mime("application/x-frobnicate").Name).IsEqualTo("frobx");

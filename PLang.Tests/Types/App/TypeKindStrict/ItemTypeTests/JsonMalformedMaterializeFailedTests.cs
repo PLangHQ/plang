@@ -6,7 +6,7 @@ public class JsonMalformedMaterializeFailedTests
 {
     [Test] public async Task NavigatingBrokenJson_AnswersMaterializeFailed_NamingTheLine()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var data = new global::app.data.@this("x", "{\"a\": 1,", new global::app.type.@this("item", "json"), context: ctx);
 

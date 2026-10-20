@@ -16,14 +16,14 @@ public class ModuleAddTests
     {
         var assemblyPath = typeof(global::app.@this).Assembly.Location;
         var assemblyDir = global::System.IO.Path.GetDirectoryName(assemblyPath)!;
-        var app = new global::app.@this(assemblyDir).Testing();
+        var app = global::PLang.Tests.Session.App(assemblyDir).Testing();
         return (app.actor.list.User.Context, app, assemblyPath);
     }
 
     [Test]
     public async Task Add_NonexistentPath_ReturnsError()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var context = app.actor.list.User.Context;
 
         var add = new Add(context) { Path = context.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve("nonexistent_mylib.dll", context)),

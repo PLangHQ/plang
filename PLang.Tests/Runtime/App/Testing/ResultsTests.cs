@@ -14,7 +14,7 @@ public class ResultsTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test").Testing();
+        _app = global::PLang.Tests.Session.App("/test").Testing();
     }
 
     private global::app.test.@this NewTest(string name = "T") =>

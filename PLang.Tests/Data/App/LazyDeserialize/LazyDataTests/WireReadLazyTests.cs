@@ -13,7 +13,7 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 // parse is dropped. Signing recanonicalizes (no "verify on raw").
 public class WireReadLazyTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private data RoundTrip(data d)
@@ -55,7 +55,7 @@ public class WireReadLazyTests : System.IAsyncDisposable
         // The wire carries {number, kind:int}; the read honors a value's kind when
         // a Context is present (the realistic runtime path — the context-less
         // fallback can't resolve a kind and lifts the bare JSON number as long).
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var d = app.Ok(5);                 // number / int derived

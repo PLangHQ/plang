@@ -123,7 +123,7 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task DictKeys_ReturnsListOfText_NotIEnumerableString()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var d = ctx.Dict();
         d.Set(new Data("name", "a", context: ctx));
@@ -138,7 +138,7 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task ListCount_ReturnsNumber_NotInt()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var l = new global::app.type.item.list.@this(app.type.list["list"]);
         l.Add(new Data("", 1, context: ctx));
@@ -155,7 +155,7 @@ public class Stage7_SurfaceGateTests
     {
         var root = Path.Combine(Path.GetTempPath(), "plang_st7size_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
-        await using var app = new global::app.@this(root).Testing();
+        await using var app = global::PLang.Tests.Session.App(root).Testing();
         var context = app.actor.list.User.Context;
         var tmp = Path.Combine(root, "size.txt");
         File.WriteAllText(tmp, "12345");

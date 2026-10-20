@@ -10,7 +10,7 @@ public class SharedListNavigationTests
     [Test]
     public async Task TwoActors_NavigateSameProgramList_StoredItemsUnchanged()
     {
-        await using var app = new global::app.@this("/tmp/sharedlist-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = global::PLang.Tests.Session.App("/tmp/sharedlist-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         var goal = Make.Goal(app.actor.list.User.Context, "Start", Make.Step("first step"), Make.Step("second step"));
         var before = goal.Step.Slots().ToList();
         var user = new Data("goal", goal, context: app.actor.list.User.Context);

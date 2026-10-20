@@ -12,7 +12,7 @@ public class HashTypeTests
 {
     [Test] public async Task HashType_Resolves_ViaRegistry()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var t = app.type.list["hash"];
         await Assert.That(t.Name).IsEqualTo("hash");
         await Assert.That(t.ClrType).IsEqualTo(typeof(hash));
@@ -20,7 +20,7 @@ public class HashTypeTests
 
     [Test] public async Task HashType_OwnsBase64RoundTrip()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var sha256 = (global::app.module.crypto.type.hash.kind.sha256.@this)app.type.list[typeof(hash)].kind["sha256"]!;
         var bytes = new byte[] { 1, 2, 3, 4, 5 };
         var h = new hash(bytes, sha256);
@@ -33,7 +33,7 @@ public class HashTypeTests
     // the bytes compared, from either side; a different digest is not equal; a text that is neither is Incomparable.
     [Test] public async Task Digest_EqualsItsHexAndBase64Text_AndNothingElse()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var bytes = System.Security.Cryptography.SHA256.HashData("abc"u8.ToArray());
         var other = System.Security.Cryptography.SHA256.HashData("abd"u8.ToArray());
@@ -52,7 +52,7 @@ public class HashTypeTests
 
     [Test] public async Task CryptoHash_ReturnsHashValueWithAlgorithmKind()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var action = global::PLang.Tests.Shared.Make.Action(ctx, "crypto", "hash",
             ("data", "hello"), ("algorithm", "sha256"));
@@ -68,7 +68,7 @@ public class HashTypeTests
 
     [Test] public async Task CryptoVerify_DefaultsAlgorithmFromHashValue()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var crypto = new global::app.module.crypto.code.Default();
 

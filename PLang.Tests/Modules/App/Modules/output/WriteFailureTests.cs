@@ -6,7 +6,7 @@ namespace PLang.Tests.App.actions.output;
 /// </summary>
 public class WriteFailureTests
 {
-    private readonly global::app.@this _app = new global::app.@this("/test").Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/test").Testing();
 
     [After(Test)]
     public async Task Dispose() => await _app.DisposeAsync();

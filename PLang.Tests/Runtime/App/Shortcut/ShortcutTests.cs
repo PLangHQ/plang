@@ -17,7 +17,7 @@ public class ShortcutTests
     {
         _root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "shortcut-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_root, "shortcut", ".build"));
-        _app = new global::app.@this(_root).Testing();
+        _app = global::PLang.Tests.Session.App(_root).Testing();
     }
 
     [After(Test)]

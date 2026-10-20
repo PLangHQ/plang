@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Types;
 // shape the build site holds (a text.@this literal).
 public class KindViaCreateTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this(
+    private readonly global::app.@this app = global::PLang.Tests.Session.App(
         System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-kind-via-create-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 

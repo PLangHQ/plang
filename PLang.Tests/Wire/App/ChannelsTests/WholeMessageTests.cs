@@ -25,7 +25,7 @@ public class WholeMessageTests
     [Test]
     public async Task WritersSideBySide_EachLineIsOneWholeMessage()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = global::PLang.Tests.Session.App("/test", autoWireConsoleChannels: false).Testing();
         var user = app.actor.list.User.Context;
         var capture = new Yielding();
         var channel = new global::app.channel.type.stream.@this("out", capture,

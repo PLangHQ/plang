@@ -7,7 +7,7 @@ namespace PLang.Tests.App.TypeKindStrict.KindDerivationTests;
 
 public class ImageValidateKindTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/test").Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/test").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 

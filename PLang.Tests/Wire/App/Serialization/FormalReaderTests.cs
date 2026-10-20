@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Serialization;
 // re-pins them through the Accept tests.
 public class FormalReaderTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private Task<global::app.data.@this> Read(string formal, out global::app.goal.step.@this step)

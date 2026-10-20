@@ -8,7 +8,7 @@ namespace PLang.Tests.App.CallStackTests;
 /// </summary>
 public class ErrorRecordTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/errrec-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/tmp/errrec-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private async Task<global::app.error.@this> Recorded()

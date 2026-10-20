@@ -11,7 +11,7 @@ public class AppEventTests
 
     [Test] public async Task InsideABoundCall_IsTheFramesData()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var goal = new global::app.goal.@this(app.type.list) { Name = "Checkout",
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
@@ -32,7 +32,7 @@ public class AppEventTests
 
     [Test] public async Task OutsideOne_IsUnset()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var read = await Read("%!app.event%", app.actor.list.User.Context);
         await Assert.That(read.IsInitialized).IsFalse();
     }

@@ -7,7 +7,7 @@ public class NoSwallowedValueErrorsTests
 {
     [Test] public async Task AGrepPatternThatIsNotARegex_IsAnInvalidPatternError()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-grep-" + Guid.NewGuid().ToString("N")[..8])).Testing();
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-grep-" + Guid.NewGuid().ToString("N")[..8])).Testing();
         var text = app.actor.list.User.Context.Ok("a(b\nc");
         var thrown = await Assert.That(() => { new global::app.data.code.Default().Grep(text, "a(b"); return Task.CompletedTask; })
             .Throws<global::app.error.AppException>();
@@ -16,7 +16,7 @@ public class NoSwallowedValueErrorsTests
 
     [Test] public async Task AGlobGrantWithRegexCharacters_MatchesThemLiterally()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-glob-" + Guid.NewGuid().ToString("N")[..8])).Testing();
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-glob-" + Guid.NewGuid().ToString("N")[..8])).Testing();
         var user = app.actor.list.User;
         var grant = new permission.@this(user.Name, "/a(b/*", permission.@this.AllVerbs, permission.Match.glob, app.type.list[typeof(permission.@this)]);
         await Assert.That(grant.Allows(permission.@this.Request(user, "/a(b/x", permission.Verb.read))).IsTrue();

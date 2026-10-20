@@ -11,7 +11,7 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // `_value == null` value-switches across Compare/Normalize/ToBoolean.
 public class NullWrapperTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private NullV Nul => (NullV)app.actor.list.User.Context.Null().Peek();
@@ -24,7 +24,7 @@ public class NullWrapperTests : System.IAsyncDisposable
         await Assert.That(held is NullV).IsTrue();
         await Assert.That(ReferenceEquals(held.Type, app.type.list["null"])).IsTrue();
         await Assert.That(ReferenceEquals(held, app.actor.list.System.Context.Null("b").Peek())).IsTrue();
-        await using var other = new global::app.@this("/other").Testing();
+        await using var other = global::PLang.Tests.Session.App("/other").Testing();
         await Assert.That(ReferenceEquals(held, other.actor.list.User.Context.Null("c").Peek())).IsFalse();
         var ctors = typeof(NullV).GetConstructors(
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);

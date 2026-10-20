@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Modules.debug;
 // a module doesn't carry every module — so a goal writes, however large the app.
 public class DebugViewTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/debugview-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/tmp/debugview-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;

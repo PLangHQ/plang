@@ -8,7 +8,7 @@ namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 // `type` slot is read through.
 public class TypeJsonRoundTripTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/typejson-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/tmp/typejson-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private global::app.type.@this Read(string json)

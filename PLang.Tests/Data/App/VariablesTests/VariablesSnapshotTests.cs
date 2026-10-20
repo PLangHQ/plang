@@ -2,19 +2,19 @@ namespace PLang.Tests.App.VariablesTests;
 
 public class VariablesSnapshotTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]
     public async Task Variables_RoundTrip_PreservesValuesAndProperties_ForUserVars()
     {
         // Set %x%=1 and %obj%={a:1}; Capture; Restore into fresh Variables; deep-equal.
-        var src = new global::app.@this("/src").Testing();
+        var src = global::PLang.Tests.Session.App("/src").Testing();
         src.actor.list.User.Context.Variable.Set("x", 1);
         src.actor.list.User.Context.Variable.Set("obj", new Dictionary<string, object?> { ["a"] = 1 });
 
         var snap = src.Snapshot(src.actor.list.User.Context);
-        var dst = new global::app.@this("/dst").Testing();
+        var dst = global::PLang.Tests.Session.App("/dst").Testing();
         await dst.Restore(snap, dst.actor.list.User.Context);
 
         var x = await dst.actor.list.User.Context.Variable.Get("x");
@@ -36,7 +36,7 @@ public class VariablesSnapshotTests : System.IAsyncDisposable
         // Existing partition: skip !-prefix, DynamicData (Now/GUID/!app/MyIdentity).
         // Settings is now a navigable resolver (not in _variables) so it's absent
         // by construction — no special-case needed.
-        var src = new global::app.@this("/src").Testing();
+        var src = global::PLang.Tests.Session.App("/src").Testing();
         var vars = src.actor.list.User.Context.Variable;
         vars.Set("user", "alice");        // user var — survives
         vars.Set("!myInfra", "infra");    // !-prefixed — skipped

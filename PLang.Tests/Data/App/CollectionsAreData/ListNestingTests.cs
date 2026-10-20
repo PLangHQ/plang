@@ -6,7 +6,7 @@ namespace PLang.Tests.App.CollectionsAreData;
 /// </summary>
 public class ListNestingTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.type.item.list.@this Parsed(string json)
@@ -69,7 +69,7 @@ public class ListNestingTests : System.IAsyncDisposable
     [Test]
     public async Task Flatten_LiftsANestedElement()
     {
-        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6])).Testing();
+        var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6])).Testing();
         var ctx = app.actor.list.User.Context;
         ctx.Variable.Set("l", Parsed("[[1,2],3]"));
 
@@ -87,7 +87,7 @@ public class ListNestingTests : System.IAsyncDisposable
     [Test]
     public async Task Flatten_LiftsNestedListsAtAnyDepth()
     {
-        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6])).Testing();
+        var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6])).Testing();
         var ctx = app.actor.list.User.Context;
         ctx.Variable.Set("l", Parsed("[[1,[2,[3]]],4]"));
 

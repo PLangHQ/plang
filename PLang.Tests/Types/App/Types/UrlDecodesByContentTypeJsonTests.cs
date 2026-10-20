@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Types;
 // `type.name` is `item` and `type.kind.name` is `json` (json is item's, decision 773).
 public class UrlDecodesByContentTypeJsonTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this(
+    private readonly global::app.@this app = global::PLang.Tests.Session.App(
         System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-urljson-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 

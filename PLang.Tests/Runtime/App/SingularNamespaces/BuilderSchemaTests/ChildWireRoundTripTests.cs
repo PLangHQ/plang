@@ -15,7 +15,7 @@ public class ChildWireRoundTripTests
     [Test]
     public async Task ConditionChild_SurvivesOutputReadRoundTrip()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var context = app.actor.list.System.Context;
 
         // A condition step with an indented body, folded so the body lives on the gate action's Child.

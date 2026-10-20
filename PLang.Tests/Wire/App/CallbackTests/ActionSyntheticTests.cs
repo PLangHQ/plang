@@ -12,7 +12,7 @@ public class ActionSyntheticTests
 {
     [Test] public async Task Synthetic_DefaultsToTrue_OnInlineCSharpConstruction()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var a = new ActionEntity(app.type.list) { Module = app.Module("variable"), Name = "set" };
         await Assert.That(a.Synthetic).IsTrue();
     }
@@ -22,7 +22,7 @@ public class ActionSyntheticTests
         // / Setup.LoadFile (post-deserialization sweep). No fixture .pr handy
         // here — pin the contract that Synthetic is `set`-able (init would
         // make the post-load sweep impossible).
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var a = new ActionEntity(app.type.list) { Module = app.Module("variable"), Name = "set" };
         a.Synthetic = false;
         await Assert.That(a.Synthetic).IsFalse();
@@ -30,7 +30,7 @@ public class ActionSyntheticTests
 
     [Test] public async Task CallFrame_OfASyntheticAction_IsNoResumePoint()
     {
-        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var synthetic = new ActionEntity(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" };
 
@@ -44,7 +44,7 @@ public class ActionSyntheticTests
         // Stage 2a.5 stamps Synthetic on Call frames; wire-serialize filtering
         // is a follow-up (architect's todos.md note — per-channel serializer
         // shape deferred). Pin the contract that the flag is readable.
-        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs2-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var prLoaded = new ActionEntity(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }; prLoaded.Synthetic = false;
         await using var call = app.actor.list.User.Context.call.Push(prLoaded);
@@ -55,7 +55,7 @@ public class ActionSyntheticTests
     {
         // App.Snapshot() captures the full CallStack (synthetic + non-synthetic).
         // Pin: a synthetic frame appears in the snapshot section.
-        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs3-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var synthetic = new ActionEntity(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" };
         await using var call = app.actor.list.User.Context.call.Push(synthetic);

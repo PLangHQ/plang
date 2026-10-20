@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Types;
 public class FileReadBuildTests
 {
     private static global::app.@this NewApp()
-        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        => global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fr-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test] public async Task FileReadBuild_PngExtension_ReturnsHighLevelType_Image()

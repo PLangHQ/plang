@@ -11,7 +11,7 @@ public class TagStampTests
     {
         var root = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_tagstamp_" + Guid.NewGuid().ToString("N")[..8])).FullName;
-        await using var app = new global::app.@this(root, autoWireConsoleChannels: false).Testing().Building();
+        await using var app = global::PLang.Tests.Session.App(root, autoWireConsoleChannels: false).Testing().Building();
         var context = app.actor.list.User.Context;
         var goal = global::app.goal.@this.Parse("Start\n- test.tag(Tags=[\"skip\"])\n",
             global::app.type.item.path.@this.Resolve("/Start.test.goal", context), context)!;

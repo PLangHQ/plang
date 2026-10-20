@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Core;
 
 public class GoalTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/GoalTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/tmp/GoalTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]
@@ -73,7 +73,7 @@ public class GoalTests : System.IAsyncDisposable
         System.IO.Directory.CreateDirectory(root);
         try
         {
-            await using var other = new global::app.@this(root).Testing();
+            await using var other = global::PLang.Tests.Session.App(root).Testing();
             var loaded = await other.goal.Load("/system/error/Show.goal");
 
             await loaded.IsSuccess();
@@ -262,7 +262,7 @@ public class GoalCacheTests
     [Test]
     public async Task Merge_AFoldedBody_IsCachedLikeAnyStep()
     {
-        await using var _app = new global::app.@this("/app").Testing();
+        await using var _app = global::PLang.Tests.Session.App("/app").Testing();
         var set = global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "variable", "set", global::PLang.Tests.Shared.Make.Param(_app.actor.list.User.Context, "Name", "%x%", "variable"), ("Value", 1));
         var condition = global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", "%b%"));
         var body = new Step(_app.type.list) { Index = 1, Text = "set %x% = 1", Line = new() { Number = 5, Indent = 1 } };
@@ -291,7 +291,7 @@ public class GoalCacheTests
     [Test]
     public async Task Hash_CoversTheGoalsAndTheStepsComments()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var types = app.type.list;
         Goal Written(string? goalComment, string? stepComment) => new(types)
         {

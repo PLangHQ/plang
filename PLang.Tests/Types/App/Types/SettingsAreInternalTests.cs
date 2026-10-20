@@ -10,7 +10,7 @@ public class SettingsAreInternalTests
     [Test]
     public async Task EverySettingsSubtype_IsInternal()
     {
-        await using var app = new global::app.@this(
+        await using var app = global::PLang.Tests.Session.App(
             "/tmp/plang_settings_" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         var leaked = app.type.list.Items()
             .Where(t => t.ClrType is { } clr

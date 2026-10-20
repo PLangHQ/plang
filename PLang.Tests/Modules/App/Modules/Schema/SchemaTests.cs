@@ -14,7 +14,7 @@ public class SchemaTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test").Testing();
+        _app = global::PLang.Tests.Session.App("/test").Testing();
         _app.Build = new global::app.module.build.@this(_app.actor.list.System.Context);
     }
 

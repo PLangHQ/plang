@@ -20,7 +20,7 @@ public class ReadableTests : IDisposable
         _outside = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_readable_out_" + Guid.NewGuid().ToString("N"))).FullName;
         File.WriteAllText(Path.Combine(_root, "page.html"), "<p>mine</p>");
         File.WriteAllText(Path.Combine(_outside, "secret.html"), "<p>not mine</p>");
-        _app = new global::app.@this(_root).Testing();
+        _app = global::PLang.Tests.Session.App(_root).Testing();
         // each ask here is answered no: a page that asks is refused
         _app.actor.list.User.Context.Actor!.Channel.Register(new CannedAnswerChannel("n"));
     }

@@ -13,7 +13,7 @@ public class TemplateSourceSignedRoundTripTests
         var root = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_tsrc_" + Guid.NewGuid().ToString("N"))).FullName;
         try
         {
-            await using var app = new global::app.@this(root);
+            await using var app = global::PLang.Tests.Session.App(root);
             app.test.list.Open();
             app.TestIdentity();
             var ctx = app.actor.list.User.Context;

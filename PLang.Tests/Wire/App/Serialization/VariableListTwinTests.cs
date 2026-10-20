@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Serialization;
 // AcceptTheFixture.
 public class VariableListTwinTests
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
 
     private const string Pinned = "PLang.Tests/Wire/App/Serialization/formal_golden.json";
 
@@ -50,7 +50,7 @@ public class VariableListTwinTests
     [Test]
     public async Task AnIndexedVariable_ReadsBackFromThePr_AndRuns()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "Indexed",
             Make.Step("set %first% = %users[0].name%",

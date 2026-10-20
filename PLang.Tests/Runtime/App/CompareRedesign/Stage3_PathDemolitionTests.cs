@@ -18,7 +18,7 @@ public class Stage3_PathDemolitionTests
     {
         var dir = Path.Combine(Path.GetTempPath(), "plang_st3pd_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
-        var app = new global::app.@this(dir).TestSigning();
+        var app = global::PLang.Tests.Session.App(dir).TestSigning();
         return (app, app.actor.list.User.Context, dir);
     }
 
@@ -73,7 +73,7 @@ public class Stage3_PathDemolitionTests
     public async Task PathWrite_EmitsPrivateLocation_AsTyped()
     {
         // path.Write(IWriter) emits the as-typed location string verbatim
-        await using var pathApp = new global::app.@this("/test").Testing();
+        await using var pathApp = global::PLang.Tests.Session.App("/test").Testing();
         foreach (var loc in new[] { "//file.txt", "/file.txt", "test/try.txt", "c:/my/path.txt" })
         {
             var p = new global::app.type.item.path.file.@this(loc, pathApp.actor.list.User.Context.App.type.list[new global::app.type.@this("path", "file"), pathApp.actor.list.User.Context]) { Raw = loc };
@@ -90,7 +90,7 @@ public class Stage3_PathDemolitionTests
     public async Task PathToString_LocationOnly_NeverContentFirst()
     {
         // ToString returns the location string only; Content is gone entirely
-        await using var pathApp = new global::app.@this("/test").Testing();
+        await using var pathApp = global::PLang.Tests.Session.App("/test").Testing();
         var p = new global::app.type.item.path.file.@this("/some/file.json", pathApp.actor.list.User.Context.App.type.list[new global::app.type.@this("path", "file"), pathApp.actor.list.User.Context]) { Raw = "/some/file.json" };
         await Assert.That(p.ToString()).IsEqualTo("/some/file.json");
     }
@@ -272,7 +272,7 @@ public class Stage3_PathDemolitionTests
     public async Task PathWriteOut_LocationOnly_NotContent()
     {
         // a `path` value has one face — it writes itself as the location string
-        await using var pathApp = new global::app.@this("/test").Testing();
+        await using var pathApp = global::PLang.Tests.Session.App("/test").Testing();
         var p = new global::app.type.item.path.file.@this("docs/readme.md", pathApp.actor.list.User.Context.App.type.list[new global::app.type.@this("path", "file"), pathApp.actor.list.User.Context]) { Raw = "docs/readme.md" };
         using var ms = new MemoryStream();
         using var jw = new Utf8JsonWriter(ms);

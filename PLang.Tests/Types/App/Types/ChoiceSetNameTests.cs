@@ -30,7 +30,7 @@ public class ChoiceSetNameTests
     [Test]
     public async Task ASecondSetWithATakenName_IsRefused_NamingBoth()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
 
         var added = app.type.list.Add(Clashing(), ctx);

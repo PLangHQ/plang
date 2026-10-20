@@ -21,7 +21,7 @@ public class KindFollowUpTests : System.IAsyncDisposable
             "Name — the variable · ask: which variable does the step keep its result in?\n" +
             "Value — the value the step writes\n" +
             "Type — the type the step coerces to · ask: which type does the step coerce the value to (none unless the step writes `as <type>`)?\n");
-        _app = new global::app.@this(_root).Testing().Building();
+        _app = global::PLang.Tests.Session.App(_root).Testing().Building();
     }
 
     public async System.Threading.Tasks.ValueTask DisposeAsync()

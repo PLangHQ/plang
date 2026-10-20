@@ -9,14 +9,14 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // truthiness (zero is falsy — documented policy), bare ISO-8601 serialize.
 public class DurationWrapperTests : IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/app").Testing();
     public async ValueTask DisposeAsync() => await _app.DisposeAsync();
     private global::app.actor.context.@this Context => _app.actor.list.User.Context;
 
     [Test]
     public async Task Duration_Order_ByLength()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var s = Context.Duration(System.TimeSpan.FromSeconds(1));
         var m = Context.Duration(System.TimeSpan.FromMinutes(1));
         var h = Context.Duration(System.TimeSpan.FromHours(1));

@@ -13,7 +13,7 @@ namespace PLang.Tests.App.Types;
 /// </summary>
 public class KindNestsTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/kindnests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/tmp/kindnests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     // A hand-written wire string is the at-rest (Store) form — read it so, as plang keeps it; Out would

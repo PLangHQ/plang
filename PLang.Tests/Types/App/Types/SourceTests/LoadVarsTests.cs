@@ -13,7 +13,7 @@ public class LoadVarsTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "loadvars-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root).Testing();
+        var app = global::PLang.Tests.Session.App(root).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("name", "World");
         return (app, root, ctx);

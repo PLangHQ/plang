@@ -21,7 +21,7 @@ public class ForeachErrorPropagationTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app").Testing();
+        _app = global::PLang.Tests.Session.App("/app").Testing();
     }
 
     /// <summary>

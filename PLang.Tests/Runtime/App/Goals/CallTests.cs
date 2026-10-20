@@ -14,7 +14,7 @@ public class CallTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/tmp/call-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        _app = global::PLang.Tests.Session.App("/tmp/call-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         _errors = new System.IO.MemoryStream();
         _app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
             global::app.channel.list.@this.Error, _errors, global::app.channel.ChannelDirection.Output, ownsStream: false)

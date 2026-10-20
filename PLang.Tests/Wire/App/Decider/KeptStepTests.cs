@@ -50,7 +50,7 @@ public class KeptStepTests
     [Test]
     public async Task ARebuild_AsksOnlyTheChangedStep_AndTheKeptCodeIsByteEqual()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
@@ -92,7 +92,7 @@ public class KeptStepTests
     [Test]
     public async Task AKeptStepNamingAPropertyItsActionHasNot_IsOpenedAgain()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
@@ -117,7 +117,7 @@ public class KeptStepTests
     [Test]
     public async Task AKeptStepWithADefaultFrozenInATypeItsOptionIsNoLonger_IsOpenedAgain()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
         const string split = "Start\n- split \"a\" into lines, write to %parts%\n";
 
@@ -142,7 +142,7 @@ public class KeptStepTests
     [Test]
     public async Task AKeptStepWithALiteralItsOptionNoLongerTakes_IsOpenedAgain()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
         const string read = "Start\n- read note.txt, write to %note%\n";
 
@@ -164,7 +164,7 @@ public class KeptStepTests
     [Test]
     public async Task AKeptStepWhoseCodeNoLongerHolds_IsOpenedAgain_WithAWarning()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
@@ -185,7 +185,7 @@ public class KeptStepTests
     [Test]
     public async Task TheSourceItsPrWasBuiltFrom_IsCached()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
@@ -210,7 +210,7 @@ public class KeptStepTests
     [Test]
     public async Task AStepDeleted_ItsStepsAreCached_TheGoalIsNot()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
@@ -227,7 +227,7 @@ public class KeptStepTests
     [Test]
     public async Task AStepChanged_NothingIsCached()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);

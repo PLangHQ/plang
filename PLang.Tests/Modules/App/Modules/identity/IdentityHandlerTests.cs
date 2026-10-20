@@ -16,7 +16,7 @@ public class IdentityHandlerTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_identity_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).TestSigning();
+        _app = global::PLang.Tests.Session.App(_tempDir).TestSigning();
     }
 
     [After(Test)]
@@ -42,7 +42,7 @@ public class IdentityHandlerTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_id_row_" + Guid.NewGuid().ToString("N")[..8]);
         string key;
-        await using (var first = new global::app.@this(root))
+        await using (var first = global::PLang.Tests.Session.App(root))
         {
             var ctx = first.actor.list.System.Context;
             var create = new Create(ctx) { Name = (global::app.type.item.text.@this)"keeper", Default = (global::app.type.item.@bool.@this)true };
@@ -52,7 +52,7 @@ public class IdentityHandlerTests
             key = ((Identity)(await made.Value())!).PublicKey;
         }
 
-        await using var next = new global::app.@this(root);
+        await using var next = global::PLang.Tests.Session.App(root);
         var user = next.actor.list.User.Context;
         var get = new Get(user);
         await get.Attach(null, user);
@@ -71,7 +71,7 @@ public class IdentityHandlerTests
     {
         // This test validates the ACTUAL ed25519 keypair (32-byte base64), so it needs the
         // real signing provider — not the class fixture's test-signing. Own real app, own key.
-        await using var realApp = new global::app.@this(System.IO.Path.Combine(
+        await using var realApp = global::PLang.Tests.Session.App(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang_id_real_" + Guid.NewGuid().ToString("N")[..8]));
         var realCtx = realApp.actor.list.System.Context;
         var handler = new Create(realCtx) { Name = (global::app.type.item.text.@this)"test", Default = (global::app.type.item.@bool.@this)true };

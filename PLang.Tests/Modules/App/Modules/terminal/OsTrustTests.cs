@@ -20,7 +20,7 @@ public class OsTrustTests : IDisposable
     public OsTrustTests()
     {
         _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_trust_" + Guid.NewGuid().ToString("N"))).FullName;
-        _app = new global::app.@this(_root).Testing();
+        _app = global::PLang.Tests.Session.App(_root).Testing();
         Context.Actor!.Channel.Register(new CannedAnswerChannel("n"));
     }
 

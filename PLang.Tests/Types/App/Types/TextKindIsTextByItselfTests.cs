@@ -16,7 +16,7 @@ namespace PLang.Tests.App.Types;
 /// </summary>
 public class TextKindIsTextByItselfTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task PlainText_Kind_IsText_WithoutNameFloor()

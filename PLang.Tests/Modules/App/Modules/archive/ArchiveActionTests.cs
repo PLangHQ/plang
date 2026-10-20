@@ -16,7 +16,7 @@ public class ArchiveActionTests : IDisposable
     public ArchiveActionTests()
     {
         _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_archive_" + Guid.NewGuid().ToString("N"))).FullName;
-        _app = new global::app.@this(_root).Testing();
+        _app = global::PLang.Tests.Session.App(_root).Testing();
     }
 
     public void Dispose()
@@ -90,7 +90,7 @@ public class ArchiveActionTests : IDisposable
         var root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_archive_signed_" + Guid.NewGuid().ToString("N"))).FullName;
         try
         {
-            await using var app = new global::app.@this(root);
+            await using var app = global::PLang.Tests.Session.App(root);
             app.test.list.Open();
             app.TestIdentity();
             var ctx = app.actor.list.User.Context;

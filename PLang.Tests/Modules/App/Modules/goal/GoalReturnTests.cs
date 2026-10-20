@@ -6,7 +6,7 @@ public class GoalReturnTests
 {
     private (global::app.actor.context.@this context, global::app.type.item.variable.list.@this memory) CreateContext()
     {
-        var app = new global::app.@this("/app").Testing();
+        var app = global::PLang.Tests.Session.App("/app").Testing();
         return (app.actor.list.User.Context, app.actor.list.User.Context.Variable);
     }
 

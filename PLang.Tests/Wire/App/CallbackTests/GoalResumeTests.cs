@@ -15,7 +15,7 @@ namespace PLang.Tests.App.CallbackTests;
 public class GoalResumeTests
 {
     private static global::app.@this NewApp() =>
-        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-rf-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     // The goal comes first — a step is born knowing it, so it cannot be built loose

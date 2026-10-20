@@ -14,7 +14,7 @@ public class ParallelWireTests
 
     private static async Task<global::app.type.item.parallel.@this> RoundTrip(string parallel)
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
         var goal = global::app.goal.@this.Parse("Start\n- foreach %orders% in parallel, call Ship\n",
             global::app.type.item.path.@this.Resolve("/Start.goal", context), context)!;
@@ -61,7 +61,7 @@ public class ParallelWireTests
     // stays that cpu, and none given stays the default of the machine that reads it
     private static async Task<global::app.type.item.parallel.@this> Relayed(global::app.type.item.parallel.@this parallel)
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var context = app.actor.list.User.Context;
         var plang = app.type.list["wire"].kind["plang"]!;
         using var stream = new System.IO.MemoryStream();
@@ -74,7 +74,7 @@ public class ParallelWireTests
     [Test]
     public async Task AParallelValue_RelayedThroughTheWire_IsItself()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         await Assert.That((await Relayed(global::app.type.item.parallel.@this.Off(app.type.list[typeof(global::app.type.item.parallel.@this)]))).IsTruthy()).IsFalse();
         await Assert.That((await Relayed(new global::app.type.item.parallel.@this(app.type.list[typeof(global::app.type.item.parallel.@this)], 2))).Cpu.ToInt64()).IsEqualTo(2L);
         var machine = await Relayed(new global::app.type.item.parallel.@this(app.type.list[typeof(global::app.type.item.parallel.@this)]));

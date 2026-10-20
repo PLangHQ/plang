@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Modules.crypto;
 public class CryptoV1PassThroughTests
 {
     private static global::app.@this NewApp() =>
-        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-crypto-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test]

@@ -9,7 +9,7 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // TimeOnly arm at all — this wrapper closes that gap. OwnedClrTypes = TimeOnly.
 public class TimeWrapperTests : IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/app").Testing();
     public async ValueTask DisposeAsync() => await _app.DisposeAsync();
     // a time made by the app's type for it
     private TimeT Time(int hour, int minute, int second = 0) => new(new System.TimeOnly(hour, minute, second), _app.type.list[typeof(TimeT)]);
@@ -31,7 +31,7 @@ public class TimeWrapperTests : IAsyncDisposable
     [Test]
     public async Task Time_Order_WithinTimeOnly()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var morning = Time(9, 0);
         var afternoon = Time(14, 30);
         var night = Time(23, 59);

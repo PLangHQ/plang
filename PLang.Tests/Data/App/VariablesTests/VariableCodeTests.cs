@@ -12,7 +12,7 @@ public class VariableCodeTests
     private global::app.actor.context.@this Context => _app.actor.list.User.Context;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/test").Testing();
+    public void Setup() => _app = global::PLang.Tests.Session.App("/test").Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }

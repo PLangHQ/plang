@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Types;
 // marked members only, so a row's field of the same name as a CLR member of the list still reads through to the row.
 public class TypeSurfaceTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/surface-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+    private readonly global::app.@this _app = global::PLang.Tests.Session.App("/tmp/surface-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;

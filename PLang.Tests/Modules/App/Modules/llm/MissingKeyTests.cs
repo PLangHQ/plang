@@ -11,7 +11,7 @@ public class MissingKeyTests
 
     private static (global::app.@this App, System.IO.MemoryStream Written) Asking(string? typed)
     {
-        var app = new global::app.@this("/tmp/llmkey-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        var app = global::PLang.Tests.Session.App("/tmp/llmkey-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         var written = new System.IO.MemoryStream();
         var user = app.actor.list.User;
         user.Channel.Register(new global::app.channel.type.stream.@this(global::app.channel.list.@this.Output, written,
@@ -63,7 +63,7 @@ public class MissingKeyTests
     [Test]
     public async Task ASensitiveValue_ShowsMasked_ButIsKeptWhole()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set(new global::app.data.@this("pw", new global::app.type.item.sensitive.@this(Pasted, app.type.list[typeof(global::app.type.item.sensitive.@this)]), context: ctx));
 

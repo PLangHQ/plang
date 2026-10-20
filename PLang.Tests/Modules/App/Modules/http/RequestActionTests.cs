@@ -228,7 +228,7 @@ public class RequestActionTests
     // Another app, signing for real, answers in plang: each Data it sends is one line. Returns its public key.
     private async Task<string> RemoteAnswers(params Func<global::app.actor.context.@this, global::app.data.@this>[] sent)
     {
-        await using var remote = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var remote = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_remote_" + Guid.NewGuid().ToString("N")[..8]));
         var remoteCtx = remote.actor.list.User.Context;
         using var body = new System.IO.MemoryStream();

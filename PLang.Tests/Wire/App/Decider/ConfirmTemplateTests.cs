@@ -28,7 +28,7 @@ public class ConfirmTemplateTests
     [Test]
     public async Task EachNumber_IsOneNoulUnderItsId_AndTheStateNamesItsStepAndAction()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
         var numbers = new List<global::app.goal.step.unwritten.@this>
         {
@@ -69,7 +69,7 @@ public class ConfirmTemplateTests
     public async Task TheStateAndQuestions_AreThePinnedOnes()
     {
         var golden = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), Pinned))).RootElement;
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var (state, questions, numbers) = await Render(golden, os.actor.list.User.Context);
 
         await Assert.That(state).IsEqualTo(golden.GetProperty("state").GetString());
@@ -85,7 +85,7 @@ public class ConfirmTemplateTests
     public async Task AcceptTheFixture()
     {
         var golden = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), Pinned))).RootElement;
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var (state, questions, _) = await Render(golden, os.actor.list.User.Context);
         var pinned = Fixture.Read(Pinned);
         pinned["state"] = state;

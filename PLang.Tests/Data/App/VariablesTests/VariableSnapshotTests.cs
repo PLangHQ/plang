@@ -4,8 +4,8 @@ namespace PLang.Tests.App.VariablesTests;
 // under its own name and another) is captured, and restored, under both.
 public class VariableSnapshotTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
-    private readonly global::app.@this dst = new global::app.@this("/dst").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
+    private readonly global::app.@this dst = global::PLang.Tests.Session.App("/dst").Testing();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync()
     {

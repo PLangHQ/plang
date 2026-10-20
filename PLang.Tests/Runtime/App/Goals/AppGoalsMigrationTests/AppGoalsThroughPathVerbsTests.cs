@@ -16,7 +16,7 @@ public class AppGoalsThroughPathVerbsTests
             "plang-appgoals-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
         await Task.CompletedTask;
-        return (new global::app.@this(root).Testing(), root);
+        return (global::PLang.Tests.Session.App(root).Testing(), root);
     }
 
     [Test] public async Task Load_UsesPathReadTextNotFileReadAllText()
@@ -109,7 +109,7 @@ public class AppGoalsThroughPathVerbsTests
         await app1.Save();
         await app1.DisposeAsync();
 
-        var app2 = new global::app.@this(root).Testing();
+        var app2 = global::PLang.Tests.Session.App(root).Testing();
         await app2.Load();
         await Assert.That(app2.Id).IsEqualTo("round-trip");
         await app2.DisposeAsync();

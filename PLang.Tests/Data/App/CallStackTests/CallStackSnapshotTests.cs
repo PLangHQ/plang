@@ -4,7 +4,7 @@ namespace PLang.Tests.App.CallStackTests;
 
 public class CallStackSnapshotTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private (Goal goal, Step step, ActionEntity action) MakeFrame(
@@ -20,7 +20,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
 
     private global::app.@this BuildAppWithGoals(params Goal[] goals)
     {
-        var app = new global::app.@this("/test").Testing();
+        var app = global::PLang.Tests.Session.App("/test").Testing();
         foreach (var g in goals) app.goal.list.Add(g);
         return app;
     }

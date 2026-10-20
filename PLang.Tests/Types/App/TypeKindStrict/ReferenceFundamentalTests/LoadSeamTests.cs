@@ -23,7 +23,7 @@ public class LoadSeamTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-load-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        _app = new global::app.@this(root).Testing();
+        _app = global::PLang.Tests.Session.App(root).Testing();
     }
 
     [After(Test)]

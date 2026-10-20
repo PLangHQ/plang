@@ -7,7 +7,7 @@ namespace PLang.Tests.App;
 // stays as primary; the conversion failure rides on its causing list.
 public class ErrorBuryingReproTest : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static System.NullReferenceException ThrownNRE()

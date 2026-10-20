@@ -10,7 +10,7 @@ public class NoSwallowedStartupErrorsTests
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(root, ".build", "app.pr"), "{ not json");
         try
         {
-            await using var app = new global::app.@this(root).Testing();
+            await using var app = global::PLang.Tests.Session.App(root).Testing();
             var loaded = await app.Load();
             await Assert.That(loaded.Error?.Key).IsEqualTo("AppIdentityUnreadable");
             await Assert.That(loaded.Error!.Message).Contains("app.pr");

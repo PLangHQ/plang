@@ -146,7 +146,7 @@ public class PickListTests
         return at < 0 ? "" : end < 0 ? rendered[at..] : rendered[at..end];
     }
 
-    private static global::app.@this Os() => new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing();
+    private static global::app.@this Os() => global::PLang.Tests.Session.App(System.IO.Path.Combine(Fixture.Root(), "os")).Testing();
 
     // ---- the comparisons
 
@@ -264,7 +264,7 @@ public class PickListTests
     [Test]
     public async Task BothAnswers_GiveThePinnedPicks()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var context = app.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
@@ -301,7 +301,7 @@ public class PickListTests
             System.IO.File.AppendAllText(System.IO.Path.Combine(modules, "file", "module.description.md"), " DESCRIPTION-MARK");
             System.IO.File.AppendAllText(System.IO.Path.Combine(modules, "file", "read.description.md"), " ACTION-DESCRIPTION-MARK");
 
-            await using var os = new global::app.@this(root).Testing();
+            await using var os = global::PLang.Tests.Session.App(root).Testing();
             var context = os.actor.list.User.Context;
             foreach (var module in os.module.list.Items())
                 foreach (var action in module.ActionNames)

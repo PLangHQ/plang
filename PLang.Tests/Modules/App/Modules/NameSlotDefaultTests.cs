@@ -8,7 +8,7 @@ public class NameSlotDefaultTests
     [Test]
     public async Task EveryNameSlotsDefault_ResolvesWithoutItsRow()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var context = app.actor.list.User.Context;
         var checkedSlots = new List<string>();
         var failed = new List<string>();
@@ -38,7 +38,7 @@ public class NameSlotDefaultTests
     [Test]
     public async Task AFrozenDefault_AndNone_GiveTheSameItem()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var context = app.actor.list.User.Context;
         var loop = app.module.list.Items().First(m => m.Name == "loop");
         async Task<global::app.type.item.variable.@this?> Item(bool frozen)

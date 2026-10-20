@@ -326,10 +326,16 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     public keepalive.@this KeepAlive { get; } = new();
 
+    /// <summary>What plang's own code says — its types, kinds, formats, closed sets and actions — the facts this app
+    /// was made from. Handed in by whoever makes many apps (read once for all of them), else read at this birth.</summary>
+    internal global::app.assembly.@this assembly { get; }
+
     public @this(string absolutePath,
         string? environment = null,
-        bool autoWireConsoleChannels = true)
+        bool autoWireConsoleChannels = true,
+        global::app.assembly.@this? assembly = null)
     {
+        this.assembly = assembly ?? new(typeof(@this).Assembly);
         Id = Guid.NewGuid().ToString("N")[..12];
         var trimmed = absolutePath.TrimEnd('/', '\\');
         var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
@@ -339,7 +345,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // The types come first: every value is born holding its type from this list, the actors' contexts too.
         type = new(this);
         parent = new(type.list[typeof(global::app.parent.@this)]);
-
         StartedAt = new(DateTimeOffset.UtcNow, type.list[typeof(global::app.type.item.datetime.@this)]);
         Created = StartedAt;
         Updated = StartedAt;
@@ -347,12 +352,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // The system & user actors, each owning a long-lived context. System is the cancellation root; User links
         // to its token.
         actor = new(this);
-
         // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
-        Code = new AppCode(actor.list.System.Context);
-        module = new(this);
-        goal = new(this);
+        Code = new AppCode(actor.list.System.Context);        module = new(this);        goal = new(this);
         test = new(this);
         error = new(this);
         variable = new(this);
@@ -360,15 +362,12 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         step = type.list["step"];
         action = type.list["action"];
         channel = type.list["channel"];
-
-        Code.RegisterDefaults();
-        // path's schemes, each a kind of path that builds its own path subclass. (The types' own
+        Code.RegisterDefaults();        // path's schemes, each a kind of path that builds its own path subclass. (The types' own
         // scan finds the kind classes and choice's closed sets.)
         var path = type.list[typeof(global::app.type.item.path.@this)];
         type.list.Add(new global::app.type.item.path.scheme.@this("file", path, (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
         type.list.Add(new global::app.type.item.path.scheme.@this("http", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-        type.list.Add(new global::app.type.item.path.scheme.@this("https", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-        // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
+        type.list.Add(new global::app.type.item.path.scheme.@this("https", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));        // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
         // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),
         // else its file.
         // an environment given at construction is this run's value of the app's setting
@@ -384,7 +383,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             global::app.type.item.path.@this.Resolve("/.data/data.sqlite", actor.list.System.Context),
             () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
             actor.list.System.Context);
-
         // Auto-wire console channels for ad-hoc App constructions (sub-process
         // test fixtures, embedded scenarios, C# tests, the `plang --test` child
         // app). These are NOT the interactive terminal owner, so their input is
@@ -399,8 +397,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         {
             WireConsoleChannels(actor.list.System, interactiveInput: false);
             WireConsoleChannels(actor.list.User, interactiveInput: false);
-        }
-    }
+        }    }
 
     /// <summary>
     /// Verifies the all-three-roles invariant on every I/O actor (System, User).

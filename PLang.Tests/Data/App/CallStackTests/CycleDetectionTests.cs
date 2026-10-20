@@ -5,7 +5,7 @@ namespace PLang.Tests.App.CallStackTests;
 
 public class CycleDetectionTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]
@@ -64,7 +64,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     [Test]
     public async Task EnteringAGoalAlreadyOnTheChain_Runs_RecursionIsAllowed()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var context = app.actor.list.User.Context;
         // A → B → A: a goal may call itself through others; only the depth limit stops it
         await using var a = context.call.Push(MakeAction(context, "A"));
@@ -79,7 +79,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     [Test]
     public async Task EnteringASubGoalOfTheSameFile_IsNoCycle()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var context = app.actor.list.User.Context;
         // Start calls Compile: the file's sub-goals share its .pr — a goal is its .pr and its name
         await using var start = context.call.Push(MakeAction(context, "Start"));

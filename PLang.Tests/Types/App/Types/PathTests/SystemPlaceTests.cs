@@ -10,7 +10,7 @@ public class SystemPlaceTests : System.IAsyncDisposable
     public SystemPlaceTests()
     {
         System.IO.Directory.CreateDirectory(_root);
-        _app = new global::app.@this(_root).Testing();
+        _app = global::PLang.Tests.Session.App(_root).Testing();
     }
 
     public async System.Threading.Tasks.ValueTask DisposeAsync()

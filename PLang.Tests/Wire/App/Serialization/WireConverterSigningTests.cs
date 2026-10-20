@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Serialization;
 public class WireConverterSigningTests
 {
     private static global::app.@this NewSignedApp()
-        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        => global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-wire-sig-" + Guid.NewGuid().ToString("N")[..8]));
 
     private static global::app.type.kind.@this Plang(global::app.@this app)

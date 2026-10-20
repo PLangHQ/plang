@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Serialization;
 
 public class CodeSerializerTests
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
 
     private sealed class CaptureWriter : global::app.type.format.IWriter
     {

@@ -13,7 +13,7 @@ public class TypeMemberTests
     [Test]
     public async Task TextsMembers_AreListed_ReadOrCalled()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
 
         var length = Member(app, "text", "length");
         var replace = Member(app, "text", "replace");
@@ -32,7 +32,7 @@ public class TypeMemberTests
     [Test]
     public async Task TextsGrep_IsOneMember_WithOptionalLines_AnsweringTypedValues()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
 
         var greps = app.type.list["text"].Property!.Where(p => p.Name == "grep").ToList();
         var count = Member(app, "text", "grepCount");
@@ -48,7 +48,7 @@ public class TypeMemberTests
     [Test]
     public async Task Grep_IsCalled_WithOrWithoutItsLines()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("x", new global::app.data.@this("x", "a\nb\nc", context: ctx));
 
@@ -75,7 +75,7 @@ public class TypeMemberTests
             var folder = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(root, "system", "type", "text")).FullName;
             await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(folder, "type.notes.md"), "text is words");
             await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(folder, "replace.notes.md"), "old — what to find");
-            await using var app = new global::app.@this(root).Testing();
+            await using var app = global::PLang.Tests.Session.App(root).Testing();
             var ctx = app.actor.list.User.Context;
             var text = app.type.list["text"];
 
@@ -98,7 +98,7 @@ public class TypeMemberTests
     [Test]
     public async Task AMethodAskingOnlyForItsAsker_IsReadAsAProperty()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
 
         var relative = Member(app, "path", "relative");
 

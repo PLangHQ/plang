@@ -39,7 +39,7 @@ public class ProgramFindTests : IDisposable
     {
         _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_find_" + Guid.NewGuid().ToString("N"))).FullName;
         File.WriteAllText(Path.Combine(_root, "tool"), "");
-        _app = new global::app.@this(_root).Testing();
+        _app = global::PLang.Tests.Session.App(_root).Testing();
         _app.Code.Register<global::app.module.terminal.code.ITerminal>(_terminal);
         _app.Code.SetDefault<global::app.module.terminal.code.ITerminal>("fake");
     }

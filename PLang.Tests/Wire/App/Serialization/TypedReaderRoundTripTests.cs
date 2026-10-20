@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Serialization;
 //    sign → deserialize → the typed path borns the value).
 public class TypedReaderRoundTripTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.type.item.@this ReadScalar(
@@ -135,7 +135,7 @@ public class TypedReaderRoundTripTests : System.IAsyncDisposable
     // The typed bool reader borns the value off the single pass on read.
     [Test] public async Task Bool_FullRoundTrip_ThroughWire()
     {
-        var app = new global::app.@this(System.IO.Path.Combine(
+        var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-typedread-" + Guid.NewGuid().ToString("N")[..8])).Testing();
         await using (app)
         {

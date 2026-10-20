@@ -29,7 +29,7 @@ public class DiscoverActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-discover-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).Testing();
+        _app = global::PLang.Tests.Session.App(_tempDir).Testing();
     }
 
     [After(Test)]

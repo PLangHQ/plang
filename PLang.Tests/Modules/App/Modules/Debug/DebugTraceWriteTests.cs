@@ -13,7 +13,7 @@ public class DebugTraceWriteTests
 {
     [Test] public async Task LlmBlock_GoesToTheDebugChannel()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var captured = new System.IO.MemoryStream();
         app.actor.list.System.Channel.Register(new global::app.channel.type.stream.@this(
             global::app.channel.list.@this.Debug, captured,

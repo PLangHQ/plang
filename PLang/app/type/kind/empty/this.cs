@@ -129,17 +129,23 @@ public sealed class @this : global::app.type.kind.@this
         lock (_gate)
         {
             if (kind.IsEmpty) { _format = kind; return; }
-            _kinds.RemoveAll(k => string.Equals(k.Name, kind.Name, System.StringComparison.OrdinalIgnoreCase));
-            _kinds.Add(kind);
-            var keys = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
-            var extensions = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
-            foreach (var held in _kinds)
+            // a kind of the same name replaced: its keys go with it, so every held kind is keyed again; else the new
+            // kind's keys join the ones already held (the first that answers keeps a key)
+            if (_kinds.RemoveAll(k => string.Equals(k.Name, kind.Name, System.StringComparison.OrdinalIgnoreCase)) > 0 || _keys == null)
             {
-                foreach (var key in held.Keys) keys.TryAdd(key, held);
-                foreach (var extension in held.Extension) extensions.TryAdd(extension.TrimStart('.'), held);
+                _keys = new(System.StringComparer.OrdinalIgnoreCase);
+                _extensions = new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var held in _kinds) Key(held);
             }
-            _keys = keys;
-            _extensions = extensions;
+            _kinds.Add(kind);
+            Key(kind);
         }
+    }
+
+    // Keys one held kind by every key it answers to, and apart by its extensions without the dot (under the gate).
+    private void Key(global::app.type.kind.@this kind)
+    {
+        foreach (var key in kind.Keys) _keys!.TryAdd(key, kind);
+        foreach (var extension in kind.Extension) _extensions!.TryAdd(extension.TrimStart('.'), kind);
     }
 }

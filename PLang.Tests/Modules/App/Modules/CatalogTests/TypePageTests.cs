@@ -48,7 +48,7 @@ public class TypePageTests
     // Render a type's learner page through the template over the os catalog.
     private static async Task<string> RenderType(string type)
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
         context.Variable.Set(new global::app.data.@this("type", os.type.list[type], context: context));
         var render = new Render(context)

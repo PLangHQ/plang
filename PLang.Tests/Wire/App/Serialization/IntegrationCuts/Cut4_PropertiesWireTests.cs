@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Serialization.IntegrationCuts;
 
 public class Cut4_PropertiesWireTests
 {
-    private static global::app.@this NewApp() => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() => global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
         "plang-cut4-" + Guid.NewGuid().ToString("N")[..8])).Testing();
 
     private static async Task<(string wire, global::app.data.@this back, global::app.@this app)> WriteAndRead()
@@ -82,7 +82,7 @@ public class Cut4_PropertiesWireTests
     // Properties ride inside the signed value: real signing refuses a tampered Properties value on read.
     [Test] public async Task Cut4_TamperingPropertyValue_FailsOuterSignatureVerify()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-cut4-" + System.Guid.NewGuid().ToString("N")[..8])).TestIdentity();
         var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
@@ -102,7 +102,7 @@ public class Cut4_PropertiesWireTests
     // carrying the same nonce, still verifies after it.
     [Test] public async Task TamperedCopyReadFirst_GenuineWireStillVerifies()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-cut4-" + System.Guid.NewGuid().ToString("N")[..8])).TestIdentity();
         var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");

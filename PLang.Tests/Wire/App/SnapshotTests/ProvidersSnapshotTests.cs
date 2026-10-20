@@ -4,7 +4,7 @@ namespace PLang.Tests.App.SnapshotTests;
 
 public class ProvidersSnapshotTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     // Public + parameterless ctor so Restore can re-instantiate it from the test DLL.
@@ -21,7 +21,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     public async Task Providers_RoundTrip_PreservesDefaultSelectionsAndRuntimeRegistrations()
     {
         // Default selections per type + runtime (type, name, source) tuples both survive.
-        var src = new global::app.@this("/src").Testing();
+        var src = global::PLang.Tests.Session.App("/src").Testing();
         var custom = new CustomGrep();
         // Stamp Source so the snapshot has a loadable origin (use this assembly's path).
         custom.Source = typeof(CustomGrep).Assembly.Location;
@@ -47,13 +47,13 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         // names that don't exist yet. We assert the contract by capturing an override that
         // names a registration that only exists post-step-1; if the order were inverted,
         // SetDefault would fire before Register and the restore would hard-error.
-        var src = new global::app.@this("/src").Testing();
+        var src = global::PLang.Tests.Session.App("/src").Testing();
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
         src.Code.SetDefault(typeof(global::app.data.code.IGrep), "custom");
 
         var snap = src.Snapshot(src.actor.list.User.Context);
-        var dst = new global::app.@this("/dst").Testing();
+        var dst = global::PLang.Tests.Session.App("/dst").Testing();
         // Pre-grant Execute on the snapshotted DLL source for the System actor —
         // restore reloads the DLL via path.LoadAssemblyAsync, which gates on
         // Execute. The original App's actor had already passed that gate; the
@@ -96,7 +96,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         });
         snap.Section("Providers").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>());
 
-        var dst = new global::app.@this("/dst").Testing();
+        var dst = global::PLang.Tests.Session.App("/dst").Testing();
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
         {
             await dst.Restore(snap, dst.actor.list.User.Context);
@@ -120,7 +120,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
             }
         });
 
-        var dst = new global::app.@this("/dst").Testing();
+        var dst = global::PLang.Tests.Session.App("/dst").Testing();
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
         {
             await dst.Restore(snap, dst.actor.list.User.Context);
@@ -133,7 +133,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
     {
         // RegisterDefaults output is reconstructed on App boot — only post-defaults
         // registrations end up in the captured payload.
-        var app = new global::app.@this("/test").Testing();
+        var app = global::PLang.Tests.Session.App("/test").Testing();
         var snap = app.Snapshot(app.actor.list.User.Context);
         var registrations = await snap.Section("Providers")
             .Records<global::app.module.code.registration.@this>("registrations");
@@ -149,7 +149,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         // layer (selections + registrations) is in the snapshot. We confirm by inspecting
         // the wire shape: only Registration tuples + DefaultOverride records, no provider
         // object graphs.
-        var src = new global::app.@this("/src").Testing();
+        var src = global::PLang.Tests.Session.App("/src").Testing();
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
 

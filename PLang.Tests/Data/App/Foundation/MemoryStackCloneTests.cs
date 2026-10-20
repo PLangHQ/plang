@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Foundation;
 /// </summary>
 public class VariablesCloneTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this(
+    private readonly global::app.@this app = global::PLang.Tests.Session.App(
         "/tmp/VariablesCloneTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();

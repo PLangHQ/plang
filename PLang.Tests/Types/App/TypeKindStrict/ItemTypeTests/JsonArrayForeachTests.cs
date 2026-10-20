@@ -6,7 +6,7 @@ public class JsonArrayForeachTests
 {
     [Test] public async Task Foreach_OverAJsonArray_YieldsPlangNumbers_AndNarrowsToList()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var data = new global::app.data.@this("x", "[1, 2, 3]", new global::app.type.@this("item", "json"), context: ctx);
 

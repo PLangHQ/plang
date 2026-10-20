@@ -11,7 +11,7 @@ namespace PLang.Tests.App.LazyDeserialize.NumberTowerTests;
 // BigInteger touches only number's declaration — never a central table.
 public class NumberDeclaresClrTypesTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task Number_DeclaresFullTowerCrlTypes()

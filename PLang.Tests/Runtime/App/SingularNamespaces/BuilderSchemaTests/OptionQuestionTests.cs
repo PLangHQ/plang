@@ -19,7 +19,7 @@ public class OptionQuestionTests : System.IAsyncDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(notes, "read.notes.md"),
             "Path — the file to read\n" +
             "Template — the kind of template the text is · ask: does the step fill the file's variables from memory (load vars)?\n");
-        _app = new global::app.@this(_root).Testing().Building();
+        _app = global::PLang.Tests.Session.App(_root).Testing().Building();
     }
 
     public async System.Threading.Tasks.ValueTask DisposeAsync()

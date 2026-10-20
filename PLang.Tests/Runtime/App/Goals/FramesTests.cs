@@ -10,7 +10,7 @@ public class FramesTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/tmp/frames-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+    public void Setup() => _app = global::PLang.Tests.Session.App("/tmp/frames-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();

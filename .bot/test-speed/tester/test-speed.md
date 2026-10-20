@@ -155,6 +155,49 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 7. §6 built on test-speed (option 1): a birth at ~3.5 ms
+
+**What was built.**
+- `app.assembly.@this` (`PLang/app/assembly/this.cs`) holds what plang's assembly says: types (with their
+  `Alias`/`OwnedClrTypes`/`Internal`/`Offer` statics), kind classes, formats, `[Choice]` sets, family subclasses
+  and actions. Each is read by reflection on first ask, then held.
+- `new app(path, …, assembly: code)` is born from a given `code`; an app given none reads its own. This is the one
+  surface change: the app constructor's new parameter, re-pinned on this branch.
+- The type list (`Registry.Load`/`Enlist`) and the module make each app's own objects from the facts. Kinds,
+  formats, choice sets and actions are still new per app, with no reflection.
+- `empty.Add` keys the new kind instead of re-keying every held kind on each add. It was 6 ms of a birth (142
+  formats, an O(n²) re-key), and the fix helps every birth, shared facts or not.
+- Tests: `PLang.Tests/Shared/Session.cs` reads the code once per test process. All 1,275 `new app(…)` sites go
+  through `Session.App(…)`, a mechanical rewrite of 554 files.
+- `plang --test`: each test's app is born from the runner app's `assembly`.
+
+**Birth** (100 warm births, 3 runs, load ~3):
+
+| | median | CPU / birth | alloc |
+|---|---|---|---|
+| before §6 (157 tip) | 26 – 29 ms | 32 – 36 ms | 5.1 MB |
+| fresh (reads its own facts) | 15 – 16 ms | 17 – 19 ms | 2.3 MB |
+| shared facts | **3.4 – 3.7 ms** (min 2.9) | 5 – 7 ms | 1.7 MB |
+
+Split of a shared birth (load ~4): type list 2.5 ms (entries 0.9, formats 0.6, choices 0.4, kind classes 0.2,
+subclasses 0.2, guard 0.1), module 1.2 ms (142 catalog actions), channels 0.5, Code 0.3.
+
+**Suites**, each alone (load 12 – 15, so a busy machine):
+
+| suite | wall / CPU now | §5, quiet |
+|---|---|---|
+| Types | 8.8 s / 24 s | 14.6 / 55 |
+| Runtime | 19.1 s / 56 s | 29.7 / 102 |
+| Modules | 33.5 s / 75 s | 39.8 / 137 |
+| Data | 13.0 s / 31 s | — |
+| `plang --test` | 15.6 s / 27 s | 17.3 / 33 (same load, before the runner shared) |
+
+C#: green except Wire's six. plang: 277 / 11, the same 11 by name.
+
+**Open for Ingi.** The holder is option 1 (the app is born holding its code). Its one surface change is the app
+constructor's `assembly` parameter. `Session.Code` is a static in test code: one per test process, which is the
+test session. The name `assembly` is a placeholder.
+
 ## 6. For Ingi: the code's facts, read once per process
 
 The 5 ms needs the class walk to happen once, not per app. Each test still gets a fresh app.

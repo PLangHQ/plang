@@ -12,7 +12,7 @@ public class OtherAccessorsTests
 {
     [Test] public async Task TypeList_Extension_AnswersTheFormatsTypeAndMime()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var jpg = app.type.list.Extension(".jpg", app.actor.list.User.Context);
         await Assert.That(jpg.Name).IsEqualTo("image");
         await Assert.That(jpg.kind.Mime[0]).IsEqualTo("image/jpeg");
@@ -20,7 +20,7 @@ public class OtherAccessorsTests
 
     [Test] public async Task ContextVariable_IndexByName_AfterSet_ReturnsValue()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         app.actor.list.User.Context.Variable.Set("x", "hello");
         await Assert.That((await (await app.actor.list.User.Context.Variable.Get("x")).Value())?.ToString()).IsEqualTo("hello");
     }

@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Serialization;
 
 public class FailureMatrixTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/tmp/FailureMatrixTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/tmp/FailureMatrixTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task PropertiesSet_DataInstanceValue_ThrowsArgumentException()
@@ -27,7 +27,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
     [Skip("Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.")]
     [Test] public async Task SigningVerify_AfterWireByteTamper_ReturnsDataHashMismatch()
     {
-        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        await using var app = global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fm-" + Guid.NewGuid().ToString("N")[..8])).Testing();
         var plang = app.actor.list.User.Context.Format("application/plang");
 

@@ -10,7 +10,7 @@ public class SetLeavesProgramTypeTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/tmp/setprogramtype-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+    public void Setup() => _app = global::PLang.Tests.Session.App("/tmp/setprogramtype-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();

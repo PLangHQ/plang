@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Types;
 // use — nothing is handed in by the registry. Each format here is made bare, as no registry made it.
 public class FormatWritesItselfTests
 {
-    private static global::app.@this NewApp() => new global::app.@this("/test").Testing();
+    private static global::app.@this NewApp() => global::PLang.Tests.Session.App("/test").Testing();
 
     [Test] public async Task AGoalsPrFormat_MadeBare_ReadsAndWritesThroughTheGoalsOwnDecodeAndEncode()
     {

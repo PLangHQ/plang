@@ -11,7 +11,7 @@ namespace PLang.Tests.App.CallbackTests;
 public class SnapshotResumeTests
 {
     private static global::app.@this NewApp() =>
-        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-sr-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     // A step is born knowing its goal, and the goal is born knowing the step.

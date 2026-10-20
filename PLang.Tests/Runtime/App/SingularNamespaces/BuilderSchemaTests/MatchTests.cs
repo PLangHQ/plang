@@ -71,7 +71,7 @@ public class MatchTests
     [Test]
     public async Task ANumberTheWordsDontWriteAsDigits_IsAskedOfTheDecider_AndTheStepStaysOpen()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = RetryOnce(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
 
@@ -87,7 +87,7 @@ public class MatchTests
     [Test]
     public async Task ANumberTheDeciderConfirms_IsTaken()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = RetryOnce(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
 
@@ -100,7 +100,7 @@ public class MatchTests
     [Test]
     public async Task ANumberTheDeciderDenies_IsRefusedAsInvented()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = RetryOnce(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
 
@@ -114,7 +114,7 @@ public class MatchTests
     [Test]
     public async Task AmongOtherProblems_AnUnwrittenNumberIsRefusedWithThem()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("call Flaky, on error retry once, ignore"), Make.Step("write out \"b\""));
         await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"), (1, "output.write"));
 
@@ -131,7 +131,7 @@ public class MatchTests
     [Test]
     public async Task AQuotedTextWithEscapes_IsHeldByTheAnswerThatWritesIt()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("""set %sourceFixMessages% = [{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}]"""));
         await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
 
@@ -146,7 +146,7 @@ public class MatchTests
     [Test]
     public async Task AVariableTheAnswerWritesInAnotherCase_IsTheStepsVariable()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("write out %greeting%"));
         await Picked(goal, app.actor.list.System.Context, (0, "output.write"));
 
@@ -158,7 +158,7 @@ public class MatchTests
     [Test]
     public async Task AVariableTheStepWrites_MissingFromTheAnswer_IsRefused()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("set %Name% to %other%"));
         await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
 
@@ -177,7 +177,7 @@ public class MatchTests
     [Arguments("sleep 7 seconds", "1s", "7 is in the step but not in your answer")]
     public async Task ADurationHoldsTheNumberItIsInAUnit(string step, string duration, string? refused)
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step(step));
         await Picked(goal, app.actor.list.System.Context, (0, "timer.sleep"));
 
@@ -196,7 +196,7 @@ public class MatchTests
     [Test]
     public async Task ANumberTheStepWrites_MissingFromTheAnswer_IsRefused()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("""if %itemCount% is 0, write out "Your cart is empty" """.TrimEnd()));
         await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (0, "output.write"));
 
@@ -212,7 +212,7 @@ public class MatchTests
     [Test]
     public async Task ANumberEqualToAChosenActionsDefault_IsCovered_AnotherUnwrittenNumberIsStillRefused()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var context = app.actor.list.System.Context;
 
         var covered = Make.Goal(app.actor.list.User.Context, "G", Make.Step("get random number between 1 and 100, write to %rand%"));
@@ -234,7 +234,7 @@ public class MatchTests
     [Test]
     public async Task AQuotedLiteral_OnlyInTheLinesSyntax_IsRefused_AndHeldByAValue_IsTaken()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var context = app.actor.list.System.Context;
         Goal Checked()
         {
@@ -260,7 +260,7 @@ public class MatchTests
     [Test]
     public async Task ABangVariableNamingNothing_IsRefused_PlangsOwnAreTaken()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var context = app.actor.list.System.Context;
         async Task<string> Refusal(string step, string pick, string answer)
         {
@@ -284,7 +284,7 @@ public class MatchTests
     [Test]
     public async Task ABarePath_DroppedFromTheAnswer_IsRefused_KeptIsTaken()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var context = app.actor.list.System.Context;
         async Task<string> Refusal(string step, string pick, string answer)
         {
@@ -309,7 +309,7 @@ public class MatchTests
     [Test]
     public async Task AQuotedLiteral_HeldByANamedValue_IsTaken()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var context = app.actor.list.System.Context;
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("""split %csv% by ",", write to %parts%"""));
         await Picked(goal, context, (0, "list.split"));
@@ -322,7 +322,7 @@ public class MatchTests
     [Test]
     public async Task ANumberTheStepWrites_HeldByTheAnswer_IsTaken()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("""if %itemCount% is 0, write out "Your cart is empty" """.TrimEnd()));
         await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (0, "output.write"));
 
@@ -336,7 +336,7 @@ public class MatchTests
     [Test]
     public async Task AQuotedTextWithEscapes_WrittenDoublyEscaped_IsRefused()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("""set %messages% = [{"Role":"user", "Content":"%why%\n\nThe goal:\n%goal%"}]"""));
         await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
 
@@ -349,7 +349,7 @@ public class MatchTests
     [Test]
     public async Task OneLinePerStep_EachStepTakesItsCode()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = MenuModule(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, MenuModulePicks);
 
@@ -362,7 +362,7 @@ public class MatchTests
     [Test]
     public async Task AStepWithNoLine_IsRefusedByName_AndStaysOpen()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = MenuModule(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, MenuModulePicks);
 
@@ -379,7 +379,7 @@ public class MatchTests
     [Test]
     public async Task AnEmptyLine_IsRefusedAsNotReading()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("write out \"a\""), Make.Step("write out \"b\""));
         await Picked(goal, app.actor.list.System.Context, (0, "output.write"), (1, "output.write"));
 
@@ -392,7 +392,7 @@ public class MatchTests
     [Test]
     public async Task AnExtraLine_AndATwiceAnsweredStep_AreRefused()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("write out \"a\""));
         await Picked(goal, app.actor.list.System.Context, (0, "output.write"));
 
@@ -419,7 +419,7 @@ public class MatchTests
     [Test]
     public async Task ABodyCopyingTheIndentedSteps_IsDropped()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = MaybeProcess(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (1, "goal.call"), (2, "output.write"));
 
@@ -432,7 +432,7 @@ public class MatchTests
     [Test]
     public async Task ABodyTheIndentedStepsDontHold_IsRefused()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = MaybeProcess(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (0, "variable.set"), (1, "goal.call"), (2, "output.write"));
 
@@ -448,7 +448,7 @@ public class MatchTests
     [Test]
     public async Task ARetry_AnswersOnlyTheRefusedSteps()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = MenuModule(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, MenuModulePicks);
         await Match(goal, MiniMergedAnswer, app.actor.list.System.Context);
@@ -468,7 +468,7 @@ public class MatchTests
     [Test]
     public async Task ARefusedStep_ReportsEveryProblemAtOnce()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "Checkout",
             Make.Step("read file 'orders/%orderId%.json', write to %order%", Make.Action(app.actor.list.User.Context, "file", "read", ("Path", "x"))),
             Make.Step("count %order.items%, write to %itemCount%", Make.Action(app.actor.list.User.Context, "list", "count", ("ListName", "%order.items%"))),
@@ -493,7 +493,7 @@ public class MatchTests
     [Test]
     public async Task AnEscapedQuoteJsonLiteral_IsHeldByTheAnswer_NotRefused()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "Start", Make.Step("set %x% = \"{\\\"port\\\":8080}\""));
         await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
 
@@ -510,7 +510,7 @@ public class MatchTests
     [Test]
     public async Task AnOnErrorThatDoesNothing_IsRefused()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("call Flaky, on error"));
         await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
 
@@ -535,7 +535,7 @@ public class MatchTests
     {
         var root = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_keptclause_" + Guid.NewGuid().ToString("N")[..8])).FullName;
-        await using var app = new global::app.@this(root).Testing().Building();
+        await using var app = global::PLang.Tests.Session.App(root).Testing().Building();
         var user = app.actor.list.User.Context;
         var goal = Make.Goal(user, "Start", "/Start.goal",
             Make.Step("set %people% = [{\"name\": \"b\"}, {\"name\": \"a\"}]"),
@@ -555,7 +555,7 @@ public class MatchTests
     [Test]
     public async Task AnOnErrorThatRetriesIgnoresOrRecovers_IsNotRefusedForDoingNothing()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         foreach (var (text, answer) in new[]
         {
             ("call Flaky, on error ignore", "[0] goal.call(Name=\"Flaky\"); on.error(Ignore=true)"),

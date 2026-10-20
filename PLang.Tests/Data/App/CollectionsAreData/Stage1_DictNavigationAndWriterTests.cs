@@ -8,11 +8,11 @@ namespace PLang.Tests.App.CollectionsAreData;
 // json objects to dict (not raw Dictionary<string,object?>).
 public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/tmp/Stage1DictNav-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/tmp/Stage1DictNav-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static global::app.@this NewApp()
-        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        => global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-dictnav-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     // (ReadingIntoAJsonObject_ParsesIt retired — text-of-kind-json is gone (773); a json object is {item, json},

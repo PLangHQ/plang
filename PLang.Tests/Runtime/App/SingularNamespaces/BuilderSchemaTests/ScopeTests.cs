@@ -56,7 +56,7 @@ public class ScopeTests
     [Test]
     public async Task TheEmptyListOfAKind_AnswersItsKind()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var type = app.actor.list.System.Context.App.type.list[typeof(global::app.type.item.list.@this<Goal>)];
 
         var empty = new global::app.data.@this("goals", type.Empty(app.actor.list.System.Context), context: app.actor.list.System.Context);
@@ -68,7 +68,7 @@ public class ScopeTests
     [Test]
     public async Task BeforeTheLlm_EachStepKnowsTheTypesItReads()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Build(app.actor.list.User.Context);
         // step 0's capture keeps build.goals' result in %goals% — the decider's Name answer
         await Picked(goal, app.actor.list.System.Context, [(0, "variable.set.Name", "%goals%")], BuildPicks);
@@ -84,7 +84,7 @@ public class ScopeTests
     [Test]
     public async Task TheScratchStore_IsSilent_AndNeverTheBuilders()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Build(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, BuildPicks);
         var heard = new List<string>();
@@ -106,7 +106,7 @@ public class ScopeTests
     [Test]
     public async Task AKnownVariableOfTheWrongType_RefusesTheStep()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "Build",
             Make.Step("build.goals path=%path%, write to %goals%"),
             Make.Step("list.range from 1 to %goals%, write to %r%"));
@@ -126,7 +126,7 @@ public class ScopeTests
     [Test]
     public async Task AnLlmAnswerWithoutSchema_IsNotTypedJson()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "Properties",
             Make.Step("llm.query Message=%messages%, Model=\"gpt-5.4-nano\", write to %answer%"));
         await Picked(goal, app.actor.list.System.Context, (0, "llm.query"), (0, "variable.set"));
@@ -145,7 +145,7 @@ public class ScopeTests
     [Test]
     public async Task AStepTakingItsCode_FreezesItsDefaults_AsTheSlotsType()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "Build",
             Make.Step("set %goals% = \"a\""),
             Make.Step("foreach %goals%, call BuildGoal"));
@@ -168,7 +168,7 @@ public class ScopeTests
     [Test]
     public async Task AWriteToAChannelTheAppRegistersLater_Builds_AndFailsAtRunOnlyIfNeverRegistered()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "Emit", Make.Step("write out \"hi\" channel: \"later\""));
         await Picked(goal, app.actor.list.System.Context, (0, "output.write"));
 
@@ -186,7 +186,7 @@ public class ScopeTests
     [Test]
     public async Task AListOfMessages_ReadAsLlmMessages_RendersItsVariables()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "Properties",
             Make.Step("set %sys% = \"hello\""),
             Make.Step("set %messages% = [{\"Role\":\"system\", \"Content\":\"%sys%\"}]"));
@@ -209,7 +209,7 @@ public class ScopeTests
     [Test]
     public async Task AnActionHeldInAValueSlot_IsRefused()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "AddItem", Make.Step("set %total% = %a% + %b%"));
         await Picked(goal, app.actor.list.System.Context, (0, "variable.set"), (0, "math.add"));
 
@@ -226,7 +226,7 @@ public class ScopeTests
     [Test]
     public async Task AStepThatSetsAVariable_MustWriteIt()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "AddItem", Make.Step("set %total% = %total% + %item%"));
         await Picked(goal, app.actor.list.System.Context, (0, "math.add"));
 
@@ -242,7 +242,7 @@ public class ScopeTests
     [Test]
     public async Task AVariableTheStepDoesNotName_IsRefused_ATypedSetIsItsType()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var invented = Make.Goal(app.actor.list.User.Context, "Start", Make.Step("set %iso%(duration) = \"PT5M\""));
         await Picked(invented, app.actor.list.System.Context, (0, "variable.set"));
 
@@ -268,7 +268,7 @@ public class ScopeTests
     [Test]
     public async Task ATextTheStepDoesNotHold_IsRefused()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "Start", Make.Step("write out %message%"));
         await Picked(goal, app.actor.list.System.Context, (0, "output.write"));
 
@@ -284,7 +284,7 @@ public class ScopeTests
     [Test]
     public async Task ATextTheStepHolds_Passes()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "Start", Make.Step("write out 'hello' to builder"));
         await Picked(goal, app.actor.list.System.Context, (0, "output.write"));
 
@@ -306,7 +306,7 @@ public class ScopeTests
     [Test]
     public async Task AKnownVariableOfTheRightType_Passes()
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "Build",
             Make.Step("set %n% = 5"),
             Make.Step("list.range from 1 to %n%, write to %r%"));

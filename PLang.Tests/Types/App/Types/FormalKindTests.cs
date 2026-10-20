@@ -10,7 +10,7 @@ public class FormalKindTests
 {
     [Test] public async Task Formal_IsAKindOfList_AndTheFormalWritersKind()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
 
         var formal = app.type.list["list"].kind["formal"];
 
@@ -22,7 +22,7 @@ public class FormalKindTests
     // In plang a type is its identity and a kind is its name, each through the plang kind's pair for its class.
     [Test] public async Task InPlang_ATypeIsItsIdentity_AKindItsName()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = global::PLang.Tests.Session.App("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var text = app.type.list["text"];
         var md = text.kind["md"]!;

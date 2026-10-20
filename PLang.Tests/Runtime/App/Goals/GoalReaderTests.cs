@@ -16,7 +16,7 @@ public class GoalReaderTests
     [Test]
     public async Task AString_IsTheGoalsName_NeverParsed()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
 
         var named = Read("\"Show\"", ctx);
@@ -30,7 +30,7 @@ public class GoalReaderTests
     [Test]
     public async Task AnObject_IsAGoalWrittenWhole()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
 
         var goal = Read("{\"name\":\"Start\",\"step\":[]}", ctx);
@@ -42,7 +42,7 @@ public class GoalReaderTests
     [Test]
     public async Task APrFile_DecodesIntoAGoal_ThroughGoalsOwnFormat()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var pr = await ctx.Pr(new global::app.goal.@this(app.type.list) { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", ctx) });
 

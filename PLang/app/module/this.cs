@@ -64,7 +64,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _app = app;
         _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
         _registering = new object();
-        Discover(typeof(@this).Assembly);
+        // the built-in actions, as plang's code says them (read once for every app made from it)
+        foreach (var action in app.assembly.action) Of(action.Module).Add(action.Name, action.Class, action.Cacheable);
     }
 
     internal @this(string name, @this root) : base(root.Type)
@@ -101,20 +102,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Registers an action class for per-call instantiation in the module named <paramref name="module"/>
     /// — the module is made the first time an action names it.</summary>
-    public void Register(string module, string actionName, System.Type type) => Of(module).Add(actionName, type);
+    public void Register(string module, string actionName, System.Type type)
+        => Of(module).Add(actionName, type, type.GetCustomAttribute<global::app.module.ActionAttribute>()?.Cacheable ?? true);
 
     /// <summary>Registers every [Action] class under <paramref name="baseNamespace"/> in an assembly — the module is
     /// the namespace segment after it. The built-ins at birth; an external DLL through <c>module.add</c>.</summary>
     public int Discover(Assembly assembly, string? baseNamespace = null)
     {
-        baseNamespace ??= "app.module";
         int count = 0;
-        foreach (var type in assembly.GetTypes())
+        foreach (var action in new global::app.assembly.@this(assembly).Actions(baseNamespace ?? "app.module"))
         {
-            if (type.IsAbstract || !typeof(ICodeGenerated).IsAssignableFrom(type)) continue;
-            if (type.GetCustomAttribute<ActionAttribute>() is not { } attr) continue;
-            if (type.Namespace == null || !type.Namespace.StartsWith(baseNamespace + ".")) continue;
-            Register(type.Namespace[(baseNamespace.Length + 1)..], attr.Name ?? type.Name.ToLowerInvariant(), type);
+            Of(action.Module).Add(action.Name, action.Class, action.Cacheable);
             count++;
         }
         return count;
@@ -144,11 +142,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Takes one action: its catalog action, born from its class as the subtype the class says it is (a
     /// clause when it is an <see cref="IClause"/>, a loop when it is an <see cref="ILoop"/>, a keep when it is an
     /// <see cref="IKeep"/>), holding the class. The module is the only thing that ever adds to its own contents.</summary>
-    internal void Add(string actionName, System.Type clr)
+    internal void Add(string actionName, System.Type clr, bool cacheable)
     {
-        // The catalog action carries the [Action] cache flag so the teaching template can tag
-        // [no-cache] — read off the attribute, its single source, not defaulted.
-        var cacheable = clr.GetCustomAttribute<global::app.module.ActionAttribute>()?.Cacheable ?? true;
+        // The catalog action carries the [Action] cache flag (read off the attribute, its single source) so the
+        // teaching template can tag [no-cache].
         var types = App.type.list;
         // The catalog action is born with its class's properties, reflected on first read.
         _action[actionName] =

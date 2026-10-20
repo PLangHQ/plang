@@ -33,7 +33,7 @@ public class AnOldShapeSettingRowIsNamedLoudlyTests
 
     [Test] public async Task AnOldShapeSettingRow_IsNamedLoudly()
     {
-        await using var app = new global::app.@this(_dir);
+        await using var app = global::PLang.Tests.Session.App(_dir);
         await app.actor.list.User.Setting.Load();
 
         var thrown = Assert.Throws<global::app.error.AppException>(

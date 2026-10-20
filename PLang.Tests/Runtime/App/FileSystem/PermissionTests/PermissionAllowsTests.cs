@@ -16,7 +16,7 @@ public class PermissionAllowsTests
         verb is { } v ? new System.Collections.Generic.HashSet<Verb> { v } : Permission.AllVerbs;
 
     // Grants are born holding the app's permission type; one shared host supplies that type list.
-    private static readonly global::app.@this TypeHost = new global::app.@this("/test").Testing();
+    private static readonly global::app.@this TypeHost = global::PLang.Tests.Session.App("/test").Testing();
 
     private static Permission Grant(string path, Match match, Verb? verb = null) =>
         new("user", path, Verbs(verb), match, TypeHost.type.list[typeof(Permission)]);
@@ -72,7 +72,7 @@ public class PermissionAllowsTests
     {
         // Permission round-trips through ITS OWN wire (Write/Create via the plang
         // serializer's persistence path), not raw STJ — the grant owns its wire form.
-        await using var app = new global::app.@this("/test").TestSigning();
+        await using var app = global::PLang.Tests.Session.App("/test").TestSigning();
         var ctx = app.actor.list.User.Context;
         var original = new Permission("user", "/p", global::app.type.item.permission.@this.AllVerbs, Match.glob, app.type.list[typeof(Permission)]);
         var data = new global::app.data.@this<Permission>("", original, context: ctx);

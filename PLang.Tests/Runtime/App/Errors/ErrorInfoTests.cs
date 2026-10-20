@@ -155,7 +155,7 @@ public class ErrorTests
     [Test]
     public async Task Step_CanBeSet()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = global::PLang.Tests.Session.App("/app").Testing();
         var goal = new Goal(app.type.list) { Name = "TestGoal" };
         var step = new Step(app.type.list) { Goal = goal, Index = 0, Text = "do something" };
         var error = new Error("Error", step);

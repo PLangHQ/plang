@@ -20,7 +20,7 @@ public class PathDerivationVerbTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-deriv-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root).Testing();
+        var app = global::PLang.Tests.Session.App(root).Testing();
         var abs = System.IO.Path.Combine(root, relUnderRoot.TrimStart('/'));
         return (app, app.actor.list.User.Context.File(abs));
     }
@@ -31,7 +31,7 @@ public class PathDerivationVerbTests
         // check inheritance; an App with arbitrary root is fine.
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-deriv-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root).Testing();
+        var app = global::PLang.Tests.Session.App(root).Testing();
         return app.actor.list.User.Context.Url(url);
     }
 
@@ -45,7 +45,7 @@ public class PathDerivationVerbTests
     [Test] public async Task Parent_OfRoot_ReturnsRootOrNullDeterministically()
     {
         var sep = System.IO.Path.DirectorySeparatorChar;
-        await using var pathApp = new global::app.@this("/test").Testing();
+        await using var pathApp = global::PLang.Tests.Session.App("/test").Testing();
         var root = sep.ToString();
         var p = pathApp.actor.list.User.Context.File(root);
         var parent = p.Parent;

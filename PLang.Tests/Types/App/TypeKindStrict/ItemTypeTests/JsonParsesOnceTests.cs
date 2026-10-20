@@ -6,7 +6,7 @@ public class JsonParsesOnceTests
 {
     private static async Task<(global::app.@this app, global::app.data.@this data)> Json(string raw)
     {
-        var app = new global::app.@this("/app").Testing();
+        var app = global::PLang.Tests.Session.App("/app").Testing();
         var ctx = app.actor.list.User.Context;
         return (app, new global::app.data.@this("x", raw, new global::app.type.@this("item", "json"), context: ctx));
     }

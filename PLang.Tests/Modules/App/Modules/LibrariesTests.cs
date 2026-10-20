@@ -6,13 +6,13 @@ namespace PLang.Tests.App.actions;
 
 public class LibrariesTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]
     public async Task Constructor_DiscoversBultInHandlers()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
 
         // the app's module auto-discovers built-in handlers
         await Assert.That(modulesHost.Module("variable")["set"] != null).IsTrue();
@@ -22,7 +22,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task Register_AddsHandler()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
 
         modulesHost.module.Register("test", "do", typeof(MockHandler));
 
@@ -32,7 +32,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task Register_CaseInsensitive()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
         modulesHost.module.Register("Test", "Do", typeof(MockHandler));
 
         await Assert.That(modulesHost.Module("test")["do"] != null).IsTrue();
@@ -42,7 +42,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task Contains_WithModuleOnly_ReturnsTrue()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
         modulesHost.module.Register("test", "do", typeof(MockHandler));
 
         await Assert.That((await modulesHost.module.Get("test", modulesHost.actor.list.User.Context)).Success).IsTrue();
@@ -51,7 +51,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task Contains_NonexistentModule_ReturnsFalse()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
 
         await Assert.That((await modulesHost.module.Get("nonexistent_xyz_123", modulesHost.actor.list.User.Context)).Success).IsFalse();
     }
@@ -59,7 +59,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task GetActions_ReturnsAllActionsInModule()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
         modulesHost.module.Register("custom", "alpha", typeof(MockHandler));
         modulesHost.module.Register("custom", "beta", typeof(MockHandler));
 
@@ -72,7 +72,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task GetActions_NonexistentModule_ReturnsEmpty()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
 
         var actions = modulesHost.Module("nonexistent_xyz_123").ActionNames.ToList();
 
@@ -82,7 +82,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task Names_ReturnsAllModules()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
 
         var names = modulesHost.module.list.Items().Select(m => m.Name).ToList();
 
@@ -94,7 +94,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task Register_SameKeyTwice_ReplacesHandler()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
         modulesHost.module.Register("test", "do", typeof(MockHandler));
 
         modulesHost.module.Register("test", "do", typeof(MockCodeGenHandler));
@@ -105,7 +105,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task BuiltIn_DiscoversFindHandlers()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
 
         // Should discover variable.set, variable.get, etc.
         await Assert.That(modulesHost.Module("variable")["set"] != null).IsTrue();
@@ -126,7 +126,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task Register_CatalogActionHoldsItsClass()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
         modulesHost.module.Register("custom", "magic", typeof(MockCodeGenHandler));
 
         await Assert.That(modulesHost.Module("custom")["magic"]!.Class).IsEqualTo(typeof(MockCodeGenHandler));
@@ -137,7 +137,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task GetCodeGenerated_BuiltInAction_ReturnsAction()
     {
-        await using var engine = new global::app.@this("/app").Testing();
+        await using var engine = global::PLang.Tests.Session.App("/app").Testing();
 
         var (action, error) = (new PrAction(engine.type.list) { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
 
@@ -148,7 +148,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task GetCodeGenerated_RegisteredClass_ReturnsItsInstance()
     {
-        await using var engine = new global::app.@this("/app").Testing();
+        await using var engine = global::PLang.Tests.Session.App("/app").Testing();
         engine.module.Register("custom", "run", typeof(MockCodeGenHandler));
 
         var (result, error) = (new PrAction(engine.type.list) { Module = engine.Module("custom"), Name = "run" }).Instance(app.actor.list.User.Context);
@@ -160,7 +160,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task GetCodeGenerated_NonICodeGeneratedAction_ReturnsActionError()
     {
-        await using var engine = new global::app.@this("/app").Testing();
+        await using var engine = global::PLang.Tests.Session.App("/app").Testing();
         engine.module.Register("legacy", "do", typeof(MockHandler));
 
         var (action, error) = (new PrAction(engine.type.list) { Module = engine.Module("legacy"), Name = "do" }).Instance(app.actor.list.User.Context);
@@ -173,7 +173,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task GetCodeGenerated_NotFound_ReturnsActionNotFound()
     {
-        await using var engine = new global::app.@this("/app").Testing();
+        await using var engine = global::PLang.Tests.Session.App("/app").Testing();
 
         var (action, error) = (new PrAction(engine.type.list) { Module = engine.Module("variable"), Name = "nope" }).Instance(app.actor.list.User.Context);
 
@@ -185,7 +185,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task GetCodeGenerated_RegisteredTwice_LastWins()
     {
-        await using var engine = new global::app.@this("/app").Testing();
+        await using var engine = global::PLang.Tests.Session.App("/app").Testing();
         engine.module.Register("custom", "run", typeof(MockHandler));
         engine.module.Register("custom", "run", typeof(MockCodeGenHandler));
 
@@ -198,7 +198,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task GetCodeGenerated_TypeBased_CreatesNewInstance()
     {
-        await using var engine = new global::app.@this("/app").Testing();
+        await using var engine = global::PLang.Tests.Session.App("/app").Testing();
 
         // variable.set is type-registered (discovered via [Action] attribute)
         var (action1, _) = (new PrAction(engine.type.list) { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
@@ -217,7 +217,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task Discover_NonMatchingNamespace_FindsNothing()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
 
         var count = modulesHost.module.Discover(typeof(global::app.@this).Assembly, "Some.Completely.Wrong.Namespace");
 
@@ -227,7 +227,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task Discover_CorrectNamespace_FindsHandlers()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
 
         var count = modulesHost.module.Discover(typeof(global::app.@this).Assembly, "app.module");
 
@@ -243,7 +243,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task Count_IncludesBuiltInAndRegistered()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
         var modules = modulesHost.module.list;
         var countBefore = modules.Items().Sum(m => m.Count);
 
@@ -256,7 +256,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task GetActionType_ReturnsTypeForBuiltIn()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
 
         var type = modulesHost.Module("variable").Handler("set");
 
@@ -266,7 +266,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task GetActionType_NonexistentAction_ReturnsNull()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
 
         var type = modulesHost.Module("nonexistent_xyz").Handler("nope");
 
@@ -276,7 +276,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task RegisterType_RegistersTypeEntry()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
         modulesHost.module.Register("custom", "run", typeof(MockCodeGenHandler));
 
         await Assert.That(modulesHost.Module("custom")["run"] != null).IsTrue();
@@ -286,7 +286,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task Names_IncludesRegistered_NoDuplicates()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
         // "variable" already exists from built-in discovery
         modulesHost.module.Register("variable", "custom_action", typeof(MockHandler));
         modulesHost.module.Register("exotic", "magic", typeof(MockHandler));
@@ -302,7 +302,7 @@ public class LibrariesTests : System.IAsyncDisposable
     [Test]
     public async Task GetActions_IncludesAll_NoDuplicates()
     {
-        await using var modulesHost = new global::app.@this("/app").Testing();
+        await using var modulesHost = global::PLang.Tests.Session.App("/app").Testing();
         // "variable.set" already exists from built-in
         modulesHost.module.Register("variable", "set", typeof(MockHandler)); // overwrites
         modulesHost.module.Register("variable", "custom_action", typeof(MockHandler)); // new

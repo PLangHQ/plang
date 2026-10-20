@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Types;
 // once, and the two makers of types (the root and the type list) answer their own type.
 public class OneTypeObjectTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     // Each concept's entry is its plain type, the one its node holds; the node is no type.

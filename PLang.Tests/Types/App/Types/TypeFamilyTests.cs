@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Types;
 // through it — one set of facts per class; a set of options answers its own values.
 public class TypeFamilyTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = global::PLang.Tests.Session.App("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;

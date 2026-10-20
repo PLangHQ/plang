@@ -37,7 +37,7 @@ public class SurfaceTests
 
         lines.Add("");
         lines.Add("# What a plang program sees");
-        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing();
+        await using var os = global::PLang.Tests.Session.App(System.IO.Path.Combine(Fixture.Root(), "os")).Testing();
         foreach (var type in os.type.list.Items().OrderBy(t => t.Name, System.StringComparer.Ordinal))
         {
             lines.Add("");

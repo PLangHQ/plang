@@ -3,7 +3,7 @@ namespace PLang.Tests.App;
 // `%!app.x%` reads app's member x as the asker sees it: the asker's call stack, trace, last answer.
 public class AppNodesTests
 {
-    private static global::app.@this NewApp() => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() => global::PLang.Tests.Session.App(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
         "plang-nodes-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     private static System.Threading.Tasks.ValueTask<global::app.data.@this> Read(string variable, global::app.actor.context.@this context)
