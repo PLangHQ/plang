@@ -77,7 +77,15 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         // a list, each read through its own type's reader over the json token stream — no JsonElement carrier,
         // no navigator. A scalar root IS its native value (`42` a number). Verify:false — ingested content is
         // unsigned, like every nested/ingest read.
-        var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(s));
+        var bytes = System.Text.Encoding.UTF8.GetBytes(s);
+        // json content is one value: anything after it means the characters are no json (JsonException, as any
+        // malformed json), never a value with the rest dropped
+        var whole = new Utf8JsonReader(bytes);
+        whole.Read();
+        whole.Skip();
+        if (whole.Read())
+            throw new JsonException($"json content is one value; '{whole.TokenType}' follows it at byte {whole.TokenStartIndex}.");
+        var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
         var reader = new global::app.type.item.kind.json.Reader(utf8);
         var read = new global::app.type.reader.ReadContext(ctx, Verify: false);
