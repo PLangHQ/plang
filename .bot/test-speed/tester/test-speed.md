@@ -155,6 +155,43 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 23. One type list per code, shared by the apps born to share it
+
+**What it is.** `new app(root, assembly: code, shareTypes: true)` takes the one type list every app made from `code`
+shares (held by the code's facts, `assembly.types`), instead of making its own: no entries, empty kinds or tables per app.
+A shared list refuses additions — a type, an assembly's types, a kind — with `TypesShared`, saying why; an app that loads
+code is born with its own. `plang --test` shares unless a goal the test reaches calls `code.load` (its two plugin tests).
+C# test apps (`Session.App`) keep their own: about 20 tests add kinds or types right after birth.
+
+**Events.** A shared object (a program's goal/step/action; a type entry of the shared list, and its kinded types) holds
+nothing an app binds: `held.Own(item, context, scope)` is the one door a binding takes — held on the binding actor's
+context, the system's for an app-wide one — and every event level reads its object's events and the asker's app's holds
+(`held.On`). This replaces §19's per-class levels. Coverage, test timing, debug and `on.event` bind through it; the
+variable store's guards and the goal load's before read through it. Tests: `ABindingOnASharedTypeEntry_IsTheBindingAppsOwn`
+(app-wide binding on `%!app.type.goal.on.start%` in one app: the entry holds nothing, the other app runs a goal without
+firing it, the binding app fires it), `ASharedTypeList_RefusesAnAddition_SayingWhy`. Mutation (`held.Own` binding on the
+item itself): both shared-object tests red; restored.
+
+**Numbers** (serial loop, same load ~8, own → shared):
+
+| | Debug | Release + server GC |
+|---|---|---|
+| Condition birth | 37.5 → **24.2 KB** | 37.5 → **24.2 KB** |
+| Condition load | 6.9 → 4.0 KB | 5.8 → 2.8 KB |
+| Condition total | 1.32 → **1.14 ms** | → **0.91 ms** median, 0.65 ms best, **~100 KB** |
+| File total | 3.9 → 4.0 ms (noise) | → 2.7 ms, ~166 KB |
+
+Parallel harness (8 workers, Release, server GC, a server's shape): allocation per request Condition 122.5 → 102.7 KB,
+ForeachDictionary 231 → 190 KB, solid; requests/s swung 1,900 – 3,600 between runs at load 9 – 20 on 8 cores — this
+machine can't measure throughput, a quiet one can (`serve.sh` in the scratchpad: SERVE_N, SHARE).
+
+**Locked-core moves (re-pinned on the playground, Ingi approved #2 for it):** the app's constructor gains `shareTypes`.
+Internal only: `type.list.IsShared`, `assembly.types`, `item.Keeps`, `type.list.Of`, the `held` hold.
+
+**Left for a decision:** a shared app can't load code. A program that needs to would be born with its own list (the
+runner decides it from the program; a server decides it from its app). Copy-on-write (an app's own list made the
+moment it adds a type) was rejected: values born before it hold the shared entries, and identity would split.
+
 ## 22. Another round of allocation cuts: Condition ~171 KB in Debug, ~121 KB in Release
 
 | app | §20 (Debug) | now, Debug (birth / load / run) | now, Release |
