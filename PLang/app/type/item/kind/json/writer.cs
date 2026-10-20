@@ -15,26 +15,18 @@ namespace app.type.item.kind.json;
 public sealed class Writer : IWriter
 {
     private readonly Utf8JsonWriter _writer;
-    private readonly app.View _view;
-    private readonly bool _emitsSchema;
     private readonly global::app.type.kind.@this _binary;   // the kind of bytes handed as a C# byte[]: plain bytes
 
-    /// <summary>A json writer over <paramref name="writer"/>, its kind found among <paramref name="types"/>: plang's
-    /// own (wire's <c>plang</c>) while it carries the schema layer, else item's <c>json</c> — that choice goes when
-    /// plang has its own writer.</summary>
-    public Writer(Utf8JsonWriter writer, global::app.type.list.@this types, app.View view = app.View.Out, bool emitsSchema = false)
+    /// <summary>A json writer over <paramref name="writer"/>, its kind item's <c>json</c> among
+    /// <paramref name="types"/>. Bare json shows a Data's value only (the record door writes nothing).</summary>
+    public Writer(Utf8JsonWriter writer, global::app.type.list.@this types)
     {
         _writer = writer;
-        _view = view;
-        _emitsSchema = emitsSchema;
-        Kind = emitsSchema ? types["wire"].kind["plang"]! : types["item"].kind["json"]!;
+        Kind = types["item"].kind["json"]!;
         _binary = types[typeof(global::app.type.item.binary.@this)].kind;
     }
 
     public global::app.type.kind.@this Kind { get; }
-
-    /// <summary>The plang wire carries the @schema/type envelope; plain json is bare.</summary>
-    public bool EmitsSchema => _emitsSchema;
 
     public void Null() => _writer.WriteNullValue();
     public void Bool(bool value) => _writer.WriteBooleanValue(value);
@@ -43,8 +35,6 @@ public sealed class Writer : IWriter
     public void Float(float value) => _writer.WriteNumberValue(value);
     public void Double(double value) => _writer.WriteNumberValue(value);
     public void String(string value) => _writer.WriteStringValue(value);
-    // a sensitive value is kept whole in plang's own store, and shown masked in every other view
-    public void Sensitive(string characters) => String(_view == app.View.Store ? characters : "****");
     // Verbatim — raw json (object/number) rides inline, unquoted.
     public void Raw(string value) => _writer.WriteRawValue(value);
     public void DateTime(System.DateTime value) => _writer.WriteStringValue(value);
@@ -68,15 +58,6 @@ public sealed class Writer : IWriter
     public void BeginObject() => _writer.WriteStartObject();
     public void Name(string name) => _writer.WritePropertyName(name);
     public void EndObject() => _writer.WriteEndObject();
-
-    /// <summary>A Data's record, in bare json: nothing of its own — bare json shows only the value.</summary>
-    public void BeginRecord(app.data.@this record) { }
-
-    /// <summary>A Data's record closes: nothing of its own in bare json.</summary>
-    public void EndRecord(app.data.@this record) { }
-
-    void IWriter.EndRecord() => throw new System.InvalidOperationException(
-        "JsonWriter.EndRecord requires the Data record reference — call EndRecord(Data) instead.");
 
     /// <summary>
     /// Writes a C# value: null, a primitive (string, int, long, double, float, bool,

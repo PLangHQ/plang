@@ -35,7 +35,7 @@ public partial class @this
     {
         using var bytes = new System.IO.MemoryStream();
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(bytes))
-            await Output(new global::app.type.item.kind.json.Writer(utf8, context.App.type.list, view, emitsSchema: true), view, context, layer: true);
+            await Output(new global::app.type.item.wire.kind.plang.Writer(utf8, context.App.type.list, view), view, context, layer: true);
         return global::app.module.crypto.type.hash.@this.Of(bytes.ToArray(), kind);
     }
 
@@ -78,81 +78,13 @@ public partial class @this
         }
 
         // What this Data holds: its value, or — when it failed — its error, which writes its own face.
-        global::app.type.item.@this held = Error ?? _item;
+        global::app.type.item.@this value = Error ?? _item;
 
-        // Only the self-describing wire (application/plang) opens the type envelope around
-        // the value; a bare format (json, text) writes the value alone (type inferred on
-        // read). The value-write below is the SAME either way.
-        if (writer.EmitsSchema)
-        {
-            writer.BeginObject();
-            // @schema is the LAYER marker (data vs signature/encryption/compression) — written
-            // ONLY at a layer boundary (the top payload). A nested typed value (a dict entry,
-            // the value slot's children) carries type+value without it.
-            if (layer)
-            {
-                writer.Name(global::app.data.@this.WireSchema);
-                writer.String(global::app.data.@this.WireSchemaData);
-            }
-            // The binding label (name) rides on EVERY Store-view Data — .pr action params (nested,
-            // not a layer) and local persistence bind by name. The Out wire omits names entirely
-            // (a server's binding label is not API surface).
-            if (mode == View.Store)
-            {
-                writer.Name("name");
-                writer.String(Name);
-            }
-            var type = Error?.Type ?? Type;
-            if (!type.IsNull)
-            {
-                // The type slot is the type as the writer's kind shows it: in plang its identity
-                // {name, kind?, strict?, template?} (plang's pair for a type) — through the one door
-                // every value is written by.
-                writer.Name("type");
-                await writer.Kind.pair.Output(type, writer, mode, context);
-            }
-            writer.Name("value");
-        }
-
-        // Materialize-and-emit — the ONE door (Load() died here). A RawUntouched
-        // byte-passthrough (`read file.json → %json% → write out %json%`) emits its
-        // bytes VERBATIM, never parsed — the value is not opened. Store preserves refs
-        // and reference-fundamental source-forms verbatim (no %var% render, no byte
-        // load). Out renders %var%/templates and loads reference-fundamental bytes at
-        // the leaf via the value door, then the materialized item writes itself (the
-        // sync leaf reads the now-loaded bytes).
-        // The value writes ITSELF (OBP: each item owns its render) — no pre-materialise through
-        // Value. An untouched source relays its raw verbatim; a materialised template renders
-        // itself; a leaf writes itself. Store vs Out rides in `mode`, honoured by each item. It is written
-        // through the writer's kind: the kind's pair for it when it has one (a list in formal), else itself.
-        await writer.Kind.pair.Output(held, writer, mode, context);
-
-        if (writer.EmitsSchema)
-        {
-            // A stored row names the variables its value holds, each as its text and code, parsed
-            // once at build: loading reads them, never parses.
-            if (mode == View.Store && _item.HasVariable)
-            {
-                writer.Name("variable");
-                await new global::app.type.item.variable.serializer.Entry().Write(writer, _item.Variable, mode, context);
-            }
-
-            // properties — nested object, omitted when empty.
-            if (Properties.Count > 0)
-            {
-                writer.Name("properties");
-                writer.BeginObject();
-                foreach (var kvp in Properties)
-                {
-                    writer.Name(kvp.Key);
-                    if (kvp.Value is global::app.data.@this pd)
-                        await pd.Output(writer, mode, context);
-                    else
-                        await writer.Kind.pair.Output(global::app.type.item.@this.Create(kvp.Value, context), writer, mode, context);
-                }
-                writer.EndObject();
-            }
-            writer.EndObject();
-        }
+        // The Data tells the writer what it is; the writer decides how much to show (plang's writer its record, a
+        // bare format only the value). The value writes itself through the writer's kind: an untouched source
+        // relays its raw verbatim, a template renders itself, a leaf writes itself, Store vs Out riding in `mode`.
+        await writer.BeginRecord(this, mode, context, layer);
+        await writer.Kind.pair.Output(value, writer, mode, context);
+        await writer.EndRecord(this, mode, context);
     }
 }

@@ -37,8 +37,6 @@ public class NumberSerializerTests
         public void Name(string n) { LastMethod = "Name"; Last = n; }
         public void EndObject() { LastMethod = "EndObject"; }
         public void EndArray() { }
-        public void BeginRecord(global::app.data.@this r) { }
-        public void EndRecord() { }
         public void Value(object? normalized) { }
     }
 
@@ -88,7 +86,7 @@ public class NumberSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.item.kind.json.Writer(utf, app.type.list, view: global::app.View.Out);
+            var w = new global::app.type.item.kind.json.Writer(utf, app.type.list);
             await w.Kind.pair.Output((number)42, w, global::app.View.Out, app.actor.list.User.Context);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -109,7 +107,7 @@ public class NumberSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.item.kind.json.Writer(utf, app.type.list, view: global::app.View.Out);
+            var w = new global::app.type.item.kind.json.Writer(utf, app.type.list);
             await w.Kind.pair.Output((number)0.1m, w, global::app.View.Out, app.actor.list.User.Context);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());

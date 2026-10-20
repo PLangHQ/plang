@@ -36,7 +36,7 @@ public class FormalKindTests
         using var ms = new System.IO.MemoryStream();
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
         {
-            var writer = new global::app.type.item.kind.json.Writer(utf8, app.type.list, global::app.View.Store, emitsSchema: true);
+            var writer = new global::app.type.item.wire.kind.plang.Writer(utf8, app.type.list, global::app.View.Store);
             await writer.Kind.pair.Output(value, writer, global::app.View.Store, ctx);
         }
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());

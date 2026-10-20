@@ -1092,7 +1092,6 @@ interface app.type.format.IReader
 interface app.type.format.IWriter
   abstract BeginArray(System.Int32 count) : System.Void
   abstract BeginObject() : System.Void
-  abstract BeginRecord(app.data.this record) : System.Void
   abstract Bool(System.Boolean value) : System.Void
   abstract Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
   abstract DateTime(System.DateTime value) : System.Void
@@ -1101,7 +1100,6 @@ interface app.type.format.IWriter
   abstract Double(System.Double value) : System.Void
   abstract EndArray() : System.Void
   abstract EndObject() : System.Void
-  abstract EndRecord() : System.Void
   abstract Enum(System.Enum value) : System.Void
   abstract Float(System.Single value) : System.Void
   abstract Guid(System.Guid value) : System.Void
@@ -1113,8 +1111,9 @@ interface app.type.format.IWriter
   abstract String(System.String value) : System.Void
   abstract TimeSpan(System.TimeSpan value) : System.Void
   abstract Value(System.Object normalized) : System.Void
+  virtual BeginRecord(app.data.this record, app.View mode, app.actor.context.this context, System.Boolean layer) : System.Threading.Tasks.ValueTask
   virtual Content(System.String value, app.type.kind.this kind) : System.Void
-  virtual EmitsSchema : System.Boolean { get; }
+  virtual EndRecord(app.data.this record, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
   virtual Given() : System.Void
   virtual Raw(System.String value) : System.Void
   virtual Sensitive(System.String characters) : System.Void
@@ -1766,17 +1765,14 @@ struct app.type.item.kind.json.Reader : app.type.format.IReader
 class app.type.item.kind.json.Writer : app.type.format.IWriter
   BeginArray(System.Int32 count) : System.Void
   BeginObject() : System.Void
-  BeginRecord(app.data.this record) : System.Void
   Bool(System.Boolean value) : System.Void
   Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
   DateTime(System.DateTime value) : System.Void
   DateTimeOffset(System.DateTimeOffset value) : System.Void
   Decimal(System.Decimal value) : System.Void
   Double(System.Double value) : System.Void
-  EmitsSchema : System.Boolean { get; }
   EndArray() : System.Void
   EndObject() : System.Void
-  EndRecord(app.data.this record) : System.Void
   Enum(System.Enum value) : System.Void
   Float(System.Single value) : System.Void
   Guid(System.Guid value) : System.Void
@@ -1786,11 +1782,10 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   Name(System.String name) : System.Void
   Null() : System.Void
   Raw(System.String value) : System.Void
-  Sensitive(System.String characters) : System.Void
   String(System.String value) : System.Void
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void
-  ctor(System.Text.Json.Utf8JsonWriter writer, app.type.list.this types, app.View view = …, System.Boolean emitsSchema = …)
+  ctor(System.Text.Json.Utf8JsonWriter writer, app.type.list.this types)
 
 class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>
   ctor(app.type.this owner)
@@ -2619,7 +2614,6 @@ abstract class app.type.item.template.kind.this : app.type.kind.this [Choice]
 class app.type.item.text.Writer : app.type.format.IWriter
   BeginArray(System.Int32 count) : System.Void
   BeginObject() : System.Void
-  BeginRecord(app.data.this record) : System.Void
   Bool(System.Boolean value) : System.Void
   Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
   DateTime(System.DateTime value) : System.Void
@@ -2628,7 +2622,6 @@ class app.type.item.text.Writer : app.type.format.IWriter
   Double(System.Double value) : System.Void
   EndArray() : System.Void
   EndObject() : System.Void
-  EndRecord() : System.Void
   Enum(System.Enum value) : System.Void
   Float(System.Single value) : System.Void
   Guid(System.Guid value) : System.Void
@@ -2955,6 +2948,34 @@ class app.type.item.variable.this : app.type.item.this, app.type.item.ICreate<ap
   static List(app.this app) : app.type.item.list.this<app.type.item.variable.this>
   static Of(app.actor.context.this context) : app.type.item.list.this<app.type.item.variable.this>
   static Resolve(System.String raw, app.actor.context.this context, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> given = …) : app.type.item.variable.this
+
+class app.type.item.wire.kind.plang.Writer : app.type.format.IWriter
+  BeginArray(System.Int32 count) : System.Void
+  BeginObject() : System.Void
+  BeginRecord(app.data.this record, app.View mode, app.actor.context.this context, System.Boolean layer) : System.Threading.Tasks.ValueTask
+  Bool(System.Boolean value) : System.Void
+  Bytes(System.Byte[] value, app.type.kind.this kind) : System.Void
+  DateTime(System.DateTime value) : System.Void
+  DateTimeOffset(System.DateTimeOffset value) : System.Void
+  Decimal(System.Decimal value) : System.Void
+  Double(System.Double value) : System.Void
+  EndArray() : System.Void
+  EndObject() : System.Void
+  EndRecord(app.data.this record, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  Enum(System.Enum value) : System.Void
+  Float(System.Single value) : System.Void
+  Guid(System.Guid value) : System.Void
+  Int(System.Int32 value) : System.Void
+  Kind : app.type.kind.this { get; }
+  Long(System.Int64 value) : System.Void
+  Name(System.String name) : System.Void
+  Null() : System.Void
+  Raw(System.String value) : System.Void
+  Sensitive(System.String characters) : System.Void
+  String(System.String value) : System.Void
+  TimeSpan(System.TimeSpan value) : System.Void
+  Value(System.Object normalized) : System.Void
+  ctor(System.Text.Json.Utf8JsonWriter writer, app.type.list.this types, app.View view)
 
 class app.type.item.wire.kind.plang.this : app.type.kind.this<app.type.item.wire.this>
   Read(app.type.item.source source, app.type.reader.ReadContext ctx) : app.type.item.this

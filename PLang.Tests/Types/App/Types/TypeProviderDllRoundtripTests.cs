@@ -62,8 +62,6 @@ public class TypeProviderDllRoundtripTests : System.IAsyncDisposable
         public void Name(string n) { }
         public void EndObject() { }
         public void EndArray() { }
-        public void BeginRecord(global::app.data.@this r) { }
-        public void EndRecord() { }
         public void Value(object? n) { Captured = n?.ToString(); }
     }
 }

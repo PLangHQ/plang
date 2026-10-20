@@ -161,10 +161,6 @@ public sealed class Writer : IWriter
 
     // ---------------------------------------------------------------- a Data record
 
-    /// <summary>Formal carries no Data envelope — a record is its value.</summary>
-    public void BeginRecord(global::app.data.@this record) { }
-    public void EndRecord() { }
-
     public void Value(object? normalized)
     {
         switch (normalized)

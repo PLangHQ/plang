@@ -13,7 +13,7 @@ public class IWriterFormatTests
     private global::app.type.item.kind.json.Writer MakeJsonWriter(System.IO.Stream stream)
     {
         var utf = new Utf8JsonWriter(stream);
-        return new global::app.type.item.kind.json.Writer(utf, app.type.list, view: global::app.View.Out);
+        return new global::app.type.item.kind.json.Writer(utf, app.type.list);
     }
 
     [Test]

@@ -13,7 +13,7 @@ namespace app.type.item.text;
 /// delegated to a <see cref="Utf8JsonWriter"/> over the SAME stream. The WRITER owns that — there
 /// is no per-type <c>serializer/text.cs</c> override and no shape branch at the selector: a leaf
 /// writes itself bare, a container writes itself as json, both through this one writer.
-/// <para><see cref="IWriter.EmitsSchema"/> stays false — the text channel carries no Data envelope.</para>
+/// <para>A Data shows only its value here: the record door writes nothing.</para>
 /// </summary>
 public sealed class Writer : global::app.type.format.IWriter
 {
@@ -46,7 +46,7 @@ public sealed class Writer : global::app.type.format.IWriter
     // EITHER a bare top-level scalar OR structural json, never interleaved.
     private global::app.type.item.kind.json.Writer Structural()
         => _json ??= new global::app.type.item.kind.json.Writer(
-               _utf8 = new Utf8JsonWriter(_stream), _types, emitsSchema: false);
+               _utf8 = new Utf8JsonWriter(_stream), _types);
 
     // Scalars: bare at the top, json (quoted / comma-joined) when nested inside an open structure.
     public void Null() { if (_depth > 0) Structural().Null(); }
@@ -89,9 +89,6 @@ public sealed class Writer : global::app.type.format.IWriter
     public void BeginObject() { Structural().BeginObject(); _depth++; }
     public void Name(string name) => Structural().Name(name);
     public void EndObject() { Structural().EndObject(); Close(); }
-    public void BeginRecord(global::app.data.@this record) { Structural().BeginRecord(record); _depth++; }
-    public void EndRecord() => throw new System.InvalidOperationException(
-        "text.Writer.EndRecord requires the Data record — records ride the json delegate's EndRecord(Data).");
 
     // A top-level scalar rides bare (its own scalar method, depth 0); a top-level container is json.
     public void Value(object? normalized)

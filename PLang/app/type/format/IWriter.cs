@@ -12,8 +12,8 @@ namespace app.type.format;
 ///
 /// <para>The surface is deliberately minimal: leaf primitives, an array
 /// bracket (count optional — JSON ignores, protobuf may use), and a Data
-/// record bracket (the canonical <c>{name, type, value, properties, signature}</c>
-/// envelope, which only the writer knows how to lay out per format).</para>
+/// record (<see cref="BeginRecord"/>): every Data tells the writer what it is, and
+/// the writer decides how much of it to show.</para>
 /// </summary>
 public interface IWriter
 {
@@ -23,16 +23,6 @@ public interface IWriter
     /// to say, not the value's.
     /// </summary>
     global::app.type.kind.@this Kind { get; }
-
-    /// <summary>
-    /// Whether this format carries the Data self-describing layer: <c>@schema</c> +
-    /// <c>type</c> around every value (the <c>application/plang</c> wire), so values
-    /// round-trip fully typed. <c>application/json</c> and <c>text</c> are bare — the
-    /// value alone, type inferred. <see cref="app.data.@this.Output"/> gates the
-    /// envelope on this; the item's own value output is identical either way.
-    /// Default false; the plang writer overrides true.
-    /// </summary>
-    bool EmitsSchema => false;
 
     void Null();
     void Bool(bool value);
@@ -103,7 +93,7 @@ public interface IWriter
     /// the layout: between <see cref="BeginObject"/> and <see cref="EndObject"/>
     /// it calls <see cref="Name"/> then a leaf method (or <see cref="Value"/> for
     /// the nested <c>value</c> slot) per field. Distinct from
-    /// <see cref="BeginRecord"/>, which is the fixed Data envelope.
+    /// <see cref="BeginRecord"/>, a Data telling the writer what it is.
     /// </summary>
     void BeginObject();
 
@@ -113,14 +103,17 @@ public interface IWriter
     void EndObject();
 
     /// <summary>
-    /// Begin a Data record bracket. The writer emits the canonical
-    /// <c>{name, type, value, properties, signature}</c> envelope shape for
-    /// its format and accepts the payload from subsequent calls. Implementations
-    /// own the layout; the caller only invokes value-emission methods between
-    /// <see cref="BeginRecord"/> and <see cref="EndRecord"/>.
+    /// A Data begins: it tells the writer what it is (its name, type, properties), its value written next through
+    /// the door. The writer decides how much of it to show — plang's writer its record (<c>@schema</c> when it is a
+    /// <paramref name="layer"/>, the name in the Store view, the type); a bare format nothing (only the value).
     /// </summary>
-    void BeginRecord(app.data.@this record);
-    void EndRecord();
+    System.Threading.Tasks.ValueTask BeginRecord(app.data.@this record, app.View mode,
+        global::app.actor.context.@this? context, bool layer) => default;
+
+    /// <summary>The Data's value is written: what the writer shows after it (plang's writer the stored variables and
+    /// the properties), and the record closes. A bare format writes nothing.</summary>
+    System.Threading.Tasks.ValueTask EndRecord(app.data.@this record, app.View mode,
+        global::app.actor.context.@this? context) => default;
 
     /// <summary>
     /// Write a C# primitive (or a byte[], as plain bytes) in the current slot; a plang

@@ -130,7 +130,7 @@ public class IWriterContractTests : System.IAsyncDisposable
     {
         var context = app.actor.list.User.Context;
         var (jw, ms) = MakeWriter();
-        var w = new global::app.type.item.kind.json.Writer(jw, app.type.list, emitsSchema: true);
+        var w = new global::app.type.item.wire.kind.plang.Writer(jw, app.type.list, global::app.View.Out);
         var record = new global::app.data.@this("hello", "world", context: context);
         await record.Output(w, global::app.View.Out, context);
         var s = Flush(jw, ms);
@@ -142,7 +142,7 @@ public class IWriterContractTests : System.IAsyncDisposable
         await Assert.That(s).Contains("\"value\":\"world\"");
 
         var (jw2, ms2) = MakeWriter();
-        var w2 = new global::app.type.item.kind.json.Writer(jw2, app.type.list, view: global::app.View.Store, emitsSchema: true);
+        var w2 = new global::app.type.item.wire.kind.plang.Writer(jw2, app.type.list, global::app.View.Store);
         await record.Output(w2, global::app.View.Store, context);
         await Assert.That(Flush(jw2, ms2)).Contains("\"name\":\"hello\"");
     }
@@ -151,7 +151,7 @@ public class IWriterContractTests : System.IAsyncDisposable
     {
         var context = app.actor.list.User.Context;
         var (jw, ms) = MakeWriter();
-        var w = new global::app.type.item.kind.json.Writer(jw, app.type.list, emitsSchema: true);
+        var w = new global::app.type.item.wire.kind.plang.Writer(jw, app.type.list, global::app.View.Out);
         var record = new global::app.data.@this("nums", new List<int> { 1, 2 }, context: context);
         await record.Output(w, global::app.View.Out, context);
         // each element writes itself as plang does: its type and its value

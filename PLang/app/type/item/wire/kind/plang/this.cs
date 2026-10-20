@@ -46,7 +46,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
                 data = signed;
             }
             await using var utf8 = new Utf8JsonWriter(stream);
-            var writer = new global::app.type.item.kind.json.Writer(utf8, context.App.type.list, view, emitsSchema: true);
+            var writer = new Writer(utf8, context.App.type.list, view);
             if (data.Peek() is global::app.type.item.signature.@this sig)
                 await writer.Kind.pair.Output(sig, writer, view, context);
             else

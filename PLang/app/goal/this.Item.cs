@@ -33,7 +33,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                          Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                      }))
         {
-            var writer = new global::app.type.item.kind.json.Writer(utf8, context.App.type.list, view, emitsSchema: true);
+            var writer = new global::app.type.item.wire.kind.plang.Writer(utf8, context.App.type.list, view);
             await writer.Kind.pair.Output(item, writer, view, context);
             await utf8.FlushAsync(ct);
         }

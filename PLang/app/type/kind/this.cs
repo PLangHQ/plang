@@ -348,7 +348,7 @@ public class @this : global::app.type.@this
     // OBPV — carry marked, collapse after the restructure compiles: this is a verb+noun name
     // AND a type-switch fork standing in for a value's own self-write. Fix: a reflected value
     // writes itself via `new Data(name, value, ctx).Output(...)` — Data.Output already emits bare
-    // vs {name,type,value} envelope by the writer's format (EmitsSchema), not by value type, so
+    // vs its record by the writer's record door (BeginRecord), not by value type, so
     // the switch below should dissolve. (todos.md 2026-07-09)
     protected async global::System.Threading.Tasks.ValueTask WriteReflected(
         global::app.type.format.IWriter writer, object value, global::app.View mode,

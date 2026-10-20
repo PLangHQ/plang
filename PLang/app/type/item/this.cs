@@ -828,8 +828,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual async System.Threading.Tasks.Task<global::app.data.@this> Pour(System.IO.Stream into, actor.context.@this context)
     {
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(into))
-            await Output(new global::app.type.item.kind.json.Writer(utf8, context.App.type.list, global::app.View.Out, emitsSchema: false),
-                global::app.View.Out, context);
+            await Output(new global::app.type.item.kind.json.Writer(utf8, context.App.type.list), global::app.View.Out, context);
         return context.Ok();
     }
 
@@ -859,8 +858,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                      {
                          Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                      }))
-            await Output(new global::app.type.item.kind.json.Writer(utf8, context.App.type.list, global::app.View.Debug, emitsSchema: false),
-                global::app.View.Debug, context);
+            await Output(new global::app.type.item.kind.json.Writer(utf8, context.App.type.list), global::app.View.Debug, context);
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 
