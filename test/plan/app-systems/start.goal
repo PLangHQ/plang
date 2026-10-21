@@ -20,48 +20,48 @@ Start
 Stage8h
 / the builder builds itself, and plain words compile to what they mean (plus checks.md: the rebuild, the eval)
 / "retry once" is one retry
-- call /plan/app-systems/module/on/error/RetryOnceMeansOneRetry
+- call /module/on/error/RetryOnceMeansOneRetry
 / "if %done%, return %x%" returns from inside the if
-- call /plan/app-systems/module/condition/if/IfReturnReturns
+- call /module/condition/if/IfReturnReturns
 / render takes its arguments by name
-- call /plan/app-systems/module/ui/render/RenderTakesNamedArguments
+- call /module/ui/render/RenderTakesNamedArguments
 
 Stage9
 / every value is born through its type, so a program can hook any value's birth (plus checks.md: the module pass)
 / "after file create" fires when a file value is born
-- call /plan/app-systems/app/type/file/CreateFiresOnBirth
+- call /app/type/file/CreateFiresOnBirth
 / converting a value to another type is a birth: "set %p% as path" fires "after path create"
-- call /plan/app-systems/app/type/path/AsPathIsABirth
+- call /app/type/path/AsPathIsABirth
 / a loop's item is the loop's own: it doesn't outlive the loop
-- call /plan/app-systems/module/loop/foreach/LoopItemEndsWithTheLoop
+- call /module/loop/foreach/LoopItemEndsWithTheLoop
 / the loop body's other writes reach the caller: a running total survives the loop
-- call /plan/app-systems/module/loop/foreach/BodyWritesReachTheCaller
+- call /module/loop/foreach/BodyWritesReachTheCaller
 / a call's parameter doesn't outlive the call; the caller's variable of that name is its own again
-- call /plan/app-systems/module/goal/call/ParameterEndsWithTheCall
+- call /module/goal/call/ParameterEndsWithTheCall
 / a callback's write reaches the caller; its %message% ends with it
-- call /plan/app-systems/module/channel/set/CallbackWriteReachesTheCaller
+- call /module/channel/set/CallbackWriteReachesTheCaller
 
 Stage10a
 / registration: %!app.type.list% lists every type a program can use
 / the app lists its types
-- call /plan/app-systems/app/type/AppListsItsTypes
+- call /app/type/AppListsItsTypes
 / a plugin's type joins the app
-- call /plan/app-systems/app/type/PluginTypeJoinsTheApp
+- call /app/type/PluginTypeJoinsTheApp
 / one name, one type: a plugin can't take a built-in's name (a clash fails loudly)
-- call /plan/app-systems/app/type/OneNameOneType
+- call /app/type/OneNameOneType
 
 Stage10b
 / typed lists: list<text> is made by the type itself, a kind carries its element
 / a typed list holds its type
-- call /plan/app-systems/app/type/list/TypedListHoldsItsType
+- call /app/type/list/TypedListHoldsItsType
 / a list read doesn't copy itself
 
 Stage10c
 / the app's facts are plang values
 / %!app.created% is a datetime, uptime a duration
-- call /plan/app-systems/app/AppFactsArePlangValues
+- call /app/AppFactsArePlangValues
 / id, name and environment are the app's settings
-- call /plan/app-systems/app/setting/AppNameIsItsSetting
+- call /app/setting/AppNameIsItsSetting
 / a channel's settings are plang values
 / the app's identity is read back through the format that writes it; the store is ready when the app is
 
@@ -73,11 +73,11 @@ Stage10d
 Stage10e
 / one form of computed value: %Now% and %!event% are computed on each read, one way
 / two reads of %Now% differ, and a copy of it holds still
-- call /plan/app-systems/app/variable/NowIsReadFresh
+- call /app/variable/NowIsReadFresh
 
 Stage11a
 / the actor is reached one way: %!app.actor.system% and %!app.actor.user%, no second app.System/app.User
-- call /plan/app-systems/app/actor/OneDoorToAnActor
+- call /app/actor/OneDoorToAnActor
 
 Stage11b
 / tests reach the app through its own doors (checks.md: every C# test passes with the test-only helpers gone)
@@ -90,9 +90,9 @@ Stage11c
 Stage12a
 / the exception pass: a programmer's mistake reaches the result as an error with its own key, never a crash (plus the C# pins: KeepsItsKeyTests)
 / a value that takes no child is an error result
-- call /plan/app-systems/app/type/item/SetChildOnAValueIsAnError
+- call /app/type/item/SetChildOnAValueIsAnError
 / an unknown setting is an error result
-- call /plan/app-systems/app/setting/UnknownSettingIsAnError
+- call /app/setting/UnknownSettingIsAnError
 
 Stage12b
 / born knowing: a goal knows where it was loaded from when it's born, not stamped on after
@@ -101,8 +101,8 @@ Stage12b
 / Done, kept as validation that the modifiers-as-clauses logic works
 Stage8g
 / each retry of an action gets a fresh deadline
-- call /plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline
+- call /module/on/timeout/RetryGetsAFreshDeadline
 / a recovery's result is never served from the cache
-- call /plan/app-systems/module/on/cache/RecoveryIsNeverCached
+- call /module/on/cache/RecoveryIsNeverCached
 / %!data% after an action with a clause is the action's result
-- call /plan/app-systems/module/on/DataIsLeftAloneAfterAClause
+- call /module/on/DataIsLeftAloneAfterAClause

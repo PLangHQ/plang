@@ -24,8 +24,8 @@ app-systems: what is done (stages 1–12; 10b closed on its C# pins, decision 69
 fixed on the way: the 5-second first signature (500 identities made in a loop); a failed signature is an error, not a silent unsigned write; one default provider per interface
 
 validated by (built when Ingi says):
-  test/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline
-  test/plan/app-systems/module/on/cache/RecoveryIsNeverCached
-  test/plan/app-systems/module/on/DataIsLeftAloneAfterAClause
-  test/plan/app-systems/app/type/file/CreateFiresOnBirth
-  test/plan/app-systems/app/type/path/AsPathIsABirth
+  test/module/on/timeout/RetryGetsAFreshDeadline
+  test/module/on/cache/RecoveryIsNeverCached
+  test/module/on/DataIsLeftAloneAfterAClause
+  test/app/type/file/CreateFiresOnBirth
+  test/app/type/path/AsPathIsABirth
