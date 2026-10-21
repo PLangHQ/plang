@@ -156,7 +156,7 @@ public partial class @this
         try
         {
             var rendered = await asked.Value();
-            if (asked.Success) return new @this(Name, rendered, context: _context) { Carried = Carried.Copy() };
+            if (asked.Success) return new @this(Name, rendered, context: _context) { Attachment = Attachment.Copy() };
             why = asked.Error!;
         }
         // a partial template throws for a name it can't read; here that is this value's answer, on the Data
@@ -212,7 +212,7 @@ public partial class @this
     [JsonIgnore]
     [LlmIgnore]
     [Out, Store]
-    public virtual Properties Properties { get => Carried.Properties; set => Carried.Properties = value; }
+    public virtual Properties Properties { get => Attachment.Properties; set => Attachment.Properties = value; }
 
     /// <summary>The members a program added to this variable's value that the value can't hold itself
     /// (<c>set %name.lang% = "is"</c> on a text) — read with a dot after the value's own members, never with
@@ -220,13 +220,13 @@ public partial class @this
     [JsonIgnore]
     [LlmIgnore]
     [Out, Store]
-    internal global::app.type.item.kept.list.@this Kept { get => Carried.Kept; set => Carried.Kept = value; }
+    internal global::app.type.item.kept.list.@this Kept { get => Attachment.Kept; set => Attachment.Kept = value; }
 
     /// <summary>What this variable's value carries — its properties and its added members, together: a face of this
     /// variable shares it, a copy takes a copy of it.</summary>
     [JsonIgnore]
     [LlmIgnore]
-    internal virtual carried Carried { get; set; } = new();
+    internal virtual attachment Attachment { get; set; } = new();
 
 
     [JsonConstructor]
@@ -618,7 +618,7 @@ public partial class @this
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Carried = Carried,
+            Attachment = Attachment,
         };
         clone._item = answer ?? Empty;
         // A declined ask lands its reason on this binding (asking.Fail) and
@@ -649,7 +649,7 @@ public partial class @this
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Carried = Carried,
+            Attachment = Attachment,
             IsInitialized = IsInitialized,
         };
         view._item = _item;
@@ -736,7 +736,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Carried = Carried.Copy(),
+            Attachment = Attachment.Copy(),
             Signature = signature ?? Signature,
         };
     }
@@ -753,7 +753,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Carried = Carried.Copy(),
+            Attachment = Attachment.Copy(),
         };
     }
 
@@ -931,7 +931,7 @@ public class @this<T> : @this
         copy.Handled = source.Handled;
         copy.Returned = source.Returned;
         copy.ReturnDepth = source.ReturnDepth;
-        copy.Carried = source.Carried;
+        copy.Attachment = source.Attachment;
         copy.Snapshot = source.Snapshot;
         return copy;
     }
@@ -983,10 +983,10 @@ public class DynamicData : @this
         _data = data;
     }
 
-    internal override carried Carried
+    internal override attachment Attachment
     {
-        get => _data(Context)?.Carried ?? base.Carried;
-        set => base.Carried = value;
+        get => _data(Context)?.Attachment ?? base.Attachment;
+        set => base.Attachment = value;
     }
 
     /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
@@ -1003,7 +1003,7 @@ public class DynamicData : @this
         global::app.type.item.signature.@this? signature = null)
     {
         var ctx = context ?? Context;
-        return new @this(name, _cell.Compute(ctx), context: ctx) { Carried = Carried.Copy() };
+        return new @this(name, _cell.Compute(ctx), context: ctx) { Attachment = Attachment.Copy() };
     }
 }
 

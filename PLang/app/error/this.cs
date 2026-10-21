@@ -274,7 +274,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// </summary>
     public static Error FromException(Exception ex)
     {
-        if (ex is AppException carried) return carried.Error;
+        if (ex is AppException exception) return exception.Error;
         return new ServiceError($"{ex.GetType().Name}: {ex.Message}", "ServiceError", 500) { Exception = ex };
     }
 

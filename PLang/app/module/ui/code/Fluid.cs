@@ -202,7 +202,7 @@ public class Fluid : ITemplate
             // Fluid wraps what the template's code threw (a TargetInvocationException): a program's error
             // inside the template — an unknown goal, a failed include — is the render's answer, whole.
             for (var inner = ex; inner != null; inner = inner.InnerException)
-                if (inner is AppException carried) return action.Context.Error(carried.Error);
+                if (inner is AppException exception) return action.Context.Error(exception.Error);
 
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
             // Its Message is the useless "Exception has been thrown by the target of an invocation" — dig to

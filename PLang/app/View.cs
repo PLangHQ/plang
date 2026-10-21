@@ -93,13 +93,6 @@ public abstract class View
     internal virtual System.Threading.Tasks.ValueTask Variables(global::app.type.item.@this value, global::app.type.format.IWriter writer)
         => default;
 
-    // The value as written: its own write — a template's text, a reference's name, as the step gave them.
-    private protected System.Threading.Tasks.ValueTask Written(global::app.type.item.@this value, global::app.type.format.IWriter writer)
-        => value.Output(writer);
-
-    // What a Data settles to — a reference the Data it names, a template its render; not initialized when a name it
-    // names holds nothing.
-    private protected System.Threading.Tasks.ValueTask<global::app.data.@this> Settled(global::app.data.@this data) => data.Settle();
 
     /// <summary>The Data as this view takes it: what it writes, settled once — a reference a copy of the Data it names,
     /// a template its render, a name that reads nothing the error. A Data that is a failure is taken as it is: the
@@ -110,7 +103,9 @@ public abstract class View
     // Used where it must be: a name it can't read is the write's error.
     private protected async System.Threading.Tasks.ValueTask<global::app.data.@this> Used(global::app.data.@this data)
     {
-        var used = await Settled(data);
+        // what the Data settles to — a reference the Data it names, a template its render; not initialized when a
+        // name it names holds nothing
+        var used = await data.Settle();
         if (!used.IsInitialized || !used.Success)
             throw new global::app.error.AppException(used.Error ?? new global::app.error.VariableNotFoundException(data.Name).Error);
         return used;
@@ -143,7 +138,7 @@ public abstract class View
         internal override string? Name(global::app.data.@this record) => record.Name;
 
         private protected override System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer)
-            => Written(value, writer);
+            => value.Output(writer);   // the value as written: a template's text, a reference's name, as the step gave them
 
         // plang's own store keeps a Data as written: its references and templates with the variables they name
         internal override System.Threading.Tasks.ValueTask<global::app.data.@this> Settle(global::app.data.@this data) => new(data);
@@ -185,14 +180,14 @@ public abstract class View
             {
                 var used = await Used(data);
                 await writer.BeginRecord(used, layer);
-                await Written(await Opened(used), writer);
+                await (await Opened(used)).Output(writer);
                 await writer.EndRecord(used);
             }
             finally { _depth.Value--; }
         }
 
         private protected override async System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer)
-            => await Written(await Opened(await Used(new global::app.data.@this("", value, context: writer.Context))), writer);
+            => await (await Opened(await Used(new global::app.data.@this("", value, context: writer.Context)))).Output(writer);
 
         // what a used Data holds, opened (a reference's content); a value that fails to open is the write's error
         private async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Opened(global::app.data.@this used)
@@ -244,10 +239,10 @@ public abstract class View
         {
             writer.BeginObject();
             writer.Name("written");
-            await Written(value, writer);
+            await value.Output(writer);
             // a dump never ends the program it watches: a failure to resolve is shown, never thrown
             global::app.data.@this used;
-            try { used = await Settled(new global::app.data.@this("", value, context: writer.Context)); }
+            try { used = await new global::app.data.@this("", value, context: writer.Context).Settle(); }
             catch (global::app.error.AppException failed) { used = writer.Context.Error(failed.Error); }
             // a name that reads nothing: the miss, or the error its own status calls not found
             var unread = !used.IsInitialized || used.Error is { Status.IsNotFound: true };
@@ -271,7 +266,7 @@ public abstract class View
                 if (!writing.Add(resolved)) writer.String(resolved.ToString() ?? resolved.Type.Name);
                 else
                 {
-                    try { await Written(resolved, writer); }
+                    try { await resolved.Output(writer); }
                     finally { writing.Remove(resolved); }
                 }
                 // the type as the format writes one (text its word, json and plang its identity)
