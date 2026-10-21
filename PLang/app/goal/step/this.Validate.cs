@@ -47,10 +47,12 @@ public sealed partial class @this
         var comparer = global::app.type.item.variable.list.@this.Comparer;
         var said = new global::app.type.item.variable.parser.@this(Text, context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
         var answered = new global::app.type.item.variable.parser.@this(written, context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
-        // each told as the step writes it, to be copied exactly — beside the answer's own when it wrote one near it
+        // each told as the step writes it, to be copied exactly — beside the answer's own when it wrote one the step's
+        // variables say was meant to be this one
+        var step = new global::app.type.item.variable.parser.@this(Text, context.App.type.list);
         foreach (var v in said)
             if (!answered.Contains(v, comparer))
-                problems.Add(answered.Where(a => !said.Contains(a, comparer)).OrderByDescending(a => Shared(a, v)).FirstOrDefault(a => Shared(a, v) > 1) is { } near
+                problems.Add(answered.Where(a => !said.Contains(a, comparer)).FirstOrDefault(a => comparer.Equals(step.Nearest(a), v)) is { } near
                     ? $"step {Index}: {v} is in the step but not in your answer: the step writes `{v}`; your answer has `{near}` — copy it exactly"
                     : $"step {Index}: {v} is in the step but not in your answer: copy it exactly");
         // and the other way: a variable the answer names that the step's words don't is invented — a
@@ -99,14 +101,6 @@ public sealed partial class @this
                 && !literals.Any(l => l.Contains(t, System.StringComparison.OrdinalIgnoreCase)))
                 problems.Add($"step {Index}: your answer writes \"{t}\", which the step doesn't — leave out what the step doesn't give");
         return problems;
-
-        // how many characters two variables' texts start with alike
-        static int Shared(string a, string b)
-        {
-            var n = 0;
-            while (n < a.Length && n < b.Length && char.ToLowerInvariant(a[n]) == char.ToLowerInvariant(b[n])) n++;
-            return n;
-        }
 
         async System.Threading.Tasks.Task<bool> Held(string quoted)
         {
