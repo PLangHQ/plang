@@ -15,6 +15,13 @@
           "name": "set",
           "property": [
             {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"size\": 10, \"name\": \"box\"}"
+            },
+            {
               "name": "Name",
               "type": {
                 "name": "variable"
@@ -32,18 +39,11 @@
               ]
             },
             {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "{\"size\": 10, \"name\": \"box\"}"
-            },
-            {
               "name": "Type",
               "type": {
                 "name": "type"
               },
-              "value": "item"
+              "value": {"name":"item","kind":"json"}
             }
           ],
           "default": [
@@ -55,12 +55,6 @@
               "value": false
             }
           ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %x% = '{\"size\": 10, \"name\": \"box\"}', type=json': variable.set: cannot make a 'json' from a text value"
         }
       ]
     },
@@ -76,6 +70,13 @@
           "module": "variable",
           "name": "set",
           "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 28
+            },
             {
               "name": "Name",
               "type": {
@@ -95,13 +96,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "number"
-              },
-              "value": 28
             }
           ],
           "default": [
@@ -131,6 +125,13 @@
             {
               "name": "Expected",
               "type": {
+                "name": "number"
+              },
+              "value": 10
+            },
+            {
+              "name": "Actual",
+              "type": {
                 "name": "item",
                 "template": "plang"
               },
@@ -148,13 +149,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "number"
-              },
-              "value": 10
             }
           ]
         }
@@ -175,6 +169,13 @@
             {
               "name": "Expected",
               "type": {
+                "name": "number"
+              },
+              "value": 28
+            },
+            {
+              "name": "Actual",
+              "type": {
                 "name": "item",
                 "template": "plang"
               },
@@ -192,13 +193,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "number"
-              },
-              "value": 28
             }
           ]
         }
@@ -219,6 +213,13 @@
             {
               "name": "Expected",
               "type": {
+                "name": "text"
+              },
+              "value": "box"
+            },
+            {
+              "name": "Actual",
+              "type": {
                 "name": "item",
                 "template": "plang"
               },
@@ -236,13 +237,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "text"
-              },
-              "value": "box"
             }
           ]
         }
