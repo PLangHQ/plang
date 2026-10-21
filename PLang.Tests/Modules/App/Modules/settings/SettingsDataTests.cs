@@ -65,15 +65,20 @@ public class SettingsDataTests
         await Assert.That((await Llm(ctx)).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.use);
     }
 
+    // A module's settings with no class of their own save this run's values at their address, as a dict row; an
+    // action of it reads the option from that row once this run's value is gone.
     [Test]
-    public async Task Save_ANodeThatIsNoClass_IsRefused()
+    public async Task Save_ANodeThatIsNoClass_KeepsItsValuesAsTheRow()
     {
         var ctx = _app.actor.list.System.Context;
         var node = new global::app.type.item.setting.module.@this("http", ctx.App.type.list[typeof(global::app.type.item.setting.module.@this)]);
+        ctx.Setting.Set("http.setting.timeout", ctx.Ok(42L));
 
-        var result = await new global::app.module.setting.Save(ctx) { Setting = Given(node, ctx) }.Start();
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("NotASettingClass");
+        await (await new global::app.module.setting.Save(ctx) { Setting = Given(node, ctx) }.Start()).IsSuccess();
+        ctx.Setting.Set("http.setting.timeout", null);
+
+        var read = await ctx.Setting.Get(ctx.App.Module("http")["request"]!, "timeout");
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("42");
     }
 
     [Test]

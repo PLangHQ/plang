@@ -28,9 +28,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public virtual async System.Threading.Tasks.ValueTask<string> Text(global::app.actor.context.@this context)
     {
         var standard = (await context.Setting.Get<setting.@this>()).Standard.Value;
-        var written = Of(Value, standard, new global::app.data.@this("", context: context))
+        var size = Of(Value, standard, new global::app.data.@this("", context: context))
             ?? throw new System.InvalidOperationException($"the size standard {standard.Name} made no size of {Value} bytes.");
-        return await written.Text(context);
+        return await size.Text(context);
     }
 
     /// <summary>A size writes its text in the standard it is: <c>100 MB</c> stays <c>100 MB</c>; one with no standard,

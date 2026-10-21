@@ -35,16 +35,17 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         // settings' own) opens in memory
         var user = _app.actor.list.User;
         var session = new global::app.channel.type.test.@this(test);
-        // what the default actor held under the session's name (a test's own session is its output)
-        var held = user.Channel.Get(session.Name);
+        // the channel the default actor has under the session's name (a test's own session is its output)
+        var channel = user.Channel.Get(session.Name);
         user.Channel.Register(session);
         // then where test's setting says, when that is another actor: the session moves there — opened on it first, so
-        // the app never stops testing, then the default actor given back what it held; one session is left, never two
-        if (await Actor() is not { } named || ReferenceEquals(named, user)) return session;
-        var moved = Open(named, test);
-        if (held != null) await user.Channel.Set(held);
-        else await user.Channel.Remove(session.Name, user.Context);
-        return moved;
+        // the app never stops testing, then the default actor given back its channel; one session is left, never two
+        if (await Actor() is not { } actor || ReferenceEquals(actor, user)) return session;
+        var name = session.Name;
+        session = Open(actor, test);
+        if (channel != null) await user.Channel.Set(channel);
+        else await user.Channel.Remove(name, user.Context);
+        return session;
     }
 
     /// <summary>Opens a session on <paramref name="actor"/> — the one test's setting names, read by a caller that can

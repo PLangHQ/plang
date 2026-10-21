@@ -1,10 +1,10 @@
 namespace app.type.item.setting.action;
 
 /// <summary>
-/// An action's settings — <c>%!llm.query.setting%</c>: its options are its properties
+/// An action's settings — <c>%!llm.query.setting%</c>, made by the action for an asker: its options are its properties
 /// (<c>%!llm.query.setting.cache%</c>), each as the action-param seam reads it (this run's — the action's, then
-/// the module's — the saved rows), else the action's default. What <c>save %!llm.query.setting%</c> stores is the
-/// action with them.
+/// the module's — the saved rows), else the action's default; a write is checked against them. What
+/// <c>save %!llm.query.setting%</c> stores is this run's values at its address.
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {
@@ -25,7 +25,7 @@ public sealed class @this : global::app.type.item.setting.@this
             types[typeof(@this)]) { }
 
     private @this(global::app.goal.step.action.@this action, global::app.type.item.setting.module.@this module, global::app.type.@this type)
-        : base($"{action.Module.Name}.{action.Name}.setting", type)
+        : base(action.Address, type)
     {
         _action = action;
         Module = module;

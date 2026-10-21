@@ -200,7 +200,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>This module's settings — <c>%!llm.setting%</c>: its own class, or the options its actions take.</summary>
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
-        => _root != null ? await parent.Context.Setting.Get(this) : await base.Setting(parent);
+    {
+        if (_root == null) return await base.Setting(parent);
+        // its own class, as the asker's settings build it; else the options its actions take, read and written through it
+        var own = await parent.Context.Setting.Get(Address);
+        return own.IsInitialized || !own.Success ? own
+            : new global::app.data.@this(Address, new global::app.type.item.setting.module.@this(Name,
+                parent.Context.App.type.list[typeof(global::app.type.item.setting.module.@this)]), context: parent.Context);
+    }
+
+    /// <summary>Where this module's settings are kept — its name, then <c>.setting</c> (<c>llm.setting</c>).</summary>
+    internal string Address => $"{Name}.setting";
 
     /// <summary>Select the catalog element that holds <paramref name="clr"/> — the module and the name registration
     /// gave the class; the app's module asks each of its modules. Null when no module holds it.</summary>

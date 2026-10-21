@@ -34,7 +34,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// it has one, else its options as the catalog has them. None once its module was taken out of the app
     /// (module.Remove empties it): no catalog holds it then.</summary>
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
-        => Module[Name] is { } catalog ? await parent.Context.Setting.Get(catalog) : null;
+    {
+        if (Module[Name] is not { } catalog) return null;
+        // its own class, as the asker's settings build it; else its options, read and written through it
+        var own = await parent.Context.Setting.Get(catalog.Address);
+        return own.IsInitialized || !own.Success ? own
+            : new global::app.data.@this(catalog.Address, new global::app.type.item.setting.action.@this(catalog), context: parent.Context);
+    }
+
+    /// <summary>Where this action's settings are kept — its module's name, its own, then <c>.setting</c>
+    /// (<c>llm.query.setting</c>).</summary>
+    internal string Address => $"{Module.Name}.{Name}.setting";
 
     /// <summary>The action writes ITSELF — the bare shape it owns, in every view:
     /// <c>{module, name, property, default?, child?}</c>. Its module is a reference, written by name,

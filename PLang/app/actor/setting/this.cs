@@ -106,10 +106,9 @@ public sealed class @this : IDisposable
     public async ValueTask<data.@this> Get(global::app.goal.step.action.@this action, string option)
     {
         await Load();
-        // read where each node writes: under the action's settings' path, then its module's
-        var settings = new global::app.type.item.setting.action.@this(action);
-        var own = settings.Path;
-        var module = settings.Module.Path;
+        // read at the action's address, then its module's
+        var own = action.Address;
+        var module = action.Module.Address;
         var run = Run([$"{own}.{option}", $"{module}.{option}"]);
         if (run.IsInitialized) return run;
         if (Saved(own) is { } row && Option(row, option) is { } saved) return saved;
@@ -187,21 +186,18 @@ public sealed class @this : IDisposable
         }
     }
 
-    /// <summary>Stores <paramref name="setting"/> whole as the row, under its own path, of the actor this
-    /// scope belongs to.</summary>
+    /// <summary>Stores <paramref name="setting"/> as the row, under its own path, of the actor this scope belongs to:
+    /// a settings class whole; at an address no class has (an action's settings, a module's with no class of its own),
+    /// this run's values there, as a dict of the options set.</summary>
     public async ValueTask<data.@this> Save(global::app.type.item.setting.@this setting)
     {
         var path = setting.Path;
-        // a node's settings (%!http.setting%, %!llm.query.setting%) are no class: its row could not be read back.
-        // An action's settings are not storable yet; when they are, their row is a dict of the set options,
-        // read by Option(), and Option()'s action-row branch goes.
-        if (Class(path) == null)
-            return _context.Error(new global::app.error.@this(
-                $"'{path}' is not a setting class — save the class that holds the option.", "NotASettingClass", 400));
         var owner = Owner;
         // rows that could not be read are never written over
         if (await owner.Load() is { Success: false } unread) return unread;
-        var row = new data.@this($"{owner._actor!.Name.ToLowerInvariant()}!{path}", setting, context: _context);
+        global::app.type.item.@this saved = Class(path) != null ? setting
+            : global::app.type.item.@this.Create(Under(path), _context);
+        var row = new data.@this($"{owner._actor!.Name.ToLowerInvariant()}!{path}", saved, context: _context);
         var stored = await Store.Set(Table, row.Name, row);
         if (!stored.Success) return stored;
         owner._held![path] = row;
@@ -249,14 +245,14 @@ public sealed class @this : IDisposable
     // Whether the class at path is an actor's own — its values never come from the actor it falls back to.
     private bool Own(string path) => Class(path) is { } clr && System.Attribute.IsDefined(clr, typeof(global::app.type.item.setting.OwnAttribute));
 
-    // One option of a saved row: a setting's (its property), or an action's (its Property row).
+    // One option of a saved row: a setting's (its property), or one an address with no class kept (its entry).
     private data.@this? Option(data.@this row, string name) => row.Peek() switch
     {
         global::app.type.item.setting.@this setting when setting.Property(name) is { } option
             => new data.@this(name, option.GetValue(setting), context: _context),
-        global::app.goal.step.action.@this action
-            when action.Property.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)) is { } property
-            => new data.@this(name, property.Value, context: _context),
+        global::app.type.item.dict.@this options when options.Entries(_context)
+                .FirstOrDefault(entry => string.Equals(entry.Name, name, StringComparison.OrdinalIgnoreCase)) is { } entry
+            => new data.@this(name, entry.Peek(), context: _context),
         _ => null,
     };
 
@@ -404,28 +400,6 @@ public sealed class @this : IDisposable
     /// <summary>A fresh value of the settings class a <paramref name="path"/> names — its defaults; null
     /// when no class names it. What the build's step scope teaches from (its Path and its Rows).</summary>
     public global::app.type.item.setting.@this? Fresh(string path) => Make(path);
-
-    /// <summary>
-    /// <paramref name="module"/>'s settings as this scope sees them — <c>%!llm.setting%</c>, <c>%!http.setting%</c>:
-    /// its own class when it has one, else the module's node, whose options are ones its actions take.
-    /// </summary>
-    public async ValueTask<data.@this> Get(global::app.module.@this module)
-    {
-        var node = new global::app.type.item.setting.module.@this(module.Name,
-            _context.App.type.list[typeof(global::app.type.item.setting.module.@this)]);
-        return Class(node.Path) != null ? await Get(node.Path) : new data.@this(node.Path, node, context: _context);
-    }
-
-    /// <summary>
-    /// <paramref name="action"/>'s settings as this scope sees them — <c>%!llm.decider.setting%</c>,
-    /// <c>%!llm.query.setting%</c>: its own class when it has one, else the action's node, whose options are its
-    /// properties.
-    /// </summary>
-    public async ValueTask<data.@this> Get(global::app.goal.step.action.@this action)
-    {
-        var node = new global::app.type.item.setting.action.@this(action);
-        return Class(node.Path) != null ? await Get(node.Path) : new data.@this(node.Path, node, context: _context);
-    }
 
     // This run's values under path, the closest scope winning, as the options they set — a key deeper than
     // an option (path.llm.system) nests under it. A node set both as a whole and by its members (diff = true,

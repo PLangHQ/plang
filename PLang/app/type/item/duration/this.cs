@@ -33,10 +33,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         var standard = (await writer.Context.Setting.Get<setting.@this>()).Standard.Value;
-        var written = writer.Context.App.type.list[new global::app.type.@this("duration", standard.Name), writer.Context]
+        var duration = writer.Context.App.type.list[new global::app.type.@this("duration", standard.Name), writer.Context]
             .Make(Value, new global::app.data.@this("", context: writer.Context)) as @this
             ?? throw new System.InvalidOperationException($"the duration standard {standard.Name} made no span of {Value}.");
-        await written.Write(writer);
+        await duration.Write(writer);
     }
 
     /// <summary>A span born holding <paramref name="type"/> — the app's {duration, standard}.</summary>
