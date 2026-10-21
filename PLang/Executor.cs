@@ -72,14 +72,11 @@ namespace PLang
 				var context = app.actor.list.System.Context;
 				var found = app.actor.list.System.Setting.Find(key[1..]);
 				if (!found.Success) return (null, found);
-				var setting = (global::app.type.item.setting.@this)found.Peek()!;
-				var option = setting.Option(key[1..], context);
-				if (!option.Success) return (null, option);
-				var named = (await option.Value())!.ToString();
-				var fits = setting.Apply(named, value, context);
-				if (!fits.Success) return (null, fits);
+				var setting = (await found.Value())!;
+				var address = setting.Apply(key[1..], value, context);
+				if (!address.Success) return (null, address);
 				settings.Add(setting.GetType());
-				flags.Add((named.Length == 0 ? setting.Path : $"{setting.Path}.{named}", value));
+				flags.Add(((await address.Value())!.ToString(), value));
 			}
 
 			// A mode is on when its word is given (and not false), or when the run writes its setting.

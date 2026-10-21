@@ -143,18 +143,18 @@ public sealed class @this : IDisposable
     /// (<c>channel.setting.format</c> → <c>app.channel.setting</c>) — a fresh value of it, at its defaults. A path no
     /// setting goes by, or one two settings go by, is refused.
     /// </summary>
-    public data.@this Find(string path)
+    public data.@this<global::app.type.item.setting.@this> Find(string path)
     {
         var answers = _answers ??= Answers();
         for (var end = path.Length; end > 0; end = path.LastIndexOf('.', end - 1))
         {
             if (!answers.TryGetValue(path[..end], out var settings)) continue;
             if (settings.Count > 1)
-                return _context.Error(new global::app.error.@this(
+                return _context.Error<global::app.type.item.setting.@this>(new global::app.error.@this(
                     $"'{path}' names two settings: {string.Join(" and ", settings)} — write the one you mean in full.", "AmbiguousSetting", 400));
-            return new data.@this(settings[0], Make(settings[0]), context: _context);
+            return _context.Ok(Make(settings[0])!);
         }
-        return _context.Error(new global::app.error.@this(
+        return _context.Error<global::app.type.item.setting.@this>(new global::app.error.@this(
             $"'{path}' names no setting — a setting's path is its owner's and then .setting (channel.setting.format).", "UnknownSetting", 400));
     }
 

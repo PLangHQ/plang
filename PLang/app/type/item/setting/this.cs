@@ -286,43 +286,41 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         }
     }
 
-    /// <summary>The option <paramref name="path"/> names under this setting, by a path it goes by
-    /// (<c>channel.setting.format</c> → <c>format</c>, <c>call.setting.diff.deep</c> → <c>diff.deep</c>); empty for
-    /// the setting's own path. A path that isn't this setting's, or an option it doesn't have, is refused.</summary>
-    public global::app.data.@this<global::app.type.item.text.@this> Option(string path, global::app.actor.context.@this context)
+    /// <summary>Takes <paramref name="value"/> at <paramref name="path"/> — a path this setting goes by, then an option
+    /// (<c>channel.setting.format</c>, <c>call.setting.diff.deep</c>), or its own alone with a dict of its options — onto a
+    /// copy of this setting, through the one convert walk. Answers the address the value is kept at
+    /// (<c>app.channel.setting.format</c>), or the refusal: a path that isn't this setting's, an option it doesn't have,
+    /// or a value its option can't take.</summary>
+    public global::app.data.@this<global::app.type.item.text.@this> Apply(string path, object? value, global::app.actor.context.@this context)
     {
         foreach (var own in Paths)
         {
-            if (string.Equals(path, own, System.StringComparison.OrdinalIgnoreCase)) return context.Ok(Text("", context));
-            if (!path.StartsWith(own + ".", System.StringComparison.OrdinalIgnoreCase)) continue;
-            var option = path[(own.Length + 1)..];
-            var first = option.Split('.')[0];
-            if (Property(first) == null && Switch(first) == null)
-                return context.Error<global::app.type.item.text.@this>(new global::app.error.@this(
-                    $"Unknown setting '{first}' on {Path} — no public-settable property.", "UnknownSetting", 400));
-            return context.Ok(Text(option, context));
+            // the setting's own path takes a dict of its options
+            if (string.Equals(path, own, System.StringComparison.OrdinalIgnoreCase))
+                return value is IDictionary<string, object?> options
+                    ? Take(options, Path, context)
+                    : context.Error<global::app.type.item.text.@this>(new global::app.error.@this(
+                        $"'{path}' is the setting {Path}: give it its options, {{\"option\": value}}, or name one ({path}.<option>).",
+                        "TypeConversionFailed", 400));
+            // an option's path takes its value
+            if (path.StartsWith(own + ".", System.StringComparison.OrdinalIgnoreCase))
+            {
+                var option = path[(own.Length + 1)..];
+                return Take(Nested(option, value), $"{Path}.{option}", context);
+            }
         }
         return context.Error<global::app.type.item.text.@this>(new global::app.error.@this(
             $"'{path}' is not a path of the setting {Path}.", "UnknownSetting", 400));
     }
 
-    private global::app.type.item.text.@this Text(string text, global::app.actor.context.@this context)
-        => new(text, context.App.type.list[typeof(global::app.type.item.text.@this)]);
-
-    /// <summary>Takes <paramref name="value"/> at <paramref name="option"/> (as <see cref="Option"/> answers it) onto a
-    /// copy of this setting, through the one convert walk: an option's path takes its value, the setting's own (empty)
-    /// a dict of its options. A key that is no option, or a value its option can't take, is refused. Answers the
-    /// copy.</summary>
-    public global::app.data.@this Apply(string option, object? value, global::app.actor.context.@this context)
+    // Takes the options onto a copy: answers the address they are kept at, or why not.
+    private global::app.data.@this<global::app.type.item.text.@this> Take(IDictionary<string, object?> options, string address,
+        global::app.actor.context.@this context)
     {
-        IDictionary<string, object?>? options = option.Length == 0 ? value as IDictionary<string, object?> : Nested(option, value);
-        if (options == null)
-            return context.Error(new global::app.error.@this(
-                $"'{Path}' is a setting: give it its options, {{\"option\": value}}, or name one ({Path}.<option>).",
-                "TypeConversionFailed", 400));
-        var set = Copy();
-        var applied = set.Apply(options, context);
-        return applied.Success ? context.Ok(set) : applied;
+        var applied = Copy().Apply(options, context);
+        return applied.Success
+            ? context.Ok(new global::app.type.item.text.@this(address, context.App.type.list[typeof(global::app.type.item.text.@this)]))
+            : context.Error<global::app.type.item.text.@this>(applied.Error!);
     }
 
     // An option path's value as the options it sets: format → {format: v}, diff.deep → {diff: {deep: v}}.
