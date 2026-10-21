@@ -16,8 +16,11 @@ Source: `.bot/item-doors/codeanalyzer/v3/report.md` (46f7965b5). Section numbers
 10. **§11 debug's eight static methods fetching `context.App?.Debug`**: instance methods. `Write(object?)`'s local `envelope`.
 11. **§11 history/task comments** ("stage 6: was …", "decision 818", "ruling 6"): docs say what is.
 12. **§2's `catch … when (ex is JsonException or NotSupportedException)`** (`wire/kind/plang/this.cs:62,106`): the error rule (`catch (AppException)`), if the throw site can carry its Error.
+13. **From C, the real point under 270c** (Ingi: "yes"): an unnamed duration or size is marked by an empty kind, which its write checks. Instead, an unnamed duration or size is its own kind, whose write asks the asker's standard, so no write checks for an empty kind. 270c's behaviour is unchanged.
+14. **From C, names** (Ingi: "yes"): `carried` (a participle as a class name) is named for what it is; View's private `Settled` beside `Data.Settle` becomes one name for one idea.
+15. **From C, the call setting asked at every push** (270b): the ask sits once where pushes share a door (already asked of the coder in 270b's amendment). Confirm it, or say which sites are truly their own.
 
-## B. Locked: to Ingi, one at a time (not merge blockers unless he says so)
+## B. Locked: a follow-up branch after item-doors (Ingi: "yes", decision 280). Not merge blockers.
 
 1. **§2 the view compared by constant** (`view == View.Store` in the plang format and the signature reader; "from our store" held as view, Origin and `Window == null`): the view answers `Window`, `Origin`, `RequiresSignature` (internal members on View, the serializer's).
 2. **§3/§4 `type.Make` answering value-or-error**: ~29 throwaway `new data("", …)` carriers read only for `.Error`.
