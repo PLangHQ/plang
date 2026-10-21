@@ -100,13 +100,13 @@ public sealed partial class @this : global::app.type.item.path.@this
         var under = root.EndsWith(PathHelper.DirectorySeparatorChar) || root.EndsWith(PathHelper.AltDirectorySeparatorChar)
             ? root : root + PathHelper.DirectorySeparatorChar;
         var system = PathHelper.Combine(context.App!.OsAbsolutePath, "system");
-        var written = Absolute.StartsWith(under, RootComparison) ? "/" + Absolute[under.Length..].Replace('\\', '/')
+        var raw = Absolute.StartsWith(under, RootComparison) ? "/" + Absolute[under.Length..].Replace('\\', '/')
             : string.Equals(Absolute, root, RootComparison) ? "/"
             // the system folder and everything under it: its location replaced by /system
             : (Absolute + PathHelper.DirectorySeparatorChar).StartsWith(system + PathHelper.DirectorySeparatorChar, RootComparison)
                 ? "/system" + Absolute[system.Length..].Replace('\\', '/')
             : Absolute;
-        return new @this(Absolute, Type) { Raw = written };
+        return new @this(Absolute, Type) { Raw = raw };
     }
 
     /// <summary>An OS location, shown as a plang form under <paramref name="context"/>'s root —

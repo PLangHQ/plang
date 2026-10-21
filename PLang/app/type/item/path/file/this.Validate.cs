@@ -76,12 +76,12 @@ public sealed partial class @this
     private static IReadOnlyList<string> Places(string absolute, global::app.@this app)
     {
         var separator = PathHelper.DirectorySeparatorChar;
-        var own = PathHelper.GetFullPath(app.AbsolutePath).AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
+        var root = PathHelper.GetFullPath(app.AbsolutePath).AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
         var os = PathHelper.GetFullPath(app.OsAbsolutePath).AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
-        if (absolute.StartsWith(own, StringComparison.OrdinalIgnoreCase))
-            return [absolute, PathHelper.GetFullPath(os + absolute[own.Length..])];
+        if (absolute.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            return [absolute, PathHelper.GetFullPath(os + absolute[root.Length..])];
         if (absolute.StartsWith(os, StringComparison.OrdinalIgnoreCase))
-            return [PathHelper.GetFullPath(own + absolute[os.Length..]), absolute];
+            return [PathHelper.GetFullPath(root + absolute[os.Length..]), absolute];
         return [absolute];
     }
 

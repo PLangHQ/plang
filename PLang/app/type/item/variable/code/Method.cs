@@ -79,9 +79,9 @@ public sealed class Method : Hop
             var item = await row.Value();
             if (!row.Success) return row;
             if (p.ParameterType.IsInstanceOfType(item)) { args.Add(item); continue; }
-            var made = context.App.type.list[p.ParameterType].Make(item, row);
-            if (made is null) return context.Error(row.Error!);
-            args.Add(made);
+            var argument = context.App.type.list[p.ParameterType].Make(item, row);
+            if (argument is null) return context.Error(row.Error!);
+            args.Add(argument);
         }
 
         var answer = method.Invoke(target, args.ToArray());

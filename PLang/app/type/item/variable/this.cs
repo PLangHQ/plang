@@ -112,9 +112,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // it is), so a variable used as a list is its content; a failure or an ask is left as it is.
     private async System.Threading.Tasks.ValueTask<global::app.data.@this> Held(actor.context.@this context)
     {
-        var held = await Start(context);
-        if (held.Success && !held.Exits) await held.Value();
-        return held;
+        var data = await Start(context);
+        if (data.Success && !data.Exits) await data.Value();
+        return data;
     }
 
     /// <summary>What the variable holds, as a <typeparamref name="TAs"/>, handed to <paramref name="then"/> —
@@ -134,13 +134,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         // changed in place, so what the root holds must be this context's own (a task's copy of its caller's)
         if (!Code.Root.Name.StartsWith('!')) await context.Variable.Own(Code.Root.Name);
-        var held = await Held(context);
-        return await held.Use<TAs>(async value =>
+        var data = await Held(context);
+        return await data.Use<TAs>(async value =>
         {
             var changed = await then(value);
             if (!changed.Success || changed.Exits) return changed;
-            var kept = await Replace(held, value, context);
-            return kept.Success && !kept.Handled ? changed : kept;
+            var answer = await Replace(data, value, context);
+            return answer.Success && !answer.Handled ? changed : answer;
         });
     }
 
@@ -214,7 +214,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static @this Resolve(string raw, actor.context.@this context, IReadOnlyList<@this>? given = null)
     {
         // a row's list holds it already — as written (%x%) or as its bare name (x)
-        if (given?.FirstOrDefault(v => v.Text == raw || v.Name == raw) is { } held) return held;
+        if (given?.FirstOrDefault(v => v.Text == raw || v.Name == raw) is { } variable) return variable;
         var parser = new parser.@this(raw, context.App.type.list);
         return parser.Whole ?? throw new global::app.error.AppException(parser.Error[0].Message, "InvalidVariable", 400);
     }
@@ -249,8 +249,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         if (!string.Equals(key, "type", System.StringComparison.OrdinalIgnoreCase))
             return await base.Get(parent, key);
-        var held = await Start(parent.Context);
-        return held.IsInitialized ? new global::app.data.@this(key, held.Type, parent: parent) : held;
+        var data = await Start(parent.Context);
+        return data.IsInitialized ? new global::app.data.@this(key, data.Type, parent: parent) : data;
     }
 
     /// <summary>A reference renders itself FRESH every read — like a computed, never memoized onto

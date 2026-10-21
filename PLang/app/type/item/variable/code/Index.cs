@@ -66,8 +66,8 @@ public sealed class Index : Hop
     private async System.Threading.Tasks.ValueTask<global::app.data.@this> Resolve(global::app.actor.context.@this context)
     {
         if (Key is not variable.@this named) return context.Ok(Key);
-        var held = await named.Start(context);
-        if (held.IsInitialized && held.Peek() is not global::app.type.item.@null.@this) return held;
+        var key = await named.Start(context);
+        if (key.IsInitialized && key.Peek() is not global::app.type.item.@null.@this) return key;
 
         var root = named.Code.Root;
         var rootData = await context.Variable.Get(root.Name);

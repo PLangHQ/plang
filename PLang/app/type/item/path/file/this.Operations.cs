@@ -177,11 +177,11 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this>> Save(data.@this? value, actor.context.@this context)
     {
         // The file is the channel the value is written to — it opens the value, its extension's format writes it.
-        var written = await new global::app.channel.type.file.@this(this, context)
+        var answer = await new global::app.channel.type.file.@this(this, context)
             .Write(value ?? new data.@this("", context: context));
-        return written.Success && !written.Exits
+        return answer.Success && !answer.Exits
             ? context.Ok<global::app.type.item.path.@this>(this)
-            : data.@this<global::app.type.item.path.@this>.From(written);
+            : data.@this<global::app.type.item.path.@this>.From(answer);
     }
 
     public override async Task<data.@this<global::app.type.item.path.@this>> WriteBytes(byte[] content, actor.context.@this context)
@@ -257,9 +257,9 @@ public sealed partial class @this
     {
         if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         if (OperatingSystem.IsWindows()) return context.Ok<global::app.type.item.path.@this>(this);
-        var kept = mode | System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite
+        var permissions = mode | System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite
                    | (context.FileSystem.IsFolder(this) ? System.IO.UnixFileMode.UserExecute : 0);
-        context.FileSystem.Mode(this, kept & ~(System.IO.UnixFileMode.SetUser | System.IO.UnixFileMode.SetGroup));
+        context.FileSystem.Mode(this, permissions & ~(System.IO.UnixFileMode.SetUser | System.IO.UnixFileMode.SetGroup));
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 

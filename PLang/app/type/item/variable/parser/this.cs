@@ -112,16 +112,16 @@ public sealed class @this
 
     private List<variable.@this> Scan()
     {
-        var found = new List<variable.@this>();
+        var variables = new List<variable.@this>();
         for (int i = 0; i < _text.Length; i++)
         {
             if (_text[i] != '%') continue;
             var close = Close(i);
             if (close < 0) continue;
-            if (Body(i, close) is { } v) found.Add(v);
+            if (Body(i, close) is { } v) variables.Add(v);
             i = close;
         }
-        return found;
+        return variables;
     }
 
     // The closing % of a reference opening at `at`, or -1 when none opens there.
@@ -296,10 +296,10 @@ public sealed class @this
     private variable.@this? Nested(int at)
     {
         var inner = new @this(_text, _types);
-        var found = inner.Read(at);
+        var variable = inner.Read(at);
         _error.AddRange(inner._error);
-        if (found != null) _pos = at + found.Text.Length;
-        return found;
+        if (variable != null) _pos = at + variable.Text.Length;
+        return variable;
     }
 
     // A bare path inside brackets: [idx], [askInfo.gui], [items[0]] — a variable.
@@ -314,9 +314,9 @@ public sealed class @this
             _pos++;
         }
         var inner = new @this("%" + _text[start.._pos] + "%", _types);
-        var found = inner.Read(0);
+        var variable = inner.Read(0);
         _error.AddRange(inner._error);
-        return found;
+        return variable;
     }
 
     private string? Quoted()
@@ -338,10 +338,10 @@ public sealed class @this
         var start = _pos;
         if (_text[_pos] == '-') _pos++;
         while (_pos < _end && (char.IsDigit(_text[_pos]) || _text[_pos] == '.')) _pos++;
-        var written = _text[start.._pos];
-        if (long.TryParse(written, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out var whole))
+        var digits = _text[start.._pos];
+        if (long.TryParse(digits, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out var whole))
             return whole;
-        if (decimal.TryParse(written, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var part))
+        if (decimal.TryParse(digits, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var part))
             return part;
         return null;
     }

@@ -27,8 +27,8 @@ public sealed class Variable : Hop
         var bound = await context.Variable.Get(Name);
         if (bound.IsInitialized || !Name.StartsWith('!')) return bound;
         var name = Name[1..];
-        if (await context.App.shortcut.Get(name, context) is { Success: true } shortcut && await shortcut.Value() is { } held)
-            return await held.Read(context);
+        if (await context.App.shortcut.Get(name, context) is { Success: true } data && await data.Value() is { } shortcut)
+            return await shortcut.Read(context);
         var app = await context.Variable.Get("!app");
         var member = await app.Peek().Get(app, name);
         if (member.IsInitialized && !member.Peek().IsNull) return member;
@@ -75,7 +75,7 @@ public sealed class Variable : Hop
     /// that, which takes the write itself.</summary>
     internal async System.Threading.Tasks.ValueTask<global::app.data.@this> Ensure(global::app.actor.context.@this context)
     {
-        if (Name.StartsWith('!') && await Start(null, context) is { IsInitialized: true } held) return held;
+        if (Name.StartsWith('!') && await Start(null, context) is { IsInitialized: true } data) return data;
         return await context.Variable.Ensure(Name,
             () => context.App.type.list["dict"].Create(new System.Collections.Generic.Dictionary<string, object?>(), context));
     }

@@ -108,7 +108,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         // a text is held as it is when it already is the declared type, else born again holding it
         if (value is @this self) return type is null || self.Is(type) ? self : new @this(self, type);
-        if (Create(value, type ?? data.Context.App.type.list[typeof(@this)]) is { } built) return built;
+        if (Create(value, type ?? data.Context.App.type.list[typeof(@this)]) is { } text) return text;
         data.Fail(new global::app.error.@this(
             $"Cannot bind a {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to text — it has no textual form.", "TypeConversionFailed", 400));
         return null;
@@ -160,15 +160,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         int pos = 0;
         for (int at = _value.IndexOf('%'); at >= 0; at = _value.IndexOf('%', at + 1))
         {
-            var found = At(at);
-            if (found == null) continue;
+            var variable = At(at);
+            if (variable == null) continue;
             w.String(_value[pos..at]);
-            pos = at + found.Text.Length;
-            var bound = await found.Start(context);
+            pos = at + variable.Text.Length;
+            var bound = await variable.Start(context);
             if (!bound.IsInitialized)
             {
-                if (found.Code.Root.Name.StartsWith('!')) { w.String(found.Text); at = pos - 1; continue; }
-                throw await Unreachable(found, context);
+                if (variable.Code.Root.Name.StartsWith('!')) { w.String(variable.Text); at = pos - 1; continue; }
+                throw await Unreachable(variable, context);
             }
             // The crash net for this render's door (Start + Output, not the variable's Value door, which has its
             // own): a value reached again while it is being written into a template would recurse until the
@@ -180,7 +180,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 System.Collections.Generic.ReferenceEqualityComparer.Instance);
             var value = bound.Peek();
             if (outer.Contains(value))
-                throw new global::app.error.AppException($"variable resolve cycle: {found.Text} holds a template that renders {found.Text}", "VarResolveCycle", 400);
+                throw new global::app.error.AppException($"variable resolve cycle: {variable.Text} holds a template that renders {variable.Text}", "VarResolveCycle", 400);
             rendering.Value = outer.Add(value);
             try { await bound.Output(w); }
             finally { rendering.Value = outer; }
@@ -258,7 +258,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // a failed Data when they don't read as their kind says; null when the kind opens nothing.
     private global::app.data.@this? Opened(global::app.actor.context.@this? context)
     {
-        if (_opened is { } kept) return new global::app.data.@this("", kept, context: context);
+        if (_opened is { } item) return new global::app.data.@this("", item, context: context);
         var opened = Format(context).Open(_value, context!);
         if (opened is { Success: true }) _opened = opened.Peek();
         return opened;
@@ -412,10 +412,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.list.@this<@this>>> Grep(@this pattern,
         global::app.actor.context.@this context, global::app.type.item.number.@this? lines = null)
     {
-        var found = (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
+        var matches = (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
             .Grep(new global::app.data.@this("", this, context: context), pattern._value, lines?.Clr<int>() ?? 0);
-        if (!found.Success) return global::app.data.@this<global::app.type.item.list.@this<@this>>.From(found);
-        var text = (await found.Value())?.ToString() ?? "";
+        if (!matches.Success) return global::app.data.@this<global::app.type.item.list.@this<@this>>.From(matches);
+        var text = (await matches.Value())?.ToString() ?? "";
         return context.Ok(new global::app.type.item.list.@this<@this>(
             text.Length == 0 ? [] : [.. text.Split('\n').Select(line => (global::app.type.item.@this)new @this(line.TrimEnd('\r'), Type.Family))],
             context.App.type.list[typeof(global::app.type.item.list.@this<@this>)]));

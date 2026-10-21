@@ -107,8 +107,8 @@ public partial class @this
             value = bound.IsInitialized ? bound.Copy(name) : _context.NotFound(name);
         }
         // what the value becomes where the name's value was (a task keeps the task written before it)
-        if (value is data.@this written)
-            value = await written.Replace(async () => (await Get(name)).Peek());
+        if (value is data.@this carrier)
+            value = await carrier.Replace(async () => (await Get(name)).Peek());
 
         // The name is a variable's root; a write deeper in is the variable's own (variable.Set).
 
@@ -225,14 +225,14 @@ public partial class @this
         if (existing.IsInitialized) return existing;
         var born = await value();
         if (!born.Success || born.Handled) return born;
-        var made = born.Peek();
+        var item = born.Peek();
         if (_context.call.Current?.Keeper(name) != null)
-            return await Set(name, made);
+            return await Set(name, item);
 
-        if (await Before(Events?.set, name, made) is { } refused) return refused;
+        if (await Before(Events?.set, name, item) is { } refused) return refused;
         data.@this? stored = null;
-        var held = _variables.GetOrAdd(name, _ => stored = new data.@this(name, made, context: _context));
-        return ReferenceEquals(held, stored) ? await After(name, null, held) : held;
+        var binding = _variables.GetOrAdd(name, _ => stored = new data.@this(name, item, context: _context));
+        return ReferenceEquals(binding, stored) ? await After(name, null, binding) : binding;
     }
 
     /// <summary>What <paramref name="name"/> holds, as this run's own to change in place: held where a write to it lands
@@ -249,10 +249,10 @@ public partial class @this
         if (!read.Success || !read.IsInitialized || read.Peek() is not { } value) return read;
         var copy = value.Copy();
         if (ReferenceEquals(copy, value)) return read;
-        var own = new data.@this(name, copy, context: _context);
-        if (keeper == null) return _variables.GetOrAdd(name, own);
-        keeper.Set(name, own);
-        return own;
+        var binding = new data.@this(name, copy, context: _context);
+        if (keeper == null) return _variables.GetOrAdd(name, binding);
+        keeper.Set(name, binding);
+        return binding;
     }
 
     /// <summary>Stores <paramref name="value"/> under <paramref name="name"/> only if the name still
@@ -268,9 +268,9 @@ public partial class @this
         // the frame a write lands in reads what it holds outward — a frame with memory of its own (a task's run) reading
         // its caller's — and the write lands in it: the caller's stays as it was
         var frame = _context.call.Current?.Keeper(name);
-        if (frame != null ? !(frame.TryGet(name, out var held) && ReferenceEquals(held, expected))
-                          : !_variables.TryGetValue(name, out held) || !ReferenceEquals(held, expected))
-            return held ?? expected;
+        if (frame != null ? !(frame.TryGet(name, out var binding) && ReferenceEquals(binding, expected))
+                          : !_variables.TryGetValue(name, out binding) || !ReferenceEquals(binding, expected))
+            return binding ?? expected;
 
         // Rebind — the same rebind Set does.
         var rebound = new data.@this(name, value, context: _context);
@@ -352,8 +352,8 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Remove(string name)
     {
-        if (!_variables.TryGetValue(name, out var held)) return _context.NotFound(name);
-        if (await Before(Events?.remove, name, held) is { } refused) return refused;
+        if (!_variables.TryGetValue(name, out var binding)) return _context.NotFound(name);
+        if (await Before(Events?.remove, name, binding) is { } refused) return refused;
         if (!_variables.TryRemove(name, out var removed)) return _context.NotFound(name);
         return Events?.remove is { after.Count: > 0 } remove ? await remove.After(Named(name), removed, _context) : removed;
     }
@@ -383,14 +383,14 @@ public partial class @this
             var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys)
                 .Where(n => !n.StartsWith('!'))
                 .Distinct(StringComparer.OrdinalIgnoreCase);
-            var held = new global::app.type.item.list.@this<global::app.type.item.variable.@this>(
+            var variables = new global::app.type.item.list.@this<global::app.type.item.variable.@this>(
                 _context.App.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.variable.@this>)]);
             foreach (var name in names)
                 // a name the parser doesn't read back whole (stored by C#, not written in plang) isn't
                 // one a program can name
                 if (new parser.@this(name, _context.App.type.list).Whole is { } variable)
-                    held.Add(variable);
-            return held;
+                    variables.Add(variable);
+            return variables;
         }
     }
 

@@ -13,19 +13,19 @@ public sealed partial class @this : global::app.type.item.ICreate<@this>
     {
         if (value is @this self) return self;
         if (value is null or global::app.type.item.@null.@this) return null;
-        var written = (value as global::app.type.item.@this)?.ToString() ?? value as string;
-        if (written == null) return null;
-        if (written.StartsWith('/'))
+        var text = (value as global::app.type.item.@this)?.ToString() ?? value as string;
+        if (text == null) return null;
+        if (text.StartsWith('/'))
         {
             data.Fail(new global::app.error.@this(
-                $"'{written}' is a relative url — it needs a base url to join. Use 'configure http, base url https://...'",
+                $"'{text}' is a relative url — it needs a base url to join. Use 'configure http, base url https://...'",
                 "NoBaseUrl", 400));
             return null;
         }
-        var url = written.Contains("://") ? written : "https://" + written;
+        var url = text.Contains("://") ? text : "https://" + text;
         if (!System.Uri.TryCreate(url, System.UriKind.Absolute, out var uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
         {
-            data.Fail(new global::app.error.@this($"Only http:// and https:// URLs are allowed, got '{written}'", "InvalidUrlScheme", 400));
+            data.Fail(new global::app.error.@this($"Only http:// and https:// URLs are allowed, got '{text}'", "InvalidUrlScheme", 400));
             return null;
         }
         return new @this(url, Typed(url, data.Context));
@@ -35,9 +35,9 @@ public sealed partial class @this : global::app.type.item.ICreate<@this>
     /// joined onto this; any other is an http url of its own.</summary>
     public global::app.data.@this<@this> Address(global::app.type.item.text.@this url, actor.context.@this context)
     {
-        var written = url.ToString();
-        if (written.StartsWith('/')) return context.Ok<@this>((@this)Combine(written));
+        var text = url.ToString();
+        if (text.StartsWith('/')) return context.Ok<@this>((@this)Combine(text));
         var carrier = new global::app.data.@this<@this>("url", context: context);
-        return Create(written, carrier.Type, carrier) is { } made ? context.Ok<@this>(made) : carrier;
+        return Create(text, carrier.Type, carrier) is { } path ? context.Ok<@this>(path) : carrier;
     }
 }

@@ -41,8 +41,8 @@ public sealed class @this : global::app.type.item.list.bare.@this<Hop>
             value = settled;
         }
         // what the value becomes where the variable's value was (a task keeps the task written before it)
-        if (value is global::app.data.@this written)
-            value = await written.Replace(async () => (await Start(context)).Peek());
+        if (value is global::app.data.@this carrier)
+            value = await carrier.Replace(async () => (await Start(context)).Peek());
 
         // the write lands inside what the root holds, so the root must be this context's own (a task's copy of its
         // caller's)
@@ -58,12 +58,12 @@ public sealed class @this : global::app.type.item.list.bare.@this<Hop>
         System.Func<System.Threading.Tasks.ValueTask<global::app.data.@this>> value, global::app.actor.context.@this context)
     {
         if (CountRaw == 1) return await context.Variable.Ensure(Root.Name, value);
-        var held = await Start(context);
-        if (held.IsInitialized) return held;
+        var data = await Start(context);
+        if (data.IsInitialized) return data;
         var born = await value();
         if (!born.Success || born.Handled) return born;
-        var written = await Set(born.Peek(), context);
-        return written.Success ? await Start(context) : written;
+        var answer = await Set(born.Peek(), context);
+        return answer.Success ? await Start(context) : answer;
     }
 
     /// <summary>Writes <paramref name="value"/> only if the variable still holds <paramref name="expected"/> — a
