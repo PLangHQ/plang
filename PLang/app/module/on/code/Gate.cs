@@ -12,11 +12,11 @@ public static class Gate
 {
     private static readonly ConditionalWeakTable<global::app.@this, SemaphoreSlim> Gates = new();
 
-    /// <summary>Binds <paramref name="payload"/> as <c>%!data%</c> and runs <paramref name="held"/>, after any
+    /// <summary>Binds <paramref name="payload"/> as <c>%!data%</c> and runs <paramref name="call"/>, after any
     /// call already running for the same app. A failing call is written to the error channel — one that
     /// threw too: its sources start it and don't wait (a browser's message, a program's line), so nothing
     /// else would ever see the exception. The source keeps going.</summary>
-    public static async Task Call(Call held, data.@this payload, actor.context.@this context)
+    public static async Task Call(Call call, data.@this payload, actor.context.@this context)
     {
         var gate = Gates.GetValue(context.App, _ => new SemaphoreSlim(1, 1));
         await gate.WaitAsync();
@@ -26,14 +26,14 @@ public static class Gate
             // %!data% is a name of the call's own frame, on its own flow (as a loop binds its item) — never written into
             // the actor's memory, where the step that started the source may still be reading its own %!data% (issue 64).
             // What else the call writes reaches the actor's variables as before.
-            await using var bound = context.call.Push([payload], await context.call.Setting(), held);
-            var result = await held.Start(context);
+            await using var bound = context.call.Push([payload], await context.call.Setting(), call);
+            var result = await call.Start(context);
             if (!result.Success) await context.Actor.Channel.Report(result);
         }
         catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
         {
             await context.Actor.Channel.Report(context.Error(
-                new global::app.error.ServiceError($"{held.Module}.{held.Name} failed: {ex.Message}", "CallFailed") { Exception = ex }));
+                new global::app.error.ServiceError($"{call.Module}.{call.Name} failed: {ex.Message}", "CallFailed") { Exception = ex }));
         }
         finally { gate.Release(); }
     }

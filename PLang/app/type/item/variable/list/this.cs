@@ -184,9 +184,9 @@ public partial class @this
             return (rebound, true, prevValue);
         }
 
-        var fresh = new data.@this(name, value, context: _context);
-        _variables[name] = fresh;
-        return (fresh, true, null);
+        var binding = new data.@this(name, value, context: _context);
+        _variables[name] = binding;
+        return (binding, true, null);
     }
 
     // The variable type's events — once the app has it: the actors' stores are born before the app's types.

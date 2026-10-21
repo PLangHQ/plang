@@ -127,12 +127,12 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
             await foreach (var (names, unread) in Bound(itemVariable, keyVariable))
             {
                 if (unread != null) return unread;
-                items.Add(actor.Task.Start(goal, async own =>
+                items.Add(actor.Task.Start(goal, async token =>
                 {
-                    await places.WaitAsync(own);
+                    await places.WaitAsync(token);
                     try
                     {
-                        using var child = Context.Child(actor, own);
+                        using var child = Context.Child(actor, token);
                         await using (child.call.Isolate(names, await child.call.Setting(), caller: from))
                             foreach (var action in body)
                             {

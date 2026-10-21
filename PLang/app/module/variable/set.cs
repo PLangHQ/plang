@@ -172,16 +172,15 @@ public partial class Set : IContext, IScope, IKeep
             // entity itself ({name, kind?, strict?} → type.@this). A bare type-name (raw string)
             // still names a type by name. No dict rebuild — that was the pre-reader path.
             // The developer named the type — an unknown name is their error, answered as plang's.
-            var declaredName = (typeValue as global::app.type.@this)?.Name ?? typeValue.ToString()!;
-            var named = await Context.App.type.Get(declaredName, Context);
-            if (!named.Success || await named.Value() is not { } entity)
+            var typeName = (typeValue as global::app.type.@this)?.Name ?? typeValue.ToString()!;
+            var answer = await Context.App.type.Get(typeName, Context);
+            if (!answer.Success || await answer.Value() is not { } entity)
                 return Context.Error(
-                    new global::app.error.ServiceError($"Unknown type '{declaredName}'", "UnknownType", 400));
+                    new global::app.error.ServiceError($"Unknown type '{typeName}'", "UnknownType", 400));
             // The declared type through the types: its item class, its kind canonicalised
             // (`markdown` → `md`, `jpeg` → `jpg`). The declared type object is the program's (shared
             // by every run), so a changed kind is this run's own type object.
-            var type = typeValue is global::app.type.@this hint ? Context.App.type.list[hint, Context] : entity;
-            var typeName = type.Name;
+            var type = typeValue is global::app.type.@this named ? Context.App.type.list[named, Context] : entity;
             var targetType = type.ClrType;
 
             // A value that already is the declared type is kept as it is — followed to what it names
@@ -199,7 +198,7 @@ public partial class Set : IContext, IScope, IKeep
             // avoid. Content is read (door opened) only for a value that isn't the declared type.
             object? sourceValue = incoming.RawUntouched ? null : await incoming.Value();
             // The value as it is — what the declared type is handed to make itself from.
-            object? heldValue = sourceValue;
+            object? converted = sourceValue;
             // The strict probe below reasons over the raw CLR face (ctor matching, magic-byte
             // sniffing) — a born-typed text/binary leaf presents its backing to it.
             if (sourceValue is global::app.type.item.text.@this st) sourceValue = st.Clr<string>();
@@ -208,7 +207,7 @@ public partial class Set : IContext, IScope, IKeep
             if (targetType == null)
             {
                 return Context.Error(
-                    new global::app.error.ServiceError($"Unknown type '{typeName}'", "UnknownType", 400));
+                    new global::app.error.ServiceError($"Unknown type '{type.Name}'", "UnknownType", 400));
             }
 
             // Strict kind enforcement at runtime — for `%var%` paths
@@ -227,7 +226,7 @@ public partial class Set : IContext, IScope, IKeep
                     if (!ok)
                         return Context.Error(
                             new global::app.error.ServiceError(
-                                $"Strict kind mismatch: declared {typeName}/{type.kind}"
+                                $"Strict kind mismatch: declared {type.Name}/{type.kind}"
                                 + (actual != null ? $" but content is {actual}." : "."),
                                 "StrictKindMismatch", 400));
                 }
@@ -246,8 +245,7 @@ public partial class Set : IContext, IScope, IKeep
                 return await Context.Variable.Set(Value.Copy(name!));
             }
 
-            if (Value.RawUntouched) heldValue = await Value.Value();
-            object? converted = heldValue;
+            if (Value.RawUntouched) converted = await Value.Value();
 
             // The incoming value composes the declared type as a facet under a DIFFERENT
             // name (an image has-a path, so an image bound to a `path` slot satisfies `path`)
@@ -305,7 +303,7 @@ public partial class Set : IContext, IScope, IKeep
                 if (enforcer.CheckStrictKind() is { ok: false } mismatch)
                     return Context.Error(
                         new global::app.error.ServiceError(
-                            $"Strict kind mismatch: declared {typeName}/{type.kind}"
+                            $"Strict kind mismatch: declared {type.Name}/{type.kind}"
                             + (mismatch.actualKind != null ? $" but content is {mismatch.actualKind}." : "."),
                             "StrictKindMismatch", 400));
             }

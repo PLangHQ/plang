@@ -11,7 +11,7 @@ namespace app.module.window;
 /// folder), it also gets <c>plang(text)</c>: what it says is heard with its window's id added (<c>"from"</c>). Every
 /// call is checked: a page that has since gone somewhere else (a website) is not heard.
 /// </summary>
-internal sealed class Page(string target, Cdp cdp, Func<string, bool> own)
+internal sealed class Page(string target, Cdp cdp, Func<string, bool> plang)
 {
     private Session? _session;
 
@@ -132,7 +132,7 @@ internal sealed class Page(string target, Cdp cdp, Func<string, bool> own)
             var reply = await Ask("Runtime.evaluate", new JsonObject { ["expression"] = "location.href", ["contextId"] = context, ["returnByValue"] = true });
             return reply.TryGetProperty("result", out var r) && r.TryGetProperty("result", out var v)
                 && v.TryGetProperty("value", out var href) && href.ValueKind == JsonValueKind.String
-                && own(href.GetString()!);
+                && plang(href.GetString()!);
         }
         catch (Exception ex) when (ex is TimeoutException or IOException or KeyNotFoundException) { return false; }
     }

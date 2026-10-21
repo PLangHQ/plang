@@ -39,12 +39,12 @@ public sealed partial class @this
     // app's. A result whose kind climbed (int → long) holds the app's {number, <kind>}, found through this number's
     // family — a type object per result (kept per pairing would need a list door keyed by (entry, kind), Ingi's). An
     // operator-born operand (a type built from the class, no app) leaves the result the operator's birth.
-    private @this Derived(@this made, @this? other = null)
-        => ReferenceEquals(made, this) || ReferenceEquals(made, other) ? made
-         : string.Equals(made.Kind.Name, Kind.Name, System.StringComparison.OrdinalIgnoreCase) ? new(Type, made)
-         : other != null && string.Equals(made.Kind.Name, other.Kind.Name, System.StringComparison.OrdinalIgnoreCase) ? new(other.Type, made)
-         : Type.Family.kind[made.Kind.Name] is kind.@this climbed ? new(new global::app.type.@this(Type.Family, climbed, false, null), made)
-         : made;
+    private @this Derived(@this result, @this? other = null)
+        => ReferenceEquals(result, this) || ReferenceEquals(result, other) ? result
+         : string.Equals(result.Kind.Name, Kind.Name, System.StringComparison.OrdinalIgnoreCase) ? new(Type, result)
+         : other != null && string.Equals(result.Kind.Name, other.Kind.Name, System.StringComparison.OrdinalIgnoreCase) ? new(other.Type, result)
+         : Type.Family.kind[result.Kind.Name] is kind.@this climbed ? new(new global::app.type.@this(Type.Family, climbed, false, null), result)
+         : result;
 
     // A pure numeric op returns its VALUE and THROWS a keyed AppException on error. It has no
     // context, so it cannot born an error Data — the context-ful boundary (the math.* handler /

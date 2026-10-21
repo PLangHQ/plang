@@ -84,8 +84,8 @@ public sealed class @this : global::app.type.item.@this
         await _sending.WaitAsync();
         try
         {
-            var sent = await _pipe.Write(new global::app.data.@this("", (global::app.type.item.text.@this)message.ToJsonString()));
-            if (!sent.Success) throw new InvalidOperationException($"DevTools' pipe refused {method}: {sent.Error?.Message}");
+            var answer = await _pipe.Write(new global::app.data.@this("", (global::app.type.item.text.@this)message.ToJsonString()));
+            if (!answer.Success) throw new InvalidOperationException($"DevTools' pipe refused {method}: {answer.Error?.Message}");
         }
         finally { _sending.Release(); }
     }

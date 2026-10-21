@@ -36,13 +36,13 @@ public sealed class @this
     /// <summary>The one of the text's variables <paramref name="written"/> was meant to be: the one it starts most like
     /// (case aside, as variables compare), sharing more than its marker (<c>%</c>, <c>%!</c>); null when none does —
     /// what a build refusal quotes beside the answer's text, so the retry copies the step's.</summary>
-    internal string? Nearest(string written)
+    internal string? Nearest(string variable)
     {
-        var marker = written.StartsWith("%!") ? 2 : 1;
+        var marker = variable.StartsWith("%!") ? 2 : 1;
         int Shared(string text)
         {
             var n = 0;
-            while (n < text.Length && n < written.Length && char.ToLowerInvariant(text[n]) == char.ToLowerInvariant(written[n])) n++;
+            while (n < text.Length && n < variable.Length && char.ToLowerInvariant(text[n]) == char.ToLowerInvariant(variable[n])) n++;
             return n;
         }
         return Variable.Select(v => v.Text).Distinct().OrderByDescending(Shared).FirstOrDefault(text => Shared(text) > marker);

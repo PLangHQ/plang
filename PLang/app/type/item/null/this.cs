@@ -23,8 +23,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 {
     public static string Shape => "null";
 
-    /// <summary>A null of <paramref name="declared"/> — born holding the type as declared, its class with it.</summary>
-    internal @this(global::app.type.@this declared) : base(declared) { }
+    /// <summary>A null of <paramref name="type"/> — born holding the type as declared, its class with it.</summary>
+    internal @this(global::app.type.@this type) : base(type) { }
 
     /// <summary>
     /// Is this raw value "null" in PLang's sense — a C# null reference OR the born-native

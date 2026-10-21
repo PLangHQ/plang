@@ -131,8 +131,8 @@ public class Fluid : ITemplate
             var value = new global::app.data.@this("", input is Item plang ? plang.Held
                 : global::app.type.item.@this.Create(input.ToObjectValue(), action.Context), context: action.Context);
             using var json = new MemoryStream();
-            var encoded = await action.Context.App.type.list.Mime("application/json").Encode(json, value, action.Context);
-            if (!encoded.Success) throw new AppException(encoded.Error!);
+            var answer = await action.Context.App.type.list.Mime("application/json").Encode(json, value, action.Context);
+            if (!answer.Success) throw new AppException(answer.Error!);
             return new StringValue(System.Text.Encoding.UTF8.GetString(json.ToArray()));
         });
 
@@ -143,8 +143,8 @@ public class Fluid : ITemplate
             var value = new global::app.data.@this("", input is Item plang ? plang.Held
                 : global::app.type.item.@this.Create(input.ToObjectValue(), action.Context), context: action.Context);
             using var text = new MemoryStream();
-            var encoded = await action.Context.App.type.list.Mime("text/plain").Encode(text, value, action.Context);
-            if (!encoded.Success) throw new AppException(encoded.Error!);
+            var answer = await action.Context.App.type.list.Mime("text/plain").Encode(text, value, action.Context);
+            if (!answer.Success) throw new AppException(answer.Error!);
             return new StringValue(System.Text.Encoding.UTF8.GetString(text.ToArray()));
         });
 

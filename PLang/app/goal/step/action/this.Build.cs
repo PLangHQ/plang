@@ -59,7 +59,7 @@ public partial class @this
         }
 
         foreach (var action in Held)
-            if (await action.Build(context) is { } heldFailed) causes.Add(heldFailed);
+            if (await action.Build(context) is { } cause) causes.Add(cause);
         for (int i = 0; i < Child.Count; i++)
             if (await Child[i].Code.Build(context) is { } branch) causes.Add(branch);
 

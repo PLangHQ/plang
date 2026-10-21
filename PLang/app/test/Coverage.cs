@@ -199,7 +199,7 @@ public sealed class Coverage
         }
 
         int sitesComplete = 0, sitesPartial = 0, sitesUnreached = 0;
-        int declaredTotal = 0, hitTotal = 0;
+        int branchTotal = 0, hitTotal = 0;
         var untested = new List<(string Site, List<string> Missing)>();
         foreach (var site in allSites)
         {
@@ -225,7 +225,7 @@ public sealed class Coverage
             {
                 var hit = !labelBacked || observedLabels.Contains(branch);
                 parts.Add((hit ? "✅ " : "❌ ") + branch);
-                declaredTotal++;
+                branchTotal++;
                 if (hit) hitTotal++;
                 else missing.Add(branch);
             }
@@ -236,10 +236,10 @@ public sealed class Coverage
             else { sitesPartial++; untested.Add((site, missing)); }
         }
 
-        var percent = declaredTotal > 0 ? (int)Math.Round(100.0 * hitTotal / declaredTotal) : 0;
+        var percent = branchTotal > 0 ? (int)Math.Round(100.0 * hitTotal / branchTotal) : 0;
         sb.AppendLine();
         sb.AppendLine($"  Sites: {allSites.Count} total ({sitesComplete} complete, {sitesPartial} partial, {sitesUnreached} unreached)");
-        sb.AppendLine($"  Branches: {hitTotal}/{declaredTotal} covered ({percent}%)");
+        sb.AppendLine($"  Branches: {hitTotal}/{branchTotal} covered ({percent}%)");
         if (untested.Count > 0)
         {
             sb.AppendLine();

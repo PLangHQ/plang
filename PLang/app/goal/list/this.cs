@@ -84,11 +84,11 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         }
         return await Loaded("/" + source.TrimStart('/', '\\'));
 
-        // the goal the .goal at `written` is built to, resolved as written (the app's /system/ first); its name is
+        // the goal the .goal at `raw` is built to, resolved as written (the app's /system/ first); its name is
         // a goal's, compared as plang names are (case aside) — its folder is a path, as written
-        async Task<data.@this<goal.@this>> Loaded(string written)
+        async Task<data.@this<goal.@this>> Loaded(string raw)
         {
-            var at = global::app.type.item.path.@this.Resolve(written, context);
+            var at = global::app.type.item.path.@this.Resolve(raw, context);
             if (!await (await at.Exists(context)).ToBooleanAsync())
             {
                 if (await Spelled(at) is not { } file) return data.@this<goal.@this>.From(context.NotFound(name));

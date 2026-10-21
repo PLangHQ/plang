@@ -317,9 +317,9 @@ public partial class @this
     /// an LLM-emitted shape; a kind hook refines an authored literal). Same
     /// rules as the entry lift's judgement fold (<see cref="type.Judge"/>).
     /// </summary>
-    internal void Declare(type declared, global::app.actor.context.@this? ctx = null)
+    internal void Declare(type type, global::app.actor.context.@this? ctx = null)
     {
-        if (declared is not { IsNull: false } || declared.Polymorphic) return;
+        if (type is not { IsNull: false } || type.Polymorphic) return;
         // The after-the-fact stamp routes through the SAME door as the ctor: the type
         // builds from the current (already-built) value — a value already of the type
         // holds (re-kind if needed), a different built type re-types, a %ref%/variable
@@ -327,7 +327,7 @@ public partial class @this
         // A program-structure Data (an action's param, read context-free) carries no context of
         // its own — the ASK supplies it (the build normalization is the ask). Context travels with
         // the ask: prefer the Data's own, else the caller's.
-        _item = declared.Make(_item, _context ?? ctx);
+        _item = type.Make(_item, _context ?? ctx);
     }
 
     /// <summary>
@@ -965,7 +965,7 @@ public class DynamicData : @this
     private readonly global::app.type.item.computed _cell;
 
     // The Data this stands for, found per read with the asker's context.
-    private readonly Func<actor.context.@this, @this?> _found;
+    private readonly Func<actor.context.@this, @this?> _read;
 
     /// <summary>A Data <paramref name="found"/> at each read. <paramref name="declared"/> labels what it is
     /// before it is read (<c>%Now%</c> is a datetime).</summary>
@@ -976,17 +976,17 @@ public class DynamicData : @this
     {
     }
 
-    private DynamicData(string name, global::app.type.item.computed cell, Func<actor.context.@this, @this?> found,
+    private DynamicData(string name, global::app.type.item.computed cell, Func<actor.context.@this, @this?> read,
         actor.context.@this context)
         : base(name, cell, context: context)
     {
         _cell = cell;
-        _found = found;
+        _read = read;
     }
 
     internal override carried Carried
     {
-        get => _found(Context)?.Carried ?? base.Carried;
+        get => _read(Context)?.Carried ?? base.Carried;
         set => base.Carried = value;
     }
 

@@ -31,11 +31,11 @@ public partial class Read : IContext
     {
         var typed = await Typed();
         return await Path.Use(async path => typed
-            ? await Type!.Use(async declared =>
+            ? await Type!.Use(async type =>
             {
                 var bytes = await path.Bytes(Context);
                 return bytes.Success
-                    ? await declared.Create((await bytes.Value())?.Value, Context, path.Name.ToString(), path)
+                    ? await type.Create((await bytes.Value())?.Value, Context, path.Name.ToString(), path)
                     : bytes;
             })
             : Template is { IsInitialized: true }

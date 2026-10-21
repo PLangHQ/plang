@@ -59,10 +59,10 @@ public sealed class Variable : Hop
     /// <summary>The variable rebinds to <paramref name="value"/>; with steps after it, the next writes on the binding it
     /// says it writes on.</summary>
     internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Write(
-        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own = false)
+        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool binding = false)
         => Next is null
             ? await Set(null, value, context)
-            : await Next.Write(await Next.Binding(this, context), value, context, own: true);
+            : await Next.Write(await Next.Binding(this, context), value, context, binding: true);
 
     /// <summary>The variable rebinds to <paramref name="value"/>.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(

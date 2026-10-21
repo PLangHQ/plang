@@ -618,13 +618,13 @@ public sealed class Default : IHttp
     }
 
     /// <summary>
-    /// Runs the held callback call once for one runtime value. The value is run-state: it binds as
+    /// Runs the callback <paramref name="call"/> once for one runtime value. The value is run-state: it binds as
     /// the variable <paramref name="name"/> (the name the slot's <c>[GoalCallback]</c> advertises —
-    /// <c>%chunk%</c>, <c>%progress%</c>) in the context the call runs under; the held call then runs
+    /// <c>%chunk%</c>, <c>%progress%</c>) in the context the call runs under; the call then runs
     /// as itself, binding its authored arguments after, so an authored name wins a collision.
     /// </summary>
     private static async Task RunCallbackAsync(
-        Call held, object? value, PlangType? type, string name,
+        Call call, object? value, PlangType? type, string name,
         AppType app, actor.context.@this context, CancellationToken ct)
     {
         // A Data payload rides AS the variable — re-boxing would nest a bare Data, which the store
@@ -634,7 +634,7 @@ public sealed class Default : IHttp
         else bound = new data.@this(name, value, type, context: context);
         await context.Variable.Set(name, bound);
 
-        var result = await held.Start(context);
+        var result = await call.Start(context);
         if (!result.Success)
             await app.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteText(result.Error?.Message ?? "");
     }

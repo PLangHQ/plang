@@ -70,9 +70,9 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
         // program. Its goal loads through the goal collection, which registers what it loads.
         var app = _context.App;
         var separator = global::app.Utils.PathHelper.DirectorySeparatorChar;
-        var builtIsOs = string.Equals(app.AbsolutePath.TrimEnd(separator), app.OsAbsolutePath.TrimEnd(separator),
+        var isOs = string.Equals(app.AbsolutePath.TrimEnd(separator), app.OsAbsolutePath.TrimEnd(separator),
             System.OperatingSystem.IsWindows() ? System.StringComparison.OrdinalIgnoreCase : System.StringComparison.Ordinal);
-        var builder = (builtIsOs ? app.actor.list.System : app.actor.list.User).Context;
+        var builder = (isOs ? app.actor.list.System : app.actor.list.User).Context;
         var loaded = await app.goal.Load("/system/builder/Build.goal");
         if (!loaded.Success) return loaded;
         return await ((await loaded.Value()) as global::app.goal.@this)!.Start(builder);

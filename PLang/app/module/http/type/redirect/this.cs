@@ -41,9 +41,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             data.Fail(new global::app.error.@this("a redirect is {follow, max}", "RedirectInvalid", 400));
             return null;
         }
-        var fresh = new @this();
-        global::app.type.item.@bool.@this follow = fresh.Follow;
-        global::app.type.item.number.@this max = fresh.Max;
+        var @default = new @this();
+        global::app.type.item.@bool.@this follow = @default.Follow;
+        global::app.type.item.number.@this max = @default.Max;
         foreach (var entry in dict.Entries(data.Context!))
             switch (entry.Name.ToLowerInvariant())
             {

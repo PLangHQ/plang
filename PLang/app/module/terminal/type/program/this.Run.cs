@@ -172,10 +172,10 @@ public sealed partial class @this
 
     /// <summary>Runs the held goal call once for one line, the line as <c>%!data%</c>. A failing call is reported on
     /// the error channel and the program keeps running.</summary>
-    private static async Task OnLine(Call held, string line, Context context)
+    private static async Task OnLine(Call call, string line, Context context)
     {
         await context.Variable.Set("!data", process.@this.Written(line, context));
-        var result = await held.Start(context);
+        var result = await call.Start(context);
         if (!result.Success) await context.Actor.Channel.Report(result);
     }
 

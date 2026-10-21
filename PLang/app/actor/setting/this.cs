@@ -415,9 +415,9 @@ public sealed class @this : IDisposable
         var under = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         var prefix = path + ".";
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var isOwn = Own(path);
+        var isActor = Own(path);
         const string enabled = "enabled";
-        for (@this? s = this; s != null; s = isOwn && s._actor != null ? null : s._parent)
+        for (@this? s = this; s != null; s = isActor && s._actor != null ? null : s._parent)
             foreach (var (key, value) in s._values)
             {
                 if (!key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || !seen.Add(key)) continue;

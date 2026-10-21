@@ -21,7 +21,7 @@ public class WireTemplateOutputTests
     private static Wire Template(global::app.actor.context.@this ctx)
         => ctx.App.type.list[new global::app.type.@this("dict", template: new global::app.type.item.template.kind.plang.@this()), ctx].Make(Slice,
             (global::app.type.item.wire.kind.plang.@this)ctx.App.type.list["wire"].kind["plang"]!,
-            new global::app.type.item.variable.parser.@this(Slice, ctx.App.type.list).Variable, built: true);
+            new global::app.type.item.variable.parser.@this(Slice, ctx.App.type.list).Variable, pr: true);
 
     [Test]
     public async Task TemplateWire_IntoJson_WritesItsVariablesValues()

@@ -74,15 +74,15 @@ public sealed class Property : Hop
     /// binding's Properties.</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
         global::app.data.@this? parent, object? value, global::app.actor.context.@this context)
-        => Set(parent, value, context, own: false);
+        => Set(parent, value, context, binding: false);
 
-    /// <summary>A member written on a variable's own binding (<paramref name="own"/>) that its value can't take is kept
+    /// <summary>A member written on a variable's binding (<paramref name="binding"/>) that its value can't take is kept
     /// in the binding (<c>set %name.lang% = "is"</c>).</summary>
     internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
-        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own)
+        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool binding)
     {
         if (parent is null) return context.NotFound(Name);
-        if (!IsBinding) return await parent.Set(Name, isIndex: false, value, keeps: own);
+        if (!IsBinding) return await parent.Set(Name, isIndex: false, value, keeps: binding);
         if (!parent.IsInitialized)
             return context.Error(new global::app.error.@this($"Variable '{parent.Name}' is not set", "VariableNotFound", 400));
 

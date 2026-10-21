@@ -178,7 +178,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     // with — what its runner supplied (a goal call's parameters, a tool's arguments).
     private readonly Dictionary<string, global::app.data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _born = new(StringComparer.OrdinalIgnoreCase);
-    // The held action this frame was pushed to run (a tool invocation) — the one call its supplied names are FOR.
+    // The action this frame was pushed to run (a tool invocation) — the one call its supplied names are FOR.
     private readonly global::app.goal.step.action.@this? _for;
 
     /// <summary>Whether this frame counts toward the chain's depth (<see cref="Depth"/>, the depth limit) — a goal's,
@@ -210,7 +210,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         Variables? diffSource,
         global::app.call.setting.@this setting,
         IEnumerable<global::app.data.@this>? names = null,
-        global::app.goal.step.action.@this? held = null) : base(type)
+        global::app.goal.step.action.@this? callee = null) : base(type)
     {
         _id = Guid.NewGuid().ToString("N")[..8];
         Setting = setting;
@@ -222,7 +222,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         _stack = stack;
         _previousCurrent = previousCurrent;
         _diffSource = diffSource;
-        _for = held;
+        _for = callee;
         _datetime = datetime;
         Tags = new global::app.type.item.dict.@this(dict);
         Errors =new global::app.error.list.@this(stack.Audit.Type);

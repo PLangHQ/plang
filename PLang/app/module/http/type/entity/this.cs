@@ -42,9 +42,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             data.Fail(new global::app.error.@this("a request's content is {mime, encoding}", "ContentInvalid", 400));
             return null;
         }
-        var fresh = new @this();
-        global::app.type.item.text.@this mime = fresh.Mime;
-        global::app.type.item.text.@this encoding = fresh.Encoding;
+        var @default = new @this();
+        global::app.type.item.text.@this mime = @default.Mime;
+        global::app.type.item.text.@this encoding = @default.Encoding;
         foreach (var entry in dict.Entries(data.Context!))
             switch (entry.Name.ToLowerInvariant())
             {

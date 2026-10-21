@@ -44,10 +44,10 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
         => System.Threading.Tasks.ValueTask.FromResult(context.Error(new global::app.error.@this(
             $"'{Text}' can't be written to — a {Kind} answers a value, it holds none.", "VariableNotWritable", 400)));
 
-    /// <summary>Its write on <paramref name="parent"/>, knowing whether that is the variable's own binding
-    /// (<paramref name="own"/>). Most steps are the same either way.</summary>
+    /// <summary>Its write on <paramref name="parent"/>, knowing whether that is the variable's binding
+    /// (<paramref name="binding"/>). Most steps are the same either way.</summary>
     internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
-        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own) => Set(parent, value, context);
+        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool binding) => Set(parent, value, context);
 
     /// <summary>Its step, then the steps after it; a step that fails or reaches nothing answers there.</summary>
     internal virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Read(
@@ -69,11 +69,11 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Writes <paramref name="value"/>: the last step sets itself on <paramref name="parent"/>; any other step
     /// takes its slot in the parent and hands it to the next. A slot holding nothing leaves the write nowhere to land.
-    /// Whether <paramref name="parent"/> is the variable's own binding (<paramref name="own"/>) is the root's to say.</summary>
+    /// Whether <paramref name="parent"/> is the variable's binding (<paramref name="binding"/>) is the root's to say.</summary>
     internal virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Write(
-        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own = false)
+        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool binding = false)
     {
-        if (Next is null) return await Set(parent, value, context, own);
+        if (Next is null) return await Set(parent, value, context, binding);
         if (parent is null) return context.NotFound(Text);
         var slot = await Slot(parent, context);
         if (!slot.Success) return slot;

@@ -14,8 +14,8 @@ public partial class @this
     {
         var declined = new System.Collections.Generic.List<global::app.error.@this>();
         var (handler, bindError) = await Bind(scratch);
-        if (bindError == null && handler is global::app.module.IClass own)
-            declined.AddRange(await own.Check());
+        if (bindError == null && handler is global::app.module.IClass @class)
+            declined.AddRange(await @class.Check());
         if (bindError == null && handler is global::app.module.IScope scope)
             await scope.Scope();
         else

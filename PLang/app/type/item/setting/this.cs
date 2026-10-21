@@ -60,16 +60,16 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             && type?.ClrType is { IsAbstract: false } clr && typeof(@this).IsAssignableFrom(clr)
             && clr != typeof(@this))
         {
-            var fresh = (@this)System.Activator.CreateInstance(clr, data.Context.App.type.list[clr])!;
+            var instance = (@this)System.Activator.CreateInstance(clr, data.Context.App.type.list[clr])!;
             // each option the record holds, read through the option's own type in Apply (the convert walk the
             // CLI flags take); a field that is no option of this class (the base's Enabled, a dropped option) is
             // not applied — the class takes only its own.
             var options = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
             foreach (var entry in record.Entries(data.Context))
-                if (fresh.Property(entry.Name) is not null) options[entry.Name] = entry.Peek();
-            var applied = fresh.Apply(options, data.Context);
-            if (applied.Success) return fresh;
-            data.Fail(Unreadable(fresh.Path, applied.Error));
+                if (instance.Property(entry.Name) is not null) options[entry.Name] = entry.Peek();
+            var applied = instance.Apply(options, data.Context);
+            if (applied.Success) return instance;
+            data.Fail(Unreadable(instance.Path, applied.Error));
             return null;
         }
         if (raw is global::app.type.item.dict.@this)

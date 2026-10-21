@@ -178,7 +178,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// (a goal, an item, a host) answers its typed null: still null, still this type.</summary>
     public item.@this Empty(global::app.actor.context.@this context)
     {
-        if (_empty is { } thunk) return thunk();
+        if (_empty is { } empty) return empty();
         var clr = ClrType;
         const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
             | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
@@ -186,7 +186,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         _empty = clr == null || !typeof(item.@this).IsAssignableFrom(clr) || clr.IsAbstract || clr.ContainsGenericParameters
             ? () => new item.@null.@this(this)
             : clr.GetConstructor(any, [typeof(@this)]) is { } typed ? () => (item.@this)typed.Invoke([this])
-            : clr.GetConstructor(any, System.Type.EmptyTypes) is { } empty ? () => (item.@this)empty.Invoke(null)
+            : clr.GetConstructor(any, System.Type.EmptyTypes) is { } ctor ? () => (item.@this)ctor.Invoke(null)
             : () => new item.@null.@this(this);
         // an empty value no holder's change can reach (its Copy is itself — a null, 0, "") is one value, its type's
         // own: the app's null is one per app; a container's empty is made fresh for each holder
@@ -432,10 +432,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// the parse stays at first touch. The one place a slice is made (a re-declared slice comes back here).
     /// The capture build beside the content <see cref="Make(object?, actor.context.@this?)"/> build —
     /// same verb, the capture's knowledge as an argument, never a format name. Not a birth.
-    /// <paramref name="built"/>: the slice is the build's own bytes (its read granted it).</summary>
+    /// <paramref name="pr"/>: the slice is the build's own bytes, a <c>.pr</c> (its read granted it).</summary>
     internal item.wire.@this Make(string slice, global::app.type.item.wire.kind.plang.@this reader,
-        IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false)
-        => Template != null ? new item.wire.template(slice, this, reader, variable ?? [], built) : new item.wire.@this(slice, this, reader, built: built);
+        IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool pr = false)
+        => Template != null ? new item.wire.template(slice, this, reader, variable ?? [], pr) : new item.wire.@this(slice, this, reader, built: pr);
 
     /// <summary>Reads a value slot of this type off the reader — the one door for a
     /// <c>{name, type, value}</c> row's value, a Data's or an action property's. The slot is exactly
@@ -467,7 +467,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             // byte-identical). A name was read above, by its own eager reader.
             return Template != null
                 ? kind.Make(JsonSerializer.Deserialize<string>(slice)!, this, null, ctx.Variable, ctx.IsBuilt)
-                : Make(slice, transport, built: ctx.IsBuilt);
+                : Make(slice, transport, pr: ctx.IsBuilt);
         }
         // EVERY other slot is a wire: a VERBATIM Slice with the capturing transport named at the
         // mint site. Face validation is free — the type's own pull IS the validator on first touch.

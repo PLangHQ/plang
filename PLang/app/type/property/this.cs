@@ -39,15 +39,15 @@ public sealed class @this : global::app.type.item.note.IAbout
         // A closed-set default — an enum member or a name — is born as its choice through the door a written value
         // takes (choice.Create), born holding this property's type, so it names itself (`Promote`, keccak256 the kind),
         // never its number or a bare string. Without [Default], a type with a default of its own (IDefault<T>) gives it.
-        var declaredDefault = prop.GetCustomAttribute<global::app.module.DefaultAttribute>()?.Value;
-        var ownDefault = value.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.IDefault<>))
+        var attribute = prop.GetCustomAttribute<global::app.module.DefaultAttribute>()?.Value;
+        var @interface = value.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.IDefault<>))
             ? value.GetProperty("Default", BindingFlags.Public | BindingFlags.Static)?.GetValue(null)
             : null;
-        Default = declaredDefault != null && value.IsGenericType
+        Default = attribute != null && value.IsGenericType
                   && value.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>)
             ? value.GetMethod("Create", BindingFlags.Public | BindingFlags.Static, new[] { typeof(object), typeof(global::app.type.@this) })!
-                .Invoke(null, new[] { declaredDefault, Type })
-            : declaredDefault ?? ownDefault;
+                .Invoke(null, new[] { attribute, Type })
+            : attribute ?? @interface;
         IsInput = prop.GetCustomAttribute<global::app.Attributes.InputAttribute>() != null;
     }
 
@@ -120,7 +120,7 @@ public sealed class @this : global::app.type.item.note.IAbout
             return context.Error(new global::app.error.@this(
                 $"{Name} is {owner.Type.Name}'s own — it can't be written", "OwnMember", 400));
         var item = value is global::app.data.@this data ? await data.Value() : value as global::app.type.item.@this;
-        object? written = item ?? value;
+        object? member = item ?? value;
         if (item != null && !slot.PropertyType.IsInstanceOfType(item))
         {
             try
@@ -132,12 +132,12 @@ public sealed class @this : global::app.type.item.note.IAbout
                     && typeof(global::app.type.item.list.@this).IsAssignableFrom(slot.PropertyType))
                     read = System.Activator.CreateInstance(slot.PropertyType, rows);
                 // a member whose C# type no plang type is (a string) takes the plang value lowered — the C# boundary
-                written = read is global::app.type.item.@this plang && !slot.PropertyType.IsInstanceOfType(plang)
+                member = read is global::app.type.item.@this plang && !slot.PropertyType.IsInstanceOfType(plang)
                     ? plang.Clr(slot.PropertyType, context) : read;
             }
             catch (global::app.error.AppException refused) { return context.Error(refused.Error); }
         }
-        slot.SetValue(owner, written);
+        slot.SetValue(owner, member);
         return context.Ok(owner);
     }
 

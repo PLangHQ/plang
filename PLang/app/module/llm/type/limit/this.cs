@@ -44,10 +44,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             data.Fail(new global::app.error.@this("a limit is {token, tool, retry}", "LimitInvalid", 400));
             return null;
         }
-        var fresh = new @this();
-        global::app.type.item.number.@this token = fresh.Token;
-        global::app.type.item.number.@this tool = fresh.Tool;
-        global::app.type.item.number.@this retry = fresh.Retry;
+        var @default = new @this();
+        global::app.type.item.number.@this token = @default.Token;
+        global::app.type.item.number.@this tool = @default.Tool;
+        global::app.type.item.number.@this retry = @default.Retry;
         foreach (var entry in dict.Entries(data.Context!))
             switch (entry.Name.ToLowerInvariant())
             {

@@ -70,14 +70,14 @@ public class source : @this
         if (type.Template == null) return;
         // the variables written in it are read off its text face (a byte raw declared text is its UTF-8)
         var raw = Peek() as string;
-        IReadOnlyList<global::app.type.item.variable.@this> written()
+        IReadOnlyList<global::app.type.item.variable.@this> all()
             => raw != null ? new global::app.type.item.variable.parser.@this(raw, type.Types ?? throw new System.InvalidOperationException(
                    $"a {type.Name} template is born holding the app's type — a bare one holds no types to read its variables with")).Variable : [];
         // THE door for content from outside: what a template holds, by whose bytes these are. Decided ONCE,
         // here — a variable not held is never resolved; it stays as written everywhere downstream.
         IEnumerable<global::app.type.item.variable.@this> variables =
-            built ? variable ?? written()                           // the build's own .pr: every variable its row lists
-            : origin != null ? written().Where(v => v.IsOwn)        // a file or url read with load vars: the program's own only
+            built ? variable ?? all()                               // the build's own .pr: every variable its row lists
+            : origin != null ? all().Where(v => v.IsOwn)            // a file or url read with load vars: the program's own only
             : [];                                                   // anything else (a peer's value, the store): none
         _variable = variables.DistinctBy(v => v.Text).ToList();
         // A full-match %ref% on ANY declared type is a reference to a binding — resolved at
