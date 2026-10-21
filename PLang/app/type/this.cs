@@ -332,8 +332,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (context is null) throw new System.InvalidOperationException(
             $"context-never-null: building a '{Name}' value without a context — pass the actor context at the construction site.");
 
-        // Typed absence — the declaration survives (a typed null, a tool-parameter slot; a JSON-null too).
-        if (raw is null or global::app.type.item.@null.@this) return new global::app.type.item.@null.@this(this);
+        // Typed absence — the declaration survives (a typed null, a tool-parameter slot; a JSON-null too). Under `item`
+        // (no declaration: any value) it is the null type's own, as a literal null is.
+        if (raw is null or global::app.type.item.@null.@this)
+            return new global::app.type.item.@null.@this(Polymorphic ? context.App.type.list["null"] : this);
 
         // A name type's text IS the name (a write target), not content to defer: its own reader reads it now,
         // as it reads a wire slot. A raw string, or the text a built leaf of another type holds; an unread
