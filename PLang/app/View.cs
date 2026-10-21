@@ -192,6 +192,11 @@ public abstract class View
             await global::app.error.@this.FromException(thrown).Output(writer);
         }
 
+        // The resolved values each dump (its writer) is writing now, by reference: held weakly by the writer, so a dump
+        // that ends leaves on its own.
+        private readonly System.Runtime.CompilerServices.ConditionalWeakTable<global::app.type.format.IWriter,
+            System.Collections.Generic.HashSet<global::app.type.item.@this>> _writing = new();
+
         // as written, and beside it what it resolves to with its type; that it is not set, when a name it names reads
         // nothing; or the error it resolves to, as itself
         internal override async System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
@@ -218,7 +223,15 @@ public abstract class View
             {
                 var resolved = await used.Value();
                 writer.Name("value");
-                await Written(resolved, writer);
+                // what a value inside a dump resolves to can be the structure the dump is in (a goal whose action reads
+                // %!data%, while %!data% holds that goal): one this dump is already writing is named, never walked again
+                var writing = _writing.GetValue(writer, _ => new(System.Collections.Generic.ReferenceEqualityComparer.Instance));
+                if (!writing.Add(resolved)) writer.String(resolved.ToString() ?? resolved.Type.Name);
+                else
+                {
+                    try { await Written(resolved, writer); }
+                    finally { writing.Remove(resolved); }
+                }
                 // the type as the format writes one (text its word, json and plang its identity)
                 writer.Name("type");
                 await resolved.Type.Output(writer);
