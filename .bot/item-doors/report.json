@@ -556,6 +556,34 @@
         "health": "shape holds; fix at the root: view asked from template/plang writer, kept-or-used in four holders, Own hook, kind undo, size/duration standards, tag predicate, CLR-number switch, view default",
         "notes": "verdict fail; no build or test run by me"
       }
+    },
+    {
+      "id": "789ad9ac-cb1a-4bd4-96a4-70d418ef4dec",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-21T22:08:45Z",
+      "intent": "OBP scan of the whole item-doors diff before merge (decision 269)",
+      "before": {
+        "assumptions": "base 1adfb9555..origin/item-doors, 431 files; code since b96c60765 weighs most",
+        "risk": "size: reading by hunks misses surrounding shape"
+      },
+      "plan": ".bot/item-doors/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/item-doors/codeanalyzer/v3/report.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "OBP scan of the item-doors diff against its base (431 files) by three region readers and spot checks; ranked findings, v2 status, names. Read only."
+        }
+      ],
+      "timestamp_end": "2026-10-21T22:14:17Z",
+      "after": {
+        "status": "report written: .bot/item-doors/codeanalyzer/v3/report.md",
+        "health": "fail: root fixes needed (kept-or-used, view by constant, throwaway Data, name words)",
+        "notes": "no build or tests run; some reader line numbers not re-grepped"
+      }
     }
   ]
 }
