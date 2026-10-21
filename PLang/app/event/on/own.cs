@@ -53,7 +53,7 @@ public sealed class own : @this
     /// <summary>The event named <paramref name="name"/>, this item's own — one of the core's, or one its type declares;
     /// null when there is no event of that name.</summary>
     public override global::app.@event.@this? this[string name]
-        => Made.TryGetValue(name, out var made) ? _events.GetOrAdd(name, _ => made(new binding.list.before(), new binding.list.after()))
+        => Made.TryGetValue(name, out var constructor) ? _events.GetOrAdd(name, _ => constructor(new binding.list.before(), new binding.list.after()))
          : IsDeclared(name) ? _events.GetOrAdd(name, n => new declared(n, new binding.list.before(), new binding.list.after()))
          : null;
 
@@ -76,8 +76,8 @@ public sealed class own : @this
     /// <paramref name="when"/> it runs — a kind of binding (a mock) that is its own handler.</summary>
     public T Bind<T>(string @event, When when, System.Func<binding.list.@this, T> make) where T : binding.@this
     {
-        var found = this[@event] ?? throw new KeyNotFoundException($"there is no event '{@event}'");
-        binding.list.@this side = when == When.before ? found.before : found.after;
+        var entry = this[@event] ?? throw new KeyNotFoundException($"there is no event '{@event}'");
+        binding.list.@this side = when == When.before ? entry.before : entry.after;
         return side.Add(make);
     }
 }

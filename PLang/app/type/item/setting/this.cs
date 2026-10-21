@@ -25,8 +25,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <c>llm.decider.setting</c>.</summary>
     protected @this(global::app.type.@this type) : base(type)
     {
-        var path = GetType() is { DeclaringType: { } owner } declared
-            ? $"{declared.Namespace}.{owner.Name}.{declared.Name}"
+        var path = GetType() is { DeclaringType: { } owner } @class
+            ? $"{@class.Namespace}.{owner.Name}.{@class.Name}"
             : GetType().Namespace!;
         const string module = "app.module.", at = "app.type.item.";
         Path = path.StartsWith(module) ? path[module.Length..]
@@ -147,9 +147,9 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// goes in whole.</summary>
     protected async System.Threading.Tasks.ValueTask Write(string key, object? value, global::app.actor.context.@this context)
     {
-        var written = value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context);
-        await written.Value();
-        context.Setting.Set($"{Path}.{key}", written);
+        var data = value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context);
+        await data.Value();
+        context.Setting.Set($"{Path}.{key}", data);
     }
 
     /// <summary>
@@ -197,22 +197,22 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 object? val;
                 try
                 {
-                    var built = global::app.type.item.@this.Create(kvp.Value, context);
+                    var item = global::app.type.item.@this.Create(kvp.Value, context);
                     // a slot the born value doesn't fit (a choice from its text, a list<path> from a list) is
                     // made by the slot's own type, through the type door; one it refuses with why (a culture no one
                     // has) is the answer
-                    if (!prop.PropertyType.IsInstanceOfType(built))
+                    if (!prop.PropertyType.IsInstanceOfType(item))
                     {
                         var asked = new global::app.data.@this(kvp.Key, context: context);
-                        if (context.App.type.list[prop.PropertyType].Make(kvp.Value, asked) is { } made
-                            && prop.PropertyType.IsInstanceOfType(made))
-                            built = made;
+                        if (context.App.type.list[prop.PropertyType].Make(kvp.Value, asked) is { } value
+                            && prop.PropertyType.IsInstanceOfType(value))
+                            item = value;
                         else if (!asked.Success)
                             return context.Error(asked.Error!);
                     }
                     // a list whose element is itself a closed type (list<choice<visibility>>) the type door can't
                     // close yet — its element kind names no single type — is re-tagged by its CLR form
-                    val = prop.PropertyType.IsInstanceOfType(built) ? built : built.Clr(prop.PropertyType, context);
+                    val = prop.PropertyType.IsInstanceOfType(item) ? item : item.Clr(prop.PropertyType, context);
                 }
                 catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
                     or System.OverflowException or System.NotSupportedException)
@@ -234,15 +234,15 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         {
             if (member.SetMethod?.IsPublic != true || !typeof(global::app.type.item.@this).IsAssignableFrom(member.PropertyType)
                 || member.GetValue(node) != null) continue;
-            if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.DefaultAttribute>(member) is { } declared)
+            if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.DefaultAttribute>(member) is { } @default)
             {
                 var asked = new global::app.data.@this(member.Name, context: context);
-                if (context.App.type.list[member.PropertyType].Make(declared.Value, asked) is { } made
-                    && member.PropertyType.IsInstanceOfType(made))
-                    member.SetValue(node, made);
+                if (context.App.type.list[member.PropertyType].Make(@default.Value, asked) is { } value
+                    && member.PropertyType.IsInstanceOfType(value))
+                    member.SetValue(node, value);
                 else
                     return context.Error(asked.Error ?? new global::app.error.@this(
-                        $"setting '{member.Name}' declares a default its {member.PropertyType.Name} cannot be made from: {declared.Value}",
+                        $"setting '{member.Name}' declares a default its {member.PropertyType.Name} cannot be made from: {@default.Value}",
                         "TypeConversionFailed", 400));
             }
             else if (nullability.Create(member).WriteState != System.Reflection.NullabilityState.Nullable
@@ -293,12 +293,12 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// setting's, an option it doesn't have, or a value its option can't take.</summary>
     public global::app.data.@this<global::app.type.item.dict.@this> Apply(string path, object? value, global::app.actor.context.@this context)
     {
-        foreach (var own in Paths)
+        foreach (var address in Paths)
         {
-            var isOwnPath = string.Equals(path, own, System.StringComparison.OrdinalIgnoreCase);
-            if (!isOwnPath && !path.StartsWith(own + ".", System.StringComparison.OrdinalIgnoreCase)) continue;
+            var isOwnPath = string.Equals(path, address, System.StringComparison.OrdinalIgnoreCase);
+            if (!isOwnPath && !path.StartsWith(address + ".", System.StringComparison.OrdinalIgnoreCase)) continue;
             // the setting's own path takes a dict of its options; an option's path takes its value
-            var options = isOwnPath ? value as IDictionary<string, object?> : Nested(path[(own.Length + 1)..], value);
+            var options = isOwnPath ? value as IDictionary<string, object?> : Nested(path[(address.Length + 1)..], value);
             if (options == null)
                 return context.Error<global::app.type.item.dict.@this>(new global::app.error.@this(
                     $"'{path}' is the setting {Path}: give it its options, {{\"option\": value}}, or name one ({path}.<option>).",

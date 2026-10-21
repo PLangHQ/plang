@@ -58,7 +58,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             foreach (var step in reached.Step.Items())
                 foreach (var action in step.Code.Items())
                     foreach (var required in action.Requirement)
-                        if (global::app.type.item.tag.@this.Create(required, tag) is { } made) test.Tags.Add(made);
+                        if (global::app.type.item.tag.@this.Create(required, tag) is { } capability) test.Tags.Add(capability);
 
         if (goal.Tag.Has(new global::app.type.item.tag.@this("skip", tag)))
         {
@@ -131,20 +131,20 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// </summary>
     public async System.Threading.Tasks.Task Start(global::app.@this app, global::app.actor.context.@this context)
     {
-        var own = app.actor.list.User.Context;
+        var user = app.actor.list.User.Context;
         Begin();
-        global::app.@event.binding.@this[] watching = [app.test.list.Report.Coverage.Watch(own), .. await Time(own)];
+        global::app.@event.binding.@this[] watching = [app.test.list.Report.Coverage.Watch(user), .. await Time(user)];
 
         System.TimeSpan timeout = (await context.Setting.Get<global::app.test.setting.@this>()).Timeout;
         using var cts = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
         cts.CancelAfter(timeout <= System.TimeSpan.Zero ? System.Threading.Timeout.InfiniteTimeSpan : timeout);
-        own.PushCancellation(cts);
+        user.PushCancellation(cts);
         var timedOut = () => cts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested;
         try
         {
             var loaded = await app.goal.Load(Goal.Path!.ToString());
             var result = loaded.Success
-                ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(own)
+                ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(user)
                 : loaded;
             if (timedOut()) Complete(Status.Timeout);
             else Complete(result);
@@ -159,7 +159,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         }
         finally
         {
-            own.PopCancellation();
+            user.PopCancellation();
             Stdout = app.test.list.Session?.Text;
             foreach (var binding in watching) binding.Remove();
         }

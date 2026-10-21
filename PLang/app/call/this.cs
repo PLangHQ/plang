@@ -267,7 +267,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     public bool TryGet(string name, out global::app.data.@this value)
     {
         for (var frame = this; frame != null; frame = frame.Caller)
-            if (frame._variables.TryGetValue(name, out var held)) { value = held; return true; }
+            if (frame._variables.TryGetValue(name, out var variable)) { value = variable; return true; }
         value = null!;
         return false;
     }

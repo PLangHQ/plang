@@ -119,14 +119,14 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         {
             var listed = await root.List(match.ToString(), under.Value == global::app.type.item.path.subfolder.include, context);
             if (!listed.Success) return listed;
-            var found = new List<data.@this>();
+            var tests = new List<data.@this>();
             if (await listed.Value() is global::app.type.item.list.@this files)
                 foreach (var row in files.Items(context))
                     // .test.goal files resolve only under the file scheme; another scheme is skipped
                     if (await row.Value<global::app.type.item.path.@this>() is global::app.type.item.path.file.@this file)
-                        found.Add(new data.@this("", await Of(file, context), context: context));
+                        tests.Add(new data.@this("", await Of(file, context), context: context));
             return (data.@this)context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
-                new global::app.type.item.list.@this<global::app.test.@this>(found,
+                new global::app.type.item.list.@this<global::app.test.@this>(tests,
                     context.App.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]));
         }));
 
@@ -151,16 +151,16 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         // aborted discovery.
         var prRead = await pr.Read(context);
         if (!prRead.Success) return Stale(source, prRead.Error?.Message ?? "pr corrupt");
-        global::app.goal.@this? built;
-        try { built = (await prRead.Value()) as global::app.goal.@this; }
+        global::app.goal.@this? goal;
+        try { goal = (await prRead.Value()) as global::app.goal.@this; }
         catch (global::app.error.AppException refused) { return Stale(source, refused.Message); }
-        if (built == null) return Stale(source, prRead.Error?.Message ?? "pr corrupt");
-        if (!string.Equals(source.Hash, built.Hash, StringComparison.OrdinalIgnoreCase)) return Stale(source, "rebuild needed");
+        if (goal == null) return Stale(source, prRead.Error?.Message ?? "pr corrupt");
+        if (!string.Equals(source.Hash, goal.Hash, StringComparison.OrdinalIgnoreCase)) return Stale(source, "rebuild needed");
         // the same words, but the saved code must still hold against today's catalogue (the build's own judgement), its
         // sub-goals' too
-        if (await built.Invalid(context) is { } invalid) return Stale(source, "rebuild needed: " + invalid.Message);
+        if (await goal.Invalid(context) is { } invalid) return Stale(source, "rebuild needed: " + invalid.Message);
 
-        return await global::app.test.@this.From(built, context);
+        return await global::app.test.@this.From(goal, context);
 
         global::app.test.@this Stale(global::app.goal.@this goal, string reason)
             => new(context.App.type.list) { Goal = goal, Status = Status.Stale, StatusReason = reason };    }

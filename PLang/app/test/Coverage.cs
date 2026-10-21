@@ -203,25 +203,25 @@ public sealed class Coverage
         var untested = new List<(string Site, List<string> Missing)>();
         foreach (var site in allSites)
         {
-            var declared = chains.TryGetValue(site, out var chain) ? chain : null;
+            var branches = chains.TryGetValue(site, out var chain) ? chain : null;
             var observedLabels = labelsMap.TryGetValue(site, out var labels) ? labels : new HashSet<string>();
 
             bool labelBacked = true;
-            if (declared == null || declared.Count == 0)
+            if (branches == null || branches.Count == 0)
             {
                 if (observedLabels.Count > 0)
-                    declared = observedLabels.OrderBy(Order).ToList();
+                    branches = observedLabels.OrderBy(Order).ToList();
                 else if (indicesMap.TryGetValue(site, out var indices))
                 {
-                    declared = indices.OrderBy(i => i).Select(i => i.ToString()).ToList();
+                    branches = indices.OrderBy(i => i).Select(i => i.ToString()).ToList();
                     labelBacked = false;
                 }
-                else declared = new List<string>();
+                else branches = new List<string>();
             }
 
             var missing = new List<string>();
             var parts = new List<string>();
-            foreach (var branch in declared)
+            foreach (var branch in branches)
             {
                 var hit = !labelBacked || observedLabels.Contains(branch);
                 parts.Add((hit ? "✅ " : "❌ ") + branch);

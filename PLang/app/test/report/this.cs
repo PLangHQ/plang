@@ -82,8 +82,8 @@ public sealed class @this
         if (!encoded.Success) return encoded;
         var content = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         var target = global::app.type.item.path.@this.Resolve("/.test/" + chosen.Kind.Report, context);
-        var written = await target.WriteText(content, context);
-        if (!written.Success) return context.Error(written.Error!);
+        var path = await target.WriteText(content, context);
+        if (!path.Success) return context.Error(path.Error!);
 
         var result = context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(run);
         result.Properties.Set("format", chosen.ToString());

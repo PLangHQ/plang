@@ -29,8 +29,8 @@ public class @this : global::app.type.item.setting.@this
     {
         if (Property(key) != null) return await base.Set(key, isIndex, value, context);
         var module = await context.App.module.Get(Module, context);
-        if (!module.Success || await module.Value() is not { } found
-            || !found.ActionNames.Any(name => found[name]?.Property[key] != null))
+        if (!module.Success || await module.Value() is not { } catalog
+            || !catalog.ActionNames.Any(name => catalog[name]?.Property[key] != null))
             return context.Error(new global::app.error.@this($"module '{Module}' has no option '{key}'", "NoOption", 404));
         await Write(key, value, context);
         return context.Ok(this);

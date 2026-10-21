@@ -110,8 +110,8 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                 throw new global::app.error.PrFormatOutdatedException($"'{name}' is a template without its variable list", ctx.Origin);
             var utf8 = new System.Text.Json.Utf8JsonReader(raw);
             utf8.Read();
-            var held = new global::app.type.item.kind.json.Reader(utf8, raw);
-            value = typeRef!.Read(ref held, ctx with { Variable = variables });
+            var json = new global::app.type.item.kind.json.Reader(utf8, raw);
+            value = typeRef!.Read(ref json, ctx with { Variable = variables });
         }
         if (value != null)
         {

@@ -68,9 +68,9 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
     // The goal the address names, found as a call finds it; one that doesn't load is left out, said on debug.
     private async System.Threading.Tasks.Task<global::app.goal.@this?> Goal(string address)
     {
-        var found = await _app.goal.list.Find(address);
-        if (found.Peek() is global::app.goal.@this goal) return goal;
-        await (_app.Debug?.Write($"shortcut: {address} left out — {found.Error?.Message ?? "not found"}") ?? System.Threading.Tasks.Task.CompletedTask);
+        var data = await _app.goal.list.Find(address);
+        if (data.Peek() is global::app.goal.@this goal) return goal;
+        await (_app.Debug?.Write($"shortcut: {address} left out — {data.Error?.Message ?? "not found"}") ?? System.Threading.Tasks.Task.CompletedTask);
         return null;
     }
 }

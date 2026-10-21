@@ -50,9 +50,9 @@ public sealed class @this : global::app.type.item.setting.@this
         // the option can't take is refused before this run holds it
         var raw = value is global::app.data.@this given ? await given.Value() : value;
         var binding = new global::app.data.@this(key, raw, context: context);
-        if (option.Type.Make(raw, binding) is not { } made)
+        if (option.Type.Make(raw, binding) is not { } item)
             return context.Error(binding.Error!);
-        await Write(key, made, context);
+        await Write(key, item, context);
         return context.Ok(this);
     }
 }

@@ -92,10 +92,10 @@ public sealed class @this : global::app.type.item.@this
     // a value as json, for the trip up: what it holds, written by plang's json format
     private static async Task<(JsonNode?, global::app.data.@this?)> Json(global::app.data.@this value, global::app.actor.context.@this context)
     {
-        using var written = new MemoryStream();
-        var encoded = await context.App.type.list.Mime("application/json").Encode(written, value, context);
+        using var stream = new MemoryStream();
+        var encoded = await context.App.type.list.Mime("application/json").Encode(stream, value, context);
         if (!encoded.Success) return (null, encoded);
-        var text = System.Text.Encoding.UTF8.GetString(written.ToArray());
+        var text = System.Text.Encoding.UTF8.GetString(stream.ToArray());
         try { return (JsonNode.Parse(text), null); }
         catch (JsonException) { return (JsonValue.Create(text), null); }
     }

@@ -39,8 +39,8 @@ public sealed class @this : global::app.type.item.setting.module.@this
                 + (asked.Error is { } why ? $" ({why.Message})" : ""),
                 "MissingLlmKey", 401));
         Key = secret.Characters;
-        var saved = await context.Setting.Save(this);
-        return saved.Success ? context.Ok(Key) : context.Error<global::app.type.item.text.@this>(saved.Error!);
+        var row = await context.Setting.Save(this);
+        return row.Success ? context.Ok(Key) : context.Error<global::app.type.item.text.@this>(row.Error!);
     }
 
     /// <summary>Where a query is sent — when none is saved, the <c>OPENAI_API_ENDPOINT</c> environment variable's,

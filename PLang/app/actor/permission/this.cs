@@ -38,11 +38,11 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         var grant = new Grant(_actor.Name,
             _actor.App.OsAbsolutePath + global::app.Utils.PathHelper.DirectorySeparatorChar + "**",
             new HashSet<Verb>(verbs), MatchMode.glob, _actor.App.type.list[typeof(Grant)]);
-        var held = new global::app.data.@this<Grant>("", grant, context: _actor.Context);
+        var entry = new global::app.data.@this<Grant>("", grant, context: _actor.Context);
         lock (_lock)
         {
             _inMemory.RemoveAll(d => d.Peek() is Grant g && string.Equals(g.Path, grant.Path, StringComparison.Ordinal));
-            _inMemory.Add(held);
+            _inMemory.Add(entry);
         }
     }
 
@@ -129,11 +129,11 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         if (persist)
         {
             var setting = await Saved();
-            var kept = new List<Grant>();
+            var grants = new List<Grant>();
             foreach (var row in setting.Grant.Items(_actor.Context))
-                if (await row.Value<Grant>() is { } held && !string.Equals(held.Path, key, StringComparison.Ordinal)) kept.Add(held);
-            kept.Add(__rec);
-            await Save(setting, kept);
+                if (await row.Value<Grant>() is { } entry && !string.Equals(entry.Path, key, StringComparison.Ordinal)) grants.Add(entry);
+            grants.Add(__rec);
+            await Save(setting, grants);
             return;
         }
 
@@ -164,13 +164,13 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         }
 
         var setting = await Saved();
-        var kept = new List<Grant>();
+        var grants = new List<Grant>();
         foreach (var row in setting.Grant.Items(_actor.Context))
-            if (await row.Value<Grant>() is { } held && !(held.Actor == match.Actor && held.Path == match.Path)) kept.Add(held);
-        if (kept.Count < setting.Grant.CountRaw)
+            if (await row.Value<Grant>() is { } grant && !(grant.Actor == match.Actor && grant.Path == match.Path)) grants.Add(grant);
+        if (grants.Count < setting.Grant.CountRaw)
         {
-            var saved = await Save(setting, kept);
-            if (saved.Success) removed = true;
+            var row = await Save(setting, grants);
+            if (row.Success) removed = true;
         }
         return removed;
     }
@@ -186,8 +186,8 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     // with the grants, never the setting they handed out.
     private async Task<global::app.data.@this> Save(setting.@this setting, List<Grant> grants)
     {
-        var saved = (global::app.actor.permission.setting.@this)setting.Copy();
-        saved.Grant = new global::app.type.item.list.@this<Grant>(grants, _actor.App.type.list[typeof(global::app.type.item.list.@this<Grant>)]);
-        return await _actor.Setting.Save(saved);
+        var permission = (global::app.actor.permission.setting.@this)setting.Copy();
+        permission.Grant = new global::app.type.item.list.@this<Grant>(grants, _actor.App.type.list[typeof(global::app.type.item.list.@this<Grant>)]);
+        return await _actor.Setting.Save(permission);
     }
 }

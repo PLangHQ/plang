@@ -492,8 +492,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // App says where; the file writes it — .pr is a program file, so its format writes the host's [Store]
         // face. No hard-coded field list (add a [Store] prop → it persists).
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", actor.list.System.Context!);
-        var written = await prPath.Save(actor.list.System.Context!.Ok(new global::app.type.clr.@this<global::app.@this>(this, actor.list.System.Context!)), actor.list.System.Context!);
-        if (!written.Success) return written;
+        var path = await prPath.Save(actor.list.System.Context!.Ok(new global::app.type.clr.@this<global::app.@this>(this, actor.list.System.Context!)), actor.list.System.Context!);
+        if (!path.Success) return path;
         _stored = true;
         return actor.list.System.Context!.Ok(this);
     }

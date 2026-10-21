@@ -106,13 +106,13 @@ public sealed class @this : IDisposable
     {
         await Load();
         // read at the action's address, then its module's
-        var own = action.Address;
+        var address = action.Address;
         var module = action.Module.Address;
-        var run = Run([$"{own}.{option}", $"{module}.{option}"]);
+        var run = Run([$"{address}.{option}", $"{module}.{option}"]);
         if (run.IsInitialized) return run;
-        if (Saved(own) is { } row && Option(row, option) is { } saved) return saved;
-        if (Saved(module) is { } held && Option(held, option) is { } kept) return kept;
-        return _context.NotFound($"{own}.{option}");
+        if (Saved(address) is { } row && Option(row, option) is { } value) return value;
+        if (Saved(module) is { } setting && Option(setting, option) is { } entry) return entry;
+        return _context.NotFound($"{address}.{option}");
     }
 
     // This run's value for the first key that has one, the closest scope first.
@@ -174,7 +174,7 @@ public sealed class @this : IDisposable
             if (settings.Count > 1)
                 return _context.Error<global::app.type.item.setting.@this>(new global::app.error.@this(
                     $"'{path}' names two settings: {string.Join(" and ", settings)} — write the one you mean in full.", "AmbiguousSetting", 400));
-            return _context.Ok(Make(settings[0])!);
+            return _context.Ok(Default(settings[0])!);
         }
         return _context.Error<global::app.type.item.setting.@this>(new global::app.error.@this(
             $"'{path}' names no setting — a setting's path is its owner's and then .setting (channel.setting.format).", "UnknownSetting", 400));
@@ -188,7 +188,7 @@ public sealed class @this : IDisposable
     {
         var answers = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
         foreach (var path in Classes().Keys)
-            foreach (var key in Make(path)!.Paths)
+            foreach (var key in Default(path)!.Paths)
             {
                 if (!answers.TryGetValue(key, out var settings)) answers[key] = settings = [];
                 settings.Add(path);
@@ -342,27 +342,27 @@ public sealed class @this : IDisposable
     {
         await Load();
         var version = System.Threading.Interlocked.Read(ref Root._version);
-        if (_built.TryGetValue(@class, out var held) && held.Version == version) return held.Built;
-        var built = Build(Address(@class));
-        _built[@class] = (version, built);
-        return built;
+        if (_built.TryGetValue(@class, out var entry) && entry.Version == version) return entry.Built;
+        var setting = Build(Address(@class));
+        _built[@class] = (version, setting);
+        return setting;
     }
 
     // The setting at path as this scope sees it: the class's defaults ← the saved row ← this run's values.
     private global::app.type.item.setting.@this Build(string path)
     {
-        var instance = Make(path) ?? throw new KeyNotFoundException($"'{path}' names no setting class.");
+        var instance = Default(path) ?? throw new KeyNotFoundException($"'{path}' names no setting class.");
         // a saved row that could NOT be read (an older-shape row) answers its error here — the read of this
         // setting is loud and names the key + how to fix it (790), never a silent fall-back to the defaults
         if (Saved(path) is { Success: false, Error: { } unreadable }) throw new global::app.error.AppException(unreadable);
         // the saved row's options, an owned setting copied — this run's values below never reach the row
-        if (Saved(path)?.Peek() is global::app.type.item.setting.@this held)
-            foreach (var option in held.Options)
-                option.SetValue(instance, option.GetValue(held) is global::app.type.item.setting.@this owned ? owned.Copy() : option.GetValue(held));
+        if (Saved(path)?.Peek() is global::app.type.item.setting.@this setting)
+            foreach (var option in setting.Options)
+                option.SetValue(instance, option.GetValue(setting) is global::app.type.item.setting.@this owned ? owned.Copy() : option.GetValue(setting));
         // this run's values for its own options — a longer path under it (llm.query.cache under llm)
         // is another setting's
-        var own = Under(path).Where(kv => instance.Property(kv.Key) != null).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
-        var applied = instance.Apply(own, _context);
+        var values = Under(path).Where(kv => instance.Property(kv.Key) != null).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+        var applied = instance.Apply(values, _context);
         if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
         return instance;
     }
@@ -396,19 +396,16 @@ public sealed class @this : IDisposable
         return _classes = classes;
     }
 
-    // A fresh value of the class at path — its defaults (the empty lists the one apply walk gives a member left
-    // out); null when no class there. The value stores no context (Rows takes the asker's).
-    private global::app.type.item.setting.@this? Make(string path)
+    /// <summary>The settings class <paramref name="path"/> names, at its defaults (the empty lists the one apply walk
+    /// gives a member left out); null when no class names it. Stores no context (Rows takes the asker's). What the
+    /// build's step scope teaches from (its Path and its Rows), and what each setting here is built on.</summary>
+    public global::app.type.item.setting.@this? Default(string path)
     {
         if (Class(path) is not { } clr) return null;
-        var made = (global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])!;
-        made.Apply(new Dictionary<string, object?>(), _context);
-        return made;
+        var setting = (global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])!;
+        setting.Apply(new Dictionary<string, object?>(), _context);
+        return setting;
     }
-
-    /// <summary>A fresh value of the settings class a <paramref name="path"/> names — its defaults; null
-    /// when no class names it. What the build's step scope teaches from (its Path and its Rows).</summary>
-    public global::app.type.item.setting.@this? Defaults(string path) => Make(path);
 
     // This run's values under path, the closest scope winning, as the options they set — a key deeper than
     // an option (path.llm.system) nests under it. A node set both as a whole and by its members (diff = true,
@@ -418,9 +415,9 @@ public sealed class @this : IDisposable
         var under = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         var prefix = path + ".";
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var own = Own(path);
+        var isOwn = Own(path);
         const string enabled = "enabled";
-        for (@this? s = this; s != null; s = own && s._actor != null ? null : s._parent)
+        for (@this? s = this; s != null; s = isOwn && s._actor != null ? null : s._parent)
             foreach (var (key, value) in s._values)
             {
                 if (!key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || !seen.Add(key)) continue;

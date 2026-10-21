@@ -447,9 +447,9 @@ public partial class @this
     public virtual async System.Threading.Tasks.ValueTask<@this> Replace(
         System.Func<System.Threading.Tasks.ValueTask<global::app.type.item.@this?>> previous)
     {
-        if (Peek() is not { } held) return this;
-        var became = await held.Replace(previous);
-        return ReferenceEquals(became, held) ? this : new @this(Name, became, context: Context);
+        if (Peek() is not { } item) return this;
+        var became = await item.Replace(previous);
+        return ReferenceEquals(became, item) ? this : new @this(Name, became, context: Context);
     }
 
     /// <summary>What this carrier holds, handed to <paramref name="then"/> as a <typeparamref name="TAs"/> —
@@ -461,10 +461,10 @@ public partial class @this
         if (!Success || Exits) return this;
         var carrier = await Follow(Context);
         if (!carrier.Success || carrier.Exits) return carrier;
-        if (carrier.Peek() is not TAs held)
+        if (carrier.Peek() is not TAs value)
             return Context.Error(new global::app.error.@this(
                 $"'{Name}' is a {carrier.Type.Name}, not a {(global::app.type.item.@this.NameOf(typeof(TAs)))}", "NotA", 400));
-        return await then(held);
+        return await then(value);
     }
 
     /// <summary>True when this Data is source-backed (holds an undecoded form held verbatim).</summary>
@@ -536,8 +536,8 @@ public partial class @this
         // A value-slot %var% names a binding, not content: what it names is enumerated (Follow — the value
         // door stays shut, so a real list/dict is walked in place), and this carrier stays as it is. A name
         // that holds nothing enumerates the carrier itself.
-        var held = await Follow(_context);
-        var walked = held.IsInitialized ? held : this;
+        var value = await Follow(_context);
+        var walked = value.IsInitialized ? value : this;
         // Content not yet read (a {item, kind: json} holding its raw) is parsed first: the read yields the
         // real list/dict and the value narrows to it (decision 787), so foreach walks its elements — not the
         // one unread source. A value already walkable (the list/dict a %var% names) keeps its door shut.

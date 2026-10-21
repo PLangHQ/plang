@@ -43,7 +43,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     {
         int outer = -1, inner = -1;
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            if (Of(level.on) is { } held && side(held).Count > 0)
+            if (Of(level.on) is { } @event && side(@event).Count > 0)
             {
                 if (outer < 0) outer = depth;
                 inner = depth;

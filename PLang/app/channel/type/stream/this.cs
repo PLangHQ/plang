@@ -199,10 +199,10 @@ public class @this : global::app.channel.type.session.@this
             var at = _ahead.AsSpan(searched, _held - searched).IndexOf(end);
             if (at >= 0)
             {
-                var found = searched + at;
-                var length = cr != null && _ahead.AsSpan(0, found).EndsWith(cr) ? found - cr.Length : found;
+                var index = searched + at;
+                var length = cr != null && _ahead.AsSpan(0, index).EndsWith(cr) ? index - cr.Length : index;
                 var message = _ahead.AsSpan(0, length).ToArray();
-                var rest = found + end.Length;
+                var rest = index + end.Length;
                 _ahead.AsSpan(rest, _held - rest).CopyTo(_ahead);
                 _held -= rest;
                 return message;

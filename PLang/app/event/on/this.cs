@@ -29,7 +29,7 @@ public class @this : global::app.type.item.@this
 
     // The shared empty events: one of each, closed to bindings.
     private static readonly FrozenDictionary<string, global::app.@event.@this> None =
-        Made.ToFrozenDictionary(made => made.Key, made => made.Value(binding.list.before.None, binding.list.after.None), StringComparer.OrdinalIgnoreCase);
+        Made.ToFrozenDictionary(entry => entry.Key, entry => entry.Value(binding.list.before.None, binding.list.after.None), StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The events of an item nothing is bound on and whose type declares none — one for the whole app,
     /// never changed: every event it answers is shared and closed to bindings.</summary>
@@ -121,7 +121,7 @@ public class @this : global::app.type.item.@this
     /// <summary>One step down: the event by its name (<c>.start</c>); a name that is no event is refused
     /// (<see cref="NoEvent"/>).</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-        => new(this[key] is { } found
-            ? new global::app.data.@this(key, found, parent: parent)
+        => new(this[key] is { } @event
+            ? new global::app.data.@this(key, @event, parent: parent)
             : parent.Context.Error(NoEvent(key)));
 }

@@ -90,7 +90,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public async System.Threading.Tasks.ValueTask<global::app.data.@this<@this>> Get(string name, global::app.actor.context.@this context)
     {
         foreach (var module in list.Items())
-            if (await module.Match(name) is { } found) return context.Ok<@this>(found);
+            if (await module.Match(name) is { } match) return context.Ok<@this>(match);
         return global::app.data.@this<@this>.FromError(new global::app.error.@this($"no module '{name}'", "NotFound", 404), context);
     }
 
@@ -126,7 +126,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         lock (Root._registering!)
         {
-            if (Named(name) is { } held) return held;
+            if (Named(name) is { } module) return module;
             var born = new @this(name, Root);
             list.Add(born);
             return born;
