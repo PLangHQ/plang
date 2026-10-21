@@ -49,12 +49,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %total% = 0': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
@@ -104,18 +98,9 @@
             {
               "name": "Name",
               "type": {
-                "name": "text"
+                "name": "goal"
               },
               "value": "AddUp"
-            }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
             }
           ]
         }
@@ -291,12 +276,6 @@
                   "value": false
                 }
               ]
-            }
-          ],
-          "warning": [
-            {
-              "key": "Reopened",
-              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %total% = %total% + %item%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ]
         }

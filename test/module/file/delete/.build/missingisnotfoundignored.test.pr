@@ -61,15 +61,6 @@
                       },
                       "value": "Caught"
                     }
-                  ],
-                  "default": [
-                    {
-                      "name": "parallel",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": false
-                    }
                   ]
                 }
               ]
@@ -234,12 +225,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 3's saved code no longer holds — rebuilt: step 3 'variable.set(Name=%after%, Value=\"went on\")': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
@@ -355,12 +340,6 @@
                   "value": false
                 }
               ]
-            }
-          ],
-          "warning": [
-            {
-              "key": "Reopened",
-              "message": "step 0's saved code no longer holds — rebuilt: step 0 'variable.set(Name=%caught%, Value=%!error.Key%)': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ]
         }

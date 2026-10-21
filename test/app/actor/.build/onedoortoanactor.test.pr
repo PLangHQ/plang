@@ -6,7 +6,8 @@
       "index": 0,
       "text": "assert %!app.actor[\"system\"]% is not null",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -41,14 +42,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
       "text": "assert %!app.actor[\"user\"]% is not null",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -83,14 +84,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
       "text": "assert %!app.system% is null, \"the app doesn't hold its actors twice\"",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -127,17 +128,10 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/plan/app-systems/app/actor/OneDoorToAnActor.test.goal",
-  "prPath": "/plan/app-systems/app/actor/.build/onedoortoanactor.test.pr",
-  "hash": "ee55f78f56bf5db611c2f8bfbc72ff27e6d472d9df897ebcbb92dbdd99d1fe11",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "OneDoorToAnActor.test.goal",
+  "hash": "ee55f78f56bf5db611c2f8bfbc72ff27e6d472d9df897ebcbb92dbdd99d1fe11"
 }

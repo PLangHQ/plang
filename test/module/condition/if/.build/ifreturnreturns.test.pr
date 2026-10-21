@@ -80,12 +80,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'call Early done=true, write to %result%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
@@ -206,12 +200,6 @@
               "value": false
             }
           ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 2's saved code no longer holds — rebuilt: step 2 'call Early done=false, write to %result%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ]
     },

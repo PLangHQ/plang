@@ -49,12 +49,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %message% = \"boom\"': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
@@ -138,12 +132,8 @@
       ],
       "warning": [
         {
-          "key": "Reopened",
-          "message": "step 1's saved code no longer holds — rebuilt: step 1 'render template \"Failed: {{ error }}\", error=%message%, write to %html%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        },
-        {
           "key": "Unsure",
-          "message": "step 1 uses variable.set, which the decider was not sure of (0.81)"
+          "message": "step 1 uses variable.set, which the decider was not sure of (0.87)"
         }
       ]
     },

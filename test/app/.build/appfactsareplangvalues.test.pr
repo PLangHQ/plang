@@ -6,7 +6,8 @@
       "index": 0,
       "text": "assert %!app.created!type.name% equals \"datetime\"",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -49,14 +50,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
       "text": "assert %!app.startedat!type.name% equals \"datetime\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -99,14 +100,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
       "text": "assert %!app.uptime!type.name% equals \"duration\"",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -149,14 +150,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
       "text": "assert %!app.store!type.name% equals \"store\", \"the store is born ready and opens itself on first use\"",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -206,17 +207,10 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/plan/app-systems/app/AppFactsArePlangValues.test.goal",
-  "prPath": "/plan/app-systems/app/.build/appfactsareplangvalues.test.pr",
-  "hash": "07c775cdcd7d062ed24d081d59791966d63fd1b27e9c848f8b4c49eca474762c",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "AppFactsArePlangValues.test.goal",
+  "hash": "07c775cdcd7d062ed24d081d59791966d63fd1b27e9c848f8b4c49eca474762c"
 }

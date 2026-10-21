@@ -103,12 +103,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 1's saved code no longer holds — rebuilt: step 1 'call ReadIt, write to %a%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
@@ -211,12 +205,6 @@
               "value": false
             }
           ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 3's saved code no longer holds — rebuilt: step 3 'call ReadIt, write to %b%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ]
     },
@@ -357,12 +345,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 6's saved code no longer holds — rebuilt: step 6 'delete file \"spec_clause.txt\"': file.delete: the default frozen for 'ignoreifnotfound' is no option of this action any more."
-        }
       ]
     }
   ],
@@ -393,6 +375,19 @@
             },
             {
               "module": "on",
+              "name": "timeout",
+              "property": [
+                {
+                  "name": "After",
+                  "type": {
+                    "name": "duration"
+                  },
+                  "value": "5s"
+                }
+              ]
+            },
+            {
+              "module": "on",
               "name": "cache",
               "property": [
                 {
@@ -400,7 +395,7 @@
                   "type": {
                     "name": "duration"
                   },
-                  "value": "60s"
+                  "value": "1m"
                 }
               ],
               "default": [
@@ -410,19 +405,6 @@
                     "name": "bool"
                   },
                   "value": false
-                }
-              ]
-            },
-            {
-              "module": "on",
-              "name": "timeout",
-              "property": [
-                {
-                  "name": "After",
-                  "type": {
-                    "name": "duration"
-                  },
-                  "value": "5s"
                 }
               ]
             },
@@ -475,12 +457,6 @@
                   "value": false
                 }
               ]
-            }
-          ],
-          "warning": [
-            {
-              "key": "Reopened",
-              "message": "step 0's saved code no longer holds — rebuilt: step 0 'read file \"spec_clause.txt\", cache for 1 minute, timeout after 5 seconds, write to %content%': file.read: the default frozen for 'resolvevariables' is no option of this action any more.; variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ]
         },

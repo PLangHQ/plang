@@ -67,12 +67,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'code.load Path=\"IdentityShadow.dll\", on error key \"TypeLoadCollision\" call Refused': on.error: the default frozen for 'ignoreerror' is no option of this action any more."
-        }
       ]
     },
     {
@@ -90,13 +84,6 @@
             {
               "name": "Expected",
               "type": {
-                "name": "text"
-              },
-              "value": "TypeLoadCollision"
-            },
-            {
-              "name": "Actual",
-              "type": {
                 "name": "item",
                 "template": "plang"
               },
@@ -111,6 +98,13 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "text"
+              },
+              "value": "TypeLoadCollision"
             },
             {
               "name": "Message",
@@ -245,12 +239,6 @@
                   "value": false
                 }
               ]
-            }
-          ],
-          "warning": [
-            {
-              "key": "Reopened",
-              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %refused% = %!error.Key%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ]
         }

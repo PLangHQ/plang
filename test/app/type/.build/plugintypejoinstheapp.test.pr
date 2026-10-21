@@ -89,12 +89,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 1's saved code no longer holds — rebuilt: step 1 'set %types% = %!app.type.list%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
@@ -203,12 +197,8 @@
       ],
       "warning": [
         {
-          "key": "Reopened",
-          "message": "step 2's saved code no longer holds — rebuilt: step 2 'any %types% where \"name\" == \"money\", write to %joined%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        },
-        {
           "key": "Unsure",
-          "message": "step 2 uses list.any, which the decider was not sure of (0.96)"
+          "message": "step 2 uses list.any, which the decider was not sure of (0.95)"
         }
       ]
     },

@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %attempts% = 0",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -36,13 +37,6 @@
                 "name": "number"
               },
               "value": 0
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "number"
             }
           ],
           "default": [
@@ -61,7 +55,8 @@
       "index": 1,
       "text": "call SlowTwice, timeout after 100ms, on error retry 2 times",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -126,7 +121,8 @@
       "index": 2,
       "text": "assert %attempts% equals 3, \"each retry has its own deadline\"",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -178,7 +174,8 @@
           "index": 0,
           "text": "set %attempts% = %attempts% + 1",
           "line": {
-            "number": 9
+            "number": 9,
+            "indent": 0
           },
           "code": [
             {
@@ -284,7 +281,7 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 0 uses math.add, which the decider was not sure of (0.97)"
+              "message": "step 0 uses math.add, which the decider was not sure of (0.98)"
             }
           ]
         },
@@ -292,7 +289,8 @@
           "index": 1,
           "text": "if %attempts% is less than 3, call Slow",
           "line": {
-            "number": 10
+            "number": 10,
+            "indent": 0
           },
           "code": [
             {
@@ -338,7 +336,8 @@
                   "index": 0,
                   "text": "goal.call(Name=\"Slow\")",
                   "line": {
-                    "number": 10
+                    "number": 10,
+                    "indent": 0
                   },
                   "code": [
                     {
@@ -361,10 +360,7 @@
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal",
-      "prPath": "/plan/app-systems/module/on/timeout/.build/retrygetsafreshdeadline.test.pr",
       "hash": "5a6a80593e6c5cd86f837f4b110f1c967f054d7cce1bceff97f343065911ba26"
     },
     {
@@ -374,7 +370,8 @@
           "index": 0,
           "text": "sleep 1 second",
           "line": {
-            "number": 13
+            "number": 13,
+            "indent": 0
           },
           "code": [
             {
@@ -393,15 +390,11 @@
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal",
-      "prPath": "/plan/app-systems/module/on/timeout/.build/retrygetsafreshdeadline.test.pr",
       "hash": "080624e77774675c3ce2e39d1c4f1661df93b42be25012869d04293504dc6910"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal",
-  "prPath": "/plan/app-systems/module/on/timeout/.build/retrygetsafreshdeadline.test.pr",
+  "file": "RetryGetsAFreshDeadline.test.goal",
   "hash": "e529c2af2c8fdf97a0c016d156c6805d2320e8b1e21063c7051eddf82cd79642"
 }

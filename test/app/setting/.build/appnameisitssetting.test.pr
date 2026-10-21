@@ -55,12 +55,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %!app.setting.name% = \"Shop\"': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {

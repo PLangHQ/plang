@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %created% = 0",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -36,13 +37,6 @@
                 "name": "number"
               },
               "value": 0
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "number"
             }
           ],
           "default": [
@@ -61,7 +55,8 @@
       "index": 1,
       "text": "bind CountCreated to run after %!app.type.path.on.create%",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -122,15 +117,6 @@
                     },
                     "value": "CountCreated"
                   }
-                ],
-                "default": [
-                  {
-                    "name": "parallel",
-                    "type": {
-                      "name": "bool"
-                    },
-                    "value": false
-                  }
                 ]
               }
             }
@@ -152,7 +138,8 @@
       "index": 2,
       "text": "set %p% = \"a.txt\" as path",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -207,7 +194,8 @@
       "index": 3,
       "text": "assert %created% equals 1, \"converting to another type is a birth\"",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -259,7 +247,8 @@
           "index": 0,
           "text": "set %created% = %created% + 1",
           "line": {
-            "number": 10
+            "number": 10,
+            "indent": 0
           },
           "code": [
             {
@@ -349,13 +338,6 @@
                       ]
                     }
                   ]
-                },
-                {
-                  "name": "Type",
-                  "type": {
-                    "name": "type"
-                  },
-                  "value": "number"
                 }
               ],
               "default": [
@@ -377,15 +359,11 @@
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/app/type/path/AsPathIsABirth.test.goal",
-      "prPath": "/plan/app-systems/app/type/path/.build/aspathisabirth.test.pr",
       "hash": "03662325b967596fa340c431eaf3101b0f776b007b149191a8b1746ad25f8a46"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/app-systems/app/type/path/AsPathIsABirth.test.goal",
-  "prPath": "/plan/app-systems/app/type/path/.build/aspathisabirth.test.pr",
+  "file": "AsPathIsABirth.test.goal",
   "hash": "f7dbef5f8e1d83dbef6fef457186ce6ba1a2bd5306fc53221251060923850a51"
 }

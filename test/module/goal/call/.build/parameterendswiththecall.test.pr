@@ -49,12 +49,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %city% = \"Oslo\"': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
@@ -72,7 +66,7 @@
             {
               "name": "Name",
               "type": {
-                "name": "text"
+                "name": "goal"
               },
               "value": "Visit"
             },
@@ -82,15 +76,6 @@
                 "name": "list"
               },
               "value": [{"name":"city","type":{"name":"text"},"value":"Reykjavik"},{"name":"unit","type":{"name":"text"},"value":"metric"}]
-            }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
             }
           ]
         }
@@ -306,12 +291,6 @@
                   "value": false
                 }
               ]
-            }
-          ],
-          "warning": [
-            {
-              "key": "Reopened",
-              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %visited% = %city%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ]
         }
