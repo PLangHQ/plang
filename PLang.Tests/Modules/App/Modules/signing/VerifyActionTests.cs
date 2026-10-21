@@ -202,6 +202,64 @@ public class VerifyActionTests
         await Assert.That(result.Error?.Key).IsEqualTo("DataHashMismatch");
     }
 
+    // A signed value kept in a list is the same signed Data: its row verifies.
+    [Test]
+    public async Task ASignedValue_InAList_Verifies()
+    {
+        await SignedOrder();
+        await Ctx.Variable.Set("list", new List<object?>());
+        await (await global::PLang.Tests.Shared.Make.Action(Ctx, "list", "add", ("Value", "%signed%"),
+            global::PLang.Tests.Shared.Make.Param(Ctx, "ListName", "%list%", "variable")).Start(Ctx)).IsSuccess();
+
+        await (await Program("signing", "verify", ("Data", "%list[0]%"))).IsSuccess();
+    }
+
+    // A property a value carries (`set %order!note% = …`) stays on it in a list.
+    [Test]
+    public async Task AProperty_SurvivesTheAdd()
+    {
+        await Ctx.Variable.Set("order", new Dictionary<string, object?> { ["total"] = 5L });
+        await new global::app.type.item.variable.@this("order!note", _app.type.list).Set("kept", Ctx);
+        await Ctx.Variable.Set("orders", new List<object?>());
+        await (await global::PLang.Tests.Shared.Make.Action(Ctx, "list", "add", ("Value", "%order%"),
+            global::PLang.Tests.Shared.Make.Param(Ctx, "ListName", "%orders%", "variable")).Start(Ctx)).IsSuccess();
+
+        await Assert.That((await (await Read("orders[0]!note")).Value())?.ToString()).IsEqualTo("kept");
+    }
+
+    // A member kept beside a value it has no place in (`set %name.lang% = "is"` on a text) stays with it in a list.
+    [Test]
+    public async Task AKeptMember_SurvivesTheAdd()
+    {
+        await Ctx.Variable.Set("name", "Ada");
+        await new global::app.type.item.variable.@this("name.lang", _app.type.list).Set("is", Ctx);
+        await Ctx.Variable.Set("names", new List<object?>());
+        await (await global::PLang.Tests.Shared.Make.Action(Ctx, "list", "add", ("Value", "%name%"),
+            global::PLang.Tests.Shared.Make.Param(Ctx, "ListName", "%names%", "variable")).Start(Ctx)).IsSuccess();
+
+        await Assert.That((await (await Read("names[0].lang")).Value())?.ToString()).IsEqualTo("is");
+    }
+
+    // In memory a row keeps its signature; across actors a list rides in ONE signature that attests the whole, and its
+    // rows arrive as values — a row read off the wire has no signature of its own, the list's verify is what passes.
+    [Test]
+    public async Task AListAcrossTheWire_IsSignedWhole_ItsRowsAreValues()
+    {
+        await SignedOrder();
+        await Ctx.Variable.Set("orders", new List<object?>());
+        await (await global::PLang.Tests.Shared.Make.Action(Ctx, "list", "add", ("Value", "%signed%"),
+            global::PLang.Tests.Shared.Make.Param(Ctx, "ListName", "%orders%", "variable")).Start(Ctx)).IsSuccess();
+        var plang = _app.type.list.Mime("application/plang");
+        using var wire = new System.IO.MemoryStream();
+        await (await plang.Encode(wire, await Read("orders"), Ctx, global::app.View.Out)).IsSuccess();
+
+        var arrived = await plang.Decode(wire.ToArray(), Ctx, global::app.View.Out);
+        await arrived.IsSuccess();
+        await Ctx.Variable.Set("arrived", arrived);
+
+        await Assert.That((await Program("signing", "verify", ("Data", "%arrived[0]%"))).Error?.Key).IsEqualTo("NoSignature");
+    }
+
     // A changed bearer crosses with its old layer — never re-signed on the way out — and the receiver refuses it.
     [Test]
     public async Task AChangedSignedValue_IsRefusedWhereItArrives()

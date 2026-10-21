@@ -628,11 +628,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual bool Refuses(global::app.type.@this asked, global::app.data.@this data) => false;
 
     /// <summary>This value, given by <paramref name="carrier"/>, goes into <paramref name="into"/> at
-    /// <paramref name="at"/> (a position in it, else the end) — as one element pointing at the value's current
-    /// instance. A list goes in as its elements instead.</summary>
+    /// <paramref name="at"/> (a position in it, else the end) — as one element, a copy of the carrier pointing at the
+    /// value's current instance and keeping what the value can't hold (its signature, its properties, the members kept
+    /// beside it). A list goes in as its elements instead.</summary>
     internal virtual void Enroll(global::app.type.item.list.@this into, global::app.data.@this carrier,
         global::app.type.item.number.@this at, global::app.actor.context.@this context)
-        => into.Place(new global::app.data.@this(carrier.Name, carrier.Peek(), carrier.Type, context: context), at);
+        => into.Place(carrier.Copy(context), at);
 
     /// <summary>This value, given by <paramref name="carrier"/>, spread into <paramref name="into"/> — itself, as
     /// one element. A list spreads its elements, however deep.</summary>

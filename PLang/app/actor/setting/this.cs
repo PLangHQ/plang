@@ -195,9 +195,9 @@ public sealed class @this : IDisposable
         var owner = Owner;
         // rows that could not be read are never written over
         if (await owner.Load() is { Success: false } unread) return unread;
-        global::app.type.item.@this saved = Class(path) != null ? setting
+        global::app.type.item.@this value = Class(path) != null ? setting
             : global::app.type.item.@this.Create(Under(path), _context);
-        var row = new data.@this($"{owner._actor!.Name.ToLowerInvariant()}!{path}", saved, context: _context);
+        var row = new data.@this($"{owner._actor!.Name.ToLowerInvariant()}!{path}", value, context: _context);
         var stored = await Store.Set(Table, row.Name, row);
         if (!stored.Success) return stored;
         owner._held![path] = row;

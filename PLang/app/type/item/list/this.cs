@@ -769,7 +769,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public async System.Threading.Tasks.Task<Data> Add(Data value, global::app.type.item.number.@this at, actor.context.@this context)
     {
         if (await value.Value() is { } item) item.Enroll(this, value, at, context);
-        else Place(new Data(value.Name, value.Peek(), value.Type, context: context), at);
+        else Place(value.Copy(context), at);
         return context.Ok(this);
     }
 

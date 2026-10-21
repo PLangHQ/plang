@@ -37,8 +37,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         if (Module[Name] is not { } catalog) return null;
         // its own class, as the asker's settings build it; else its options, read and written through it
-        var own = await parent.Context.Setting.Get(catalog.Address);
-        return own.IsInitialized || !own.Success ? own
+        var setting = await parent.Context.Setting.Get(catalog.Address);
+        return setting.IsInitialized || !setting.Success ? setting
             : new global::app.data.@this(catalog.Address, new global::app.type.item.setting.action.@this(catalog), context: parent.Context);
     }
 

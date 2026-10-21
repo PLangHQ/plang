@@ -203,8 +203,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         if (_root == null) return await base.Setting(parent);
         // its own class, as the asker's settings build it; else the options its actions take, read and written through it
-        var own = await parent.Context.Setting.Get(Address);
-        return own.IsInitialized || !own.Success ? own
+        var setting = await parent.Context.Setting.Get(Address);
+        return setting.IsInitialized || !setting.Success ? setting
             : new global::app.data.@this(Address, new global::app.type.item.setting.module.@this(Name,
                 parent.Context.App.type.list[typeof(global::app.type.item.setting.module.@this)]), context: parent.Context);
     }
