@@ -346,6 +346,20 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         }
     }
 
+    /// <summary>This frame and its callers out to its goal's own frame, inclusive — one goal's run, inner first, never
+    /// past it to the root.</summary>
+    internal IEnumerable<@this> Within
+    {
+        get
+        {
+            for (var frame = this; frame != null; frame = frame.Caller)
+            {
+                yield return frame;
+                if (frame.IsGoal) yield break;
+            }
+        }
+    }
+
     /// <summary>
     /// Length of the synchronous Caller chain rooted at this Call. <c>Root.Depth == 1</c>
     /// (only itself), <c>Root.Children[0].Depth == 2</c>, etc. A birth fact: one more than its

@@ -118,15 +118,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// <see cref="Current"/> pushed for a goal itself (a goal, no step). Its steps' frames come and go inside
     /// it; what lives for the goal's run (its tags) lives here. Null outside any goal.</summary>
     [global::app.LlmBuilder]
-    public call.@this? Scope
-    {
-        get
-        {
-            for (var frame = _current.Value; frame != null; frame = frame.Caller)
-                if (frame.IsGoal) return frame;
-            return null;
-        }
-    }
+    public call.@this? Scope => _current.Value?.Within.LastOrDefault(frame => frame.IsGoal);
 
     /// <summary>
     /// The error in play — what PLang reads as <c>%!error%</c>. Walks <c>Caller</c> outward from

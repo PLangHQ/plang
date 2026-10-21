@@ -122,31 +122,75 @@ public sealed class @this
         var user = _context.App.actor.list.User;
         var types = _context.App.type.list;
         var step = Setting.Step?.ToInt32();
-
+        // with no goal named, every goal is debugged and a step named is that step of each; with a goal named, debug
+        // attaches where it starts (or at its step named) and follows what it calls
+        var every = Every;
         var steps = types["step"].Own();
-        steps.Bind("start", When.before, (_, _, context) => BeforeStepHandler(context, step), user, global::app.@event.binding.Scope.actor,
-            (item, _) => item is global::app.goal.step.@this s && Watches(s.Goal));
-        steps.Bind("start", When.after, (_, _, context) => AfterStepHandler(context, step), user, global::app.@event.binding.Scope.actor,
-            (item, _) => item is global::app.goal.step.@this s && Watches(s.Goal));
+        var goals = types["goal"].Own();
 
-        types["goal"].Own().Bind("start", When.after, (_, _, context) => AfterGoalHandler(context), user, global::app.@event.binding.Scope.actor,
-            (item, _) => item is global::app.goal.@this g && Watches(g));
+        if (!every)
+        {
+            // the marks, bound before the watchers so a frame is marked before it is shown
+            goals.Bind("start", When.before, (item, _, context) => Mark((global::app.goal.@this)item, context, step), user,
+                global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.@this);
+            if (step != null)
+                steps.Bind("start", When.before, (item, _, context) => Mark((global::app.goal.step.@this)item, context, step.Value), user,
+                    global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.step.@this);
+        }
+        var shown = every ? step : null;
+
+        steps.Bind("start", When.before, (_, _, context) => BeforeStepHandler(context, shown), user, global::app.@event.binding.Scope.actor,
+            (item, context) => item is global::app.goal.step.@this && Debugged(context));
+        steps.Bind("start", When.after, (_, _, context) => AfterStepHandler(context, shown), user, global::app.@event.binding.Scope.actor,
+            (item, context) => item is global::app.goal.step.@this && Debugged(context));
+
+        goals.Bind("start", When.after, (_, _, context) => AfterGoalHandler(context), user, global::app.@event.binding.Scope.actor,
+            (item, context) => item is global::app.goal.@this && Debugged(context));
 
         if (Setting.Level.Value == global::app.module.debug.Level.Action)
         {
             var actions = types["action"].Own();
-            actions.Bind("start", When.before, (_, _, context) => BeforeActionHandler(context, step), user, global::app.@event.binding.Scope.actor);
-            actions.Bind("start", When.after, (_, _, context) => AfterActionHandler(context, step), user, global::app.@event.binding.Scope.actor);
+            actions.Bind("start", When.before, (_, _, context) => BeforeActionHandler(context, shown), user, global::app.@event.binding.Scope.actor,
+                (_, context) => Debugged(context));
+            actions.Bind("start", When.after, (_, _, context) => AfterActionHandler(context, shown), user, global::app.@event.binding.Scope.actor,
+                (_, context) => Debugged(context));
         }
         return null;
     }
 
-    // Whether debug watches <paramref name="goal"/>: every goal (`*`), the goals a `prefix*` starts, or the one
-    // named (case aside).
+    // The frames debug attached at — a named goal's own (or its step named), and each goal one of them calls — held
+    // by frame: a frame that ends leaves on its own.
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<global::app.call.@this, @this> _marked = new();
+
+    // Whether no goal is named: every goal is debugged (`*`, or none given).
+    private bool Every => Setting.Goal?.ToString() is not { Length: > 0 } pattern || pattern == "*";
+
+    // A goal starting, in its own frame: marked when it is the goal named (and no step is), or when its caller's run
+    // is marked — it is called from inside what debug follows.
+    private Task<data.@this> Mark(global::app.goal.@this goal, actor.context.@this context, int? step)
+    {
+        if (context.call.Current is { } frame
+            && (step == null && Watches(goal) || frame.Caller?.Within.Any(caller => _marked.TryGetValue(caller, out _)) == true))
+            _marked.AddOrUpdate(frame, this);
+        return Task.FromResult(context.Ok());
+    }
+
+    // A step starting, in its own frame: marked when it is the step named of the goal named.
+    private Task<data.@this> Mark(global::app.goal.step.@this step, actor.context.@this context, int index)
+    {
+        if (step.Index == index && Watches(step.Goal) && context.call.Current is { } frame)
+            _marked.AddOrUpdate(frame, this);
+        return Task.FromResult(context.Ok());
+    }
+
+    // Whether what runs now is debugged: everything when no goal is named, else when its goal's run holds a mark.
+    private bool Debugged(actor.context.@this context)
+        => Every || context.call.Current?.Within.Any(frame => _marked.TryGetValue(frame, out _)) == true;
+
+    // Whether <paramref name="goal"/> is the goal named: the goals a `prefix*` starts, or the one named (case aside).
     private bool Watches(global::app.goal.@this? goal)
     {
-        var pattern = Setting.Goal?.ToString();
-        if (string.IsNullOrEmpty(pattern) || pattern == "*") return true;
+        var pattern = Setting.Goal?.ToString() ?? "";
         var name = goal?.Name ?? "";
         return pattern.EndsWith('*')
             ? name.StartsWith(pattern[..^1], StringComparison.OrdinalIgnoreCase)
