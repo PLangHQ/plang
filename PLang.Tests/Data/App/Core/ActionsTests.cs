@@ -237,13 +237,13 @@ public class ActionsTests : System.IAsyncDisposable
         var stepFromLlm = new Step(app.type.list)
         {
             Code = new StepActions(app.type.list),
-            Warning = { new global::app.warning.@this { Key = "W1", Message = "Some warning" } }
         };
+        stepFromLlm.Warning.Add(new global::app.warning.@this(app.type.list) { Key = "W1", Message = "Some warning" });
 
         var (result, error) = MergeStep(step, stepFromLlm);
 
         await Assert.That(error).IsNull();
-        await Assert.That(result!.Warning.Count).IsEqualTo(1);
+        await Assert.That(result!.Warning.CountRaw).IsEqualTo(1);
         await Assert.That(result.Warning[0].Key).IsEqualTo("W1");
     }
 
@@ -279,11 +279,7 @@ public class ActionsTests : System.IAsyncDisposable
 
         step.Code = stepFromLlm.Code;   // take the node (mirrors step.Merge)
 
-        if (stepFromLlm.Warning.Count > 0)
-        {
-            step.Warning.Clear();
-            step.Warning.AddRange(stepFromLlm.Warning);
-        }
+        step.Merge(stepFromLlm);   // the warnings, as step.Merge takes them
 
         return (step, null);
     }

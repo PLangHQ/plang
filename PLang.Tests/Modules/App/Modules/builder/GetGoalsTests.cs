@@ -313,6 +313,6 @@ public class GetGoalsTests
         // Steps should have empty actions (no merge happened)
         await Assert.That(goals[0].Step[0].Code.Count).IsEqualTo(0);
         // The corrupt .pr is a build diagnostic about the goal that rebuilt — it hangs on that goal
-        await Assert.That(goals[0].Warning.Any(w => w.Key == "CorruptPrFile")).IsTrue();
+        await Assert.That(goals[0].Warning.Items().Any(w => w.Key == "CorruptPrFile")).IsTrue();
     }
 }

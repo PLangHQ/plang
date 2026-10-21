@@ -85,23 +85,23 @@ public class MergeTests : System.IAsyncDisposable
         var target = new Step(app.type.list)
         {
             Text = "step",
-            Warning = { new global::app.warning.@this { Key = "W1", Message = "original warning" } }
         };
+        target.Warning.Add(new global::app.warning.@this(app.type.list) { Key = "W1", Message = "original warning" });
 
         // Source with no warnings — target keeps its warnings
         var emptySource = new Step(app.type.list) { Text = "step" };
         target.Merge(emptySource);
-        await Assert.That(target.Warning.Count).IsEqualTo(1);
+        await Assert.That(target.Warning.CountRaw).IsEqualTo(1);
         await Assert.That(target.Warning[0].Key).IsEqualTo("W1");
 
         // Source with warnings — target warnings replaced
         var sourceWithWarnings = new Step(app.type.list)
         {
             Text = "step",
-            Warning = { new global::app.warning.@this { Key = "W2", Message = "new warning" } }
         };
+        sourceWithWarnings.Warning.Add(new global::app.warning.@this(app.type.list) { Key = "W2", Message = "new warning" });
         target.Merge(sourceWithWarnings);
-        await Assert.That(target.Warning.Count).IsEqualTo(1);
+        await Assert.That(target.Warning.CountRaw).IsEqualTo(1);
         await Assert.That(target.Warning[0].Key).IsEqualTo("W2");
     }
 

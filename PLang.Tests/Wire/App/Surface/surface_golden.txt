@@ -3482,7 +3482,7 @@ type app.type.item.input.modifier.list
 type app.type.item.note
   .line : list<app.type.item.note.line>
   .returns : app.type.item.note.line
-  .warning : list<clr>
+  .warning : list<warning>
 
 type app.type.item.note.line
   .name : text
@@ -3615,7 +3615,7 @@ type goal
   .child : list<goal>
   .visibility : choice<visibility>
   .path : path
-  .warning : list<clr>
+  .warning : list<warning>
   .cache : goal
   .isCached : bool
 
@@ -3809,6 +3809,10 @@ type url
 
 type variable
   .name : text
+
+type warning
+  .key : text
+  .message : text
 
 type window
   .id : number

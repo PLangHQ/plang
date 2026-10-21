@@ -70,7 +70,7 @@ public class DebugViewTests : System.IAsyncDisposable
         var goal = Make.Goal(Ctx, "Start", "/Start.goal",
             Make.Step("read a.txt", await Ctx.Action("file.read(Path=\"a.txt\")")));
         goal.Step[0].Line = new() { Number = 7, Indent = 1 };
-        goal.Step[0].Warning.Add(new global::app.warning.@this { Key = "Unsure", Message = "maybe file.read" });
+        goal.Step[0].Warning.Add(new global::app.warning.@this(_app.type.list) { Key = "Unsure", Message = "maybe file.read" });
 
         var written = await goal.Debug(Ctx);
 

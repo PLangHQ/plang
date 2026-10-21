@@ -1,24 +1,21 @@
 namespace app.warning.list;
 
 /// <summary>
-/// A program node's build diagnostics — its own collection of <see cref="app.warning.@this"/> rows
-/// (private backing, own Add, read-only surface, per the naked-collection rule). Exposed behind the
-/// singular <c>.Warning</c> property on goal/step. Reflection-serializable in Debug mode
-/// (Count + indexer).
+/// A program node's build diagnostics — a plang list of <see cref="app.warning.@this"/> values
+/// (<c>list&lt;warning&gt;</c>), exposed behind the singular <c>.Warning</c> property on goal/step. PROGRAM STRUCTURE:
+/// born context-free (the graph is shared across runs), it stores no context.
 /// </summary>
-public sealed class @this : System.Collections.Generic.IReadOnlyList<global::app.warning.@this>
+public sealed class @this : global::app.type.item.list.@this<global::app.warning.@this>
 {
-    private readonly System.Collections.Generic.List<global::app.warning.@this> _items = new();
+    /// <summary>An empty warning list, born holding its type from <paramref name="types"/>, the app's type list.</summary>
+    public @this(global::app.type.list.@this types) : base(new System.Collections.Generic.List<object?>(), types[typeof(@this)]) { }
 
-    public void Add(global::app.warning.@this warning) => _items.Add(warning);
-    public void AddRange(System.Collections.Generic.IEnumerable<global::app.warning.@this> warnings)
-        => _items.AddRange(warnings);
-    public void Clear() => _items.Clear();
-
-    public int Count => _items.Count;
-    public global::app.warning.@this this[int index] => _items[index];
-
-    public System.Collections.Generic.IEnumerator<global::app.warning.@this> GetEnumerator()
-        => _items.GetEnumerator();
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    /// <summary>Writes itself as the bare warning array — each warning its own {key, message} (not the base's per-row
+    /// value face), the shape the step reader reads.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    {
+        writer.BeginArray(CountRaw);
+        foreach (var warning in Items()) await warning.Output(writer);
+        writer.EndArray();
+    }
 }

@@ -244,9 +244,9 @@ public sealed class @this
         var warnings = new List<global::app.warning.@this>();
         foreach (var l in _listed.Where(l => used.Contains(l.Name)))
             if (l.Mark == listed.Mark.Possible)
-                warnings.Add(new() { Key = "Unsure", Message = $"step {i} uses {l.Name}, which the decider was not sure of ({l.Shown})" });
+                warnings.Add(new(context.App.type.list) { Key = "Unsure", Message = $"step {i} uses {l.Name}, which the decider was not sure of ({l.Shown})" });
             else if (l.Mark == listed.Mark.Popular)
-                warnings.Add(new() { Key = "Popular", Message = $"step {i} uses {l.Name} from the decider's popular-action choice ({l.Shown}): unsure" });
+                warnings.Add(new(context.App.type.list) { Key = "Popular", Message = $"step {i} uses {l.Name} from the decider's popular-action choice ({l.Shown}): unsure" });
         return (refused, warnings);
     }
 

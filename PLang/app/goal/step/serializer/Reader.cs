@@ -79,7 +79,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                                 default: throw new global::app.error.PrFormatOutdatedException($"warning key '{field}' isn't in this .pr format", ctx.Origin);
                             }
                         reader.EndObject();
-                        step.Warning.Add(new global::app.warning.@this { Key = key, Message = message });
+                        step.Warning.Add(new global::app.warning.@this(ctx.Context.App.type.list) { Key = key, Message = message });
                     }
                     reader.EndArray();
                     break;

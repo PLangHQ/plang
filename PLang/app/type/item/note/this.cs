@@ -28,7 +28,7 @@ public sealed class @this : global::app.type.item.@this
 
     // Null until the notes are read.
     private System.Collections.Generic.IReadOnlyList<line.@this>? _line;
-    private global::app.warning.list.@this _warning = new();
+    private global::app.warning.list.@this? _warning;
 
     /// <summary>The notes of <paramref name="about"/>, in <paramref name="file"/> — nothing read yet; born holding the
     /// app's <paramref name="type"/> for notes.</summary>
@@ -52,10 +52,11 @@ public sealed class @this : global::app.type.item.@this
     [global::app.LlmBuilder]
     public line.@this? Returns => Line.FirstOrDefault(line => string.Equals(line.Name?.ToString(), Result, System.StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>What the notes and its parts don't agree on: a line naming none of them, a part no line names.</summary>
+    /// <summary>What the notes and its parts don't agree on: a line naming none of them, a part no line names. None
+    /// before the notes are read.</summary>
     [global::app.Out]
     [global::app.LlmBuilder]
-    public global::app.warning.list.@this Warning => _warning;
+    public global::app.warning.list.@this? Warning => _warning;
 
     /// <summary>The notes read, once: the file's lines, each a named line or a free one, then what they and its parts
     /// don't agree on. Something with no notes file has no lines. A file that can't be read fails
@@ -79,17 +80,17 @@ public sealed class @this : global::app.type.item.@this
                 if (fence) fenced = !fenced;
             }
         }
-        var warning = new global::app.warning.list.@this();
+        var warning = new global::app.warning.list.@this(data.Context.App.type.list);
         // names are plang's: read whatever their case
         var named = read.Where(line => line.Name != null).Select(line => line.Name!.ToString())
             .ToHashSet(System.StringComparer.OrdinalIgnoreCase);
         var part = _about.Part;
         var title = char.ToUpperInvariant(part[0]) + part[1..];
         foreach (var name in named.Where(name => !string.Equals(name, Result, System.StringComparison.OrdinalIgnoreCase) && !_about.Names(name)))
-            warning.Add(new global::app.warning.@this { Key = $"NoteWithout{title}",
+            warning.Add(new global::app.warning.@this(data.Context.App.type.list) { Key = $"NoteWithout{title}",
                 Message = $"{_about.Noted}: the notes line '{name}' names no {part}" });
         foreach (var owed in _about.Parts.Where(owed => !named.Contains(owed)))
-            warning.Add(new global::app.warning.@this { Key = $"{title}WithoutNote",
+            warning.Add(new global::app.warning.@this(data.Context.App.type.list) { Key = $"{title}WithoutNote",
                 Message = $"{_about.Noted}: the {part} '{owed}' has no notes line" });
         _warning = warning;
         _line = read;

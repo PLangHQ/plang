@@ -57,7 +57,10 @@ public sealed partial class @this
     /// <summary>A step, born holding its type and its code list from <paramref name="types"/>, the app's type list
     /// (read at birth, never kept).</summary>
     public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
-        => _code = new(types[typeof(global::app.goal.step.action.list.@this)]);
+    {
+        _code = new(types[typeof(global::app.goal.step.action.list.@this)]);
+        Warning = new(types);
+    }
 
     private global::app.goal.step.action.list.@this _code;
     /// <summary>The step's code: the actions it runs, as the .pr holds them under <c>code</c>.</summary>
@@ -92,7 +95,7 @@ public sealed partial class @this
     public string? Source { get; set; }
 
     [Store, Out, Debug]
-    public global::app.warning.list.@this Warning { get; init; } = new();
+    public global::app.warning.list.@this Warning { get; private set; }
 
     /// <summary>Why the build could not write this step: the reasons that still refuse it after the step-fixer's
     /// retry, one cause each in its <c>list</c>. Null for a step that built. A goal holding a step with an Error
@@ -161,11 +164,8 @@ public sealed partial class @this
         if (from.Code.Count > 0)
             _code = from.Code;   // take the node — from is discarded; the graph is read-only after load
 
-        if (from.Warning.Count > 0)
-        {
-            Warning.Clear();
-            Warning.AddRange(from.Warning);
-        }
+        if (from.Warning.CountRaw > 0)
+            Warning = from.Warning;   // take the node, as the code above
     }
 
     public override string ToString() => $"[{Index}] {Text}";

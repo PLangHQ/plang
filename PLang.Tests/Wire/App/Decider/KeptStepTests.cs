@@ -108,7 +108,7 @@ public class KeptStepTests
         await second.Reopen(context);
 
         await Assert.That(second.Step[0].IsCached).IsFalse();
-        await Assert.That(second.Step[0].Warning.Single().Message).Contains("'Wait' is not a property of this action");
+        await Assert.That(second.Step[0].Warning.Items().Single().Message).Contains("'Wait' is not a property of this action");
         await Assert.That(second.Step[1].IsCached).IsTrue();
     }
 
@@ -134,7 +134,7 @@ public class KeptStepTests
         await second.Reopen(context);
 
         await Assert.That(second.Step[0].IsCached).IsFalse();
-        await Assert.That(second.Step[0].Warning.Single().Message).Contains("was built when Empty was a bool");
+        await Assert.That(second.Step[0].Warning.Items().Single().Message).Contains("was built when Empty was a bool");
         await Assert.That(second.IsCached).IsFalse();
     }
 
@@ -158,7 +158,7 @@ public class KeptStepTests
         await second.Reopen(context);
 
         await Assert.That(second.Step[0].IsCached).IsFalse();
-        await Assert.That(second.Step[0].Warning.Single().Message).Contains("file.read was built when Template was a bool");
+        await Assert.That(second.Step[0].Warning.Items().Single().Message).Contains("file.read was built when Template was a bool");
     }
 
     [Test]
@@ -176,7 +176,7 @@ public class KeptStepTests
 
         await Assert.That(second.Step[0].Code.Count).IsEqualTo(0);
         await Assert.That(second.Step[0].IsCached).IsFalse();
-        await Assert.That(second.Step[0].Warning.Single().Key).IsEqualTo("Reopened");
+        await Assert.That(second.Step[0].Warning.Items().Single().Key).IsEqualTo("Reopened");
         await Assert.That(second.Step[1].IsCached).IsTrue();
         await Assert.That(second.IsCached).IsFalse();
     }

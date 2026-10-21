@@ -43,6 +43,7 @@ public sealed partial class @this
         _step = new(types[typeof(global::app.goal.step.list.@this)]);
         Child = new(this, types[typeof(child.@this)]);
         Tag = new(types[typeof(global::app.goal.tag.list.@this)]);
+        Warning = new(types);
     }
 
     private global::app.goal.step.list.@this _step;
@@ -180,7 +181,7 @@ public sealed partial class @this
 
     [Debug]
     [LlmBuilder]
-    public global::app.warning.list.@this Warning { get; init; } = new();
+    public global::app.warning.list.@this Warning { get; init; }
 
     [Debug, Default]
     public string FullPath
@@ -312,7 +313,7 @@ public sealed partial class @this
         {
             if (await step.Validate(context) is not { } invalid) continue;
             step.Code = new global::app.goal.step.action.list.@this(step.Code.Type);
-            step.Warning.Add(new global::app.warning.@this
+            step.Warning.Add(new global::app.warning.@this(context.App.type.list)
             {
                 Key = "Reopened",
                 Message = $"step {step.Index}'s saved code no longer holds — rebuilt: {invalid.Message}",

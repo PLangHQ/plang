@@ -63,38 +63,4 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
         if (!any) yield return incoming;
     }
-
-    /// <summary>The step writes ITSELF — its bare [Store] shape, singular keys, nulls omitted, in every view. Its
-    /// <c>code</c> is the action list's own JSON tree (each action writes itself); <c>line</c> writes
-    /// itself; <c>warning</c> is written when the build left any. Before it closes, the view adds what only it shows (a
-    /// dump its diagnostics).</summary>
-    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-    {
-        writer.BeginObject();
-        writer.Name("index"); writer.Int(Index);
-        writer.Name("text"); writer.String(Text);
-        writer.Name("line"); Line.Output(writer);
-        if (Comment != null) { writer.Name("comment"); writer.String(Comment); }
-        writer.Name("code");
-        await Code.Output(writer);   // the action.list writes its own bare array
-        if (Intent != null) { writer.Name("intent"); writer.String(Intent); }
-        if (Source != null) { writer.Name("source"); writer.String(Source); }
-        if (Warning.Count > 0)
-        {
-            writer.Name("warning");
-            writer.BeginArray(Warning.Count);
-            foreach (var warning in Warning)
-            {
-                writer.BeginObject();
-                writer.Name("key"); writer.String(warning.Key);
-                writer.Name("message"); writer.String(warning.Message);
-                writer.EndObject();
-            }
-            writer.EndArray();
-        }
-        // a step the build could not fix: its error writes itself, as it does everywhere — the goal it belongs to does
-        // not start
-        if (Error != null) { writer.Name("error"); await Error.Output(writer); }
-        writer.EndObject();
-    }
 }

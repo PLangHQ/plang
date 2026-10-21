@@ -357,7 +357,7 @@ public class Default : IBuilder
         }
         catch (System.Exception ex) when (ex is global::app.error.AppException or System.Text.Json.JsonException)
         {
-            goal.Warning.Add(new global::app.warning.@this
+            goal.Warning.Add(new global::app.warning.@this(context.App.type.list)
             {
                 Key = "CorruptPrFile",
                 Message = $"Failed to deserialize .pr file at {prPath}: {ex.Message}"
@@ -367,7 +367,7 @@ public class Default : IBuilder
 
         if (prGoal is null)
         {
-            goal.Warning.Add(new global::app.warning.@this
+            goal.Warning.Add(new global::app.warning.@this(context.App.type.list)
             {
                 Key = "CorruptPrFile",
                 Message = $"Failed to parse .pr file at {prPath}"
