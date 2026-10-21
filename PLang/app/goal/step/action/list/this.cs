@@ -123,6 +123,7 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
             var action = this[i];
             // what the actions so far belong to: a clause belongs to the step action before it
             var before = anchor;
+            var belongs = action.Belongs(anchor);
             anchor = action.Anchor(anchor);
             if (action.IsBranch)
             {
@@ -146,7 +147,7 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
 
             // what belongs to the action before it (a clause: the condition's own error) chains; a step action stands on its
             // own, so after a condition it is a body beside it
-            if (condition != null && ReferenceEquals(anchor, action))
+            if (condition != null && !belongs)
                 return Broken(action,
                     $"`{action.Module}.{action.Name}` is after the {condition.Name} — a branch's body goes in its child.",
                     "BodyBesideCondition");
