@@ -17,6 +17,21 @@ public sealed class @this : global::app.snapshot.ISnapshot
     /// <summary>Keeps <paramref name="value"/> as <paramref name="name"/>, over what was kept by that name.</summary>
     internal void Add(string name, global::app.data.@this value) => _kept[name] = value;
 
+    /// <summary>How many members are kept.</summary>
+    internal int Count => _kept.Count;
+
+    /// <summary>The kept members, each the Data it was given, under its name.</summary>
+    internal System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, global::app.data.@this>> Members => _kept;
+
+    /// <summary>A list keeping the same members — the list is copied, the members shared, as a variable's copy keeps
+    /// what its value was given.</summary>
+    internal @this Copy()
+    {
+        var copy = new @this();
+        foreach (var (name, member) in _kept) copy._kept[name] = member;
+        return copy;
+    }
+
     /// <summary>Its section in a snapshot.</summary>
     public string Section => "Kept";
 

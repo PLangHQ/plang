@@ -40,6 +40,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         string name = "";
         global::app.type.@this? typeRef = null;
         Properties? properties = null;
+        global::app.type.item.kept.list.@this? kept = null;
         // The value slot — a lazy source (content or wire) or an eagerly-read item (goal.call);
         // a source IS an item, so one local carries every arm. Its bytes are held until the row
         // closes: the "variable" list written after it is what the value is born with.
@@ -88,6 +89,13 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                 case "properties":
                     properties = Properties.Read(ref reader, ctx);
                     break;
+                case "kept":
+                    // the members a program added to the value, each the Data it was given
+                    kept = new global::app.type.item.kept.list.@this();
+                    reader.BeginObject();
+                    while (reader.NextName(out var member)) kept.Add(member, Read(ref reader, ctx));
+                    reader.EndObject();
+                    break;
                 default:
                     reader.Skip();
                     break;
@@ -116,6 +124,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                 ? new Data(name, context: born) { Error = received }
                 : new Data(name, value, context: born);
             if (properties != null) d.Properties = properties;
+            if (kept != null) d.Kept = kept;
             return d;
         }
         // No value slot — a typed absence under its declared type (the absence the type's own
@@ -124,6 +133,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             ? new Data(name, new global::app.type.item.@null.@this(typeRef), context: born)
             : new Data(name, (object?)null, context: born);
         if (properties != null) typedNull.Properties = properties;
+        if (kept != null) typedNull.Kept = kept;
         return typedNull;
     }
 }
