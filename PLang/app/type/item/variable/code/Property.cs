@@ -24,12 +24,8 @@ public sealed class Property : Hop
     /// what holds it.</summary>
     internal override bool IsOwn => !IsBinding;
 
-    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
         global::app.data.@this? previous, global::app.actor.context.@this context)
-        => Start(previous, context, own: false);
-
-    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
-        global::app.data.@this? previous, global::app.actor.context.@this context, bool own)
     {
         if (previous is null) return context.NotFound(Name);
         if (!IsBinding)

@@ -361,12 +361,15 @@ public sealed class @this : IDisposable
     private System.Collections.Generic.Dictionary<System.Type, string>? _addresses;
     private System.Type? Class(string address) => Classes().GetValueOrDefault(address);
 
-    // The address of a settings class — a class that is none is a program's mistake (ISetting<T> names a settings class).
-    private string Address(System.Type @class)
+    /// <summary>Where the settings class <paramref name="class"/> is kept (<c>app.call.setting</c>), or one of its options
+    /// (<c>app.call.setting.timing</c>) — known without making one. A class that is no settings class is a program's
+    /// mistake.</summary>
+    public string Address(System.Type @class, string? option = null)
     {
         Classes();
-        return _addresses!.TryGetValue(@class, out var address) ? address
+        var address = _addresses!.TryGetValue(@class, out var held) ? held
             : throw new InvalidOperationException($"{@class.FullName} is not a settings class");
+        return option == null ? address : $"{address}.{option}";
     }
 
     private System.Collections.Generic.Dictionary<string, System.Type> Classes()

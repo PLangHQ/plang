@@ -177,7 +177,7 @@ public sealed partial class @this(IProgram asked)
             if (key.StartsWith('!') && child.Find(key[1..]) is { Success: true } setting
                 && (await setting.Value())!.Apply(key[1..], value, context) is { Success: true } address)
                 child.Set((await address.Value())!.ToString(), value);
-        return ReferenceEquals((await child.Get<global::app.channel.setting.@this>()).Format.Kind, process.@this.PlangFormat(context));
+        return (await child.Get<global::app.channel.setting.@this>()).Format.IsPlang;
     }
 
     public override string ToString() => File?.Absolute ?? asked.App.Peek()?.ToString() ?? "a program";

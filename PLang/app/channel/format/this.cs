@@ -18,6 +18,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The kind that writes and reads the channel's content.</summary>
     public global::app.type.kind.@this Kind { get; }
 
+    /// <summary>Whether this is plang's own format — a channel in it speaks plang (a program that runs this plang).</summary>
+    internal bool IsPlang => Kind is global::app.type.item.wire.kind.plang.@this;
+
     /// <summary>A format passes; a name, MIME or extension is the format the type list reads by it. Anything else, or a
     /// name no format answers to, is refused.</summary>
     public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)

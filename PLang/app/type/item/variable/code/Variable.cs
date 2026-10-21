@@ -50,10 +50,10 @@ public sealed class Variable : Hop
     /// <summary>What the name holds, then the steps after it — the first of them stepping on the variable's own
     /// binding.</summary>
     internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Read(
-        global::app.data.@this? previous, global::app.actor.context.@this context, bool own = false)
+        global::app.data.@this? previous, global::app.actor.context.@this context)
     {
         var binding = await Start(null, context);
-        return Next is null || !binding.Success || !binding.IsInitialized ? binding : await Next.Read(binding, context, own: true);
+        return Next is null || !binding.Success || !binding.IsInitialized ? binding : await Next.Read(binding, context);
     }
 
     /// <summary>The variable rebinds to <paramref name="value"/>; with steps after it, the next writes on the binding it

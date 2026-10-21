@@ -171,8 +171,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private async System.Threading.Tasks.Task<global::app.@event.binding.@this[]> Time(global::app.actor.context.@this context)
     {
         var system = context.App.actor.list.System;
-        var call = new global::app.call.setting.@this(context.App.type.list[typeof(global::app.call.setting.@this)]).Path;
-        system.Setting.Set(call + ".timing", true);
+        system.Setting.Set(system.Setting.Address(typeof(global::app.call.setting.@this), "timing"), true);
 
         var entry = Goal.Path?.ToString();
         bool Own(global::app.goal.step.@this step) => string.Equals(step.Goal.Path?.ToString(), entry, System.StringComparison.Ordinal);

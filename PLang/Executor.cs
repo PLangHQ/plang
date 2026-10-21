@@ -48,11 +48,12 @@ namespace PLang
 			// A flag is a setting's path: --channel.setting.format=plang is this run's value for
 			// %!app.channel.setting.format%, on the system actor (the user falls back to it); the mode words alone
 			// (--build, --test, --debug) switch their mode on. A flag no setting takes is the run's answer.
-			var modes = new Dictionary<string, global::app.type.item.setting.@this>(StringComparer.OrdinalIgnoreCase)
+			// each mode word's settings class
+			var modes = new Dictionary<string, System.Type>(StringComparer.OrdinalIgnoreCase)
 			{
-				["!debug"] = new global::app.module.debug.setting.@this(app.type.list[typeof(global::app.module.debug.setting.@this)]),
-				["!test"] = new global::app.test.setting.@this(app.type.list[typeof(global::app.test.setting.@this)]),
-				["!build"] = new global::app.module.build.setting.@this(app.type.list[typeof(global::app.module.build.setting.@this)]),
+				["!debug"] = typeof(global::app.module.debug.setting.@this),
+				["!test"] = typeof(global::app.test.setting.@this),
+				["!build"] = typeof(global::app.module.build.setting.@this),
 			};
 			// the flags that are settings' paths, and the setting classes they will write — known before anything is written
 			var flags = new List<(string Address, object? Value)>();
@@ -63,7 +64,7 @@ namespace PLang
 				{
 					if (value is IDictionary<string, object?>)
 						return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
-							$"'--{key[1..]}' takes no settings: write them at its setting's path, --{mode.Path}={{…}} or --{mode.Path}.<option>=value.",
+							$"'--{key[1..]}' takes no settings: write them at its setting's path, --{app.actor.list.System.Setting.Address(mode)}={{…}} or --{app.actor.list.System.Setting.Address(mode, "<option>")}=value.",
 							"UnknownSetting", 400)));
 					continue;
 				}
@@ -80,12 +81,12 @@ namespace PLang
 
 			// A mode is on when its word is given (and not false), or when the run writes its setting.
 			bool On(string word) => parameters.TryGetValue(word, out var given) && given is not false
-				|| settings.Contains(modes[word].GetType());
+				|| settings.Contains(modes[word]);
 
 			// The modes' defaults, under the command line's values: a debug run shows each step's time, so this run's
 			// call stacks time their frames (--call.setting.timing=false still says not).
 			if (On("!debug"))
-				app.actor.list.System.Setting.Set(new global::app.call.setting.@this(app.type.list[typeof(global::app.call.setting.@this)]).Path + ".timing", true);
+				app.actor.list.System.Setting.Set(app.actor.list.System.Setting.Address(typeof(global::app.call.setting.@this), "timing"), true);
 
 			// The command line's values, once: the last word.
 			foreach (var (address, value) in flags)
@@ -131,7 +132,7 @@ namespace PLang
 				// The run's value is in memory, so the sync Configure sets it at once.
 				var cache = (await app.actor.list.System.Context.Setting.Get<global::app.module.build.setting.@this>()).Cache;
 				if (cache.Value == global::app.module.cache.type.cache.skip)
-					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this(app.type.list[typeof(global::app.module.llm.setting.@this)]).Path + ".cache", cache);
+					app.actor.list.System.Setting.Set(app.actor.list.System.Setting.Address(typeof(global::app.module.llm.setting.@this), "cache"), cache);
 			}
 
 			// Set the goal file on system context — Start() reads it. Test mode runs the system test runner on what it

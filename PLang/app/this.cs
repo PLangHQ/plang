@@ -349,8 +349,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // an environment given at construction is this run's value of the app's setting
         if (environment != null)
         {
-            var own = new global::app.setting.@this(type.list[typeof(global::app.setting.@this)]).Path;
-            _ = actor.list.System.Setting.Set(own + ".environment",
+            var setting = actor.list.System.Setting;
+            _ = setting.Set(setting.Address(typeof(global::app.setting.@this), "environment"),
                 new global::app.type.item.text.@this(environment, type.list[typeof(global::app.type.item.text.@this)]));
         }
 

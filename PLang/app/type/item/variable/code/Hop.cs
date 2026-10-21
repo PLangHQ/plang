@@ -44,23 +44,16 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
         => System.Threading.Tasks.ValueTask.FromResult(context.Error(new global::app.error.@this(
             $"'{Text}' can't be written to — a {Kind} answers a value, it holds none.", "VariableNotWritable", 400)));
 
-    /// <summary>Its step on <paramref name="previous"/>, knowing whether that is the variable's own binding
-    /// (<paramref name="own"/>) — where a member a program added to the variable's value is kept. Most steps are the
-    /// same either way.</summary>
-    internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
-        global::app.data.@this? previous, global::app.actor.context.@this context, bool own) => Start(previous, context);
-
     /// <summary>Its write on <paramref name="parent"/>, knowing whether that is the variable's own binding
     /// (<paramref name="own"/>). Most steps are the same either way.</summary>
     internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
         global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own) => Set(parent, value, context);
 
-    /// <summary>Its step, then the steps after it; a step that fails or reaches nothing answers there. Whether
-    /// <paramref name="previous"/> is the variable's own binding (<paramref name="own"/>) is the root's to say.</summary>
+    /// <summary>Its step, then the steps after it; a step that fails or reaches nothing answers there.</summary>
     internal virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Read(
-        global::app.data.@this? previous, global::app.actor.context.@this context, bool own = false)
+        global::app.data.@this? previous, global::app.actor.context.@this context)
     {
-        var data = await Start(previous, context, own);
+        var data = await Start(previous, context);
         return Next is null || !data.Success || !data.IsInitialized ? data : await Next.Read(data, context);
     }
 
