@@ -54,6 +54,8 @@ public sealed class Property : Hop
         // A fact about the thing the value is — a reference's own (a file's !path, !size, !kind; a url's !host), never
         // its content's. A plain value has none: its members are read with a dot.
         if (await previous.Peek().Fact(key, previous) is { } fact) return fact;
+        // then a fact of what the value came from — a read file the use narrowed to the dict it parses to
+        if (await previous.Peek().history.Fact(key, previous) is { } origin) return origin;
 
         return previous.Context?.NotFound(key) ?? context.NotFound(key);
     }

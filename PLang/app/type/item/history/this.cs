@@ -34,6 +34,15 @@ public sealed class @this
         return false;
     }
 
+    /// <summary>A fact of what the item came from, read with <c>!</c> (<c>%cfg!path%</c> on the dict a read file parsed
+    /// to): the newest prior first, each its own fact, else what it came from; null when none has it.</summary>
+    internal async System.Threading.Tasks.ValueTask<global::app.data.@this?> Fact(string key, global::app.data.@this parent)
+    {
+        for (var i = _list.Count - 1; i >= 0; i--)
+            if ((await _list[i].Fact(key, parent) ?? await _list[i].history.Fact(key, parent)) is { } fact) return fact;
+        return null;
+    }
+
     /// <summary>Was any prior (recursively) of the kind <paramref name="name"/>? A read <c>config.json</c> parsed to a
     /// dict still answers <c>is json</c>.</summary>
     public bool HasKind(string name)
