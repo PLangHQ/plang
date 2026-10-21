@@ -7,7 +7,8 @@ namespace app.Utils;
 /// Values are pure JSON — any valid JSON value works: strings, numbers, booleans, objects, arrays.
 ///
 /// Examples:
-///   plang Start                          → goal=Start.goal
+///   plang Start                          → positional=Start (the goal to run)
+///   plang --test module/math             → positional=module/math (what to test), !test=true
 ///   plang --build                        → !build=true
 ///   plang --debug.setting.goal=Start     → !debug.setting.goal="Start"
 ///   plang name="my app"                  → name="my app"
@@ -16,35 +17,32 @@ namespace app.Utils;
 /// </summary>
 public class CommandLineParser
 {
-	public string GoalName { get; private set; } = "Start.goal";
+	/// <summary>The one argument that is no parameter, wherever it stands — the goal to run, or in test mode what to test;
+	/// null when none is given.</summary>
+	public string? Positional { get; private set; }
 	public Dictionary<string, object> Parameters { get; private set; } = new();
 
-	public static (string goalName, Dictionary<string, object> parameters) Parse(string[] args)
+	public static (string? positional, Dictionary<string, object> parameters) Parse(string[] args)
 	{
 		var parser = new CommandLineParser();
 		parser.ParseArgs(args);
-		return (parser.GoalName, parser.Parameters);
+		return (parser.Positional, parser.Parameters);
 	}
 
 	private void ParseArgs(string[] args)
 	{
-		if (args.Length == 0) return;
-
 		int i = 0;
 
-		// First arg is the goal name if it doesn't look like a parameter
-		if (!IsParameter(args[0]))
-		{
-			GoalName = args[0];
-			if (!GoalName.EndsWith(".goal"))
-				GoalName += ".goal";
-			i = 1;
-		}
-
-		// Parse remaining args as key=value pairs
+		// Parse the args as key=value pairs; the first that doesn't look like a parameter is the positional
 		while (i < args.Length)
 		{
 			var arg = args[i];
+			if (Positional == null && !IsParameter(arg))
+			{
+				Positional = arg;
+				i++;
+				continue;
+			}
 			bool isSystem = arg.StartsWith("--");
 			if (isSystem) arg = arg[2..];
 

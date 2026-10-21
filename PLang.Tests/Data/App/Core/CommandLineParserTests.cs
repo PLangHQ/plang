@@ -5,20 +5,31 @@ namespace PLang.Tests.App.Core;
 public class CommandLineParserTests
 {
     [Test]
-    public async Task Parse_NoArgs_DefaultGoalIsStart()
+    public async Task Parse_NoArgs_HasNoPositional()
     {
         var (goalName, parameters) = CommandLineParser.Parse([]);
 
-        await Assert.That(goalName).IsEqualTo("Start.goal");
+        await Assert.That(goalName).IsNull();
         await Assert.That(parameters.Count).IsEqualTo(0);
     }
 
     [Test]
-    public async Task Parse_CustomGoalName_AppendsGoalExtension()
+    public async Task Parse_CustomGoalName_IsThePositionalAsWritten()
     {
         var (goalName, _) = CommandLineParser.Parse(["TestGoal"]);
 
-        await Assert.That(goalName).IsEqualTo("TestGoal.goal");
+        await Assert.That(goalName).IsEqualTo("TestGoal");
+    }
+
+    // the positional is the first argument that is no parameter, wherever it stands
+    [Test]
+    public async Task Parse_APositionalAfterAFlag_IsThePositional()
+    {
+        var (positional, parameters) = CommandLineParser.Parse(["--test", "module/math"]);
+
+        await Assert.That(positional).IsEqualTo("module/math");
+        await Assert.That(parameters).ContainsKey("!test");
+        await Assert.That(parameters).DoesNotContainKey("module/math");
     }
 
     [Test]
@@ -34,7 +45,7 @@ public class CommandLineParserTests
     {
         var (goalName, parameters) = CommandLineParser.Parse(["name=Ingi"]);
 
-        await Assert.That(goalName).IsEqualTo("Start.goal");
+        await Assert.That(goalName).IsNull();
         await Assert.That(parameters).ContainsKey("name");
         await Assert.That(parameters["name"]).IsEqualTo("Ingi");
     }
@@ -62,7 +73,7 @@ public class CommandLineParserTests
     {
         var (goalName, parameters) = CommandLineParser.Parse(["TestGoal", "name=Ingi", "isActive=true"]);
 
-        await Assert.That(goalName).IsEqualTo("TestGoal.goal");
+        await Assert.That(goalName).IsEqualTo("TestGoal");
         await Assert.That(parameters).ContainsKey("name");
         await Assert.That(parameters["name"]).IsEqualTo("Ingi");
         await Assert.That(parameters).ContainsKey("isActive");

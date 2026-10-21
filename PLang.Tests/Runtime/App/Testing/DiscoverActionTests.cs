@@ -170,6 +170,19 @@ public class DiscoverActionTests
     }
 
     // A .goal with no matching .pr in .build/ → global::app.test.Status.Stale with reason "no .pr".
+    // A root that is a test file is that one test (`plang --test sub/Bar.test.goal`).
+    [Test]
+    public async Task Discover_ATestFileAsTheRoot_IsThatOneTest()
+    {
+        await CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" });
+        await CreateTestFile("sub/Bar.test.goal", "Start", new[] { "set %x% = 2" });
+
+        var files = await Discover("sub/Bar.test.goal");
+
+        await Assert.That(files.Count).IsEqualTo(1);
+        await Assert.That(files[0].Goal.Path!.ToString()).EndsWith("Bar.test.goal");
+    }
+
     [Test]
     public async Task Discover_NoPrFile_MarksStaleWithReasonNoPr()
     {
