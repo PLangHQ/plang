@@ -15,7 +15,7 @@ public sealed class Index : Hop
     public override string Kind => "index";
 
     /// <summary>A literal key holds no variable; a variable key is own when it is.</summary>
-    internal override bool IsOwn => Key.Variable.All(v => v.IsOwn);
+    internal override bool IsProgram => Key.Variable.All(v => v.IsProgram);
 
     /// <summary><c>{"number": 0}</c>, <c>{"text": "k"}</c>, or <c>{"variable": [the key]}</c>.</summary>
     protected override async System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer)

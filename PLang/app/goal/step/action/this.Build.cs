@@ -8,7 +8,7 @@ public partial class @this
 {
     /// <summary>The actions this action's properties hold — a callback (<c>action</c>), a recovery
     /// (<c>list&lt;action&gt;</c>) — in property order. Program, walked like the branch body.</summary>
-    internal System.Collections.Generic.IEnumerable<@this> Held
+    internal System.Collections.Generic.IEnumerable<@this> Callback
     {
         get
         {
@@ -58,7 +58,7 @@ public partial class @this
             }
         }
 
-        foreach (var action in Held)
+        foreach (var action in Callback)
             if (await action.Build(context) is { } cause) causes.Add(cause);
         for (int i = 0; i < Child.Count; i++)
             if (await Child[i].Code.Build(context) is { } branch) causes.Add(branch);
@@ -92,7 +92,7 @@ public partial class @this
     public void Freeze(global::app.actor.context.@this context)
     {
         foreach (var row in Unfrozen(context).ToList()) Default.Add(row);
-        foreach (var action in Held) action.Freeze(context);
+        foreach (var action in Callback) action.Freeze(context);
         for (int i = 0; i < Child.Count; i++)
             foreach (var action in Child[i].Code.Items()) action.Freeze(context);
     }
@@ -127,7 +127,7 @@ public partial class @this
         if (Module[Name] is { } catalog)
             await Property.Reduce(catalog.Property, string.Equals(Module.Name, "condition", StringComparison.OrdinalIgnoreCase)
                 ? new HashSet<string> { "Left", "Right" } : new HashSet<string>(), context);
-        foreach (var action in Held) await action.Reduce(context);
+        foreach (var action in Callback) await action.Reduce(context);
         for (int i = 0; i < Child.Count; i++)
             foreach (var action in Child[i].Code.Items()) await action.Reduce(context);
     }

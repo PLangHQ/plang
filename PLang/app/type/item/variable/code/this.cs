@@ -15,7 +15,7 @@ public sealed class @this : global::app.type.item.list.bare.@this<Hop>
     public Variable Root => (Variable)this[0];
 
     /// <summary>Whether every hop stays among the program's own variables.</summary>
-    internal bool IsOwn => Items().All(hop => hop.IsOwn);
+    internal bool IsProgram => Items().All(hop => hop.IsProgram);
 
     /// <summary>Runs every hop: what the variable holds — or, for a path read from a value
     /// (<see cref="parser.@this.Path"/>, no root), what <paramref name="from"/> holds there.</summary>

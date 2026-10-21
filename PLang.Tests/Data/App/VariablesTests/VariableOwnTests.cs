@@ -18,7 +18,7 @@ public class VariableOwnTests
     public async Task TheProgramsOwn(string text)
     {
         await using var app = new global::app.@this("/test").Testing();
-        await Assert.That(new Parser(text, app.type.list).Whole!.IsOwn).IsTrue();
+        await Assert.That(new Parser(text, app.type.list).Whole!.IsProgram).IsTrue();
     }
 
     [Test]
@@ -34,6 +34,6 @@ public class VariableOwnTests
     public async Task ReachesOutside(string text)
     {
         await using var app = new global::app.@this("/test").Testing();
-        await Assert.That(new Parser(text, app.type.list).Whole!.IsOwn).IsFalse();
+        await Assert.That(new Parser(text, app.type.list).Whole!.IsProgram).IsFalse();
     }
 }

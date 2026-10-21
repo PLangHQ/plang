@@ -180,7 +180,7 @@ public partial class Set : IContext, IScope, IKeep
             // The declared type through the types: its item class, its kind canonicalised
             // (`markdown` → `md`, `jpeg` → `jpg`). The declared type object is the program's (shared
             // by every run), so a changed kind is this run's own type object.
-            var type = typeValue is global::app.type.@this named ? Context.App.type.list[named, Context] : entity;
+            var type = typeValue is global::app.type.@this clause ? Context.App.type.list[clause, Context] : entity;
             var targetType = type.ClrType;
 
             // A value that already is the declared type is kept as it is — followed to what it names

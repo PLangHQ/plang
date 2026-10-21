@@ -68,7 +68,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (Chain(caller).FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } near)
             return context.Ok(near);
 
-        if (Held(name) is { } match) return context.Ok(match);
+        if (Goal(name) is { } match) return context.Ok(match);
 
         var source = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name : name + ".goal";
         if (!source.StartsWith('/') && !source.StartsWith('\\') && caller?.Folder is { } folder)
@@ -139,7 +139,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // different files may share one), its .goal or .pr path in any of the forms a call writes, or a
     // slash-qualified name whose folder is part of it (BuildGoal/Start is Start in a BuildGoal folder).
     // A setup goal runs only through setup, never by a call.
-    private goal.@this? Held(string name)
+    private goal.@this? Goal(string name)
     {
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase)) name = name[..^5];
         var goals = Items().Where(g => !g.IsSetup).Reverse().ToList();

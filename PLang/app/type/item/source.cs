@@ -77,7 +77,7 @@ public class source : @this
         // here — a variable not held is never resolved; it stays as written everywhere downstream.
         IEnumerable<global::app.type.item.variable.@this> variables =
             built ? variable ?? all()                               // the build's own .pr: every variable its row lists
-            : origin != null ? all().Where(v => v.IsOwn)            // a file or url read with load vars: the program's own only
+            : origin != null ? all().Where(v => v.IsProgram)          // a file or url read with load vars: the program's own only
             : [];                                                   // anything else (a peer's value, the store): none
         _variable = variables.DistinctBy(v => v.Text).ToList();
         // A full-match %ref% on ANY declared type is a reference to a binding — resolved at

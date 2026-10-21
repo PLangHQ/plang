@@ -147,7 +147,7 @@ public sealed class @this : browser.@this
 
     /// <summary>The page at <paramref name="address"/> is one of plang's own: a file under the app's folder or the
     /// os folder.</summary>
-    internal bool Own(string address)
+    internal bool IsPlang(string address)
         => Uri.TryCreate(address, UriKind.Absolute, out var url) && url.IsFile
            && new FilePath(url.LocalPath, _app.Type) is var page && (page.IsUnder(_app).Value || page.IsUnder(_os).Value);
 
@@ -179,7 +179,7 @@ public sealed class @this : browser.@this
             browser.Message = said => global::app.module.on.code.Gate.Call(onMessage, Payload(said, context), context);
         // OnMessage asks to hear the page, but only plang's own pages may talk: say so, rather than a page
         // that waits for plang() forever
-        if (onMessage != null && !browser.Own(url))
+        if (onMessage != null && !browser.IsPlang(url))
             await context.Actor.Channel.Report(context.Error(new global::app.error.ActionError(
                 $"browser.start: {url} is not one of plang's own pages (under the app's or the os folder), so it gets no plang() and OnMessage never hears it",
                 "PageNotOwn", 400)));

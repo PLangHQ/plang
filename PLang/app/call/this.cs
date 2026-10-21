@@ -177,7 +177,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     // This frame's own variables: every name it binds (born with or written into it), and which of them it was born
     // with — what its runner supplied (a goal call's parameters, a tool's arguments).
     private readonly Dictionary<string, global::app.data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _born = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _arguments = new(StringComparer.OrdinalIgnoreCase);
     // The action this frame was pushed to run (a tool invocation) — the one call its supplied names are FOR.
     private readonly global::app.goal.step.action.@this? _for;
 
@@ -231,7 +231,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         {
             if (name == null || string.IsNullOrEmpty(name.Name)) continue;
             _variables[name.Name] = name;   // last wins on duplicate names
-            _born.Add(name.Name);
+            _arguments.Add(name.Name);
         }
 
         if (!Measured) return;
@@ -255,12 +255,12 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
 
     /// <summary>The frame a write to <paramref name="name"/> lands in: this one when it was born with the name, else
     /// the nearest caller that was; null when none was — the write goes to its context's memory.</summary>
-    internal virtual @this? Keeper(string name) => _born.Contains(name) ? this : Caller?.Keeper(name);
+    internal virtual @this? Keeper(string name) => _arguments.Contains(name) ? this : Caller?.Keeper(name);
 
     /// <summary>True when this frame was pushed FOR <paramref name="call"/> and born with <paramref name="name"/> — its
     /// runner supplied it (a tool's argument), so the supplied value wins over the call's own row.</summary>
     public bool Supplies(global::app.goal.step.action.@this call, string name)
-        => ReferenceEquals(_for, call) && _born.Contains(name);
+        => ReferenceEquals(_for, call) && _arguments.Contains(name);
 
     /// <summary>What <paramref name="name"/> holds, read from this frame outward — an inner frame's shadows an outer's.
     /// Case-insensitive.</summary>
@@ -273,7 +273,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     }
 
     /// <summary>The names this frame was born with — a goal call's own arguments, not its callers'.</summary>
-    internal IEnumerable<string> Arguments => _born;
+    internal IEnumerable<string> Arguments => _arguments;
 
     /// <summary>The names this frame and its callers hold, the inner frame's first.</summary>
     internal IEnumerable<string> Names

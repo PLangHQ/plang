@@ -85,7 +85,7 @@ public partial class @this
 
         // what it holds judges itself too — the actions its properties hold (a callback, a recovery), the steps
         // of its branch body — as the build walks them
-        foreach (var action in Held)
+        foreach (var action in Callback)
             if (await action.Validate(context) is { } cause) causes.Add(cause);
         for (int i = 0; i < Child.Count; i++)
             if (await Child[i].Code.Validate(context) is { } branch) causes.Add(branch);

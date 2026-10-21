@@ -13,7 +13,7 @@ public sealed class Variable : Hop
 
     /// <summary>A name the program sets is its own; a <c>!</c> name (<c>%!app%</c>, <c>%!trace%</c>) is the
     /// app's or a binding's.</summary>
-    internal override bool IsOwn => !Name.StartsWith('!');
+    internal override bool IsProgram => !Name.StartsWith('!');
 
     protected override System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer) { writer.String(Name); return default; }
 
@@ -41,7 +41,7 @@ public sealed class Variable : Hop
     /// <see cref="Start"/> would read: a binding, a shortcut, the app's member, a module. <c>%!photo.png%</c> names
     /// none of them.</summary>
     internal async System.Threading.Tasks.ValueTask<bool> Names(global::app.actor.context.@this context)
-        => IsOwn || Bound.Contains(Name, global::app.type.item.variable.list.@this.Comparer)
+        => IsProgram || Bound.Contains(Name, global::app.type.item.variable.list.@this.Comparer)
            || (await Start(null, context)).IsInitialized;
 
     // the ! names a run binds as it goes — never there before it runs

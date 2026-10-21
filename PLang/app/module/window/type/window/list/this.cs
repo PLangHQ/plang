@@ -76,7 +76,7 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
     internal Task ShowDesktop(string target, string address)
     {
         Desktop.Address = address;
-        return Desktop.Show(0, new Page(target, browser.Cdp, browser.Own), browser.Own(address) ? browser.Message : null,
+        return Desktop.Show(0, new Page(target, browser.Cdp, browser.IsPlang), browser.IsPlang(address) ? browser.Message : null,
             browser.Video(0), browser.VideoScript);
     }
 
@@ -125,7 +125,7 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
                 known.Named = title;
                 if (pages.FirstOrDefault(p => p.target == known.Target) is { url: { } now } && now != known.Address)
                 {
-                    var within = browser.Own(now) && browser.Own(known.Address);
+                    var within = browser.IsPlang(now) && browser.IsPlang(known.Address);
                     known.Address = now;
                     if (!within) browser.Display.Wayland.Url(id, Browser.AddressOf(known.Address, context));
                 }
@@ -137,7 +137,7 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
             window.Address = page.url;
             if (!_shown.TryAdd(id, window)) return;
             browser.Display.Wayland.Url(id, Browser.AddressOf(window.Address, context));
-            await window.Show(id, new Page(page.target, browser.Cdp, browser.Own), browser.Own(window.Address) ? browser.Message : null,
+            await window.Show(id, new Page(page.target, browser.Cdp, browser.IsPlang), browser.IsPlang(window.Address) ? browser.Message : null,
                 browser.Video(id), browser.VideoScript);
         }
         catch (Exception ex) when (ex is JsonException or IOException or InvalidOperationException or TimeoutException)

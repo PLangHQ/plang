@@ -965,7 +965,7 @@ public class DynamicData : @this
     private readonly global::app.type.item.computed _cell;
 
     // The Data this stands for, found per read with the asker's context.
-    private readonly Func<actor.context.@this, @this?> _read;
+    private readonly Func<actor.context.@this, @this?> _data;
 
     /// <summary>A Data <paramref name="found"/> at each read. <paramref name="declared"/> labels what it is
     /// before it is read (<c>%Now%</c> is a datetime).</summary>
@@ -976,17 +976,17 @@ public class DynamicData : @this
     {
     }
 
-    private DynamicData(string name, global::app.type.item.computed cell, Func<actor.context.@this, @this?> read,
+    private DynamicData(string name, global::app.type.item.computed cell, Func<actor.context.@this, @this?> data,
         actor.context.@this context)
         : base(name, cell, context: context)
     {
         _cell = cell;
-        _read = read;
+        _data = data;
     }
 
     internal override carried Carried
     {
-        get => _read(Context)?.Carried ?? base.Carried;
+        get => _data(Context)?.Carried ?? base.Carried;
         set => base.Carried = value;
     }
 
