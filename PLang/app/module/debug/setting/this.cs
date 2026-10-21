@@ -16,6 +16,18 @@ public sealed class @this : global::app.type.item.setting.module.@this
     /// prefix starts). Null or <c>*</c> = every goal.</summary>
     [Out, Store] public global::app.type.item.text.@this? Goal { get; set; }
 
+    /// <summary>Whether the goal named <paramref name="name"/> is one <see cref="Goal"/> names: every goal when it names
+    /// none (or <c>*</c>), the goals a <c>prefix*</c> starts, or the one named (case aside). No goal (a step composed in
+    /// C#) is only one when every goal is.</summary>
+    internal bool Matches(string? name)
+    {
+        if (Goal?.ToString() is not { Length: > 0 } pattern || pattern == "*") return true;
+        if (name == null) return false;
+        return pattern.EndsWith('*')
+            ? name.StartsWith(pattern[..^1], System.StringComparison.OrdinalIgnoreCase)
+            : string.Equals(name, pattern, System.StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <summary>The step debug attaches at instead, in each goal named: that step and what it calls. Null = the goal's
     /// whole run.</summary>
     [Out, Store] public global::app.type.item.number.@this? Step { get; set; }

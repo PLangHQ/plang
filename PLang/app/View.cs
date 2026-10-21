@@ -249,7 +249,8 @@ public abstract class View
             global::app.data.@this used;
             try { used = await Settled(new global::app.data.@this("", value, context: writer.Context)); }
             catch (global::app.error.AppException failed) { used = writer.Context.Error(failed.Error); }
-            var unread = !used.IsInitialized || used.Error is { Key: "VariableNotFound" };
+            // a name that reads nothing: the miss, or the error its own status calls not found
+            var unread = !used.IsInitialized || used.Error is { Status.IsNotFound: true };
             if (unread)
             {
                 writer.Name("value");

@@ -19,6 +19,10 @@ public sealed partial class @this
     [Store, Out, LlmBuilder, Debug, Default]
     public string Text { get; internal set; } = "";
 
+    /// <summary>How this step is named where it is shown — its index, and its goal's name when it has one
+    /// (<c>[3] of Start</c>).</summary>
+    internal string Label => Goal is { } goal ? $"[{Index}] of {goal.Name}" : $"[{Index}]";
+
     /// <summary>
     /// Text of the prior-build step that produced this step's Actions. Set by
     /// Goal.Merge when actions are carried over from an existing .pr. Used

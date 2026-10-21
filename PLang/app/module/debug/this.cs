@@ -75,9 +75,9 @@ public sealed class @this
             var variables = _context.App.variable.type.Own();
             bool Watches(global::app.type.item.@this item, actor.context.@this _)
                 => item is global::app.type.item.variable.@this variable && watched.Contains(variable.Name);
-            variables.Bind("set", When.after, (item, result, context) => Watch((global::app.type.item.variable.@this)item, "SET", result, context),
+            variables.Bind("set", When.after, (item, result, context) => Set((global::app.type.item.variable.@this)item, result, context),
                 _context.App.actor.list.User, global::app.@event.binding.Scope.actor, Watches);
-            variables.Bind("remove", When.after, (item, result, context) => Watch((global::app.type.item.variable.@this)item, "DELETED", null, context),
+            variables.Bind("remove", When.after, (item, _, context) => Remove((global::app.type.item.variable.@this)item, context),
                 _context.App.actor.list.User, global::app.@event.binding.Scope.actor, Watches);
         }
 
@@ -181,44 +181,41 @@ public sealed class @this
     private bool Debugged(actor.context.@this context)
         => context.call.Current?.Within.Any(frame => _marked.TryGetValue(frame, out _)) == true;
 
-    // Whether <paramref name="goal"/> is a goal named: every goal when none is (or `*`), the goals a `prefix*` starts, or
-    // the one named (case aside).
+    // Whether <paramref name="goal"/> is a goal the setting names.
     private async System.Threading.Tasks.ValueTask<bool> Watches(global::app.goal.@this? goal)
+        => (await Setting()).Matches(goal?.Name);
+
+    /// <summary>A watched variable set: where it happened and the type it now holds. Answers a plain success — the watch
+    /// never fails a program.</summary>
+    private async Task<data.@this> Set(global::app.type.item.variable.@this variable, data.@this? stored, actor.context.@this context)
     {
-        var pattern = (await Setting()).Goal?.ToString() ?? "";
-        if (pattern.Length == 0 || pattern == "*") return true;
-        var name = goal?.Name ?? "";
-        return pattern.EndsWith('*')
-            ? name.StartsWith(pattern[..^1], StringComparison.OrdinalIgnoreCase)
-            : string.Equals(name, pattern, StringComparison.OrdinalIgnoreCase);
-    }
-
-
-    /// <summary>One watched variable was set or removed: where it happened (goal, step) and, on a set, the
-    /// type it now holds. Answers a plain success — the watch never fails a program.</summary>
-    private async Task<data.@this> Watch(global::app.type.item.variable.@this variable, string change,
-        data.@this? stored, actor.context.@this context)
-    {
-        var goalName = context.call.Goal?.Name ?? "?";
-        var stepIndex = context.call.Step?.Index.ToString() ?? "?";
-        var stepText = context.call.Step?.Text;
-        if (stepText != null && stepText.Length > 60) stepText = stepText[..60];
-
         var sb = new StringBuilder();
-        sb.AppendLine($"=== WATCH [{variable.Name}] {change} ===");
-        sb.AppendLine($"  Goal: {goalName}[{stepIndex}] {stepText ?? "?"}");
+        sb.AppendLine($"=== WATCH [{variable.Name}] SET ===");
+        sb.AppendLine($"  {Where(context)}");
         if (stored != null) sb.AppendLine($"  Type: {stored.Type.Name}");
         await Write(sb.ToString());
         return context.Ok();
     }
 
+    /// <summary>A watched variable removed: where it happened.</summary>
+    private async Task<data.@this> Remove(global::app.type.item.variable.@this variable, actor.context.@this context)
+    {
+        await Write($"=== WATCH [{variable.Name}] DELETED ==={Environment.NewLine}  {Where(context)}{Environment.NewLine}");
+        return context.Ok();
+    }
+
+    // Where a watched change happened: the step running (its label and text, cut to 60), else the goal, else no goal.
+    private string Where(actor.context.@this context)
+        => context.call.Step is { } step ? $"Step: {step.Label} {(step.Text.Length > 60 ? step.Text[..60] : step.Text)}"
+            : context.call.Goal is { } goal ? $"Goal: {goal.Name}"
+            : "outside any goal";
+
     // A step about to run, as debug shows it: its text, its actions as written, the calls it sits in, its variables.
     private static async Task<data.@this> Before(global::app.goal.step.@this step, actor.context.@this context)
     {
-        var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
 
-        sb.AppendLine($"=== DEBUG [BEFORE]: Step [{step.Index}] of {goalName} ===");
+        sb.AppendLine($"=== DEBUG [BEFORE]: Step {step.Label} ===");
         sb.AppendLine($"  Text: {step.Text}");
 
         foreach (var action in step.Code.Items())   // sync display reads the stored actions, never resolves
@@ -252,12 +249,11 @@ public sealed class @this
     // A step that ran, as debug shows it: how long it took, its variables.
     private static async Task<data.@this> After(global::app.goal.step.@this step, actor.context.@this context)
     {
-        var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
 
         // the after-binding runs inside the step's frame: its Duration is the step's time so far
         var took = context.call.Current?.Duration(context) is { } elapsed ? $" ({elapsed.Value.TotalMilliseconds:0.###} ms)" : "";
-        sb.AppendLine($"=== DEBUG [AFTER]: Step [{step.Index}] of {goalName}{took} ===");
+        sb.AppendLine($"=== DEBUG [AFTER]: Step {step.Label}{took} ===");
 
         await Variables(sb, step, context);
         sb.AppendLine("========================================");
@@ -331,9 +327,8 @@ public sealed class @this
     {
         if (action.Step is not { } step) return context.Ok();
 
-        var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
-        sb.AppendLine($"  --- ACTION [BEFORE] in Step [{step.Index}] of {goalName} ---");
+        sb.AppendLine($"  --- ACTION [BEFORE] in Step {step.Label} ---");
 
         await Variables(sb, step, context);
 
@@ -346,9 +341,8 @@ public sealed class @this
     {
         if (action.Step is not { } step) return context.Ok();
 
-        var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
-        sb.AppendLine($"  --- ACTION [AFTER] in Step [{step.Index}] of {goalName} ---");
+        sb.AppendLine($"  --- ACTION [AFTER] in Step {step.Label} ---");
 
         await Variables(sb, step, context);
 
@@ -388,7 +382,7 @@ public sealed class @this
                 continue;
             }
 
-            sb.AppendLine($"    %{variable.Name}% = {await FormatValue(data.Peek(), context)} ({data.Type?.Name ?? "?"})");
+            sb.AppendLine($"    %{variable.Name}% = {await FormatValue(data.Peek(), context)} ({data.Type.Name})");
 
             if (data.Properties.Count > 0)
             {
