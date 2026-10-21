@@ -177,11 +177,9 @@ public class @this : global::app.channel.type.session.@this
         if (line == null)
             return action.Context.Error(new global::app.error.NoAnswer(
                 $"Channel '{Name}' has no interactive answerer (stream EOF)"));
-        // the answer is read in this channel's format: a line typed is text — the user's data itself; in plang's own
-        // it is the Data the program answered. It has arrived whole, so it is read now: nothing is left to defer.
-        var answer = await Format(action.Context).Decode(System.Text.Encoding.UTF8.GetBytes(line), action.Context, Name, ct: ct);
-        if (answer.Success) await answer.Value();
-        return answer;
+        // the answer is read as any message on this channel is, in its format: a line typed is text — the user's data
+        // itself; in plang's own it is the Data the program answered
+        return await Read(ResolveEncoding().GetBytes(line), ct);
     }
 
     // what was read past the last message's end: the start of the next one

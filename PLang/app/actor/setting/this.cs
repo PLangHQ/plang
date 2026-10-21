@@ -141,10 +141,8 @@ public sealed class @this : IDisposable
     /// </summary>
     public data.@this Set(string path, object? value)
     {
-        var found = Find(path);
-        if (!found.Success) return found;
-        var setting = ((global::app.type.item.setting.@this)found.Peek()!).Path;
-        var option = path.Length > found.Name.Length ? path[(found.Name.Length + 1)..] : null;
+        var (setting, option, refused) = Place(path);
+        if (refused != null) return _context.Error(refused);
         var raw = value is data.@this given ? given.Peek() : value;
         var options = option == null ? raw as IDictionary<string, object?> : Nested(option, raw);
         if (options == null)
@@ -156,44 +154,52 @@ public sealed class @this : IDisposable
         if (option != null && value is data.@this whole) _values[$"{setting}.{option}"] = whole;
         else Flatten(setting, options);
         Move();
-        return found;
+        return new data.@this(setting, Make(setting), context: _context);
     }
 
     /// <summary>
-    /// The setting <paramref name="path"/> names, as the command line names it: the longest path a setting answers to,
-    /// its own or without <c>app.</c> (<c>channel.setting.format</c> → <c>app.channel.setting</c>) — a fresh value of
-    /// it, at its defaults, the Data named by the part of the path it answered to. A path no setting answers to, or
-    /// one two settings answer to, is refused.
+    /// The setting <paramref name="path"/> names: the longest path a setting answers to, its own or without
+    /// <c>app.</c> (<c>channel.setting.format</c> → <c>app.channel.setting</c>) — a fresh value of it, at its defaults.
+    /// A path no setting answers to, or one two settings answer to, is refused.
     /// </summary>
     public data.@this Find(string path)
     {
-        var flags = _flags ??= Flags();
+        var (setting, _, refused) = Place(path);
+        return refused != null ? _context.Error(refused) : new data.@this(setting, Make(setting), context: _context);
+    }
+
+    // Where path lands: the setting the longest part of it answers to, and the option after it (null for the setting's
+    // own path) — or why it lands nowhere.
+    private (string Setting, string? Option, global::app.error.@this? Refused) Place(string path)
+    {
+        var answers = _answers ??= Answers();
         for (var end = path.Length; end > 0; end = path.LastIndexOf('.', end - 1))
         {
-            if (!flags.TryGetValue(path[..end], out var settings)) continue;
+            if (!answers.TryGetValue(path[..end], out var settings)) continue;
             if (settings.Count > 1)
-                return _context.Error(new global::app.error.@this(
+                return ("", null, new global::app.error.@this(
                     $"'{path}' names two settings: {string.Join(" and ", settings)} — write the one you mean in full.", "AmbiguousSetting", 400));
-            return new data.@this(path[..end], Make(settings[0]), context: _context);
+            return (settings[0], end == path.Length ? null : path[(end + 1)..], null);
         }
-        return _context.Error(new global::app.error.@this(
+        return ("", null, new global::app.error.@this(
             $"'{path}' names no setting — a setting's path is its owner's and then .setting (channel.setting.format).", "UnknownSetting", 400));
     }
 
-    // Each setting by the paths a flag names it: its own, and without `app.` (app.channel.setting, channel.setting).
-    private Dictionary<string, List<string>>? _flags;
+    // The settings each path answers to: a setting's own path, and it without `app.` (app.channel.setting,
+    // channel.setting) — two settings answering to one path make it ambiguous.
+    private Dictionary<string, List<string>>? _answers;
 
-    private Dictionary<string, List<string>> Flags()
+    private Dictionary<string, List<string>> Answers()
     {
-        var flags = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        var answers = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
         const string app = "app.";
         foreach (var path in (_classes ??= Index()).Keys)
             foreach (var key in path.StartsWith(app, StringComparison.OrdinalIgnoreCase) ? new[] { path, path[app.Length..] } : new[] { path })
             {
-                if (!flags.TryGetValue(key, out var paths)) flags[key] = paths = [];
-                paths.Add(path);
+                if (!answers.TryGetValue(key, out var settings)) answers[key] = settings = [];
+                settings.Add(path);
             }
-        return flags;
+        return answers;
     }
 
     // An option path's value as the options it sets: format → {format: v}, diff.deep → {diff: {deep: v}}.

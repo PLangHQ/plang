@@ -164,14 +164,17 @@ public sealed partial class @this(IProgram asked)
         info.StandardInputEncoding = new UTF8Encoding(false);
     }
 
-    /// <summary>It is a plang told to speak plang's own format on its console (<c>--channel.setting.format=…</c>, with
-    /// or without <c>app.</c>, a name of that format).</summary>
+    /// <summary>It is a plang told to speak plang's own format on its console — its command line read as a plang reads
+    /// its own (<c>--channel.setting.format=plang</c>, with or without <c>app.</c>, or the setting's dict).</summary>
     internal bool SpeaksPlang(Context context)
     {
-        string[] flags = ["--channel.setting.format=", "--app.channel.setting.format="];
-        var named = Info!.ArgumentList.Select(a => flags.FirstOrDefault(f => a.StartsWith(f, StringComparison.OrdinalIgnoreCase)) is { } f ? a[f.Length..] : null)
-            .FirstOrDefault(n => n != null);
-        return named != null && ReferenceEquals(context.App.type.list.Format(named), process.@this.PlangFormat(context));
+        var (_, parameters) = global::app.Utils.CommandLineParser.Parse([.. Info!.ArgumentList]);
+        // the child's settings as its command line sets them, in a layer of their own; a flag that is no setting is
+        // the child's to refuse when it starts, not this read's
+        using var child = new global::app.actor.setting.@this(context);
+        foreach (var (key, value) in parameters)
+            if (key.StartsWith('!')) child.Set(key[1..], value);
+        return ReferenceEquals(child.Of<global::app.channel.setting.@this>().Format.Kind, process.@this.PlangFormat(context));
     }
 
     public override string ToString() => File?.Absolute ?? asked.App.Peek()?.ToString() ?? "a program";

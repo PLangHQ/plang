@@ -48,8 +48,9 @@ public class AskAnswerTests
         await ctx.Variable.Set("name", asked);
 
         var name = await ctx.Variable.Get("name");
-        await Assert.That(name.Peek()).IsTypeOf<global::app.type.item.text.@this>();
-        await Assert.That(name.Peek().ToString()).IsEqualTo("Ada");
+        await Assert.That(name.Type.Name).IsEqualTo("text");
+        await Assert.That(await name.Value()).IsTypeOf<global::app.type.item.text.@this>();
+        await Assert.That((await name.Value())!.ToString()).IsEqualTo("Ada");
     }
 
     [Test] public async Task TheAnswer_RendersInATemplate()

@@ -67,8 +67,9 @@ public class OutputAskRoutingTests
         var ch = new global::app.channel.type.stream.@this("i", ms,
             global::app.channel.ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
-        // Empty question to skip WriteCore — exercises Ask's read-line path
-        // without needing a registered Channels collection for the serializer.
+        // a channel reads in its list's context: registered on the user actor
+        app.actor.list.User.Channel.Register(ch);
+        // Empty question to skip WriteCore — exercises Ask's read-line path.
         var action = new ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) };
         var result = await ch.Ask(action);
         await result.IsSuccess();
