@@ -1,12 +1,12 @@
 {
-  "name": "MissingVarIsNotNullValue",
-  "comment": "An explicit null is a real, typed, present value (Type \"null\") occupying the variable — it is\nNOT the same as a never-set variable (which resolves to not-found). Here we pin the value side:\nassigning null yields a present null-typed value that reads back as null.",
+  "name": "ExplicitNullIsAPresentNullValue",
+  "comment": "An explicit null is a real, typed, present value (Type \"null\") occupying the variable — it is\nNOT the same as a never-set variable (which resolves to not-found; WhereUnsetVariableIsNotFound\npins that side). Here we pin the value side: assigning null yields a present null-typed value\nthat reads back as null.",
   "step": [
     {
       "index": 0,
       "text": "set %x% = null",
       "line": {
-        "number": 5,
+        "number": 6,
         "indent": 0
       },
       "code": [
@@ -53,9 +53,9 @@
     },
     {
       "index": 1,
-      "text": "assert %x!type% equals \"null\"",
+      "text": "assert %x!type.name% equals \"null\"",
       "line": {
-        "number": 6,
+        "number": 7,
         "indent": 0
       },
       "code": [
@@ -76,16 +76,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x!type%",
+              "value": "%x!type.name%",
               "variable": [
                 {
-                  "text": "%x!type%",
+                  "text": "%x!type.name%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
                       "property": "!type"
+                    },
+                    {
+                      "property": "name"
                     }
                   ]
                 }
@@ -99,7 +102,7 @@
       "index": 2,
       "text": "assert %x% is null",
       "line": {
-        "number": 7,
+        "number": 8,
         "indent": 0
       },
       "code": [
@@ -131,6 +134,6 @@
     }
   ],
   "visibility": "Public",
-  "file": "MissingVarIsNotNullValue.test.goal",
-  "hash": "77fd4e171520f20cf428b9567e91fdf03284ab0b65cbc7a27b0fc71ae5d5c644"
+  "file": "ExplicitNullIsAPresentNullValue.test.goal",
+  "hash": "0a9e6f3a6197dd9dc065953a1591906025722a630a0b079afd0d53b60f0bef9f"
 }
