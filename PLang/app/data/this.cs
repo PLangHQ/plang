@@ -150,7 +150,7 @@ public partial class @this
         try
         {
             var rendered = await asked.Value();
-            if (asked.Success) return new @this(Name, rendered, context: _context) { Properties = Properties.Clone() };
+            if (asked.Success) return new @this(Name, rendered, context: _context) { Properties = Properties.Clone(), Kept = Kept.Copy() };
             why = asked.Error!;
         }
         // a partial template throws for a name it can't read; here that is this value's answer, on the Data
@@ -207,6 +207,14 @@ public partial class @this
     [LlmIgnore]
     [Out, Store]
     public virtual Properties Properties { get; set; } = new();
+
+    /// <summary>The members a program added to this variable's value that the value can't hold itself
+    /// (<c>set %name.lang% = "is"</c> on a text) — read with a dot after the value's own members, never with
+    /// <c>!</c>, which reads <see cref="Properties"/>. They ride with the value: across the wire and in the store.</summary>
+    [JsonIgnore]
+    [LlmIgnore]
+    [Out, Store]
+    internal virtual global::app.type.item.kept.list.@this Kept { get; set; } = new();
 
 
     [JsonConstructor]
@@ -599,6 +607,7 @@ public partial class @this
             Returned = Returned,
             ReturnDepth = ReturnDepth,
             Properties = Properties,
+            Kept = Kept,
         };
         clone._item = answer ?? Empty;
         // A declined ask lands its reason on this binding (asking.Fail) and
@@ -630,6 +639,7 @@ public partial class @this
             Returned = Returned,
             ReturnDepth = ReturnDepth,
             Properties = Properties,
+            Kept = Kept,
             IsInitialized = IsInitialized,
         };
         view._item = _item;
@@ -717,6 +727,7 @@ public partial class @this
             Returned = Returned,
             ReturnDepth = ReturnDepth,
             Properties = Properties.Clone(),
+            Kept = Kept.Copy(),
             Signature = signature ?? Signature,
         };
     }
@@ -733,7 +744,8 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties.Clone()
+            Properties = Properties.Clone(),
+            Kept = Kept.Copy(),
         };
     }
 
@@ -912,6 +924,7 @@ public class @this<T> : @this
         copy.Returned = source.Returned;
         copy.ReturnDepth = source.ReturnDepth;
         copy.Properties = source.Properties;
+        copy.Kept = source.Kept;
         copy.Snapshot = source.Snapshot;
         return copy;
     }
@@ -969,6 +982,12 @@ public class DynamicData : @this
         set => base.Properties = value;
     }
 
+    internal override global::app.type.item.kept.list.@this Kept
+    {
+        get => _found(Context)?.Kept ?? base.Kept;
+        set => base.Kept = value;
+    }
+
     /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
     public override global::app.type.item.@this Peek() => _cell.Compute(Context);
 
@@ -983,7 +1002,7 @@ public class DynamicData : @this
         global::app.type.item.signature.@this? signature = null)
     {
         var ctx = context ?? Context;
-        return new @this(name, _cell.Compute(ctx), context: ctx) { Properties = Properties.Clone() };
+        return new @this(name, _cell.Compute(ctx), context: ctx) { Properties = Properties.Clone(), Kept = Kept.Copy() };
     }
 }
 

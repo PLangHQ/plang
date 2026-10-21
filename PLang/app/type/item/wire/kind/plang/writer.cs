@@ -71,6 +71,18 @@ public sealed class Writer : global::app.type.format.IWriter
             }
             _json.EndObject();
         }
+        // the members a program added to the value, beside it; nothing kept, nothing said
+        if (record.Kept.Count > 0)
+        {
+            _json.Name("kept");
+            _json.BeginObject();
+            foreach (var (name, member) in record.Kept.Members)
+            {
+                _json.Name(name);
+                await member.Output(this);
+            }
+            _json.EndObject();
+        }
         _json.EndObject();
     }
 

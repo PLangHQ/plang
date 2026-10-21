@@ -26,7 +26,7 @@ public partial class @this
     /// <paramref name="isIndex"/> tells a position (<c>[0]</c>) from a member (<c>.name</c>). The item
     /// owns the write; this Data rebinds when the item comes back replaced (a json host materialises
     /// into a dict; a clr host mutates in place, so identity holds). When this Data is a variable's own binding
-    /// (<paramref name="keeps"/>), a member its value can't take is kept in its Properties. Answers this Data.
+    /// (<paramref name="keeps"/>), a member its value can't take is kept beside it (<see cref="Kept"/>). Answers this Data.
     /// </summary>
     public async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, bool keeps = false)
     {
@@ -58,7 +58,7 @@ public partial class @this
             // plain value inside another has nowhere to keep one
             if (keeps && !isIndex)
             {
-                Properties[key] = value is @this given ? await given.Value() : value;
+                Kept.Add(key, value as @this ?? new @this(key, value, context: _context));
                 return this;
             }
             return _context?.Error(new global::app.error.@this(

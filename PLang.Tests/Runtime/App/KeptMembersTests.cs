@@ -54,8 +54,71 @@ public class KeptMembersTests
         await (await Set(ctx, "%name.lang%", ctx.Text("is"))).IsSuccess();
 
         await Assert.That(await Read(ctx, "%name.lang%")).IsEqualTo("is");
-        await Assert.That(await Read(ctx, "%name!lang%")).IsEqualTo("is");
         await Assert.That(await Read(ctx, "%name%")).IsEqualTo("Ingi");
+    }
+
+    // `.` reads the value's members, added ones included; `!` reads the variable's properties and facts. Neither sees
+    // the other's.
+    [Test]
+    public async Task AnAddedMember_IsNoProperty()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
+        await ctx.Variable.Set("name", new global::app.data.@this("name", "Ingi", context: ctx));
+
+        await (await Set(ctx, "%name.lang%", ctx.Text("is"))).IsSuccess();
+
+        await Assert.That((await Variable("%name!lang%", ctx.App.type.list).Start(ctx)).IsInitialized).IsFalse();
+    }
+
+    [Test]
+    public async Task AProperty_IsNoMember()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
+        await ctx.Variable.Set("x", new global::app.data.@this("x", "box", context: ctx));
+
+        await (await Set(ctx, "%x!size%", (global::app.type.item.number.@this)10)).IsSuccess();
+
+        await Assert.That(await Read(ctx, "%x!size%")).IsEqualTo("10");
+        var member = await Variable("%x.size%", ctx.App.type.list).Start(ctx);
+        await Assert.That(member.Success && member.IsInitialized).IsFalse();
+    }
+
+    // An added member rides with its variable's value: across the wire, and through the store.
+    [Test]
+    public async Task AnAddedMember_RidesTheWire()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
+        await ctx.Variable.Set("name", new global::app.data.@this("name", "Ingi", context: ctx));
+        await (await Set(ctx, "%name.lang%", ctx.Text("is"))).IsSuccess();
+        var plang = app.type.list.Format("plang")!;
+
+        using var wire = new MemoryStream();
+        await (await plang.Encode(wire, await ctx.Variable.Get("name"), ctx)).IsSuccess();
+        var back = await plang.Decode(wire.ToArray(), ctx, "name");
+        await back.IsSuccess();
+        await ctx.Variable.Set("again", back);
+
+        await Assert.That(await Read(ctx, "%again.lang%")).IsEqualTo("is");
+        await Assert.That(await Read(ctx, "%again%")).IsEqualTo("Ingi");
+    }
+
+    [Test]
+    public async Task AnAddedMember_RidesTheStore()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
+        await ctx.Variable.Set("name", new global::app.data.@this("name", "Ingi", context: ctx));
+        await (await Set(ctx, "%name.lang%", ctx.Text("is"))).IsSuccess();
+
+        await (await app.store.Set("kept", "name", await ctx.Variable.Get("name"))).IsSuccess();
+        var back = await app.store.Get<global::app.type.item.text.@this>("kept", "name");
+        await back.IsSuccess();
+        await ctx.Variable.Set("again", back);
+
+        await Assert.That(await Read(ctx, "%again.lang%")).IsEqualTo("is");
     }
 
     [Test]

@@ -35,9 +35,10 @@ public sealed class Property : Hop
         if (!IsBinding)
         {
             var read = await previous.Peek().Get(previous, Name);
-            // a member a program added to a variable's own value is kept in its binding — read after the value's own
-            if (own && (!read.Success || !read.IsInitialized) && previous.Properties.ContainsKey(Name))
-                return new global::app.data.@this(Name, await previous.Properties.Value(Name), parent: previous);
+            // a member a program added to a variable's own value is kept beside it in its binding — read after the
+            // value's own (never a `!` property: those are the variable's, read with !)
+            if (own && (!read.Success || !read.IsInitialized) && previous.Kept[Name] is { } kept)
+                return new global::app.data.@this(Name, await kept.Value(), parent: previous);
             return read;
         }
 

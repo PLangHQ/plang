@@ -205,8 +205,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             kept.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
             return context.Ok(this);
         }
-        // Where a plain value holds a member a program adds is Ingi's open question; until it is answered it holds
-        // none, and says so — a variable's own binding keeps the member instead.
+        // A plain value holds no member a program adds, and says so: a variable's own binding keeps it beside the value
+        // (its Kept), read with a dot and never with `!`.
         return context.Error(new global::app.error.@this(
             $"a {Type.Name} can't hold an added member yet ('{key}'); a dict can", "NoAddedMember", 404));
     }
