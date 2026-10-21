@@ -155,6 +155,44 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 30. Throughput: what stops 8 workers
+
+Asked (Ingi): how high can it go; profile the 8-worker run and find the contention. The §29 harness, one goal
+(`Condition.test.goal`), no console, 60k request apps, server GC, Debug build. Machine: i7-8665U — **4 cores, 2
+threads each** (`lscpu`), not 8 cores; load ~1 – 2.
+
+| workers | wall | CPU (user + sys) | cores busy | req/s |
+|---|---|---|---|---|
+| 1 | 34 s | 37 s | 1.1 | ~1,900 |
+| 4 | 15 s | 57 s | 3.7 | ~4,500 |
+| 8 | 12.7 s | 83 s | 6.5 | ~5,400 |
+
+(wall includes ~3 s of test-host start.) **The workers are busy, not waiting**: CPU per request goes 0.6 → 1.4 ms
+because two threads share a core and an all-core clock is lower — 4 → 8 adds the ~20 % hyper-threading gives.
+The ceiling here is the laptop; a 16-core server should do roughly 4×; Release is ~20 % more (§23).
+
+How it was ruled out (dotnet-trace: CPU samples, contention and GC events; analyzer in the scratchpad):
+- **Locks are not it.** True contention (the runtime's ContentionStart/Stop) summed 1.2 s over all threads in a
+  17 s run, most of it the first wave waiting for one-time loads (type list 667 ms, type reader, module list) — gone
+  once warm. `Monitor.Enter_Slowpath` samples on `variable.list.Bind` and `call.child.list.Add` are threads parked
+  for a GC at that safe point: those locks are one app's and never show as contention.
+- **GC is not it.** 4,412 pauses, 3.7 s stopped; but gen0 given 8× the room (`DOTNET_GCgen0size`, working set 150
+  → 380 MB) moved throughput 0 %. The `DateTime.UtcNow` in every `Data` ctor is where threads park, not a cost.
+- **One real shared lock on the hot path — fixed:** the empty kind's lookup by key (`kind/empty/this.cs`
+  `this[string]`) took the type's gate on every look, and a type is shared by every app (`path.Resolve`,
+  `type.list.Full`: ~190 waits, ~200 ms). Now its key tables are made under the gate and read without it — a made
+  table is never written again; `Add` drops it and the next look makes a new one. `Held` (the kinds as an array)
+  the same: one array until a kind comes in, not a copy per walk. After: contention events 553 → 248, the empty
+  kind gone from them (what is left is the one-time first wave and `property.list.Rows`). Throughput not re-timed:
+  the machine went to load 13 (another session's compiler); the fix is ~1 % of thread time, so expect little here
+  and more on more cores.
+- Tests `KindLookupTests`: a kind added after a lookup answers its key (red with `Add` not dropping the keys); 8
+  readers look keys up while kinds keep coming in, every answer whole (red, 3 of 3, with the table published
+  before it is filled). C# green but Wire's six; `plang --test` the same 11 names (diffed against the stash).
+
+Where more would come from: more cores, then less per request — ~100 KB allocated and many `Data` objects (each
+reads the clock) per tiny request.
+
 ## 29. Soak: what a server keeps after 100k request apps
 
 Asked (Ingi): a leak check. A request app per request (born with shared types, a goal loaded and run, disposed), a

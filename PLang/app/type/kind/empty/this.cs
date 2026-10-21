@@ -14,9 +14,15 @@ public sealed class @this : global::app.type.kind.@this
     // extensions without the dot — the first kind that answers, in the order they came. Made whole, at its size, the
     // first time a key is looked up after kinds came in (Add drops it), so a key finds its kind in one look, never by
     // asking each kind in turn; none while nothing looks a key up (a type object made for a value, the common case,
-    // and a type whose kinds are only walked, never pay for one).
-    private System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _keys;
-    private System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _extensions;
+    // and a type whose kinds are only walked, never pay for one). Made under the gate, read without it: a made table
+    // is never written again (Add drops it and the next look makes a new one), so the apps sharing a type look
+    // their keys up at once.
+    private sealed record Keys(
+        System.Collections.Generic.Dictionary<string, global::app.type.kind.@this> Named,
+        System.Collections.Generic.Dictionary<string, global::app.type.kind.@this> Extended);
+    private Keys? _keys;
+    // The held kinds as one array, made at the first walk after kinds came in (Add drops it): read without the gate.
+    private global::app.type.kind.@this[]? _held;
     private readonly object _gate = new();
     // The type's own format — its class's [Format("", …)]: plain text is {text}, opaque bytes {binary}.
     private global::app.type.kind.@this? _format;
@@ -100,7 +106,8 @@ public sealed class @this : global::app.type.kind.@this
         get
         {
             Ready();
-            lock (_gate) return _kinds.ToArray();
+            if (System.Threading.Volatile.Read(ref _held) is { } held) return held;
+            lock (_gate) return _held ??= _kinds.ToArray();
         }
     }
 
@@ -121,14 +128,11 @@ public sealed class @this : global::app.type.kind.@this
             // (`.template` is a file's, never a kind named template); any other as it is, as a MIME without its
             // parameters, else as an extension
             var semicolon = name.IndexOf(';');
-            lock (_gate)
-            {
-                Keyed();
-                return name.StartsWith('.') ? _extensions?.GetValueOrDefault(name[1..])
-                       : _keys?.GetValueOrDefault(name)
-                         ?? (semicolon >= 0 ? _keys?.GetValueOrDefault(name[..semicolon].Trim()) : null)
-                         ?? _extensions?.GetValueOrDefault(name);
-            }
+            if (Keyed() is not { } keys) return null;
+            return name.StartsWith('.') ? keys.Extended.GetValueOrDefault(name[1..])
+                   : keys.Named.GetValueOrDefault(name)
+                     ?? (semicolon >= 0 ? keys.Named.GetValueOrDefault(name[..semicolon].Trim()) : null)
+                     ?? keys.Extended.GetValueOrDefault(name);
         }
     }
 
@@ -175,26 +179,31 @@ public sealed class @this : global::app.type.kind.@this
                 if (string.Equals(_kinds[at].Name, kind.Name, System.StringComparison.OrdinalIgnoreCase))
                     _kinds.RemoveAt(at);
             _kinds.Add(kind);
-            _keys = null;
-            _extensions = null;
+            System.Threading.Volatile.Write(ref _keys, null);
+            System.Threading.Volatile.Write(ref _held, null);
         }
     }
 
-    // Makes the keys of the held kinds, when they are not made (under the gate): the first kind that answers keeps a key.
-    private void Keyed()
+    // The keys of the held kinds, made the first time they are looked up (under the gate): the first kind that
+    // answers keeps a key. Null while the type holds no kinds.
+    private Keys? Keyed()
     {
-        if (_keys != null || _kinds.Count == 0) return;
-        int keys = 0, extensions = 0;
-        foreach (var kind in _kinds)
+        if (System.Threading.Volatile.Read(ref _keys) is { } made) return made;
+        lock (_gate)
         {
-            var (k, e) = kind.Count;
-            keys += k;
-            extensions += e;
+            if (_keys != null || _kinds.Count == 0) return _keys;
+            int keys = 0, extensions = 0;
+            foreach (var kind in _kinds)
+            {
+                var (k, e) = kind.Count;
+                keys += k;
+                extensions += e;
+            }
+            var keyed = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(keys, System.StringComparer.OrdinalIgnoreCase);
+            var extended = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(extensions, System.StringComparer.OrdinalIgnoreCase);
+            foreach (var kind in _kinds) kind.Key(keyed, extended);
+            System.Threading.Volatile.Write(ref _keys, new Keys(keyed, extended));
+            return _keys;
         }
-        var keyed = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(keys, System.StringComparer.OrdinalIgnoreCase);
-        var extended = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(extensions, System.StringComparer.OrdinalIgnoreCase);
-        foreach (var kind in _kinds) kind.Key(keyed, extended);
-        _extensions = extended;
-        _keys = keyed;
     }
 }
