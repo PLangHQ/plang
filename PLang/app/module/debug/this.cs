@@ -42,8 +42,8 @@ public sealed class @this
         var ch = _context.App.actor.list.System.Channel.Get(app.channel.list.@this.Debug)
               ?? _context.App.actor.list.System.Channel.Get(app.channel.list.@this.Error);
         if (ch == null) return Task.CompletedTask;
-        var envelope = message is app.data.@this d ? d : _context.App.actor.list.System.Context.Ok(message);
-        return ch.WriteAsync(envelope);
+        var data = message is app.data.@this d ? d : _context.App.actor.list.System.Context.Ok(message);
+        return ch.WriteAsync(data);
     }
 
     /// <summary>
@@ -87,8 +87,6 @@ public sealed class @this
         {
             if (_context.App.Code.Get<global::app.module.llm.code.ILlm>().Provider is global::app.module.llm.code.OpenAi oai)
             {
-                var context = _context.App.actor.list.User.Context;
-
                 oai.OnBeforeRequest += async (messages, schema) =>
                 {
                     if (llm.System)
@@ -96,24 +94,24 @@ public sealed class @this
                         var sys = messages
                             .Where(m => string.Equals(m.Role, "system", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
-                        await Show("LLM SYSTEM", sys, context);
+                        await Show("LLM SYSTEM", sys);
                     }
                     if (llm.User)
                     {
                         var users = messages
                             .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
-                        await Show("LLM USER", users, context);
+                        await Show("LLM USER", users);
                     }
                     if (llm.Schema == true && !string.IsNullOrEmpty(schema))
                     {
-                        await Show("LLM SCHEMA", new[] { schema }, context);
+                        await Show("LLM SCHEMA", new[] { schema });
                     }
                 };
                 if (llm.Response)
                 {
                     oai.OnAfterResponse += (rawResponse) =>
-                        Show("LLM RESPONSE", new[] { rawResponse ?? "(null)" }, context);
+                        Show("LLM RESPONSE", new[] { rawResponse ?? "(null)" });
                 }
             }
         }
@@ -211,7 +209,7 @@ public sealed class @this
             : "outside any goal";
 
     // A step about to run, as debug shows it: its text, its actions as written, the calls it sits in, its variables.
-    private static async Task<data.@this> Before(global::app.goal.step.@this step, actor.context.@this context)
+    private async Task<data.@this> Before(global::app.goal.step.@this step, actor.context.@this context)
     {
         var sb = new StringBuilder();
 
@@ -242,12 +240,12 @@ public sealed class @this
         await Variables(sb, step, context);
         sb.AppendLine("========================================");
 
-        await Show(sb, context);
+        await Show(sb);
         return context.Ok();
     }
 
     // A step that ran, as debug shows it: how long it took, its variables.
-    private static async Task<data.@this> After(global::app.goal.step.@this step, actor.context.@this context)
+    private async Task<data.@this> After(global::app.goal.step.@this step, actor.context.@this context)
     {
         var sb = new StringBuilder();
 
@@ -258,7 +256,7 @@ public sealed class @this
         await Variables(sb, step, context);
         sb.AppendLine("========================================");
 
-        await Show(sb, context);
+        await Show(sb);
         return context.Ok();
     }
 
@@ -268,21 +266,21 @@ public sealed class @this
     /// granular Llm.* flag handlers — each flag fires its own block independently.
     /// </summary>
     // internal for DebugTraceWriteTests (driving the LLM event lifecycle requires a real LLM call)
-    internal static Task Show(string title, IEnumerable<string> chunks, actor.context.@this context)
+    internal Task Show(string title, IEnumerable<string> chunks)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"=== {title} ===");
         foreach (var chunk in chunks)
             sb.AppendLine(chunk);
         sb.AppendLine($"=== END {title} ===");
-        return Show(sb, context);
+        return Show(sb);
     }
 
-    private static async Task Show(StringBuilder sb, actor.context.@this context)
+    // A block, as debug shows it: the lines its grep keeps, each cut to the length its setting allows, written.
+    private async Task Show(StringBuilder sb)
     {
-        var debug = context.App?.Debug;
-        var maxLen = (await (debug?.Setting() ?? context.Setting.Get<setting.@this>())).Length.Max.ToInt32();
-        var grep = debug?._grepRegex;
+        var maxLen = (await Setting()).Length.Max.ToInt32();
+        var grep = _grepRegex;
         var output = sb.ToString();
 
         // Grep first on full content
@@ -310,20 +308,18 @@ public sealed class @this
             output = truncated.ToString();
         }
 
-        if (context.App?.Debug is { } writer) await writer.Write(output);
+        await Write(output);
     }
 
     // A goal that ran, as debug shows it.
-    private static async Task<data.@this> After(global::app.goal.@this goal, actor.context.@this context)
+    private async Task<data.@this> After(global::app.goal.@this goal, actor.context.@this context)
     {
-        var debug = context.App?.Debug;
-        if (debug != null)
-            await debug.Write($"--- DEBUG: Goal '{goal.Name}' completed ---{Environment.NewLine}");
+        await Write($"--- DEBUG: Goal '{goal.Name}' completed ---{Environment.NewLine}");
         return context.Ok();
     }
 
     // An action about to run, as debug shows it: where it is, its step's variables. One composed in C# holds no step.
-    private static async Task<data.@this> Before(global::app.goal.step.action.@this action, actor.context.@this context)
+    private async Task<data.@this> Before(global::app.goal.step.action.@this action, actor.context.@this context)
     {
         if (action.Step is not { } step) return context.Ok();
 
@@ -332,12 +328,12 @@ public sealed class @this
 
         await Variables(sb, step, context);
 
-        await Show(sb, context);
+        await Show(sb);
         return context.Ok();
     }
 
     // An action that ran, as debug shows it: where it is, its step's variables.
-    private static async Task<data.@this> After(global::app.goal.step.action.@this action, actor.context.@this context)
+    private async Task<data.@this> After(global::app.goal.step.action.@this action, actor.context.@this context)
     {
         if (action.Step is not { } step) return context.Ok();
 
@@ -346,14 +342,13 @@ public sealed class @this
 
         await Variables(sb, step, context);
 
-        await Show(sb, context);
+        await Show(sb);
         return context.Ok();
     }
 
     // The step's variables, as debug shows them, written into sb.
-    private static async Task Variables(StringBuilder sb, global::app.goal.step.@this step, actor.context.@this context)
+    private async Task Variables(StringBuilder sb, global::app.goal.step.@this step, actor.context.@this context)
     {
-
         // the variables the step's values hold, each shown by the name it lives under, then each watched one whole — a
         // path (%!build.setting.cache%) reaches what it names, which its root alone never shows
         var shown = new List<global::app.type.item.variable.@this>();
@@ -363,10 +358,9 @@ public sealed class @this
                 if (p.Value is { } value)
                     foreach (var v in value.Variable)
                         if (named.Add(v.Code.Root.Name)) shown.Add(new global::app.type.item.variable.@this(v.Code.Root.Name, context.App!.type.list));
-        if (context.App?.Debug is { } debug)
-            foreach (var name in await debug.Watched())
-                if (new global::app.type.item.variable.parser.@this(name, context.App.type.list).Whole is { } variable && named.Add(variable.Name))
-                    shown.Add(variable);
+        foreach (var name in await Watched())
+            if (new global::app.type.item.variable.parser.@this(name, context.App.type.list).Whole is { } variable && named.Add(variable.Name))
+                shown.Add(variable);
 
         if (shown.Count == 0) return;
 
@@ -399,7 +393,7 @@ public sealed class @this
     // diagnostic door: a structure written in full in the Debug view, a [Sensitive] member masked. Truncation
     // happens at Show via maxLength; a raw collection says how many it holds. A value that cannot be shown
     // shows why — a debug view answers, never ends the program it watches.
-    private static async System.Threading.Tasks.ValueTask<string> Text(object? value, actor.context.@this context)
+    private async System.Threading.Tasks.ValueTask<string> Text(object? value, actor.context.@this context)
     {
         string shown;
         try { shown = await global::app.type.item.@this.Create(value, context).Debug(context); }

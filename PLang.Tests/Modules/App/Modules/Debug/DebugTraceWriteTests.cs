@@ -20,8 +20,7 @@ public class DebugTraceWriteTests
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         app.Debug = new global::app.module.debug.@this(app.actor.list.System.Context);
 
-        await global::app.module.debug.@this.Show("LLM TEST", new[] { "line one", "line two" },
-            app.actor.list.User.Context);
+        await app.Debug.Show("LLM TEST", new[] { "line one", "line two" });
 
         var written = System.Text.Encoding.UTF8.GetString(captured.ToArray());
         await Assert.That(written).Contains("=== LLM TEST ===");
