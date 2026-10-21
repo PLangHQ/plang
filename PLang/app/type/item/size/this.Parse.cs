@@ -6,7 +6,7 @@ namespace app.type.item.size;
 /// that one. A number with no unit, or with <c>B</c>, is a count of bytes, made by its asker's standard. The standards
 /// asked are the app's own kinds of size, each through its own type's make.
 /// </summary>
-public abstract partial class @this
+public partial class @this
 {
     public static @this? Resolve(string raw, global::app.actor.context.@this context)
     {

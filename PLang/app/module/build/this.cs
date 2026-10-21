@@ -48,7 +48,7 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
         // No app marker on disk → confirm creation (or error when headless).
         // Was inverted (fired when the marker DID exist) — that forced every
         // build of an existing app to need --app.setting.create=true.
-        if ((!appPrExists.Success || (await appPrExists.Value())?.Value != true) && !_context.Setting.Of<global::app.setting.@this>().Create.Value)
+        if ((!appPrExists.Success || (await appPrExists.Value())?.Value != true) && !(await _context.Setting.Get<global::app.setting.@this>()).Create.Value)
         {
             if (Console.IsInputRedirected)
                 return Context.Error(new global::app.error.ServiceError(

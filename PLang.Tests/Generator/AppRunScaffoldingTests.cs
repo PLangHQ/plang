@@ -50,7 +50,7 @@ public class AppRunScaffoldingTests
         var ctx = _app.actor.list.User.Context;
 
         var stepBefore = new Step(_app.type.list) { Index = 9, Text = "before-step" };
-        await using var caller = ctx.call.Push(stepBefore);
+        await using var caller = ctx.call.Push(stepBefore, await ctx.call.Setting());
 
         var dispatchStep = new Step(_app.type.list) { Index = 0, Text = "dispatch-step" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
@@ -76,7 +76,7 @@ public class AppRunScaffoldingTests
         var ctx = _app.actor.list.User.Context;
 
         var goalBefore = new Goal(_app.type.list) { Name = "before-goal", Path = global::app.type.item.path.@this.Resolve("/g.goal", _app.actor.list.User.Context) };
-        await using var caller = ctx.call.Push(goalBefore);
+        await using var caller = ctx.call.Push(goalBefore, await ctx.call.Setting());
 
         var step = new Step(_app.type.list) { Index = 0, Text = "s" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "x"));

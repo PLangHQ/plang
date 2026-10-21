@@ -23,7 +23,7 @@ public class SnapshotAtErrorTests
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
         stack.Variables = vars;
-        await using var call = stack.Push(action, vars);
+        await using var call = stack.Push(action, await stack.Setting(), vars);
 
         // Establish %x%=1 *before* the error fires.
         vars.Set("x", 1);
@@ -46,7 +46,7 @@ public class SnapshotAtErrorTests
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
         stack.Variables = vars;
-        await using var call = stack.Push(action, vars);
+        await using var call = stack.Push(action, await stack.Setting(), vars);
 
         vars.Set("a", "before");
         var error = new ServiceError("boom", "TestErr", 400);
@@ -67,7 +67,7 @@ public class SnapshotAtErrorTests
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
         stack.Variables = vars;
-        await using var call = stack.Push(action, vars);
+        await using var call = stack.Push(action, await stack.Setting(), vars);
 
         vars.Set("x", 1);
         var error = new ServiceError("boom", "TestErr", 400);
@@ -86,7 +86,7 @@ public class SnapshotAtErrorTests
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
         stack.Variables = vars;
-        await using var call = stack.Push(action, vars);
+        await using var call = stack.Push(action, await stack.Setting(), vars);
 
         vars.Set("x", "stable");
         var error = new ServiceError("boom", "TestErr", 400);
@@ -105,7 +105,7 @@ public class SnapshotAtErrorTests
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
         stack.Variables = vars;
-        await using var call = stack.Push(action, vars);
+        await using var call = stack.Push(action, await stack.Setting(), vars);
 
         vars.Set("v", 10);
         var error = new ServiceError("boom", "TestErr", 400);

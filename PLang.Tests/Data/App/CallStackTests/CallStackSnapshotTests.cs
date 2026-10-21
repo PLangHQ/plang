@@ -33,8 +33,8 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var app = BuildAppWithGoals(g1, g2);
 
         var stack = app.actor.list.User.Context.call;
-        await using var outer = stack.Push(a1);
-        await using var inner = stack.Push(a2);
+        await using var outer = stack.Push(a1, await stack.Setting());
+        await using var inner = stack.Push(a2, await stack.Setting());
 
         var section = new Snapshot(app.actor.list.User.Context);
         stack.Capture(section);
@@ -55,11 +55,11 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var stack = app.actor.list.User.Context.call;
         // Turn History on so completed children stay in the tree — we'll assert the snapshot
         // still excludes them because they're not on the *active* chain.
-        stack.Setting.History = true;
+        app.actor.list.User.Context.Setting.Set("app.call.setting.history", true);
 
-        await using (var parent = stack.Push(a1))
+        await using (var parent = stack.Push(a1, await stack.Setting()))
         {
-            await using (var child = stack.Push(a2)) { /* completes here */ }
+            await using (var child = stack.Push(a2, await stack.Setting())) { /* completes here */ }
             var section = new Snapshot(app.actor.list.User.Context);
             stack.Capture(section);
             var frames = await section.Frames("frames")!;
@@ -76,8 +76,8 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var (g2, _, a2) = MakeFrame("Inner2");
         var src = BuildAppWithGoals(g1, g2);
 
-        await using (var outer = src.actor.list.User.Context.call.Push(a1))
-        await using (var inner = src.actor.list.User.Context.call.Push(a2))
+        await using (var outer = src.actor.list.User.Context.call.Push(a1, await src.actor.list.User.Context.call.Setting()))
+        await using (var inner = src.actor.list.User.Context.call.Push(a2, await src.actor.list.User.Context.call.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
@@ -108,12 +108,12 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var src = BuildAppWithGoals(g1, g2);
         var stack = src.actor.list.User.Context.call;
 
-        await using (stack.Push(g1))
-        await using (stack.Push(s1))
-        await using (stack.Push(a1))
-        await using (stack.Push(g2))
-        await using (stack.Push(s2))
-        await using (stack.Push(a2))
+        await using (stack.Push(g1, await stack.Setting()))
+        await using (stack.Push(s1, await stack.Setting()))
+        await using (stack.Push(a1, await stack.Setting()))
+        await using (stack.Push(g2, await stack.Setting()))
+        await using (stack.Push(s2, await stack.Setting()))
+        await using (stack.Push(a2, await stack.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
@@ -140,11 +140,11 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var app = BuildAppWithGoals(g1, g2);
         var stack = app.actor.list.User.Context.call;
 
-        await using var goal = stack.Push(g1);
-        await using var step = stack.Push(s1);
-        await using var call = stack.Push(a1);
-        await using var callee = stack.Push(g2);
-        await using var calleeStep = stack.Push(s2);
+        await using var goal = stack.Push(g1, await stack.Setting());
+        await using var step = stack.Push(s1, await stack.Setting());
+        await using var call = stack.Push(a1, await stack.Setting());
+        await using var callee = stack.Push(g2, await stack.Setting());
+        await using var calleeStep = stack.Push(s2, await stack.Setting());
 
         await Assert.That(stack.BottomFrame!.Action).IsSameReferenceAs(a1);
     }
@@ -157,8 +157,8 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var (g2, _, a2) = MakeFrame("LBInner");
         var app = BuildAppWithGoals(g1, g2);
         var stack = app.actor.list.User.Context.call;
-        await using var outer = stack.Push(a1);
-        await using var inner = stack.Push(a2);
+        await using var outer = stack.Push(a1, await stack.Setting());
+        await using var inner = stack.Push(a2, await stack.Setting());
 
         var bottom = stack.BottomFrame;
         await Assert.That(bottom).IsNotNull();

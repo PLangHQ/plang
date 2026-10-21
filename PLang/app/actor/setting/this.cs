@@ -58,8 +58,8 @@ public sealed class @this : IDisposable
         _parent = parent;
         _store = new(() =>
         {
-            var (provider, missing) = context.App.Code.Get<global::app.store.code.IStore>();
-            if (provider == null) throw new global::app.error.AppException(missing!);
+            var (provider, error) = context.App.Code.Get<global::app.store.code.IStore>();
+            if (provider == null) throw new global::app.error.AppException(error!);
             return provider.Open(global::app.type.item.path.@this.Resolve("/.data/setting/data.sqlite", context),
                 () => context.App.Mode.Value == global::app.Mode.Test ? $"setting-{context.App.Id}" : null,
                 context);
@@ -169,7 +169,7 @@ public sealed class @this : IDisposable
     private Dictionary<string, List<string>> Answers()
     {
         var answers = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var path in (_classes ??= Index()).Keys)
+        foreach (var path in Classes().Keys)
             foreach (var key in Make(path)!.Paths)
             {
                 if (!answers.TryGetValue(key, out var settings)) answers[key] = settings = [];
@@ -298,22 +298,45 @@ public sealed class @this : IDisposable
     }
 
     /// <summary>
-    /// The setting class at <paramref name="path"/>, as this scope sees it — its defaults, the actor's
-    /// saved row on them (the user's, else the system's; none before the app reads them), this run's
-    /// values on top. What an owner reads its settings through (<c>test.start</c>, the build, Debug).
+    /// The setting class <typeparamref name="T"/> as this scope sees it — its defaults, the actor's saved row on them
+    /// (the user's, else the system's), this run's values on top (<c>await context.Setting.Get&lt;test.setting&gt;()</c>).
+    /// Read on its first ask and kept until a setting is written; read-only by contract — a caller that changes one
+    /// changes its Copy. A saved row that can't be read is loud (790).
     /// </summary>
-    public global::app.type.item.setting.@this this[string path]
+    public async ValueTask<T> Get<T>() where T : global::app.type.item.setting.@this
+        => (T)await Setting(Address(typeof(T)));
+
+    /// <summary>The settings <paramref name="host"/> names with <c>ISetting&lt;T&gt;</c> — <c>%!app.goal.list.setting%</c>,
+    /// <c>%!app.type.size.setting%</c> — or <paramref name="host"/>'s own, when it is a settings class; null when it
+    /// names none. What a value, a type, a host or a concept answers its settings through, by its class.</summary>
+    public async ValueTask<data.@this?> Get(System.Type host)
     {
-        get
-        {
-            // built once per version: a read is a lookup until a setting is written somewhere (read-only by
-            // contract — a caller that changes one changes its Copy)
-            var version = System.Threading.Interlocked.Read(ref Root._version);
-            if (_built.TryGetValue(path, out var held) && held.Version == version) return held.Built;
-            var built = Build(path);
-            _built[path] = (version, built);
-            return built;
-        }
+        Classes();
+        var @class = _addresses!.ContainsKey(host) ? host
+            : host.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.setting.ISetting<>))
+                ?.GetGenericArguments()[0];
+        return @class == null ? null : await Get(Address(@class));
+    }
+
+    /// <summary>The setting at <paramref name="address"/> as this scope sees it (<c>%!app.test.setting%</c>); NotFound when
+    /// no settings class has that address, the error when a value its options can't take is held.</summary>
+    public async ValueTask<data.@this> Get(string address)
+    {
+        if (Class(address) == null) return _context.NotFound(address);
+        try { return new data.@this(address, await Setting(address), context: _context); }
+        catch (global::app.error.AppException ex) { return _context.Error(ex.Error); }
+    }
+
+    // The setting at address, made once per version: after the rows are read, a read is a lookup until a setting is
+    // written somewhere.
+    private async ValueTask<global::app.type.item.setting.@this> Setting(string address)
+    {
+        await Load();
+        var version = System.Threading.Interlocked.Read(ref Root._version);
+        if (_built.TryGetValue(address, out var held) && held.Version == version) return held.Built;
+        var built = Build(address);
+        _built[address] = (version, built);
+        return built;
     }
 
     // The setting at path as this scope sees it: the class's defaults ← the saved row ← this run's values.
@@ -335,51 +358,37 @@ public sealed class @this : IDisposable
         return instance;
     }
 
-    /// <summary>The setting class <typeparamref name="T"/>, as this scope sees it — the class says its own
-    /// path (<c>context.Setting.Of&lt;test.setting&gt;()</c>).</summary>
-    public T Of<T>() where T : global::app.type.item.setting.@this
-        => (T)this[((T)System.Activator.CreateInstance(typeof(T), _context.App.type.list[typeof(T)])!).Path];
-
-    /// <summary>The settings <paramref name="owner"/> names with <c>ISetting&lt;T&gt;</c>, as this scope sees
-    /// them — <c>%!app.goal.list.setting%</c>, <c>%!app.setting%</c>; null when it names none.</summary>
-    public ValueTask<data.@this?> Of(object owner) => Named(owner.GetType());
-
-    /// <summary>The settings <paramref name="type"/>'s class names — <c>%!app.type.size.setting%</c> is the size
-    /// class's; null when it names none.</summary>
-    public ValueTask<data.@this?> Of(global::app.type.@this type)
-        => type.ClrType is { } clr ? Named(clr) : ValueTask.FromResult<data.@this?>(null);
-
-    // The settings the class host names with ISetting<T>, as this scope sees them.
-    private async ValueTask<data.@this?> Named(System.Type host)
-    {
-        var named = host.GetInterfaces()
-            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.setting.ISetting<>));
-        return named == null ? null : await Of(named.GetGenericArguments()[0]);
-    }
-
-    /// <summary>The setting class <paramref name="class"/>, as this scope sees it — <c>%!app.test.setting%</c>,
-    /// the settings a concept's type answers.</summary>
-    public async ValueTask<data.@this> Of(System.Type @class)
-    {
-        await Load();
-        return Instance(((global::app.type.item.setting.@this)Activator.CreateInstance(@class, _context.App.type.list[@class])!).Path);
-    }
-
-    // The settings class at path, from actor/setting's own path→class index over the settings types
-    // (774 A: actor/setting owns the path keys, the type list owns the names — a settings class's name is
-    // its namespace, its path its address, and they differ). Built once from the app's types.
+    // The settings classes by address, and each class's address, from actor/setting's own index over the settings
+    // types (774 A: actor/setting owns the address keys, the type list owns the names — a settings class's name is its
+    // namespace, its address its path, and they differ). Built once from the app's types, each class made once here.
     private System.Collections.Generic.Dictionary<string, System.Type>? _classes;
-    private System.Type? Class(string path) => (_classes ??= Index()).GetValueOrDefault(path);
+    private System.Collections.Generic.Dictionary<System.Type, string>? _addresses;
+    private System.Type? Class(string address) => Classes().GetValueOrDefault(address);
 
-    private System.Collections.Generic.Dictionary<string, System.Type> Index()
+    // The address of a settings class — a class that is none is a program's mistake (ISetting<T> names a settings class).
+    private string Address(System.Type @class)
     {
-        var map = new System.Collections.Generic.Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase);
+        Classes();
+        return _addresses!.TryGetValue(@class, out var address) ? address
+            : throw new InvalidOperationException($"{@class.FullName} is not a settings class");
+    }
+
+    private System.Collections.Generic.Dictionary<string, System.Type> Classes()
+    {
+        if (_classes != null) return _classes;
+        var classes = new System.Collections.Generic.Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase);
+        var addresses = new System.Collections.Generic.Dictionary<System.Type, string>();
         foreach (var type in _context.App.type.list.Items())
             if (type.ClrType is { } clr && typeof(global::app.type.item.setting.@this).IsAssignableFrom(clr)
                 && clr != typeof(global::app.type.item.setting.@this) && !clr.IsAbstract
                 && clr.GetConstructor(new[] { typeof(global::app.type.@this) }) != null)
-                map[((global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])!).Path] = clr;
-        return map;
+            {
+                var address = ((global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])!).Path;
+                classes[address] = clr;
+                addresses[clr] = address;
+            }
+        _addresses = addresses;
+        return _classes = classes;
     }
 
     // A fresh value of the class at path — its defaults (the empty lists the one apply walk gives a member left
@@ -396,23 +405,15 @@ public sealed class @this : IDisposable
     /// when no class names it. What the build's step scope teaches from (its Path and its Rows).</summary>
     public global::app.type.item.setting.@this? Fresh(string path) => Make(path);
 
-    // The class at path as a value — a value its options can't take (this run's) is the error.
-    private data.@this Instance(string path)
-    {
-        try { return new data.@this(path, this[path], context: _context); }
-        catch (global::app.error.AppException ex) { return _context.Error(ex.Error); }
-    }
-
     /// <summary>
     /// <paramref name="module"/>'s settings as this scope sees them — <c>%!llm.setting%</c>, <c>%!http.setting%</c>:
     /// its own class when it has one, else the module's node, whose options are ones its actions take.
     /// </summary>
-    public async ValueTask<data.@this> Of(global::app.module.@this module)
+    public async ValueTask<data.@this> Get(global::app.module.@this module)
     {
-        await Load();
         var node = new global::app.type.item.setting.module.@this(module.Name,
             _context.App.type.list[typeof(global::app.type.item.setting.module.@this)]);
-        return Class(node.Path) != null ? Instance(node.Path) : new data.@this(node.Path, node, context: _context);
+        return Class(node.Path) != null ? await Get(node.Path) : new data.@this(node.Path, node, context: _context);
     }
 
     /// <summary>
@@ -420,11 +421,10 @@ public sealed class @this : IDisposable
     /// <c>%!llm.query.setting%</c>: its own class when it has one, else the action's node, whose options are its
     /// properties.
     /// </summary>
-    public async ValueTask<data.@this> Of(global::app.goal.step.action.@this action)
+    public async ValueTask<data.@this> Get(global::app.goal.step.action.@this action)
     {
-        await Load();
         var node = new global::app.type.item.setting.action.@this(action);
-        return Class(node.Path) != null ? Instance(node.Path) : new data.@this(node.Path, node, context: _context);
+        return Class(node.Path) != null ? await Get(node.Path) : new data.@this(node.Path, node, context: _context);
     }
 
     // This run's values under path, the closest scope winning, as the options they set — a key deeper than

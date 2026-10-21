@@ -81,7 +81,7 @@ public class StandardRoundTripTests : System.IAsyncDisposable
         var carrier = new global::app.data.@this("d", context: Ctx);
         var asked = global::app.type.item.duration.@this.Create("PT30S", new global::app.type.@this("duration", "iso"), carrier)!;
 
-        await Assert.That(ReferenceEquals(count.Type, Ctx.App.type.list[new global::app.type.@this("size", "iec"), Ctx])).IsTrue();
+        await Assert.That(ReferenceEquals(count.Type, Ctx.App.type.list["size"])).IsTrue();
         await Assert.That(ReferenceEquals(asked.Type, Ctx.App.type.list[new global::app.type.@this("duration", "iso"), Ctx])).IsTrue();
     }
 

@@ -43,7 +43,7 @@ public static class Make
     /// <see cref="Goal(global::app.actor.context.@this, string, string, StepDef[])"/>: its call frame has no goal, so
     /// what reads the running goal from that frame (<c>%!app.goal%</c>, a relative path's folder) finds none. A
     /// <c>.pr</c>'s reader gives each action its step; a test that needs the running goal pushes the goal's frame
-    /// itself (<c>context.call.Push(goal)</c>).</para>
+    /// itself (<c>context.call.Push(goal, await context.call.Setting())</c>).</para>
     /// </summary>
     public static global::app.goal.step.action.@this Action(global::app.actor.context.@this context,
         string module, string actionName, params (string name, object? value)[] parameters)

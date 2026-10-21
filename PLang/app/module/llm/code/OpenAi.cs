@@ -62,7 +62,7 @@ public sealed class OpenAi : ILlm
         var context = action.Context;
 
         // --- Config: the llm module's settings — a saved key wins, else its environment's ---
-        var llm = context.Setting.Of<global::app.module.llm.setting.@this>();
+        var llm = await context.Setting.Get<global::app.module.llm.setting.@this>();
         var endpoint = llm.Endpoint.ToString();
         var held = await llm.Asked(context);
         if (!held.Success) return held;
@@ -414,7 +414,7 @@ public sealed class OpenAi : ILlm
             {
                 // The answer is the validator's %response%, in a frame for it — never the caller's own variables.
                 data.@this validationResult;
-                await using (context.call.Push([new data.@this("response", extracted, context: context)], validator))
+                await using (context.call.Push([new data.@this("response", extracted, context: context)], await context.call.Setting(), validator))
                     validationResult = await validator.Start(context);
 
                 if (!validationResult.Success)
@@ -525,7 +525,7 @@ public sealed class OpenAi : ILlm
         // OnToolCall — starting. The run-state binds in a frame for the held call (never the caller's own
         // variables: a user's %name% stays theirs); the held call runs as itself.
         if (action.OnToolCall != null && await action.OnToolCall.Value() is { } onToolCall)
-            await using (context.call.Push(toolCall.State("starting", null, context), onToolCall))
+            await using (context.call.Push(toolCall.State("starting", null, context), await context.call.Setting(), onToolCall))
                 await onToolCall.Start(context);
 
         if (tools?.Find(t => t.Name == toolCall.Name) is not { } tool)
@@ -537,7 +537,7 @@ public sealed class OpenAi : ILlm
         // keeps the frame it was started in).
         var parameters = tool.Arguments(toolCall.Arguments, context);
         if (parameters.Find(p => !p.Success) is { } unread) return unread;
-        await using (context.call.Isolate(parameters, tool.Held))
+        await using (context.call.Isolate(parameters, await context.call.Setting(), tool.Held))
             return await tool.Held.Start(context);
     }
 
@@ -561,7 +561,7 @@ public sealed class OpenAi : ILlm
 
         // OnToolCall — completed
         if (action.OnToolCall != null && await action.OnToolCall.Value() is { } onToolCall)
-            await using (context.call.Push(toolCall.State("completed", result, context), onToolCall))
+            await using (context.call.Push(toolCall.State("completed", result, context), await context.call.Setting(), onToolCall))
                 await onToolCall.Start(context);
 
         return result;

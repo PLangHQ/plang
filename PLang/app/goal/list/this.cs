@@ -185,7 +185,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     {
         // goal.list's setting as the asker's actor sees it (its defaults, a saved row, this run's), the
         // call's own values on top through the one convert walk — onto this walk's own copy
-        var wants = context.Setting.Of<setting.@this>();
+        var wants = await context.Setting.Get<setting.@this>();
         if (setting != null)
         {
             wants = (global::app.goal.list.setting.@this)wants.Copy();

@@ -14,7 +14,7 @@ public class TemplateSourceSignedRoundTripTests
         try
         {
             await using var app = new global::app.@this(root);
-            app.test.list.Open();
+            await app.test.list.Open();
             app.TestIdentity();
             var ctx = app.actor.list.User.Context;
             await ctx.Variable.Set("original", new global::app.data.@this("original", "The quick brown fox",

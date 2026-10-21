@@ -9,8 +9,10 @@ public sealed class @this : size.@this, global::app.type.item.ICreate<@this>
     /// <summary>A count born holding <paramref name="type"/>, the app's <c>{size, iec}</c>.</summary>
     public @this(long bytes, global::app.type.@this type) : base(bytes, type) { }
 
-    protected override long Step => step;
-    protected override string[] Units => units;
+    /// <summary>Its text in IEC — <c>95.4 MiB</c>.</summary>
+    public override System.Threading.Tasks.ValueTask<string> Text(global::app.actor.context.@this context) => new(Spell(step, units));
+
+    public override string ToString() => Spell(step, units);
 
     /// <summary>A count, or a text in IEC units, as an IEC size born holding <paramref name="type"/>; a text in
     /// another standard is refused, naming how IEC is written.</summary>

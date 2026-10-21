@@ -11,7 +11,7 @@ public class SigningHashKindTests
     {
         var root = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_hashkind_" + Guid.NewGuid().ToString("N"))).FullName;
         var app = new global::app.@this(root);
-        app.test.list.Open();
+        await app.test.list.Open();
         app.TestIdentity();
         await Task.CompletedTask;
         return (app, root);

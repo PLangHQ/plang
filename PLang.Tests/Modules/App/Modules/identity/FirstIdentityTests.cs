@@ -28,7 +28,7 @@ public class FirstIdentityTests
 
             // the one ask, and the one its own save makes — never a chain down to the stack's limit
             await Assert.That(gets).IsLessThanOrEqualTo(4);
-            await Assert.That(app.actor.list.System.Setting.Of<global::app.module.identity.setting.@this>().Identity.CountRaw).IsEqualTo(1);
+            await Assert.That((await app.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity.CountRaw).IsEqualTo(1);
         }
         finally { System.IO.Directory.Delete(root, recursive: true); }
     }

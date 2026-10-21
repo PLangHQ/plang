@@ -35,7 +35,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     {
         if (_writing.Value)
         {
-            await Name(writer.Context).Output(writer);
+            await (await Name(writer.Context)).Output(writer);
             return;
         }
         _writing.Value = true;
@@ -66,8 +66,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// folder's name — <c>%!app.name%</c> answers as its asker.
     /// </summary>
     [global::app.LlmBuilder]
-    public global::app.type.item.text.@this Name(global::app.actor.context.@this context)
-        => context.Setting.Of<global::app.setting.@this>().Name ?? _folder;
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.text.@this> Name(global::app.actor.context.@this context)
+        => (await context.Setting.Get<global::app.setting.@this>()).Name ?? _folder;
 
     // The app's folder's name — what the app goes by until a setting names it.
     private readonly string _folder;
@@ -115,8 +115,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// have it (<c>%!app.setting.environment%</c>) — <c>%!app.environment%</c> answers as its asker.
     /// </summary>
     [global::app.LlmBuilder]
-    public global::app.type.item.text.@this Environment(global::app.actor.context.@this context)
-        => context.Setting.Of<global::app.setting.@this>().Environment;
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.text.@this> Environment(global::app.actor.context.@this context)
+        => (await context.Setting.Get<global::app.setting.@this>()).Environment;
 
     /// <summary>The calls of <paramref name="context"/> — <c>%!app.call%</c> answers as its asker.</summary>
     [global::app.LlmBuilder]
@@ -356,8 +356,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         _store = new(() =>
         {
-            var (provider, missing) = Code.Get<global::app.store.code.IStore>();
-            if (provider == null) throw new global::app.error.AppException(missing!);
+            var (provider, error) = Code.Get<global::app.store.code.IStore>();
+            if (provider == null) throw new global::app.error.AppException(error!);
             return provider.Open(global::app.type.item.path.@this.Resolve("/.data/data.sqlite", actor.list.System.Context),
                 () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
                 actor.list.System.Context);
@@ -535,7 +535,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         }
 
         data.@this shown;
-        await using (context.call.Push(new[] { new data.@this("error", error, context: context) }))
+        await using (context.call.Push(new[] { new data.@this("error", error, context: context) }, await context.call.Setting()))
             shown = await show.Start(context);
         if (shown.Success) failed.Properties.Set("shown", true);
         else await (Debug?.Write($"error show: /system/error/Show failed — {shown.Error}") ?? Task.CompletedTask);

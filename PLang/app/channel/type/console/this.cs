@@ -17,6 +17,6 @@ public sealed class @this : global::app.channel.type.stream.@this
     }
 
     /// <summary>The channel setting's format, as <paramref name="context"/>'s settings have it now.</summary>
-    protected override global::app.type.kind.@this Format(global::app.actor.context.@this context)
-        => context.Setting.Of<global::app.channel.setting.@this>().Format.Kind;
+    protected override async System.Threading.Tasks.ValueTask<global::app.type.kind.@this> Format(global::app.actor.context.@this context)
+        => (await context.Setting.Get<global::app.channel.setting.@this>()).Format.Kind;
 }

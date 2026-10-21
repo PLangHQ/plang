@@ -19,7 +19,7 @@ public class SettingNodeTests
         ctx.Setting.Set(Path + ".diff", ctx.Ok(true));
         ctx.Setting.Set(Path + ".diff.deep", ctx.Ok(true));
 
-        var setting = ctx.Setting.Of<global::app.call.setting.@this>();
+        var setting = (await ctx.Setting.Get<global::app.call.setting.@this>());
         await Assert.That(setting.Diff.Enabled.Value).IsTrue();
         await Assert.That(setting.Diff.Deep.Value).IsTrue();
     }

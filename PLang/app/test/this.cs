@@ -65,7 +65,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             test.Status = Status.Skipped;
             test.StatusReason = "tagged 'skip'";
         }
-        else if (context.Setting.Of<setting.@this>().Exclusion(test, context) is { } reason)
+        else if ((await context.Setting.Get<setting.@this>()).Exclusion(test, context) is { } reason)
         {
             test.Status = Status.Skipped;
             test.StatusReason = reason;
@@ -135,7 +135,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Begin();
         global::app.@event.binding.@this[] watching = [app.test.list.Report.Coverage.Watch(own), .. await Time(own)];
 
-        System.TimeSpan timeout = context.Setting.Of<global::app.test.setting.@this>().Timeout;
+        System.TimeSpan timeout = (await context.Setting.Get<global::app.test.setting.@this>()).Timeout;
         using var cts = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
         cts.CancelAfter(timeout <= System.TimeSpan.Zero ? System.Threading.Timeout.InfiniteTimeSpan : timeout);
         own.PushCancellation(cts);

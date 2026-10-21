@@ -94,7 +94,7 @@ public partial class Call : IContext
                 ? Context.Ok(runs.Actor.Task.Start(goal, async token =>
                 {
                     using var child = Context.Child(runs.Actor, token);
-                    await using (child.call.Isolate(null, caller: from))
+                    await using (child.call.Isolate(null, await child.call.Setting(), caller: from))
                         return await goal.Start(child, bound);
                 }))
                 : await goal.Start(runs, bound);

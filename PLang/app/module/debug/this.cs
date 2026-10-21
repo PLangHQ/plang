@@ -16,7 +16,12 @@ public sealed class @this
     /// <summary>What debug shows (<c>%!debug%</c>), as its context's settings have it now — a read is a lookup in
     /// their cache, built again only after a write. Activation reads the watched variables, the grep and the LLM
     /// flags once.</summary>
-    public setting.@this Setting => _context.Setting.Of<setting.@this>();
+    public System.Threading.Tasks.ValueTask<setting.@this> Setting() => _context.Setting.Get<setting.@this>();
+
+    // The watched names, as the store names them (no %).
+    private async System.Threading.Tasks.ValueTask<HashSet<string>> Watched()
+        => (await Setting()).Variables.Items(_context).Select(v => (v.Peek()?.ToString() ?? "").Trim('%'))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
@@ -41,10 +46,6 @@ public sealed class @this
         return ch.WriteAsync(envelope);
     }
 
-    // The watched names, as the store names them (no %).
-    private HashSet<string> Watched => Setting.Variables.Items(_context).Select(v => (v.Peek()?.ToString() ?? "").Trim('%'))
-        .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
     /// <summary>
     /// Activates debug tracing: watches the named variables through the User store's own events,
     /// subscribes the LLM request/response hooks, compiles the grep regex, and registers the
@@ -54,9 +55,10 @@ public sealed class @this
     /// (callstack config is its own flag, <c>--callstack</c>). A grep that isn't a regex is the caller's
     /// error, answered (<c>InvalidPattern</c>) before anything is bound — never a quiet literal match.
     /// </summary>
-    public global::app.error.@this? Activate()
+    public async Task<global::app.error.@this?> Activate()
     {
-        if (Setting.Grep?.ToString() is { Length: > 0 } grep)
+        var setting = await Setting();
+        if (setting.Grep?.ToString() is { Length: > 0 } grep)
         {
             try { _grepRegex = new Regex(grep, RegexOptions.IgnoreCase); }
             catch (ArgumentException ex)
@@ -67,9 +69,9 @@ public sealed class @this
         }
 
         // The watch binds after every set and remove of a variable the User actor makes, for the watched names.
-        if (Setting.Variables.CountRaw > 0)
+        if (setting.Variables.CountRaw > 0)
         {
-            var watched = Watched;
+            var watched = await Watched();
             var variables = _context.App.variable.type.Own();
             bool Watches(global::app.type.item.@this item, actor.context.@this _)
                 => item is global::app.type.item.variable.@this variable && watched.Contains(variable.Name);
@@ -81,7 +83,7 @@ public sealed class @this
 
         // Subscribe to granular LLM tracing — each Llm.* flag writes its own block to the debug channel, whose
         // backing (stderr, a file) decides where it lands.
-        if (Setting.Llm is { } llm && (llm.System == true || llm.User == true || llm.Response == true || llm.Schema == true))
+        if (setting.Llm is { } llm && (llm.System == true || llm.User == true || llm.Response == true || llm.Schema == true))
         {
             if (_context.App.Code.Get<global::app.module.llm.code.ILlm>().Provider is global::app.module.llm.code.OpenAi oai)
             {
@@ -121,7 +123,7 @@ public sealed class @this
         // as the app whose types they are bound on.
         var user = _context.App.actor.list.User;
         var types = _context.App.type.list;
-        var step = Setting.Step?.ToInt32();
+        var step = setting.Step?.ToInt32();
         // debug attaches where the goal named starts (no goal named is every goal), or at its step named, and follows
         // what it calls
         var steps = types["step"].Own();
@@ -142,7 +144,7 @@ public sealed class @this
         goals.Bind("start", When.after, (_, _, context) => AfterGoalHandler(context), user, global::app.@event.binding.Scope.actor,
             (item, context) => item is global::app.goal.@this && Debugged(context));
 
-        if (Setting.Level.Value == global::app.module.debug.Level.Action)
+        if (setting.Level.Value == global::app.module.debug.Level.Action)
         {
             var actions = types["action"].Own();
             actions.Bind("start", When.before, (_, _, context) => BeforeActionHandler(context), user, global::app.@event.binding.Scope.actor,
@@ -159,20 +161,20 @@ public sealed class @this
 
     // A goal starting, in its own frame: marked when it is the goal named (and no step is), or when its caller's run
     // is marked — it is called from inside what debug follows.
-    private Task<data.@this> Mark(global::app.goal.@this goal, actor.context.@this context, int? step)
+    private async Task<data.@this> Mark(global::app.goal.@this goal, actor.context.@this context, int? step)
     {
         if (context.call.Current is { } frame
-            && (step == null && Watches(goal) || frame.Caller?.Within.Any(caller => _marked.TryGetValue(caller, out _)) == true))
+            && (step == null && await Watches(goal) || frame.Caller?.Within.Any(caller => _marked.TryGetValue(caller, out _)) == true))
             _marked.AddOrUpdate(frame, this);
-        return Task.FromResult(context.Ok());
+        return context.Ok();
     }
 
     // A step starting, in its own frame: marked when it is the step named of the goal named.
-    private Task<data.@this> Mark(global::app.goal.step.@this step, actor.context.@this context, int index)
+    private async Task<data.@this> Mark(global::app.goal.step.@this step, actor.context.@this context, int index)
     {
-        if (step.Index == index && Watches(step.Goal) && context.call.Current is { } frame)
+        if (step.Index == index && await Watches(step.Goal) && context.call.Current is { } frame)
             _marked.AddOrUpdate(frame, this);
-        return Task.FromResult(context.Ok());
+        return context.Ok();
     }
 
     // Whether what runs now is debugged: its goal's run holds a mark.
@@ -181,9 +183,9 @@ public sealed class @this
 
     // Whether <paramref name="goal"/> is a goal named: every goal when none is (or `*`), the goals a `prefix*` starts, or
     // the one named (case aside).
-    private bool Watches(global::app.goal.@this? goal)
+    private async System.Threading.Tasks.ValueTask<bool> Watches(global::app.goal.@this? goal)
     {
-        var pattern = Setting.Goal?.ToString() ?? "";
+        var pattern = (await Setting()).Goal?.ToString() ?? "";
         if (pattern.Length == 0 || pattern == "*") return true;
         var name = goal?.Name ?? "";
         return pattern.EndsWith('*')
@@ -284,10 +286,10 @@ public sealed class @this
         return WriteFiltered(sb, context);
     }
 
-    private static Task WriteFiltered(StringBuilder sb, actor.context.@this context)
+    private static async Task WriteFiltered(StringBuilder sb, actor.context.@this context)
     {
         var debug = context.App?.Debug;
-        var maxLen = (debug?.Setting ?? context.Setting.Of<setting.@this>()).Length.Max.ToInt32();
+        var maxLen = (await (debug?.Setting() ?? context.Setting.Get<setting.@this>())).Length.Max.ToInt32();
         var grep = debug?._grepRegex;
         var output = sb.ToString();
 
@@ -316,7 +318,7 @@ public sealed class @this
             output = truncated.ToString();
         }
 
-        return context.App?.Debug?.Write(output) ?? Task.CompletedTask;
+        if (context.App?.Debug is { } writer) await writer.Write(output);
     }
 
     private static async Task<data.@this> AfterGoalHandler(actor.context.@this context)
@@ -373,7 +375,7 @@ public sealed class @this
                     foreach (var v in value.Variable)
                         if (named.Add(v.Code.Root.Name)) shown.Add(new global::app.type.item.variable.@this(v.Code.Root.Name, context.App!.type.list));
         if (context.App?.Debug is { } debug)
-            foreach (var name in debug.Watched)
+            foreach (var name in await debug.Watched())
                 if (new global::app.type.item.variable.parser.@this(name, context.App.type.list).Whole is { } variable && named.Add(variable.Name))
                     shown.Add(variable);
 

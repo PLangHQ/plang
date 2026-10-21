@@ -48,7 +48,7 @@ public class EdgeCaseTests
     {
         var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["timeout"] = "-5s" });
         await result.IsSuccess();
-        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Timeout.Value.TotalSeconds).IsEqualTo(-5);
+        await Assert.That((await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Timeout.Value.TotalSeconds).IsEqualTo(-5);
     }
 
     // --test.setting={"parallel":0} or {"parallel":-1} → accepted. Zero/negative is the "auto" sentinel:
@@ -58,7 +58,7 @@ public class EdgeCaseTests
     {
         var zero = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = 0 });
         await zero.IsSuccess();
-        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(0);
+        await Assert.That((await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Parallel.ToInt32()).IsEqualTo(0);
 
         var neg = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = -1 });
         await neg.IsSuccess();

@@ -24,7 +24,7 @@ public class Default : IArchive
         if (!packing.Success) return packing;
         var to = action.To == null || !action.To.IsInitialized ? null : await action.To.Value();
         if (action.To != null && action.To.IsInitialized && !action.To.Success) return action.To;
-        var setting = context.Setting.Of<global::app.module.archive.setting.@this>();
+        var setting = await context.Setting.Get<global::app.module.archive.setting.@this>();
         var level = action.Level == null || !action.Level.IsInitialized ? setting.Level.Value : (await action.Level.Value())!.Value;
 
         // the format named, else the one the archive's path ends in, else gzip
@@ -78,7 +78,7 @@ public class Default : IArchive
         if (action.Into != null && action.Into.IsInitialized && !action.Into.Success) return action.Into;
         if (into != null && into is not File)
             return context.Error(new global::app.error.ServiceError($"{into} is no folder on this machine: an archive unpacks into a folder", "UnpackNeedsFolder", 400));
-        var max = action.Max == null || !action.Max.IsInitialized ? context.Setting.Of<global::app.module.archive.setting.@this>().Max : (await action.Max.Value())!;
+        var max = action.Max == null || !action.Max.IsInitialized ? (await context.Setting.Get<global::app.module.archive.setting.@this>()).Max : (await action.Max.Value())!;
         if (action.Max != null && action.Max.IsInitialized && !action.Max.Success) return action.Max;
         var named = action.Format == null || !action.Format.IsInitialized ? null : (await action.Format.Value())?.Value;
         if (action.Format != null && action.Format.IsInitialized && !action.Format.Success) return action.Format;

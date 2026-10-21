@@ -6,7 +6,7 @@ namespace app.type.item.duration;
 /// so the text names its standard and the duration is born that one. The standards asked are the app's own kinds of
 /// duration, each through its own type's make.
 /// </summary>
-public abstract partial class @this
+public partial class @this
 {
     public static @this? Resolve(string raw, global::app.actor.context.@this context)
     {

@@ -8,7 +8,7 @@ namespace app.type.item.size;
 /// text rounds.
 /// </summary>
 [global::app.Attributes.PlangType("size"), global::app.Attributes.Kinds, global::app.Attributes.Choice]
-public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
+public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.setting.ISetting<setting.@this>, System.IEquatable<@this>
 {
     public static string Shape => "string";
@@ -23,26 +23,24 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
 
-    /// <summary>How many bytes one of its standard's smallest units is (1024, 1000).</summary>
-    protected abstract long Step { get; }
-
-    /// <summary>Its standard's units above a byte, smallest first.</summary>
-    protected abstract string[] Units { get; }
-
-    /// <summary>Its text in its standard — <c>95.4 MiB</c>, <c>100 MB</c>; <c>%s.text%</c>.</summary>
-    public string Text => Spell(Step, Units);
-
-    /// <summary>A size writes its text in the standard it is: <c>100 MB</c> stays <c>100 MB</c>.</summary>
-    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    /// <summary>Its text in its standard — <c>95.4 MiB</c>, <c>100 MB</c>; <c>%s.text%</c>. One born with no standard (a
+    /// file's length, a download's bytes) is written in the one <paramref name="context"/>'s setting names, read once.</summary>
+    public virtual async System.Threading.Tasks.ValueTask<string> Text(global::app.actor.context.@this context)
     {
-        writer.String(Text);
-        return default;
+        var standard = (await context.Setting.Get<setting.@this>()).Standard.Value;
+        var written = Of(Value, standard, new global::app.data.@this("", context: context))
+            ?? throw new System.InvalidOperationException($"the size standard {standard.Name} made no size of {Value} bytes.");
+        return await written.Text(context);
     }
 
-    /// <summary>A count of bytes, made by the standard its asker's setting names.</summary>
+    /// <summary>A size writes its text in the standard it is: <c>100 MB</c> stays <c>100 MB</c>; one with no standard,
+    /// in its asker's.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => writer.String(await Text(writer.Context));
+
+    /// <summary>A count of bytes with no standard of its own, written in the one its asker's setting names.</summary>
     public static @this Create(long bytes, global::app.actor.context.@this context)
-        => Of(bytes, context.Setting.Of<setting.@this>().Standard.Value, new global::app.data.@this("", context: context))
-           ?? throw new System.InvalidOperationException($"the size standard {context.Setting.Of<setting.@this>().Standard.Value.Name} made no size of {bytes} bytes.");
+        => new(bytes, context.App.type.list["size"]);
 
     // a count made by its standard, through the app's entry for {size, <standard>}
     private static @this? Of(long bytes, global::app.type.kind.@this<@this> standard, global::app.data.@this data)
@@ -114,7 +112,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
 
     // its value written in the standard whose units are these: its largest unit that is at least one, with one decimal
     // at most (95.4 MiB, 100 MB); under the smallest unit, bytes (512 B)
-    private string Spell(long step, string[] units)
+    protected string Spell(long step, string[] units)
     {
         decimal amount = Value;
         var unit = -1;
@@ -132,8 +130,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     public static bool operator ==(@this? a, @this? b) => a is null ? b is null : a.Equals(b);
     public static bool operator !=(@this? a, @this? b) => !(a == b);
 
-    /// <summary>Its text in its standard (<see cref="Text"/>).</summary>
-    public override string ToString() => Text;
+    /// <summary>Its bytes — a standard's size says its own text (<see cref="Text"/>).</summary>
+    public override string ToString() => $"{Value} B";
 
     // ---- Truthiness (item): zero is falsy ----
     public override bool IsTruthy() => Value != 0;

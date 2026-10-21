@@ -11,8 +11,8 @@ public class SnapshotChainTests : System.IAsyncDisposable
     public async Task SnapshotChain_FirstElementIsSelf()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
-        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
-        await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "Inner"));
+        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"), await stack.Setting());
+        await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "Inner"), await stack.Setting());
         var chain = inner.Chain;
         await Assert.That(chain[0]).IsEqualTo(inner);
     }
@@ -21,9 +21,9 @@ public class SnapshotChainTests : System.IAsyncDisposable
     public async Task SnapshotChain_OrderIsLeafToRoot()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
-        await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
-        await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
-        await using var c = stack.Push(MakeAction(app.actor.list.User.Context, "C"));
+        await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
+        await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"), await stack.Setting());
+        await using var c = stack.Push(MakeAction(app.actor.list.User.Context, "C"), await stack.Setting());
         var chain = c.Chain;
         await Assert.That(chain.Count).IsEqualTo(3);
         await Assert.That(chain[0]).IsEqualTo(c);
@@ -35,7 +35,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
     public async Task SnapshotChain_SingleFrame_ReturnsLengthOne()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
-        await using var only = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        await using var only = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
         var chain = only.Chain;
         await Assert.That(chain.Count).IsEqualTo(1);
         await Assert.That(chain[0]).IsEqualTo(only);
@@ -45,7 +45,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
     public async Task SnapshotChain_ReturnsStableRefs_NoCopy()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
-        await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
         var chain = a.Chain;
         await Assert.That(ReferenceEquals(chain[0], a)).IsTrue();
     }
@@ -54,10 +54,10 @@ public class SnapshotChainTests : System.IAsyncDisposable
     public async Task SnapshotChain_DoesNotWalkCause()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
-        await using var goalCall = stack.Push(MakeAction(app.actor.list.User.Context, "Goal"));
-        var errored = stack.Push(MakeAction(app.actor.list.User.Context, "Errored"));
+        await using var goalCall = stack.Push(MakeAction(app.actor.list.User.Context, "Goal"), await stack.Setting());
+        var errored = stack.Push(MakeAction(app.actor.list.User.Context, "Errored"), await stack.Setting());
         await errored.DisposeAsync();
-        await using var recovery = stack.Push(MakeAction(app.actor.list.User.Context, "Recovery"));
+        await using var recovery = stack.Push(MakeAction(app.actor.list.User.Context, "Recovery"), await stack.Setting());
 
         var chain = recovery.Chain;
         await Assert.That(chain.Contains(errored)).IsFalse();

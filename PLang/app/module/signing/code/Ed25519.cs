@@ -35,7 +35,7 @@ public class Ed25519 : ISigning
         catch (global::app.error.AppException unread) { return action.Context.Error(unread.Error); }
         // The digest of the inner data as it crosses the wire, in that view — what binds the value into the signed
         // bytes — by the kind of hash the signing setting names.
-        var hash = await data.Digest(view, action.Context.Setting.Of<global::app.module.signing.setting.@this>().Hash.Value, action.Context);
+        var hash = await data.Digest(view, (await action.Context.Setting.Get<global::app.module.signing.setting.@this>()).Hash.Value, action.Context);
 
         var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
         var nonce = (await (await action.Context.Variable.Get("GUID")).Clr<Guid>(default)).ToString();

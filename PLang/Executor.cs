@@ -104,7 +104,7 @@ namespace PLang
 			if (On("!debug"))
 			{
 				app.Debug = new Debug(app.actor.list.System.Context);
-				if (app.Debug.Activate() is { } refused) return (null, app.actor.list.System.Context.Error(refused));
+				if (await app.Debug.Activate() is { } refused) return (null, app.actor.list.System.Context.Error(refused));
 			}
 
 			// Test mode: its setting names the actor the run's session opens on. What it tests is the positional (a folder
@@ -115,7 +115,7 @@ namespace PLang
 				if (!parameters.ContainsKey("path"))
 					await userVars.Set("path", positional == null ? startupDirectory
 						: global::app.type.item.path.@this.Resolve("/" + positional.TrimStart('/', '\\'), app.actor.list.User.Context));
-				app.test.list.Open();
+				await app.test.list.Open();
 			}
 
 			// Build mode (`plang build` normalizes the subcommand to `--build`).
@@ -129,7 +129,7 @@ namespace PLang
 				// own `action.Cache` (which resolves %!llm.query.setting.cache% → %!llm.setting.cache% →
 				// [Default]) instead of sniffing the build. The skip reaches every llm.query without threading.
 				// The run's value is in memory, so the sync Configure sets it at once.
-				var cache = app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Cache;
+				var cache = (await app.actor.list.System.Context.Setting.Get<global::app.module.build.setting.@this>()).Cache;
 				if (cache.Value == global::app.module.cache.type.cache.skip)
 					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this(app.type.list[typeof(global::app.module.llm.setting.@this)]).Path + ".cache", cache);
 			}

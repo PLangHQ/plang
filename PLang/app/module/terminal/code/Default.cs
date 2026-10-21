@@ -41,7 +41,7 @@ public sealed class Default : ITerminal
         return [.. pathExt.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
     }
 
-    public Task<data.@this<Process>> Start(type.program.@this program, global::app.actor.context.@this context)
+    public async Task<data.@this<Process>> Start(type.program.@this program, global::app.actor.context.@this context)
     {
         var (info, file, sandbox, pipe) = (program.Info!, program.File!, program.Sandbox, program.Pipe);
         child.@this Started() => pipe
@@ -58,27 +58,27 @@ public sealed class Default : ITerminal
             var channel = os.Pipe is { } pair
                 ? new global::app.channel.type.stream.@this("pipe", pair, ownsStream: true) { Framed = true, Actor = context.Actor! }
                 : null;
-            return Task.FromResult(context.Ok<Process>(new Process(context.App.type.list[typeof(Process)])
+            return context.Ok<Process>(new Process(context.App.type.list[typeof(Process)])
             {
                 Program = file.Absolute, Id = os.Id, Os = os, pipe = channel,
-                Plang = program.SpeaksPlang(context),
+                Plang = await program.SpeaksPlang(context),
                 OutputEncoding = program.Setting.Encoding.Clr<string>() ?? "utf-8", StartedBy = context.Actor,
-            }));
+            });
         }
         catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)
         {
-            return Task.FromResult(data.@this<Process>.From(context.Error(new ActionError("The user declined administrator rights.", "ElevationDeclined", 403))));
+            return data.@this<Process>.From(context.Error(new ActionError("The user declined administrator rights.", "ElevationDeclined", 403)));
         }
         catch (Exception ex) when (sandbox == null && ex is InvalidOperationException or PlatformNotSupportedException)
         {
-            return Task.FromResult(data.@this<Process>.From(context.Error(new ActionError(
-                $"Could not start {file.Absolute}: {ex.Message}", "ProcessStartFailed", 500))));
+            return data.@this<Process>.From(context.Error(new ActionError(
+                $"Could not start {file.Absolute}: {ex.Message}", "ProcessStartFailed", 500)));
         }
         // the kernel couldn't hold it: it isn't started, never started free
         catch (Exception ex) when (sandbox != null && ex is not (OutOfMemoryException or StackOverflowException))
         {
-            return Task.FromResult(data.@this<Process>.From(context.Error(new ActionError(
-                $"Could not hold {file.Absolute} to its permissions: {ex.Message}", "PermissionNotEnforced", 500))));
+            return data.@this<Process>.From(context.Error(new ActionError(
+                $"Could not hold {file.Absolute} to its permissions: {ex.Message}", "PermissionNotEnforced", 500)));
         }
     }
 }

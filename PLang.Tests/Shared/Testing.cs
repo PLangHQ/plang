@@ -2,7 +2,8 @@ namespace PLang.Tests;
 
 /// <summary>
 /// A test's app, composed only from production doors — nothing a program's app can't do, and no state of its
-/// own. <see cref="Testing"/> opens a test session (<c>app.test.list.Open()</c>: test mode, the store in memory,
+/// own. <see cref="Testing"/> opens a test session on the user actor (test's setting's default; a test app is born
+/// with no other — test mode, the store in memory,
 /// scoped by the app's id) and swaps in the no-crypto signing mock through the code door; a test that exercises
 /// real crypto leaves it out.
 /// </summary>
@@ -11,7 +12,7 @@ public static class AppTesting
     /// <summary>This app as a test runs it: a test session open, signing through the no-crypto mock.</summary>
     public static global::app.@this Testing(this global::app.@this app)
     {
-        app.test.list.Open();
+        app.test.list.Open(app.actor.list.User);
         return app.TestSigning();
     }
 

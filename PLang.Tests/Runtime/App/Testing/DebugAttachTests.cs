@@ -25,11 +25,11 @@ public class DebugAttachTests
         return reader.ReadToEnd();
     }
 
-    private void Debugging(Dictionary<string, object?> setting)
+    private async Task Debugging(Dictionary<string, object?> setting)
     {
         _app.actor.list.System.Setting.Set("debug.setting", setting);
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        _app.Debug.Activate();
+        await _app.Debug.Activate();
     }
 
     // A goal of formal steps, one line each, added to the app's goals.
@@ -55,7 +55,7 @@ public class DebugAttachTests
     {
         await Goal("Inner", "variable.set(Name=%b%, Value=2)");
         var start = await Goal("Start", "goal.call(Name=\"Inner\")", "variable.set(Name=%a%, Value=1)");
-        Debugging(new() { ["goal"] = "Start" });
+        await Debugging(new() { ["goal"] = "Start" });
 
         await _app.Start(start, _app.actor.list.User.Context);
 
@@ -70,7 +70,7 @@ public class DebugAttachTests
     {
         await Goal("Inner", "variable.set(Name=%b%, Value=2)", "variable.set(Name=%c%, Value=3)");
         var start = await Goal("Start", "variable.set(Name=%z%, Value=0)", "goal.call(Name=\"Inner\")", "variable.set(Name=%a%, Value=1)");
-        Debugging(new() { ["goal"] = "Start", ["step"] = 1 });
+        await Debugging(new() { ["goal"] = "Start", ["step"] = 1 });
 
         await _app.Start(start, _app.actor.list.User.Context);
 
@@ -88,7 +88,7 @@ public class DebugAttachTests
     {
         await Goal("Inner", "variable.set(Name=%b%, Value=2)", "variable.set(Name=%c%, Value=3)");
         var start = await Goal("Start", "variable.set(Name=%z%, Value=0)", "goal.call(Name=\"Inner\")");
-        Debugging(new() { ["step"] = 1 });
+        await Debugging(new() { ["step"] = 1 });
 
         await _app.Start(start, _app.actor.list.User.Context);
 
@@ -106,7 +106,7 @@ public class DebugAttachTests
         await Goal("Inner", "variable.set(Name=%b%, Value=2)");
         var beside = await Goal("Beside", "goal.call(Name=\"Inner\")");
         var start = await Goal("Start", "goal.call(Name=\"Inner\")");
-        Debugging(new() { ["goal"] = "Start" });
+        await Debugging(new() { ["goal"] = "Start" });
 
         await _app.Start(beside, _app.actor.list.User.Context);
         await Assert.That(Shown()).DoesNotContain("of Inner");
@@ -125,7 +125,7 @@ public class DebugAttachTests
             "condition.if(Left=%again%, Operator=\"==\", Right=true) { variable.set(Name=%again%, Value=false); goal.call(Name=\"Rec\") }",
             "goal.call(Name=\"Leaf\")");
         await _app.actor.list.User.Context.Variable.Set("again", true);
-        Debugging(new() { ["goal"] = "Rec" });
+        await Debugging(new() { ["goal"] = "Rec" });
 
         await _app.Start(rec, _app.actor.list.User.Context);
 

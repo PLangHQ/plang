@@ -77,29 +77,29 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   BottomFrame : app.call.Position { get; }
   Capture(app.snapshot.this s) : System.Void
   Current : app.call.this { get; } [LlmBuilder]
-  Diff : app.type.item.bool.this { get; }
+  Diff() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
   DiffScope(app.type.item.variable.list.this variables) : System.IDisposable
   Error : app.error.this { get; }
   Event : app.data.this { get; }
   EventsSince(System.DateTimeOffset t) : System.Collections.Generic.IEnumerable<app.call.Diff>
   Goal : app.goal.this { get; }
-  History : app.type.item.bool.this { get; }
-  Isolate(System.Collections.Generic.IEnumerable<app.data.this> names, app.goal.step.action.this held = …, app.call.this caller = …) : app.call.this
+  History() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
+  Isolate(System.Collections.Generic.IEnumerable<app.data.this> names, app.call.setting.this setting, app.goal.step.action.this held = …, app.call.this caller = …) : app.call.this
   MaxDepth : System.Int32 { get; init; }
   Overflow(app.error.CallStackOverflowException ex, app.goal.this goal, app.goal.step.this step) : app.error.this
-  Push(System.Collections.Generic.IEnumerable<app.data.this> names, app.goal.step.action.this held = …) : app.call.this
-  Push(app.goal.step.action.this action, app.type.item.variable.list.this variables = …) : app.call.this
-  Push(app.goal.step.this step) : app.call.this
-  Push(app.goal.this goal, System.Collections.Generic.IEnumerable<app.data.this> names = …) : app.call.this
+  Push(System.Collections.Generic.IEnumerable<app.data.this> names, app.call.setting.this setting, app.goal.step.action.this held = …) : app.call.this
+  Push(app.goal.step.action.this action, app.call.setting.this setting, app.type.item.variable.list.this variables = …) : app.call.this
+  Push(app.goal.step.this step, app.call.setting.this setting) : app.call.this
+  Push(app.goal.this goal, app.call.setting.this setting, System.Collections.Generic.IEnumerable<app.data.this> names = …) : app.call.this
   Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
   RestoredChain : System.Collections.Generic.IReadOnlyList<app.call.Position> { get; }
   Root : app.call.this { get; }
   Scope : app.call.this { get; } [LlmBuilder]
   Section : System.String { get; }
-  Setting : app.call.setting.this { get; } [LlmBuilder]
+  Setting() : System.Threading.Tasks.ValueTask<app.call.setting.this> [LlmBuilder]
   Step : app.goal.step.this { get; }
-  Tags : app.type.item.bool.this { get; }
-  Timing : app.type.item.bool.this { get; }
+  Tags() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
+  Timing() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
   Variables : app.type.item.variable.list.this { get; }
   ctor(app.type.list.this types, System.Func<app.actor.setting.this> settings, app.error.list.this audit)
   override IsLeaf : System.Boolean { get; }
@@ -223,7 +223,7 @@ abstract class app.channel.this : app.type.item.this, System.IAsyncDisposable, S
   protected ResolveEncoding() : System.Text.Encoding
   protected override Clone() : app.type.item.this
   protected override Level(System.Int32 depth, app.actor.context.this context) : app.type.item.this
-  protected virtual Format(app.actor.context.this context) : app.type.kind.this
+  protected virtual Format(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.kind.this>
   virtual AskAsync(app.module.output.ask action, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   virtual Available : System.Boolean { get; }
   virtual CanRead : System.Boolean { get; }
@@ -236,7 +236,7 @@ abstract class app.channel.this : app.type.item.this, System.IAsyncDisposable, S
 
 class app.channel.type.console.this : app.channel.type.stream.this
   ctor(System.String name, System.IO.Stream stream, app.channel.ChannelDirection direction)
-  protected override Format(app.actor.context.this context) : app.type.kind.this
+  protected override Format(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.kind.this>
 
 class app.channel.type.file.this : app.channel.this
   Path : app.type.item.path.file.this { get; } [Debug]
@@ -370,7 +370,7 @@ class app.data.Wire
   ReadBuffered(System.Byte[] bytes) : app.data.this
   Sign : System.Boolean { get; }
   View : app.View { get; }
-  ctor(app.View view, app.actor.context.this context, System.Boolean sign = …, app.type.item.template.kind.this template = …, System.Boolean verify = …, System.Boolean deferVerify = …)
+  ctor(app.View view, app.actor.context.this context, System.Boolean sign = …, app.type.item.template.kind.this template = …, System.Boolean verify = …, System.Boolean deferVerify = …, app.type.item.duration.this window = …)
 
 class app.data.code.Default : app.data.code.IGrep, app.module.code.ICode
   Grep(app.data.this data, System.String pattern, System.Int32 contextLines = …) : app.data.this
@@ -977,13 +977,13 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Created : app.type.item.datetime.this { get; } [LlmBuilder, Out, Store]
   Debug : app.module.debug.this { get; set; }
   DisposeAsync() : System.Threading.Tasks.ValueTask
-  Environment(app.actor.context.this context) : app.type.item.text.this [LlmBuilder]
+  Environment(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.text.this> [LlmBuilder]
   FileSystem : app.type.item.path.file.filesystem.this { get; }
   Id : System.String { get; } [Out, Store]
   KeepAlive : app.keepalive.this { get; }
   Load() : System.Threading.Tasks.Task<app.data.this>
   Mode : app.type.item.choice.this<app.Mode> { get; }
-  Name(app.actor.context.this context) : app.type.item.text.this [LlmBuilder]
+  Name(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.text.this> [LlmBuilder]
   OsAbsolutePath : System.String { get; } [LlmBuilder]
   RequestShutdown() : System.Void
   Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
@@ -1556,7 +1556,7 @@ class app.type.item.duration.short.this : app.type.item.duration.this, app.type.
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.duration.short.this
 
-abstract class app.type.item.duration.this : app.type.item.this, System.IEquatable<app.type.item.duration.this>, app.type.item.ICreate<app.type.item.duration.this>, app.type.item.setting.ISetting<app.type.item.duration.setting.this> [Choice, Kinds, PlangType]
+class app.type.item.duration.this : app.type.item.this, System.IEquatable<app.type.item.duration.this>, app.type.item.ICreate<app.type.item.duration.this>, app.type.item.setting.ISetting<app.type.item.duration.setting.this> [Choice, Kinds, PlangType]
   AreEqual(System.Object other) : System.Boolean
   Days(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
   Equals(app.type.item.duration.this other) : System.Boolean
@@ -1571,8 +1571,8 @@ abstract class app.type.item.duration.this : app.type.item.this, System.IEquatab
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
   override Rank : System.Int32 { get; }
-  protected abstract Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected static Measure(System.Object raw, System.Func<System.String, System.Nullable<System.TimeSpan>> read) : System.Nullable<System.TimeSpan>
   protected static Refuse(System.Object raw, System.String standard, System.String written, app.data.this data) : System.Void
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.duration.this
@@ -2536,8 +2536,8 @@ class app.type.item.signature.this : app.type.item.this, app.type.item.ICreate<a
 
 class app.type.item.size.iec.this : app.type.item.size.this, app.type.item.ICreate<app.type.item.size.iec.this>
   ctor(System.Int64 bytes, app.type.this type)
-  protected override Step : System.Int64 { get; }
-  protected override Units : System.String[] { get; }
+  override Text(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.String>
+  override ToString() : System.String
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.size.iec.this
 
 static class app.type.item.size.serializer.Default
@@ -2555,13 +2555,12 @@ class app.type.item.size.setting.this : app.type.item.setting.this
 
 class app.type.item.size.si.this : app.type.item.size.this, app.type.item.ICreate<app.type.item.size.si.this>
   ctor(System.Int64 bytes, app.type.this type)
-  protected override Step : System.Int64 { get; }
-  protected override Units : System.String[] { get; }
+  override Text(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.String>
+  override ToString() : System.String
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.size.si.this
 
-abstract class app.type.item.size.this : app.type.item.this, System.IEquatable<app.type.item.size.this>, app.type.item.ICreate<app.type.item.size.this>, app.type.item.setting.ISetting<app.type.item.size.setting.this> [Choice, Kinds, PlangType]
+class app.type.item.size.this : app.type.item.this, System.IEquatable<app.type.item.size.this>, app.type.item.ICreate<app.type.item.size.this>, app.type.item.setting.ISetting<app.type.item.size.setting.this> [Choice, Kinds, PlangType]
   Equals(app.type.item.size.this other) : System.Boolean
-  Text : System.String { get; }
   Value : System.Int64 { get; }
   ctor(System.Int64 bytes, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
@@ -2570,8 +2569,7 @@ abstract class app.type.item.size.this : app.type.item.this, System.IEquatable<a
   override IsTruthy() : System.Boolean
   override Rank : System.Int32 { get; }
   override ToString() : System.String
-  protected abstract Step : System.Int64 { get; }
-  protected abstract Units : System.String[] { get; }
+  protected Spell(System.Int64 step, System.String[] units) : System.String
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected static Count(System.Object raw, System.Int64 step, System.String[] units) : System.Nullable<System.Int64>
@@ -2580,6 +2578,7 @@ abstract class app.type.item.size.this : app.type.item.this, System.IEquatable<a
   static Create(System.Object value, app.type.this type, app.data.this data) : app.type.item.size.this
   static Resolve(System.String raw, app.actor.context.this context) : app.type.item.size.this
   static Shape : System.String { get; }
+  virtual Text(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.String>
 
 class app.type.item.source : app.type.item.this
   Raw : System.Object { get; }
@@ -3230,6 +3229,7 @@ class app.type.reader.ReadContext : System.IEquatable<app.type.reader.ReadContex
   Variable : System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> { get; init; }
   Verify : System.Boolean { get; init; }
   View : app.View { get; init; }
+  Window : app.type.item.duration.this { get; init; }
   ctor(app.actor.context.this Context, app.type.item.template.kind.this Template = …, System.Boolean Verify = …, System.Boolean DeferVerify = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> Variable = …, app.type.item.path.this Origin = …, System.Boolean IsBuilt = …)
 
 class app.type.reader.this
@@ -3400,7 +3400,7 @@ type app.call.isolated
   .depth : number
 
 type app.call.list
-  .setting : app.call.setting
+  .setting() : app.call.setting
   .audit : list<error>
   .current : app.call
   .scope : app.call

@@ -21,14 +21,14 @@ public class SettingCacheTests
 
     [Test]
     public async Task ASecondRead_IsTheSameSetting()
-        => await Assert.That(User.Setting.Of<math>()).IsSameReferenceAs(User.Setting.Of<math>());
+        => await Assert.That((await User.Setting.Get<math>())).IsSameReferenceAs((await User.Setting.Get<math>()));
 
     [Test]
     public async Task AWrite_IsReadByTheNextRead()
     {
-        var before = User.Setting.Of<math>();
+        var before = (await User.Setting.Get<math>());
         await (User.Setting.Set("math.setting.equal.digits", User.Ok(3))).IsSuccess();
-        var after = User.Setting.Of<math>();
+        var after = (await User.Setting.Get<math>());
         await Assert.That(after).IsNotSameReferenceAs(before);
         await Assert.That(after.Equal.Digits.ToInt32()).IsEqualTo(3);
     }
@@ -36,32 +36,32 @@ public class SettingCacheTests
     [Test]
     public async Task AWriteInTheSystemsSettings_ReachesTheUsersRead()
     {
-        _ = User.Setting.Of<math>();
+        _ = (await User.Setting.Get<math>());
         _app.actor.list.System.Setting.Set("math.setting.equal.digits", _app.actor.list.System.Context.Ok(4));
-        await Assert.That(User.Setting.Of<math>().Equal.Digits.ToInt32()).IsEqualTo(4);
+        await Assert.That((await User.Setting.Get<math>()).Equal.Digits.ToInt32()).IsEqualTo(4);
     }
 
     [Test]
     public async Task AWriteThroughASetting_LeavesTheOneHandedOutAsItWas()
     {
-        var handed = User.Setting.Of<math>();
+        var handed = (await User.Setting.Get<math>());
         await handed.Equal.Set("digits", false, User.Ok(2), User);
         await Assert.That(handed.Equal.Digits.ToInt32()).IsEqualTo(15);
-        await Assert.That(User.Setting.Of<math>().Equal.Digits.ToInt32()).IsEqualTo(2);
+        await Assert.That((await User.Setting.Get<math>()).Equal.Digits.ToInt32()).IsEqualTo(2);
     }
 
     [Test]
     public async Task ReadsBesideWrites_NeitherThrowNorStayStale()
     {
-        var reads = Enumerable.Range(0, 64).Select(_ => Task.Run(() =>
+        var reads = Enumerable.Range(0, 64).Select(_ => Task.Run(async () =>
         {
-            for (var i = 0; i < 200; i++) _ = User.Setting.Of<math>().Equal.Digits.ToInt32();
+            for (var i = 0; i < 200; i++) _ = (await User.Setting.Get<math>()).Equal.Digits.ToInt32();
         }));
         var writes = Task.Run(async () =>
         {
             for (var i = 1; i <= 50; i++) User.Setting.Set("math.setting.equal.digits", User.Ok(i));
         });
         await Task.WhenAll(reads.Append(writes));
-        await Assert.That(User.Setting.Of<math>().Equal.Digits.ToInt32()).IsEqualTo(50);
+        await Assert.That((await User.Setting.Get<math>()).Equal.Digits.ToInt32()).IsEqualTo(50);
     }
 }

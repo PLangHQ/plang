@@ -78,7 +78,7 @@ public class ActorPermissionStorageTests
     {
         await actor.Setting.Load();
         var paths = new List<string>();
-        foreach (var d in actor.Setting.Of<global::app.actor.permission.setting.@this>().Grant.Items(actor.Context))
+        foreach (var d in (await actor.Setting.Get<global::app.actor.permission.setting.@this>()).Grant.Items(actor.Context))
             if (await d.Value<PermissionRecord>() is { } p) paths.Add(p.Path);
         return paths;
     }

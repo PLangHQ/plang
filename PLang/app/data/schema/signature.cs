@@ -101,7 +101,7 @@ public sealed class signature : ISchemaReader
                 context.App.type.list[new global::app.type.@this("hash", hashKind.Name), context]), sig,
             expires is { } ex ? new global::app.type.item.datetime.@this(ex, datetime) : null, contracts,
             stored ? global::app.type.item.signature.Origin.Stored : global::app.type.item.signature.Origin.Live,
-            stored ? null : context.Setting.Of<global::app.module.signing.setting.@this>().Expiry);
+            stored ? null : ctx.Window);
 
         // The OUTER read verifies the signature; a NESTED reconstruction (ctx.Verify == false) peels
         // without verifying — the inner Data is already covered by the outer signature, and an inner

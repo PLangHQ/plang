@@ -63,7 +63,7 @@ public class Default : IBuilder
         // A files entry names a goal file of the app being built: a relative one is from the app's root
         // (as the user types it at the root), never from the builder's own folder.
         var filters = new List<path>();
-        foreach (var row in context.Setting.Of<global::app.module.build.setting.@this>().Files.Items(context))
+        foreach (var row in (await context.Setting.Get<global::app.module.build.setting.@this>()).Files.Items(context))
             if ((await row.Value())?.ToString() is { Length: > 0 } entry)
                 filters.Add(path.Resolve(entry.StartsWith('/') || entry.StartsWith('\\') ? entry : "/" + entry, context));
 
@@ -113,7 +113,7 @@ public class Default : IBuilder
             // The .pr IS the build's cache: merging it sets goal.Cache (→ IsCached skips the goal) and carries
             // each step's prior code (→ step.IsCached skips the step). cache:skip means no cached answer of any
             // kind, so a fresh source rebuilds in full — skip the merge entirely and the goal is built anew.
-            if (context.Setting.Of<global::app.module.build.setting.@this>().Cache.Value == global::app.module.cache.type.cache.use)
+            if ((await context.Setting.Get<global::app.module.build.setting.@this>()).Cache.Value == global::app.module.cache.type.cache.use)
                 await MergePrData(goal, context);
             allGoals.Add(goal);
         }

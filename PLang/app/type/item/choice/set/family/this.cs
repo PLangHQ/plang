@@ -21,10 +21,10 @@ public sealed class @this : set.@this
                     .SelectMany(root => root.Kinds).Where(Option(clr).IsInstanceOfType))
             .OrderBy(k => k.Name, System.StringComparer.Ordinal).ToList());
 
-    /// <summary>Whether <paramref name="clr"/> is a kind family — an abstract kind its kinds are subclasses of, or an
-    /// abstract value whose subclasses are its kinds (<c>[Kinds]</c>).</summary>
+    /// <summary>Whether <paramref name="clr"/> is a kind family — an abstract kind its kinds are subclasses of, or a value
+    /// whose subclasses are its kinds (<c>[Kinds]</c>; the value itself may be one too: a size of no standard).</summary>
     internal static bool Is(System.Type clr)
-        => clr.IsAbstract && (typeof(global::app.type.kind.@this).IsAssignableFrom(clr) || IsItem(clr));
+        => IsItem(clr) || clr.IsAbstract && typeof(global::app.type.kind.@this).IsAssignableFrom(clr);
 
     // Whether clr is an item family whose subclasses are its kinds ([Kinds]) — a value, not a kind (a kind is a value too)
     private static bool IsItem(System.Type clr)

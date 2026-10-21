@@ -60,7 +60,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             await stream.WriteAsync(characters.GetBytes(text.ToString()), ct);
         else
             await data.Output(new global::app.type.item.text.Writer(stream, characters,
-                context.Setting.Of<global::app.setting.@this>().Culture, view, context));
+                (await context.Setting.Get<global::app.setting.@this>()).Culture, view, context));
         await stream.FlushAsync(ct);
         return context.Ok();
     }
@@ -156,7 +156,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         using var ms = new System.IO.MemoryStream();
         var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8,
-            context.Setting.Of<global::app.setting.@this>().Culture, global::app.View.Out, context);
+            (await context.Setting.Get<global::app.setting.@this>()).Culture, global::app.View.Out, context);
         int pos = 0;
         for (int at = _value.IndexOf('%'); at >= 0; at = _value.IndexOf('%', at + 1))
         {

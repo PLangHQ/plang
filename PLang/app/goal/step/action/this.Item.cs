@@ -34,7 +34,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// it has one, else its options as the catalog has them. None once its module was taken out of the app
     /// (module.Remove empties it): no catalog holds it then.</summary>
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
-        => Module[Name] is { } catalog ? await parent.Context.Setting.Of(catalog) : null;
+        => Module[Name] is { } catalog ? await parent.Context.Setting.Get(catalog) : null;
 
     /// <summary>The action writes ITSELF — the bare shape it owns, in every view:
     /// <c>{module, name, property, default?, child?}</c>. Its module is a reference, written by name,

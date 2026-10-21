@@ -27,7 +27,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (app, action) = BuildLiveAction("StubGoal");
         var stack = app.actor.list.User.Context.call;
-        await using var call = stack.Push(action);
+        await using var call = stack.Push(action, await stack.Setting());
 
         var snap = new Snapshot(app.actor.list.User.Context);
         call.Capture(snap);
@@ -46,7 +46,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (app, action) = BuildLiveAction("G", "a step");
         var user = app.actor.list.User.Context;
-        await using var call = app.actor.list.User.Context.call.Push(action);
+        await using var call = app.actor.list.User.Context.call.Push(action, await app.actor.list.User.Context.call.Setting());
         var snap = new Snapshot(user);
         call.Capture(snap);
 
@@ -64,7 +64,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (app, action) = BuildLiveAction("PosGoal");
         var stack = app.actor.list.User.Context.call;
-        await using var call = stack.Push(action);
+        await using var call = stack.Push(action, await stack.Setting());
 
         var snap = new Snapshot(app.actor.list.User.Context);
         call.Capture(snap);
@@ -77,7 +77,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Restore_ResolvesGoalStubAgainstLiveRegistry()
     {
         var (src, action) = BuildLiveAction("ResolveGoal");
-        await using (var call = src.actor.list.User.Context.call.Push(action))
+        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
@@ -107,7 +107,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Restore_HardErrors_OnGoalNotFound()
     {
         var (src, action) = BuildLiveAction("DisappearingGoal");
-        await using (var call = src.actor.list.User.Context.call.Push(action))
+        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
             // Restore on a fresh App that never had this goal registered.
@@ -125,7 +125,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Restore_HardErrors_OnHashMismatch_RaisesCallbackGoalHashMismatch()
     {
         var (src, action) = BuildLiveAction("HashGoal", "original step text");
-        await using (var call = src.actor.list.User.Context.call.Push(action))
+        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
@@ -154,7 +154,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
         // Same step text (so the goal hash matches) compiled to a different action: the position now
         // points at another action, which only the captured module/name can tell.
         var (src, action) = BuildLiveAction("RecompiledGoal", "same step text");
-        await using (var call = src.actor.list.User.Context.call.Push(action))
+        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
@@ -180,7 +180,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Restore_DoesNotMutateLiveGoal()
     {
         var (src, action) = BuildLiveAction("PureGoal");
-        await using (var call = src.actor.list.User.Context.call.Push(action))
+        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
@@ -221,8 +221,8 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Capture_OmitsTimingTier_AndInFlightNetworkState()
     {
         var (app, action) = BuildLiveAction("DropGoal");
-        app.actor.list.User.Context.call.Setting.Timing = true;
-        await using var call = app.actor.list.User.Context.call.Push(action);
+        (await app.actor.list.User.Context.call.Setting()).Timing = true;
+        await using var call = app.actor.list.User.Context.call.Push(action, await app.actor.list.User.Context.call.Setting());
 
         var snap = new Snapshot(app.actor.list.User.Context);
         call.Capture(snap);

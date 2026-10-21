@@ -94,9 +94,9 @@ public class FramesTests
         var stack = _app.actor.list.User.Context.call;
         var step = caller.Step[0];
 
-        await using var goalFrame = stack.Push(caller);
-        await using var stepFrame = stack.Push(step);
-        await using var actionFrame = stack.Push(step.Code[0]);
+        await using var goalFrame = stack.Push(caller, await stack.Setting());
+        await using var stepFrame = stack.Push(step, await stack.Setting());
+        await using var actionFrame = stack.Push(step.Code[0], await stack.Setting());
 
         await Assert.That(goalFrame.ToString()).IsEqualTo("Caller in /Caller.goal");
         await Assert.That(stepFrame.ToString()).IsEqualTo("Caller (step 1) in /Caller.goal");

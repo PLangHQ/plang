@@ -47,7 +47,7 @@ public class DebugSmokeTests
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
         _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["grep"] = "a(b" });
 
-        var refused = _app.Debug.Activate();
+        var refused = await _app.Debug.Activate();
 
         await Assert.That(refused?.Key).IsEqualTo("InvalidPattern");
     }
@@ -61,7 +61,7 @@ public class DebugSmokeTests
         // PLang.Tests.App.Debug namespace (the App/Debug/ test folder). CLAUDE.md alias-clash trap.
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
         _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["level"] = "action" });
-        _app.Debug.Activate();
+        await _app.Debug.Activate();
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "Dbg",
             Make.Step("set x",
@@ -89,7 +89,7 @@ public class DebugSmokeTests
     {
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
         _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["level"] = "action" });
-        _app.Debug.Activate();
+        await _app.Debug.Activate();
         var ctx = _app.actor.list.User.Context;
         var show = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Show",
             Make.Step("set seen", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "seen", "variable"), ("Value", "%!error.Message%")))));
@@ -120,7 +120,7 @@ public class DebugSmokeTests
         {
             ["llm"] = new Dictionary<string, object?> { ["user"] = true, ["response"] = true },
         });
-        _app.Debug.Activate();
+        await _app.Debug.Activate();
         var ctx = _app.actor.list.User.Context;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Dbg",
             Make.Step("set app", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "app", "variable"), ("Value", "%!app%"))),
@@ -143,7 +143,7 @@ public class DebugSmokeTests
         var set = _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["variables"] = new List<object?> { "trace", "%goal%" } });
 
         await set.IsSuccess();
-        await Assert.That(_app.Debug.Setting.Variables.Items(_app.actor.list.System.Context).Select(v => v.Peek()?.ToString()).ToList())
+        await Assert.That((await _app.Debug.Setting()).Variables.Items(_app.actor.list.System.Context).Select(v => v.Peek()?.ToString()).ToList())
             .IsEquivalentTo(new List<string> { "trace", "%goal%" });
     }
 
@@ -154,7 +154,7 @@ public class DebugSmokeTests
     {
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
         _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["variables"] = new List<object?> { "%trace%" } });
-        _app.Debug.Activate();
+        await _app.Debug.Activate();
         var store = _app.actor.list.User.Context.Variable;
 
         await store.Set("trace", 1);

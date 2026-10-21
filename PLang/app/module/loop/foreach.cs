@@ -77,7 +77,7 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
             if (failed != null) return failed;
             if (Context.CancellationToken.IsCancellationRequested)
                 return await Result(count, complete: false);
-            await using (Context.call.Push(names))
+            await using (Context.call.Push(names, await Context.call.Setting()))
                 foreach (var action in body)
                 {
                     var result = await action.Start(Context);
@@ -133,7 +133,7 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
                     try
                     {
                         using var child = Context.Child(actor, own);
-                        await using (child.call.Isolate(names, caller: from))
+                        await using (child.call.Isolate(names, await child.call.Setting(), caller: from))
                             foreach (var action in body)
                             {
                                 var result = await action.Start(child);

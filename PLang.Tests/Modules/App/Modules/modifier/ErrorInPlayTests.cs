@@ -84,7 +84,7 @@ public class ErrorInPlayTests
         var action = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%x%", "variable"), ("value", "v"));
         var error = new global::app.error.@this("frame failed");
 
-        await using var call = Ctx.call.Push(action, Ctx.Variable);
+        await using var call = Ctx.call.Push(action, await Ctx.call.Setting(), Ctx.Variable);
         call.Errors.Add(error);
 
         await Assert.That(Ctx.call.Error).IsEqualTo(error);
@@ -100,11 +100,11 @@ public class ErrorInPlayTests
         var outerError = new global::app.error.@this("outer failed");
         var innerError = new global::app.error.@this("inner failed");
 
-        await using var outer = Ctx.call.Push(outerAction, Ctx.Variable);
+        await using var outer = Ctx.call.Push(outerAction, await Ctx.call.Setting(), Ctx.Variable);
         outer.Errors.Add(outerError);
         await Assert.That(Ctx.call.Error).IsEqualTo(outerError);
 
-        await using (var inner = Ctx.call.Push(innerAction, Ctx.Variable))
+        await using (var inner = Ctx.call.Push(innerAction, await Ctx.call.Setting(), Ctx.Variable))
         {
             inner.Errors.Add(innerError);
             await Assert.That(Ctx.call.Error).IsEqualTo(innerError);   // shadowed
@@ -120,7 +120,7 @@ public class ErrorInPlayTests
     {
         var action = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%x%", "variable"), ("value", "v"));
 
-        await using var call = Ctx.call.Push(action, Ctx.Variable);
+        await using var call = Ctx.call.Push(action, await Ctx.call.Setting(), Ctx.Variable);
         call.Errors.Add(new global::app.error.@this("recovered later"));
 
         call.Handled = true;
@@ -139,7 +139,7 @@ public class ErrorInPlayTests
     {
         var action = global::PLang.Tests.Shared.Make.Action(Ctx, "error", "throw", ("message", "already finished"));
 
-        await using (var call = Ctx.call.Push(action, Ctx.Variable))
+        await using (var call = Ctx.call.Push(action, await Ctx.call.Setting(), Ctx.Variable))
         {
             call.Errors.Add(new global::app.error.@this("already finished"));
             await Assert.That(Ctx.call.Error).IsNotNull();

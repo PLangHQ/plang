@@ -173,9 +173,9 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
         // goal (a file 'note.txt') is found where the goal is, not where the builder's own goal is. Each context
         // has its own calls, so the frame is pushed in each the checks run in.
         var goal = CountRaw > 0 ? this[0].Goal : null;
-        await using var frame = goal != null ? context.call.Push(goal) : null;
-        await using var checking = goal != null ? check.call.Push(goal) : null;
-        await using var scoping = goal != null ? scratch.call.Push(goal) : null;
+        await using var frame = goal != null ? context.call.Push(goal, await context.call.Setting()) : null;
+        await using var checking = goal != null ? check.call.Push(goal, await check.call.Setting()) : null;
+        await using var scoping = goal != null ? scratch.call.Push(goal, await scratch.call.Setting()) : null;
         for (int i = 0; i < CountRaw; i++)
         {
             var step = this[i];

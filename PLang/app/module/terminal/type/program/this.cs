@@ -55,7 +55,7 @@ public sealed partial class @this(IProgram asked)
                 $"The step gives the program permissions, but {named} holds none — leave Permission out to run it free.", "PermissionInvalid", 400));
         if (await Found(held: given != null) is { } failed) return failed;
         // a start trusted by its origin runs by the terminal's defaults, none of the actor's settings (579)
-        Setting = Trusted ? new(context.App.type.list[typeof(setting.@this)]) : context.Setting.Of<setting.@this>();
+        Setting = Trusted ? new(context.App.type.list[typeof(setting.@this)]) : await context.Setting.Get<setting.@this>();
         if (given == null) return null;
         var (sandbox, refused) = await Sandbox.Of(given.Rows(context), File!, context);
         Sandbox = sandbox;
@@ -137,7 +137,7 @@ public sealed partial class @this(IProgram asked)
         // inside what started unasked. Its environment is plang's own and what the step names, nothing else. A clean
         // start takes no environment setting either.
         var trusted = named && global::app.type.item.path.@this.AskedByOs(context);
-        var env = trusted || cleanStart ? new() : context.Setting.Of<setting.@this>().Environment.Clr<Dictionary<string, object?>>() ?? new();
+        var env = trusted || cleanStart ? new() : (await context.Setting.Get<setting.@this>()).Environment.Clr<Dictionary<string, object?>>() ?? new();
         // a step that writes no Environment reads the setting's through its property — for a trusted or clean start that
         // is the same side door: it takes only what the step itself wrote
         var written = asking?.Property["Environment"] != null || environment?.Peek() is { IsNull: false } && asking == null;
@@ -166,15 +166,18 @@ public sealed partial class @this(IProgram asked)
 
     /// <summary>It is a plang told to speak plang's own format on its console — its command line read as a plang reads
     /// its own (<c>--channel.setting.format=plang</c>, with or without <c>app.</c>, or the setting's dict).</summary>
-    internal bool SpeaksPlang(Context context)
+    internal async Task<bool> SpeaksPlang(Context context)
     {
         var (_, parameters) = global::app.Utils.CommandLineParser.Parse([.. Info!.ArgumentList]);
-        // the child's settings as its command line sets them, in a layer of their own; a flag that is no setting is
+        // the child's settings as its command line sets them, in a layer of their own, kept where the setting each flag
+        // names says (as the child's own command line does); a flag that is no setting, or one its setting refuses, is
         // the child's to refuse when it starts, not this read's
         using var child = new global::app.actor.setting.@this(context);
         foreach (var (key, value) in parameters)
-            if (key.StartsWith('!')) child.Set(key[1..], value);
-        return ReferenceEquals(child.Of<global::app.channel.setting.@this>().Format.Kind, process.@this.PlangFormat(context));
+            if (key.StartsWith('!') && child.Find(key[1..]) is { Success: true } setting
+                && (await setting.Value())!.Apply(key[1..], value, context) is { Success: true } address)
+                child.Set((await address.Value())!.ToString(), value);
+        return ReferenceEquals((await child.Get<global::app.channel.setting.@this>()).Format.Kind, process.@this.PlangFormat(context));
     }
 
     public override string ToString() => File?.Absolute ?? asked.App.Peek()?.ToString() ?? "a program";

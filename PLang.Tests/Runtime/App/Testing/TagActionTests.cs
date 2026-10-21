@@ -35,7 +35,7 @@ public class TagActionTests
     public async Task Build_StampsTheGoalBeingBuilt()
     {
         var goal = Goal();
-        await using var frame = Ctx.call.Push(goal);
+        await using var frame = Ctx.call.Push(goal, await Ctx.call.Setting());
 
         var result = await new Tag(Ctx) { Tags = Tags("http", "Fast") }.Build();
 
@@ -48,7 +48,7 @@ public class TagActionTests
     public async Task Build_SameTagTwice_StampedOnce()
     {
         var goal = Goal();
-        await using var frame = Ctx.call.Push(goal);
+        await using var frame = Ctx.call.Push(goal, await Ctx.call.Setting());
 
         await new Tag(Ctx) { Tags = Tags("http") }.Build();
         await new Tag(Ctx) { Tags = Tags("HTTP", "slow") }.Build();
@@ -60,7 +60,7 @@ public class TagActionTests
     public async Task Build_VariableTags_StampNothing()
     {
         var goal = Goal();
-        await using var frame = Ctx.call.Push(goal);
+        await using var frame = Ctx.call.Push(goal, await Ctx.call.Setting());
 
         var action = global::PLang.Tests.Shared.Make.Action(Ctx, "test", "tag", new (string, object?)[] { ("Tags", "%myTags%") });
         await Assert.That(await action.Build(Ctx)).IsNull();

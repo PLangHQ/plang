@@ -195,7 +195,8 @@ public partial class @this
         // Handled on that frame is what takes it out of play. When the Push wrapped dispatch only,
         // the frame died between the failure and the recovery that had to see it.
         global::app.call.@this call;
-        try { call = context.call.Push(this, context.Variable); }
+        var setting = await context.call.Setting();
+        try { call = context.call.Push(this, setting, context.Variable); }
         catch (global::app.error.CallStackOverflowException ex)
         {
             // The depth limit — trips at Push, before the frame is on the

@@ -31,7 +31,8 @@ public sealed class @this : IReadOnlyList<CallEntity>
         lock (_lock)
         {
             _entries.Add(child);
-            var setting = _stack.Setting;
+            // what the stack captured when the child was pushed
+            var setting = child.Setting;
             if (setting.History.Value && _entries.Count > setting.Frame.Max.ToInt32())
                 _entries.RemoveAt(0);
         }

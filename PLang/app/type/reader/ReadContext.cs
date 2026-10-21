@@ -46,4 +46,8 @@ public sealed record ReadContext(
 {
     /// <summary>What the bytes were written for: what crosses to others, unless the read names plang's own store.</summary>
     public global::app.View View { get; init; } = global::app.View.Out;
+
+    /// <summary>How long a signature read live is good for after it was made — the signing setting's expiry, read by
+    /// the async maker of this read (the reader itself can't wait for a setting). Null outside a live read.</summary>
+    public global::app.type.item.duration.@this? Window { get; init; }
 }

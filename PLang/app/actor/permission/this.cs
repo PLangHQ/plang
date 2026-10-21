@@ -179,8 +179,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     // and a save would overwrite them).
     private async Task<setting.@this> Saved()
     {
-        await _actor.Setting.Load();
-        return _actor.Setting.Of<setting.@this>();
+        return await _actor.Setting.Get<setting.@this>();
     }
 
     // Saves the grants as the actor's own permission setting — one row, whole: a copy of what the settings hold,

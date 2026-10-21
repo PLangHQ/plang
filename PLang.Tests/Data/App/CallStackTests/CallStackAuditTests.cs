@@ -12,7 +12,7 @@ public class CallStackAuditTests : System.IAsyncDisposable
     public async Task Audit_AppendsErrorOnFailingAction()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
-        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
         var err = new Error("Boom");
         call.Errors.Add(err);
         stack.Audit.Add(err);
@@ -23,7 +23,7 @@ public class CallStackAuditTests : System.IAsyncDisposable
     public async Task Audit_RetainsErrorAfterPop()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
-        var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
         var err = new Error("Boom");
         stack.Audit.Add(err);
         await call.DisposeAsync();
@@ -34,22 +34,22 @@ public class CallStackAuditTests : System.IAsyncDisposable
     public async Task Audit_AccumulatesBothHandledAndUnhandled()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
-        var c1 = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        var c1 = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
         stack.Audit.Add(new Error("e1"));
         c1.Handled = true;
         await c1.DisposeAsync();
 
-        var c2 = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
+        var c2 = stack.Push(MakeAction(app.actor.list.User.Context, "B"), await stack.Setting());
         stack.Audit.Add(new Error("e2"));
         c2.Handled = true;
         await c2.DisposeAsync();
 
-        var c3 = stack.Push(MakeAction(app.actor.list.User.Context, "C"));
+        var c3 = stack.Push(MakeAction(app.actor.list.User.Context, "C"), await stack.Setting());
         stack.Audit.Add(new Error("e3"));
         c3.Handled = true;
         await c3.DisposeAsync();
 
-        var c4 = stack.Push(MakeAction(app.actor.list.User.Context, "D"));
+        var c4 = stack.Push(MakeAction(app.actor.list.User.Context, "D"), await stack.Setting());
         stack.Audit.Add(new Error("e4"));
         // c4 stays unhandled
         await c4.DisposeAsync();
@@ -75,7 +75,7 @@ public class CallStackAuditTests : System.IAsyncDisposable
         // App.Run translates a thrown Exception into a ServiceError and adds it to both
         // call.Errors and stack.Audit. Test the data wiring by simulating the same writes.
         var stack = TestCalls.Stack(app, TestCalls.Settings());
-        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
         var sv = new ServiceError("crash", call.Step!);
         call.Errors.Add(sv);
         stack.Audit.Add(sv);

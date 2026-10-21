@@ -119,8 +119,9 @@ public class Fluid : ITemplate
         // each question Liquid asks through the value's own doors (Item, below): how it shows (its Output), whether
         // it is true, how it compares, what it holds. Converters run wherever FluidValue.Create does — the
         // variable-binding loops below and every member or element a render reaches.
+        var culture = (await action.Context.Setting.Get<global::app.setting.@this>()).Culture;
         options.ValueConverters.Add(value =>
-            value is global::app.type.item.@this held ? Item.Liquid(held, action.Context, options) : null);
+            value is global::app.type.item.@this held ? Item.Liquid(held, action.Context, options, culture) : null);
 
         // `{{ x | json }}` writes the value through plang's json format, as the json writer shows it, compact
         // (liquid's `json: true` indent is not honoured). Liquid's own json filter reflects the C# object behind
@@ -283,15 +284,17 @@ public class Fluid : ITemplate
     /// <c>map</c>, <c>where</c> act on it; any other iterates as <c>[key, value]</c> pairs
     /// (<c>{% for c in decider.common %}{{ c[0] }}</c>).
     /// </summary>
-    private sealed class Item(global::app.type.item.@this item, global::app.actor.context.@this context, TemplateOptions options)
+    private sealed class Item(global::app.type.item.@this item, global::app.actor.context.@this context, TemplateOptions options,
+            global::app.type.item.culture.@this culture)
         : ObjectValueBase(item)
     {
-        /// <summary><paramref name="value"/> in the liquid shape it holds its children in.</summary>
+        /// <summary><paramref name="value"/> in the liquid shape it holds its children in, its numbers shown in
+        /// <paramref name="culture"/> (the render's, read once before it starts: liquid asks for text synchronously).</summary>
         internal static FluidValue Liquid(global::app.type.item.@this value, global::app.actor.context.@this context,
-            TemplateOptions options)
+            TemplateOptions options, global::app.type.item.culture.@this culture)
             => value.IsSequence
                 ? new ArrayValue(value.EnumerateItems(context).Select(pair => FluidValue.Create(pair.value.Peek(), options)).ToList())
-                : new Item(value, context, options);
+                : new Item(value, context, options, culture);
 
         /// <summary>What liquid takes the value for when it compares (<c>where:</c>, <c>==</c>, <c>size</c>): a leaf
         /// what its raw form is to liquid (a text a string, a number a number), anything else an object.</summary>
@@ -348,7 +351,7 @@ public class Fluid : ITemplate
 
         // plang's text writer over the stream, its numbers in the render's culture
         private global::app.type.item.text.Writer Writer(Stream into)
-            => new(into, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture, global::app.View.Out, context);
+            => new(into, System.Text.Encoding.UTF8, culture, global::app.View.Out, context);
 
         /// <summary>Whether the value is true — its own truthiness (0, "", false and null are not).</summary>
         public override bool ToBooleanValue() => item.IsTruthy();

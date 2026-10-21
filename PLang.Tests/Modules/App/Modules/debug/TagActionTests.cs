@@ -16,13 +16,13 @@ public class TagActionTests
 
     // The frames a running tag action sits in: its goal's, its step's, its own.
     private static (global::app.call.@this goal, global::app.call.@this step, global::app.call.@this action)
-        Frames(global::app.@this app)
+        Frames(global::app.@this app, global::app.call.setting.@this setting)
     {
         var action = MakeAction(app.actor.list.User.Context, "Goal", module: "debug", actionName: "tag");
         var stack = app.actor.list.User.Context.call;
-        var goal = stack.Push(action.Step!.Goal!);
-        var step = stack.Push(action.Step!);
-        return (goal, step, stack.Push(action));
+        var goal = stack.Push(action.Step!.Goal!, setting);
+        var step = stack.Push(action.Step!, setting);
+        return (goal, step, stack.Push(action, setting));
     }
 
     [Test]
@@ -31,7 +31,7 @@ public class TagActionTests
         // The tag action's own frame and its step's pop when the step ends; the goal's frame lives for
         // the goal's run, so a later step can read what this one tagged.
         await using var app = new global::app.@this("/app").Testing();
-        var (goal, step, action) = Frames(app);
+        var (goal, step, action) = Frames(app, await app.actor.list.User.Context.call.Setting());
         await using (goal) await using (step) await using (action)
         {
             await Tagging(app, new() { ["k1"] = "v1", ["k2"] = "v2" }).Start();
@@ -49,7 +49,7 @@ public class TagActionTests
     public async Task Tag_LabelAsTrue_SetsTagsLabelTrue()
     {
         await using var app = new global::app.@this("/app").Testing();
-        var (goal, step, action) = Frames(app);
+        var (goal, step, action) = Frames(app, await app.actor.list.User.Context.call.Setting());
         await using (goal) await using (step) await using (action)
         {
             await Tagging(app, new() { ["manual-checkpoint"] = true }).Start();
@@ -72,7 +72,7 @@ public class TagActionTests
     public async Task Tag_OutsideAGoal_TagsTheCurrentFrame()
     {
         await using var app = new global::app.@this("/app").Testing();
-        await using var call = app.actor.list.User.Context.call.Push(MakeAction(app.actor.list.User.Context, "Goal"));
+        await using var call = app.actor.list.User.Context.call.Push(MakeAction(app.actor.list.User.Context, "Goal"), await app.actor.list.User.Context.call.Setting());
         await Tagging(app, new() { ["x"] = true }).Start();
 
         await Assert.That(Count(call, app)).IsEqualTo(1);
@@ -83,7 +83,7 @@ public class TagActionTests
     public async Task Tag_MergeOverwritesAKeyAndKeepsTheRest()
     {
         await using var app = new global::app.@this("/app").Testing();
-        var (goal, step, action) = Frames(app);
+        var (goal, step, action) = Frames(app, await app.actor.list.User.Context.call.Setting());
         await using (goal) await using (step) await using (action)
         {
             await Tagging(app, new() { ["a"] = "1", ["b"] = "2" }).Start();

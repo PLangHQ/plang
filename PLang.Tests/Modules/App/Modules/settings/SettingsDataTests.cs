@@ -31,8 +31,8 @@ public class SettingsDataTests
     }
 
     // The setting as the actor's settings hold it now — llm's own class.
-    private global::app.module.llm.setting.@this Llm(global::app.actor.context.@this ctx)
-        => ctx.Setting.Of<global::app.module.llm.setting.@this>();
+    private async Task<global::app.module.llm.setting.@this> Llm(global::app.actor.context.@this ctx)
+        => (await ctx.Setting.Get<global::app.module.llm.setting.@this>());
 
     private static global::app.data.@this<global::app.type.item.setting.@this> Given(
         global::app.type.item.setting.@this setting, global::app.actor.context.@this ctx)
@@ -42,27 +42,27 @@ public class SettingsDataTests
     public async Task Save_StoresTheSettingWhole_AsTheActorsRow()
     {
         var ctx = _app.actor.list.System.Context;
-        var llm = Llm(ctx);
+        var llm = await Llm(ctx);
         llm.Cache = ctx.Choice(global::app.module.cache.type.cache.skip);
 
         var result = await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start();
         await result.IsSuccess();
         // no value rides out — a setting may hold secrets
         await Assert.That(result.Peek() is null or global::app.type.item.@null.@this).IsTrue();
-        await Assert.That(Llm(ctx).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.skip);
+        await Assert.That((await Llm(ctx)).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.skip);
     }
 
     [Test]
     public async Task Remove_GoesBackToTheDefaults()
     {
         var ctx = _app.actor.list.System.Context;
-        var llm = Llm(ctx);
+        var llm = await Llm(ctx);
         llm.Cache = ctx.Choice(global::app.module.cache.type.cache.skip);
         await (await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start()).IsSuccess();
 
-        var result = await new global::app.module.setting.Remove(ctx) { Setting = Given(Llm(ctx), ctx) }.Start();
+        var result = await new global::app.module.setting.Remove(ctx) { Setting = Given(await Llm(ctx), ctx) }.Start();
         await result.IsSuccess();
-        await Assert.That(Llm(ctx).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.use);
+        await Assert.That((await Llm(ctx)).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.use);
     }
 
     [Test]
@@ -98,7 +98,7 @@ public class SettingsDataTests
         await using (var onDisk = new global::app.@this(_tempDir).TestSigning())
         {
             var ctx = onDisk.actor.list.System.Context;
-            var llm = Llm(ctx);
+            var llm = await Llm(ctx);
             llm.Cache = ctx.Choice(global::app.module.cache.type.cache.skip);
             await (await onDisk.actor.list.System.Setting.Save(llm)).IsSuccess();
 

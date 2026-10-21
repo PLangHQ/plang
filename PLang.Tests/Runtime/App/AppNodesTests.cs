@@ -28,7 +28,7 @@ public class AppNodesTests
         await using var app = NewApp();
         var user = app.actor.list.User.Context;
         var goal = new global::app.goal.@this(app.type.list) { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
-        await using var frame = user.call.Push(goal);
+        await using var frame = user.call.Push(goal, await user.call.Setting());
         frame.Tag(new global::app.type.item.dict.@this(new System.Collections.Generic.Dictionary<string, object?> { ["owner"] = "ingi" }, user.App.type.list[typeof(global::app.type.item.dict.@this)]), user);
         frame.Record(new global::app.error.@this("seen", "Seen", 400), user);
 
@@ -52,7 +52,7 @@ public class AppNodesTests
         var user = app.actor.list.User.Context;
         var goal = new global::app.goal.@this(app.type.list) { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
         await user.Variable.Set("secret", user.Ok("s3cr3t-value"));
-        await using var frame = user.call.Push(goal);
+        await using var frame = user.call.Push(goal, await user.call.Setting());
         var error = new global::app.error.@this("it failed here", "Boom", 400) { Variables = user.Variable.Snapshot() };
         frame.Record(error, user);
 
@@ -77,7 +77,7 @@ public class AppNodesTests
         await using var app = NewApp();
         var user = app.actor.list.User.Context;
         var goal = new global::app.goal.@this(app.type.list) { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
-        await using var frame = user.call.Push(goal);
+        await using var frame = user.call.Push(goal, await user.call.Setting());
         frame.Record(new global::app.error.@this("seen", "Seen", 400), user);
 
         async Task<string> In(global::app.View view)

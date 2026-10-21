@@ -103,7 +103,7 @@ public class @this<T, L> : @this
             return new data.@this(key, Of(parent.Context), parent: parent);
         // the concept's own settings (%!app.test.setting%), as the asker's settings build them
         if (_setting is { } @class && string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase))
-            return await parent.Context.Setting.Of(@class);
+            return await parent.Context.Setting.Get(@class) ?? parent.Context.NotFound(key);
         if (string.Equals(key, "type", System.StringComparison.OrdinalIgnoreCase))
             return new data.@this(key, type, parent: parent);
         return null;

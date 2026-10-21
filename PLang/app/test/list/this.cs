@@ -29,10 +29,30 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
 
     /// <summary>Opens a session on the actor test's setting names: the run's own, or (given its test) the
     /// one a test's App writes into.</summary>
-    public global::app.channel.type.test.@this Open(global::app.test.@this? test = null)
+    public async Task<global::app.channel.type.test.@this> Open(global::app.test.@this? test = null)
+    {
+        // opened on the default actor first: the app is testing from here, so a store its setting's read opens (the
+        // settings' own) opens in memory
+        var user = _app.actor.list.User;
+        var session = new global::app.channel.type.test.@this(test);
+        // what the default actor held under the session's name (a test's own session is its output)
+        var held = user.Channel.Get(session.Name);
+        user.Channel.Register(session);
+        // then where test's setting says, when that is another actor: the session moves there — opened on it first, so
+        // the app never stops testing, then the default actor given back what it held; one session is left, never two
+        if (await Actor() is not { } named || ReferenceEquals(named, user)) return session;
+        var moved = Open(named, test);
+        if (held != null) await user.Channel.Set(held);
+        else await user.Channel.Remove(session.Name, user.Context);
+        return moved;
+    }
+
+    /// <summary>Opens a session on <paramref name="actor"/> — the one test's setting names, read by a caller that can
+    /// wait for it.</summary>
+    public global::app.channel.type.test.@this Open(global::app.actor.@this actor, global::app.test.@this? test = null)
     {
         var session = new global::app.channel.type.test.@this(test);
-        Actor.Channel.Register(session);
+        actor.Channel.Register(session);
         return session;
     }
 
@@ -43,8 +63,8 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     }
 
     // The actor test's setting names — one of the app's, which the actor list holds.
-    private global::app.actor.@this Actor
-        => _app.actor.list[_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Actor];
+    private async Task<global::app.actor.@this> Actor()
+        => _app.actor.list[(await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Actor];
 
     /// <summary>The App this run belongs to — reporters read its version for drift.</summary>
     internal global::app.@this App => _app;
@@ -70,7 +90,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests, given.Type);
         if (tests.Count == 0) return executed;
 
-        var parallel = context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32();
+        var parallel = (await context.Setting.Get<global::app.test.setting.@this>()).Parallel.ToInt32();
         if (parallel < 1) parallel = System.Environment.ProcessorCount;
 
         using var semaphore = new SemaphoreSlim(parallel);
@@ -154,7 +174,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         if (test.Status == Status.Ready)
         {
             await using var app = new global::app.@this(_app.AbsolutePath);
-            app.test.list.Open(test);
+            await app.test.list.Open(test);
             Made?.Invoke(app);
             await test.Start(app, context);
             Report.Coverage.Merge(app.test.list.Report.Coverage);

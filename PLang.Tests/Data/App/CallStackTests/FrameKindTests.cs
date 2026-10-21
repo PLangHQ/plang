@@ -20,9 +20,9 @@ public class FrameKindTests : System.IAsyncDisposable
     public async Task ABindingFrame_DoesNotDeepenTheChain_NorCountTowardItsLimit()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings(), maxDepth: 2);
-        await using var a = stack.Push(MakeAction(Ctx, "A"));
-        await using var item = stack.Push(Names("item", 1));
-        await using var b = stack.Push(MakeAction(Ctx, "B"));
+        await using var a = stack.Push(MakeAction(Ctx, "A"), await stack.Setting());
+        await using var item = stack.Push(Names("item", 1), await stack.Setting());
+        await using var b = stack.Push(MakeAction(Ctx, "B"), await stack.Setting());
 
         await Assert.That(item.Depth.ToInt32()).IsEqualTo(1);
         await Assert.That(b.Depth.ToInt32()).IsEqualTo(2);
@@ -33,8 +33,8 @@ public class FrameKindTests : System.IAsyncDisposable
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings(new Dictionary<string, object?> { ["timing"] = true }));
         var action = MakeAction(Ctx, "A");
-        await using var frame = stack.Push(action);
-        await using var item = stack.Push(Names("item", 1));
+        await using var frame = stack.Push(action, await stack.Setting());
+        await using var item = stack.Push(Names("item", 1), await stack.Setting());
 
         await Assert.That(item.Step).IsSameReferenceAs(frame.Step);
         await Assert.That(item.Goal).IsSameReferenceAs(frame.Goal);
@@ -48,8 +48,8 @@ public class FrameKindTests : System.IAsyncDisposable
     public async Task AFrameIsBornWithItsNames_AndReadsOutward()
     {
         var stack = TestCalls.Stack(app, TestCalls.Settings());
-        await using var outer = stack.Push(Names("city", "Reykjavik"));
-        await using var inner = stack.Push(Names("day", "today"));
+        await using var outer = stack.Push(Names("city", "Reykjavik"), await stack.Setting());
+        await using var inner = stack.Push(Names("day", "today"), await stack.Setting());
 
         await Assert.That(inner.TryGet("city", out var city)).IsTrue();
         await Assert.That((await city.Value())?.ToString()).IsEqualTo("Reykjavik");

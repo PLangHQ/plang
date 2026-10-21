@@ -26,7 +26,7 @@ public sealed class TypeSafe : IDecider
             return context.Ok(new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]));
 
         // the decider's own settings: the saved row, else the environment's, else the service's endpoint
-        var setting = context.Setting.Of<global::app.module.llm.decider.setting>();
+        var setting = await context.Setting.Get<global::app.module.llm.decider.setting>();
         var endpoint = setting.Endpoint.ToString();
         var apiKey = setting.Key.ToString();
 

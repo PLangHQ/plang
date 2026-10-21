@@ -34,7 +34,7 @@ public class SizeKindTests : System.IAsyncDisposable
     [Arguments("500 KiB")]
     [Arguments("2 GiB")]
     public async Task ASizeReadFromText_WritesItBack(string text)
-        => await Assert.That(Size.Resolve(text, app.actor.list.User.Context)!.Text).IsEqualTo(text);
+        => await Assert.That(await Size.Resolve(text, app.actor.list.User.Context)!.Text(app.actor.list.User.Context)).IsEqualTo(text);
 
     [Test]
     [Arguments(512L, "512 B")]
@@ -42,7 +42,7 @@ public class SizeKindTests : System.IAsyncDisposable
     [Arguments(100_000_000L, "95.4 MiB")]
     [Arguments(0L, "0 B")]
     public async Task ACountWithNothingSet_IsIec_InItsLargestUnit(long bytes, string text)
-        => await Assert.That(Size.Create(bytes, app.actor.list.User.Context).Text).IsEqualTo(text);
+        => await Assert.That(await Size.Create(bytes, app.actor.list.User.Context).Text(app.actor.list.User.Context)).IsEqualTo(text);
 
     [Test]
     [Arguments("12 parsecs")]
@@ -68,7 +68,7 @@ public class SizeKindTests : System.IAsyncDisposable
 
         await set.IsSuccess();
         await Assert.That((await standard.Value())?.ToString()).IsEqualTo("si");
-        await Assert.That(Size.Create(100_000_000L, context).Text).IsEqualTo("100 MB");
+        await Assert.That(await Size.Create(100_000_000L, context).Text(context)).IsEqualTo("100 MB");
     }
 
     [Test]
@@ -76,7 +76,7 @@ public class SizeKindTests : System.IAsyncDisposable
     {
         await using var app = new global::app.@this("/app").Testing();
 
-        await Assert.That(Size.Create(100_000_000L, app.actor.list.User.Context).Text).IsEqualTo("95.4 MiB");
+        await Assert.That(await Size.Create(100_000_000L, app.actor.list.User.Context).Text(app.actor.list.User.Context)).IsEqualTo("95.4 MiB");
     }
 
     // `as si`: the declared type names the kind, and a count is made by it, written in it.
@@ -88,7 +88,7 @@ public class SizeKindTests : System.IAsyncDisposable
 
         var converted = Size.Create(104_857_600L, new global::app.type.@this("size", "si"), carrier)!;
 
-        await Assert.That(converted.Text).IsEqualTo("104.9 MB");
+        await Assert.That(await converted.Text(app.actor.list.User.Context)).IsEqualTo("104.9 MB");
         await Assert.That(converted.Value).IsEqualTo(104_857_600L);
     }
 
@@ -118,7 +118,7 @@ public class SizeKindTests : System.IAsyncDisposable
             var size = await (await file.Size(context)).Value();
 
             await Assert.That(size!.Value).IsEqualTo(2048L);
-            await Assert.That(size.Text).IsEqualTo("2 KiB");
+            await Assert.That(await size.Text(context)).IsEqualTo("2 KiB");
         }
         finally { System.IO.Directory.Delete(root, true); }
     }

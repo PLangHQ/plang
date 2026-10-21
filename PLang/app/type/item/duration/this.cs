@@ -16,7 +16,7 @@ namespace app.type.item.duration;
 /// ISO-8601 (<see cref="ToString"/>).</para>
 /// </summary>
 [global::app.Attributes.PlangType("duration"), global::app.Attributes.Kinds, global::app.Attributes.Choice]
-public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
+public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.setting.ISetting<setting.@this>, System.IEquatable<@this>
 {
     public static string Shape => "string";
@@ -28,8 +28,16 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     public override bool IsLeaf => true;
 
     /// <summary>A duration writes itself in the standard it is: a <c>short</c> as <c>30s</c>, an <c>iso</c> as
-    /// <c>PT5M</c>, a <c>dotnet</c> as <c>00:05:00</c> — each standard a kind of duration, a class of its own.</summary>
-    protected internal abstract override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer);
+    /// <c>PT5M</c>, a <c>dotnet</c> as <c>00:05:00</c> — each standard a kind of duration, a class of its own. One born
+    /// with no standard (how long a step ran) is written in the one its asker's setting names, read once per write.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    {
+        var standard = (await writer.Context.Setting.Get<setting.@this>()).Standard.Value;
+        var written = writer.Context.App.type.list[new global::app.type.@this("duration", standard.Name), writer.Context]
+            .Make(Value, new global::app.data.@this("", context: writer.Context)) as @this
+            ?? throw new System.InvalidOperationException($"the duration standard {standard.Name} made no span of {Value}.");
+        await written.Write(writer);
+    }
 
     /// <summary>A span born holding <paramref name="type"/> — the app's {duration, standard}.</summary>
     protected @this(System.TimeSpan value, global::app.type.@this type) : base(type) => Value = value;
@@ -52,15 +60,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
             data.Fail(new global::app.error.@this($"'{text}' is not a duration in {standard} ({standard} is written {written})", "DurationParseFailed", 400));
     }
 
-    /// <summary>A span with no form of its own (how long a step ran), made by the standard its asker's setting names
-    /// (<c>short</c> unless set), through the app's entry for it.</summary>
+    /// <summary>A span with no form of its own (how long a step ran): a duration of no standard, written in the one its
+    /// asker's setting names (<c>short</c> unless set).</summary>
     public static @this Create(System.TimeSpan span, global::app.actor.context.@this context)
-    {
-        var standard = context.Setting.Of<setting.@this>().Standard.Value;
-        return context.App.type.list[new global::app.type.@this("duration", standard.Name), context]
-                   .Make(span, new global::app.data.@this("", context: context)) as @this
-               ?? throw new System.InvalidOperationException($"the duration standard {standard.Name} made no span of {span}.");
-    }
+        => new(span, context.App.type.list["duration"]);
 
     /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan is made in its asker's standard; a string (30s, ISO-8601
     /// <c>PT30S</c> or .NET <c>00:00:30</c>, via <see cref="Resolve"/>) is the standard it is written in, as

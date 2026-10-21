@@ -61,7 +61,7 @@ public class DotDotTraversalRegressionTests
             Name = "Probe",
             Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context)
         };
-        await using var inGoal = context.call.Push(goal);
+        await using var inGoal = context.call.Push(goal, await context.call.Setting());
 
         // The attack shape: a relative rawPath with enough .. to climb past
         // root. file.Resolve does Path.Combine(runtimeDir, raw) — pre-fix the
@@ -97,7 +97,7 @@ public class DotDotTraversalRegressionTests
             {
                 Name = "Probe",
                 Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context)
-            });
+            }, await context.call.Setting());
 
             var relative = "../../" + System.IO.Path.GetFileName(secretPath);
             var p = (FilePath)Path.Resolve(relative, context);

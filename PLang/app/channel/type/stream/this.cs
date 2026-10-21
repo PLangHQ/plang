@@ -72,7 +72,7 @@ public class @this : global::app.channel.type.session.@this
             // last moment — the format then decides how it looks.
             var opened = await data.Peek().Open(context);
             if (opened != null) return context.Error(opened);
-            var format = Format(context);
+            var format = await Format(context);
             // One message leaves whole, in order: its bytes and its frame, never interleaved with another writer's
             // (tasks writing side by side). Only the leaving is held — the value was opened above.
             await _writing.WaitAsync(ct);

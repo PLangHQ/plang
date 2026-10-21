@@ -33,7 +33,7 @@ public class DeciderSettingTests : System.IAsyncDisposable
         var endpoint = await Variable("%!llm.decider.setting.endpoint%").Start(Ctx);
 
         await Assert.That((await endpoint.Value())?.ToString()).IsEqualTo("https://decide.example/v1");
-        await Assert.That(Ctx.Setting.Of<decider.setting>().Endpoint.ToString()).IsEqualTo("https://decide.example/v1");
+        await Assert.That((await Ctx.Setting.Get<decider.setting>()).Endpoint.ToString()).IsEqualTo("https://decide.example/v1");
     }
 
     [Test] public async Task TypeSafe_AsksWhereTheSettingSays_WithItsKey()
@@ -59,12 +59,12 @@ public class DeciderSettingTests : System.IAsyncDisposable
 
     [Test] public async Task ASavedKey_IsReadBack()
     {
-        var setting = Ctx.Setting.Of<decider.setting>().Copy();
+        var setting = (await Ctx.Setting.Get<decider.setting>()).Copy();
         ((decider.setting)setting).Key = "saved-key-2";
 
         await (await Ctx.Setting.Save(setting)).IsSuccess();
 
-        await Assert.That(Ctx.Setting.Of<decider.setting>().Key.ToString()).IsEqualTo("saved-key-2");
+        await Assert.That((await Ctx.Setting.Get<decider.setting>()).Key.ToString()).IsEqualTo("saved-key-2");
     }
 
     [Test] public async Task TheKey_IsNeverShown()

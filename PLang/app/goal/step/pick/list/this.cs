@@ -434,7 +434,7 @@ public sealed class @this
     {
         using var stream = new System.IO.MemoryStream();
         var writer = new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8,
-            context.Setting.Of<global::app.setting.@this>().Culture, global::app.View.Out, context);
+            (await context.Setting.Get<global::app.setting.@this>()).Culture, global::app.View.Out, context);
         await offer.Output(writer);
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }

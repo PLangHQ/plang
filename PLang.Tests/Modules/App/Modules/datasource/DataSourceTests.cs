@@ -368,7 +368,7 @@ public class DataSourceTests
     public async Task App_UsesInMemory_WhenTestingEnabled()
     {
         await using var engine = new global::app.@this(_tempDir).TestSigning();
-        engine.test.list.Open();
+        await engine.test.list.Open();
 
         // app.store is in-memory under Testing — no .data directory created.
         var ds = engine.store;

@@ -47,7 +47,7 @@ public class SettingsTests : System.IAsyncDisposable
         await store.Set("app.test.setting.formt", "json").IsSuccess();
         await store.Set("app.test.setting.timeout", "5s").IsSuccess();
 
-        await Assert.That(app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Timeout.Value.TotalSeconds).IsEqualTo(5);
+        await Assert.That((await app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Timeout.Value.TotalSeconds).IsEqualTo(5);
     }
 
     // --build.setting={"files":["a.goal"]} binds a JSON string array to build's files setting (a plang list);
@@ -65,7 +65,7 @@ public class SettingsTests : System.IAsyncDisposable
         await Assert.That(result.Success).IsTrue().Because(result.Error?.Message ?? "ok");
 
         // The consumer's read: each string row lifts to a REAL path (text→path via the lift door).
-        var files = app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Files;
+        var files = (await app.actor.list.System.Context.Setting.Get<global::app.module.build.setting.@this>()).Files;
         var paths = new List<global::app.type.item.path.@this>();
         foreach (var row in files.Items(app.actor.list.User.Context))
             paths.Add((await row.Value<global::app.type.item.path.@this>())!);
@@ -83,7 +83,7 @@ public class SettingsTests : System.IAsyncDisposable
         var result = app.actor.list.System.Setting.Set("build.setting", new Dictionary<string, object?> { ["files"] = "a.goal" });
         await Assert.That(result.Success).IsTrue().Because(result.Error?.Message ?? "ok");
 
-        var files = app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Files;
+        var files = (await app.actor.list.System.Context.Setting.Get<global::app.module.build.setting.@this>()).Files;
         var paths = new List<global::app.type.item.path.@this>();
         foreach (var row in files.Items(app.actor.list.User.Context))
             paths.Add((await row.Value<global::app.type.item.path.@this>())!);

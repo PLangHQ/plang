@@ -63,8 +63,8 @@ public class ExecutorTests
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.test.list.Session != null).IsTrue();
-        await Assert.That(engine.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Timeout.Value.TotalSeconds).IsEqualTo(5);
-        await Assert.That(engine.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel).IsEqualTo(3);
+        await Assert.That((await engine.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Timeout.Value.TotalSeconds).IsEqualTo(5);
+        await Assert.That((await engine.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Parallel).IsEqualTo(3);
         await using var _ = engine;
     }
 
@@ -80,6 +80,30 @@ public class ExecutorTests
         await Assert.That(error).IsNotNull();
         await error!.IsFailure();
         await Assert.That(engine).IsNull();
+    }
+
+    // Under --test the settings store opens in memory, though the session's actor is read from the settings before it is
+    // known where the session goes: nothing is written to the app's folder.
+    [Test]
+    public async Task Configure_Test_OpensTheSettingsInMemory()
+    {
+        var (engine, error) = await NewExecutor().Configure(new[] { "Start.goal", "--test" });
+        await using var _ = engine;
+
+        await Assert.That(error).IsNull();
+        await Assert.That(System.IO.Directory.Exists(System.IO.Path.Combine(_tempDir, ".data"))).IsFalse();
+    }
+
+    // The session runs on the actor test's setting names — moved there, the default actor holding none.
+    [Test]
+    public async Task Configure_TestSettingActor_RunsTheSessionThere()
+    {
+        var (engine, error) = await NewExecutor().Configure(new[] { "Start.goal", "--test.setting.actor=system" });
+        await using var _ = engine;
+
+        await Assert.That(error).IsNull();
+        await Assert.That(engine!.actor.list.System.Channel[typeof(global::app.channel.type.test.@this)]).IsNotNull();
+        await Assert.That(engine.actor.list.User.Channel[typeof(global::app.channel.type.test.@this)]).IsNull();
     }
 
     // A typo in a flag's option is refused by the setting it names, before anything is written.
@@ -255,7 +279,7 @@ public class ExecutorTests
         await using var _ = engine;
 
         await Assert.That(error).IsNull();
-        await Assert.That(engine!.actor.list.User.Context.Setting.Of<global::app.channel.setting.@this>().Format.ToString())
+        await Assert.That((await engine!.actor.list.User.Context.Setting.Get<global::app.channel.setting.@this>()).Format.ToString())
             .IsEqualTo("application/octet-stream");
     }
 
@@ -293,7 +317,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine!.Debug != null).IsTrue();
-        await Assert.That(engine.Debug!.Setting.Goal?.ToString()).IsEqualTo("Start");
+        await Assert.That((await engine.Debug!.Setting()).Goal?.ToString()).IsEqualTo("Start");
     }
 
     [Test]
@@ -326,7 +350,7 @@ public class ExecutorTests
         await using var _ = engine;
 
         await Assert.That(error).IsNull();
-        await Assert.That(engine!.actor.list.System.Context.Setting.Of<global::app.call.setting.@this>().Timing.Value).IsEqualTo(timed);
+        await Assert.That((await engine!.actor.list.System.Context.Setting.Get<global::app.call.setting.@this>()).Timing.Value).IsEqualTo(timed);
     }
 
     // Covers Start()'s composition with Configure(): an invalid --test config produces

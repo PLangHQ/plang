@@ -12,11 +12,11 @@ public class CallStackWalkTests
         await using var app = new global::app.@this("/app").Testing();
         app.actor.list.System.Setting.Set(new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Path, new Dictionary<string, object?>());
         var f = app.actor.list.User.Context.call;
-        await Assert.That(f.Timing.Value).IsFalse();
-        await Assert.That(f.Diff.Value).IsFalse();
-        await Assert.That(f.Tags.Value).IsFalse();
-        await Assert.That(f.History.Value).IsFalse();
-        await Assert.That(f.Setting.Frame.Max.ToInt32()).IsEqualTo(1000);
+        await Assert.That((await f.Timing()).Value).IsFalse();
+        await Assert.That((await f.Diff()).Value).IsFalse();
+        await Assert.That((await f.Tags()).Value).IsFalse();
+        await Assert.That((await f.History()).Value).IsFalse();
+        await Assert.That((await f.Setting()).Frame.Max.ToInt32()).IsEqualTo(1000);
     }
 
     [Test]
@@ -32,12 +32,12 @@ public class CallStackWalkTests
             ["frame"] = new Dictionary<string, object?> { ["max"] = 500 }
         });
         var f = app.actor.list.User.Context.call;
-        await Assert.That(f.Timing.Value).IsTrue();
-        await Assert.That(f.Diff.Value).IsTrue();
-        await Assert.That(f.Setting.Diff.Deep.Value).IsFalse();
-        await Assert.That(f.Tags.Value).IsTrue();
-        await Assert.That(f.History.Value).IsTrue();
-        await Assert.That(f.Setting.Frame.Max.ToInt32()).IsEqualTo(500);
+        await Assert.That((await f.Timing()).Value).IsTrue();
+        await Assert.That((await f.Diff()).Value).IsTrue();
+        await Assert.That((await f.Setting()).Diff.Deep.Value).IsFalse();
+        await Assert.That((await f.Tags()).Value).IsTrue();
+        await Assert.That((await f.History()).Value).IsTrue();
+        await Assert.That((await f.Setting()).Frame.Max.ToInt32()).IsEqualTo(500);
     }
 
     [Test]
@@ -46,9 +46,9 @@ public class CallStackWalkTests
         await using var app = new global::app.@this("/app").Testing();
         app.actor.list.System.Setting.Set(new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Path, new Dictionary<string, object?> { ["diff"] = true });
         var f = app.actor.list.User.Context.call;
-        await Assert.That(f.Diff.Value).IsTrue();
-        await Assert.That(f.Timing.Value).IsFalse();
-        await Assert.That(f.Tags.Value).IsFalse();
+        await Assert.That((await f.Diff()).Value).IsTrue();
+        await Assert.That((await f.Timing()).Value).IsFalse();
+        await Assert.That((await f.Tags()).Value).IsFalse();
     }
 
     [Test]
@@ -56,6 +56,6 @@ public class CallStackWalkTests
     {
         await using var app = new global::app.@this("/app").Testing();
         app.actor.list.System.Setting.Set(new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Path, new Dictionary<string, object?> { ["history"] = true });
-        await Assert.That(app.actor.list.User.Context.call.Setting.Frame.Max.ToInt32()).IsEqualTo(1000);
+        await Assert.That((await app.actor.list.User.Context.call.Setting()).Frame.Max.ToInt32()).IsEqualTo(1000);
     }
 }

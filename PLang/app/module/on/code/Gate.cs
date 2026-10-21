@@ -26,7 +26,7 @@ public static class Gate
             // %!data% is a name of the call's own frame, on its own flow (as a loop binds its item) — never written into
             // the actor's memory, where the step that started the source may still be reading its own %!data% (issue 64).
             // What else the call writes reaches the actor's variables as before.
-            await using var bound = context.call.Push([payload], held);
+            await using var bound = context.call.Push([payload], await context.call.Setting(), held);
             var result = await held.Start(context);
             if (!result.Success) await context.Actor.Channel.Report(result);
         }

@@ -23,8 +23,8 @@ public class DefaultSwitchTests
     private static async Task<string?> MyIdentityName(global::app.actor.context.@this ctx)
         => (await (await new global::app.type.item.variable.@this("MyIdentity.Name", ctx.App.type.list).Start(ctx)).Value())?.ToString();
 
-    private static int Defaults(global::app.@this app)
-        => app.actor.list.System.Setting.Of<global::app.module.identity.setting.@this>().Identity
+    private static async Task<int> Defaults(global::app.@this app)
+        => (await app.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity
             .Items(app.actor.list.System.Context).Count(row => row.Peek() is global::app.module.identity.Identity { IsDefault: true });
 
     [Test] public async Task SetDefault_MovesTheDefault_AndLeavesExactlyOne() => await InApp(async app =>
@@ -37,7 +37,7 @@ public class DefaultSwitchTests
         await Run(ctx, "setDefault", ("Name", "TestSwitchB"));
 
         await Assert.That(await MyIdentityName(ctx)).IsEqualTo("TestSwitchB");
-        await Assert.That(Defaults(app)).IsEqualTo(1);
+        await Assert.That(await Defaults(app)).IsEqualTo(1);
         return true;
     });
 
@@ -49,7 +49,7 @@ public class DefaultSwitchTests
         await Run(ctx, "create", ("Name", "TestSwitchA"), ("Default", true));
 
         await Assert.That(await MyIdentityName(ctx)).IsEqualTo("TestSwitchA");
-        await Assert.That(Defaults(app)).IsEqualTo(1);
+        await Assert.That(await Defaults(app)).IsEqualTo(1);
         return true;
     });
 }

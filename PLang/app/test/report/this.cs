@@ -45,7 +45,7 @@ public sealed class @this
     public async Task<global::app.data.@this> Write(global::app.actor.context.@this context)
     {
         var tests = _tests.Items().ToList();
-        var chosen = context.Setting.Of<global::app.test.setting.@this>().Format.Value;
+        var chosen = (await context.Setting.Get<global::app.test.setting.@this>()).Format.Value;
         var nested = global::app.test.@this.Current(context) != null;
         var summary = Summary();
 

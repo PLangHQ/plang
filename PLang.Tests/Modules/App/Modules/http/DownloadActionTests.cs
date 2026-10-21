@@ -296,6 +296,6 @@ public class DownloadActionTests
         await Download(new byte[3000], null, null, progress: true);
         var received = await new global::app.type.item.variable.parser.@this("%progress.received%", Ctx.App.type.list).Variable.Single().Start(Ctx);
 
-        await Assert.That((await received.Value())?.ToString()).IsEqualTo("3 kB");
+        await Assert.That(await ((global::app.type.item.size.@this)(await received.Value())!).Text(Ctx)).IsEqualTo("3 kB");
     }
 }

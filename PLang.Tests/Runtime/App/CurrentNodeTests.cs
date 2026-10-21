@@ -25,7 +25,7 @@ public class CurrentNodeTests
         var ctx = app.actor.list.User.Context;
         var goal = new global::app.goal.@this(ctx.App.type.list) { Name = "Checkout",
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
-        await using var frame = ctx.call.Push(goal);
+        await using var frame = ctx.call.Push(goal, await ctx.call.Setting());
 
         await Assert.That((await (await Read("%!app.goal.Name%", ctx)).Value())?.ToString()).IsEqualTo("Checkout");
         await Assert.That((await (await Read("%!app.goal.type.name%", ctx)).Value())?.ToString()).IsEqualTo("goal");

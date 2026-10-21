@@ -48,7 +48,8 @@ public class Wire
     private readonly global::app.type.item.template.kind.@this? _template;
 
     public Wire(global::app.View view, actor.context.@this context, bool sign = true,
-        global::app.type.item.template.kind.@this? template = null, bool verify = true, bool deferVerify = false)
+        global::app.type.item.template.kind.@this? template = null, bool verify = true, bool deferVerify = false,
+        global::app.type.item.duration.@this? window = null)
     {
         View = view;
         Sign = sign;
@@ -56,7 +57,11 @@ public class Wire
         _template = template;
         _verify = verify;
         _deferVerify = deferVerify;
+        _window = window;
     }
+
+    // How long a signature read live is good for — handed in by the async maker of the read.
+    private readonly global::app.type.item.duration.@this? _window;
 
     // Verify a signed Data on read. The OUTER transport read verifies; a nested reconstruction
     // (goal-param readers) is built with verify:false — the inner Data is already covered by the
@@ -116,7 +121,7 @@ public class Wire
             var jr = new global::app.type.item.kind.json.Reader(reader, buffer);
             // _context is non-null (born-in-ctor); the Store read routes through the typed wire
             // reader that binds nested typed entries.
-            var ctx = new global::app.type.reader.ReadContext(_context, _template, _verify, _deferVerify) { View = View };
+            var ctx = new global::app.type.reader.ReadContext(_context, _template, _verify, _deferVerify) { View = View, Window = _window };
             var bodyData = global::app.data.schema.@this.Instance.Reader(schema).Read(ref jr, ctx);
             reader = jr.Inner;
             return bodyData;

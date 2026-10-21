@@ -102,7 +102,7 @@ public class GoalPathTests
 
             var goal = (global::app.goal.@this)(await (await app.goal.Load("/mine/Show.goal")).Value())!;
             bool trusted;
-            await using (ctx.call.Push(goal)) trusted = global::app.type.item.path.@this.AskedByOs(ctx);
+            await using (ctx.call.Push(goal, await ctx.call.Setting())) trusted = global::app.type.item.path.@this.AskedByOs(ctx);
 
             await Assert.That(goal.Path!.ToString()).IsEqualTo("/mine/Show.goal");
             await Assert.That(goal.IsSystem).IsFalse();

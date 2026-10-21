@@ -208,10 +208,12 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         global::app.type.@this dict,
         @this? previousCurrent,
         Variables? diffSource,
+        global::app.call.setting.@this setting,
         IEnumerable<global::app.data.@this>? names = null,
         global::app.goal.step.action.@this? held = null) : base(type)
     {
         _id = Guid.NewGuid().ToString("N")[..8];
+        Setting = setting;
         Goal = goal;
         Step = step;
         Action = action;
@@ -233,8 +235,6 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         }
 
         if (!Measured) return;
-        // what the stack captures, read once for this push
-        var setting = stack.Setting;
         if (setting.Timing.Value)
         {
             _startedAt = DateTimeOffset.UtcNow;
@@ -248,6 +248,10 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
             stack.Open(this);
         }
     }
+
+    /// <summary>What the stack captured when this frame was pushed — its async caller read it and handed it in: the
+    /// frame's timing and diff, whether it stays among its caller's children, how many of them are kept.</summary>
+    internal global::app.call.setting.@this Setting { get; }
 
     /// <summary>The frame a write to <paramref name="name"/> lands in: this one when it was born with the name, else
     /// the nearest caller that was; null when none was — the write goes to its context's memory.</summary>
@@ -426,7 +430,7 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
 
         if (Diffs != null) _stack.Close(this);
 
-        if (!_stack.History.Value && Caller != null)
+        if (!Setting.History.Value && Caller != null)
             Caller.Children.Remove(this);
 
         // AsyncLocal restore: only flip back if we're still the Current. If a parallel branch

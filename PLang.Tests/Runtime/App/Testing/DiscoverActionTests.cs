@@ -97,7 +97,7 @@ public class DiscoverActionTests
         // The build pass stamps the goal's build-birth facts (test.tag → goal.Tag), building each step inside
         // the goal's frame, as the build's step check does.
         var buildContext = _app.actor.list.User.Context;
-        await using (buildContext.call.Push(goal))
+        await using (buildContext.call.Push(goal, await buildContext.call.Setting()))
             foreach (var step in goal.Step.Items())
                 await step.Code.Build(buildContext);
 

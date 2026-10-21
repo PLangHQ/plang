@@ -77,7 +77,10 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
         {
             if (raw.Length == 0) return context.Ok();
             // The container IS a Data — the reconstruction itself, never an Ok around it.
-            var read = new global::app.data.Wire(view, context: context, deferVerify: true).ReadBuffered(raw);
+            // a signature read live is good for the signing setting's window: read here, where the read can wait for it
+            var window = view == global::app.View.Store ? null
+                : (await context.Setting.Get<global::app.module.signing.setting.@this>()).Expiry;
+            var read = new global::app.data.Wire(view, context: context, deferVerify: true, window: window).ReadBuffered(raw);
             if (read == null) return context.Ok();
 
             // Deferred verify: the sync reader answered the Data holding the signature it arrived in (it can't

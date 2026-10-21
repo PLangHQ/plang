@@ -16,7 +16,8 @@ public partial class @this
 
         // The step runs again — its frame is the step in play for its remaining actions
         global::app.call.@this frame;
-        try { frame = context.call.Push(this); }
+        var setting = await context.call.Setting();
+        try { frame = context.call.Push(this, setting); }
         catch (global::app.error.CallStackOverflowException ex)
         {
             return context.Error(context.call.Overflow(ex, Goal, this));

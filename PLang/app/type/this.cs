@@ -914,5 +914,5 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>A type's settings are the ones its class names (<c>%!app.type.size.setting%</c>) — the registry's
     /// type, as the asker sees it.</summary>
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
-        => await parent.Context.Setting.Of(parent.Context.App.type.list[this, parent.Context]);
+        => parent.Context.App.type.list[this, parent.Context].ClrType is { } clr ? await parent.Context.Setting.Get(clr) : null;
 }

@@ -69,22 +69,23 @@ public sealed partial class @this : global::app.type.item.@this
         Audit = audit;
     }
 
-    /// <summary>What this stack captures (<c>%!app.call.setting%</c>), as its settings have it now — a read is
-    /// a lookup in their cache, built again only after a write. A push reads it once.</summary>
+    /// <summary>What this stack captures (<c>%!app.call.setting%</c>), as its settings have it now — kept by them until a
+    /// write. A push is handed it by its async caller: a frame is made current where it is pushed, which an awaited push
+    /// would undo on its return.</summary>
     [global::app.LlmBuilder]
-    public setting.@this Setting => _settings().Of<setting.@this>();
+    public System.Threading.Tasks.ValueTask<setting.@this> Setting() => _settings().Get<setting.@this>();
 
     // An open diff scope (DiffScope) turns Diff on for as long as it's open, whatever the setting says.
     private int _diffScopes;
 
-    public @bool  Timing    => Setting.Timing;
-    public @bool  Diff      => IsDiffing(Setting) ? @bool.True : @bool.False;
+    public async System.Threading.Tasks.ValueTask<@bool> Timing() => (await Setting()).Timing;
+    public async System.Threading.Tasks.ValueTask<@bool> Diff() => IsDiffing(await Setting()) ? @bool.True : @bool.False;
 
     /// <summary>Whether a push captures diffs under <paramref name="setting"/>: an open diff scope says yes whatever
     /// the setting says.</summary>
     internal bool IsDiffing(setting.@this setting) => Volatile.Read(ref _diffScopes) > 0 || setting.Diff.Enabled.Value;
-    public @bool  Tags      => Setting.Tags;
-    public @bool  History   => Setting.History;
+    public async System.Threading.Tasks.ValueTask<@bool> Tags() => (await Setting()).Tags;
+    public async System.Threading.Tasks.ValueTask<@bool> History() => (await Setting()).History;
 
     /// <summary>
     /// Every error observed this run at every frame (handled or unhandled). Survives Pop.
@@ -170,32 +171,34 @@ public sealed partial class @this : global::app.type.item.@this
     /// automatic Pop.
     /// </summary>
     /// <param name="goal">The goal starting — its frame's goal is itself.</param>
+    /// <param name="setting">What the stack captures, as its async caller read it (<see cref="Setting"/>).</param>
     /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
-    public call.@this Push(global::app.goal.@this goal, IEnumerable<global::app.data.@this>? names = null)
-        => Push(goal, null, null, null, names);
+    public call.@this Push(global::app.goal.@this goal, setting.@this setting, IEnumerable<global::app.data.@this>? names = null)
+        => Push(goal, null, null, null, setting, names);
 
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
     /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
-    public call.@this Push(IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? held = null)
-        => Enter(new call.binding.@this(_binding, _current.Value, this, _datetime, _dict, names, held));
+    public call.@this Push(IEnumerable<global::app.data.@this>? names, setting.@this setting, global::app.goal.step.action.@this? held = null)
+        => Enter(new call.binding.@this(_binding, _current.Value, this, _datetime, _dict, names, held, setting));
 
     /// <summary>Pushes a frame with memory of its own, born with <paramref name="names"/>: every write under it stays
     /// in it (a tool's goal, a shortcut's). A task's run starts its chain with one whose <paramref name="caller"/> is
     /// the frame its caller was in — reads fall through to the caller's frames and memory.</summary>
-    public call.@this Isolate(IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? held = null,
-        call.@this? caller = null)
-        => Enter(new call.isolated.@this(_isolated, caller ?? _current.Value, this, _datetime, _dict, names, held));
+    public call.@this Isolate(IEnumerable<global::app.data.@this>? names, setting.@this setting,
+        global::app.goal.step.action.@this? held = null, call.@this? caller = null)
+        => Enter(new call.isolated.@this(_isolated, caller ?? _current.Value, this, _datetime, _dict, names, held, setting));
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
-    public call.@this Push(global::app.goal.step.@this step) => Push(step.Goal, step, null, null);
+    public call.@this Push(global::app.goal.step.@this step, setting.@this setting) => Push(step.Goal, step, null, null, setting);
 
     /// <summary>Pushes the frame of an action starting: its step's goal, its step and itself — an action composed
     /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
-    public call.@this Push(global::app.goal.step.action.@this action, Variables? variables = null)
-        => Push(action.Step?.Goal, action.Step, action, variables);
+    public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
+        => Push(action.Step?.Goal, action.Step, action, variables, setting);
 
     private call.@this Push(global::app.goal.@this? goal, global::app.goal.step.@this? step,
-        global::app.goal.step.action.@this? action, Variables? variables, IEnumerable<global::app.data.@this>? names = null)
+        global::app.goal.step.action.@this? action, Variables? variables, setting.@this setting,
+        IEnumerable<global::app.data.@this>? names = null)
     {
         var caller = _current.Value;
 
@@ -203,7 +206,7 @@ public sealed partial class @this : global::app.type.item.@this
         if (caller != null && caller.Depth >= MaxDepth)
             throw new CallStackOverflowException(MaxDepth);
 
-        return Enter(new call.@this(_call, goal, step, action, caller, this, _datetime, _dict, caller, variables ?? Variables, names));
+        return Enter(new call.@this(_call, goal, step, action, caller, this, _datetime, _dict, caller, variables ?? Variables, setting, names));
     }
 
     // The frame becomes current: it joins its caller's children (Children owns its own lock + FIFO eviction), and a

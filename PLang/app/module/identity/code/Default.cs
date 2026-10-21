@@ -224,7 +224,7 @@ public sealed class Default : IIdentity
     {
         var system = action.Context.App.actor.list.System.Setting;
         var loaded = await system.Load();
-        return loaded.Success ? (system.Of<setting.@this>(), null) : (null, loaded.Error);
+        return loaded.Success ? (await system.Get<setting.@this>(), null) : (null, loaded.Error);
     }
 
     // Each identity the setting holds.

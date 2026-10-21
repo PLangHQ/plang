@@ -61,7 +61,7 @@ public class IdentityHandlerTests
         await Assert.That(((Identity)(await got.Value())!).PublicKey).IsEqualTo(key);
 
         await next.actor.list.User.Setting.Load();
-        await Assert.That(next.actor.list.User.Setting.Of<global::app.module.identity.setting.@this>().Identity.CountRaw).IsEqualTo(0);
+        await Assert.That((await next.actor.list.User.Setting.Get<global::app.module.identity.setting.@this>()).Identity.CountRaw).IsEqualTo(0);
     }
 
     // --- create ---

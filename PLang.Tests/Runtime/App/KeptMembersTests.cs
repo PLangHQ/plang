@@ -36,7 +36,7 @@ public class KeptMembersTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        await using var frame = ctx.call.Push(names: null);
+        await using var frame = ctx.call.Push(names: null, await ctx.call.Setting());
         var call = new global::app.data.@this("call", frame, context: ctx);
 
         await (await call.Set("retries", false, ctx.Ok((global::app.type.item.number.@this)2))).IsSuccess();
