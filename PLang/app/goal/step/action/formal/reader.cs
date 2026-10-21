@@ -115,10 +115,9 @@ public sealed class Reader
         {
             var end = _text.IndexOfAny([',', ')', ' ', '\n'], _pos + 1);
             var written = end < 0 ? _text[_pos..] : _text[_pos..end];
-            var said = new global::app.type.item.variable.parser.@this(_step.Text, _context.App.type.list).Variable
-                .Select(v => v.Text).Distinct().ToList();
-            int Shared(string s) { var n = 0; while (n < s.Length && n < written.Length && s[n] == written[n]) n++; return n; }
-            var meant = said.OrderByDescending(Shared).FirstOrDefault(s => Shared(s) > 1);
+            var step = new global::app.type.item.variable.parser.@this(_step.Text, _context.App.type.list);
+            var said = step.Variable.Select(v => v.Text).Distinct().ToList();
+            var meant = step.Nearest(written);
             return meant != null
                 ? $"a %variable% is not closed: the step writes `{meant}`; your answer has `{written}` — copy it exactly"
                 : said.Count > 0

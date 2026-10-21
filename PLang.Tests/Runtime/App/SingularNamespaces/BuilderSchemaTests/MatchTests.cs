@@ -155,6 +155,23 @@ public class MatchTests
         await result.IsSuccess();
     }
 
+    // A variable in a closed-set slot (a choice) stays the variable: the build answer holds it, and the check passes it.
+    [Test]
+    public async Task AVariableInAChoiceSlot_StaysTheVariable()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G",
+            Make.Step("ask llm %m%, model gpt-5.4-nano, cache %!build.setting.cache%, write to %answer%"));
+        await Picked(goal, app.actor.list.System.Context, (0, "llm.query"), (0, "variable.set"));
+
+        var result = await Match(goal,
+            "[0] llm.query(Message=%m%, Model=\"gpt-5.4-nano\", Cache=%!build.setting.cache%); variable.set(Name=%answer%, Value=%!data%)",
+            app.actor.list.System.Context);
+
+        await Assert.That(result.Error?.Message ?? "").DoesNotContain("%!build.setting.cache% is in the step but not in your answer");
+        await result.IsSuccess();
+    }
+
     // A refusal quotes the step's own text and the answer's, so the retry copies the step's: an answer whose variable
     // doesn't close names the step's variable it should be.
     [Test]

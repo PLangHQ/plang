@@ -33,6 +33,21 @@ public sealed class @this
     /// reason is in <see cref="Error"/>.</summary>
     public IReadOnlyList<variable.@this> Variable => _variable ??= Scan();
 
+    /// <summary>The one of the text's variables <paramref name="written"/> was meant to be: the one it starts most like
+    /// (case aside, as variables compare), sharing more than its marker (<c>%</c>, <c>%!</c>); null when none does —
+    /// what a build refusal quotes beside the answer's text, so the retry copies the step's.</summary>
+    internal string? Nearest(string written)
+    {
+        var marker = written.StartsWith("%!") ? 2 : 1;
+        int Shared(string text)
+        {
+            var n = 0;
+            while (n < text.Length && n < written.Length && char.ToLowerInvariant(text[n]) == char.ToLowerInvariant(written[n])) n++;
+            return n;
+        }
+        return Variable.Select(v => v.Text).Distinct().OrderByDescending(Shared).FirstOrDefault(text => Shared(text) > marker);
+    }
+
     /// <summary>Why a reference in the text doesn't parse — empty when every one does.</summary>
     public IReadOnlyList<global::app.error.@this> Error
     {
