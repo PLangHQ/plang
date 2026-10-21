@@ -155,6 +155,23 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 27. `if %zip% is empty` answers from the first byte
+
+Asked (Ingi): the empty check should not read the file. It did: a condition asks `data.ToBooleanAsync()`, which
+opens the value (`Held()` → `Value()`), so the reference was read whole and narrowed to its content before its truth
+was asked — `if %zip%` too (I said otherwise in chat; wrong). For binary, text and image the truth is "has bytes"
+(`Length > 0`; non-empty UTF-8 is never empty text), so the first byte answers exactly.
+
+Built: `item.Truth(context)`, internal virtual, null by default ("open me to know"); `ToBooleanAsync` asks what the
+Data names before opening it. A reference not read, its content a plain value of a byte family (`Verbatim`, the same
+check the save's pour uses), reads one byte from its stream and answers; any other kind is sampled from what is
+open (a url fetched once) and answers as before. A failure on the way (missing file, refused) fails the Data, as
+the read did. json is not a byte family: still read (`{}` is not empty today, as before — untouched).
+
+Read + `if %zip% is empty` + save on the 261 MB zip: **+4.0 MB heap**, output identical. Tests
+(`FileSaveStreamsTests`, 12): zip/txt, with and without bytes, answer and stay unread (red under mutation); json is
+read; a missing file fails NotFound. No surface move. C# green but Wire's six; plang the same 11 names.
+
 ## 26. Another format and a url flow through too
 
 Asked (Ingi): stream the other-format save and the url. Same harness as §25 (Debug, one run each, a url served by

@@ -689,7 +689,16 @@ public partial class @this
     /// (its <c>Success</c> says so), answering false.
     /// </summary>
     public async System.Threading.Tasks.Task<bool> ToBooleanAsync()
-        => await (await Held()).AsBooleanAsync(_context);
+    {
+        // what it holds may know its truth before it is opened (a file's content: has it a first byte)
+        if (Success && await Follow(_context) is { Success: true } named && await named.Peek().Truth(_context) is { } known)
+        {
+            if (known.Success) return known.ToBoolean();
+            Fail(known.Error!);
+            return false;
+        }
+        return await (await Held()).AsBooleanAsync(_context);
+    }
 
     /// <summary>
     /// What this holds, read, as a question asks it (truthiness, equality): a reference (<see cref="IsVariable"/>)

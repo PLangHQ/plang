@@ -99,29 +99,51 @@ public abstract class @this : global::app.type.item.@this
         if (IsLoaded || Type.Template != null || Type.Strict) return await base.Save(self, into, format, context);
         return await Stream(async (body, kind) =>
         {
-            if (Pours(kind, format, context))
+            if (Verbatim(kind, context) is { } family && ReferenceEquals(family, format.Owner))
             {
                 await body.CopyToAsync(into, context.CancellationToken);
                 return context.Ok();
             }
-            if (!IsLoaded)
-            {
-                using var whole = new System.IO.MemoryStream();
-                await body.CopyToAsync(whole, context.CancellationToken);
-                _bytes = whole.ToArray();
-                _format = kind;
-            }
+            await Sample(body, kind, context);
             return await base.Save(self, into, format, context);
         }, context);
     }
 
-    // Content of kind source, written in target: its bytes as they are, when it is born a plain value of target's own
-    // family, a family whose value is its bytes, with nothing bound to that birth.
-    private static bool Pours(global::app.type.kind.@this source, global::app.type.kind.@this target, global::app.actor.context.@this context)
-        => source.IsBorn && source.Owner is { } family && ReferenceEquals(family, target.Owner)
+    /// <summary>Before it is read, content that would be born a plain value whose truth is having bytes (binary, image,
+    /// text) answers from its first byte, never read whole. Any other is sampled from what is open (a url fetched
+    /// once) and answers when it is opened.</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Truth(global::app.actor.context.@this context)
+    {
+        if (IsLoaded || Type.Template != null || Type.Strict) return null;
+        bool? known = null;
+        var opened = await Stream(async (body, kind) =>
+        {
+            if (Verbatim(kind, context) != null) known = await body.ReadAsync(new byte[1], context.CancellationToken) > 0;
+            else await Sample(body, kind, context);
+            return context.Ok();
+        }, context);
+        return !opened.Success || opened.Exits ? opened : known is { } truth ? context.Ok(truth) : null;
+    }
+
+    // The sample, taken from content already open (once), with the format it is in.
+    private async System.Threading.Tasks.Task Sample(System.IO.Stream body, global::app.type.kind.@this kind, global::app.actor.context.@this context)
+    {
+        if (IsLoaded) return;
+        using var whole = new System.IO.MemoryStream();
+        await body.CopyToAsync(whole, context.CancellationToken);
+        _bytes = whole.ToArray();
+        _format = kind;
+    }
+
+    // The family content of kind is born a plain value of — when that value is its bytes (IVerbatim) and nothing is
+    // bound to the birth; null when it is anything else (its kind reads it its own way, a family that writes its own
+    // way, a birth something listens to).
+    private static global::app.type.@this? Verbatim(global::app.type.kind.@this kind, global::app.actor.context.@this context)
+        => kind.IsBorn && kind.Owner is { } family
            && family.ClrType is { } clr && typeof(IVerbatim).IsAssignableFrom(clr)
-           && context.App.type.list[new global::app.type.@this(family.Name, source.IsEmpty ? null : source.Name), context] is var born
-           && !born.on.create.IsBound(born, context);
+           && context.App.type.list[new global::app.type.@this(family.Name, kind.IsEmpty ? null : kind.Name), context] is var born
+           && !born.on.create.IsBound(born, context)
+            ? family : null;
 
     /// <summary>
     /// The value door — the sample decoded by its format, handed this reference's template, answering with the

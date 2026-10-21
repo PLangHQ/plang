@@ -106,6 +106,74 @@ public class FileSaveStreamsTests
         return 0;
     });
 
+    // Whether the step under `if %held% is empty` ran.
+    private static async Task<bool> Ran(global::app.@this app)
+        => await app.actor.list.User.Context.Variable.Get("empty") is { IsInitialized: true };
+
+    // read file 'source', write to %held%  /  if %held% is empty  /    set %empty% = true
+    private static async Task<global::app.data.@this> ReadThenAskEmpty(global::app.@this app, string source)
+    {
+        var ctx = app.actor.list.User.Context;
+        var condition = Make.Action(ctx, "condition", "if", ("Left", "%held%"), Make.Param(ctx, "Operator", "isempty", "choice", "operator"));
+        var body = new global::app.goal.step.@this(app.type.list) { Index = 2, Text = "set %empty% = true", Line = new() { Number = 3, Indent = 1 } };
+        body.Code.Add(Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "empty", "variable"), ("Value", true)));
+        condition.Child.Add(body);
+        var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "Ask", "/Ask.goal",
+            Make.Step($"read file '{source}', write to %held%",
+                Make.Action(ctx, "file", "read", ("path", source)),
+                Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "held", "variable"), ("Value", "%!data%"))),
+            Make.Step("if %held% is empty", condition)));
+        app.goal.list.Add(goal);
+        return await app.Start(goal, ctx);
+    }
+
+    [Test]
+    [Arguments("in.zip", new byte[] { 0x50, 0x4B }, false)]
+    [Arguments("in.zip", new byte[0], true)]
+    [Arguments("in.txt", new byte[] { (byte)'h' }, false)]
+    [Arguments("in.txt", new byte[0], true)]
+    public async Task AFileOfBytesAskedIfEmpty_AnswersFromItsFirstByte_AndStaysUnread(string name, byte[] bytes, bool empty) => await InRoot(async root =>
+    {
+        await System.IO.File.WriteAllBytesAsync(System.IO.Path.Combine(root, name), bytes);
+        await using var app = global::PLang.Tests.Session.App(root).Testing();
+
+        var result = await ReadThenAskEmpty(app, name);
+
+        await result.IsSuccess();
+        var ctx = app.actor.list.User.Context;
+        await Assert.That(await Ran(app)).IsEqualTo(empty);
+        await Assert.That((await ctx.Variable.Get("held"))!.Peek() is global::app.type.item.file.@this { IsLoaded: false }).IsTrue()
+            .Because("bytes are empty when there is no first byte: one is read, never the file");
+        return 0;
+    });
+
+    [Test] public async Task AJsonFileAskedIfEmpty_IsRead_ForItsContentAnswers() => await InRoot(async root =>
+    {
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(root, "in.json"), "{\"a\": 1}");
+        await using var app = global::PLang.Tests.Session.App(root).Testing();
+
+        var result = await ReadThenAskEmpty(app, "in.json");
+
+        await result.IsSuccess();
+        await Assert.That((await app.actor.list.User.Context.Variable.Get("held"))!.Peek() is global::app.type.item.file.@this { IsLoaded: false }).IsFalse()
+            .Because("json is not its bytes: its truth is its content's, so it is read to answer");
+        return 0;
+    });
+
+    [Test] public async Task AMissingFileAskedIfEmpty_Fails_AsReadingItDoes() => await InRoot(async root =>
+    {
+        await using var app = global::PLang.Tests.Session.App(root).Testing();
+        var ctx = app.actor.list.User.Context;
+        var held = await global::app.type.item.path.@this.Resolve(System.IO.Path.Combine(root, "gone.zip"), ctx)!.Read(ctx);
+
+        var truth = await held.ToBooleanAsync();
+
+        await Assert.That(truth).IsFalse();
+        await Assert.That(held.Success).IsFalse();
+        await Assert.That(held.Error!.Key).IsEqualTo("NotFound");
+        return 0;
+    });
+
     private static async Task Grant(global::app.@this app, string url)
     {
         var ctx = app.actor.list.User.Context;

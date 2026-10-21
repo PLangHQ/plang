@@ -742,6 +742,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual System.Threading.Tasks.Task<bool> AsBooleanAsync(global::app.actor.context.@this context)
         => System.Threading.Tasks.Task.FromResult(IsTruthy());
 
+    /// <summary>This value's truth as it is, before it is opened — null when opening it is how its truth is known (the
+    /// default); a reference whose content's truth is whether it has any bytes answers from its first one. A failure
+    /// on the way is the answer.</summary>
+    internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this?> Truth(global::app.actor.context.@this context)
+        => default;
+
     /// <summary>
     /// The lazy narrow: an un-narrowed value (<c>type=item, kind=json</c>) reads
     /// its raw form at first touch and re-stamps itself <c>dict</c>/<c>list</c>.
