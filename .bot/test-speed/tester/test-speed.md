@@ -155,6 +155,36 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 25. A big file flows through a save
+
+Asked (Ingi): read a 261 MB zip and save it, memory should not grow. `read file 'big.zip', write to %zip%` /
+`save %zip% to file 'out.zip'`, the builder's own shape (`file.read` + `variable.set %!data%`, then `file.save`),
+run through the handlers in a C# harness (no TypeSafe decider key on this machine, so no `plang build` of a new
+goal). Debug, one run each; output byte-identical every time.
+
+| | managed heap peak | allocated | working set peak | time |
+|---|---|---|---|---|
+| before | +785 MB | 794 MB | +793 MB | 4.9 s |
+| after | **+2.5 MB** | **2.4 MB** | +6 MB | 0.7 s |
+
+Before, the file channel held three copies: the value opened (the reference read whole), encoded into a
+`MemoryStream`, then `ToArray` for one `WriteBytes` — the "a failed encode leaves the file as it was" guarantee.
+Two reasons it read whole: the save's `Value` slot reached the channel still the text `%zip%` (so `Peek()` was the
+variable, not the file), and nothing let a value write itself into a stream.
+
+Built: the channel settles the value (`Data.Settle()`: a reference the Data it names, unread) and asks it to save
+itself into the file as it is written — `item.Save(self, into, format, context)`, internal virtual: opened and
+encoded by the file's format; `binary` pours its raw bytes (the channel's binary branch moved onto it); a `file`
+not yet read, no template, same format as the target, pours from its location (`path.Pour`, read-gated). The file
+path's new internal `Write(fill, context)` (write-gated) writes through the filesystem into `<file>.<guid>.part`
+beside it and moves it over the file only when the fill succeeds, so the guarantee holds without the buffer (the
+overlay holds it in memory, as before). No surface move (all internal). Tests: `FileSaveStreamsTests` (a file
+saved to its own format stays unread; a failed save leaves the file as it was and nothing beside), both red under
+mutation. C# green but Wire's six; plang the same 11 names.
+
+Open: a `file` saved to another format (`.json` → `.txt`) still reads and encodes whole; a `url` reference is
+not streamed (its format is known only after the fetch).
+
 ## 24. Birth and frame trims — diminishing returns
 
 A bare app sharing its types (a server's request app: no test session), born and disposed, 4,000 traced: **7.2 → 5.8 KB**.

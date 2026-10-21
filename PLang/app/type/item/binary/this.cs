@@ -224,6 +224,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return context.Ok();
     }
 
+    /// <summary>Saved to a file, binary lands as its raw bytes whatever the file's format says. (Open question with
+    /// Ingi: or the format writes it — json → base64.)</summary>
+    internal override System.Threading.Tasks.Task<global::app.data.@this> Save(global::app.data.@this self,
+        System.IO.Stream into, global::app.type.kind.@this format, actor.context.@this context) => Pour(into, context);
+
     // ---- Comparison — the value's own behavior (see app.data.Comparison) ----
 
     /// <summary>Outranks text — bytes never compare lexically.</summary>

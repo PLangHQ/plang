@@ -1,13 +1,13 @@
 using app.error;
-using Verb = global::app.type.item.permission.Verb;
 
 namespace app.channel.type.file;
 
 /// <summary>
 /// A file as a channel. A value written to it is opened at the last moment, encoded in the format the file's
-/// extension names (<c>.pr</c> → goal's, <c>.json</c> → json, <c>.txt</c> → text), and lands in one write, so
-/// a failed encode leaves the file as it was. The file's format writes the value, or asks its type to be born
-/// from it; when nothing can, the write fails with the format's reason. Write-only.
+/// extension names (<c>.pr</c> → goal's, <c>.json</c> → json, <c>.txt</c> → text), and streams into the file as it
+/// is written, never held whole; it lands only when the write succeeds, so a failed encode leaves the file as it
+/// was. The value says what it writes (a file of the same format pours its bytes); when nothing can, the write
+/// fails with the format's reason. Write-only.
 /// </summary>
 public sealed class @this : global::app.channel.@this
 {
@@ -25,21 +25,15 @@ public sealed class @this : global::app.channel.@this
     public override async Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
     {
         var context = data.Context;
-        var allowed = await Path.Authorize(Verb.write, context);
-        if (!allowed.Success || allowed.Exits) return allowed;
         try
         {
-            // Open question (with Ingi): a binary value lands as its raw bytes whatever the extension says, or
-            // the extension's format writes it (json → base64). Today: raw bytes.
-            if (data.Type.Is("binary") && await data.Value() is global::app.type.item.binary.@this bytes)
-                return await Path.WriteBytes(bytes.Value, context);
-
-            var opened = await data.Peek().Open(context);
-            if (opened != null) return context.Error(opened);
-            using var encoded = new MemoryStream();
-            var result = await Path.Kind(context).kind.Encode(encoded, data, context, ct: ct);
-            if (!result.Success) return result;
-            return await Path.WriteBytes(encoded.ToArray(), context);
+            // what was written, as it reads now: a reference the Data it names, unread — so a file not yet read
+            // can pour itself — a template rendered
+            var value = await data.Settle();
+            if (!value.Success) return value;
+            var format = Path.Kind(context).kind;
+            var written = await Path.Write(into => value.Peek().Save(value, into, format, context), context);
+            return written.Success && !written.Exits ? context.Ok<global::app.type.item.path.@this>(Path) : written;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

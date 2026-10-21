@@ -83,6 +83,15 @@ public sealed class @this : filesystem.@this
         await Write(p, held.ToArray());
     }
 
+    /// <summary>A build's file is held in memory: what the fill writes is held, and kept only when it answers success.</summary>
+    internal override async Task<data.@this> Write(file.@this p, Func<System.IO.Stream, Task<data.@this>> fill)
+    {
+        using var held = new System.IO.MemoryStream();
+        var filled = await fill(held);
+        if (filled.Success && !filled.Exits) await Write(p, held.ToArray());
+        return filled;
+    }
+
     public override async Task<System.IO.Stream> Open(file.@this p) => new System.IO.MemoryStream(await Read(p), writable: false);
 
     public override async Task Append(file.@this p, string text)

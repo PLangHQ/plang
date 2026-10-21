@@ -32,6 +32,26 @@ public class @this
         await content.CopyToAsync(file, ct);
     }
 
+    /// <summary>Writes the file from what <paramref name="fill"/> writes into it, never held whole, making its folder
+    /// when there is none. It lands only when the fill answers success: until then it is written beside the file, so
+    /// a fill that fails leaves the file as it was.</summary>
+    internal virtual async Task<data.@this> Write(file.@this p, Func<System.IO.Stream, Task<data.@this>> fill)
+    {
+        Parent(p);
+        var beside = p.Absolute + "." + System.Guid.NewGuid().ToString("N") + ".part";
+        try
+        {
+            data.@this filled;
+            await using (var file = System.IO.File.Create(beside)) filled = await fill(file);
+            if (filled.Success && !filled.Exits) System.IO.File.Move(beside, p.Absolute, overwrite: true);
+            return filled;
+        }
+        finally
+        {
+            if (System.IO.File.Exists(beside)) System.IO.File.Delete(beside);
+        }
+    }
+
     /// <summary>The file, to be read as it streams.</summary>
     public virtual Task<System.IO.Stream> Open(file.@this p) => Task.FromResult<System.IO.Stream>(System.IO.File.OpenRead(p.Absolute));
 

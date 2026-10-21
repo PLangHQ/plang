@@ -823,6 +823,16 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         global::app.data.@this self, System.IO.Stream into, actor.context.@this context)
         => (await context.App.type.list["wire"].kind["plang"]!.Encode(into, self, context, ct: context.CancellationToken), "data", null);
 
+    /// <summary>What saving this value to a file in <paramref name="format"/> writes into <paramref name="into"/>: the
+    /// value, opened, encoded by the file's format. A value whose bytes already are what the file holds (binary, a
+    /// file of that format not yet read) pours them as they stream. Ok, or why it can't be written.</summary>
+    internal virtual async System.Threading.Tasks.Task<global::app.data.@this> Save(global::app.data.@this self,
+        System.IO.Stream into, global::app.type.kind.@this format, actor.context.@this context)
+    {
+        if (await Open(context) is { } refused) return context.Error(refused);
+        return await format.Encode(into, self, context, ct: context.CancellationToken);
+    }
+
     /// <summary>
     /// This value as a diagnostic shows it — an assertion message, a test report line, a debug dump. A leaf
     /// answers its text; a structure writes itself through the json writer in the Debug view, where a

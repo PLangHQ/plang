@@ -195,6 +195,14 @@ public sealed partial class @this
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
+    /// <summary>Writes the file from what <paramref name="fill"/> writes into it — never held whole, gated as a write;
+    /// it lands only when the fill answers success, so a failed fill leaves the file as it was.</summary>
+    internal async Task<data.@this> Write(Func<System.IO.Stream, Task<data.@this>> fill, actor.context.@this context)
+    {
+        if (await AuthGate(Verb.write, context) is { } early) return early;
+        return await context.FileSystem.Write(this, fill);
+    }
+
     /// <summary>A file's bytes are its contents — read as they stream, gated as a read, never held whole.</summary>
     public override async Task<data.@this> Pour(System.IO.Stream into, actor.context.@this context)
     {

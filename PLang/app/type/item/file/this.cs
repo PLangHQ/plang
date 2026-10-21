@@ -55,6 +55,15 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
         global::app.data.@this self, System.IO.Stream into, global::app.actor.context.@this context)
         => Path.Pack(self, into, context);
 
+    /// <summary>Saved to a file of its own format before it was read, a file's bytes already are what the other holds:
+    /// they pour from its location as they stream (gated as a read), never held. Read, a template, or another format,
+    /// it is opened and encoded as any value is.</summary>
+    internal override async System.Threading.Tasks.Task<global::app.data.@this> Save(global::app.data.@this self,
+        System.IO.Stream into, global::app.type.kind.@this format, global::app.actor.context.@this context)
+        => !IsLoaded && Type.Template == null && ReferenceEquals(Path.Kind(context).kind, format)
+            ? await Path.Pour(into, context)
+            : await base.Save(self, into, format, context);
+
     /// <summary>Stat byte-size — the file's `!size` (a <c>size</c>), as its asker may read it; never reads
     /// content.</summary>
     public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.size.@this>> Size(global::app.actor.context.@this context)
