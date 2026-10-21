@@ -68,6 +68,34 @@ public class ElseWithoutIfTests : System.IAsyncDisposable
         return condition;
     }
 
+    // A clause after a condition is the condition's (its evaluation's error): `if %d% == %n% then … on error call
+    // Caught` chains. A step action after it is still a body beside it.
+    private global::app.goal.step.action.@this OnError() =>
+        Make.Action(app.actor.list.User.Context, "on", "error", ("Ignore", true));
+
+    [Test]
+    public async Task AClauseAfterAnIf_IsTheIfs()
+    {
+        var error = await Validate(WithBody(If(), "a", Write("a")), OnError());
+        await Assert.That(error?.Key).IsNotEqualTo("BodyBesideCondition");
+        await Assert.That(error).IsNull();
+    }
+
+    [Test]
+    public async Task AClauseAfterAnElseIfOrAnElse_IsTheirs()
+    {
+        var error = await Validate(WithBody(If(), "a", Write("a")), WithBody(ElseIf(), "b", Write("b")), OnError(),
+            WithBody(Else(), "c", Write("c")), OnError());
+        await Assert.That(error).IsNull();
+    }
+
+    [Test]
+    public async Task AStepActionAfterAnIfAndItsClause_IsStillBesideIt()
+    {
+        var error = await Validate(WithBody(If(), "a", Write("a")), OnError(), Write("beside"));
+        await Assert.That(error!.Key).IsEqualTo("BodyBesideCondition");
+    }
+
     // gpt-5.4-mini, child eval run 3, inline_if_then_step: `if %n% > 5, call Big` answered flat.
     [Test]
     public async Task BodyBesideTheCondition_IsRefused()

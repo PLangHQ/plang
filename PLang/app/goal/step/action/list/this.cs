@@ -116,13 +116,16 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
     private global::app.error.@this? Chain()
     {
         global::app.goal.step.action.@this? condition = null;   // the last condition in this list
+        global::app.goal.step.action.@this? anchor = null;      // the step action what follows belongs to — a clause's
         global::app.error.@this? missing = null;                 // a branch with no body — reported last
         for (int i = 0; i < Count; i++)
         {
             var action = this[i];
+            // what the actions so far belong to: a clause belongs to the step action before it
+            var before = anchor;
+            anchor = action.Anchor(anchor);
             if (action.IsBranch)
             {
-                var before = i > 0 ? this[i - 1] : null;
                 if (before is not { IsCondition: true } || string.Equals(before.Name, "else", System.StringComparison.OrdinalIgnoreCase))
                     return Broken(action, $"an {action.Name} must be in the same step as its if.", "ElseWithoutIf");
             }
@@ -141,7 +144,9 @@ public sealed class @this : global::app.type.item.list.bare.@this<Action>, globa
                 continue;
             }
 
-            if (condition != null)
+            // what belongs to the action before it (a clause: the condition's own error) chains; a step action stands on its
+            // own, so after a condition it is a body beside it
+            if (condition != null && ReferenceEquals(anchor, action))
                 return Broken(action,
                     $"`{action.Module}.{action.Name}` is after the {condition.Name} — a branch's body goes in its child.",
                     "BodyBesideCondition");
