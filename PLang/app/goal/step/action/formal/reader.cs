@@ -109,6 +109,23 @@ public sealed class Reader
             throw new Invalid($"line {line}, column {column}: {reason}", reason);
         }
 
+        // A %variable% the answer doesn't close, quoted beside the step's own: the step's variable it starts as (the
+        // longest start they share), else every variable the step writes — so the retry copies the step's text.
+        private string Unclosed()
+        {
+            var end = _text.IndexOfAny([',', ')', ' ', '\n'], _pos + 1);
+            var written = end < 0 ? _text[_pos..] : _text[_pos..end];
+            var said = new global::app.type.item.variable.parser.@this(_step.Text, _context.App.type.list).Variable
+                .Select(v => v.Text).Distinct().ToList();
+            int Shared(string s) { var n = 0; while (n < s.Length && n < written.Length && s[n] == written[n]) n++; return n; }
+            var meant = said.OrderByDescending(Shared).FirstOrDefault(s => Shared(s) > 1);
+            return meant != null
+                ? $"a %variable% is not closed: the step writes `{meant}`; your answer has `{written}` — copy it exactly"
+                : said.Count > 0
+                    ? $"a %variable% is not closed: your answer has `{written}`; the step writes {string.Join(", ", said.Select(s => $"`{s}`"))} — copy them exactly"
+                    : $"a %variable% is not closed: your answer has `{written}`";
+        }
+
         public void Space()
         {
             while (_pos < _text.Length && char.IsWhiteSpace(_text[_pos])) _pos++;
@@ -501,7 +518,7 @@ public sealed class Reader
             if (c == '%')
             {
                 var v = new global::app.type.item.variable.parser.@this(_text, _context.App.type.list).Read(_pos);
-                if (v == null) Fail(_text.AsSpan(_pos).StartsWith("%?") ? "a `?` is still there: fill it with the value the step gives" : "a %variable% is not closed");
+                if (v == null) Fail(_text.AsSpan(_pos).StartsWith("%?") ? "a `?` is still there: fill it with the value the step gives" : Unclosed());
                 _pos += v!.Text.Length;
                 return Scalar(System.Text.Json.JsonSerializer.Serialize(v.Text), System.Text.Json.JsonValueKind.String, variable: true);
             }

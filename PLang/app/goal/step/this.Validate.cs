@@ -47,8 +47,12 @@ public sealed partial class @this
         var comparer = global::app.type.item.variable.list.@this.Comparer;
         var said = new global::app.type.item.variable.parser.@this(Text, context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
         var answered = new global::app.type.item.variable.parser.@this(written, context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
+        // each told as the step writes it, to be copied exactly — beside the answer's own when it wrote one near it
         foreach (var v in said)
-            if (!answered.Contains(v, comparer)) problems.Add($"step {Index}: {v} is in the step but not in your answer");
+            if (!answered.Contains(v, comparer))
+                problems.Add(answered.Where(a => !said.Contains(a, comparer)).OrderByDescending(a => Shared(a, v)).FirstOrDefault(a => Shared(a, v) > 1) is { } near
+                    ? $"step {Index}: {v} is in the step but not in your answer: the step writes `{v}`; your answer has `{near}` — copy it exactly"
+                    : $"step {Index}: {v} is in the step but not in your answer: copy it exactly");
         // and the other way: a variable the answer names that the step's words don't is invented — a
         // system variable (%!data%, %!error%) excepted
         foreach (var v in answered)
@@ -67,11 +71,11 @@ public sealed partial class @this
             if (l.Length > 0 && !await Held(l))
                 problems.Add(l.Contains('\\') && await Held(l.Replace("\\", "\\\\"))
                     ? $"step {Index}: \"{l}\" is in the step, and your answer doubles its backslashes — write each escape as the step does"
-                    : $"step {Index}: \"{l}\" is in the step but not in your answer");
+                    : $"step {Index}: \"{l}\" is in the step but not in your answer: copy it exactly");
         // a path the step writes bare is one of its markers as a quoted literal is: held by one of the answer's values
         foreach (var p in BarePath.Matches(Quoted.Replace(Text, "")).Select(m => m.Value.TrimEnd('.')).Distinct())
             if (p.Length > 1 && !await Held(p))
-                problems.Add($"step {Index}: {p} is in the step but not in your answer");
+                problems.Add($"step {Index}: {p} is in the step but not in your answer: copy it exactly");
         // a number the step writes as digits is one of its markers: an answer without it dropped what the step
         // says (`if %n% is 0` answered with no Right). Present when the digits stand in the answer on their own,
         // not inside a larger number — a duration's PT5S holds the step's 5 — or held by one of the answer's values as it
@@ -79,7 +83,7 @@ public sealed partial class @this
         foreach (var n in Number.Matches(Quoted.Replace(Text, "")).Select(m => m.Value).Distinct())
             if (!System.Text.RegularExpressions.Regex.IsMatch(written, $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(n)}(?![\d.]|\.\d)")
                 && !await Counted((global::app.type.item.number.@this)double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
-                problems.Add($"step {Index}: {n} is in the step but not in your answer");
+                problems.Add($"step {Index}: {n} is in the step but not in your answer: copy it exactly");
         // and a text the answer writes that the step's words don't hold is invented (channel="X" on a
         // step that names no X) — a choice's option, a number and a dict's keys are not texts. The step's
         // own quoted literals are read as it MEANS them, not as raw text: a double-quoted literal decoded
@@ -95,6 +99,14 @@ public sealed partial class @this
                 && !literals.Any(l => l.Contains(t, System.StringComparison.OrdinalIgnoreCase)))
                 problems.Add($"step {Index}: your answer writes \"{t}\", which the step doesn't — leave out what the step doesn't give");
         return problems;
+
+        // how many characters two variables' texts start with alike
+        static int Shared(string a, string b)
+        {
+            var n = 0;
+            while (n < a.Length && n < b.Length && char.ToLowerInvariant(a[n]) == char.ToLowerInvariant(b[n])) n++;
+            return n;
+        }
 
         async System.Threading.Tasks.Task<bool> Held(string quoted)
         {
