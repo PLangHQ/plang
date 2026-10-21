@@ -122,94 +122,56 @@ public sealed class @this : IDisposable
         return _context.NotFound(keys.Length > 0 ? keys[0] : "setting");
     }
 
-    /// <summary>This run's value for <paramref name="key"/> in this scope, as a setting node wrote it once it checked
-    /// it against its own options (an action's, a module's, a class's); null clears it.</summary>
-    internal ValueTask<data.@this> Write(string key, data.@this? value)
-    {
-        if (value is null) _values.TryRemove(key, out _);
-        else _values[key] = value;
-        Move();
-        return new(value ?? _context.Ok());
-    }
-
     /// <summary>
-    /// This run's value at <paramref name="path"/> — a setting's path (<c>app.</c> left out or not) and then its option
-    /// (<c>channel.setting.format</c>, <c>call.setting.diff.deep</c>), or the setting's alone with a dict of its
-    /// options (<c>test.setting={"timeout":"5s"}</c>). What the command line writes (<c>--&lt;path&gt;=&lt;value&gt;</c>).
-    /// The value is what the caller holds (the command line's raw value, a row's, a plang value); the setting's own
-    /// walk makes it a plang value. A path no setting answers to, an option the setting doesn't have, or a value its
-    /// option can't take is refused — nothing is written then. Answers the setting written, at its defaults.
+    /// This run's value at <paramref name="address"/> in this scope, kept by its address without looking: a setting's
+    /// path and then its option (<c>app.channel.setting.format</c>), where the next read of that setting builds it
+    /// from. A dict is kept leaf by leaf under the address; a Data is held whole; null clears it. Checking is the
+    /// writer's: a step's write goes through its setting node, the command line through the setting it finds
+    /// (<see cref="Find"/>, then the setting's own Option and Apply).
     /// </summary>
-    public data.@this Set(string path, object? value)
+    public data.@this Set(string address, object? value)
     {
-        var (setting, option, refused) = Place(path);
-        if (refused != null) return _context.Error(refused);
-        // the setting's own path takes a dict of its options; an option's path takes its value
-        var options = option == null ? value as IDictionary<string, object?> : Nested(option, value);
-        if (options == null)
-            return _context.Error(new global::app.error.@this(
-                $"'{path}' is the setting {setting}: give it its options, {{\"option\": value}}, or name one ({path}.<option>).",
-                "TypeConversionFailed", 400));
-        var fits = Make(setting)!.Apply(options, _context);
-        if (!fits.Success) return fits;
-        Flatten(setting, options);
+        if (value is null) _values.TryRemove(address, out _);
+        else if (value is IDictionary<string, object?> options) Flatten(address, options);
+        else _values[address] = value as data.@this ?? new data.@this(address[(address.LastIndexOf('.') + 1)..], value, context: _context);
         Move();
-        return new data.@this(setting, Make(setting), context: _context);
+        return value as data.@this ?? _context.Ok();
     }
 
     /// <summary>
-    /// The setting <paramref name="path"/> names: the longest path a setting answers to, its own or without
-    /// <c>app.</c> (<c>channel.setting.format</c> → <c>app.channel.setting</c>) — a fresh value of it, at its defaults.
-    /// A path no setting answers to, or one two settings answer to, is refused.
+    /// The setting <paramref name="path"/> names: the longest path a setting goes by
+    /// (<c>channel.setting.format</c> → <c>app.channel.setting</c>) — a fresh value of it, at its defaults. A path no
+    /// setting goes by, or one two settings go by, is refused.
     /// </summary>
     public data.@this Find(string path)
-    {
-        var (setting, _, refused) = Place(path);
-        return refused != null ? _context.Error(refused) : new data.@this(setting, Make(setting), context: _context);
-    }
-
-    // Where path lands: the setting the longest part of it answers to, and the option after it (null for the setting's
-    // own path) — or why it lands nowhere.
-    private (string Setting, string? Option, global::app.error.@this? Refused) Place(string path)
     {
         var answers = _answers ??= Answers();
         for (var end = path.Length; end > 0; end = path.LastIndexOf('.', end - 1))
         {
             if (!answers.TryGetValue(path[..end], out var settings)) continue;
             if (settings.Count > 1)
-                return ("", null, new global::app.error.@this(
+                return _context.Error(new global::app.error.@this(
                     $"'{path}' names two settings: {string.Join(" and ", settings)} — write the one you mean in full.", "AmbiguousSetting", 400));
-            return (settings[0], end == path.Length ? null : path[(end + 1)..], null);
+            return new data.@this(settings[0], Make(settings[0]), context: _context);
         }
-        return ("", null, new global::app.error.@this(
+        return _context.Error(new global::app.error.@this(
             $"'{path}' names no setting — a setting's path is its owner's and then .setting (channel.setting.format).", "UnknownSetting", 400));
     }
 
-    // The settings each path answers to: a setting's own path, and it without `app.` (app.channel.setting,
-    // channel.setting) — two settings answering to one path make it ambiguous.
+    // The settings each path names, as each setting says the paths it goes by — two settings going by one path make
+    // it ambiguous.
     private Dictionary<string, List<string>>? _answers;
 
     private Dictionary<string, List<string>> Answers()
     {
         var answers = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        const string app = "app.";
         foreach (var path in (_classes ??= Index()).Keys)
-            foreach (var key in path.StartsWith(app, StringComparison.OrdinalIgnoreCase) ? new[] { path, path[app.Length..] } : new[] { path })
+            foreach (var key in Make(path)!.Paths)
             {
                 if (!answers.TryGetValue(key, out var settings)) answers[key] = settings = [];
                 settings.Add(path);
             }
         return answers;
-    }
-
-    // An option path's value as the options it sets: format → {format: v}, diff.deep → {diff: {deep: v}}.
-    private IDictionary<string, object?> Nested(string option, object? value)
-    {
-        var names = option.Split('.');
-        IDictionary<string, object?> options = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { [names[^1]] = value };
-        for (var i = names.Length - 2; i >= 0; i--)
-            options = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { [names[i]] = options };
-        return options;
     }
 
     private void Flatten(string path, IDictionary<string, object?> values)
@@ -286,7 +248,7 @@ public sealed class @this : IDisposable
     // One option of a saved row: a setting's (its property), or an action's (its Property row).
     private data.@this? Option(data.@this row, string name) => row.Peek() switch
     {
-        global::app.type.item.setting.@this setting when setting.Option(name) is { } option
+        global::app.type.item.setting.@this setting when setting.Property(name) is { } option
             => new data.@this(name, option.GetValue(setting), context: _context),
         global::app.goal.step.action.@this action
             when action.Property.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)) is { } property
@@ -363,7 +325,7 @@ public sealed class @this : IDisposable
                 option.SetValue(instance, option.GetValue(held) is global::app.type.item.setting.@this owned ? owned.Copy() : option.GetValue(held));
         // this run's values for its own options — a longer path under it (llm.query.cache under llm)
         // is another setting's
-        var own = Under(path).Where(kv => instance.Option(kv.Key) != null).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+        var own = Under(path).Where(kv => instance.Property(kv.Key) != null).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
         var applied = instance.Apply(own, _context);
         if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
         return instance;

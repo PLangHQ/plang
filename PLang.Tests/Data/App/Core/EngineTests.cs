@@ -180,7 +180,7 @@ public class EngineTests : System.IAsyncDisposable
         await using var engine = new global::app.@this("/app").Testing();
         var user = engine.actor.list.User.Context;
 
-        await user.Setting.Write("app.setting.name", new Data("name", user.Text("CustomEngine"), context: user));
+        user.Setting.Set("app.setting.name", new Data("name", user.Text("CustomEngine"), context: user));
 
         await Assert.That(engine.Name(user).ToString()).IsEqualTo("CustomEngine");
         await Assert.That(engine.Name(engine.actor.list.System.Context).ToString()).IsEqualTo("app");

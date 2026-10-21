@@ -149,7 +149,7 @@ public class PrLoadTests : System.IAsyncDisposable
     public async Task ASettingOverAStaleFrozenDefault_IsJudgedAsTheSetting()
     {
         var context = _app.actor.list.User.Context;
-        await context.Setting.Write("list.split.setting.empty", context.Ok("sometimes"));
+        context.Setting.Set("list.split.setting.empty", context.Ok("sometimes"));
 
         var ran = await RanWith("set.pr", Make.Action(context, "list", "split", ("Value", "a\nb")),
             "default", "{\"name\":\"empty\",\"type\":{\"name\":\"bool\"},\"value\":true}");

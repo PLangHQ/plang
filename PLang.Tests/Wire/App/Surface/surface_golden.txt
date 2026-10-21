@@ -2490,9 +2490,12 @@ class app.type.item.setting.module.this : app.type.item.setting.this
 
 class app.type.item.setting.this : app.type.item.this, app.type.item.ICreate<app.type.item.setting.this> [PlangType]
   Apply(System.Collections.Generic.IDictionary<System.String, System.Object> values, app.actor.context.this context) : app.data.this
+  Apply(System.String option, System.Object value, app.actor.context.this context) : app.data.this
   Disabled : app.type.item.bool.this { get; }
   Enabled : app.type.item.bool.this { get; set; } [Out, Store]
+  Option(System.String path, app.actor.context.this context) : app.data.this<app.type.item.text.this>
   Path : System.String { get; }
+  Paths : System.Collections.Generic.IEnumerable<System.String> { get; }
   Rows(app.actor.context.this context) : app.type.property.list.this
   ctor(System.String path, app.type.this type)
   ctor(app.type.this type)

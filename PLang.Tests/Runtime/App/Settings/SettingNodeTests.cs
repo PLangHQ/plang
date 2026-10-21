@@ -16,8 +16,8 @@ public class SettingNodeTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.System.Context;
-        await ctx.Setting.Write(Path + ".diff", ctx.Ok(true));
-        await ctx.Setting.Write(Path + ".diff.deep", ctx.Ok(true));
+        ctx.Setting.Set(Path + ".diff", ctx.Ok(true));
+        ctx.Setting.Set(Path + ".diff.deep", ctx.Ok(true));
 
         var setting = ctx.Setting.Of<global::app.call.setting.@this>();
         await Assert.That(setting.Diff.Enabled.Value).IsTrue();
@@ -42,7 +42,7 @@ public class SettingNodeTests
         var ctx = app.actor.list.System.Context;
         await Assert.That(await (await Read("%!app.call.setting.diff%", ctx)).ToBooleanAsync()).IsFalse();
 
-        await ctx.Setting.Write(Path + ".diff", ctx.Ok(true));
+        ctx.Setting.Set(Path + ".diff", ctx.Ok(true));
         await Assert.That(await (await Read("%!app.call.setting.diff%", ctx)).ToBooleanAsync()).IsTrue();
     }
 

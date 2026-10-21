@@ -140,7 +140,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Format_InvalidValue_RejectedWithError()
     {
-        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "csv" });
+        var result = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "csv" }, _app.actor.list.System.Context);
         await result.IsFailure();
     }
 }

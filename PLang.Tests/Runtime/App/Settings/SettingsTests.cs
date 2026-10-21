@@ -35,6 +35,21 @@ public class SettingsTests : System.IAsyncDisposable
         await Assert.That(d.IsInitialized).IsFalse();   // unset → NotFound → the seam falls to [Default]
     }
 
+    // The store keeps a value by its address without looking: an address no setting has is kept, and a setting's
+    // own address is read back by that setting.
+    [Test]
+    public async Task Set_KeepsAnAddressWithoutLooking()
+    {
+        await using var app = new EngineType("/app");
+        var store = app.actor.list.System.Setting;
+
+        await store.Set("app.no.such.setting.option", 1).IsSuccess();
+        await store.Set("app.test.setting.formt", "json").IsSuccess();
+        await store.Set("app.test.setting.timeout", "5s").IsSuccess();
+
+        await Assert.That(app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Timeout.Value.TotalSeconds).IsEqualTo(5);
+    }
+
     // --build.setting={"files":["a.goal"]} binds a JSON string array to build's files setting (a plang list);
     // each row lifts to a REAL path at its door (row.Value<path>()).
     [Test]
@@ -80,7 +95,7 @@ public class SettingsTests : System.IAsyncDisposable
     public async Task Set_ThenGet_ReturnsValue()
     {
         var ctx = Ctx();
-        await ctx.Setting.Write("http.request.setting.timeout", ctx.Ok(42L));
+        ctx.Setting.Set("http.request.setting.timeout", ctx.Ok(42L));
 
         var d = await ctx.Setting.Get(Request(ctx.Setting), "timeout");
         await Assert.That(d.IsInitialized).IsTrue();
@@ -91,7 +106,7 @@ public class SettingsTests : System.IAsyncDisposable
     public async Task Child_InheritsParentSetting()
     {
         var parent = Ctx();
-        await parent.Setting.Write("http.request.setting.timeout", parent.Ok(50L));
+        parent.Setting.Set("http.request.setting.timeout", parent.Ok(50L));
 
         var child = parent.CreateChild();
         var d = await child.Setting.Get(Request(child.Setting), "timeout");
@@ -102,10 +117,10 @@ public class SettingsTests : System.IAsyncDisposable
     public async Task Child_Shadows_ParentUnaffected()
     {
         var parent = Ctx();
-        await parent.Setting.Write("http.request.setting.timeout", parent.Ok(50L));
+        parent.Setting.Set("http.request.setting.timeout", parent.Ok(50L));
 
         var child = parent.CreateChild();
-        await child.Setting.Write("http.request.setting.timeout", child.Ok(10L));
+        child.Setting.Set("http.request.setting.timeout", child.Ok(10L));
 
         await Assert.That((await (await child.Setting.Get(Request(child.Setting), "timeout")).Value())?.ToString()).IsEqualTo("10");
         await Assert.That((await (await parent.Setting.Get(Request(parent.Setting), "timeout")).Value())?.ToString()).IsEqualTo("50");
@@ -115,10 +130,10 @@ public class SettingsTests : System.IAsyncDisposable
     public async Task Clone_Isolates_Writes()
     {
         var ctx = Ctx();
-        await ctx.Setting.Write("http.request.setting.timeout", ctx.Ok(42L));
+        ctx.Setting.Set("http.request.setting.timeout", ctx.Ok(42L));
 
         var clone = ctx.Setting.Clone();
-        await clone.Write("http.request.setting.timeout", ctx.Ok(999L));
+        clone.Set("http.request.setting.timeout", ctx.Ok(999L));
 
         await Assert.That((await (await clone.Get(Request(clone), "timeout")).Value())?.ToString()).IsEqualTo("999");
         await Assert.That((await (await ctx.Setting.Get(Request(ctx.Setting), "timeout")).Value())?.ToString()).IsEqualTo("42");
@@ -129,7 +144,7 @@ public class SettingsTests : System.IAsyncDisposable
     public async Task UserContext_FallsBackTo_TheSystemsSetting()
     {
         var engine = new EngineType("/app");
-        await engine.actor.list.System.Setting.Write("llm.setting.cache", engine.actor.list.System.Context.Ok(false));
+        engine.actor.list.System.Setting.Set("llm.setting.cache", engine.actor.list.System.Context.Ok(false));
 
         var read = await engine.actor.list.User.Context.Setting.Get(Query(engine), "cache");
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
@@ -140,7 +155,7 @@ public class SettingsTests : System.IAsyncDisposable
     public async Task SystemContext_DoesNotSee_TheUsersSetting()
     {
         var engine = new EngineType("/app");
-        await engine.actor.list.User.Setting.Write("llm.setting.cache", engine.actor.list.User.Context.Ok(false));
+        engine.actor.list.User.Setting.Set("llm.setting.cache", engine.actor.list.User.Context.Ok(false));
 
         var read = await engine.actor.list.System.Context.Setting.Get(Query(engine), "cache");
         await Assert.That(read.IsInitialized).IsFalse();

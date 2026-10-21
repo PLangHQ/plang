@@ -163,11 +163,11 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_UnknownKey_Rejected()
     {
-        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?>
+        var result = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?>
         {
             ["timeout"] = "10s",
             ["futureOption"] = "not a valid key yet"
-        });
+        }, _app.actor.list.System.Context);
 
         await result.IsFailure();
     }

@@ -66,7 +66,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             // not applied — the class takes only its own.
             var options = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
             foreach (var entry in record.Entries(data.Context))
-                if (fresh.Option(entry.Name) is not null) options[entry.Name] = entry.Peek();
+                if (fresh.Property(entry.Name) is not null) options[entry.Name] = entry.Peek();
             var applied = fresh.Apply(options, data.Context);
             if (applied.Success) return fresh;
             data.Fail(Unreadable(fresh.Path, applied.Error));
@@ -107,7 +107,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 parent.Context.App.type.list[typeof(global::app.type.item.text.@this)]), parent: parent);
         if (key.Equals(nameof(Rows), System.StringComparison.OrdinalIgnoreCase))
             return new global::app.data.@this(key, Rows(parent.Context), parent: parent);
-        if ((Option(key) ?? Switch(key)) is { } option)
+        if ((Property(key) ?? Switch(key)) is { } option)
             return new global::app.data.@this(key, option.GetValue(this), parent: parent);
         return await Next(parent, key);
     }
@@ -130,7 +130,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex,
         object? value, global::app.actor.context.@this context)
     {
-        if (Option(key) == null && Switch(key)?.SetMethod == null)
+        if (Property(key) == null && Switch(key)?.SetMethod == null)
             return context.Error(new global::app.error.@this($"setting '{Path}' has no option '{key}'", "NoOption", 404));
         // onto a copy through the one convert walk (a choice from its text) — a value the option can't take is
         // refused before this run holds it
@@ -149,7 +149,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     {
         var written = value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context);
         await written.Value();
-        await context.Setting.Write($"{Path}.{key}", written);
+        context.Setting.Set($"{Path}.{key}", written);
     }
 
     /// <summary>
@@ -269,10 +269,71 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     private object Construct(System.Type t, global::app.actor.context.@this context)
         => System.Activator.CreateInstance(t, context.App.type.list[t])!;
 
-    /// <summary>The option named <paramref name="key"/> — a public settable property this class declares
-    /// (the base's own members are not options); null when there is none.</summary>
-    internal System.Reflection.PropertyInfo? Option(string key)
+    /// <summary>The property of the option named <paramref name="key"/> — a public settable property this class
+    /// declares (the base's own members are not options); null when there is none.</summary>
+    internal System.Reflection.PropertyInfo? Property(string key)
         => Options.FirstOrDefault(o => string.Equals(o.Name, key, System.StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The paths this setting goes by: its own, and it without <c>app.</c> (<c>app.channel.setting</c>,
+    /// <c>channel.setting</c>).</summary>
+    public IEnumerable<string> Paths
+    {
+        get
+        {
+            const string app = "app.";
+            yield return Path;
+            if (Path.StartsWith(app, System.StringComparison.OrdinalIgnoreCase)) yield return Path[app.Length..];
+        }
+    }
+
+    /// <summary>The option <paramref name="path"/> names under this setting, by a path it goes by
+    /// (<c>channel.setting.format</c> → <c>format</c>, <c>call.setting.diff.deep</c> → <c>diff.deep</c>); empty for
+    /// the setting's own path. A path that isn't this setting's, or an option it doesn't have, is refused.</summary>
+    public global::app.data.@this<global::app.type.item.text.@this> Option(string path, global::app.actor.context.@this context)
+    {
+        foreach (var own in Paths)
+        {
+            if (string.Equals(path, own, System.StringComparison.OrdinalIgnoreCase)) return context.Ok(Text("", context));
+            if (!path.StartsWith(own + ".", System.StringComparison.OrdinalIgnoreCase)) continue;
+            var option = path[(own.Length + 1)..];
+            var first = option.Split('.')[0];
+            if (Property(first) == null && Switch(first) == null)
+                return context.Error<global::app.type.item.text.@this>(new global::app.error.@this(
+                    $"Unknown setting '{first}' on {Path} — no public-settable property.", "UnknownSetting", 400));
+            return context.Ok(Text(option, context));
+        }
+        return context.Error<global::app.type.item.text.@this>(new global::app.error.@this(
+            $"'{path}' is not a path of the setting {Path}.", "UnknownSetting", 400));
+    }
+
+    private global::app.type.item.text.@this Text(string text, global::app.actor.context.@this context)
+        => new(text, context.App.type.list[typeof(global::app.type.item.text.@this)]);
+
+    /// <summary>Takes <paramref name="value"/> at <paramref name="option"/> (as <see cref="Option"/> answers it) onto a
+    /// copy of this setting, through the one convert walk: an option's path takes its value, the setting's own (empty)
+    /// a dict of its options. A key that is no option, or a value its option can't take, is refused. Answers the
+    /// copy.</summary>
+    public global::app.data.@this Apply(string option, object? value, global::app.actor.context.@this context)
+    {
+        IDictionary<string, object?>? options = option.Length == 0 ? value as IDictionary<string, object?> : Nested(option, value);
+        if (options == null)
+            return context.Error(new global::app.error.@this(
+                $"'{Path}' is a setting: give it its options, {{\"option\": value}}, or name one ({Path}.<option>).",
+                "TypeConversionFailed", 400));
+        var set = Copy();
+        var applied = set.Apply(options, context);
+        return applied.Success ? context.Ok(set) : applied;
+    }
+
+    // An option path's value as the options it sets: format → {format: v}, diff.deep → {diff: {deep: v}}.
+    private IDictionary<string, object?> Nested(string option, object? value)
+    {
+        var names = option.Split('.');
+        IDictionary<string, object?> options = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { [names[^1]] = value };
+        for (var i = names.Length - 2; i >= 0; i--)
+            options = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { [names[i]] = options };
+        return options;
+    }
 
     /// <summary>A copy of this setting, its own to change: every option as it is, an owned setting (a composite —
     /// debug's <c>length</c>, math's <c>equal</c>) copied too, so nothing is shared with this one. What the settings

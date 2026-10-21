@@ -60,7 +60,7 @@ public class SettingOwnerTests
     [Test] public async Task Flag_RefusesAValueItsOptionCantTake()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var set = app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "nonsense" });
+        var set = await app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "nonsense" }, app.actor.list.System.Context);
         await set.IsFailure();
         await Assert.That(app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Format.Value.ToString())
             .IsEqualTo("json");

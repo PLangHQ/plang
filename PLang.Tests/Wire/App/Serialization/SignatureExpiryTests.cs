@@ -26,7 +26,7 @@ public class SignatureExpiryTests
         await Assert.That(layer.Origin.Value).IsEqualTo(global::app.type.item.signature.Origin.Live);
         await Assert.That(layer.Expires!.Value).IsEqualTo(layer.Created.Value + TimeSpan.FromMinutes(5));
 
-        await ctx.Setting.Write("signing.setting.expiry", ctx.Ok(ctx.Duration(TimeSpan.FromMinutes(1))));
+        ctx.Setting.Set("signing.setting.expiry", ctx.Ok(ctx.Duration(TimeSpan.FromMinutes(1))));
         var shorter = await ReadBack(app, "second");
         await Assert.That(shorter.Expires!.Value).IsEqualTo(shorter.Created.Value + TimeSpan.FromMinutes(1));
     }

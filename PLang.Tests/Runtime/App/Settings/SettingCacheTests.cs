@@ -27,7 +27,7 @@ public class SettingCacheTests
     public async Task AWrite_IsReadByTheNextRead()
     {
         var before = User.Setting.Of<math>();
-        await (await User.Setting.Write("math.setting.equal.digits", User.Ok(3))).IsSuccess();
+        await (User.Setting.Set("math.setting.equal.digits", User.Ok(3))).IsSuccess();
         var after = User.Setting.Of<math>();
         await Assert.That(after).IsNotSameReferenceAs(before);
         await Assert.That(after.Equal.Digits.ToInt32()).IsEqualTo(3);
@@ -37,7 +37,7 @@ public class SettingCacheTests
     public async Task AWriteInTheSystemsSettings_ReachesTheUsersRead()
     {
         _ = User.Setting.Of<math>();
-        await _app.actor.list.System.Setting.Write("math.setting.equal.digits", _app.actor.list.System.Context.Ok(4));
+        _app.actor.list.System.Setting.Set("math.setting.equal.digits", _app.actor.list.System.Context.Ok(4));
         await Assert.That(User.Setting.Of<math>().Equal.Digits.ToInt32()).IsEqualTo(4);
     }
 
@@ -59,7 +59,7 @@ public class SettingCacheTests
         }));
         var writes = Task.Run(async () =>
         {
-            for (var i = 1; i <= 50; i++) await User.Setting.Write("math.setting.equal.digits", User.Ok(i));
+            for (var i = 1; i <= 50; i++) User.Setting.Set("math.setting.equal.digits", User.Ok(i));
         });
         await Task.WhenAll(reads.Append(writes));
         await Assert.That(User.Setting.Of<math>().Equal.Digits.ToInt32()).IsEqualTo(50);

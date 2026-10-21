@@ -82,6 +82,17 @@ public class ExecutorTests
         await Assert.That(engine).IsNull();
     }
 
+    // A typo in a flag's option is refused by the setting it names, before anything is written.
+    [Test]
+    public async Task Configure_AnOptionTypo_IsRefused()
+    {
+        var (engine, error) = await NewExecutor().Configure(new[] { "--channel.setting.formt=json" });
+
+        await Assert.That(engine).IsNull();
+        await error!.IsFailure();
+        await Assert.That(error.Error!.Key).IsEqualTo("UnknownSetting");
+    }
+
     // --debug=Start routes to Debug.Apply which sets IsEnabled and parses the argument.
     // A string value (vs dict) is accepted — scalar values set the IsEnabled bit only.
     [Test]

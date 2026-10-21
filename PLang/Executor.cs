@@ -55,7 +55,7 @@ namespace PLang
 				["!build"] = new global::app.module.build.setting.@this(app.type.list[typeof(global::app.module.build.setting.@this)]),
 			};
 			// the flags that are settings' paths, and the setting classes they will write — known before anything is written
-			var flags = new List<(string Path, object? Value)>();
+			var flags = new List<(string Address, object? Value)>();
 			var settings = new HashSet<System.Type>();
 			foreach (var (key, value) in parameters.Where(p => p.Key.StartsWith('!')).ToList())
 			{
@@ -67,10 +67,19 @@ namespace PLang
 							"UnknownSetting", 400)));
 					continue;
 				}
+				// the setting the flag names, the option under it, and the value it takes — a typo is refused before
+				// anything is written
+				var context = app.actor.list.System.Context;
 				var found = app.actor.list.System.Setting.Find(key[1..]);
 				if (!found.Success) return (null, found);
-				settings.Add(found.Peek()!.GetType());
-				flags.Add((key[1..], value));
+				var setting = (global::app.type.item.setting.@this)found.Peek()!;
+				var option = setting.Option(key[1..], context);
+				if (!option.Success) return (null, option);
+				var named = (await option.Value())!.ToString();
+				var fits = setting.Apply(named, value, context);
+				if (!fits.Success) return (null, fits);
+				settings.Add(setting.GetType());
+				flags.Add((named.Length == 0 ? setting.Path : $"{setting.Path}.{named}", value));
 			}
 
 			// A mode is on when its word is given (and not false), or when the run writes its setting.
@@ -83,8 +92,8 @@ namespace PLang
 				app.actor.list.System.Setting.Set(new global::app.call.setting.@this(app.type.list[typeof(global::app.call.setting.@this)]).Path + ".timing", true);
 
 			// The command line's values, once: the last word.
-			foreach (var (path, value) in flags)
-				if (app.actor.list.System.Setting.Set(path, value) is { Success: false } refused) return (null, refused);
+			foreach (var (address, value) in flags)
+				app.actor.list.System.Setting.Set(address, value);
 
 			var userVars = app.actor.list.User.Context.Variable;
 

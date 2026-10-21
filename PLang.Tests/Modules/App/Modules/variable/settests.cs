@@ -45,7 +45,7 @@ public class SetTests
     public async Task SetDefault_OnASetting_KeepsItsValue()
     {
         var context = _app.actor.list.User.Context;
-        await _app.actor.list.System.Setting.Write("build.setting.cache", _app.actor.list.System.Context.Ok("skip"));
+        _app.actor.list.System.Setting.Set("build.setting.cache", _app.actor.list.System.Context.Ok("skip"));
 
         var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!build.setting.cache%", "variable"), ("value", "use"), ("default", true));
         var result = await action.Start(context);

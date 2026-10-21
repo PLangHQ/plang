@@ -191,7 +191,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
 
     [Test] public async Task ZeroDigits_IsExact()
     {
-        var set = await _app.actor.list.User.Setting.Write("math.setting.equal.digits", _app.actor.list.User.Context.Ok(0));
+        var set = _app.actor.list.User.Setting.Set("math.setting.equal.digits", _app.actor.list.User.Context.Ok(0));
         await set.IsSuccess();
         await Assert.That(IsFalse(await EvalIf(Sum, "==", global::app.type.item.number.@this.Parse("0.3")))).IsTrue();
     }

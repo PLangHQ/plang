@@ -27,7 +27,7 @@ public class @this : global::app.type.item.setting.@this
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex,
         object? value, global::app.actor.context.@this context)
     {
-        if (Option(key) != null) return await base.Set(key, isIndex, value, context);
+        if (Property(key) != null) return await base.Set(key, isIndex, value, context);
         var module = await context.App.module.Get(Module, context);
         if (!module.Success || await module.Value() is not { } found
             || !found.ActionNames.Any(name => found[name]?.Property[key] != null))

@@ -75,7 +75,7 @@ public class ConsoleChannelTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
 
-        var set = app.actor.list.System.Setting.Set("app.channel.setting", new Dictionary<string, object?> { ["format"] = "nonsense" });
+        var set = await app.actor.list.System.Setting.Flag("app.channel.setting", new Dictionary<string, object?> { ["format"] = "nonsense" }, app.actor.list.System.Context);
 
         await set.IsFailure();
         await Assert.That(set.Error!.Key).IsEqualTo("FormatNotFound");
