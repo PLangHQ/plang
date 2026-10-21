@@ -42,7 +42,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The setting address <paramref name="row"/> is this actor's row for; null when it is another actor's
     /// (every key of this actor's starts as its row for no address does).</summary>
     internal string? Address(string row)
-        => Row("") is var start && row.StartsWith(start, System.StringComparison.OrdinalIgnoreCase) ? row[start.Length..] : null;
+        => Row("") is var prefix && row.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase) ? row[prefix.Length..] : null;
 
     /// <summary>An actor written alone, in every view, is its name — what a program reads an actor by; its context,
     /// channels and permissions are its own, never written with it.</summary>

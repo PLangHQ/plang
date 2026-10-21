@@ -24,10 +24,9 @@ public sealed class @this : IDisposable
     // While the rows are being read, a setting read inside that (the store reading a row back) builds
     // without them — it can't wait on the read it is part of.
     private readonly AsyncLocal<bool> _reading = new();
-    // What this scope built, per setting path, with the version it was built at — read-only by contract (a caller
+    // What this scope built, per settings class, with the version it was built at — read-only by contract (a caller
     // that changes a setting changes its Copy). Read from parallel branches, so concurrent.
-    private readonly ConcurrentDictionary<string, (long Version, global::app.type.item.setting.@this Built)> _built =
-        new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<System.Type, (long Version, global::app.type.item.setting.@this Built)> _built = new();
     // The settings' version — held by the root of every chain (the system's): any write anywhere moves it, so a
     // built setting knows it is stale whichever scope was written.
     private long _version;
@@ -309,7 +308,7 @@ public sealed class @this : IDisposable
     /// changes its Copy. A saved row that can't be read is loud (790).
     /// </summary>
     public async ValueTask<T> Get<T>() where T : global::app.type.item.setting.@this
-        => (T)await Setting(Address(typeof(T)));
+        => (T)await Setting(typeof(T));
 
     /// <summary>The settings <paramref name="host"/> names with <c>ISetting&lt;T&gt;</c> — <c>%!app.goal.list.setting%</c>,
     /// <c>%!app.type.size.setting%</c> — or <paramref name="host"/>'s own, when it is a settings class; null when it
@@ -332,20 +331,20 @@ public sealed class @this : IDisposable
     /// no settings class has that address, the error when a value its options can't take is held.</summary>
     public async ValueTask<data.@this> Get(string address)
     {
-        if (Class(address) == null) return _context.NotFound(address);
-        try { return new data.@this(address, await Setting(address), context: _context); }
+        if (Class(address) is not { } @class) return _context.NotFound(address);
+        try { return new data.@this(address, await Setting(@class), context: _context); }
         catch (global::app.error.AppException ex) { return _context.Error(ex.Error); }
     }
 
-    // The setting at address, made once per version: after the rows are read, a read is a lookup until a setting is
-    // written somewhere.
-    private async ValueTask<global::app.type.item.setting.@this> Setting(string address)
+    // The setting of the class, made once per version: after the rows are read, a read is a lookup until a setting is
+    // written somewhere (its address is looked up only then).
+    private async ValueTask<global::app.type.item.setting.@this> Setting(System.Type @class)
     {
         await Load();
         var version = System.Threading.Interlocked.Read(ref Root._version);
-        if (_built.TryGetValue(address, out var held) && held.Version == version) return held.Built;
-        var built = Build(address);
-        _built[address] = (version, built);
+        if (_built.TryGetValue(@class, out var held) && held.Version == version) return held.Built;
+        var built = Build(Address(@class));
+        _built[@class] = (version, built);
         return built;
     }
 

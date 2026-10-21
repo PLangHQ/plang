@@ -67,11 +67,11 @@ namespace PLang
 			var flags = await store.Flags(parameters.Where(p => p.Key.StartsWith('!') && !modes.ContainsKey(p.Key))
 				.Select(p => new KeyValuePair<string, object?>(p.Key[1..], p.Value)), app.actor.list.System.Context);
 			if (!flags.Success) return (null, flags);
-			var written = (await flags.Value())!.Entries(app.actor.list.System.Context).ToList();
+			var values = (await flags.Value())!.Entries(app.actor.list.System.Context).ToList();
 
 			// A mode is on when its word is given (and not false), or when the run writes its setting.
 			bool On(string word) => parameters.TryGetValue(word, out var given) && given is not false
-				|| written.Any(entry => entry.Name.StartsWith(store.Address(modes[word]) + ".", StringComparison.OrdinalIgnoreCase));
+				|| values.Any(entry => entry.Name.StartsWith(store.Address(modes[word]) + ".", StringComparison.OrdinalIgnoreCase));
 
 			// The modes' defaults, under the command line's values: a debug run shows each step's time, so this run's
 			// call stacks time their frames (--call.setting.timing=false still says not).
@@ -79,7 +79,7 @@ namespace PLang
 				app.actor.list.System.Setting.Set(app.actor.list.System.Setting.Address(typeof(global::app.call.setting.@this), "timing"), true);
 
 			// The command line's values, once: the last word.
-			foreach (var entry in written)
+			foreach (var entry in values)
 				store.Set(entry.Name, entry);
 
 			var userVars = app.actor.list.User.Context.Variable;
