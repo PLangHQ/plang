@@ -19,25 +19,22 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     /// <summary>json content is text.</summary>
     public override bool IsText => true;
 
-    /// <summary>A json writer — plain json, or plang's schema-on json — writes json: json content goes into it
-    /// as the token it already is.</summary>
-    public override bool Owns(global::app.type.format.IWriter writer)
-        => ReferenceEquals(writer.Kind, this) || writer.Kind is global::app.type.item.wire.kind.plang.@this;
-
     /// <summary>A test run's report in json: the run's tests, written as json.</summary>
     public override string? Report => "results.json";
 
-    // json RESTS (ruling 6, decision 792): its untyped materialize does NOT parse — an unread {item, json}
-    // answers itself, so a courier (content.Value, a variable set, passing a value on, a url's or a render's
-    // result) carries it unread. Only a USE opens it: navigation, enumeration, `is`, a typed ask each parse once
-    // (through Parse) and narrow. The source form IS the rest: the source materialize sees a source come back
-    // and answers itself.
+    // json RESTS: its untyped materialize does NOT parse — an unread {item, json} answers itself, so a courier
+    // (content.Value, a variable set, passing a value on, a url's or a render's result) carries it unread. Only a USE
+    // opens it: navigation, enumeration, `is`, a typed ask each parse once (through Parse) and narrow. The json
+    // content IS the rest: the source materialize sees a source come back and answers itself.
     public override System.Threading.Tasks.ValueTask<global::app.data.@this?> Load(
         object raw, global::app.actor.context.@this ctx)
-        // The source carries THIS kind as the format its raw is in — the object the raw was decoded by, so a
+        // The content carries THIS kind as the format its raw is in — the object the raw was decoded by, so a
         // re-declaration keeps it and asks it to Parse directly (never a kind-name lookup across the app).
-        => new(ctx.Ok(new global::app.type.item.source(raw,
-            ctx.App.type.list[new global::app.type.@this("item", "json"), ctx], format: this)));
+        => new(ctx.Ok(Make(raw, ctx.App.type.list[new global::app.type.@this("item", "json"), ctx], null)));
+
+    /// <summary>json content, unread: its characters already are json, so a json document pastes them.</summary>
+    public override global::app.type.item.source Make(object raw, global::app.type.@this type, global::app.type.item.path.@this? origin)
+        => new source(raw, type, this, origin);
 
     // Every character written as itself (Icelandic letters, "—"); the ones a page reads as markup (< > & ' +)
     // still escaped, as json in an HTML page needs.

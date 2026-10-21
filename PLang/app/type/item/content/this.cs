@@ -137,12 +137,13 @@ public abstract class @this : global::app.type.item.@this
         return sample.Success ? null : sample.Error;
     }
 
-    /// <summary>A reference writes its content once sampled, as the bytes of its format — the writer decides how
-    /// they look; unsampled, its location.</summary>
-    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    /// <summary>A reference writes its content once sampled, as what its format makes of its bytes, unread (json
+    /// content pastes into json; any other is bytes of its format, the writer deciding how they look); unsampled, its
+    /// location.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        if (!IsLoaded) { writer.String(ToString()); return default; }
-        writer.Bytes(Bytes, _format ?? Type.kind);
-        return default;
+        if (!IsLoaded) { writer.String(ToString()); return; }
+        var format = _format ?? Type.kind;
+        await format.Make(Bytes, format.Content(writer.Context), Path).Output(writer);
     }
 }

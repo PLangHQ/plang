@@ -33,6 +33,9 @@ public sealed class Writer : IWriter
     public global::app.View View { get; }
     public global::app.actor.context.@this Context { get; }
 
+    /// <summary>A value written as json: its json look (characters that already are json pasted), else its own write.</summary>
+    public System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value) => value.Write(this);
+
     public void Null() => _writer.WriteNullValue();
     public void Bool(bool value) => _writer.WriteBooleanValue(value);
     public void Int(int value) => _writer.WriteNumberValue(value);
@@ -48,12 +51,10 @@ public sealed class Writer : IWriter
     public void Guid(System.Guid value) => _writer.WriteStringValue(value);
     public void Enum(System.Enum value) => _writer.WriteStringValue(value.ToString());
     public void Decimal(decimal value) => _writer.WriteNumberValue(value);
-    // Bytes of a kind json owns are a json token already, relayed verbatim (validated: invalid json throws); a text's
-    // bytes are the text they spell; any other bytes are base64.
+    // A text's bytes are the text they spell; any other bytes are base64.
     public void Bytes(byte[] value, global::app.type.kind.@this kind)
     {
-        if (kind.Owns(this)) _writer.WriteRawValue(value);
-        else if (kind.IsText) _writer.WriteStringValue(System.Text.Encoding.UTF8.GetString(value));
+        if (kind.IsText) _writer.WriteStringValue(System.Text.Encoding.UTF8.GetString(value));
         else _writer.WriteBase64StringValue(value);
     }
 

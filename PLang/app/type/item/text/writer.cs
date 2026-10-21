@@ -78,7 +78,6 @@ public sealed class Writer : global::app.type.format.IWriter
         return (exact ?? value).ToString(pattern, _culture.Number);
     }
     public void String(string value) { if (_depth > 0) Structural().String(value); else Bare(value); }
-    public void Raw(string value) { if (_depth > 0) Structural().Raw(value); else Bare(value); }
     public void DateTime(System.DateTime value) { if (_depth > 0) Structural().DateTime(value); else Bare(value.ToString("o", CultureInfo.InvariantCulture)); }
     public void DateTimeOffset(System.DateTimeOffset value) { if (_depth > 0) Structural().DateTimeOffset(value); else Bare(value.ToString("o", CultureInfo.InvariantCulture)); }
     public void TimeSpan(System.TimeSpan value) { if (_depth > 0) Structural().TimeSpan(value); else Bare(value.ToString("c")); }

@@ -1106,10 +1106,8 @@ interface app.type.format.IWriter
   abstract Value(System.Object normalized) : System.Void
   abstract View : app.View { get; }
   virtual BeginRecord(app.data.this record, System.Boolean layer) : System.Threading.Tasks.ValueTask
-  virtual Content(System.String value, app.type.kind.this kind) : System.Void
   virtual EndRecord(app.data.this record) : System.Threading.Tasks.ValueTask
   virtual Given() : System.Void
-  virtual Raw(System.String value) : System.Void
   virtual Sensitive(System.String characters) : System.Void
   virtual Variable(System.String name) : System.Void
   virtual Write(app.type.item.this value) : System.Threading.Tasks.ValueTask
@@ -1811,7 +1809,13 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void
   View : app.View { get; }
+  Write(app.type.item.this value) : System.Threading.Tasks.ValueTask
   ctor(System.Text.Json.Utf8JsonWriter writer, app.View view, app.actor.context.this context)
+
+class app.type.item.kind.json.source : app.type.item.source
+  ctor(System.Object raw, app.type.this type, app.type.item.kind.json.this json, app.type.item.path.this origin = …)
+  protected override Write(app.type.item.kind.json.Writer writer) : System.Threading.Tasks.ValueTask
+  protected override Write(app.type.item.wire.kind.plang.Writer writer) : System.Threading.Tasks.ValueTask
 
 class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>
   ctor(app.type.this owner)
@@ -1820,9 +1824,9 @@ class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override IsText : System.Boolean { get; }
   override Load(System.Object raw, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.data.this>
+  override Make(System.Object raw, app.type.this type, app.type.item.path.this origin) : app.type.item.source
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Open(System.String characters, app.actor.context.this context) : app.data.this
-  override Owns(app.type.format.IWriter writer) : System.Boolean
   override Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
   override Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.actor.context.this context) : System.Object
   override Report : System.String { get; }
@@ -2633,7 +2637,6 @@ class app.type.item.text.Writer : app.type.format.IWriter
   Long(System.Int64 value) : System.Void
   Name(System.String name) : System.Void
   Null() : System.Void
-  Raw(System.String value) : System.Void
   String(System.String value) : System.Void
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void
@@ -2720,7 +2723,9 @@ abstract class app.type.item.this : app.data.IBooleanResolvable, app.type.item.I
   protected virtual Type : app.type.this { get; }
   protected virtual Write(app.goal.step.action.formal.Writer writer) : System.Threading.Tasks.ValueTask
   protected virtual Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  protected virtual Write(app.type.item.kind.json.Writer writer) : System.Threading.Tasks.ValueTask
   protected virtual Write(app.type.item.text.Writer writer) : System.Threading.Tasks.ValueTask
+  protected virtual Write(app.type.item.wire.kind.plang.Writer writer) : System.Threading.Tasks.ValueTask
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.this
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.this
   virtual AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
@@ -2984,6 +2989,7 @@ class app.type.item.wire.kind.plang.Writer : app.type.format.IWriter
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void
   View : app.View { get; }
+  Write(app.type.item.this value) : System.Threading.Tasks.ValueTask
   ctor(System.Text.Json.Utf8JsonWriter writer, app.View view, app.actor.context.this context)
 
 class app.type.item.wire.kind.plang.this : app.type.kind.this<app.type.item.wire.this>
@@ -2994,7 +3000,6 @@ class app.type.item.wire.kind.plang.this : app.type.kind.this<app.type.item.wire
   override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
-  override Owns(app.type.format.IWriter writer) : System.Boolean
 
 class app.type.item.wire.template : app.type.item.wire.this
   ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable, System.Boolean built = …)
@@ -3003,6 +3008,8 @@ class app.type.item.wire.this : app.type.item.source [PlangType]
   ctor(System.String slice, app.type.this type, app.type.item.wire.kind.plang.this reader, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …)
   override RawText : System.String { get; }
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  protected override Write(app.type.item.kind.json.Writer writer) : System.Threading.Tasks.ValueTask
+  protected override Write(app.type.item.wire.kind.plang.Writer writer) : System.Threading.Tasks.ValueTask
   static Internal : System.Boolean { get; }
 
 class app.type.kind.empty.this : app.type.kind.this
@@ -3068,10 +3075,10 @@ class app.type.kind.this : app.type.this
   virtual Item[System.String] : app.type.kind.this { get; }
   virtual Item[System.Type] : app.type.kind.this { get; }
   virtual Load(System.Object raw, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.data.this>
+  virtual Make(System.Object raw, app.type.this type, app.type.item.path.this origin) : app.type.item.source
   virtual Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   virtual Of(System.Type type) : System.Type
   virtual Open(System.String characters, app.actor.context.this context) : app.data.this
-  virtual Owns(app.type.format.IWriter writer) : System.Boolean
   virtual Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
   virtual Read(System.Object obj, app.type.reader.ITypeReader reader, System.String kind, app.actor.context.this context) : System.Object
   virtual Report : System.String { get; }

@@ -26,6 +26,10 @@ public sealed class Writer : global::app.type.format.IWriter
     public global::app.View View { get; }
     public global::app.actor.context.@this Context { get; }
 
+    /// <summary>A value written in plang's format: its plang look (characters that already are json pasted), else its
+    /// own write.</summary>
+    public System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value) => value.Write(this);
+
     public async System.Threading.Tasks.ValueTask BeginRecord(global::app.data.@this record, bool layer)
     {
         _json.BeginObject();

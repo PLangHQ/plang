@@ -220,23 +220,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>
-    /// The text writes ITSELF, as written: its characters, with the kind they are in (a template's
-    /// <c>%ref%</c> as the step gave it). Whether a template is kept as written or used (resolved, rendered)
-    /// is the writer's view's to decide, where its Data is written; using it is its <see cref="Value"/>.
+    /// The text writes ITSELF, as written: its characters (a template's <c>%ref%</c> as the step gave it). Whether a
+    /// template is kept as written or used (resolved, rendered) is the writer's view's to decide, where its Data is
+    /// written; using it is its <see cref="Value"/>.
     /// </summary>
     protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        writer.Content(_value, Format(writer.Context));
+        writer.String(_value);
         return default;
     }
 
-    // The kind these characters are in, as the types hold it — one of text's own (md) or one text coins for another
-    // type's format (json); with no context to ask, the kind by its name alone.
-    private global::app.type.kind.@this Format(global::app.actor.context.@this? context)
-        => context?.App.type.list.Kind(Type, context) ?? Type.kind;
-
-    /// <summary>A text holds what a step quoted by its own characters, whatever kind they are in: a json text
-    /// <c>{"size": 10}</c> holds the step's <c>{"size": 10}</c>, never only the escaped form a writer would give it.</summary>
+    /// <summary>A text holds what a step quoted by its own characters: a text <c>{"size": 10}</c> holds the step's
+    /// <c>{"size": 10}</c>, never only the escaped form a writer would give it.</summary>
     internal override System.Threading.Tasks.ValueTask<bool> Holds(string quoted, global::app.actor.context.@this context)
         => System.Threading.Tasks.ValueTask.FromResult(_value.Contains(quoted));
 
@@ -252,10 +247,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
         => IsVariable ? await _variable[0].Start(ctx) : null;
 
-    // What the characters stand for, as their kind opens them (a text of kind json: the json value) — opened at the
-    // first navigation, not before, and kept; the text stays the text it is. Only what opened is kept: it holds no
+    // What the characters stand for, as their kind opens them, when it opens any — opened at the first navigation,
+    // not before, and kept; the text stays the text it is. Only what opened is kept: it holds no
     // context, so every asker navigates it with their own.
     private global::app.type.item.@this? _opened;
+
+    // The kind these characters are in, as the types hold it — one of text's own (md); a name text holds no kind of is
+    // that name alone, with no owner. With no context to ask, the kind by its name alone.
+    private global::app.type.kind.@this Format(global::app.actor.context.@this? context)
+        => context?.App.type.list.Kind(Type, context) ?? Type.kind;
 
     // The characters opened by their kind, for this asker: what was kept, else opened now (and kept when it opened);
     // a failed Data when they don't read as their kind says; null when the kind opens nothing.
@@ -268,9 +268,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>
-    /// A text navigates as its kind opens its characters: a text of kind json (<c>%x.a%</c>) is walked as the json
-    /// its characters are, parsed only then, and stays text; characters that don't read as json answer why
-    /// (MaterializeFailed). A text whose kind opens nothing has no by-key structure — navigating it
+    /// A text navigates as its kind opens its characters: walked as what they open to, parsed only then, and it stays
+    /// text; characters that don't read as their kind answer why (MaterializeFailed). A text whose kind opens nothing
+    /// (none of text's own does; json content is item's json) has no by-key structure — navigating it
     /// (<c>%x.port%</c>) is an authoring error. Method calls (<c>%x.grep("..")%</c>) are text's own methods, not
     /// this, so they are unaffected.
     /// </summary>
@@ -278,8 +278,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         global::app.data.@this parent, string key)
         => Get(parent, key, isIndex: false);
 
-    /// <summary>A text iterates as its kind opens its characters — a text of kind json holding an array yields its
-    /// elements; any other text is one value, yielded once, never its characters. Characters that don't read as their
+    /// <summary>A text iterates as its kind opens its characters — an array they open to yields its elements; any other
+    /// text is one value, yielded once, never its characters. Characters that don't read as their
     /// kind stop the loop with why.</summary>
     public override System.Collections.Generic.IEnumerable<(global::app.data.@this key, global::app.data.@this value)>
         EnumerateItems(global::app.actor.context.@this? context)

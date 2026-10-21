@@ -33,7 +33,7 @@ public sealed partial class @this
 
     /// <summary>
     /// The kind the type named <paramref name="type"/> has by the name <paramref name="kind"/>: one it holds, or one
-    /// it coins for the name (text's <c>{text, json}</c>); the type's own empty kind when no kind is named or the name
+    /// it coins for the name (a list's element kind, <c>{list, path}</c>); the type's own empty kind when no kind is named or the name
     /// is the type's own format. A kind the type does NOT hold is that name with no class — asked of its parent, never
     /// of the app (decision 774, ruling 2): a kind is found under its type, no app-wide search by bare name. The type
     /// is found by its name, and no type is made — a value writing itself asks this on every write.

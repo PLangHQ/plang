@@ -351,15 +351,13 @@ public class source : @this
 
     /// <summary>
     /// A source writes itself as written — its raw content directly, a <c>string</c> or a <c>byte[]</c>, never a
-    /// structured value: into a writer of its declared kind's own format (json content into json) verbatim,
-    /// otherwise bytes as bytes and a string quoted. No materialize-on-write. Whether a template source is kept as
-    /// written or used is the writer's view's, where its Data is written. (A <see cref="wire.@this"/> writes its slice
-    /// its own way.)
+    /// structured value: bytes as bytes of its declared kind, characters as characters. No materialize-on-write.
+    /// Whether a template source is kept as written or used is the writer's view's, where its Data is written. (A
+    /// <see cref="wire.@this"/> and json content paste their characters into json their own way.)
     /// </summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        // The raw is content of its declared kind, as bytes or as characters: the writer decides how it looks
-        // (into a writer of the kind's own format, verbatim).
+        // The raw is content of its declared kind, as bytes or as characters: the writer decides how it looks.
         if (_value is byte[] b) { writer.Bytes(b, Type.kind); return; }
         // A whole %ref% in a slot not typed text is the variable itself (`Value: item = %!data%`); inside a
         // text it stays the text it is (`"Total: %x%"`).
@@ -368,7 +366,7 @@ public class source : @this
             await _variable[0].Output(writer);
             return;
         }
-        writer.Content(_value.ToString() ?? "", Type.kind);
+        writer.String((string)_value);
     }
 
 

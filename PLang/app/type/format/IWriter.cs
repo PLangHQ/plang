@@ -53,34 +53,14 @@ public interface IWriter
     void Decimal(decimal value);
 
     /// <summary>
-    /// Bytes of <paramref name="kind"/> — what they are (an image's format, json content, a text, plain bytes). The
-    /// writer decides how they look: a writer the kind owns takes them as a token of its own format, as they are;
-    /// any other writes them its own way (json base64 or the text they spell, text their size or their text).
+    /// Bytes of <paramref name="kind"/> — what they are (an image's format, a text, plain bytes). The writer decides
+    /// how they look (json base64 or the text they spell, text their size or their text).
     /// </summary>
     void Bytes(byte[] value, global::app.type.kind.@this kind);
-
-    /// <summary>
-    /// Emit content already valid in the target format, verbatim — a source value's
-    /// undecoded raw form, passed through without re-encoding. JSON emits it unquoted
-    /// (<c>WriteRawValue</c>) so a raw json object/number rides inline; text writes the
-    /// string as-is. The caller (a <c>source</c> leaf) decides when its raw is format-ready.
-    /// Default falls back to a quoted string for writers that have no verbatim concept.
-    /// </summary>
-    void Raw(string value) => String(value);
 
     /// <summary>Characters nobody should see (a key, a password), as the writer's view shows them: <c>****</c>, and whole
     /// in plang's own store.</summary>
     void Sensitive(string characters) => String(View.Sensitive(characters));
-
-    /// <summary>
-    /// Characters that are content of a format — a text of kind <paramref name="kind"/> (json, md, …). A writer the
-    /// kind owns takes them as a token of its own format, as they are; any other writes them as text.
-    /// </summary>
-    void Content(string value, global::app.type.kind.@this kind)
-    {
-        if (kind.Owns(this)) Raw(value);
-        else String(value);
-    }
 
     /// <summary>A variable, named as itself — <paramref name="name"/> without its % signs. Default: the
     /// text <c>%name%</c> as a string; a writer with a bare variable form (formal) writes that.</summary>

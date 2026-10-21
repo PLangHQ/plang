@@ -171,9 +171,11 @@ public class @this : global::app.type.@this
     /// <see cref="ClrForm"/> takes it.</summary>
     public virtual bool Carries(System.Type clr) => ClrForm is { } form && form.IsAssignableFrom(clr);
 
-    /// <summary>Whether <paramref name="writer"/> writes this kind's own format — content of this kind is then
-    /// already a token of it, relayed verbatim. By default no writer is.</summary>
-    public virtual bool Owns(global::app.type.format.IWriter writer) => false;
+    /// <summary>Content of this kind, unread: <paramref name="raw"/> (characters or bytes) as a value of
+    /// <paramref name="type"/>, read off <paramref name="origin"/> when it came from a file. By default a source; a kind
+    /// whose content looks different in a format makes its own.</summary>
+    public virtual global::app.type.item.source Make(object raw, global::app.type.@this type, global::app.type.item.path.@this? origin)
+        => new(raw, type, origin: origin);
 
     // A kind's own aliases (int → "integer") — what it answers to by name besides its name; never its owner's, which a
     // kinded type ({text, md}) reads as its family's.
@@ -269,9 +271,14 @@ public class @this : global::app.type.@this
         // a type that reads this format itself makes the value now (a .pr into a goal)
         if (_decode != null && template == null) return await _decode(raw, context, name, origin);
         // else content decoded into a new value is a birth: it comes through its type's on.create, unread until used
-        var type = context.App.type.list[new global::app.type.@this(Owner?.Name ?? "binary", IsEmpty ? null : Name, template: template), context];
-        return await type.Create(raw, context, name, origin);
+        return await Content(context, template).Create(raw, context, name, origin);
     }
+
+    /// <summary>The type content of this kind is born as, among the asker's types — its family's, of this kind (bytes
+    /// with no family are binary's); a template when <paramref name="template"/> marks it one.</summary>
+    internal global::app.type.@this Content(global::app.actor.context.@this context,
+        global::app.type.item.template.kind.@this? template = null)
+        => context.App.type.list[new global::app.type.@this(Owner?.Name ?? "binary", IsEmpty ? null : Name, template: template), context];
 
     /// <summary>
     /// A Data written onto a stream in this format — the one encode door, <see cref="Decode"/>'s pair. The

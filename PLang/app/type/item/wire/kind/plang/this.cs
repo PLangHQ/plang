@@ -13,8 +13,7 @@ namespace app.type.item.wire.kind.plang;
 /// view (plang's own files and store) skips the freshness window — at-rest artefacts present the same nonce
 /// by design. Sensitive values are not stripped here: plang's store rides this format to keep an identity.</para>
 ///
-/// <para>The format also reads a value slot a <c>.pr</c> captured still encoded (<see cref="Read"/>) and says
-/// whether a writer writes this format (<see cref="Owns"/>), so a captured slice relays byte-identical.</para>
+/// <para>The format also reads a value slot a <c>.pr</c> captured still encoded (<see cref="Read"/>).</para>
 /// </summary>
 public sealed class @this : global::app.type.kind.@this<global::app.type.item.wire.@this>
 {
@@ -118,10 +117,4 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
         var reader = new global::app.type.item.kind.json.Reader(utf8);
         return typeReader.Read(ref reader, kind, ctx);
     }
-
-    /// <summary>Whether <paramref name="writer"/> writes this format — a captured slice rides verbatim into a json
-    /// writer (schema on → "plang", off → "json"); any other writer is a different format, where the slice is
-    /// decoded and the value writes itself.</summary>
-    public override bool Owns(global::app.type.format.IWriter writer)
-        => ReferenceEquals(writer.Kind, this) || writer.Kind is global::app.type.item.kind.json.@this;
 }

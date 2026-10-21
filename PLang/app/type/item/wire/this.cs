@@ -53,15 +53,23 @@ public class @this : global::app.type.item.source
     private protected global::app.type.item.@this Decoded(actor.context.@this context)
         => (Type.kind is { IsEmpty: false } ? context.App.type.list.Kind(Type, context).Parse(Raw, context) : null) ?? Read(context);
 
-    // A wire writes verbatim into its own format (a byte-identical relay of the captured slice, signatures
-    // hold) — until the identity pair relays a value's written form. Any other writer is a USE: the slice
-    // decodes with the caller's context, and the decoded value is written through the writer's kind (a
-    // structure structurally).
-    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    // Its characters already are json: into json and plang's own format the slice is pasted (a byte-identical relay,
+    // signatures hold).
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.kind.json.Writer writer)
     {
-        if (_reader.Owns(writer)) { writer.Raw((string)Raw); return; }
-        await Decoded(writer.Context).Output(writer);
+        writer.Raw((string)Raw);
+        return default;
     }
+
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.wire.kind.plang.Writer writer)
+    {
+        writer.Raw((string)Raw);
+        return default;
+    }
+
+    // Any other writer is a USE: the slice decodes with the caller's context, and the decoded value writes itself.
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => await Decoded(writer.Context).Output(writer);
 
     // Lowering an undecoded wire to CLR is a USE: graduate to the decoded value first (never hand
     // the ENCODED slice to a converter — the bug the inherited source.Clr would commit), then that

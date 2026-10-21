@@ -99,8 +99,8 @@ public sealed class Writer : IWriter
     public void Bytes(byte[] value, global::app.type.kind.@this kind)
         => String(kind.IsText ? System.Text.Encoding.UTF8.GetString(value) : System.Convert.ToBase64String(value));
 
-    /// <summary>Verbatim — content already formal (a %variable% written bare).</summary>
-    public void Raw(string value) { Element(); _out.Append(value); }
+    // Verbatim — content already formal (a %variable% written bare).
+    private void Raw(string value) { Element(); _out.Append(value); }
 
     /// <summary>A variable, bare: <c>%content%</c>.</summary>
     public void Variable(string name) => Raw($"%{name}%");

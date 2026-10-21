@@ -361,7 +361,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // first use. The source carries the type's Name/Kind/Strict/template and reads its own raw —
         // knowing where the raw came from, when it was read off a file.
         if (raw is string or byte[])
-            return new item.source(raw, this, origin: origin);
+            return kind.Make(raw, this, origin);
 
         // A container / domain value is already native (dict, list, path, image, …) — hold it; a value of a
         // type this type takes (a path declared a file, a list declared list<path>) is made into this type by
