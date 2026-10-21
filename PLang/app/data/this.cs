@@ -125,6 +125,8 @@ public partial class @this
     /// <item>A value that holds variables (<c>"%name%: %price% kr"</c>, a dict or list holding them) renders here:
     /// the one place a value door is opened, since a template renders by opening the values it names. A name it
     /// can't read fails the render, and that failure is the answer.</item>
+    /// <item>A signed Data answers itself: it holds what was signed, as its view took it, and reading it again would make
+    /// it something the signature doesn't cover.</item>
     /// <item>A failure, and any other Data, answers itself.</item>
     /// </list></summary>
     /// <summary>This Data settled for <paramref name="view"/> — the view decides: plang's own store keeps it as written; a
@@ -134,7 +136,7 @@ public partial class @this
 
     public virtual async System.Threading.Tasks.ValueTask<@this> Settle()
     {
-        if (!HasVariable || _error != null) return this;
+        if (!HasVariable || _error != null || Signature != null) return this;
         @this answer;
         if (!IsVariable) answer = await Rendered();
         else if (await Follow(Context) is { IsInitialized: true } named) answer = named.Copy(Name, named._context);

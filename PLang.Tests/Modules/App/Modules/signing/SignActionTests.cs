@@ -52,9 +52,9 @@ public class SignActionTests
         return await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
     }
 
-    // sign now returns a Data whose value IS the signature layer (no Data.Signature).
+    // sign answers the Data it signed, holding its layer (Data.Signature).
     private static global::app.type.item.signature.@this Layer(Data result)
-        => (global::app.type.item.signature.@this)result.Peek();
+        => result.Signature!;
 
     #region Happy Path & Field Population
 
@@ -79,7 +79,7 @@ public class SignActionTests
         var result = await SignData(new { message = "hello" });
 
         await result.IsSuccess();
-        await Assert.That(result.Type?.Name).IsEqualTo("signature");
+        await Assert.That(Layer(result).Type.Name).IsEqualTo("signature");
         await Assert.That(Layer(result).Algorithm.ToString()).IsEqualTo("ed25519");
     }
 
@@ -214,7 +214,7 @@ public class SignActionTests
 
         var result = await SignData("test");
         await result.IsSuccess();
-        await Assert.That(result.Peek() is global::app.type.item.signature.@this).IsTrue();
+        await Assert.That(result.Signature != null).IsTrue();
         await Assert.That(mock.SignCalled).IsTrue();
     }
 

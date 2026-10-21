@@ -61,8 +61,9 @@ public class Ed25519 : ISigning
 
         try
         {
+            // the Data it hashed, holding its layer — what a read off the wire answers too
             var signed = unsigned.Signed(Sign(unsigned, new global::app.type.item.text.@this(identity.PrivateKey, text)));
-            return action.Context.Ok(signed);
+            return data.Copy(signed);
         }
         catch (Exception ex)
         {
@@ -72,8 +73,9 @@ public class Ed25519 : ISigning
 
     public virtual async Task<data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action)
     {
-        // what the step gives, as it is now: a %variable% is the signed Data it holds
-        if ((action.Data == null ? null : (await action.Data.Follow(action.Context)).Peek()) is not global::app.type.item.signature.@this signature)
+        // what the step gives, as it is now: a %variable% is the signed Data it holds, holding its layer
+        var bearer = action.Data == null ? null : await action.Data.Follow(action.Context);
+        if (bearer?.Signature is not { } signature)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data has no signature", "NoSignature", 400));
 
         var app = action.Context.App;
@@ -100,7 +102,7 @@ public class Ed25519 : ISigning
         if (!ContractsMatch(System.Linq.Enumerable.ToList(signature.ContractStrings()), expectedContracts))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
-        // 4. Data hash verification — rehash the inner value, compare to the
+        // 4. Data hash verification — rehash the Data that holds the signature, as it is now, compare to the
         // signed digest (which carries its own algorithm).
         var storedHash = signature.Hash;
         if (storedHash.Bytes.Length == 0)
@@ -113,7 +115,7 @@ public class Ed25519 : ISigning
         // is a property-bag carrying every [Store] field; hashing it in Out view (a subset) would diverge from the
         // sign-time Store hash.
         var view = signature.Origin.Value == global::app.type.item.signature.Origin.Stored ? global::app.View.Store : global::app.View.Out;
-        if (!(await signature.Value.Digest(view, kind, action.Context)).DigestEquals(storedHash))
+        if (!(await signature.Over(bearer).Value.Digest(view, kind, action.Context)).DigestEquals(storedHash))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
         // 5. Signature verification — over the signature's canonical signing bytes.

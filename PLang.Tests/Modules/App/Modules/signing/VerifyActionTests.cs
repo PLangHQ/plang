@@ -61,12 +61,12 @@ public class VerifyActionTests
         return await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
     }
 
-    // sign returns a Data whose value IS the signature layer (immutable). To
+    // sign answers the Data it signed, holding its layer (immutable). To
     // "tamper", rebuild the layer with one field changed but the ORIGINAL
     // signature bytes — verify then fails because the sig no longer covers the
     // changed metadata (or the changed field trips its own check first).
     private static global::app.type.item.signature.@this Layer(Data signed)
-        => (global::app.type.item.signature.@this)signed.Peek();
+        => signed.Signature!;
 
     private static Data Tampered(Data signed,
         global::app.type.item.text.@this? algorithm = null,
@@ -83,7 +83,7 @@ public class VerifyActionTests
             contractsNull ? null : l.Contracts,
             window is null ? global::app.type.item.signature.Origin.Signed : global::app.type.item.signature.Origin.Live,
             window is { } w ? signed.Context.Duration(w) : null);
-        return signed.Context.Ok(rebuilt);
+        return signed.Copy(rebuilt);
     }
 
     // The signature as a live read off the wire has it: born with a window (the wire reader gives the signing
@@ -133,8 +133,7 @@ public class VerifyActionTests
 
         await Ctx.Variable.Set("data", "changed");
 
-        var layer = (global::app.type.item.signature.@this)signed.Peek();
-        await Assert.That((await layer.Value.Value())?.ToString()).IsEqualTo("hello");
+        await Assert.That((await signed.Value())?.ToString()).IsEqualTo("hello");
         await Ctx.Variable.Set("signed", signed);
         await (await Program("signing", "verify", ("Data", "%signed%"))).IsSuccess();
     }
@@ -154,6 +153,88 @@ public class VerifyActionTests
         await ctx.Variable.Set("signed", await global::PLang.Tests.Shared.Make.Action(ctx, "signing", "sign", ("Data", "%data%")).Start(ctx));
         await (await global::PLang.Tests.Shared.Make.Action(ctx, "signing", "verify", ("Data", "%signed%")).Start(ctx)).IsSuccess();
     }
+
+    #region A signed value is the Data it signed
+
+    // Reads %path% as a program does.
+    private async Task<Data> Read(string path)
+        => await new global::app.type.item.variable.@this(path, _app.type.list).Start(Ctx);
+
+    private async Task<Data> SignedOrder()
+    {
+        await Ctx.Variable.Set("order", new Dictionary<string, object?> { ["total"] = 5L, ["message"] = "signed" });
+        var signed = await Program("signing", "sign", ("Data", "%order%"));
+        await signed.IsSuccess();
+        await Ctx.Variable.Set("signed", signed);
+        return signed;
+    }
+
+    // In memory as off the wire: %signed.total% is the signed order's total, and %signed!signature% its layer.
+    [Test]
+    public async Task ASignedValue_ReadsAsTheDataItSigned()
+    {
+        await SignedOrder();
+
+        await Assert.That((await (await Read("signed.total")).Value())?.ToString()).IsEqualTo("5");
+        await Assert.That((await Read("signed!signature")).Peek()).IsTypeOf<global::app.type.item.signature.@this>();
+    }
+
+    // A member written after signing is a different Data: verify names it (the digest no longer matches), the write
+    // doesn't drop the signature.
+    [Test]
+    public async Task AMemberWrittenAfterSigning_DataHashMismatch()
+    {
+        await SignedOrder();
+        await new global::app.type.item.variable.@this("signed.message", _app.type.list).Set("changed", Ctx);
+
+        var result = await Program("signing", "verify", ("Data", "%signed%"));
+        await Assert.That(result.Error?.Key).IsEqualTo("DataHashMismatch");
+    }
+
+    // Intended: the digest covers the Data's properties, so a property added after signing fails verify too.
+    [Test]
+    public async Task APropertyAddedAfterSigning_DataHashMismatch()
+    {
+        await SignedOrder();
+        await new global::app.type.item.variable.@this("signed!note", _app.type.list).Set("added", Ctx);
+
+        var result = await Program("signing", "verify", ("Data", "%signed%"));
+        await Assert.That(result.Error?.Key).IsEqualTo("DataHashMismatch");
+    }
+
+    // A changed bearer crosses with its old layer — never re-signed on the way out — and the receiver refuses it.
+    [Test]
+    public async Task AChangedSignedValue_IsRefusedWhereItArrives()
+    {
+        await SignedOrder();
+        await new global::app.type.item.variable.@this("signed.message", _app.type.list).Set("changed", Ctx);
+        var plang = _app.type.list.Mime("application/plang");
+        using var wire = new System.IO.MemoryStream();
+        await (await plang.Encode(wire, await Read("signed"), Ctx, global::app.View.Out)).IsSuccess();
+
+        var arrived = await plang.Decode(wire.ToArray(), Ctx, global::app.View.Out);
+
+        await Assert.That(arrived.Error?.Key).IsEqualTo("DataHashMismatch");
+    }
+
+    // A signature binds the content, not the name it is bound under: one kept in plang's own store, read back and bound
+    // as another variable, still verifies.
+    [Test]
+    public async Task AStoredSignedValue_BoundUnderAnotherName_Verifies()
+    {
+        var signed = await Program("signing", "sign", ("Data", new Dictionary<string, object?> { ["total"] = 5L }), ("StoreView", true));
+        await signed.IsSuccess();
+        var plang = _app.type.list.Mime("application/plang");
+        using var store = new System.IO.MemoryStream();
+        await (await plang.Encode(store, signed, Ctx, global::app.View.Store)).IsSuccess();
+        var read = await plang.Decode(store.ToArray(), Ctx, global::app.View.Store);
+        await read.IsSuccess();
+        await Ctx.Variable.Set("row", read);
+
+        await (await Program("signing", "verify", ("Data", "%row%"))).IsSuccess();
+    }
+
+    #endregion
 
     #region Error Keys
 
@@ -261,8 +342,10 @@ public class VerifyActionTests
         var signed = await SignHelper("test");
         var past = Live(signed, window: TimeSpan.FromSeconds(1),
             created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1), _app.type.list[typeof(global::app.type.item.datetime.@this)]));
-        await Assert.That((await (await past.Get("expired")).Value())?.ToString()).IsEqualTo("true");
-        await Assert.That((await (await Live(signed).Get("expired")).Value())?.ToString()).IsEqualTo("false");
+        await Ctx.Variable.Set("past", past);
+        await Ctx.Variable.Set("live", Live(signed));
+        await Assert.That((await (await Read("past!signature.expired")).Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await (await Read("live!signature.expired")).Value())?.ToString()).IsEqualTo("false");
     }
 
     [Test]
@@ -287,9 +370,7 @@ public class VerifyActionTests
         var l = Layer(signed);
         var changed = new Data("", l.Value.Peek(), context: Ctx);
         changed.Properties.Set("note", "changed");
-        var tampered = signed.Context.Ok(new global::app.type.item.signature.@this(
-            l.Type, changed, l.Algorithm, l.Nonce, l.Created, l.Identity, l.Hash, l.Signature, l.Expires, l.Contracts,
-            global::app.type.item.signature.Origin.Signed, null));
+        var tampered = changed.Copy(l);
 
         var result = await VerifyHelper(tampered);
         await result.IsFailure();

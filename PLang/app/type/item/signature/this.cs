@@ -144,6 +144,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this Signed(binary signature)
         => new(Type, Value, Algorithm, Nonce, Created, Identity, Hash, signature, _expires, Contracts, Origin.Value, _window);
 
+    /// <summary>This layer over <paramref name="bearer"/> — the Data that holds it, as it is now. What verify re-hashes and
+    /// what a write sends, so a bearer changed after signing is one the signature doesn't cover.</summary>
+    internal @this Over(global::app.data.@this bearer)
+        => new(Type, bearer, Algorithm, Nonce, Created, Identity, Hash, Signature, _expires, Contracts, Origin.Value, _window);
+
     /// <summary>Structural — the inner value is a nested record, not a leaf.</summary>
     public override bool IsLeaf => false;
 

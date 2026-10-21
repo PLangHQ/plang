@@ -35,13 +35,14 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
             hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(),
                 (global::app.module.crypto.type.hash.kind.@this)action.Context.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
             signature: new global::app.type.item.binary.@this(System.Array.Empty<byte>(), action.Context.App.type.list[typeof(global::app.type.item.binary.@this)]));
-        return action.Context.Ok((object?)unsigned);
+        // the Data it settled, holding its layer — as the real signer answers
+        return data.Copy(unsigned);
     }
 
     // The crypto is faked, but the Data is read as the real verifier reads it: one that holds no signature is refused.
     public async Task<global::app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(global::app.module.signing.verify action)
     {
-        if ((action.Data == null ? null : (await action.Data.Follow(action.Context)).Peek()) is not global::app.type.item.signature.@this)
+        if ((action.Data == null ? null : await action.Data.Follow(action.Context))?.Signature == null)
             return action.Context.Error<global::app.type.item.@bool.@this>(new global::app.error.@this("Data has no signature", "NoSignature", 400));
         return action.Context.Ok<global::app.type.item.@bool.@this>(new global::app.type.item.@bool.@this(true,
             action.Context.App.type.list[typeof(global::app.type.item.@bool.@this)]));

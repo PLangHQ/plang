@@ -116,7 +116,7 @@ public sealed class signature : ISchemaReader
         // fresh error when the verify fails, so this Data never escapes unverified.
         if (ctx.DeferVerify) return peeled;
 
-        var verifyAction = new global::app.module.signing.verify(context) { Data = context.Ok(layer) };
+        var verifyAction = new global::app.module.signing.verify(context) { Data = peeled };
         var verifyResult = new global::app.goal.step.action.@this(verifyAction, context)
             .Start(context)
             .GetAwaiter().GetResult();

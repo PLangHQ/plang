@@ -33,8 +33,9 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
         try
         {
             // Sign-if-missing at the I/O boundary: a Data crossing in a real actor scope rides in ONE signature
-            // layer; skipped with no actor (an internal write) or when it already is one.
-            if (context.Actor != null && data.Peek() is not global::app.type.item.signature.@this)
+            // layer; skipped with no actor (an internal write) or when it holds one already — a Data changed after
+            // signing goes out with the layer it holds and is refused where it arrives, never re-signed here.
+            if (context.Actor != null && data.Signature == null)
             {
                 var signed = await new global::app.goal.step.action.@this(
                     new global::app.module.signing.sign(context) { Data = data,
@@ -42,14 +43,15 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
                         // the same view) gets matching bytes.
                         StoreView = new global::app.data.@this<global::app.type.item.@bool.@this>("", view == global::app.View.Store, context: context) },
                     context).Start(context);
-                // A Data that should cross signed and couldn't be is the write's failure — never sent unsigned.
-                if (!signed.Success) return signed;
+                // A Data that should cross signed and couldn't be is the write's failure — never sent unsigned. A failed
+                // result signs as itself, so what tells is the signature it holds.
+                if (signed.Signature == null) return signed;
                 data = signed;
             }
             await using var utf8 = new Utf8JsonWriter(stream);
             var writer = new Writer(utf8, view, context);
-            if (data.Peek() is global::app.type.item.signature.@this sig)
-                await sig.Output(writer);
+            if (data.Signature is { } layer)
+                await layer.Over(data).Output(writer);
             else
                 await data.Output(writer, layer: true);
             await utf8.FlushAsync(ct);
@@ -81,10 +83,10 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
             // Deferred verify: the sync reader answered the Data holding the signature it arrived in (it can't
             // await inside a ref-struct reader); verify it now, awaited. A failed verify answers a fresh error,
             // so a Data this answers holds only a signer it verified.
-            if (read.Signature is { } layer)
+            if (read.Signature != null)
             {
                 var verified = await new global::app.goal.step.action.@this(
-                    new global::app.module.signing.verify(context) { Data = context.Ok(layer) }, context).Start(context);
+                    new global::app.module.signing.verify(context) { Data = read }, context).Start(context);
                 if (!verified.Success)
                     return context.Error(verified.Error ?? new global::app.error.ServiceError(
                         "Signature verification failed", "SignatureInvalid", 400));
