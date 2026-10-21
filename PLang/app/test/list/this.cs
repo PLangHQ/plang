@@ -96,12 +96,6 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         actor.context.@this context)
         => pattern.Use(match => subfolder.Use(async under =>
         {
-            // a root that is a test file is that one test
-            if (root is global::app.type.item.path.file.@this one && await one.Stat(context) is { Success: true } stat
-                && (await stat.Value())?.IsFile == true)
-                return (data.@this)context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
-                    new global::app.type.item.list.@this<global::app.test.@this>([new data.@this("", await Of(one, context), context: context)],
-                        context.App.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]));
             var listed = await root.List(match.ToString(), under.Value == global::app.type.item.path.subfolder.include, context);
             if (!listed.Success) return listed;
             var found = new List<data.@this>();
@@ -143,23 +137,12 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         if (!string.Equals(source.Hash, built.Hash, StringComparison.OrdinalIgnoreCase)) return Stale(source, "rebuild needed");
         // the same words, but the saved code must still hold against today's catalogue (the build's own judgement), its
         // sub-goals' too
-        if (await Invalid(built) is { } invalid) return Stale(source, "rebuild needed: " + invalid.Message);
+        if (await built.Invalid(context) is { } invalid) return Stale(source, "rebuild needed: " + invalid.Message);
 
         return await global::app.test.@this.From(built, context);
 
         global::app.test.@this Stale(global::app.goal.@this goal, string reason)
-            => new(context.App.type.list) { Goal = goal, Status = Status.Stale, StatusReason = reason };
-
-        // the first step whose saved code no longer holds, in the goal or a sub-goal; null when all hold
-        async Task<global::app.error.@this?> Invalid(global::app.goal.@this goal)
-        {
-            foreach (var step in goal.Step.Items())
-                if (await step.Validate(context) is { } invalid) return invalid;
-            foreach (var sub in goal.Child.Items())
-                if (await Invalid(sub) is { } invalid) return invalid;
-            return null;
-        }
-    }
+            => new(context.App.type.list) { Goal = goal, Status = Status.Stale, StatusReason = reason };    }
 
     // One test: this run's coverage takes in the goals it reaches (a site that never runs still shows); a test
     // that isn't Ready is recorded, not run; a Ready one runs itself in an App of its own, rooted at this one's folder
