@@ -22,6 +22,8 @@ Source: `.bot/item-doors/codeanalyzer/v3/report.md` (46f7965b5). Section numbers
 
 ## B. Locked: a follow-up branch after item-doors (Ingi: "yes", decision 280). Not merge blockers.
 
+0. **A5 moved here (decision 281):** the open-generic interface probe copied at ~11 sites (Registry, type, type.list, list, reflection, node, property, actor/setting). One owner needs a locked `type.list` member or a static extension on `System.Type`, so it waits for the follow-up branch.
+
 1. **§2 the view compared by constant** (`view == View.Store` in the plang format and the signature reader; "from our store" held as view, Origin and `Window == null`): the view answers `Window`, `Origin`, `RequiresSignature` (internal members on View, the serializer's).
 2. **§3/§4 `type.Make` answering value-or-error**: ~29 throwaway `new data("", …)` carriers read only for `.Error`.
 3. **§5 the type answering its settings address and paths** (`Activator.CreateInstance(...).Path` per class at `actor/setting/this.cs:375,388`).
