@@ -26,14 +26,26 @@ public class source : global::app.type.item.source
     /// <summary>Whether it holds anything is what it stands for's answer — opening it is a use (<c>{}</c>, <c>[]</c>,
     /// <c>""</c>, <c>0</c>, <c>false</c> and <c>null</c> are empty). Characters that are no json answer why.</summary>
     public override async System.Threading.Tasks.Task<bool> AsBooleanAsync(global::app.actor.context.@this context)
+        => Opened(context) is { } opened ? await opened.AsBooleanAsync(context) : IsTruthy();
+
+    /// <summary>Unread, it drives every comparison it is in: it opens itself first and hands the comparison to what it
+    /// stands for, which then ranks as it does.</summary>
+    public override int Rank => int.MaxValue;
+
+    /// <summary>Compared, it is what it stands for: opened, what it parses to is compared — two equal json objects are
+    /// equal, and json and a dict of the same content too. Characters that are no json answer why.</summary>
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other,
+        global::app.actor.context.@this context)
+        => Opened(context) is { } opened ? await opened.Compare(other, context) : await base.Order(other, context);
+
+    // What the characters stand for, opened; characters that are no json are the asker's error, saying why.
+    private global::app.type.item.@this? Opened(global::app.actor.context.@this context)
     {
-        global::app.type.item.@this? opened;
-        try { opened = Parse(context); }
+        try { return Parse(context); }
         catch (System.Text.Json.JsonException shape)
         {
             throw new global::app.error.AppException(Unread(shape, new global::app.data.@this("", this, context: context)));
         }
-        return opened is null ? IsTruthy() : await opened.AsBooleanAsync(context);
     }
 
     protected internal override System.Threading.Tasks.ValueTask Write(Writer writer)
