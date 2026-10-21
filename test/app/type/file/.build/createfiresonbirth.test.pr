@@ -6,7 +6,8 @@
       "index": 0,
       "text": "save \"spec_create.txt\" with content \"x\"",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -35,7 +36,8 @@
       "index": 1,
       "text": "set %created% = 0",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -83,7 +85,8 @@
       "index": 2,
       "text": "after %!app.type.file.on.create% call CountCreated",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -144,15 +147,6 @@
                     },
                     "value": "CountCreated"
                   }
-                ],
-                "default": [
-                  {
-                    "name": "parallel",
-                    "type": {
-                      "name": "bool"
-                    },
-                    "value": false
-                  }
                 ]
               }
             }
@@ -174,7 +168,8 @@
       "index": 3,
       "text": "read file \"spec_create.txt\", write to %file%",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -255,7 +250,8 @@
       "index": 4,
       "text": "assert %created% equals 1, \"reading a file is the birth of a file value\"",
       "line": {
-        "number": 8
+        "number": 8,
+        "indent": 0
       },
       "code": [
         {
@@ -302,7 +298,8 @@
       "index": 5,
       "text": "delete file \"spec_create.txt\"",
       "line": {
-        "number": 9
+        "number": 9,
+        "indent": 0
       },
       "code": [
         {
@@ -338,7 +335,8 @@
           "index": 0,
           "text": "set %created% = %created% + 1",
           "line": {
-            "number": 12
+            "number": 12,
+            "indent": 0
           },
           "code": [
             {
@@ -449,15 +447,11 @@
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/app/type/file/CreateFiresOnBirth.test.goal",
-      "prPath": "/plan/app-systems/app/type/file/.build/createfiresonbirth.test.pr",
       "hash": "03662325b967596fa340c431eaf3101b0f776b007b149191a8b1746ad25f8a46"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/app-systems/app/type/file/CreateFiresOnBirth.test.goal",
-  "prPath": "/plan/app-systems/app/type/file/.build/createfiresonbirth.test.pr",
+  "file": "CreateFiresOnBirth.test.goal",
   "hash": "492d9976ad1a8c588e59c5bd382489664191978ace11754d84fed93e5072c3b0"
 }

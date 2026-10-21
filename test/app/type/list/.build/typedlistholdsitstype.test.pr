@@ -1,0 +1,171 @@
+{
+  "name": "Start",
+  "comment": "A typed list holds its element type: what goes in stays as it came, and each element is born a path at its own\nfirst read, never left as text.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %files% as list of path = [\"a.txt\", \"b.txt\"]",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%files%",
+              "variable": [
+                {
+                  "text": "%files%",
+                  "code": [
+                    {
+                      "variable": "files"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": ["a.txt","b.txt"]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {"name":"list","kind":"path"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %files!type.name% equals \"list\"",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "list"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%files!type.name%",
+              "variable": [
+                {
+                  "text": "%files!type.name%",
+                  "code": [
+                    {
+                      "variable": "files"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %files[0]!type.name% equals \"path\", \"each element is born as the element type of the list\"",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "path"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%files[0]!type.name%",
+              "variable": [
+                {
+                  "text": "%files[0]!type.name%",
+                  "code": [
+                    {
+                      "variable": "files"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "each element is born as the element type of the list"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "TypedListHoldsItsType.test.goal",
+  "hash": "2d45653c13e53addb4f246a385d55bec141278d4223e200eb9613c7e04c54d09"
+}
