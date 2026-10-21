@@ -409,7 +409,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         => Type.Template == null ? [] : _value.Values
             .SelectMany(slot => slot switch
             {
-                global::app.data.@this held => held.Peek().Variable,
+                global::app.data.@this data => data.Peek().Variable,
                 global::app.type.item.@this item => item.Variable,
                 _ => [],
             })
@@ -448,8 +448,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override async System.Threading.Tasks.Task<Data> Where(global::app.type.item.text.@this field,
         global::app.data.Operator op, Data value, actor.context.@this context)
     {
-        if (await Field(field.ToString(), context) is not { } held) return NoField(field.ToString(), Fields, context);
-        var holds = await op.Evaluate(held, value, context);
+        if (await Field(field.ToString(), context) is not { } entry) return NoField(field.ToString(), Fields, context);
+        var holds = await op.Evaluate(entry, value, context);
         if (!holds.Success) return holds;
         return holds.ToBoolean() ? context.Ok(this) : context.Ok(null, context.App.type.list["dict"]);
     }

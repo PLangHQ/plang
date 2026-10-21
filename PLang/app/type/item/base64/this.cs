@@ -124,10 +124,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         {
             using var ms = new System.IO.MemoryStream();
             var carrier = new global::app.data.@this("", ready, context: data.Context);
-            var written = await data.Context.App.type.list["item"].kind["json"]!.Encode(ms, carrier, data.Context, global::app.View.Out);
-            if (!written.Success)
+            var json = await data.Context.App.type.list["item"].kind["json"]!.Encode(ms, carrier, data.Context, global::app.View.Out);
+            if (!json.Success)
             {
-                data.Fail(written.Error ?? new global::app.error.@this(
+                data.Fail(json.Error ?? new global::app.error.@this(
                     "could not serialize value for base64 encode.", "Base64EncodeFailed", 400));
                 return data.Empty;
             }

@@ -21,14 +21,14 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
             writer.String(sign + span.TotalMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture) + "ms");
         else
         {
-            var written = new System.Text.StringBuilder(sign);
-            if (span.Days > 0) written.Append(span.Days).Append('d');
-            if (span.Hours > 0) written.Append(span.Hours).Append('h');
-            if (span.Minutes > 0) written.Append(span.Minutes).Append('m');
+            var text = new System.Text.StringBuilder(sign);
+            if (span.Days > 0) text.Append(span.Days).Append('d');
+            if (span.Hours > 0) text.Append(span.Hours).Append('h');
+            if (span.Minutes > 0) text.Append(span.Minutes).Append('m');
             var seconds = span.Ticks % System.TimeSpan.TicksPerMinute;
             if (seconds > 0)
-                written.Append(((decimal)seconds / System.TimeSpan.TicksPerSecond).ToString("0.#######", System.Globalization.CultureInfo.InvariantCulture)).Append('s');
-            writer.String(written.ToString());
+                text.Append(((decimal)seconds / System.TimeSpan.TicksPerSecond).ToString("0.#######", System.Globalization.CultureInfo.InvariantCulture)).Append('s');
+            writer.String(text.ToString());
         }
         return default;
     }

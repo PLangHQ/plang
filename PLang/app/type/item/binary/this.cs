@@ -140,7 +140,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (value is not @this bytes)
         {
             var born = await context.App.type.list[typeof(@this)].Create(value, context, data.Name);
-            if (born.Success && !born.Exits && born.Peek() is @this made) bytes = made;
+            if (born.Success && !born.Exits && born.Peek() is @this binary) bytes = binary;
             else return born.Success ? context.Error(new global::app.error.@this(
                 $"%{data.Name}% holds a {data.Type?.Name ?? "value"}, not bytes — nothing writes it as binary content", "NoEncoder", 400))
                 : born;
@@ -189,7 +189,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         // bytes are held as they are when they already are the declared type, else born again holding it
         if (value is @this self) return type is null || self.Is(type) ? self : new @this(self.Value, type);
-        if (type is not null && Create(value, type) is { } built) return built;
+        if (type is not null && Create(value, type) is { } binary) return binary;
         object? clr = (value as global::app.type.item.@this)?.Clr<object>() ?? value;
         data.Fail(clr is string
             ? new global::app.error.@this("Cannot parse string as binary — expected base64.", "BinaryParseFailed", 400)

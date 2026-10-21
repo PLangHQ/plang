@@ -20,8 +20,8 @@ public abstract class @this : global::app.type.item.@this
     {
         const System.Reflection.BindingFlags Public = System.Reflection.BindingFlags.Public
             | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase;
-        if (GetType().GetProperty(key, Public) is { } own)
-            return new(new global::app.data.@this(key, own.GetValue(this), parent: parent));
+        if (GetType().GetProperty(key, Public) is { } property)
+            return new(new global::app.data.@this(key, property.GetValue(this), parent: parent));
         if (GetType().GetMethod(key, Public, binder: null, types: [typeof(global::app.actor.context.@this)], modifiers: null) is { } asks)
             return new(new global::app.data.@this(key, asks.Invoke(this, [parent.Context]), parent: parent));
         return default;

@@ -34,11 +34,11 @@ public sealed class @this : global::app.type.item.@this
     [global::app.LlmBuilder]
     public global::app.type.item.list.@this<modifier.@this> list(global::app.actor.context.@this context)
     {
-        var held = new global::app.type.item.list.@this<modifier.@this>(
+        var keys = new global::app.type.item.list.@this<modifier.@this>(
             context.App.type.list[typeof(global::app.type.item.list.@this<modifier.@this>)]);
         foreach (var modifier in _held)
-            held.Add(new global::app.data.@this(modifier.ToString(), modifier, context: context));
-        return held;
+            keys.Add(new global::app.data.@this(modifier.ToString(), modifier, context: context));
+        return keys;
     }
 
     /// <summary>Read alone, the first key held.</summary>

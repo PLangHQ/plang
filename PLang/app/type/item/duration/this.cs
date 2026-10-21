@@ -88,7 +88,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         // asked for in a standard (`as iso`): that standard makes it, from a span or a text in its own form only
         if (type?.kind is { IsEmpty: false } asked && data.Context.App.type.list["duration"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
             return data.Context.App.type.list[new global::app.type.@this("duration", standard.Name), data.Context].Make(value, data) as @this;
-        if (Create(value, data.Context) is { } built) return built;
+        if (Create(value, data.Context) is { } duration) return duration;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as duration — expected a number and its unit (30s, 200ms, 5m), ISO-8601 (PT30S) or .NET format (00:00:30).", "DurationParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to duration.", "DurationConversionFailed", 400));

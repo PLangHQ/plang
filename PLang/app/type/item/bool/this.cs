@@ -79,7 +79,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         if (value is @this self) return self;
-        if (Create(value, type ?? data.Context.App.type.list[typeof(@this)]) is { } built) return built;
+        if (Create(value, type ?? data.Context.App.type.list[typeof(@this)]) is { } @bool) return @bool;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as bool — expected true or false.", "BoolParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to bool.", "BoolConversionFailed", 400));

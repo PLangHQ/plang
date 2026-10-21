@@ -45,7 +45,7 @@ public sealed class @this : global::app.type.item.@this
 
     /// <summary>The words it reads as now, for <paramref name="context"/>.</summary>
     internal async System.Threading.Tasks.ValueTask<string> Text(global::app.actor.context.@this context)
-        => await Own(context) is { Length: > 0 } own ? own : _otherwise == null ? "" : await _otherwise.Text(context);
+        => await Own(context) is { Length: > 0 } words ? words : _otherwise == null ? "" : await _otherwise.Text(context);
 
     // its own pieces' words
     private async System.Threading.Tasks.ValueTask<string> Own(global::app.actor.context.@this context)
@@ -55,9 +55,9 @@ public sealed class @this : global::app.type.item.@this
         {
             if (piece is not global::app.type.item.@this value) { words.Append(piece); continue; }
             var read = new global::app.data.@this("", value, context: context);
-            var held = await read.Value();
-            if (!read.Success || held == null || held.IsNull) return "";
-            var text = (held is @this inner ? await inner.Text(context) : held.ToString() ?? "").Trim();
+            var item = await read.Value();
+            if (!read.Success || item == null || item.IsNull) return "";
+            var text = (item is @this inner ? await inner.Text(context) : item.ToString() ?? "").Trim();
             if (text.Length == 0) return "";
             words.Append(text);
         }

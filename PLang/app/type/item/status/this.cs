@@ -63,7 +63,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// is the code's standard reason); anything else declines with why.</summary>
     public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
-        if (Create(raw) is { } made) return made;
+        if (Create(raw) is { } status) return status;
         if (raw is global::app.type.item.dict.@this dict)
         {
             global::app.type.item.number.@this? code = null;

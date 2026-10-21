@@ -36,9 +36,9 @@ public sealed class @this : set.@this
 
     public override object Member(string symbol)
     {
-        var made = _clr.GetConstructor(new[] { typeof(string) })
-                   ?? throw new System.InvalidOperationException($"choice<{_clr.Name}>: a named set makes its member by a ctor(string).");
-        try { return made.Invoke(new object?[] { symbol }); }
+        var constructor = _clr.GetConstructor(new[] { typeof(string) })
+                          ?? throw new System.InvalidOperationException($"choice<{_clr.Name}>: a named set makes its member by a ctor(string).");
+        try { return constructor.Invoke(new object?[] { symbol }); }
         catch (TargetInvocationException ex) when (ex.InnerException is System.ArgumentException refused) { throw refused; }
     }
 }

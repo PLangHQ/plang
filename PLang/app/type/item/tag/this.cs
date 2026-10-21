@@ -42,7 +42,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (value is @this self) return self;
         // made by the type that asks; with none (a read that names no app) no tag is made
-        if (type is not null && Create(value, type) is { } built) return built;
+        if (type is not null && Create(value, type) is { } tag) return tag;
         data.Fail(new global::app.error.@this(
             $"Cannot make a tag from {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name ?? "null")} — expected a non-empty label.",
             "TagConversionFailed", 400));

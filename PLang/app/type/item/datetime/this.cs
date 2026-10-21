@@ -46,7 +46,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         if (value is @this self) return self;
-        if (type is not null && Create(value, type) is { } built) return built;
+        if (type is not null && Create(value, type) is { } datetime) return datetime;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as datetime — expected ISO-8601 (e.g. 2024-03-15T10:30:00+00:00).", "DateTimeParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to datetime.", "DateTimeConversionFailed", 400));

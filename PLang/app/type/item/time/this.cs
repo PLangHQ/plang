@@ -45,7 +45,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (value is @this self) return self;
         // made by the type that asks; with none (a read that names no app) no time is made
-        if (type is not null && Create(value, type) is { } built) return built;
+        if (type is not null && Create(value, type) is { } time) return time;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as time — expected ISO HH:mm:ss.", "TimeParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to time.", "TimeConversionFailed", 400));

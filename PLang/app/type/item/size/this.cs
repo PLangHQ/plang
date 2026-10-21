@@ -70,7 +70,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         // asked for in a standard (`as si`): that standard makes it, from a count or a text in its own form only
         if (type?.kind is { IsEmpty: false } asked && data.Context.App.type.list["size"].kind[asked.Name] is global::app.type.kind.@this<@this> standard)
             return data.Context.App.type.list[new global::app.type.@this("size", standard.Name), data.Context].Make(value, data) as @this;
-        if (Read(value, data.Context) is { } built) return built;
+        if (Read(value, data.Context) is { } size) return size;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot read '{s}' as a size — expected a number and its unit: IEC (500 KiB, 95.4 MiB) or SI (512 kB, 100 MB).", "SizeParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to size.", "SizeConversionFailed", 400));

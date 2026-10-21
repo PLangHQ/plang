@@ -107,7 +107,7 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     {
         if (raw is @this<T> self) return self;
         type ??= data.Context.App.type.list[typeof(@this<T>)];
-        try { if (Create(raw, type) is { } made) return made; }
+        try { if (Create(raw, type) is { } choice) return choice; }
         catch (System.FormatException ex)
         {
             data.Fail(new global::app.error.@this(ex.Message, "ChoiceInvalid", 400)
