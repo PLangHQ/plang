@@ -144,6 +144,6 @@ public abstract class @this : global::app.type.item.@this
     {
         if (!IsLoaded) { writer.String(ToString()); return; }
         var format = _format ?? Type.kind;
-        await format.Make(Bytes, format.Content(writer.Context), Path).Output(writer);
+        await format.Make(Bytes, writer.Context.App.type.list.Of(format, writer.Context), Path).Output(writer);
     }
 }

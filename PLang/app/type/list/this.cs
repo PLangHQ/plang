@@ -132,9 +132,12 @@ public sealed partial class @this
             : this[new app.type.@this("binary", extension.TrimStart('.')), context];
     }
 
-    // The full type a held kind makes: its owner, with the kind unless it is the owner's own format.
-    private app.type.@this Of(global::app.type.kind.@this kind, actor.context.@this context)
-        => this[new app.type.@this(kind.Owner!.Name, kind.IsEmpty ? null : kind.Name), context];
+    /// <summary>The type content of <paramref name="kind"/> is born as: its owner, with the kind unless it is the
+    /// owner's own format (bytes with no owner are binary's); a template when <paramref name="template"/> marks it
+    /// one.</summary>
+    internal app.type.@this Of(global::app.type.kind.@this kind, actor.context.@this context,
+        global::app.type.item.template.kind.@this? template = null)
+        => this[new app.type.@this(kind.Owner?.Name ?? "binary", kind.IsEmpty ? null : kind.Name, template: template), context];
 
     /// <summary>
     /// The full type for a value's type — its identity (name, kind, strict, template) with the

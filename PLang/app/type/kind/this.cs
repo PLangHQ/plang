@@ -271,14 +271,8 @@ public class @this : global::app.type.@this
         // a type that reads this format itself makes the value now (a .pr into a goal)
         if (_decode != null && template == null) return await _decode(raw, context, name, origin);
         // else content decoded into a new value is a birth: it comes through its type's on.create, unread until used
-        return await Content(context, template).Create(raw, context, name, origin);
+        return await context.App.type.list.Of(this, context, template).Create(raw, context, name, origin);
     }
-
-    /// <summary>The type content of this kind is born as, among the asker's types — its family's, of this kind (bytes
-    /// with no family are binary's); a template when <paramref name="template"/> marks it one.</summary>
-    internal global::app.type.@this Content(global::app.actor.context.@this context,
-        global::app.type.item.template.kind.@this? template = null)
-        => context.App.type.list[new global::app.type.@this(Owner?.Name ?? "binary", IsEmpty ? null : Name, template: template), context];
 
     /// <summary>
     /// A Data written onto a stream in this format — the one encode door, <see cref="Decode"/>'s pair. The
