@@ -57,7 +57,7 @@ ConfirmNumbers
 - render template "/system/builder/llm/templates/confirm.state.template", write to %confirmState%
 - render template "/system/builder/llm/templates/confirm.template", write to %confirmQuestions%
 - llm.decider State=%confirmState%, Question=%confirmQuestions%, write to %confirmed%
-- build.match Goal=%goal%, Answer=%answer%, Confirmed=%confirmed%
+- build.match(Goal=%goal%, Answer=%answer%, Confirmed=%confirmed%); on.error(Recovery=[goal.call(Name="FixSteps")])
 
 
 / Sub-goal recursion — the same three stages, attached to the parent trace.
