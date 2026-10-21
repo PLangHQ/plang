@@ -17,7 +17,7 @@ public partial class @this
                 && (await context.App.goal.list.Find(key, Step?.Goal)).Peek() is global::app.goal.@this goal)
                 callee.Add(goal);
 
-        foreach (var action in Callback)
+        foreach (var action in Action)
             callee.AddRange(await action.Callee(context));
         for (int i = 0; i < Child.Count; i++)
             foreach (var branch in Child[i].Code.Items())
@@ -33,7 +33,7 @@ public partial class @this
         foreach (var property in Property)
             if (Declares(property) && property.Value is { HasVariable: true }) return true;
 
-        foreach (var action in Callback)
+        foreach (var action in Action)
             if (await action.IsDynamic(context)) return true;
         for (int i = 0; i < Child.Count; i++)
             foreach (var branch in Child[i].Code.Items())

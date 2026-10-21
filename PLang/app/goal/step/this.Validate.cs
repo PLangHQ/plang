@@ -146,7 +146,7 @@ public sealed partial class @this
                             && !said.Contains(number) && (answered == null || answered.Contains(number)))
                             numbers.Add(new unwritten.@this(Index, $"{a.Module.Name}.{a.Name}", p.Name, n, Text));
                 }
-                await Walk(a.Callback);
+                await Walk(a.Action);
                 foreach (var child in a.Child.Items()) await Walk(child.Code.Items());
             }
         }
@@ -162,7 +162,7 @@ public sealed partial class @this
         var values = new List<global::app.type.item.@this>();
         foreach (var a in actions)
         {
-            values.AddRange(Values(a.Callback, context));
+            values.AddRange(Values(a.Action, context));
             foreach (var p in a.Property.Concat(a.Default).Concat(a.Unfrozen(context)))
                 if (p.Value is not (null or global::app.goal.step.action.@this or global::app.goal.step.action.list.@this))
                     values.Add(p.Value);
@@ -180,7 +180,7 @@ public sealed partial class @this
         var texts = new List<string>();
         foreach (var a in actions)
         {
-            texts.AddRange(await Texts(a.Callback, context));
+            texts.AddRange(await Texts(a.Action, context));
             foreach (var p in a.Property)
             {
                 if (p.Type?.Name != "text" || p.Value is null) continue;

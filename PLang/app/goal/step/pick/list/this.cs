@@ -144,7 +144,7 @@ public sealed class @this
         foreach (var a in actions)
         {
             yield return a;
-            foreach (var h in Every(a.Callback)) yield return h;
+            foreach (var h in Every(a.Action)) yield return h;
             foreach (var child in a.Child.Items())
                 foreach (var c in Every(child.Code.Items())) yield return c;
         }
@@ -261,7 +261,7 @@ public sealed class @this
     {
         foreach (var a in actions)
         {
-            foreach (var action in a.Callback)
+            foreach (var action in a.Action)
             {
                 yield return $"{action.Module.Name}.{action.Name}";
                 foreach (var name in Held([action])) yield return name;
