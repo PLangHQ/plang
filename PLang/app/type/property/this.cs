@@ -185,7 +185,8 @@ public sealed class @this : global::app.type.item.note.IAbout
     /// made as this member's type. A member with no default has none to be.</summary>
     public async System.Threading.Tasks.ValueTask<bool> IsDefault(global::app.type.item.@this? value, global::app.actor.context.@this context)
     {
-        if (Default == null || value == null) return false;
+        // a value holding a variable is what the variable holds at run, never the default, whatever it holds now
+        if (Default == null || value == null || value.HasVariable) return false;
         // the value as it is read — a slot still its written form (a wire) opens through its door first
         var data = new global::app.data.@this(Name, value, context: context);
         var opened = await data.Value();
