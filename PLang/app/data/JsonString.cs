@@ -6,8 +6,7 @@ namespace app.data;
 
 /// <summary>
 /// Extension methods for JSON conversion. OBP: the string owns its conversion.
-/// Relocated from <c>App.Utils.Json</c> in stage 27 — pure parsing utility, sits next to
-/// the JSON-related Data machinery.
+/// A pure parsing utility, beside the JSON-related Data machinery.
 /// </summary>
 public static class JsonString
 {

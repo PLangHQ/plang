@@ -11,10 +11,9 @@ namespace app.data;
 /// </summary>
 public partial class @this
 {
-    // JsonIgnore: Snapshot is in-process state. Stateless-resume wire shape
-    // is built by a per-channel serializer (architect's "Per-channel
-    // serializer for stateless suspend" follow-up). Including it as a JSON
-    // member here induces recursion via Variables→Data→Snapshot→Variables.
+    // JsonIgnore: Snapshot is in-process state; no wire shape carries it.
+    // Including it as a JSON member here induces recursion via
+    // Variables→Data→Snapshot→Variables.
     [JsonIgnore]
     public snapshot.@this? Snapshot { get; set; }
 }

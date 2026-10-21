@@ -15,8 +15,8 @@ namespace app.Attributes;
 ///     Lives in the type itself (ctor, lookup, registry — type's choice). Not the
 ///     language layer's concern.
 ///
-/// Replaces the old <c>static ValidValues</c> + <c>IObject</c> pattern that conflated
-/// vocabulary with type construction and broke for stateful runtime types like Actor.
+/// Vocabulary is kept apart from construction, so a stateful runtime type (an actor) can offer
+/// choices without being made from them.
 /// </summary>
 [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false)]
 public sealed class ChoicesAttribute : System.Attribute

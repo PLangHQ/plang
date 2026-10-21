@@ -70,17 +70,10 @@ public sealed class OpenAi : ILlm
         var model = ((action.Model == null ? null : await action.Model.Value())?.ToString()) is { Length: >0 } __m ? __m : llm.Model.ToString();
 
         // --- Validate ---
-        // HACK (minimal): Messages.Value can be NULL (not just empty) — the [IsNotNull]
-        // guard checks the parameter's presence, not the lazily-resolved value. Seen in the
-        // builder self-build: when on.error RETRIES QueryAndValidatePlan
-        // (BuildGoal/Plan.goal:26), the parent-scope %messages% variable resolves to null on
-        // the retry (it's fine on the first call), so `action.Messages.Value!.Count` NRE'd
-        // and crashed the whole build with a bare NullReferenceException. Treat null like
-        // empty → clean ValidationError instead of a crash.
-        // TODO(coder): real fix is in the retry/scope handling — a sub-goal's access to a
-        // parent-scope variable should survive an on.error retry (or pass %messages% as
-        // a goal.call parameter to QueryAndValidatePlan so it re-binds each attempt). See
-        // .bot/type-kind-strict/builder/v2/baseline-findings.md.
+        // Messages can resolve to null (not just empty): the [IsNotNull] guard checks the
+        // parameter's presence, not the lazily-resolved value, and a parent-scope %messages%
+        // reads null when on.error retries the sub-goal that asks (BuildGoal/Plan.goal:26).
+        // Null is treated as empty: a ValidationError, never a NullReferenceException.
         // The .NET edge: the message list lowers ITSELF to the API's CLR shape.
         var rawMessages = (await action.Message.Value()).Clr<List<LlmMessage>>();
         if (rawMessages is not { Count: > 0 })
@@ -871,9 +864,8 @@ public sealed class OpenAi : ILlm
         var props = new Dictionary<string, object?>();
 
         // The cache entry round-trips as a native dict (in-memory) or a clr(json) (through the
-        // json reader) — both enumerate uniformly. The old per-shape reconstruction
-        // (dict / Clr{JsonElement} / Clr{Dictionary}) existed ONLY because a JsonElement
-        // couldn't survive the cache; a clr(json) round-trips as raw json now.
+        // json reader) — both enumerate uniformly: a clr(json) round-trips as raw json, so no
+        // per-shape reconstruction is needed.
         System.Collections.Generic.IEnumerable<data.@this>? entries = cachedValue switch
         {
             global::app.type.item.dict.@this d => d.Entries(cached.Context),

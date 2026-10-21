@@ -14,7 +14,7 @@ public enum Kind
     /// <summary>Which value an action's option takes, as the step's words say — a choice over
     /// <see cref="@this.Values"/>, about <see cref="@this.Property"/> of <see cref="@this.Action"/>.</summary>
     Option,
-    /// <summary>Which kind of the type a step coerced to, once the type is picked (ruling 10): a choice over the
+    /// <summary>Which kind of the type a step coerced to, once the type is picked: a choice over the
     /// type's own <c>kind.list</c> (a number's int/decimal, an item's json), or, for a generic, the element type —
     /// a follow-up to a <see cref="Option"/> whose value is a kind-capable type. A choice over
     /// <see cref="@this.Values"/>, refining <see cref="@this.Property"/> of <see cref="@this.Action"/>.</summary>

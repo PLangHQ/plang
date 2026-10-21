@@ -11,7 +11,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
 {
     public @this(global::app.type.@this owner) : base("list", owner) { }
 
-    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out (814).
+    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out.
     protected override bool? OwnInternal => true;
 
     // Claims IEnumerable (not just IList) so ANY sequence — HashSet, a LINQ enumerable — resolves

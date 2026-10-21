@@ -316,7 +316,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                         + "and the list names none for it.", "TypeLoadFormat", 400);
                 var encode = Encoder(t);
                 var decode = Decoder(t);
-                // each format is a kind<declaring-type> — one concrete class over the declaring type (774)
+                // each format is a kind<declaring-type> — one concrete class over the declaring type
                 var kindType = typeof(global::app.type.kind.format.@this<>).MakeGenericType(t);
                 foreach (var format in t.GetCustomAttributes<global::app.Attributes.FormatAttribute>(inherit: false))
                     Hold((global::app.type.kind.@this)System.Activator.CreateInstance(kindType, format, declaring, encode, decode)!);
@@ -376,7 +376,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private static string? NameOf(System.Type type)
     {
         if (!typeof(app.type.item.@this).IsAssignableFrom(type) || FamilyName(type) != null) return null;
-        // A kind is a type under its parent, found only through it (decision 774) — never a top-level type,
+        // A kind is a type under its parent, found only through it — never a top-level type,
         // though `kind : type : item` makes it an @this. Kinds are enlisted onto their parent by Enlist.
         if (typeof(global::app.type.kind.@this).IsAssignableFrom(type)) return null;
         if (type.GetCustomAttribute<PlangTypeAttribute>(inherit: false) == null

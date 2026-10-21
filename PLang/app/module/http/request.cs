@@ -71,8 +71,7 @@ public partial class request : IContext, IAddressed
     public partial IHttp Http { get; }
 
     // Returns plain Data — the response body is the lazy value (type/kind from
-    // Content-Type); status/headers/duration ride as Properties (read with `!`).
-    // The parallel http.response record dissolved (Decision 6).
+    // Content-Type); status/headers/duration ride as Properties (read with `!`) — no response record beside it.
     public async Task<data.@this> Start() => await Http.SendAsync(this);
 
     /// <summary>

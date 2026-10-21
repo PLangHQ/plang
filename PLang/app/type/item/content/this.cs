@@ -42,7 +42,7 @@ public abstract class @this : global::app.type.item.@this
     /// and renders itself at use. <paramref name="clr"/> is the concrete reference type (file, url). Born holding the
     /// app's entry for <paramref name="clr"/> paired with the app's kind its path's format is (a <c>.json</c> file
     /// holds item's json kind) — both the app's objects; only the pairing is per value, as an element kind's is.
-    /// Kept per pairing would need the list to key its cache by (entry, kind object): a list surface change, Ingi's.</summary>
+    /// The list keeps no pairing: it keys its types by entry, not by (entry, kind object).</summary>
     protected @this(System.Type clr, global::app.type.item.path.@this path, global::app.actor.context.@this context, global::app.type.item.template.kind.@this? template)
         : base(context.App.type.list[clr] is var entry
                && (path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null) is var kind

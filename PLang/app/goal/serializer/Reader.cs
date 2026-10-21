@@ -67,10 +67,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // is still written, read by no one.
                 case "visibility": reader.Skip(); break;
                 case "file":
-                    // A .pr stores only the goal file's NAME (start.md ruling 11). A "file" that is MORE than a
+                    // A .pr stores only the goal file's NAME. A "file" that is MORE than a
                     // bare name — a path separator, a `.`/`..` segment, a rooted or drive form — could aim the
                     // goal's folder elsewhere (even under the os root, which AskedByOs then trusts): it is
-                    // refused BEFORE it is combined, loud, so a rebuild writes it right (decision 745). Not
+                    // refused BEFORE it is combined, loud, so a rebuild writes it right. Not
                     // silently reduced to a last segment — a .pr that says more than a name is wrong.
                     var named0 = reader.String();
                     if (named0.Length == 0 || named0 is "." or ".." || named0.IndexOfAny(['/', '\\', ':']) >= 0)

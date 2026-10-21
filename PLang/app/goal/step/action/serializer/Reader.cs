@@ -77,7 +77,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                         withDefault.Default.Add(Property(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
-                // The old key: skipping it would load the action with no properties, silently.
+                // An outdated .pr's key for `property`: refused, since skipping it would load the action with no
+                // properties, silently.
                 case "parameter":
                 case "parameters":
                     throw new global::app.error.PrFormatOutdatedException($"action key '{name}' is now 'property'", ctx.Origin);

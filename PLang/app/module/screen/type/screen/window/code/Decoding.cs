@@ -6,8 +6,8 @@ namespace app.module.screen.type.screen.window.code;
 /// the AV1 Video Extension is installed. Which ones are here is asked of Windows once.</summary>
 internal sealed class Decoding : IDecoding
 {
-    // AV1 only: Windows' own H.264 decoder took ~2.5 cores for one 1080p50 stream on Ingi's machine (ruv.is) — more than
-    // the page's own player in PlangOS and the pictures sent as before. H.264 stays there; AV1 (YouTube) comes here.
+    // AV1 only: Windows' own H.264 decoder took ~2.5 cores for one 1080p50 stream (ruv.is) — more than
+    // the page's own player in PlangOS and sending the pictures. H.264 stays there; AV1 (YouTube) comes here.
     private readonly Lazy<string[]> codecs = new(() => OperatingSystem.IsWindows() ? [.. new[] { "av01" }.Where(Mft.Here)] : []);
 
     public string[] Codecs => codecs.Value;

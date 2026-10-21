@@ -199,7 +199,7 @@ public sealed partial class @this
     {
         if (!quoted.StartsWith('"')) return null;
         var read = await context.App.type.list.Kind("item", "json").Decode(System.Text.Encoding.UTF8.GetBytes(quoted), context);
-        // Reading the literal as the text it means is a USE (805): the typed ask opens the json source and
+        // Reading the literal as the text it means is a USE: the typed ask opens the json source and
         // parses it to its text ("BuilderChannel"). The untyped .Value() rests (the courier door), so it would
         // hand back the source, not the text. A literal that isn't one answers a failure there.
         return await read.Value<global::app.type.item.text.@this>() is { } text && read.Success ? text.ToString() : null;

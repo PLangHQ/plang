@@ -7,7 +7,7 @@ public sealed class @this : global::app.type.item.setting.@this
     /// <summary>Born holding its type — the app's list hands it its own class.</summary>
     public @this(global::app.type.@this type) : base(type) { }
 
-    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
     /// <summary>The standard a counted size is written in — <c>iec</c> (1024: 95.4 MiB) or <c>si</c> (1000: 100 MB).</summary>

@@ -37,7 +37,7 @@ public sealed partial class @this
 
     // A result of this number's kind (or the other operand's) is a derived birth: it holds that one's type, the
     // app's. A result whose kind climbed (int → long) holds the app's {number, <kind>}, found through this number's
-    // family — a type object per result (kept per pairing would need a list door keyed by (entry, kind), Ingi's). An
+    // family — a type object per result (the list keys its types by entry, not by (entry, kind)). An
     // operator-born operand (a type built from the class, no app) leaves the result the operator's birth.
     private @this Derived(@this result, @this? other = null)
         => ReferenceEquals(result, this) || ReferenceEquals(result, other) ? result

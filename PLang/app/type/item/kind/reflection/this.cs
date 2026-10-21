@@ -15,7 +15,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     /// the app (a value born without one). Goes with the implicit-conversion branch, when no value is.</summary>
     internal static readonly @this Fallback = new(new global::app.type.@this("item", typeof(global::app.type.item.@this)));
 
-    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out (814).
+    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out.
     protected override bool? OwnInternal => true;
 
     // Descend one property. A name is read ignoring its case; a derived type's property shadows a base one (bottom-up,

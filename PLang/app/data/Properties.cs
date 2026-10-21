@@ -136,9 +136,8 @@ public sealed class Properties : IEnumerable<KeyValuePair<string, object?>>
     // domain-object containers — `List<LlmMessage>` and similar — that today
     // pass through Properties.* untouched. The right tightening lives at
     // those upstream call sites (convert to dict/list-of-primitives before
-    // storing) and is tracked separately; for now this gate keeps Data
-    // instances out of Properties (the only invariant Stage 4 has to enforce
-    // at this layer) and trusts the producer for everything else.
+    // storing); this gate keeps Data instances out of Properties (the one
+    // invariant this layer enforces) and trusts the producer for everything else.
     private static void EnsureSupportedValue(object? value)
     {
         if (value is null) return;

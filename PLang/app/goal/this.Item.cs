@@ -1,6 +1,6 @@
 namespace app.goal;
 
-// The goal IS a plang value (item) — see step/actions/action/this.Item.cs for the ruling. The engine
+// The goal IS a plang value (item), as an action is (step/action/this.Item.cs). The engine
 // reads the typed internals (Name, Steps, Child, …) directly; the item faces are the boundary only.
 // The goal is written by its tags, in declaration order (each member a plang value that writes itself — choice,
 // the step/goal children); its serializer/Reader.cs reads itself back.

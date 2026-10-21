@@ -12,7 +12,7 @@ public sealed class @this : set.@this
     internal @this(System.Type clr, global::app.type.@this owner, global::app.type.list.@this types)
         : base(Option(clr), Family(clr), owner)
         => _kinds = new(() =>
-            // template's kinds are held by no type — built from their classes until stage 6 gives template its type
+            // template's kinds are held by no type — built from their classes
             (typeof(global::app.type.item.template.kind.@this).IsAssignableFrom(clr)
                 ? clr.Assembly.GetTypes()
                     .Where(t => clr.IsAssignableFrom(t) && !t.IsAbstract && t.GetConstructor(System.Type.EmptyTypes) != null)
@@ -36,7 +36,7 @@ public sealed class @this : set.@this
         => IsItem(clr) ? typeof(global::app.type.kind.@this<>).MakeGenericType(clr) : clr;
 
     // The type a family's kinds are kinds of — the value family itself, or the T its kind is a kind<T> of (kind<size>
-    // itself, or an abstract kind under it); template's kinds have no type to be T, and name their facet until stage 6.
+    // itself, or an abstract kind under it); template's kinds have no type to be T, and name their facet.
     private static string Family(System.Type clr)
         => IsItem(clr) ? global::app.type.item.@this.NameOf(clr)!
             : (clr.IsGenericType ? clr : clr.BaseType) is { IsGenericType: true } parent && parent.GetGenericTypeDefinition() == typeof(global::app.type.kind.@this<>)

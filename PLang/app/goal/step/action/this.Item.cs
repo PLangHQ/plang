@@ -1,17 +1,10 @@
 namespace app.goal.step.action;
 
-// The action IS a plang value (item) — Ingi's 2026-07-17 ruling reversed the hosts-stay-hosts
-// model: goal/step/action/modifier are items, holding their C# internals behind faces. This is
-// what lets an action value enter the apex at rung 1 (`is item`) instead of bouncing
-// item.Create ⇄ type.Create through a synthetic ("list", element) entity (the layer-4 stack
-// overflow). The engine still reads the typed internals directly (Module, Property, …) — the
-// item faces are the boundary layer only.
-//
-// TRANSITION: Output delegates to the reflection (*) kind — the SAME code that wrote the action
-// as a clr-host today, so the .pr wire is byte-identical while the graph flips to items. The
-// explicit item Write + serializer/Reader.cs (the recipe, defining-plang-types.md) replace this
-// delegation in the follow-up; until then the reflection read path still constructs the action
-// from its [Store] props.
+// The action IS a plang value (item): goal/step/action/modifier are items, holding their C# internals
+// behind faces, so an action value enters the apex at rung 1 (`is item`) — never through a synthetic
+// ("list", element) entity. The engine reads the typed internals directly (Module, Property, …); the
+// item faces are the boundary layer only. The action writes itself (Output) and reads itself back
+// (serializer/Reader.cs).
 [global::app.Attributes.PlangType("action")]
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {

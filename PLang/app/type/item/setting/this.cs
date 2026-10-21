@@ -49,7 +49,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>A setting node read as a bool is whether it is on.</summary>
     public override bool IsTruthy() => Enabled.Value;
 
-    /// <summary>A setting is its own stored record read back into its class (decision 789/790): a fresh one of the
+    /// <summary>A setting is its own stored record read back into its class: a new one of the
     /// class the declaration names, each of its options taken from the record. A stored row of an older shape — not
     /// this class's record — is <c>SettingsUnreadable</c>: pre-1.0 there is no reader for it, so it is fixed by
     /// hand, deleted and set again.</summary>
@@ -359,8 +359,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>This setting's options as the builder teaches them — each by the name a <c>%!path%</c>
     /// writes (<c>cache</c>), its type (named through <paramref name="context"/>'s types), and its default
     /// (the value itself, which writes its own text); a sensitive option shows no default. The rows the
-    /// decider prompt reads from what <c>step.Setting</c> holds — moved here from the setting kind (774:
-    /// the value holds what it offers). Takes the asker's context, so the value need store none.</summary>
+    /// decider prompt reads from what <c>step.Setting</c> holds — the value holds what it offers. Takes the asker's context, so the value need store none.</summary>
     public global::app.type.property.list.@this Rows(global::app.actor.context.@this context)
     {
         var rows = new global::app.type.property.list.@this();

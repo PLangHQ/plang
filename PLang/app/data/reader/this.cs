@@ -58,7 +58,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     break;
                 case "type":
                     // The type is the structured entity {name, kind?, strict?}. A bare string
-                    // form (type:"string") is the OLD shape — invalid; throw so a stale .pr
+                    // form (type:"string") is invalid; throw so a stale .pr
                     // surfaces loudly. The entity reads through its own reader (the `type`
                     // reader, like any other value) — context stamped there.
                     if (reader.Peek() == global::app.type.format.TokenKind.String)

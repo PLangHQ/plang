@@ -185,10 +185,10 @@ public class Fluid : ITemplate
             var rendered = writer.ToString();
             // The rendered characters go through the declared format's OWN birth (kind.Decode — the same door a
             // url served that format decodes through, content.@this): a .json template is born an unread
-            // {item, json} (773/804). A plain or inline template has no format and is born a text. Never a late
-            // stamp — json is the item's kind, never put onto a text (773).
+            // {item, json}. A plain or inline template has no format and is born a text. Never a late
+            // stamp — json is the item's kind, never put onto a text.
             // The rendered characters ARE text. A format a program then navigates as a structure — json, the
-            // item's kind (773/804) — rests as that structure through its own birth, so a rendered .json is an
+            // item's kind — rests as that structure through its own birth, so a rendered .json is an
             // unread {item, json}. Any other format (html, md: a code/text format) is the rendered characters
             // themselves, a plain text — never a late stamp, and never a non-text value that a text comparison
             // then refuses.

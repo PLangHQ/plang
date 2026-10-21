@@ -233,8 +233,8 @@ public class @this : global::app.type.@this
     /// <summary>Whether a host of this kind holds its children by position (an array) rather than by name (an
     /// object's members).</summary>
     // `new`: this host verb — "is a HOST of this kind positional" — shares a name with item's own
-    // IsSequence (a property: "is this value a sequence"), a coincidental collision once kind : item.
-    // It is a host kind's concern (json/dict/list/*) and moves off the base in stage 3 with the rest.
+    // IsSequence (a property: "is this value a sequence"), a coincidental collision since kind : item.
+    // It is a host kind's concern (json/dict/list/*).
     public new virtual bool IsSequence(object host) => false;
 
     /// <summary>Write a child <paramref name="key"/> onto a host of this kind — the kind owns HOW

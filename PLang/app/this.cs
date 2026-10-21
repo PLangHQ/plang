@@ -280,8 +280,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
     /// <summary>
     /// Flat per-call Service collection. Each Service is one outbound call's I/O
-    /// scope (channels, identity, parent ref). Stage 7: replaces runtime1's
-    /// Service-as-actor model.
+    /// scope (channels, identity, parent ref) — a service is not an actor.
     /// </summary>
     public global::app.service.list.@this Services => _services ??= new global::app.service.list.@this(this);
 
@@ -460,7 +459,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         try
         {
             var decoded = await context.App.type.list.Mime("application/json").Decode(raw, context, "app.pr");
-            // app.pr rests as an {item, json} source (805); reading the identity is a USE, so it opens through
+            // app.pr rests as an {item, json} source; reading the identity is a USE, so it opens through
             // the use door — json parses the bytes into the dict the app's [Store] face reads back from.
             if (await decoded.Open() is not global::app.type.item.dict.@this identity || !decoded.Success)
                 return Unreadable(decoded.Error?.Message ?? "not a json object");

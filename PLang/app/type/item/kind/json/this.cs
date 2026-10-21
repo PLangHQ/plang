@@ -3,7 +3,7 @@ using System.Text.Json;
 namespace app.type.item.kind.json;
 
 /// <summary>
-/// The json kind — a value of kind json rests as its raw bytes until a use opens it (decision 792): its
+/// The json kind — a value of kind json rests as its raw bytes until a use opens it: its
 /// untyped materialize answers an unread <c>{item, json}</c> source (<see cref="Load"/>), and a use parses it
 /// once into a plang value through <see cref="Parse"/> (an object into a dict, an array into a list, a scalar
 /// into its native) — no <c>JsonElement</c> carrier, no navigator.
@@ -72,7 +72,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         if (raw is not (string or byte[])) return null;                        // decline — not a raw json payload
         var s = new global::app.type.item.text.@this(raw, ctx.App.type.list[typeof(global::app.type.item.text.@this)]).ToString();
         if (string.IsNullOrEmpty(s)) return global::app.type.item.@this.Create(null, ctx);    // empty → the null value (NOT a decline)
-        // json parses itself into a plang value (decision 774, ruling 9): an object into a dict, an array into
+        // json parses itself into a plang value: an object into a dict, an array into
         // a list, each read through its own type's reader over the json token stream — no JsonElement carrier,
         // no navigator. A scalar root IS its native value (`42` a number). Verify:false — ingested content is
         // unsigned, like every nested/ingest read.

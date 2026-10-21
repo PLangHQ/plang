@@ -12,7 +12,7 @@ namespace app.module.browser.type.browser;
 /// Which it is is its kind: <c>%browser!type.kind%</c> (<c>headless</c>, <c>screen</c>). <c>browser.stop</c> ends either.
 ///
 /// <para>Chromium is a program a goal that ships with plang starts (<c>/system/browser/</c>, through terminal: trusted
-/// by its origin, decision 579 — it names the program and every flag itself), and DevTools speaks over that program's
+/// by its origin — it names the program and every flag itself), and DevTools speaks over that program's
 /// pipe (<see cref="cdp.@this"/>). What the caller gives — the page, the size — goes over the pipe, never on Chromium's
 /// command line.</para>
 /// </summary>
@@ -70,7 +70,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         return (program, null);
     }
 
-    /// <summary>A <c>file://</c> page is read as the caller (finding 1 of 579: a browser started trusted must not read
+    /// <summary>A <c>file://</c> page is read as the caller (a browser started trusted must not read
     /// for a caller what the caller couldn't read itself); a website is the browser's normal job. The refusal, or null.</summary>
     internal static async Task<global::app.data.@this?> Readable(string url, global::app.actor.context.@this context)
     {

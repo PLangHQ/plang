@@ -14,7 +14,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
 {
     public @this(global::app.type.@this owner) : base("dict", owner) { }
 
-    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out (814).
+    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out.
     protected override bool? OwnInternal => true;
 
     public override System.Type? ClrForm => typeof(System.Collections.IDictionary);

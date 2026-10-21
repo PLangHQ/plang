@@ -142,7 +142,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             // renders as `xn--pple-43d.com` and the user sees that something
             // is off. Same canonical form lands in the persisted grant key,
             // so cache hits also use punycode and a homograph variant doesn't
-            // silently match a previously-trusted ASCII host. (security v2 S4.a)
+            // silently match a previously-trusted ASCII host.
             var host = _uri.IdnHost.ToLowerInvariant();
 
             // Rule 2: strip default port.

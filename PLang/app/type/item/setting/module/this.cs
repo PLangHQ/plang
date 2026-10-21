@@ -7,7 +7,7 @@ namespace app.type.item.setting.module;
 /// </summary>
 public class @this : global::app.type.item.setting.@this
 {
-    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
     private const string Own = ".setting";

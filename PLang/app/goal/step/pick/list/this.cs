@@ -625,7 +625,7 @@ public sealed class @this
                 });
             }
         }
-        // a type a step coerced to may carry kinds a program names (ruling 10). Once the type is picked (an Option
+        // a type a step coerced to may carry kinds a program names. Once the type is picked (an Option
         // answered with a type whose kind is still empty), a follow-up asks which kind — the type's own kind.list
         // (a number's int/decimal, an item's json), or, for a generic, the element type, offered the same way. A
         // kind already picked (a non-empty kind) ends it; a type with no program-named kind is not asked.

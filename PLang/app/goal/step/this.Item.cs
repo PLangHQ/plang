@@ -1,6 +1,6 @@
 namespace app.goal.step;
 
-// The step IS a plang value (item) — see action/this.Item.cs for the ruling. The engine reads the
+// The step IS a plang value (item), as an action is (action/this.Item.cs). The engine reads the
 // typed internals (Index, Text, Actions, …) directly; the item faces are the boundary only. The step
 // is written by its tags, in declaration order; its serializer/Reader.cs reads itself back.
 [global::app.Attributes.PlangType("step")]

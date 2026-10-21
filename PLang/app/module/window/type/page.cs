@@ -28,7 +28,7 @@ internal sealed class Page(string target, Cdp cdp, Func<string, bool> plang)
         if (hear == null && video == null) return;
         _session.Heard += (method, parameters) =>
             // what Chromium's media players say of themselves (DevTools' Media domain: errors, state, messages) goes to
-            // the video's listener too — what a video does when it stops (both of Ingi's videos froze together)
+            // the video's listener too — what a video does when it stops (two videos on one page can freeze together)
             method.StartsWith("Media.", StringComparison.Ordinal) && video != null
                 ? video(new JsonObject { ["video"] = "media", ["event"] = method, ["data"] = JsonNode.Parse(parameters.GetRawText()) }.ToJsonString())
             : method != "Runtime.bindingCalled" ? Task.CompletedTask

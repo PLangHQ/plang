@@ -31,7 +31,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             switch (field)
             {
                 case "name":     name = reader.String(); break;
-                // a kind nests (774): its value is a type itself ({list, kind: {list, kind: path}}). Read that
+                // a kind nests: its value is a type itself ({list, kind: {list, kind: path}}). Read that
                 // inner type, which the outer's element kind then holds; a bare string is a simple kind name.
                 case "kind" when reader.Peek() == global::app.type.format.TokenKind.Object:
                                  nested = Read(ref reader, null, ctx) as global::app.type.@this; break;

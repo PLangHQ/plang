@@ -152,10 +152,10 @@ public partial class @this
     [JsonIgnore, LlmBuilder]
     public Step? Step { get; init; }
 
-    // Teaching prose (Description / Notes / Examples) is no longer stored on the action host — it lives
+    // Teaching prose (Description / Notes / Examples) is not stored on the action host — it lives
     // as lazy `file` handles on the class-zoom partial (this.Schema.cs), over
     // os/system/modules/{Module}/{Name}.{facet}.md. Templates read module-first + action through
-    // those doors; the old string fields + MergeLayers `*Rendered` cousins are retired.
+    // those doors.
 
 
     /// <summary>

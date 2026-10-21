@@ -6,9 +6,7 @@ namespace app.type.item.number;
 /// The Ladder — the cross-kind RELATION (which size an overflow climbs to), the one place that knows
 /// the ORDER between kinds. "int overflows to long" is not int's knowledge nor long's — it's knowledge
 /// about the order, so it lives here, keyed by kind NAME (the kind's identity). A LEVEL owns its range
-/// and answers its own <see cref="Level.Fits"/>. Logic is byte-for-byte the old tower; only the key
-/// type (NumberKind enum → name token) and the names (Tower→Ladder, Rung→Level, NarrowInteger→Narrow)
-/// changed. The three arithmetic categories (integer / binary-float / decimal) live here too.
+/// and answers its own <see cref="Level.Fits"/>. The three arithmetic categories (integer / binary-float / decimal) live here too.
 /// </summary>
 public sealed partial class @this
 {

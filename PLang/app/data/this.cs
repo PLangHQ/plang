@@ -24,10 +24,9 @@ public partial class @this
 {
     // THE value — the typed instance. It IS the value; Data never looks inside
     // it, never asks what type it holds, has no special cases for any type.
-    // NEVER C# null: absence is a typed citizen (`absent` for NotFound/
-    // Uninitialized, null.@this for present-null), so no consumer ever
-    // null-checks the value slot. Everything the old shape kept beside the
-    // value (raw source form, descriptor, lazy factory) lives ON the instance:
+    // NEVER C# null: an empty slot holds the app's null (null.@this), so no
+    // consumer ever null-checks the value slot. What a value needs beside
+    // itself (raw source form, descriptor, lazy factory) lives ON the instance:
     // a file holds its own bytes, a source its declared {type, kind}, a
     // computed its factory.
     private protected global::app.type.item.@this _item;
@@ -59,7 +58,7 @@ public partial class @this
     [JsonIgnore]
     public actor.context.@this Context
     {
-        // Born-with-context: _context is set at construction on every birth (Stage 3).
+        // Born-with-context: _context is set at construction on every birth.
         // No fallback to the item's context — a null here is a bug to fix at the caller,
         // not a state to paper over. Items hold no context, so nothing is pushed down.
         get => _context;
@@ -354,7 +353,7 @@ public partial class @this
     /// <summary>
     /// A USE opens the value — the door a navigation, an enumeration or a typed ask reaches instead of
     /// <see cref="Value"/>. A resting source (an unread <c>{item, json}</c>) parses once through its kind
-    /// and this Data narrows to the parsed list/dict (decision 787), the source riding as history (so it
+    /// and this Data narrows to the parsed list/dict, the source riding as history (so it
     /// parses once, never again). A value that is not a resting source answers exactly as <see cref="Value"/>
     /// does — nothing narrows. A bad parse answers <c>MaterializeFailed</c> on this Data (never a throw to a
     /// courier); the use sees <see cref="Success"/> false and surfaces it. A courier never calls this — it
@@ -368,7 +367,7 @@ public partial class @this
         {
             if (rest.Parse(_context) is not { } parsed) return value;
             parsed.history.Add(rest);               // the source rides the parsed value's history
-            if (rest.Cacheable) _item = parsed;     // narrow (787) — the next use reads the parsed value
+            if (rest.Cacheable) _item = parsed;     // narrow — the next use reads the parsed value
             return parsed;
         }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException or System.NotSupportedException)
@@ -539,7 +538,7 @@ public partial class @this
         var value = await Follow(_context);
         var walked = value.IsInitialized ? value : this;
         // Content not yet read (a {item, kind: json} holding its raw) is parsed first: the read yields the
-        // real list/dict and the value narrows to it (decision 787), so foreach walks its elements — not the
+        // real list/dict and the value narrows to it, so foreach walks its elements — not the
         // one unread source. A value already walkable (the list/dict a %var% names) keeps its door shut.
         if (walked._item is global::app.type.item.source)
             return (await walked.Open()).EnumerateItems(_context);
@@ -584,7 +583,7 @@ public partial class @this
         // a read that failed has said why — nothing is made from it
         if (!Success) return null;
         // A value already a T is held as it is. A value MADE into T from an unread source opens that source
-        // first — a typed ask is a USE, so json parses it once and the Data narrows (805/787) — then T builds
+        // first — a typed ask is a USE, so json parses it once and the Data narrows — then T builds
         // from what it opened. "Already T, or made into T", not which T it is.
         if (value is not T && value is global::app.type.item.source)
         {

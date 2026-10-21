@@ -3,7 +3,7 @@ namespace app.type.item.separator;
 /// <summary>
 /// PLang <c>separator</c> — what cuts a text into pieces (<c>split %x% into lines</c>) or goes between them
 /// (<c>join %list% with comma</c>): a named separator (line, comma, tab, space, semicolon) standing for its
-/// characters, or any characters as written. It is a kind of <c>text</c> (decision 783/788): <c>{text, kind:
+/// characters, or any characters as written. It is a kind of <c>text</c>: <c>{text, kind:
 /// separator}</c> — a text value holding its own OPEN set of named values, so <c>%line% is text</c> is true.
 /// Its named values are its own (the type's hook), not sub-kinds of their own.
 /// </summary>

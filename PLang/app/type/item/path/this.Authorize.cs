@@ -28,7 +28,7 @@ public partial class @this
     /// <summary>The actor may <paramref name="verb"/> this path: in its own root it may; else a grant it holds, or its
     /// answer when asked. <paramref name="named"/>: the asking step names this path itself — written in the step, no
     /// %ref%, nothing its caller gave — and then a step of a goal that ships with plang (under the os folder,
-    /// <c>/system/</c>) is trusted by its origin (decision 579): granted without asking, and nothing stored. The trust is
+    /// <c>/system/</c>) is trusted by its origin: granted without asking, and nothing stored. The trust is
     /// the asking step's own goal's, never a goal further up the call: a user goal an os goal calls stays the user's, and
     /// a path an os goal was handed (a parameter, a variable) is asked as any other.</summary>
     public async Task<data.@this> Authorize(Verb verb, actor.context.@this context, bool named = false)
@@ -39,7 +39,7 @@ public partial class @this
         // In-root paths are auto-granted — the actor owns its own root.
         if (IsInRoot(context)) return context.Ok();
 
-        // What ships with plang asks nobody for what it names itself (579) — the actor stays the user's own
+        // What ships with plang asks nobody for what it names itself — the actor stays the user's own
         if (named && AskedByOs(context)) return context.Ok();
 
         var existing = await actor.Permission.Find(this, verb);
@@ -57,7 +57,7 @@ public partial class @this
     {
         var grant = BuildRequest(actor, verb);
         var d = new data.@this<permission.@this>("", grant, context: context);
-        // Signing is no longer in-memory: a persisted grant is signed when it
+        // Nothing in memory signs: a persisted grant is signed when it
         // crosses the application/plang boundary into the settings store. The
         // caller's `persist` intent decides persisted vs in-memory.
         await actor.Permission.Add(d, persist);
@@ -78,7 +78,7 @@ public partial class @this
     }
 
     // The running app's anchors: the only variables a goal that ships with plang may hold in what it names itself and
-    // still be trusted (579) — each a fact no caller can set (pinned). Every other variable, any other %!…% included
+    // still be trusted — each a fact no caller can set (pinned). Every other variable, any other %!…% included
     // (settings are the asker's view, %!data% what the caller's steps left, a goal sets its own %!x%), is the caller's.
     private static readonly HashSet<string> Anchors = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -117,7 +117,7 @@ public partial class @this
     /// <summary>
     /// Extra text appended to the Authorize prompt before the y/n/a choices: what a yes means beyond the words.
     /// A change under the os folder (write, delete) changes what ships with plang — and a goal there runs programs
-    /// without asking (579), so the question says so (Ingi: ask, don't refuse). HttpPath overrides to warn when an
+    /// without asking, so the question says so — it asks, it doesn't refuse. HttpPath overrides to warn when an
     /// 'a' would persist a URL with query-string secrets verbatim to the local sqlite.
     /// </summary>
     protected virtual string AuthorizationHint(Verb verb, actor.context.@this context)

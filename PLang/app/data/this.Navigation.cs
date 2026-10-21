@@ -32,7 +32,7 @@ public partial class @this
     {
         // Setting a member is a USE: open a source-backed value (a `%cfg%` still raw json, a template
         // container still a wire) so the write lands on the PARSED value, not the raw form — a resting json
-        // source parses once and the Data narrows here (805). The write target is the opened value itself —
+        // source parses once and the Data narrows here. The write target is the opened value itself —
         // a cacheable source rebinds through the door, but a re-resolving template container (Cacheable=false)
         // never rebinds, so relying on Peek() would land the write on the stale wire. Use the opened value
         // directly and rebind to the written result, which snapshots a template container into its plain

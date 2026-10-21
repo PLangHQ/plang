@@ -37,8 +37,7 @@ public sealed class @this
     /// </summary>
     public Task Write(object? message)
     {
-        // Debug surface routes via System actor's "error" channel (stderr equivalent).
-        // Stage 6: was app.channels.WriteAsync; now per-actor.
+        // Debug surface routes via System actor's "error" channel (stderr equivalent), per actor.
         var ch = _context.App.actor.list.System.Channel.Get(app.channel.list.@this.Debug)
               ?? _context.App.actor.list.System.Channel.Get(app.channel.list.@this.Error);
         if (ch == null) return Task.CompletedTask;

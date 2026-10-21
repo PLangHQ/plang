@@ -12,10 +12,10 @@ using type = global::app.type.@this;
 /// </summary>
 public partial class @this
 {
-    // Signing is no longer carried in memory: a Data does NOT hold a Signature
-    // property. Provenance is an I/O-boundary concern — a Data crossing the
-    // application/plang boundary is wrapped in a `signature` layer at write
-    // (Wire.Write), peeled + auto-verified at read. Nothing in memory signs.
+    // Signing is an I/O-boundary concern: a Data crossing the application/plang
+    // boundary is wrapped in a `signature` layer at write (Wire.Write), peeled and
+    // verified at read. Nothing in memory signs; a Data read in keeps the signature
+    // it arrived in (Signature), never written out again.
 
     /// <summary>
     /// Encrypts and wraps the result as an encrypted outer. Requires a crypto

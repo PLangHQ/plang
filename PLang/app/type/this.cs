@@ -42,7 +42,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
-        // a kind nests (774): a kind that is itself kinded writes as the object it is ({list, kind: {list, kind:
+        // a kind nests: a kind that is itself kinded writes as the object it is ({list, kind: {list, kind:
         // path}}), so read and write are symmetric; a plain kind writes its name.
         if (!kind.IsEmpty) { writer.Name("kind"); if (kind.kind.IsEmpty) writer.String(kind.Name); else kind.Identify(writer); }
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
@@ -493,7 +493,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // belongs to, even when the class is a subtype of that family (a settings class : setting is
     // ICreate&lt;setting&gt;, not ICreate&lt;itself&gt;, so its own <see cref="Make"/> declines): the family's
     // Create is handed THIS as the declaration, so the base's Create makes the subclass by its declared.ClrType.
-    // Only the record reader asks this (decision 789); the general Make stays on the EXACT <see cref="Creatable"/>
+    // Only the record reader asks this; the general Make stays on the EXACT <see cref="Creatable"/>
     // so its CLR-value fallback (the `Make(item.Create(raw))` rung) keeps converging and never recurses. The
     // closed family thunk is a fact of the class — bound once, on first use, like <see cref="_lift"/>.
     internal item.@this? Construct(object? raw, global::app.data.@this data)

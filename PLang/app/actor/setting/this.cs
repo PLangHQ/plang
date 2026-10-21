@@ -305,7 +305,7 @@ public sealed class @this : IDisposable
     /// The setting class <typeparamref name="T"/> as this scope sees it — its defaults, the actor's saved row on them
     /// (the user's, else the system's), this run's values on top (<c>await context.Setting.Get&lt;test.setting&gt;()</c>).
     /// Read on its first ask and kept until a setting is written; read-only by contract — a caller that changes one
-    /// changes its Copy. A saved row that can't be read is loud (790).
+    /// changes its Copy. A saved row that can't be read is loud.
     /// </summary>
     public async ValueTask<T> Get<T>() where T : global::app.type.item.setting.@this
         => (T)await Setting(typeof(T));
@@ -353,7 +353,7 @@ public sealed class @this : IDisposable
     {
         var instance = Default(path) ?? throw new KeyNotFoundException($"'{path}' names no setting class.");
         // a saved row that could NOT be read (an older-shape row) answers its error here — the read of this
-        // setting is loud and names the key + how to fix it (790), never a silent fall-back to the defaults
+        // setting is loud and names the key + how to fix it, never a silent fall-back to the defaults
         if (Saved(path) is { Success: false, Error: { } unreadable }) throw new global::app.error.AppException(unreadable);
         // the saved row's options, an owned setting copied — this run's values below never reach the row
         if (Saved(path)?.Peek() is global::app.type.item.setting.@this setting)

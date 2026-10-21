@@ -206,10 +206,9 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
 
     // --- Live filesystem state ---
     //
-    // The base deliberately exposes NO sync live-state property. `Exists` and
-    // `Size` used to live here as `System.IO.File.Exists` / `FileInfo` calls —
-    // wrong for an HttpPath (always-false / throws on Windows). They moved to
-    // FilePath. The cross-scheme liveness query is the async `path.Stat()`;
+    // The base deliberately exposes NO sync live-state property: a sync `Exists`
+    // or `Size` is wrong for an HttpPath, so they are FilePath's. The
+    // cross-scheme liveness query is the async `path.Stat()`;
     // truthiness ("does it exist") is `AsBooleanAsync()`.
 
     // --- Display + wire ---

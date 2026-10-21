@@ -98,7 +98,7 @@ public partial class @this
         // reassignments. Storing the marker verbatim would go stale (!data rebinds every action) and a
         // self-assign (`set %a% = %a%`) would cycle on the value door. The reference resolves with the
         // context of the Data that carries it (a goal-call argument `place=%city%` reads the CALLER's
-        // memory, whichever store it lands in). What binds is renamed to `name` — a variable holding a
+        // memory, whichever store it lands in). What binds takes the name `name` — a variable holding a
         // failure binds that failure; a reference to nothing (settled to no value) leaves `name` unset,
         // keeping nothing of the reference, so setting the missing one later doesn't reach it.
         if (value is data.@this reference && reference.HasVariable)

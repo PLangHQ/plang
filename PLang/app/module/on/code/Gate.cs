@@ -24,8 +24,8 @@ public static class Gate
         {
             payload.Name = "!data";
             // %!data% is a name of the call's own frame, on its own flow (as a loop binds its item) — never written into
-            // the actor's memory, where the step that started the source may still be reading its own %!data% (issue 64).
-            // What else the call writes reaches the actor's variables as before.
+            // the actor's memory, where the step that started the source may still be reading its own %!data%.
+            // What else the call writes reaches the actor's variables.
             await using var bound = context.call.Push([payload], await context.call.Setting(), call);
             var result = await call.Start(context);
             if (!result.Success) await context.Actor.Channel.Report(result);

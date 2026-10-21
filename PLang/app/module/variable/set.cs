@@ -170,7 +170,7 @@ public partial class Set : IContext, IScope, IKeep
         {
             // The Type value reads through the `type` reader, so it materializes as the type
             // entity itself ({name, kind?, strict?} → type.@this). A bare type-name (raw string)
-            // still names a type by name. No dict rebuild — that was the pre-reader path.
+            // still names a type by name. No dict rebuild.
             // The developer named the type — an unknown name is their error, answered as plang's.
             var typeName = (typeValue as global::app.type.@this)?.Name ?? typeValue.ToString()!;
             var answer = await Context.App.type.Get(typeName, Context);
@@ -290,7 +290,7 @@ public partial class Set : IContext, IScope, IKeep
             var typedData = new data.@this(name, converted, keepAsIs ? null : type, context: Context);
 
             // Strict kind for a reference fundamental rides WITH the value to its
-            // load seam (Ingi: validate at byte-materialization, throw if strict).
+            // load seam: a strict kind is validated when the bytes materialize, and a mismatch throws.
             // An already-loaded value (read-lift, raw bytes in hand) validates
             // now; a lazy path-backed value defers — its own load enforces (e.g.
             // image.BytesAsync throws on mismatch). Raw byte[] slots are handled

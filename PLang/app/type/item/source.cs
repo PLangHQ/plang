@@ -22,7 +22,7 @@ public class source : @this
 
     // The format the raw bytes are in — the raw's own fact, not the declaration's. When a value is re-declared
     // (a dict slot given an unread json: {item, json} → {dict}, kind dropped), the format rides here so the
-    // declared type can still make itself from what the format parses (decision 818/758). Null when the raw
+    // declared type can still make itself from what the format parses. Null when the raw
     // carries no format of its own.
     private readonly global::app.type.kind.@this? _format;
 
@@ -202,7 +202,7 @@ public class source : @this
             if (Type.kind is { IsEmpty: false } kind
                 && await asking.App.type.list.Kind(Type, asking).Load(_value, asking) is { } loaded)
             {
-                // A kind that RESTS answers its materialize with an unread source (json, ruling 6): the courier
+                // A kind that RESTS answers its materialize with an unread source (json): the courier
                 // keeps it unread — this source answers itself, parsed only at a use (navigation / enumeration /
                 // is / a typed ask). Any other kind resolves its value now.
                 if (loaded.Peek() is global::app.type.item.source) return this;
@@ -211,7 +211,7 @@ public class source : @this
                 return decoded;
             }
             // A value re-declared away from its format keeps what format its bytes are in (a dict slot given
-            // an unread json — {item, json} re-declared {dict}, decision 818/758): the format parses the raw,
+            // an unread json — {item, json} re-declared {dict}): the format parses the raw,
             // and the declared type makes itself from what it parses (a dict from the parsed object). Only when
             // the declaration itself named no kind — a kinded declaration parses through its own kind above.
             if (Type.kind.IsEmpty && _format is { } encoded && encoded.Parse(_value, asking) is { } parsed)
@@ -276,7 +276,7 @@ public class source : @this
     /// <summary>
     /// A resting kind (json) answered its own <see cref="Value"/> unread — a courier keeps it so. A USE
     /// opens it: the raw parses through the kind, once (navigation / enumeration), and the holding Data
-    /// narrows to the parsed dict/list (decision 787). Null when there is no kind to open through (an empty
+    /// narrows to the parsed dict/list. Null when there is no kind to open through (an empty
     /// kind, or one the list doesn't carry): nothing to parse, the value is used as it is. A bad parse throws
     /// — the caller answers it through <see cref="Unread"/>.
     /// </summary>
@@ -328,7 +328,7 @@ public class source : @this
         global::app.data.@this parent, string key)
     {
         // Navigation is a USE: a resting source (json) opens here — parsed once through its kind, the Data
-        // narrowing to the parsed dict/list (decision 787) — then the parsed value is navigated. A bad parse
+        // narrowing to the parsed dict/list — then the parsed value is navigated. A bad parse
         // fails parent (MaterializeFailed), surfaced here, never a throw to the courier.
         var materialized = await parent.Open();
         if (!parent.Success) return parent;

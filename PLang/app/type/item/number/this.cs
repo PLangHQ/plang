@@ -16,10 +16,8 @@ namespace app.type.item.number;
 /// (a <c>long</c>) rather than wrapping. <c>double ⊕ decimal</c> requires an
 /// explicit precision choice (see <see cref="Precision"/>).</para>
 ///
-/// <para>Storage is a single boxed CLR numeric (<see cref="BoxedValue"/>);
-/// boxing was already the baseline since <c>Data.Value</c> is <c>object</c>.
-/// The old <c>_i/_d/_f</c> tagged union and the <c>float→double</c> collapse
-/// are gone.</para>
+/// <para>Storage is a single boxed CLR numeric (<see cref="BoxedValue"/>) — no
+/// tagged union, and a float stays a float.</para>
 /// </summary>
 [global::app.Attributes.PlangType("number")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, System.IEquatable<@this>, System.IComparable<@this>, System.IComparable, System.IConvertible

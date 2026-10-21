@@ -85,11 +85,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         // The natural lift, NAVIGATED off the identity door: the owning entity drives its own cached
         // Create thunk (int → number, string → text). The door is never null — a CLR type no value
         // type owns answers the clr entity, whose Create builds the carrier — so this is the single
-        // terminal rung; the old separate Clr fallback dissolves into entity dispatch.
+        // terminal rung, with no separate Clr fallback.
         return context.App.type.list[raw.GetType()].Make(raw, context);
     }
 
-    /// <summary>The birth of an item with a DECLARED type (decisions 786/787): an item declared with a KIND
+    /// <summary>The birth of an item with a DECLARED type: an item declared with a KIND
     /// is made from its raw by that declaration, lazily — the raw's characters ride to the declared type's
     /// own wire-raw birth (<c>declared.Make</c>, <c>type/this.cs:378</c>): a fresh source read on first use
     /// through its kind, so <c>{item, kind: json}</c> holds its characters until used and is not text. A

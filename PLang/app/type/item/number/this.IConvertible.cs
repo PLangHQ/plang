@@ -3,8 +3,8 @@ namespace app.type.item.number;
 /// <summary>
 /// <see cref="System.IConvertible"/> bridge — lets <see cref="System.Convert.ToDouble"/>,
 /// <see cref="System.Convert.ToInt32"/>, etc. accept a <see cref="@this"/>
-/// transparently. Without this, code paths that read <c>Data.Value</c> (now
-/// a <see cref="@this"/> after the Stage 4 math.* retype) and pipe it
+/// transparently. Without this, code paths that read <c>Data.Value</c> (a
+/// <see cref="@this"/> for every number) and pipe it
 /// through <c>Convert.*</c> throw <see cref="System.InvalidCastException"/>.
 /// </summary>
 public sealed partial class @this

@@ -27,7 +27,7 @@ public sealed partial class @this(IProgram asked)
     /// <summary>The hold on it, when the step gives it permissions.</summary>
     internal Sandbox? Sandbox { get; private set; }
 
-    /// <summary>A start trusted by its origin (579): an os goal naming it all.</summary>
+    /// <summary>A start trusted by its origin: an os goal naming it all.</summary>
     internal bool Trusted { get; private set; }
 
     /// <summary>It gets a pipe pair beside its standard streams (fd 3 in, fd 4 out).</summary>
@@ -54,7 +54,7 @@ public sealed partial class @this(IProgram asked)
             return context.Error(new ActionError(
                 $"The step gives the program permissions, but {named} holds none — leave Permission out to run it free.", "PermissionInvalid", 400));
         if (await Found(sandbox: given != null) is { } failed) return failed;
-        // a start trusted by its origin runs by the terminal's defaults, none of the actor's settings (579)
+        // a start trusted by its origin runs by the terminal's defaults, none of the actor's settings
         Setting = Trusted ? new(context.App.type.list[typeof(setting.@this)]) : await context.Setting.Get<setting.@this>();
         if (given == null) return null;
         var (sandbox, refused) = await Sandbox.Of(given.Rows(context), File!, context);
@@ -69,7 +69,7 @@ public sealed partial class @this(IProgram asked)
             (asked.App, asked.Parameter, asked.Environment, asked.WorkingDirectory, asked.Clean, asked.Keep);
         // the step names what it starts itself when the program, its arguments, environment, folder, whether it is clean
         // and what it keeps are all written in it — no variable but the running app's anchors (%!app.AbsolutePath%),
-        // nothing its caller handed it: only then may a goal that ships with plang start it unasked (decision 579; any
+        // nothing its caller handed it: only then may a goal that ships with plang start it unasked (any
         // other variable there is the caller's, and is asked as the caller)
         static bool Written(Data? given)
             => given?.Peek() is not { } item || item.Variable.All(global::app.type.item.path.@this.IsAnchor);

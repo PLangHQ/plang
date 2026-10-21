@@ -30,7 +30,7 @@ public partial class @this
     [JsonIgnore]
     public int ReturnDepth { get; set; } = 1;
 
-    // Observation is opt-in handling (ruling 8): reading Success/Error IS the
+    // Observation is opt-in handling: reading Success/Error IS the
     // guard. A handler that never looks at a failed param can't swallow it —
     // the generator's post-Run epilogue surfaces any UNOBSERVED param error as
     // the action's result, type-authored message intact.

@@ -468,7 +468,7 @@ public sealed partial class @this
     /// The first goal holds the Path; the rest are its sub-goals, in its file. First goal is Public, rest are Private.
     /// Inverse of ToText().
     ///
-    /// Stays <c>static</c> by Ingi's ruling: relocating this onto <c>path</c>
+    /// Stays <c>static</c>: relocating this onto <c>path</c>
     /// (<c>path.ReadAsGoal</c>) or <c>text</c> (<c>text.AsGoal</c>) would put a
     /// Goal-specific method on a general-purpose value type — too specific for
     /// that general object. A source-text → Goal factory is the sanctioned
