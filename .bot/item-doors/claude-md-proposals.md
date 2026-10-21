@@ -47,9 +47,9 @@
 
 ## coder — item-doors 222a — 2026-10-21
 **Target:** CLAUDE.md (Runtime2 Conventions, "No `System.IO.*` reaches in production C#")
-**Why:** The rule names `IContent.Content` as the door to a read reference's raw bytes. `IContent` no longer exists in the code; the reference's bytes are `content.@this.Content(context)` (`PLang/app/type/item/content/this.cs:103`), the abstract base of `file` and `url`. A reader following CLAUDE.md searches for a type that isn't there. If Ingi approves item-doors 222 (a), the door moves to item (every value answers "the bytes I already am", null by default): update the text again then.
+**Why:** The rule names `IContent.Content` as the door to a read reference's raw bytes. `IContent` no longer exists in the code; the reference's bytes are `content.@this.Content(context)` (`PLang/app/type/item/content/this.cs:103`), the abstract base of `file` and `url`. A reader following CLAUDE.md searches for a type that isn't there. Since item-doors 222b, a value that IS plain bytes answers `item.Plain` (only binary does), and a file takes those as they are, whatever its name; every typed value (a read file included) goes through the file's format.
 **Proposed change:** in that bullet, replace "its raw bytes `IContent.Content`" with:
 
 ```
-its raw bytes `content.Content(context)` (`type/item/content/this.cs`, the base of `file` and `url`)
+its raw bytes `content.Content(context)` (`type/item/content/this.cs`, the base of `file` and `url`). A value that is plain bytes says so with `item.Plain` (binary's bytes; null for every typed value): a file takes plain bytes as they are, whatever its name, and writes any other value in its format.
 ```

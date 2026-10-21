@@ -144,12 +144,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             }
             return await resolved.Value();
         }
-        return new @this(await Rendered(context), Plain);
+        return new @this(await Rendered(context), Type.Family);
     }
 
-    // The plain text type this text's own is of — what a text derived from it holds (rendered, upper-cased, cut): its
-    // content, no template and no kind of this one's.
-    private global::app.type.@this Plain => Type.Family;
 
     // The template rendered: one pass in order — each literal written as it is, each variable written
     // in place through its value's own door (its Output into a text writer: a wire materializes to
@@ -393,19 +390,19 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     // ---- Methods a variable reaches: %name.toupper()%, %text.replace("-", " ")% ----
 
-    [LlmBuilder] public @this ToUpper() => new(_value.ToUpperInvariant(), Plain);
-    [LlmBuilder] public @this ToLower() => new(_value.ToLowerInvariant(), Plain);
-    [LlmBuilder] public @this Trim() => new(_value.Trim(), Plain);
+    [LlmBuilder] public @this ToUpper() => new(_value.ToUpperInvariant(), Type.Family);
+    [LlmBuilder] public @this ToLower() => new(_value.ToLowerInvariant(), Type.Family);
+    [LlmBuilder] public @this Trim() => new(_value.Trim(), Type.Family);
 
     /// <summary>Every <paramref name="old"/> replaced by <paramref name="new"/>.</summary>
-    [LlmBuilder] public @this Replace(@this old, @this @new) => new(_value.Replace(old._value, @new._value), Plain);
+    [LlmBuilder] public @this Replace(@this old, @this @new) => new(_value.Replace(old._value, @new._value), Type.Family);
 
     /// <summary>At most <paramref name="max"/> characters, "..." marking a cut; 0 is no limit.</summary>
     [LlmBuilder]
     public @this MaxLength(global::app.type.item.number.@this max)
     {
         var limit = max.Clr<int>();
-        return limit <= 0 || _value.Length <= limit ? this : new(_value[..limit] + "...", Plain);
+        return limit <= 0 || _value.Length <= limit ? this : new(_value[..limit] + "...", Type.Family);
     }
 
     /// <summary>The lines matching <paramref name="pattern"/> — each <c>line number: line</c> — with <paramref name="lines"/>
@@ -420,7 +417,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (!found.Success) return global::app.data.@this<global::app.type.item.list.@this<@this>>.From(found);
         var text = (await found.Value())?.ToString() ?? "";
         return context.Ok(new global::app.type.item.list.@this<@this>(
-            text.Length == 0 ? [] : [.. text.Split('\n').Select(line => (global::app.type.item.@this)new @this(line.TrimEnd('\r'), Plain))],
+            text.Length == 0 ? [] : [.. text.Split('\n').Select(line => (global::app.type.item.@this)new @this(line.TrimEnd('\r'), Type.Family))],
             context.App.type.list[typeof(global::app.type.item.list.@this<@this>)]));
     }
 
@@ -455,9 +452,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public int IndexOf(string other) =>
         _value.IndexOf(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
 
-    public @this Substring(int start, int length) => new(_value.Substring(start, length), Plain);
+    public @this Substring(int start, int length) => new(_value.Substring(start, length), Type.Family);
     public @this Replace(string oldValue, string newValue) =>
-        new(_value.Replace(oldValue ?? string.Empty, newValue ?? string.Empty), Plain);
+        new(_value.Replace(oldValue ?? string.Empty, newValue ?? string.Empty), Type.Family);
 
     // ---- Truthiness (item) ----
 

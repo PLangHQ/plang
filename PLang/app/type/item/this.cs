@@ -767,6 +767,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual bool IsLeaf => false;
 
+    /// <summary>The plain bytes this value is — a file takes them as they are, whatever its name says. Null for a typed
+    /// value (a text, a read file, a structure): the file's format writes it.</summary>
+    public virtual byte[]? Plain => null;
+
     /// <summary>
     /// True when this value is a REFERENCE to a named binding (a bare name-slot
     /// <c>variable</c>, a full-match <c>%ref%</c> source, or a full-match template

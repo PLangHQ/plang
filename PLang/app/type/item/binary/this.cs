@@ -155,6 +155,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public byte[] Value { get; }
 
+    /// <summary>Bytes are plain: a file takes them as they are.</summary>
+    public override byte[]? Plain => Value;
+
     /// <summary>Bytes, born holding <paramref name="type"/> — its kind the byte format.</summary>
     public @this(byte[] value, global::app.type.@this type) : base(type) => Value = value ?? System.Array.Empty<byte>();
 

@@ -29,10 +29,9 @@ public sealed class @this : global::app.channel.@this
         if (!allowed.Success || allowed.Exits) return allowed;
         try
         {
-            // Open question (with Ingi): a binary value lands as its raw bytes whatever the extension says, or
-            // the extension's format writes it (json → base64). Today: raw bytes.
-            if (data.Type.Is("binary") && await data.Value() is global::app.type.item.binary.@this bytes)
-                return await Path.WriteBytes(bytes.Value, context);
+            // plain bytes land as they are, whatever the file's name says; a typed value goes through its format
+            if (data.Peek()?.Plain is { } plain)
+                return await Path.WriteBytes(plain, context);
 
             var opened = await data.Peek().Open(context);
             if (opened != null) return context.Error(opened);
