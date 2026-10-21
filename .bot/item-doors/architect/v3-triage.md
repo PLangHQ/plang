@@ -23,6 +23,7 @@ Source: `.bot/item-doors/codeanalyzer/v3/report.md` (46f7965b5). Section numbers
 ## B. Locked: a follow-up branch after item-doors (Ingi: "yes", decision 280). Not merge blockers.
 
 0. **A5 moved here (decision 281):** the open-generic interface probe copied at ~11 sites (Registry, type, type.list, list, reflection, node, property, actor/setting). One owner needs a locked `type.list` member or a static extension on `System.Type`, so it waits for the follow-up branch.
+0c. **From A9 (decision 283):** `ValidateKind` (verb+noun, returning an `(ok, actual)` tuple) is the member of `app/data/IKindValidatable.cs` (locked; implemented by image, called by variable.set).
 0b. **From A7 (decision 282):** `item/source.cs:145,155,224` `ReferenceEquals(born, this)`. The serializer's readers would answer "parsed nothing" (a change to their answer contract, which is locked). `item/source.cs:231` `Type.Name is "dict" or "list"`: the type would answer that its values are containers (locked).
 
 1. **§2 the view compared by constant** (`view == View.Store` in the plang format and the signature reader; "from our store" held as view, Origin and `Window == null`): the view answers `Window`, `Origin`, `RequiresSignature` (internal members on View, the serializer's).
