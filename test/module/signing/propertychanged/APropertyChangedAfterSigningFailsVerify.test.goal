@@ -1,0 +1,15 @@
+/ A signature covers the Data it signed whole — its properties too (the digest is the Data's
+/ record: type, value, properties). A property changed on the signed data after signing fails
+/ verify as a hash mismatch, not as any other refusal.
+Start
+- archive identity 'testSigner', force, on error ignore
+- create identity testSigner
+- set %data% = { "body": "content" }
+- set %data!method% = "POST"
+- sign %data%, write to %signed%
+- set %signed.value!method% = "GET"
+- verify %signed%, on error call HandlePropertyChanged
+- assert %errorKey% equals "DataHashMismatch", "a property changed after signing should fail verification"
+
+HandlePropertyChanged
+- set %errorKey% = %!error.Key%

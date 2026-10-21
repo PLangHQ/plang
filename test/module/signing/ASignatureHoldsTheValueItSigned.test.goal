@@ -1,0 +1,11 @@
+/ A signature holds the value as it was when signed: the variable it was signed from can change
+/ afterwards, and the signature still verifies, holding what it signed.
+Start
+- archive identity 'holdsSigner', force, on error ignore
+- create identity holdsSigner
+- set %data% = { "message": "signed" }
+- sign %data%, write to %signed%
+- set %data% = { "message": "changed after signing" }
+- verify %signed%, write to %ok%
+- assert %ok% is true, "the signature verifies after its source variable changed"
+- assert %signed.value.message% equals "signed", "the signature holds the value it signed"
