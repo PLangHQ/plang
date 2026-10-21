@@ -131,7 +131,15 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
             // a step written in formal is its own line: read as written, whatever the answer says
             string? line = step.IsFormal ? step.Text : null;
             if (line == null && !lines.TryGetValue(i, out line)) { Refuse(i, new global::app.error.@this("has no entry", "StepUnanswered", 400)); continue; }
-            var formal = await new global::app.goal.step.action.formal.Reader(step, modules).Read(line, context);
+            global::app.data.@this formal;
+            // a value that refuses itself while it is read (a query that names no part) is this step's refusal; the
+            // read goes on to the other steps
+            try { formal = await new global::app.goal.step.action.formal.Reader(step, modules).Read(line, context); }
+            catch (global::app.error.AppException refusal)
+            {
+                Refuse(i, new global::app.error.@this($"does not read, in: [{i}] {line.Trim()}", "StepUnread", 400) { list = [refusal.Error] });
+                continue;
+            }
             if (!formal.Success && step.IsFormal)
             {
                 Refuse(i, new global::app.error.@this("is written in formal and does not read", "FormalUnread", 400) { list = [formal.Error!] });
@@ -172,6 +180,20 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
         {
             var step = this[i];
             if (!read.TryGetValue(i, out var actions)) { await step.Scope(scratch); continue; }
+            try { await Check(i, step, actions); }
+            catch (global::app.error.AppException refusal)
+            {
+                // a value that refuses itself while its step is checked is this step's refusal; the step opens again
+                // and the check goes on to the other steps
+                Refuse(i, new global::app.error.@this($"does not read, in: [{i}] {step.Text}", "StepUnread", 400) { list = [refusal.Error] });
+                step.Code = new global::app.goal.step.action.list.@this(step.Code.Type);
+            }
+        }
+
+        // One read step checked: its body, its code's own verdict, what its words hold, its numbers, its build, its
+        // picks and its scope — each problem refused under its index; the step takes its code or opens again.
+        async System.Threading.Tasks.Task Check(int i, global::app.goal.step.@this step, global::app.goal.step.action.list.@this actions)
+        {
             // A step with steps indented under it gets its body from that layout (build.fold places it):
             // a body written over it that holds only what the indented steps do is a copy, dropped; one
             // that holds anything else is invented.

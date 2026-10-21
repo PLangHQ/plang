@@ -165,6 +165,28 @@ public class MatchTests
         await result.IsSuccess();
     }
 
+    // A value that refuses itself while its step is read (a query `{}`) is that step's refusal: the read goes on, and the
+    // other steps take their code.
+    [Test]
+    public async Task AValueThatRefusesItselfInTheRead_IsItsStepsRefusal_TheOthersTakeTheirCode()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G",
+            Make.Step("query %nums%"), Make.Step("set %x% to \"a\""), Make.Step("set %y% to \"b\""));
+        await Picked(goal, app.actor.list.System.Context, (0, "list.query"), (1, "variable.set"), (2, "variable.set"));
+
+        var result = await Match(goal,
+            "[0] list.query(List=%nums%, Query={})\n[1] variable.set(Name=%x%, Value=\"a\")\n[2] variable.set(Name=%y%, Value=\"b\")",
+            app.actor.list.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("StepsRefused");
+        await Assert.That(result.Error.Details!["steps"]?.ToString()).IsEqualTo("0");
+        await Assert.That(result.Error.Message).Contains("step 0 (");
+        await Assert.That(goal.Step[1].Code.Count).IsGreaterThan(0);
+        await Assert.That(goal.Step[2].Code.Count).IsGreaterThan(0);
+    }
+
     // A variable in a closed-set slot (a choice) stays the variable: the build answer holds it, and the check passes it.
     [Test]
     public async Task AVariableInAChoiceSlot_StaysTheVariable()
