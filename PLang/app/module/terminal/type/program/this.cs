@@ -44,7 +44,7 @@ public sealed partial class @this(IProgram asked)
         var context = asked.Context;
         var permission = asked.Permission;
         // what the step wrote, before it is read: a %ref% names permissions even when it holds none
-        var named = permission?.Peek() is { } written and not global::app.type.item.@null.@this ? written : null;
+        var named = permission?.Peek() is { } item and not global::app.type.item.@null.@this ? item : null;
         var given = permission == null ? null : await permission.Value();
         // permissions named but not read (one that is no permission, a %ref% holding none) stop the start — a step that
         // gives a program permissions never runs it free; to run free, the step leaves Permission out
@@ -72,7 +72,7 @@ public sealed partial class @this(IProgram asked)
         // nothing its caller handed it: only then may a goal that ships with plang start it unasked (decision 579; any
         // other variable there is the caller's, and is asked as the caller)
         static bool Written(Data? given)
-            => given?.Peek() is not { } held || held.Variable.All(global::app.type.item.path.@this.IsAnchor);
+            => given?.Peek() is not { } item || item.Variable.All(global::app.type.item.path.@this.IsAnchor);
         var named = Written(app) && Written(parameter) && Written(environment) && Written(workingDirectory)
             && Written(clean) && Written(keep);
         var cleanStart = clean != null && (await clean.Value())?.Value == true;
@@ -95,9 +95,9 @@ public sealed partial class @this(IProgram asked)
                 }
 
         // what a clean start keeps of plang's own environment: names, each a plain variable name, never a value
-        var kept = keep == null || !await keep.ToBooleanAsync() ? [] : ((await keep.Value())!.Clr<List<object?>>() ?? [])
+        var names = keep == null || !await keep.ToBooleanAsync() ? [] : ((await keep.Value())!.Clr<List<object?>>() ?? [])
             .Select(k => k?.ToString() ?? "").ToList();
-        if (kept.FirstOrDefault(k => !System.Text.RegularExpressions.Regex.IsMatch(k, "^[A-Za-z_][A-Za-z0-9_]*$")) is { } bad)
+        if (names.FirstOrDefault(k => !System.Text.RegularExpressions.Regex.IsMatch(k, "^[A-Za-z_][A-Za-z0-9_]*$")) is { } bad)
             return context.Error(new ActionError($"Keep names variables to keep, by name: '{bad}' is no variable name.", "KeepInvalid", 400));
 
         var name = (await app.Value())!.Clr<string>()!;
@@ -125,11 +125,11 @@ public sealed partial class @this(IProgram asked)
         // it): only the sandbox's base, what it keeps of plang's by name, and what the step gives it
         if (held || cleanStart)
         {
-            var own = new Dictionary<string, string?>(info.Environment);
+            var variables = new Dictionary<string, string?>(info.Environment);
             info.Environment.Clear();
             foreach (var (key, value) in Sandbox.Environment) info.Environment[key] = value;
-            foreach (var variable in kept)
-                if (own.TryGetValue(variable, out var value) && value != null) info.Environment[variable] = value;
+            foreach (var variable in names)
+                if (variables.TryGetValue(variable, out var value) && value != null) info.Environment[variable] = value;
                 else if (context.App.Debug is { } debug) await debug.Write($"{program.Name}: plang has no {variable} to keep");
         }
         // a start trusted by its origin (an os goal naming it all) takes nothing of the actor's settings that changes what
@@ -140,8 +140,8 @@ public sealed partial class @this(IProgram asked)
         var env = trusted || cleanStart ? new() : (await context.Setting.Get<setting.@this>()).Environment.Clr<Dictionary<string, object?>>() ?? new();
         // a step that writes no Environment reads the setting's through its property — for a trusted or clean start that
         // is the same side door: it takes only what the step itself wrote
-        var written = asking?.Property["Environment"] != null || environment?.Peek() is { IsNull: false } && asking == null;
-        if (environment != null && (written || !(trusted || cleanStart)) && await environment.ToBooleanAsync())
+        var isWritten = asking?.Property["Environment"] != null || environment?.Peek() is { IsNull: false } && asking == null;
+        if (environment != null && (isWritten || !(trusted || cleanStart)) && await environment.ToBooleanAsync())
             foreach (var (key, value) in (await environment.Value())!.Clr<Dictionary<string, object?>>() ?? new())
                 env[key] = value;
         foreach (var (key, value) in env) info.Environment[key] = value?.ToString();

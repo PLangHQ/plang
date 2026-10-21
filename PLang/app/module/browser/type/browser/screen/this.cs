@@ -220,8 +220,8 @@ public sealed class @this : browser.@this
     {
         if (await Readable(url, context) is { } refused) return refused;
         var before = (await Cdp.Pages()).Select(p => p.target).ToHashSet();
-        var found = await context.App.goal.list.Find("/system/browser/Window", context.call.Goal);
-        if (!found.Success || await found.Value() is not { } goal) return found;
+        var data = await context.App.goal.list.Find("/system/browser/Window", context.call.Goal);
+        if (!data.Success || await data.Value() is not { } goal) return data;
         var ran = await goal.Start(context, []);
         if (!ran.Success) return ran;
         // the new blank window: a page DevTools lists now that it didn't before

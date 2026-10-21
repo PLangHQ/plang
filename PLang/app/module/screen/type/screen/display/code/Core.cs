@@ -249,10 +249,10 @@ internal sealed class WlBuffer(Client client, uint id, WlShmPool pool, int offse
     {
         var opaque = format != 0;
         var all = new Rect(0, 0, width, height);
-        var kept = into is { Empty: false } p && p.Rect.Width == width && p.Rect.Height == height && p.Opaque == opaque;
-        var picture = kept ? into! : new Picture(all, GC.AllocateUninitializedArray<byte>(width * height * 4, pinned: true), opaque);
+        var isSame = into is { Empty: false } p && p.Rect.Width == width && p.Rect.Height == height && p.Opaque == opaque;
+        var picture = isSame ? into! : new Picture(all, GC.AllocateUninitializedArray<byte>(width * height * 4, pinned: true), opaque);
         if (pool.Memory == IntPtr.Zero || offset + (long)stride * (height - 1) + width * 4 > pool.Size) return picture;
-        if (!kept || damage.Count is 0 or > 16) Copy(all, picture);
+        if (!isSame || damage.Count is 0 or > 16) Copy(all, picture);
         else foreach (var changed in damage) Copy(changed.Clip(all), picture);
         return picture;
     }

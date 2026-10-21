@@ -45,13 +45,13 @@ public class Default : IArchive
         // written to the path as it is packed, never held whole; a pack that fails leaves nothing there
         var pipe = new System.IO.Pipelines.Pipe();
         var writing = Write(to, pipe, context);
-        (data.@this result, global::app.module.archive.type.archive.held.@this? held) made;
+        (data.@this result, global::app.module.archive.type.archive.held.@this? held) answer;
         await using (var into = pipe.Writer.AsStream())
-            made = await format.Pack(packing, value!, into, level, context);
-        var written = await writing;
-        if (made.result.Success && written.Success) return context.Ok<global::app.type.item.path.@this>(to);
+            answer = await format.Pack(packing, value!, into, level, context);
+        var file = await writing;
+        if (answer.result.Success && file.Success) return context.Ok<global::app.type.item.path.@this>(to);
         await to.Delete(context);
-        return made.result.Success ? written : made.result;
+        return answer.result.Success ? file : answer.result;
     }
 
     // the pipe's bytes written to the path as they come; once the path has them all — or refused them — the pipe's

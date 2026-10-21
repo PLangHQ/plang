@@ -60,9 +60,9 @@ public sealed class @this : screen.@this
                 .Set("where", where.Success ? await where.Value() : null)
                 .Set("error", error.Success && await error.Value() is { IsNull: false } what ? what : (Text)System.Text.Encoding.UTF8.GetString(sent));
             var value = new global::app.data.@this("error", record, context: context);
-            using var written = new MemoryStream();
-            if (!(await json.Encode(written, value, context)).Success) continue;
-            var line = System.Text.Encoding.UTF8.GetString(written.ToArray()) + "\n";
+            using var stream = new MemoryStream();
+            if (!(await json.Encode(stream, value, context)).Success) continue;
+            var line = System.Text.Encoding.UTF8.GetString(stream.ToArray()) + "\n";
             await (await (await file.Exists(context)).ToBooleanAsync() ? file.Append(line, context) : file.WriteText(line, context));
         }
     }

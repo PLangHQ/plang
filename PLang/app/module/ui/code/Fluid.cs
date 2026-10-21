@@ -121,7 +121,7 @@ public class Fluid : ITemplate
         // variable-binding loops below and every member or element a render reaches.
         var culture = (await action.Context.Setting.Get<global::app.setting.@this>()).Culture;
         options.ValueConverters.Add(value =>
-            value is global::app.type.item.@this held ? Item.Liquid(held, action.Context, options, culture) : null);
+            value is global::app.type.item.@this item ? Item.Liquid(item, action.Context, options, culture) : null);
 
         // `{{ x | json }}` writes the value through plang's json format, as the json writer shows it, compact
         // (liquid's `json: true` indent is not honoured). Liquid's own json filter reflects the C# object behind
@@ -131,8 +131,8 @@ public class Fluid : ITemplate
             var value = new global::app.data.@this("", input is Item plang ? plang.Held
                 : global::app.type.item.@this.Create(input.ToObjectValue(), action.Context), context: action.Context);
             using var json = new MemoryStream();
-            var written = await action.Context.App.type.list.Mime("application/json").Encode(json, value, action.Context);
-            if (!written.Success) throw new AppException(written.Error!);
+            var encoded = await action.Context.App.type.list.Mime("application/json").Encode(json, value, action.Context);
+            if (!encoded.Success) throw new AppException(encoded.Error!);
             return new StringValue(System.Text.Encoding.UTF8.GetString(json.ToArray()));
         });
 
@@ -143,8 +143,8 @@ public class Fluid : ITemplate
             var value = new global::app.data.@this("", input is Item plang ? plang.Held
                 : global::app.type.item.@this.Create(input.ToObjectValue(), action.Context), context: action.Context);
             using var text = new MemoryStream();
-            var written = await action.Context.App.type.list.Mime("text/plain").Encode(text, value, action.Context);
-            if (!written.Success) throw new AppException(written.Error!);
+            var encoded = await action.Context.App.type.list.Mime("text/plain").Encode(text, value, action.Context);
+            if (!encoded.Success) throw new AppException(encoded.Error!);
             return new StringValue(System.Text.Encoding.UTF8.GetString(text.ToArray()));
         });
 
@@ -325,28 +325,28 @@ public class Fluid : ITemplate
         /// own error, and one still waiting on I/O is refused, never blocked on.</summary>
         public override string ToStringValue()
         {
-            var written = new MemoryStream();
-            var text = Writer(written);
+            var stream = new MemoryStream();
+            var text = Writer(stream);
             // liquid asks for the text synchronously (ToStringValue has no async form), so the write is never awaited
             // here: one that hasn't completed at once is refused, and keeps the stream it is still writing into
             var output = item.Output(text);
             if (!output.IsCompleted) throw new AppException(new global::app.error.@this(
                 "a template shows a value whose output waits on I/O — read it first", "TemplateValueUnread", 400));
-            using (written)
+            using (stream)
             {
                 // completed: a write that failed re-raises its own error
                 output.GetAwaiter().GetResult();
-                return System.Text.Encoding.UTF8.GetString(written.ToArray());
+                return System.Text.Encoding.UTF8.GetString(stream.ToArray());
             }
         }
 
         public override async ValueTask WriteToAsync(TextWriter writer, System.Text.Encodings.Web.TextEncoder encoder,
             System.Globalization.CultureInfo cultureInfo)
         {
-            using var written = new MemoryStream();
-            var text = Writer(written);
+            using var stream = new MemoryStream();
+            var text = Writer(stream);
             await item.Output(text);
-            writer.Write(encoder.Encode(System.Text.Encoding.UTF8.GetString(written.ToArray())));
+            writer.Write(encoder.Encode(System.Text.Encoding.UTF8.GetString(stream.ToArray())));
         }
 
         // plang's text writer over the stream, its numbers in the render's culture
@@ -365,7 +365,7 @@ public class Fluid : ITemplate
         /// value the render's context makes of it.</summary>
         public override bool Equals(FluidValue other)
         {
-            var that = other is Item held ? held.Held
+            var that = other is Item plang ? plang.Held
                 : other.IsNil() ? context.Null().Peek()
                 : global::app.type.item.@this.Create(other.ToObjectValue(), context);
             var compared = item.Compare(that, context);
@@ -436,9 +436,9 @@ public class Fluid : ITemplate
         if (string.IsNullOrEmpty(goalName))
             throw new global::app.error.AppException("callGoal requires a goal name", "MissingGoalName", 400);
 
-        var found = await app.goal.list.Find(goalName);
-        if (!found.Success) throw new global::app.error.AppException(found.Error!);
-        if (found.Peek() is not global::app.goal.@this goal)
+        var data = await app.goal.list.Find(goalName);
+        if (!data.Success) throw new global::app.error.AppException(data.Error!);
+        if (data.Peek() is not global::app.goal.@this goal)
             throw new global::app.error.GoalNotFoundException(goalName);
 
         var result = await goal.Start(plangContext);

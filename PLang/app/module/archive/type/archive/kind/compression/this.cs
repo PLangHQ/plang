@@ -58,8 +58,8 @@ public abstract class @this : kind.@this
             if (at == null) return refused ?? context.Error(new global::app.error.ServiceError(
                 $"an archived {held.Of} named {held.Name} has no place inside {into.Raw}", "UnpackFailed", 400));
             await Clear(at, context);
-            var written = await at.Write(read, context);
-            return written.Success ? context.Ok<global::app.type.item.path.@this>(at) : written;
+            var file = await at.Write(read, context);
+            return file.Success ? context.Ok<global::app.type.item.path.@this>(at) : file;
         }
         catch (global::app.error.AppException refused)
         {

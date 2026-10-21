@@ -61,8 +61,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// program, its pipe a channel; or why not.</summary>
     private protected static async Task<(Program? program, global::app.data.@this? failed)> Started(string goal, global::app.actor.context.@this context)
     {
-        var found = await context.App.goal.list.Find("/system/browser/" + goal, context.call.Goal);
-        if (!found.Success || await found.Value() is not { } starts) return (null, found.Success ? Fail(context, $"No /system/browser/{goal} goal", "BrowserNotFound", 404) : found);
+        var data = await context.App.goal.list.Find("/system/browser/" + goal, context.call.Goal);
+        if (!data.Success || await data.Value() is not { } starts) return (null, data.Success ? Fail(context, $"No /system/browser/{goal} goal", "BrowserNotFound", 404) : data);
         var ran = await starts.Start(context, []);
         if (!ran.Success) return (null, ran);
         if (await ran.Value() is not Program { pipe: not null } program)

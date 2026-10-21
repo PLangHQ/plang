@@ -49,8 +49,8 @@ public partial class Set : IContext, IScope, IKeep
         // here, where a strict type asks for it — through the value's Data, which decodes the line's own
         // slice with its context.
         if (Type?.Peek() is global::app.type.@this t && t.Strict && !t.kind.IsEmpty && !Value.HasVariable
-            && await Value.Value() is { } held
-            && (held is global::app.type.item.@this value ? value.Backing : held) is { } valueBacking)
+            && await Value.Value() is { } item
+            && (item is global::app.type.item.@this value ? value.Backing : item) is { } valueBacking)
         {
             var clr = t.ClrType;
             if (clr != null && typeof(global::app.data.IKindValidatable).IsAssignableFrom(clr))
@@ -70,9 +70,9 @@ public partial class Set : IContext, IScope, IKeep
 
         // A literal is made as the type the step declares, here at build: one that doesn't make it (`"30s" as iso
         // duration`) is the step's error, with the type's own reason, so the LLM fixes the step. A %var% defers to Run.
-        if (Type?.Peek() is global::app.type.@this declared && !Value.HasVariable && await Value.Value() is { } literal)
+        if (Type?.Peek() is global::app.type.@this type && !Value.HasVariable && await Value.Value() is { } literal)
         {
-            try { Context.App.type.list[declared, Context].Make(literal, Context); }
+            try { Context.App.type.list[type, Context].Make(literal, Context); }
             catch (global::app.error.AppException refused) { return refused.Error; }
         }
         return null;
@@ -174,13 +174,13 @@ public partial class Set : IContext, IScope, IKeep
             // The developer named the type — an unknown name is their error, answered as plang's.
             var declaredName = (typeValue as global::app.type.@this)?.Name ?? typeValue.ToString()!;
             var named = await Context.App.type.Get(declaredName, Context);
-            if (!named.Success || await named.Value() is not { } declared)
+            if (!named.Success || await named.Value() is not { } entity)
                 return Context.Error(
                     new global::app.error.ServiceError($"Unknown type '{declaredName}'", "UnknownType", 400));
             // The declared type through the types: its item class, its kind canonicalised
             // (`markdown` → `md`, `jpeg` → `jpg`). The declared type object is the program's (shared
             // by every run), so a changed kind is this run's own type object.
-            var type = typeValue is global::app.type.@this written ? Context.App.type.list[written, Context] : declared;
+            var type = typeValue is global::app.type.@this hint ? Context.App.type.list[hint, Context] : entity;
             var typeName = type.Name;
             var targetType = type.ClrType;
 
@@ -189,8 +189,8 @@ public partial class Set : IContext, IScope, IKeep
             // unread, and is no new birth. Only a value that isn't the type is opened and converted below
             // (a re-kind and a strict declaration go on too).
             var incoming = await Value.Follow(Context);
-            if (!type.Strict && incoming.Peek() is { IsNull: false } held && held.Is(type)
-                && (type.kind.IsEmpty || string.Equals(held.Type.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase)))
+            if (!type.Strict && incoming.Peek() is { IsNull: false } item && item.Is(type)
+                && (type.kind.IsEmpty || string.Equals(item.Type.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase)))
                 return await name.Set(Binding(name), Context);
 
             // Kind-derivation and the strict probe read the IN-MEMORY value only: a

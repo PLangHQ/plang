@@ -29,14 +29,14 @@ public sealed class @this : query.@this
                     $"'{entry.Name}' is no part of a query — its parts are {Names}", "QueryInvalid", 400));
                 return null;
             }
-            if (make(entry, data, context) is not { } made)
+            if (make(entry, data, context) is not { } clause)
             {
                 // the clause's why, said as the clause's: "where: …"
                 var why = data.Error!;
                 data.Fail(new global::app.error.@this($"{entry.Name}: {why.Message}", why.Key, why.Status) { list = [why] });
                 return null;
             }
-            clauses.Add(made);
+            clauses.Add(clause);
         }
         if (clauses.Count == 0)
         {

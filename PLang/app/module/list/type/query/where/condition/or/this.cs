@@ -20,20 +20,20 @@ public sealed class @this : condition.@this
         // the rows' elements held once, as Data: a condition keeps these very elements, so one kept is known by
         // reference
         var elements = rows.Items(context).ToList();
-        var held = new List(elements, rows.Type);
-        var kept = new HashSet<Data>(ReferenceEqualityComparer.Instance);
+        var list = new List(elements, rows.Type);
+        var matches = new HashSet<Data>(ReferenceEqualityComparer.Instance);
         foreach (var condition in _condition)
         {
-            var answered = await condition.Keep(held, context);
+            var answered = await condition.Keep(list, context);
             if (!answered.Success) return answered;
             var one = await answered.Use<List>(left =>
             {
-                foreach (var element in left.Items(context)) kept.Add(element);
+                foreach (var element in left.Items(context)) matches.Add(element);
                 return System.Threading.Tasks.Task.FromResult(answered);
             });
             if (!one.Success) return one;
         }
-        return await context.App.type.list["list"].Create(elements.Where(kept.Contains).ToList(), context);
+        return await context.App.type.list["list"].Create(elements.Where(matches.Contains).ToList(), context);
     }
 
     internal override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer)

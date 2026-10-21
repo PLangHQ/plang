@@ -17,7 +17,7 @@ public sealed class @this : query.@this
     /// <summary>The query's <paramref name="where"/>: its condition; one that doesn't read is why on <c>data</c>. Born
     /// holding the app's <c>{query, where}</c>.</summary>
     internal static @this? Create(Data where, Data data, global::app.actor.context.@this context)
-        => condition.@this.Create(where, data, context) is { } kept ? new(kept, context.App.type.list[typeof(@this)]) : null;
+        => condition.@this.Create(where, data, context) is { } predicate ? new(predicate, context.App.type.list[typeof(@this)]) : null;
 
     internal override int Rank => 0;
 

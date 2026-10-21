@@ -653,11 +653,11 @@ internal sealed class Window
             case WM_DESTROY: RemoveClipboardFormatListener(h); PostQuitMessage(0); return IntPtr.Zero;
 
             case WM_MOUSEMOVE:
-                var held = Held(wParam);
+                var button = Held(wParam);
                 var now = Environment.TickCount64;
-                if (held == "none" && now - lastMove < 16) return IntPtr.Zero;   // moves are many: one per frame is enough
+                if (button == "none" && now - lastMove < 16) return IntPtr.Zero;   // moves are many: one per frame is enough
                 lastMove = now;
-                Mouse("move", lParam, held, 0);
+                Mouse("move", lParam, button, 0);
                 return IntPtr.Zero;
             case WM_LBUTTONDOWN: SetCapture(h); Mouse("down", lParam, "left", 1); return IntPtr.Zero;
             case WM_LBUTTONDBLCLK: Mouse("down", lParam, "left", 2); return IntPtr.Zero;

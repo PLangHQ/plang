@@ -64,9 +64,9 @@ public sealed class OpenAi : ILlm
         // --- Config: the llm module's settings — a saved key wins, else its environment's ---
         var llm = await context.Setting.Get<global::app.module.llm.setting.@this>();
         var endpoint = llm.Endpoint.ToString();
-        var held = await llm.Asked(context);
-        if (!held.Success) return held;
-        var apiKey = (await held.Value())!.ToString();
+        var secret = await llm.Asked(context);
+        if (!secret.Success) return secret;
+        var apiKey = (await secret.Value())!.ToString();
         var model = ((action.Model == null ? null : await action.Model.Value())?.ToString()) is { Length: >0 } __m ? __m : llm.Model.ToString();
 
         // --- Validate ---
@@ -952,12 +952,12 @@ public sealed class OpenAi : ILlm
             if (opened.Peek() is not { IsSequence: false, IsLeaf: false } members)
                 return [context.Error(new ServiceError($"the arguments of {Name} are not an object of named arguments", "ArgumentsNotAnObject", 400))];
 
-            var declared = Declared.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var names = Declared.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
             foreach (var (_, argument) in members.EnumerateItems(context))
             {
-                if (!declared.Contains(argument.Name))
+                if (!names.Contains(argument.Name))
                     return [context.Error(new ServiceError(
-                        $"'{argument.Name}' is not an argument of {Name}" + (declared.Count == 0 ? " — it takes none" : $" — it takes {string.Join(", ", declared)}"),
+                        $"'{argument.Name}' is not an argument of {Name}" + (names.Count == 0 ? " — it takes none" : $" — it takes {string.Join(", ", names)}"),
                         "UnknownArgument", 400))];
                 arguments.Add(argument);
             }
@@ -973,11 +973,11 @@ public sealed class OpenAi : ILlm
         var tools = new List<Tool>();
         foreach (var row in list.Items(action.Context))
         {
-            if (row.Peek() is not global::app.goal.step.action.@this held) continue;
-            if ((await held.Bind(action.Context)).Handler is not global::app.module.goal.Call call) continue;
+            if (row.Peek() is not global::app.goal.step.action.@this tool) continue;
+            if ((await tool.Bind(action.Context)).Handler is not global::app.module.goal.Call call) continue;
             // a tool goes by its goal's name as written, the leaf of an address
-            var goal = held["Name"]?.Value?.RawText ?? "";
-            tools.Add(new Tool(held, call, goal[(goal.LastIndexOf('/') + 1)..]));
+            var goal = tool["Name"]?.Value?.RawText ?? "";
+            tools.Add(new Tool(tool, call, goal[(goal.LastIndexOf('/') + 1)..]));
         }
         return tools;
     }

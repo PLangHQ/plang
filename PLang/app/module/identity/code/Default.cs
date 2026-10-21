@@ -205,8 +205,8 @@ public sealed class Default : IIdentity
     {
         var (items, err) = await LoadAll(action);
         if (err != null) return action.Context.Error<Identity>(err);
-        return items!.Find(i => string.Equals(i.Name, name, StringComparison.Ordinal)) is { } found
-            ? action.Context.Ok<Identity>(found)
+        return items!.Find(i => string.Equals(i.Name, name, StringComparison.Ordinal)) is { } identity
+            ? action.Context.Ok<Identity>(identity)
             : action.Context.Error<Identity>(new ActionError($"Identity '{name}' not found", "NotFound", 404));
     }
 

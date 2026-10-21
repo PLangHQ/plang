@@ -87,11 +87,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         string line;
         if (Plang)
         {
-            using var written = new MemoryStream();
+            using var stream = new MemoryStream();
             // what is sent is the value itself (what %answer% names), signed as it is — never the reference
-            var encoded = await PlangFormat(context).Encode(written, context.Ok(await data.Value()), context);
+            var encoded = await PlangFormat(context).Encode(stream, context.Ok(await data.Value()), context);
             if (!encoded.Success) return encoded;
-            line = Encoding.UTF8.GetString(written.ToArray()).TrimEnd('\r', '\n');
+            line = Encoding.UTF8.GetString(stream.ToArray()).TrimEnd('\r', '\n');
         }
         else
         {
@@ -99,9 +99,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             if (value is Text t) line = t.Clr<string>() ?? "";
             else
             {
-                using var written = new MemoryStream();
-                await Text.Encode(written, context.Ok(value), context, global::app.View.Out, null, CancellationToken.None);
-                line = Encoding.UTF8.GetString(written.ToArray()).ReplaceLineEndings(" ");
+                using var stream = new MemoryStream();
+                await Text.Encode(stream, context.Ok(value), context, global::app.View.Out, null, CancellationToken.None);
+                line = Encoding.UTF8.GetString(stream.ToArray()).ReplaceLineEndings(" ");
             }
         }
         var sent = await Write(line, context);

@@ -69,10 +69,10 @@ public partial class OnEvent : IContext
 
         // each carrier is opened through its door: the first that doesn't resolve (a %variable% holding nothing, a
         // name that is none of the choice's) is the answer
-        var own = item.Own();
-        var @event = own[named.Name]!;
+        var on = item.Own();
+        var @event = on[named.Name]!;
         return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(call =>
-            Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(own.Bind(named.Name, when.Value,
+            Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(on.Bind(named.Name, when.Value,
                 side => new global::app.@event.binding.action.@this(side, @event, call, Context.Actor!, scope.Value))))))));
     }
 }

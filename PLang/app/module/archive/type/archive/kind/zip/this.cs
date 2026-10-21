@@ -42,10 +42,10 @@ public sealed class @this : bundle.@this
         await using var zip = new ZipArchive(into, ZipArchiveMode.Create, leaveOpen: true);
         await foreach (var entry in entries.WithCancellation(ct))
         {
-            var written = zip.CreateEntry(entry.Kind == bundle.entry.Kind.Folder ? entry.Name + "/" : entry.Name, compression.@this.Of(level));
-            written.ExternalAttributes = ((int)entry.Mode | (entry.Kind == bundle.entry.Kind.Link ? Link : 0)) << 16;
+            var member = zip.CreateEntry(entry.Kind == bundle.entry.Kind.Folder ? entry.Name + "/" : entry.Name, compression.@this.Of(level));
+            member.ExternalAttributes = ((int)entry.Mode | (entry.Kind == bundle.entry.Kind.Link ? Link : 0)) << 16;
             if (entry.Kind == bundle.entry.Kind.Folder) continue;
-            await using var to = written.Open();
+            await using var to = member.Open();
             if (entry.Kind == bundle.entry.Kind.Link) await to.WriteAsync(System.Text.Encoding.UTF8.GetBytes(entry.Target ?? ""), ct);
             else if (entry.Content != null) await entry.Content.CopyToAsync(to, ct);
         }

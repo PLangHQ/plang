@@ -82,10 +82,10 @@ public partial class Throw : IContext
         // The errors that caused this one are held whole as its causes — the same errors, never rebuilt from their
         // messages. A cause list holds errors only: anything else is refused, naming what it is.
         var causes = new List<global::app.error.@this>();
-        if (Cause != null && await Cause.Value() is { } held)
+        if (Cause != null && await Cause.Value() is { } errors)
         {
             var at = 0;
-            foreach (var (_, row) in held.EnumerateItems(Context))
+            foreach (var (_, row) in errors.EnumerateItems(Context))
             {
                 if (row.Peek() is not global::app.error.@this cause)
                     return Error(new global::app.error.ActionError(

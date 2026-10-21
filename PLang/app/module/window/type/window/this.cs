@@ -144,15 +144,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                     var named = await argument.Follow(context);
                     arguments.Set(new Data(argument.Name, await named.Value(), context: context));
                 }
-        using var written = new MemoryStream();
-        await global::app.type.item.text.@this.Encode(written, new Data("arguments", arguments, context: context), context, global::app.View.Out, null, CancellationToken.None);
+        using var stream = new MemoryStream();
+        await global::app.type.item.text.@this.Encode(stream, new Data("arguments", arguments, context: context), context, global::app.View.Out, null, CancellationToken.None);
         var goal = JsonValue.Create(name).ToJsonString();
         JsonElement reply;
         try
         {
             reply = await (await Page()).Evaluate(
                 $"(async()=>{{const goal=window[{goal}];if(typeof goal!=='function')throw new Error('The page has no goal '+{goal});" +
-                $"return await goal({System.Text.Encoding.UTF8.GetString(written.ToArray())});}})()", TimeSpan.FromMinutes(10));
+                $"return await goal({System.Text.Encoding.UTF8.GetString(stream.ToArray())});}})()", TimeSpan.FromMinutes(10));
         }
         catch (Exception ex) when (ex is TimeoutException or IOException)
         {

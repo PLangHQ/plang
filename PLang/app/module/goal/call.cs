@@ -66,9 +66,9 @@ public partial class Call : IContext
     private global::app.error.@this? Unnamed(global::app.type.item.@this value)
     {
         if (value.Rows(Context) is { } rows && rows.All(row => row.Name.Length > 0)) return null;
-        var written = __action?["Parameter"]?.Value?.RawText ?? value.ToString();
+        var text = __action?["Parameter"]?.Value?.RawText ?? value.ToString();
         return new global::app.error.@this(
-            $"Parameter takes a list of named arguments — write each argument as the step names it, [{{<the name before =>: {written}}}]: {written} alone is one value with no name, which binds nothing",
+            $"Parameter takes a list of named arguments — write each argument as the step names it, [{{<the name before =>: {text}}}]: {text} alone is one value with no name, which binds nothing",
             "ParameterUnnamed", 400);
     }
 

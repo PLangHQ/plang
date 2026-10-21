@@ -199,9 +199,9 @@ public sealed class @this : browser.@this
                 if (css == _lastCursor) return;
                 _lastCursor = css;
                 // the cursor writes itself: the line it is, beside the frames
-                using var written = new MemoryStream();
-                var encoded = await context.App.type.list.Mime("application/json").Encode(written, context.Ok(new cursor.@this(css)), context);
-                if (encoded.Success) await _emit!(Encoding.UTF8.GetString(written.ToArray()));
+                using var stream = new MemoryStream();
+                var encoded = await context.App.type.list.Mime("application/json").Encode(stream, context.Ok(new cursor.@this(css)), context);
+                if (encoded.Success) await _emit!(Encoding.UTF8.GetString(stream.ToArray()));
             }
             catch (Exception ex) when (ex is TimeoutException or JsonException or IOException or InvalidOperationException)
             {
