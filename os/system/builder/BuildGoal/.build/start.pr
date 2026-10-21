@@ -1611,7 +1611,7 @@
         },
         {
           "index": 2,
-          "text": "llm.query(Message=%fixMessages%, Model=\"gpt-5.4-nano\", Cache=%!build.setting.cache%, Conversation={continue: %answer%}); variable.set(Name=%answer%, Value=%!data%)",
+          "text": "llm.query(Message=%fixMessages%, Model=\"gpt-6-luna\", Temperature=1, Cache=%!build.setting.cache%, Conversation={continue: %answer%}); variable.set(Name=%answer%, Value=%!data%)",
           "line": {
             "number": 48,
             "indent": 0
@@ -1645,7 +1645,14 @@
                   "type": {
                     "name": "text"
                   },
-                  "value": "gpt-5.4-nano"
+                  "value": "gpt-6-luna"
+                },
+                {
+                  "name": "Temperature",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
                 },
                 {
                   "name": "Cache",
@@ -1692,13 +1699,6 @@
                 }
               ],
               "default": [
-                {
-                  "name": "temperature",
-                  "type": {
-                    "name": "number"
-                  },
-                  "value": 0
-                },
                 {
                   "name": "limit",
                   "type": {
@@ -1862,7 +1862,7 @@
         }
       ],
       "visibility": "Private",
-      "hash": "e9b2807de804b0710c38caf425fb8683b0e7dfe9aedb310821f16f516c16d8fc"
+      "hash": "6410380a0768731fffade4b514c0e4ce5667451017f54eb4c863ffa590c1ce1f"
     },
     {
       "name": "ConfirmNumbers",
