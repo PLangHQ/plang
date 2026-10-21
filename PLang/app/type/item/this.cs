@@ -753,7 +753,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>
     /// The raw byte form this value carries (binary's bytes, an image's loaded bytes,
     /// text's UTF-8 content), or null when the value has no byte face — a container
-    /// serializes through a format instead. Mirror of <see cref="RawText"/>.
+    /// serializes through a format instead. Mirror of <see cref="RawText"/>. Unlike <see cref="Plain"/>, a typed
+    /// value answers too (a text, an image): it is the value's byte face, not "the value is bytes".
     /// </summary>
     public virtual byte[]? RawBytes => null;
 
@@ -768,7 +769,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual bool IsLeaf => false;
 
     /// <summary>The plain bytes this value is — a file takes them as they are, whatever its name says. Null for a typed
-    /// value (a text, a read file, a structure): the file's format writes it.</summary>
+    /// value (a text, a read file, a structure): the file's format writes it. Unlike <see cref="RawBytes"/> (any value's
+    /// byte face), only a value that IS bytes, nothing typed, answers.</summary>
     public virtual byte[]? Plain => null;
 
     /// <summary>
