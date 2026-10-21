@@ -155,6 +155,37 @@ public class MatchTests
         await result.IsSuccess();
     }
 
+    // A refusal quotes the step's own text and the answer's, so the retry copies the step's: an answer whose variable
+    // doesn't close names the step's variable it should be.
+    [Test]
+    public async Task AnAnswerWhoseVariableDoesNotClose_IsRefused_NamingTheStepsVariable()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("set %x% = %!error.data[1]%"));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
+
+        var result = await Match(goal, "[0] variable.set(Name=%x%, Value=%!error.data[1%])", app.actor.list.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("the step writes `%!error.data[1]%`");
+        await Assert.That(result.Error!.Message).Contains("your answer has `%!error.data[1%]`");
+        await Assert.That(result.Error!.Message).Contains("copy it exactly");
+    }
+
+    // What the step writes and the answer dropped is quoted to be copied exactly.
+    [Test]
+    public async Task WhatTheStepWritesAndTheAnswerDropped_IsToBeCopiedExactly()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("set %Name% to \"each element is born typed\""));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
+
+        var result = await Match(goal, "[0] variable.set(Name=%Name%, Value=\"each element\")", app.actor.list.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("\"each element is born typed\" is in the step but not in your answer: copy it exactly");
+    }
+
     [Test]
     public async Task AVariableTheStepWrites_MissingFromTheAnswer_IsRefused()
     {
