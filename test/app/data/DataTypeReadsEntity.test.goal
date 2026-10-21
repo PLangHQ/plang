@@ -2,4 +2,4 @@ TestDataTypeReadsEntityAfterStamp
 - set %name% = "alice", type=text/plain
 - assert %name!type.name% equals "text"
 / text/plain is text's own format, not a kind of it: the type holds no kind
-- assert %name!type.kind% is empty
+- assert %name!type.kind% is null
