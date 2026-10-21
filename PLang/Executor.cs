@@ -123,7 +123,7 @@ namespace PLang
 				// The run's value is in memory, so the sync Configure sets it at once.
 				var cache = app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Cache;
 				if (cache.Value == global::app.module.cache.type.cache.skip)
-					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this(app.type.list[typeof(global::app.module.llm.setting.@this)]).Path + ".cache", app.actor.list.System.Context.Ok(cache));
+					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this(app.type.list[typeof(global::app.module.llm.setting.@this)]).Path + ".cache", cache);
 			}
 
 			// Set the goal file on system context — Start() reads it

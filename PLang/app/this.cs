@@ -349,8 +349,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         {
             var own = new global::app.setting.@this(type.list[typeof(global::app.setting.@this)]).Path;
             _ = actor.list.System.Setting.Set(own + ".environment",
-                new data.@this("environment", new global::app.type.item.text.@this(environment, type.list[typeof(global::app.type.item.text.@this)]),
-                    context: actor.list.System.Context));
+                new global::app.type.item.text.@this(environment, type.list[typeof(global::app.type.item.text.@this)]));
         }
 
         store = new global::app.store.sqlite.@this(

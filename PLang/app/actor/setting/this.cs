@@ -136,23 +136,23 @@ public sealed class @this : IDisposable
     /// This run's value at <paramref name="path"/> — a setting's path (<c>app.</c> left out or not) and then its option
     /// (<c>channel.setting.format</c>, <c>call.setting.diff.deep</c>), or the setting's alone with a dict of its
     /// options (<c>test.setting={"timeout":"5s"}</c>). What the command line writes (<c>--&lt;path&gt;=&lt;value&gt;</c>).
-    /// A path no setting answers to, an option the setting doesn't have, or a value its option can't take is refused —
-    /// nothing is written then. A Data value is held whole. Answers the setting written, at its defaults.
+    /// The value is what the caller holds (the command line's raw value, a row's, a plang value); the setting's own
+    /// walk makes it a plang value. A path no setting answers to, an option the setting doesn't have, or a value its
+    /// option can't take is refused — nothing is written then. Answers the setting written, at its defaults.
     /// </summary>
     public data.@this Set(string path, object? value)
     {
         var (setting, option, refused) = Place(path);
         if (refused != null) return _context.Error(refused);
-        var raw = value is data.@this given ? given.Peek() : value;
-        var options = option == null ? raw as IDictionary<string, object?> : Nested(option, raw);
+        // the setting's own path takes a dict of its options; an option's path takes its value
+        var options = option == null ? value as IDictionary<string, object?> : Nested(option, value);
         if (options == null)
             return _context.Error(new global::app.error.@this(
                 $"'{path}' is the setting {setting}: give it its options, {{\"option\": value}}, or name one ({path}.<option>).",
                 "TypeConversionFailed", 400));
         var fits = Make(setting)!.Apply(options, _context);
         if (!fits.Success) return fits;
-        if (option != null && value is data.@this whole) _values[$"{setting}.{option}"] = whole;
-        else Flatten(setting, options);
+        Flatten(setting, options);
         Move();
         return new data.@this(setting, Make(setting), context: _context);
     }
