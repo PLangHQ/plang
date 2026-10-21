@@ -35,7 +35,7 @@ namespace PLang
 			if (args.Length > 0 && args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
 				args = ["--build", .. args[1..]];
 
-			var (goalFile, parameters) = CommandLineParser.Parse(args);
+			var (positional, parameters) = CommandLineParser.Parse(args);
 
 			// The CLI is the one interactive terminal owner: opt out of the
 			// ctor's non-interactive auto-wire and bind real stdin explicitly so
@@ -102,11 +102,14 @@ namespace PLang
 				if (app.Debug.Activate() is { } refused) return (null, app.actor.list.System.Context.Error(refused));
 			}
 
-			// Test mode: its setting names the actor the run's session opens on.
+			// Test mode: its setting names the actor the run's session opens on. What it tests is the positional (a folder
+			// or a .test.goal), unless a path= is given; neither, the whole folder it starts in.
 			if (On("!test"))
 			{
+				// a folder or test named on the command line is the starting folder's, resolved once here
 				if (!parameters.ContainsKey("path"))
-					await userVars.Set("path", startupDirectory);
+					await userVars.Set("path", positional == null ? startupDirectory
+						: global::app.type.item.path.@this.Resolve("/" + positional.TrimStart('/', '\\'), app.actor.list.User.Context));
 				app.test.list.Open();
 			}
 
@@ -126,15 +129,16 @@ namespace PLang
 					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this(app.type.list[typeof(global::app.module.llm.setting.@this)]).Path + ".cache", cache);
 			}
 
-			// Set the goal file on system context — Start() reads it
-			// Tester mode routes to system test runner instead of Start.goal
-			if (app.Mode.Value == global::app.Mode.Test && goalFile == "Start.goal")
+			// Set the goal file on system context — Start() reads it. Test mode runs the system test runner on what it
+			// tests.
+			if (app.Mode.Value == global::app.Mode.Test)
 			{
 				await app.actor.list.System.Context.Variable.Set("goalFile", "/system/test.goal");
 				return (app, null);
 			}
 
-			// the .goal to run; the goal finds its own .pr
+			// the .goal to run (Start when none is named); the goal finds its own .pr
+			var goalFile = positional ?? "Start";
 			var source = goalFile.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? goalFile : goalFile + ".goal";
 			await app.actor.list.System.Context.Variable.Set("goalFile", "/" + source.TrimStart('/', '\\'));
 

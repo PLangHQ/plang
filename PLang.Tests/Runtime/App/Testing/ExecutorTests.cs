@@ -202,6 +202,35 @@ public class ExecutorTests
         await using var _ = engine;
     }
 
+    // In test mode the positional is what to test, wherever it stands: --test module/math and module/math --test both
+    // test module/math (a path= given still wins).
+    [Test]
+    [Arguments(new[] { "--test", "module/math" }, "module/math")]
+    [Arguments(new[] { "module/math", "--test" }, "module/math")]
+    [Arguments(new[] { "--test", "module/math/AddRoundTripDecimal.test.goal" }, "module/math/AddRoundTripDecimal.test.goal")]
+    [Arguments(new[] { "--test", "path=module/list", "module/math" }, "module/list")]
+    public async Task Configure_TestWithAPositional_TestsThatPath(string[] args, string tested)
+    {
+        var (engine, error) = await NewExecutor().Configure(args);
+        await using var _ = engine;
+
+        await Assert.That(error).IsNull();
+        await Assert.That(engine!.test.list.Session != null).IsTrue();
+        await Assert.That((string?)await engine.actor.list.System.Context.Variable.GetValue("goalFile")).IsEqualTo("/system/test.goal");
+        await Assert.That((await engine.actor.list.User.Context.Variable.GetValue("path"))?.ToString()).EndsWith(tested);
+    }
+
+    // Run mode: the positional is the goal to run, wherever it stands.
+    [Test]
+    public async Task Configure_APositionalAfterAFlag_IsTheGoalToRun()
+    {
+        var (engine, error) = await NewExecutor().Configure(new[] { "--call.setting.timing=true", "sub/Run" });
+        await using var _ = engine;
+
+        await Assert.That(error).IsNull();
+        await Assert.That((string?)await engine!.actor.list.System.Context.Variable.GetValue("goalFile")).IsEqualTo("/sub/Run.goal");
+    }
+
     // The command line mirrors the path: --<path>=<value> is this run's value for %!<path>%, `app.` optional, or a dict
     // at the setting's own path for several options at once.
     [Test]

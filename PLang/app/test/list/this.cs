@@ -96,6 +96,12 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         actor.context.@this context)
         => pattern.Use(match => subfolder.Use(async under =>
         {
+            // a root that is a test file is that one test
+            if (root is global::app.type.item.path.file.@this one && await one.Stat(context) is { Success: true } stat
+                && (await stat.Value())?.IsFile == true)
+                return (data.@this)context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
+                    new global::app.type.item.list.@this<global::app.test.@this>([new data.@this("", await Of(one, context), context: context)],
+                        context.App.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]));
             var listed = await root.List(match.ToString(), under.Value == global::app.type.item.path.subfolder.include, context);
             if (!listed.Success) return listed;
             var found = new List<data.@this>();
