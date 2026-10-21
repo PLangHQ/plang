@@ -122,26 +122,21 @@ public sealed class @this
         var user = _context.App.actor.list.User;
         var types = _context.App.type.list;
         var step = Setting.Step?.ToInt32();
-        // with no goal named, every goal is debugged and a step named is that step of each; with a goal named, debug
-        // attaches where it starts (or at its step named) and follows what it calls
-        var every = Every;
+        // debug attaches where the goal named starts (no goal named is every goal), or at its step named, and follows
+        // what it calls
         var steps = types["step"].Own();
         var goals = types["goal"].Own();
 
-        if (!every)
-        {
-            // the marks, bound before the watchers so a frame is marked before it is shown
-            goals.Bind("start", When.before, (item, _, context) => Mark((global::app.goal.@this)item, context, step), user,
-                global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.@this);
-            if (step != null)
-                steps.Bind("start", When.before, (item, _, context) => Mark((global::app.goal.step.@this)item, context, step.Value), user,
-                    global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.step.@this);
-        }
-        var shown = every ? step : null;
+        // the marks, bound before the watchers so a frame is marked before it is shown
+        goals.Bind("start", When.before, (item, _, context) => Mark((global::app.goal.@this)item, context, step), user,
+            global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.@this);
+        if (step != null)
+            steps.Bind("start", When.before, (item, _, context) => Mark((global::app.goal.step.@this)item, context, step.Value), user,
+                global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.step.@this);
 
-        steps.Bind("start", When.before, (_, _, context) => BeforeStepHandler(context, shown), user, global::app.@event.binding.Scope.actor,
+        steps.Bind("start", When.before, (_, _, context) => BeforeStepHandler(context), user, global::app.@event.binding.Scope.actor,
             (item, context) => item is global::app.goal.step.@this && Debugged(context));
-        steps.Bind("start", When.after, (_, _, context) => AfterStepHandler(context, shown), user, global::app.@event.binding.Scope.actor,
+        steps.Bind("start", When.after, (_, _, context) => AfterStepHandler(context), user, global::app.@event.binding.Scope.actor,
             (item, context) => item is global::app.goal.step.@this && Debugged(context));
 
         goals.Bind("start", When.after, (_, _, context) => AfterGoalHandler(context), user, global::app.@event.binding.Scope.actor,
@@ -150,9 +145,9 @@ public sealed class @this
         if (Setting.Level.Value == global::app.module.debug.Level.Action)
         {
             var actions = types["action"].Own();
-            actions.Bind("start", When.before, (_, _, context) => BeforeActionHandler(context, shown), user, global::app.@event.binding.Scope.actor,
+            actions.Bind("start", When.before, (_, _, context) => BeforeActionHandler(context), user, global::app.@event.binding.Scope.actor,
                 (_, context) => Debugged(context));
-            actions.Bind("start", When.after, (_, _, context) => AfterActionHandler(context, shown), user, global::app.@event.binding.Scope.actor,
+            actions.Bind("start", When.after, (_, _, context) => AfterActionHandler(context), user, global::app.@event.binding.Scope.actor,
                 (_, context) => Debugged(context));
         }
         return null;
@@ -161,9 +156,6 @@ public sealed class @this
     // The frames debug attached at — a named goal's own (or its step named), and each goal one of them calls — held
     // by frame: a frame that ends leaves on its own.
     private readonly System.Runtime.CompilerServices.ConditionalWeakTable<global::app.call.@this, @this> _marked = new();
-
-    // Whether no goal is named: every goal is debugged (`*`, or none given).
-    private bool Every => Setting.Goal?.ToString() is not { Length: > 0 } pattern || pattern == "*";
 
     // A goal starting, in its own frame: marked when it is the goal named (and no step is), or when its caller's run
     // is marked — it is called from inside what debug follows.
@@ -183,14 +175,16 @@ public sealed class @this
         return Task.FromResult(context.Ok());
     }
 
-    // Whether what runs now is debugged: everything when no goal is named, else when its goal's run holds a mark.
+    // Whether what runs now is debugged: its goal's run holds a mark.
     private bool Debugged(actor.context.@this context)
-        => Every || context.call.Current?.Within.Any(frame => _marked.TryGetValue(frame, out _)) == true;
+        => context.call.Current?.Within.Any(frame => _marked.TryGetValue(frame, out _)) == true;
 
-    // Whether <paramref name="goal"/> is the goal named: the goals a `prefix*` starts, or the one named (case aside).
+    // Whether <paramref name="goal"/> is a goal named: every goal when none is (or `*`), the goals a `prefix*` starts, or
+    // the one named (case aside).
     private bool Watches(global::app.goal.@this? goal)
     {
         var pattern = Setting.Goal?.ToString() ?? "";
+        if (pattern.Length == 0 || pattern == "*") return true;
         var name = goal?.Name ?? "";
         return pattern.EndsWith('*')
             ? name.StartsWith(pattern[..^1], StringComparison.OrdinalIgnoreCase)
@@ -216,11 +210,10 @@ public sealed class @this
         return context.Ok();
     }
 
-    private static async Task<data.@this> BeforeStepHandler(actor.context.@this context, int? stepFilter)
+    private static async Task<data.@this> BeforeStepHandler(actor.context.@this context)
     {
         var step = context.call.Step;
         if (step == null) return context.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
         var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -256,11 +249,10 @@ public sealed class @this
         return context.Ok();
     }
 
-    private static async Task<data.@this> AfterStepHandler(actor.context.@this context, int? stepFilter)
+    private static async Task<data.@this> AfterStepHandler(actor.context.@this context)
     {
         var step = context.call.Step;
         if (step == null) return context.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
         var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -336,11 +328,10 @@ public sealed class @this
         return context.Ok();
     }
 
-    private static async Task<data.@this> BeforeActionHandler(actor.context.@this context, int? stepFilter)
+    private static async Task<data.@this> BeforeActionHandler(actor.context.@this context)
     {
         var step = context.call.Step;
         if (step == null) return context.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
         var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -352,11 +343,10 @@ public sealed class @this
         return context.Ok();
     }
 
-    private static async Task<data.@this> AfterActionHandler(actor.context.@this context, int? stepFilter)
+    private static async Task<data.@this> AfterActionHandler(actor.context.@this context)
     {
         var step = context.call.Step;
         if (step == null) return context.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return context.Ok();
 
         var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();

@@ -12,10 +12,12 @@ public sealed class @this : global::app.type.item.setting.module.@this
     /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
     public static bool Internal => true;
 
-    /// <summary>Filter to a specific goal name. Null = all goals.</summary>
+    /// <summary>The goal debug attaches at — it and every goal it calls, until it returns (<c>prefix*</c> for the goals a
+    /// prefix starts). Null or <c>*</c> = every goal.</summary>
     [Out, Store] public global::app.type.item.text.@this? Goal { get; set; }
 
-    /// <summary>Filter to a specific step index. Null = all steps.</summary>
+    /// <summary>The step debug attaches at instead, in each goal named: that step and what it calls. Null = the goal's
+    /// whole run.</summary>
     [Out, Store] public global::app.type.item.number.@this? Step { get; set; }
 
     /// <summary>The variables to watch, by name. A watched variable prints at every step and logs each time

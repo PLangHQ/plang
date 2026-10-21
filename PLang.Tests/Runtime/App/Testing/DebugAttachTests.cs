@@ -82,6 +82,23 @@ public class DebugAttachTests
         await Assert.That(shown).Contains("Step [1] of Inner");
     }
 
+    // No goal named is every goal named: step N of each goal, and what that step calls.
+    [Test]
+    public async Task WithAStepAndNoGoal_StepNOfEveryGoal_AndWhatItCalls()
+    {
+        await Goal("Inner", "variable.set(Name=%b%, Value=2)", "variable.set(Name=%c%, Value=3)");
+        var start = await Goal("Start", "variable.set(Name=%z%, Value=0)", "goal.call(Name=\"Inner\")");
+        Debugging(new() { ["step"] = 1 });
+
+        await _app.Start(start, _app.actor.list.User.Context);
+
+        var shown = Shown();
+        await Assert.That(shown).Contains("Step [1] of Start");
+        await Assert.That(shown).DoesNotContain("Step [0] of Start");
+        await Assert.That(shown).Contains("Step [0] of Inner");
+        await Assert.That(shown).Contains("Step [1] of Inner");
+    }
+
     // A goal the named goal didn't call is not in its stack: Inner run by Beside is not debugged, Inner run by Start is.
     [Test]
     public async Task AGoalTheNamedOneDidNotCall_IsNotDebugged()
