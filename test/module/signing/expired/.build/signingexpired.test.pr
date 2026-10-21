@@ -242,7 +242,7 @@
     },
     {
       "index": 5,
-      "text": "verify %signed% with contracts ['C0'], on error call HandleExpired",
+      "text": "verify %signed%, on error call HandleExpired",
       "line": {
         "number": 8,
         "indent": 0
@@ -269,13 +269,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Contracts",
-              "type": {
-                "name": "list"
-              },
-              "value": ["C0"]
             }
           ]
         },
@@ -441,5 +434,5 @@
   ],
   "visibility": "Public",
   "file": "SigningExpired.test.goal",
-  "hash": "f957dcb01274cb78994720660d2df5d21b4039a6347d6bba65bfa04abfd2e094"
+  "hash": "2d55de580bd69ab21d609cbbb67ff155c80eeba6fe077e91ead89b5c9a4dc734"
 }
