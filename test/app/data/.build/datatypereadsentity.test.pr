@@ -106,7 +106,7 @@
     },
     {
       "index": 2,
-      "text": "assert %name!type.kind% is empty",
+      "text": "assert %name!type.kind% is null",
       "line": {
         "number": 5,
         "indent": 0
@@ -115,17 +115,10 @@
       "code": [
         {
           "module": "assert",
-          "name": "equals",
+          "name": "isNull",
           "property": [
             {
-              "name": "Expected",
-              "type": {
-                "name": "text"
-              },
-              "value": ""
-            },
-            {
-              "name": "Actual",
+              "name": "Value",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -155,5 +148,5 @@
   ],
   "visibility": "Public",
   "file": "DataTypeReadsEntity.test.goal",
-  "hash": "51ed8871005ef99c1a90b070452317928bc67c8170871330859a0f0290b112c7"
+  "hash": "1569a563b64bddf71719323f1b18f749f120df0a8597471e6141ad2f9348c267"
 }
