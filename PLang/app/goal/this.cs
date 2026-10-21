@@ -304,6 +304,17 @@ public sealed partial class @this
     public bool IsCached => Cache != null && Cache.Hash == Hash && Cache.Child.CountRaw == Child.CountRaw
         && Step.IsCached && Child.Items().All(g => g.IsCached);
 
+    /// <summary>The first step whose saved code no longer holds against today's catalogue — this goal's, then its
+    /// sub-goals' — or null when all hold: whether a built goal is still the one its words would build.</summary>
+    internal async Task<global::app.error.@this?> Invalid(actor.context.@this context)
+    {
+        foreach (var step in Step.Items())
+            if (await step.Validate(context) is { } invalid) return invalid;
+        foreach (var subGoal in Child.Items())
+            if (await subGoal.Invalid(context) is { } invalid) return invalid;
+        return null;
+    }
+
     /// <summary>A cached step whose saved code no longer holds against today's catalogue (an action gone
     /// or renamed, a check it now fails) is opened again — its code cleared — and rebuilt, with a
     /// warning saying why. The step's own judgement decides; sub-goals are judged the same way.</summary>

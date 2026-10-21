@@ -124,11 +124,17 @@ public sealed partial class @this
 
     /// <summary>
     /// List directory entries matching <paramref name="pattern"/>. Returns a
-    /// list of FilePaths (Data&lt;list&lt;path&gt;&gt;).
+    /// list of FilePaths (Data&lt;list&lt;path&gt;&gt;). A file lists as itself when its name matches.
     /// </summary>
     public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context, Entry entry = Entry.file)
     {
         if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
+        var listType = context.App.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.path.@this>)];
+        if (entry == Entry.file && context.FileSystem.IsFile(this))
+            return context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(
+                new global::app.type.item.list.@this<global::app.type.item.path.@this>(
+                    System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(pattern.ToString(), Name.ToString())
+                        ? [new data.@this("", this, context: context)] : [], listType));
         if (!context.FileSystem.IsFolder(this))
             return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
@@ -140,8 +146,7 @@ public sealed partial class @this
                     context: context))
                 .ToList();
             return context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(
-                new global::app.type.item.list.@this<global::app.type.item.path.@this>(files,
-                    context.App.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.path.@this>)]));
+                new global::app.type.item.list.@this<global::app.type.item.path.@this>(files, listType));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
