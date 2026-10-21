@@ -124,7 +124,7 @@ public class VerifyActionTests
     }
 
     // A signature binds the value it signed: the variable it was signed from changing afterwards changes nothing it holds.
-    [Test, Skip("sign holds its slot's Data as written — a reference to %data%, not the value: the step's slot must hand the Data its variable names (open)")]
+    [Test]
     public async Task ASignature_HoldsTheValueItSigned_NotTheVariable()
     {
         await Ctx.Variable.Set("data", "hello");

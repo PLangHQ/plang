@@ -127,6 +127,11 @@ public partial class @this
     /// can't read fails the render, and that failure is the answer.</item>
     /// <item>A failure, and any other Data, answers itself.</item>
     /// </list></summary>
+    /// <summary>This Data settled for <paramref name="view"/> — the view decides: plang's own store keeps it as written; a
+    /// view that crosses (Out) or dumps (Debug) uses it, a reference a copy of the Data it names, a name that reads
+    /// nothing the error. What a signature hashes and holds, as one.</summary>
+    public System.Threading.Tasks.ValueTask<@this> Settle(View view) => view.Settle(this);
+
     public virtual async System.Threading.Tasks.ValueTask<@this> Settle()
     {
         if (!HasVariable || _error != null) return this;

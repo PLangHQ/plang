@@ -441,6 +441,7 @@ class app.data.this
   ReturnDepth : System.Int32 { get; set; }
   Returned : System.Boolean { get; set; }
   Set(System.String key, System.Boolean isIndex, System.Object value, System.Boolean keeps = …) : System.Threading.Tasks.ValueTask<app.data.this>
+  Settle(app.View view) : System.Threading.Tasks.ValueTask<app.data.this>
   ShouldExit() : System.Boolean
   Signature : app.type.item.signature.this { get; } [LlmIgnore]
   Snapshot : app.snapshot.this { get; set; }
@@ -4383,14 +4384,12 @@ action setting.save
 action signing.sign
   Data : item
   Contracts : list
-  Header : dict
   Expires : duration
   StoreView : bool
 
 action signing.verify
   Data : item
   Contracts : list
-  Header : dict
 
 action snapshot.resume
   Snapshot : snapshot required

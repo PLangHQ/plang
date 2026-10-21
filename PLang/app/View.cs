@@ -83,6 +83,12 @@ public abstract class View
     // names holds nothing.
     private protected System.Threading.Tasks.ValueTask<global::app.data.@this> Settled(global::app.data.@this data) => data.Settle();
 
+    /// <summary>The Data as this view takes it: what it writes, settled once — a reference a copy of the Data it names,
+    /// a template its render, a name that reads nothing the error. A Data that is a failure is taken as it is: the
+    /// failure is what it carries. plang's own store keeps it as written.</summary>
+    internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Settle(global::app.data.@this data)
+        => data.Success ? Used(data) : new(data);
+
     // Used where it must be: a name it can't read is the write's error.
     private protected async System.Threading.Tasks.ValueTask<global::app.data.@this> Used(global::app.data.@this data)
     {
@@ -120,6 +126,9 @@ public abstract class View
 
         internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => Written(value, writer);
+
+        // plang's own store keeps a Data as written: its references and templates with the variables they name
+        internal override System.Threading.Tasks.ValueTask<global::app.data.@this> Settle(global::app.data.@this data) => new(data);
 
         // a value kept as written names its variables beside it, so reading it back never parses
         internal override async System.Threading.Tasks.ValueTask Variables(global::app.type.item.@this value, global::app.type.format.IWriter writer)

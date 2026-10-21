@@ -26,10 +26,15 @@ public class Ed25519 : ISigning
         if (!identityResult.Success) return identityResult;
         var identity = (Identity)(await identityResult.Value())!;
 
-        var data = action.Data!;
-        // The digest of the inner data as it crosses the wire, in the view it is written in — what binds the value
-        // into the signed bytes — by the kind of hash the signing setting names.
+        // The data as the view it is signed in takes it, settled once — plang's own store as written, anything that
+        // crosses a copy of what it names — and the signature hashes and holds that one Data: the variable changing
+        // afterwards changes nothing it holds.
         var view = action.StoreView != null && (await action.StoreView.Value())?.Value == true ? global::app.View.Store : global::app.View.Out;
+        global::app.data.@this data;
+        try { data = await action.Data!.Settle(view); }
+        catch (global::app.error.AppException unread) { return action.Context.Error(unread.Error); }
+        // The digest of the inner data as it crosses the wire, in that view — what binds the value into the signed
+        // bytes — by the kind of hash the signing setting names.
         var hash = await data.Digest(view, action.Context.Setting.Of<global::app.module.signing.setting.@this>().Hash.Value, action.Context);
 
         var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
