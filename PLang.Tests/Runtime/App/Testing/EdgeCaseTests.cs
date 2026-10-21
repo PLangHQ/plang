@@ -46,7 +46,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Timeout_NonPositive_AcceptedAsSentinel()
     {
-        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["timeout"] = "-5s" });
+        var result = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["timeout"] = "-5s" }, _app.actor.list.System.Context);
         await result.IsSuccess();
         await Assert.That((await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Timeout.Value.TotalSeconds).IsEqualTo(-5);
     }
@@ -56,11 +56,11 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Parallel_ZeroOrNegative_AcceptedAsSentinel()
     {
-        var zero = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = 0 });
+        var zero = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["parallel"] = 0 }, _app.actor.list.System.Context);
         await zero.IsSuccess();
         await Assert.That((await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Parallel.ToInt32()).IsEqualTo(0);
 
-        var neg = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = -1 });
+        var neg = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["parallel"] = -1 }, _app.actor.list.System.Context);
         await neg.IsSuccess();
     }
 

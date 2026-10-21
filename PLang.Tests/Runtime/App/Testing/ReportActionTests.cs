@@ -71,7 +71,7 @@ public class ReportActionTests
     public async Task Report_Console_AlwaysWritesSummary_RegardlessOfFormat()
     {
         _app.test.list.Add(NewTest("X", global::app.test.Status.Pass));
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
 
         await Report();
 
@@ -132,7 +132,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_Format_Junit_WritesJunitXml()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
         _app.test.list.Add(NewTest("X", global::app.test.Status.Pass));
 
         await Report();
@@ -149,7 +149,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_JUnit_TestNameWithXmlSpecialChars_Escaped()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
         _app.test.list.Add(NewTest("asserts <x> & <y>", global::app.test.Status.Pass));
 
         await Report();
@@ -211,7 +211,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_FailStatus_EmitsFailureElement()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
         var err = new AssertionError("Expected: 1, Actual: 2", "1", "2", "mismatch");
         _app.test.list.Add(NewTest("Failing", global::app.test.Status.Fail, err));
 
@@ -230,7 +230,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_TimeoutStatus_EmitsFailureWithTypeTimeout()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
         _app.test.list.Add(NewTest("SlowTest", global::app.test.Status.Timeout));
 
         await Report();
@@ -247,7 +247,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_SkippedStatus_EmitsSkippedElement()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
         var run = NewTest("Filtered", global::app.test.Status.Skipped);
         run.StatusReason = "excluded by tag";
         _app.test.list.Add(run);
@@ -268,7 +268,7 @@ public class ReportActionTests
     public async Task Report_Junit_StaleStatus_EmitsErrorWithReason()
     {
         // A test that could not load is an error in junit — never a quiet skip.
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
         var run = NewTest("StaleTest", global::app.test.Status.Stale);
         run.StatusReason = "goal hash changed since build";
         _app.test.list.Add(run);

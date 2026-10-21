@@ -116,7 +116,7 @@ public class TestingClassTests
             ["exclude"] = new List<object?> { "slow" },
         };
 
-        var result = _app.actor.list.System.Setting.Set("app.test.setting", config);
+        var result = await _app.actor.list.System.Setting.Flag("app.test.setting", config, _app.actor.list.System.Context);
 
         await result.IsSuccess();
         await Assert.That((await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Timeout.Value.TotalSeconds).IsEqualTo(60);
@@ -129,7 +129,7 @@ public class TestingClassTests
     [Test]
     public async Task Configure_AChoiceFromItsText()
     {
-        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        var result = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
 
         await result.IsSuccess();
         await Assert.That((await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Format.Value.ToString()).IsEqualTo("junit");
@@ -140,14 +140,14 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_IncludeAndExclude_ReplaceExisting()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "oldInclude" } });
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "oldExclude" } });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "oldInclude" } }, _app.actor.list.System.Context);
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "oldExclude" } }, _app.actor.list.System.Context);
 
-        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?>
+        var result = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?>
         {
             ["include"] = new List<object?> { "newInclude" },
             ["exclude"] = new List<object?> { "newExclude" }
-        });
+        }, _app.actor.list.System.Context);
 
         await result.IsSuccess();
         await Assert.That((await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Include.Count.ToInt32()).IsEqualTo(1);
@@ -187,7 +187,7 @@ public class TestingClassTests
     [Test]
     public async Task From_ExcludedTest_ComesBackSkippedWithItsReason()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } }, _app.actor.list.System.Context);
 
         var test = await global::app.test.@this.From(TaggedGoal("slow"), _app.actor.list.User.Context);
 
@@ -199,7 +199,7 @@ public class TestingClassTests
     [Test]
     public async Task From_ExcludeSetThroughTheWalk_Filters()
     {
-        var set = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        var set = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } }, _app.actor.list.System.Context);
         await set.IsSuccess();
 
         var test = await global::app.test.@this.From(TaggedGoal("slow"), _app.actor.list.User.Context);
@@ -211,7 +211,7 @@ public class TestingClassTests
     [Test]
     public async Task From_TakenTest_IsReady()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } }, _app.actor.list.System.Context);
 
         var test = await global::app.test.@this.From(TaggedGoal("fast"), _app.actor.list.User.Context);
 

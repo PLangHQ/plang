@@ -45,7 +45,7 @@ public class DebugSmokeTests
     public async Task Debug_GrepThatIsNotARegex_IsAnsweredAsInvalidPattern()
     {
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["grep"] = "a(b" });
+        await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["grep"] = "a(b" }, _app.actor.list.System.Context);
 
         var refused = await _app.Debug.Activate();
 
@@ -60,7 +60,7 @@ public class DebugSmokeTests
         // Fully-qualified: the `Debug` global alias is shadowed here by the sibling
         // PLang.Tests.App.Debug namespace (the App/Debug/ test folder). CLAUDE.md alias-clash trap.
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["level"] = "action" });
+        await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["level"] = "action" }, _app.actor.list.System.Context);
         await _app.Debug.Activate();
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "Dbg",
@@ -88,7 +88,7 @@ public class DebugSmokeTests
     public async Task Debug_AShortcutTheStepReads_IsListedAsTheStepReadsIt()
     {
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["level"] = "action" });
+        await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["level"] = "action" }, _app.actor.list.System.Context);
         await _app.Debug.Activate();
         var ctx = _app.actor.list.User.Context;
         var show = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Show",
@@ -116,10 +116,10 @@ public class DebugSmokeTests
     public async Task Debug_LlmView_AStepHoldingTheApp_IsShown()
     {
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?>
+        await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?>
         {
             ["llm"] = new Dictionary<string, object?> { ["user"] = true, ["response"] = true },
-        });
+        }, _app.actor.list.System.Context);
         await _app.Debug.Activate();
         var ctx = _app.actor.list.User.Context;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Dbg",
@@ -140,7 +140,7 @@ public class DebugSmokeTests
     public async Task Debug_Variables_BindAsNames()
     {
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        var set = _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["variables"] = new List<object?> { "trace", "%goal%" } });
+        var set = await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["variables"] = new List<object?> { "trace", "%goal%" } }, _app.actor.list.System.Context);
 
         await set.IsSuccess();
         await Assert.That((await _app.Debug.Setting()).Variables.Items(_app.actor.list.System.Context).Select(v => v.Peek()?.ToString()).ToList())
@@ -153,7 +153,7 @@ public class DebugSmokeTests
     public async Task Debug_WatchedVariable_LogsSetAndDeleted()
     {
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["variables"] = new List<object?> { "%trace%" } });
+        await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["variables"] = new List<object?> { "%trace%" } }, _app.actor.list.System.Context);
         await _app.Debug.Activate();
         var store = _app.actor.list.User.Context.Variable;
 

@@ -317,7 +317,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_IncludeFilter_NonMatchingTests_MarkedSkipped()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "fast" } });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "fast" } }, _app.actor.list.System.Context);
         await CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" });  // no tags
 
         var files = await Discover();
@@ -331,7 +331,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_ExcludeFilter_MatchingTests_MarkedSkipped()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } }, _app.actor.list.System.Context);
         await CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]
@@ -352,8 +352,8 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_IncludeAndExclude_ExcludeAppliedAfterInclude()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "http" } });
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "http" } }, _app.actor.list.System.Context);
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } }, _app.actor.list.System.Context);
         await CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'http', 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]

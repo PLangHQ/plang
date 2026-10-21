@@ -12,7 +12,7 @@ public class ConsoleChannelTests
         var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
         if (format != null)
         {
-            var set = app.actor.list.System.Setting.Set("app.channel.setting", new Dictionary<string, object?> { ["format"] = format });
+            var set = await app.actor.list.System.Setting.Flag("app.channel.setting", new Dictionary<string, object?> { ["format"] = format }, app.actor.list.System.Context);
             await set.IsSuccess();
         }
         var stream = new MemoryStream();
@@ -103,7 +103,7 @@ public class ConsoleChannelTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
         if (format != null)
-            await app.actor.list.System.Setting.Set("app.channel.setting", new Dictionary<string, object?> { ["format"] = format }).IsSuccess();
+            await (await app.actor.list.System.Setting.Flag("app.channel.setting", new Dictionary<string, object?> { ["format"] = format }, app.actor.list.System.Context)).IsSuccess();
         var context = app.actor.list.User.Context;
         var output = new MemoryStream();
         // the answer as the asker's format writes it: a line typed, or a whole Data from the program running this plang

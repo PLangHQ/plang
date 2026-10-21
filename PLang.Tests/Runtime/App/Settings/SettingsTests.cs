@@ -61,7 +61,7 @@ public class SettingsTests : System.IAsyncDisposable
             ["files"] = new List<object?> { "a.goal", "b.goal" },
         };
 
-        var result = app.actor.list.System.Setting.Set("build.setting", settings);
+        var result = await app.actor.list.System.Setting.Flag("build.setting", settings, app.actor.list.System.Context);
         await Assert.That(result.Success).IsTrue().Because(result.Error?.Message ?? "ok");
 
         // The consumer's read: each string row lifts to a REAL path (text→path via the lift door).
@@ -80,7 +80,7 @@ public class SettingsTests : System.IAsyncDisposable
     {
         await using var app = new EngineType("/app");
 
-        var result = app.actor.list.System.Setting.Set("build.setting", new Dictionary<string, object?> { ["files"] = "a.goal" });
+        var result = await app.actor.list.System.Setting.Flag("build.setting", new Dictionary<string, object?> { ["files"] = "a.goal" }, app.actor.list.System.Context);
         await Assert.That(result.Success).IsTrue().Because(result.Error?.Message ?? "ok");
 
         var files = (await app.actor.list.System.Context.Setting.Get<global::app.module.build.setting.@this>()).Files;

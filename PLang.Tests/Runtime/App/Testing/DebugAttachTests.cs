@@ -27,7 +27,7 @@ public class DebugAttachTests
 
     private async Task Debugging(Dictionary<string, object?> setting)
     {
-        _app.actor.list.System.Setting.Set("debug.setting", setting);
+        await _app.actor.list.System.Setting.Flag("debug.setting", setting, _app.actor.list.System.Context);
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
         await _app.Debug.Activate();
     }

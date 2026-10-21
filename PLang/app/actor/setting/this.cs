@@ -128,14 +128,13 @@ public sealed class @this : IDisposable
     /// <summary>
     /// This run's value at <paramref name="address"/> in this scope, kept by its address without looking: a setting's
     /// path and then its option (<c>app.channel.setting.format</c>), where the next read of that setting builds it
-    /// from. A dict is kept leaf by leaf under the address; a Data is held whole; null clears it. Checking is the
-    /// writer's: a step's write goes through its setting node, the command line through the setting it finds
-    /// (<see cref="Find"/>, then the setting's own Option and Apply).
+    /// from. A Data is held whole; null clears it. Checking is the writer's: a step's write goes through its setting
+    /// node, the command line through the setting it finds (<see cref="Find"/>, then the setting's own Apply, which
+    /// answers where each value is kept).
     /// </summary>
     public data.@this Set(string address, object? value)
     {
         if (value is null) _values.TryRemove(address, out _);
-        else if (value is IDictionary<string, object?> options) Flatten(address, options);
         else _values[address] = value as data.@this ?? new data.@this(address[(address.LastIndexOf('.') + 1)..], value, context: _context);
         Move();
         return value as data.@this ?? _context.Ok();
@@ -175,15 +174,6 @@ public sealed class @this : IDisposable
                 settings.Add(path);
             }
         return answers;
-    }
-
-    private void Flatten(string path, IDictionary<string, object?> values)
-    {
-        foreach (var (key, value) in values)
-        {
-            if (value is IDictionary<string, object?> nested) Flatten($"{path}.{key}", nested);
-            else _values[$"{path}.{key}"] = new data.@this(key, value, context: _context);
-        }
     }
 
     /// <summary>Stores <paramref name="setting"/> as the row, under its own path, of the actor this scope belongs to:

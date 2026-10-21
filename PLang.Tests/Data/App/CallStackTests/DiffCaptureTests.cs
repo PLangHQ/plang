@@ -11,9 +11,9 @@ public class DiffCaptureTests : System.IAsyncDisposable
     // of the User's context records its changes on.
     private Calls Stack(bool deep = false)
     {
-        var set = _app.actor.list.User.Context.Setting.Set(new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Path,
-            new Dictionary<string, object?> { ["diff"] = new Dictionary<string, object?> { ["enabled"] = true, ["deep"] = deep } });
-        if (!set.Success) throw new System.InvalidOperationException(set.Error!.Message);
+        var setting = _app.actor.list.User.Context.Setting;
+        setting.Set(setting.Address(typeof(global::app.call.setting.@this), "diff.enabled"), true);
+        setting.Set(setting.Address(typeof(global::app.call.setting.@this), "diff.deep"), deep);
         return _app.actor.list.User.Context.call;
     }
 

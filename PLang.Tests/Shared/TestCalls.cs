@@ -12,8 +12,12 @@ public static class TestCalls
         var settings = new global::app.actor.setting.@this(App.actor.list.User.Context);
         if (options != null)
         {
-            var set = settings.Set(new global::app.call.setting.@this(App.type.list[typeof(global::app.call.setting.@this)]).Path, options);
-            if (!set.Success) throw new System.InvalidOperationException(set.Error!.Message);
+            // as a flag writes it: the call setting answers where each option is kept
+            var context = App.actor.list.User.Context;
+            var address = settings.Address(typeof(global::app.call.setting.@this));
+            var values = ((global::app.type.item.setting.@this)settings.Find(address).Peek()!).Apply(address, options, context);
+            if (!values.Success) throw new System.InvalidOperationException(values.Error!.Message);
+            foreach (var entry in ((global::app.type.item.dict.@this)values.Peek()!).Entries(context)) settings.Set(entry.Name, entry);
         }
         return () => settings;
     }

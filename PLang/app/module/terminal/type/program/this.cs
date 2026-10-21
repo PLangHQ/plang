@@ -175,8 +175,8 @@ public sealed partial class @this(IProgram asked)
         using var child = new global::app.actor.setting.@this(context);
         foreach (var (key, value) in parameters)
             if (key.StartsWith('!') && child.Find(key[1..]) is { Success: true } setting
-                && (await setting.Value())!.Apply(key[1..], value, context) is { Success: true } address)
-                child.Set((await address.Value())!.ToString(), value);
+                && (await setting.Value())!.Apply(key[1..], value, context) is { Success: true } values)
+                foreach (var entry in (await values.Value())!.Entries(context)) child.Set(entry.Name, entry);
         return (await child.Get<global::app.channel.setting.@this>()).Format.IsPlang;
     }
 

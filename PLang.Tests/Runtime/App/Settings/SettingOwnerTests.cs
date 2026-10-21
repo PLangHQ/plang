@@ -30,7 +30,7 @@ public class SettingOwnerTests
     [Test] public async Task CallStack_TakesTheSystemsValue()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.System.Setting.Set("app.call.setting", new Dictionary<string, object?> { ["history"] = true }).IsSuccess();
+        await (await app.actor.list.System.Setting.Flag("app.call.setting", new Dictionary<string, object?> { ["history"] = true }, app.actor.list.System.Context)).IsSuccess();
         await Assert.That((await app.actor.list.System.Context.call.History()).Value).IsTrue();
         await Assert.That((await app.actor.list.User.Context.call.History()).Value).IsTrue();
     }
@@ -40,7 +40,7 @@ public class SettingOwnerTests
     [Test] public async Task CallStack_TakesItsContextsValue_AndNoOthers()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.User.Context.Setting.Set("app.call.setting", new Dictionary<string, object?> { ["timing"] = true }).IsSuccess();
+        await (await app.actor.list.User.Context.Setting.Flag("app.call.setting", new Dictionary<string, object?> { ["timing"] = true }, app.actor.list.User.Context)).IsSuccess();
         await Assert.That((await app.actor.list.User.Context.call.Timing()).Value).IsTrue();
         await Assert.That((await app.actor.list.System.Context.call.Timing()).Value).IsFalse();
     }
@@ -52,7 +52,7 @@ public class SettingOwnerTests
         app.Debug = new global::app.module.debug.@this(app.actor.list.System.Context);
         await Assert.That((await app.Debug.Setting()).Length.Max.ToInt32()).IsEqualTo(500);
 
-        await app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["length"] = new Dictionary<string, object?> { ["max"] = 10 } }).IsSuccess();
+        await (await app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["length"] = new Dictionary<string, object?> { ["max"] = 10 } }, app.actor.list.System.Context)).IsSuccess();
         await Assert.That((await app.Debug.Setting()).Length.Max.ToInt32()).IsEqualTo(10);
     }
 
@@ -72,7 +72,7 @@ public class SettingOwnerTests
         await using var app = new global::app.@this("/test").Testing();
         await Assert.That((await (await Read("%!app.setting.create%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("false");
 
-        await app.actor.list.System.Setting.Set("app.setting", new Dictionary<string, object?> { ["create"] = true }).IsSuccess();
+        await (await app.actor.list.System.Setting.Flag("app.setting", new Dictionary<string, object?> { ["create"] = true }, app.actor.list.System.Context)).IsSuccess();
         await Assert.That((await (await Read("%!app.setting.create%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("true");
     }
 
@@ -84,7 +84,7 @@ public class SettingOwnerTests
         // as the CLI does it: build mode born, then the flag's values written
         app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
         var path = new global::app.module.build.setting.@this(new global::app.type.@this(typeof(global::app.module.build.setting.@this))).Path;
-        await app.actor.list.System.Setting.Set(path, new Dictionary<string, object?> { ["cache"] = "skip" }).IsSuccess();
+        await (await app.actor.list.System.Setting.Flag(path, new Dictionary<string, object?> { ["cache"] = "skip" }, app.actor.list.System.Context)).IsSuccess();
 
         foreach (var ctx in new[] { app.actor.list.System.Context, app.actor.list.User.Context })
         {

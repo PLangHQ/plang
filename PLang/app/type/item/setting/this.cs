@@ -288,40 +288,38 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>Takes <paramref name="value"/> at <paramref name="path"/> — a path this setting goes by, then an option
     /// (<c>channel.setting.format</c>, <c>call.setting.diff.deep</c>), or its own alone with a dict of its options — onto a
-    /// copy of this setting, through the one convert walk. Answers the address the value is kept at
-    /// (<c>app.channel.setting.format</c>), or the refusal: a path that isn't this setting's, an option it doesn't have,
-    /// or a value its option can't take.</summary>
-    public global::app.data.@this<global::app.type.item.text.@this> Apply(string path, object? value, global::app.actor.context.@this context)
+    /// copy of this setting, through the one convert walk. Answers where each value it sets is kept, by address
+    /// (<c>{"app.test.setting.timeout": "5s", "app.test.setting.parallel": 3}</c>), or the refusal: a path that isn't this
+    /// setting's, an option it doesn't have, or a value its option can't take.</summary>
+    public global::app.data.@this<global::app.type.item.dict.@this> Apply(string path, object? value, global::app.actor.context.@this context)
     {
         foreach (var own in Paths)
         {
-            IDictionary<string, object?>? options;
-            string address;
+            var isOwnPath = string.Equals(path, own, System.StringComparison.OrdinalIgnoreCase);
+            if (!isOwnPath && !path.StartsWith(own + ".", System.StringComparison.OrdinalIgnoreCase)) continue;
             // the setting's own path takes a dict of its options; an option's path takes its value
-            if (string.Equals(path, own, System.StringComparison.OrdinalIgnoreCase))
-            {
-                options = value as IDictionary<string, object?>;
-                address = Path;
-            }
-            else if (path.StartsWith(own + ".", System.StringComparison.OrdinalIgnoreCase))
-            {
-                var option = path[(own.Length + 1)..];
-                options = Nested(option, value);
-                address = $"{Path}.{option}";
-            }
-            else continue;
+            var options = isOwnPath ? value as IDictionary<string, object?> : Nested(path[(own.Length + 1)..], value);
             if (options == null)
-                return context.Error<global::app.type.item.text.@this>(new global::app.error.@this(
+                return context.Error<global::app.type.item.dict.@this>(new global::app.error.@this(
                     $"'{path}' is the setting {Path}: give it its options, {{\"option\": value}}, or name one ({path}.<option>).",
                     "TypeConversionFailed", 400));
             // the options must fit, on a copy: this setting is read-only
             var fits = Copy().Apply(options, context);
-            return fits.Success
-                ? context.Ok(new global::app.type.item.text.@this(address, context.App.type.list[typeof(global::app.type.item.text.@this)]))
-                : context.Error<global::app.type.item.text.@this>(fits.Error!);
+            if (!fits.Success) return context.Error<global::app.type.item.dict.@this>(fits.Error!);
+            var values = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
+            Leaves(Path, options, values);
+            return context.Ok(values);
         }
-        return context.Error<global::app.type.item.text.@this>(new global::app.error.@this(
+        return context.Error<global::app.type.item.dict.@this>(new global::app.error.@this(
             $"'{path}' is not a path of the setting {Path}.", "UnknownSetting", 400));
+    }
+
+    // Each leaf of options, at its address under address (diff.deep → app.call.setting.diff.deep), into values.
+    private void Leaves(string address, IDictionary<string, object?> options, global::app.type.item.dict.@this values)
+    {
+        foreach (var (key, value) in options)
+            if (value is IDictionary<string, object?> nested) Leaves($"{address}.{key}", nested, values);
+            else values.Set($"{address}.{key}", value);
     }
 
     // An option path's value as the options it sets: format → {format: v}, diff.deep → {diff: {deep: v}}.
