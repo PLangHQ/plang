@@ -40,7 +40,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         user.Channel.Register(session);
         // then where test's setting says, when that is another actor: the session moves there — opened on it first, so
         // the app never stops testing, then the default actor given back its channel; one session is left, never two
-        if (await Actor() is not { } actor || ReferenceEquals(actor, user)) return session;
+        if (await Actor() is not { } actor || actor.Equals(user)) return session;
         var name = session.Name;
         session = Open(actor, test);
         if (channel != null) await user.Channel.Set(channel);

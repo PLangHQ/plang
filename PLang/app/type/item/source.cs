@@ -225,13 +225,17 @@ public class source : @this
             // Container round-trip guard: a value DECLARED a container (dict/list) that
             // materialized to a non-container leaf is a round-trip loss (a json object that
             // came back an opaque scalar) — fail LOUD here, at the point of loss, not three
-            // hops later as a null navigation. Rides the catch below → MaterializeFailed,
-            // named to the binding. (The apex object/item is excluded — a scalar CAN be
-            // declared object; only genuine containers must stay containers.)
-            if (Type.Name.ToLowerInvariant() is "dict" or "list"
+            // hops later as a null navigation: MaterializeFailed, named to the binding. (The apex
+            // object/item is excluded — a scalar CAN be declared object; only genuine containers
+            // must stay containers.)
+            if (Type.Name is "dict" or "list"
                 && item is not (global::app.type.item.dict.@this or global::app.type.item.list.@this or global::app.type.clr.@this))
-                throw new System.InvalidOperationException(
-                    $"a '{Type.Name}' value materialized to a non-container ({item.GetType().Name}) — round-trip loss");
+            {
+                data.Fail(new global::app.error.@this(
+                    $"failed to read %{data.Name}% as {Type.Name}: it materialized to a non-container ({item.GetType().Name}) — round-trip loss",
+                    "MaterializeFailed", 400));
+                return data.Empty;
+            }
             item.history.Add(this);
             // Resolve the materialized item — a template (text/dict/list) renders against live
             // variables; a plain leaf/container answers itself. The source layer is transparent:
