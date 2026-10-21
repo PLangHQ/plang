@@ -61,7 +61,7 @@ public sealed class Default : ITerminal
             return context.Ok<Process>(new Process(context.App.type.list[typeof(Process)])
             {
                 Program = file.Absolute, Id = os.Id, Os = os, pipe = channel,
-                Plang = await program.SpeaksPlang(context),
+                Plang = await program.IsPlang(context),
                 OutputEncoding = program.Setting.Encoding.Clr<string>() ?? "utf-8", StartedBy = context.Actor,
             });
         }

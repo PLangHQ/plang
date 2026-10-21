@@ -408,7 +408,7 @@ public sealed class @this : IDisposable
 
     /// <summary>A fresh value of the settings class a <paramref name="path"/> names — its defaults; null
     /// when no class names it. What the build's step scope teaches from (its Path and its Rows).</summary>
-    public global::app.type.item.setting.@this? Fresh(string path) => Make(path);
+    public global::app.type.item.setting.@this? Defaults(string path) => Make(path);
 
     // This run's values under path, the closest scope winning, as the options they set — a key deeper than
     // an option (path.llm.system) nests under it. A node set both as a whole and by its members (diff = true,

@@ -36,7 +36,7 @@ public sealed partial class @this
         // each %!…% names the settings class its longest path is — a fresh value of it (its defaults),
         // resolved through actor/setting's path index (the value holds its Path and its Rows)
         _setting = variables
-            .Select(v => v.Paths.Select(path => scratch.Setting.Fresh(path)).OfType<global::app.type.item.setting.@this>().LastOrDefault())
+            .Select(v => v.Paths.Select(path => scratch.Setting.Defaults(path)).OfType<global::app.type.item.setting.@this>().LastOrDefault())
             .OfType<global::app.type.item.setting.@this>().DistinctBy(s => s.Path).ToList();
         _hasKey = variables.Any(v => v.IsKeyed);
         // the bare names the step's words write: %name% — not a setting (%!x%), not a way in (%x.y%)

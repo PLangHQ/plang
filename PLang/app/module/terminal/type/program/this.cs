@@ -166,7 +166,7 @@ public sealed partial class @this(IProgram asked)
 
     /// <summary>It is a plang told to speak plang's own format on its console — its command line read as a plang reads
     /// its own (<c>--channel.setting.format=plang</c>, with or without <c>app.</c>, or the setting's dict).</summary>
-    internal async Task<bool> SpeaksPlang(Context context)
+    internal async Task<bool> IsPlang(Context context)
     {
         var (_, parameters) = global::app.Utils.CommandLineParser.Parse([.. Info!.ArgumentList]);
         // the child's settings as its command line sets them, in a layer of their own, kept where the setting each flag

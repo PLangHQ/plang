@@ -96,24 +96,24 @@ public sealed class @this
                         var sys = messages
                             .Where(m => string.Equals(m.Role, "system", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
-                        await WriteLlmBlock("LLM SYSTEM", sys, context);
+                        await Show("LLM SYSTEM", sys, context);
                     }
                     if (llm.User)
                     {
                         var users = messages
                             .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
-                        await WriteLlmBlock("LLM USER", users, context);
+                        await Show("LLM USER", users, context);
                     }
                     if (llm.Schema == true && !string.IsNullOrEmpty(schema))
                     {
-                        await WriteLlmBlock("LLM SCHEMA", new[] { schema }, context);
+                        await Show("LLM SCHEMA", new[] { schema }, context);
                     }
                 };
                 if (llm.Response)
                 {
                     oai.OnAfterResponse += (rawResponse) =>
-                        WriteLlmBlock("LLM RESPONSE", new[] { rawResponse ?? "(null)" }, context);
+                        Show("LLM RESPONSE", new[] { rawResponse ?? "(null)" }, context);
                 }
             }
         }
@@ -130,10 +130,10 @@ public sealed class @this
         var goals = types["goal"].Own();
 
         // the marks, bound before the watchers so a frame is marked before it is shown
-        goals.Bind("start", When.before, (item, _, context) => Mark((global::app.goal.@this)item, context, step), user,
+        goals.Bind("start", When.before, (item, _, context) => Attach((global::app.goal.@this)item, context, step), user,
             global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.@this);
         if (step != null)
-            steps.Bind("start", When.before, (item, _, context) => Mark((global::app.goal.step.@this)item, context, step.Value), user,
+            steps.Bind("start", When.before, (item, _, context) => Attach((global::app.goal.step.@this)item, context, step.Value), user,
                 global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.step.@this);
 
         steps.Bind("start", When.before, (item, _, context) => Before((global::app.goal.step.@this)item, context), user,
@@ -161,7 +161,7 @@ public sealed class @this
 
     // A goal starting, in its own frame: marked when it is the goal named (and no step is), or when its caller's run
     // is marked — it is called from inside what debug follows.
-    private async Task<data.@this> Mark(global::app.goal.@this goal, actor.context.@this context, int? step)
+    private async Task<data.@this> Attach(global::app.goal.@this goal, actor.context.@this context, int? step)
     {
         if (context.call.Current is { } frame
             && (step == null && await Watches(goal) || frame.Caller?.Within.Any(caller => _marked.TryGetValue(caller, out _)) == true))
@@ -170,7 +170,7 @@ public sealed class @this
     }
 
     // A step starting, in its own frame: marked when it is the step named of the goal named.
-    private async Task<data.@this> Mark(global::app.goal.step.@this step, actor.context.@this context, int index)
+    private async Task<data.@this> Attach(global::app.goal.step.@this step, actor.context.@this context, int index)
     {
         if (step.Index == index && await Watches(step.Goal) && context.call.Current is { } frame)
             _marked.AddOrUpdate(frame, this);
@@ -226,7 +226,7 @@ public sealed class @this
                 // The value as held, never resolved: a BEFORE-step display must not run value doors —
                 // resolving renders templates / hops refs (side-effecting, and NREs on a
                 // not-yet-ready value), which would perturb the very execution we're observing.
-                sb.AppendLine($"    {p.Name} = {await FormatValue(p.Value, context)}");
+                sb.AppendLine($"    {p.Name} = {await Text(p.Value, context)}");
             }
 
         }
@@ -242,7 +242,7 @@ public sealed class @this
         await Variables(sb, step, context);
         sb.AppendLine("========================================");
 
-        await WriteFiltered(sb, context);
+        await Show(sb, context);
         return context.Ok();
     }
 
@@ -258,7 +258,7 @@ public sealed class @this
         await Variables(sb, step, context);
         sb.AppendLine("========================================");
 
-        await WriteFiltered(sb, context);
+        await Show(sb, context);
         return context.Ok();
     }
 
@@ -268,17 +268,17 @@ public sealed class @this
     /// granular Llm.* flag handlers — each flag fires its own block independently.
     /// </summary>
     // internal for DebugTraceWriteTests (driving the LLM event lifecycle requires a real LLM call)
-    internal static Task WriteLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context)
+    internal static Task Show(string title, IEnumerable<string> chunks, actor.context.@this context)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"=== {title} ===");
         foreach (var chunk in chunks)
             sb.AppendLine(chunk);
         sb.AppendLine($"=== END {title} ===");
-        return WriteFiltered(sb, context);
+        return Show(sb, context);
     }
 
-    private static async Task WriteFiltered(StringBuilder sb, actor.context.@this context)
+    private static async Task Show(StringBuilder sb, actor.context.@this context)
     {
         var debug = context.App?.Debug;
         var maxLen = (await (debug?.Setting() ?? context.Setting.Get<setting.@this>())).Length.Max.ToInt32();
@@ -332,7 +332,7 @@ public sealed class @this
 
         await Variables(sb, step, context);
 
-        await WriteFiltered(sb, context);
+        await Show(sb, context);
         return context.Ok();
     }
 
@@ -346,7 +346,7 @@ public sealed class @this
 
         await Variables(sb, step, context);
 
-        await WriteFiltered(sb, context);
+        await Show(sb, context);
         return context.Ok();
     }
 
@@ -382,14 +382,14 @@ public sealed class @this
                 continue;
             }
 
-            sb.AppendLine($"    %{variable.Name}% = {await FormatValue(data.Peek(), context)} ({data.Type.Name})");
+            sb.AppendLine($"    %{variable.Name}% = {await Text(data.Peek(), context)} ({data.Type.Name})");
 
             if (data.Properties.Count > 0)
             {
                 sb.AppendLine($"      Properties ({data.Properties.Count}):");
                 foreach (var prop in data.Properties)
                 {
-                    sb.AppendLine($"        {prop.Key} = {await FormatValue(prop.Value, context)}");
+                    sb.AppendLine($"        {prop.Key} = {await Text(prop.Value, context)}");
                 }
             }
         }
@@ -397,9 +397,9 @@ public sealed class @this
 
     // Debug output can land in logs, terminals, CI artefacts — anywhere — so a value is shown through the one
     // diagnostic door: a structure written in full in the Debug view, a [Sensitive] member masked. Truncation
-    // happens at WriteFiltered via maxLength; a raw collection says how many it holds. A value that cannot be shown
+    // happens at Show via maxLength; a raw collection says how many it holds. A value that cannot be shown
     // shows why — a debug view answers, never ends the program it watches.
-    private static async System.Threading.Tasks.ValueTask<string> FormatValue(object? value, actor.context.@this context)
+    private static async System.Threading.Tasks.ValueTask<string> Text(object? value, actor.context.@this context)
     {
         string shown;
         try { shown = await global::app.type.item.@this.Create(value, context).Debug(context); }
