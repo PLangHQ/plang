@@ -70,12 +70,11 @@ namespace PLang
 				// the setting the flag names, the option under it, and the value it takes — a typo is refused before
 				// anything is written
 				var context = app.actor.list.System.Context;
-				var found = app.actor.list.System.Setting.Find(key[1..]);
-				if (!found.Success) return (null, found);
-				var setting = (await found.Value())!;
-				var address = setting.Apply(key[1..], value, context);
+				var setting = app.actor.list.System.Setting.Find(key[1..]);
+				if (!setting.Success) return (null, setting);
+				var address = (await setting.Value())!.Apply(key[1..], value, context);
 				if (!address.Success) return (null, address);
-				settings.Add(setting.GetType());
+				settings.Add((await setting.Value())!.GetType());
 				flags.Add(((await address.Value())!.ToString(), value));
 			}
 

@@ -295,32 +295,33 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     {
         foreach (var own in Paths)
         {
-            // the setting's own path takes a dict of its options
+            IDictionary<string, object?>? options;
+            string address;
+            // the setting's own path takes a dict of its options; an option's path takes its value
             if (string.Equals(path, own, System.StringComparison.OrdinalIgnoreCase))
-                return value is IDictionary<string, object?> options
-                    ? Take(options, Path, context)
-                    : context.Error<global::app.type.item.text.@this>(new global::app.error.@this(
-                        $"'{path}' is the setting {Path}: give it its options, {{\"option\": value}}, or name one ({path}.<option>).",
-                        "TypeConversionFailed", 400));
-            // an option's path takes its value
-            if (path.StartsWith(own + ".", System.StringComparison.OrdinalIgnoreCase))
+            {
+                options = value as IDictionary<string, object?>;
+                address = Path;
+            }
+            else if (path.StartsWith(own + ".", System.StringComparison.OrdinalIgnoreCase))
             {
                 var option = path[(own.Length + 1)..];
-                return Take(Nested(option, value), $"{Path}.{option}", context);
+                options = Nested(option, value);
+                address = $"{Path}.{option}";
             }
+            else continue;
+            if (options == null)
+                return context.Error<global::app.type.item.text.@this>(new global::app.error.@this(
+                    $"'{path}' is the setting {Path}: give it its options, {{\"option\": value}}, or name one ({path}.<option>).",
+                    "TypeConversionFailed", 400));
+            // the options must fit, on a copy: this setting is read-only
+            var fits = Copy().Apply(options, context);
+            return fits.Success
+                ? context.Ok(new global::app.type.item.text.@this(address, context.App.type.list[typeof(global::app.type.item.text.@this)]))
+                : context.Error<global::app.type.item.text.@this>(fits.Error!);
         }
         return context.Error<global::app.type.item.text.@this>(new global::app.error.@this(
             $"'{path}' is not a path of the setting {Path}.", "UnknownSetting", 400));
-    }
-
-    // Takes the options onto a copy: answers the address they are kept at, or why not.
-    private global::app.data.@this<global::app.type.item.text.@this> Take(IDictionary<string, object?> options, string address,
-        global::app.actor.context.@this context)
-    {
-        var applied = Copy().Apply(options, context);
-        return applied.Success
-            ? context.Ok(new global::app.type.item.text.@this(address, context.App.type.list[typeof(global::app.type.item.text.@this)]))
-            : context.Error<global::app.type.item.text.@this>(applied.Error!);
     }
 
     // An option path's value as the options it sets: format → {format: v}, diff.deep → {diff: {deep: v}}.

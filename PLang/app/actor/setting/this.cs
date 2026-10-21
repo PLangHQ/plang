@@ -46,8 +46,8 @@ public sealed class @this : IDisposable
     // The settings changed somewhere: every setting built before this is stale.
     private void Move() => System.Threading.Interlocked.Increment(ref Root._version);
 
-    // The settings' own store — /.data/setting/data.sqlite, in memory while testing under this app's id — made by the
-    // root of the chain at its first use; every layer reaches it through its root.
+    // The settings' own store — /.data/setting/data.sqlite, in memory while testing under this app's id — opened by the
+    // default store provider, asked by the root of the chain at its first use; every layer reaches it through its root.
     private global::app.store.@this Store => Root._store.Value;
     private readonly Lazy<global::app.store.@this> _store;
 
@@ -56,10 +56,14 @@ public sealed class @this : IDisposable
     {
         _context = context;
         _parent = parent;
-        _store = new(() => new global::app.store.sqlite.@this(
-            global::app.type.item.path.@this.Resolve("/.data/setting/data.sqlite", context),
-            () => context.App.Mode.Value == global::app.Mode.Test ? $"setting-{context.App.Id}" : null,
-            context));
+        _store = new(() =>
+        {
+            var (provider, missing) = context.App.Code.Get<global::app.store.code.IStore>();
+            if (provider == null) throw new global::app.error.AppException(missing!);
+            return provider.Open(global::app.type.item.path.@this.Resolve("/.data/setting/data.sqlite", context),
+                () => context.App.Mode.Value == global::app.Mode.Test ? $"setting-{context.App.Id}" : null,
+                context);
+        });
     }
 
     /// <summary>The store the root made lets its database go; one never made holds nothing.</summary>

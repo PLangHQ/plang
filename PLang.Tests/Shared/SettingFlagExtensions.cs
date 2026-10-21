@@ -8,9 +8,9 @@ public static class SettingFlagExtensions
     public static async Task<global::app.data.@this> Flag(this global::app.actor.setting.@this store, string path, object? value,
         global::app.actor.context.@this context)
     {
-        var found = store.Find(path);
-        if (!found.Success) return found;
-        var address = (await found.Value())!.Apply(path, value, context);
+        var setting = store.Find(path);
+        if (!setting.Success) return setting;
+        var address = (await setting.Value())!.Apply(path, value, context);
         if (!address.Success) return address;
         return store.Set((await address.Value())!.ToString(), value);
     }

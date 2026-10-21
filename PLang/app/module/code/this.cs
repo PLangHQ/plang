@@ -241,6 +241,7 @@ public sealed partial class @this : IAsyncDisposable
         RegisterBuiltIn<global::app.module.llm.code.IDecider>(new global::app.module.llm.code.TypeSafe());
         RegisterBuiltIn<global::app.module.build.code.IBuilder>(new global::app.module.build.code.Default());
         RegisterBuiltIn<global::app.data.code.IGrep>(new global::app.data.code.Default());
+        RegisterBuiltIn<global::app.store.code.IStore>(new global::app.store.code.Sqlite());
     }
 
     private void RegisterBuiltIn<T>(T provider) where T : class, ICode

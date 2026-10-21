@@ -193,10 +193,12 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// The app's store — <c>.data/data.sqlite</c> (in memory while testing, under this app's id). One per
     /// app — actors share it; its owners keep their tables (<c>settings</c>, setup's steps, the LLM cache, …).
-    /// Born with the app and opened at its first verb, so an app that never touches it pays for no SQLite file.
+    /// Opened by the default store provider at its first use, so an app that never touches it pays for no file, and a
+    /// provider loaded before then is the one it keeps.
     /// </summary>
     [global::app.LlmBuilder, global::app.Out]
-    public global::app.store.@this store { get; }
+    public global::app.store.@this store => _store.Value;
+    private readonly Lazy<global::app.store.@this> _store;
 
     /// <summary>
     /// Debug mode controller. null = off; non-null = on (born under --debug).
@@ -352,10 +354,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
                 new global::app.type.item.text.@this(environment, type.list[typeof(global::app.type.item.text.@this)]));
         }
 
-        store = new global::app.store.sqlite.@this(
-            global::app.type.item.path.@this.Resolve("/.data/data.sqlite", actor.list.System.Context),
-            () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
-            actor.list.System.Context);
+        _store = new(() =>
+        {
+            var (provider, missing) = Code.Get<global::app.store.code.IStore>();
+            if (provider == null) throw new global::app.error.AppException(missing!);
+            return provider.Open(global::app.type.item.path.@this.Resolve("/.data/data.sqlite", actor.list.System.Context),
+                () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
+                actor.list.System.Context);
+        });
 
         // Auto-wire console channels for ad-hoc App constructions (sub-process
         // test fixtures, embedded scenarios, C# tests, the `plang --test` child
@@ -603,7 +609,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         await Code.DisposeAsync();
         await KeepAlive.DisposeAsync();
-        // The store lets its database go; one that never opened holds nothing.
-        store.Dispose();
+        // The store lets its database go; one never asked for holds nothing.
+        if (_store.IsValueCreated) _store.Value.Dispose();
     }
 }
