@@ -26,10 +26,11 @@ public class Ed25519 : ISigning
         if (!identityResult.Success) return identityResult;
         var identity = (Identity)(await identityResult.Value())!;
 
+        var data = action.Data!;
         // The digest of the inner data as it crosses the wire, in the view it is written in — what binds the value
         // into the signed bytes — by the kind of hash the signing setting names.
         var view = action.StoreView != null && (await action.StoreView.Value())?.Value == true ? global::app.View.Store : global::app.View.Out;
-        var hash = await action.Data!.Digest(view, action.Context.Setting.Of<global::app.module.signing.setting.@this>().Hash.Value, action.Context);
+        var hash = await data.Digest(view, action.Context.Setting.Of<global::app.module.signing.setting.@this>().Hash.Value, action.Context);
 
         var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
         var nonce = (await (await action.Context.Variable.Get("GUID")).Clr<Guid>(default)).ToString();
@@ -43,7 +44,7 @@ public class Ed25519 : ISigning
         var text = action.Context.App.type.list[typeof(global::app.type.item.text.@this)];
         var unsigned = new global::app.type.item.signature.@this(
             type: action.Context.App.type.list[new global::app.type.@this("signature", Name), action.Context],
-            value: action.Data!,
+            value: data,
             algorithm: new global::app.type.item.text.@this(Name, text),
             nonce: new global::app.type.item.text.@this(nonce, text),
             created: new global::app.type.item.datetime.@this(now, datetime),
@@ -66,7 +67,8 @@ public class Ed25519 : ISigning
 
     public virtual async Task<data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action)
     {
-        if (action.Data?.Peek() is not global::app.type.item.signature.@this signature)
+        // what the step gives, as it is now: a %variable% is the signed Data it holds
+        if ((action.Data == null ? null : (await action.Data.Follow(action.Context)).Peek()) is not global::app.type.item.signature.@this signature)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data has no signature", "NoSignature", 400));
 
         var app = action.Context.App;

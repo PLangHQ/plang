@@ -106,6 +106,57 @@ public class VerifyActionTests
 
     #endregion
 
+    // Through variables, as a program writes it: `sign %data%, write to %signed%`, then `verify %signed%`. The action's
+    // Data is the property as written — a reference — so each must read what it names.
+    private async Task<Data> Program(string module, string action, params (string, object?)[] properties)
+        => await global::PLang.Tests.Shared.Make.Action(Ctx, module, action, properties).Start(Ctx);
+
+    [Test]
+    public async Task ASignatureKeptInAVariable_Verifies()
+    {
+        await Ctx.Variable.Set("data", "hello");
+        var signed = await Program("signing", "sign", ("Data", "%data%"));
+        await signed.IsSuccess();
+        await Ctx.Variable.Set("signed", signed);
+
+        var verified = await Program("signing", "verify", ("Data", "%signed%"));
+
+        await verified.IsSuccess();
+        await Assert.That((await verified.Value())?.ToString()).IsEqualTo("true");
+    }
+
+    // A signature binds the value it signed: the variable it was signed from changing afterwards changes nothing it holds.
+    [Test, Skip("sign holds its slot's Data as written — a reference to %data%, not the value: the step's slot must hand the Data its variable names (open)")]
+    public async Task ASignature_HoldsTheValueItSigned_NotTheVariable()
+    {
+        await Ctx.Variable.Set("data", "hello");
+        var signed = await Program("signing", "sign", ("Data", "%data%"));
+        await signed.IsSuccess();
+
+        await Ctx.Variable.Set("data", "changed");
+
+        var layer = (global::app.type.item.signature.@this)signed.Peek();
+        await Assert.That((await layer.Value.Value())?.ToString()).IsEqualTo("hello");
+        await Ctx.Variable.Set("signed", signed);
+        await (await Program("signing", "verify", ("Data", "%signed%"))).IsSuccess();
+    }
+
+    // The test suites' fake signer reads its Data as the real one does: a value with no signature is refused, and a
+    // signature kept in a variable verifies — so a reference read without what it names can't hide behind it.
+    [Test]
+    public async Task TheTestSigner_ReadsItsData()
+    {
+        await using var app = new global::app.@this(_tempDir).Testing();
+        var ctx = app.actor.list.System.Context;
+        await ctx.Variable.Set("plain", "hello");
+        var refused = await global::PLang.Tests.Shared.Make.Action(ctx, "signing", "verify", ("Data", "%plain%")).Start(ctx);
+        await Assert.That(refused.Error?.Key).IsEqualTo("NoSignature");
+
+        await ctx.Variable.Set("data", "hello");
+        await ctx.Variable.Set("signed", await global::PLang.Tests.Shared.Make.Action(ctx, "signing", "sign", ("Data", "%data%")).Start(ctx));
+        await (await global::PLang.Tests.Shared.Make.Action(ctx, "signing", "verify", ("Data", "%signed%")).Start(ctx)).IsSuccess();
+    }
+
     #region Error Keys
 
     [Test]
