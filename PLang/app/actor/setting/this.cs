@@ -187,8 +187,8 @@ public sealed class @this : IDisposable
         if (await owner.Load() is { Success: false } unread) return unread;
         global::app.type.item.@this value = Class(path) != null ? setting
             : global::app.type.item.@this.Create(Under(path), _context);
-        var row = new data.@this($"{owner._actor!.Name.ToLowerInvariant()}!{path}", value, context: _context);
-        var stored = await Store.Set(Table, row.Name, row);
+        var row = new data.@this(path, value, context: _context);
+        var stored = await Store.Set(Table, owner._actor!.Row(path), row);
         if (!stored.Success) return stored;
         owner._held![path] = row;
         Move();
@@ -202,7 +202,7 @@ public sealed class @this : IDisposable
         var path = setting.Path;
         var owner = Owner;
         if (await owner.Load() is { Success: false } unread) return unread;
-        var removed = await Store.Remove(Table, $"{owner._actor!.Name.ToLowerInvariant()}!{path}");
+        var removed = await Store.Remove(Table, owner._actor!.Row(path));
         if (!removed.Success) return removed;
         owner._held!.TryRemove(path, out _);
         Move();
@@ -246,12 +246,11 @@ public sealed class @this : IDisposable
         _ => null,
     };
 
-    // The actor's rows, read from the settings' store — its keys are "<actor>!<path>" — each value read
+    // The actor's rows, read from the settings' store — each under the key the actor answers for it — each value read
     // through, so a setting builds from them in memory.
     private async Task<ConcurrentDictionary<string, data.@this>> Read()
     {
         var rows = new ConcurrentDictionary<string, data.@this>(StringComparer.OrdinalIgnoreCase);
-        var prefix = _actor!.Name.ToLowerInvariant() + "!";
         _reading.Value = true;
         // A store that can't open (an unwritable root) answers why, as any unreadable rows do: they are unread,
         // not empty — a save or remove, which needs them, answers why (Load too), and nothing writes over rows
@@ -265,8 +264,7 @@ public sealed class @this : IDisposable
         }
         foreach (var row in (await all.Value())!.Items(_context))
         {
-            if (!row.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
-            var key = row.Name[prefix.Length..];
+            if (_actor!.Address(row.Name) is not { } address) continue;
             var value = await row.Value();
             // A row that could NOT be read — an older-shape row 790 drops — is kept WITH its error, never
             // silently skipped: its read named the key and how to fix it (delete it and set it again). It is
@@ -274,11 +272,11 @@ public sealed class @this : IDisposable
             // a silent default. A row that read to nothing (a null value) is simply absent.
             if (!row.Success)
             {
-                await (_context.App.Debug?.Write($"settings: '{key}' could not be read — {row.Error?.Message}") ?? Task.CompletedTask);
-                rows[key] = row;
+                await (_context.App.Debug?.Write($"settings: '{address}' could not be read — {row.Error?.Message}") ?? Task.CompletedTask);
+                rows[address] = row;
             }
             else if (value is { IsNull: false })
-                rows[key] = new data.@this(row.Name, value, row.Type, context: _context);
+                rows[address] = new data.@this(row.Name, value, row.Type, context: _context);
         }
         return rows;
     }
@@ -297,8 +295,7 @@ public sealed class @this : IDisposable
     /// names none. What a value, a type, a host or a concept answers its settings through, by its class.</summary>
     public async ValueTask<data.@this?> Get(System.Type host)
     {
-        Classes();
-        var @class = _addresses!.ContainsKey(host) ? host
+        var @class = Classes().ContainsValue(host) ? host
             : host.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.setting.ISetting<>))
                 ?.GetGenericArguments()[0];
         return @class == null ? null : await Get(Address(@class));
@@ -344,11 +341,10 @@ public sealed class @this : IDisposable
         return instance;
     }
 
-    // The settings classes by address, and each class's address, from actor/setting's own index over the settings
-    // types (774 A: actor/setting owns the address keys, the type list owns the names — a settings class's name is its
-    // namespace, its address its path, and they differ). Built once from the app's types, each class made once here.
+    // The settings classes by address, from actor/setting's own index over the settings types (774 A: actor/setting owns
+    // the address keys, the type list owns the names — a settings class's name is its namespace, its address its path,
+    // and they differ). Built once from the app's types, each class made once here.
     private System.Collections.Generic.Dictionary<string, System.Type>? _classes;
-    private System.Collections.Generic.Dictionary<System.Type, string>? _addresses;
     private System.Type? Class(string address) => Classes().GetValueOrDefault(address);
 
     /// <summary>Where the settings class <paramref name="class"/> is kept (<c>app.call.setting</c>), or one of its options
@@ -356,9 +352,9 @@ public sealed class @this : IDisposable
     /// mistake.</summary>
     public string Address(System.Type @class, string? option = null)
     {
-        Classes();
-        var address = _addresses!.TryGetValue(@class, out var held) ? held
-            : throw new InvalidOperationException($"{@class.FullName} is not a settings class");
+        // the index's one entry for the class (some thirty classes: a look is cheap)
+        var address = Classes().FirstOrDefault(entry => entry.Value == @class).Key
+            ?? throw new InvalidOperationException($"{@class.FullName} is not a settings class");
         return option == null ? address : $"{address}.{option}";
     }
 
@@ -366,17 +362,11 @@ public sealed class @this : IDisposable
     {
         if (_classes != null) return _classes;
         var classes = new System.Collections.Generic.Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase);
-        var addresses = new System.Collections.Generic.Dictionary<System.Type, string>();
         foreach (var type in _context.App.type.list.Items())
             if (type.ClrType is { } clr && typeof(global::app.type.item.setting.@this).IsAssignableFrom(clr)
                 && clr != typeof(global::app.type.item.setting.@this) && !clr.IsAbstract
                 && clr.GetConstructor(new[] { typeof(global::app.type.@this) }) != null)
-            {
-                var address = ((global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])!).Path;
-                classes[address] = clr;
-                addresses[clr] = address;
-            }
-        _addresses = addresses;
+                classes[((global::app.type.item.setting.@this)System.Activator.CreateInstance(clr, _context.App.type.list[clr])!).Path] = clr;
         return _classes = classes;
     }
 

@@ -35,6 +35,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [global::app.LlmBuilder]
     public string Name { get; }
 
+    /// <summary>The key this actor's row for the setting at <paramref name="address"/> is kept under in the settings'
+    /// store (<c>user!app.test.setting</c>).</summary>
+    internal string Row(string address) => $"{Name.ToLowerInvariant()}!{address}";
+
+    /// <summary>The setting address <paramref name="row"/> is this actor's row for; null when it is another actor's
+    /// (every key of this actor's starts as its row for no address does).</summary>
+    internal string? Address(string row)
+        => Row("") is var start && row.StartsWith(start, System.StringComparison.OrdinalIgnoreCase) ? row[start.Length..] : null;
+
     /// <summary>An actor written alone, in every view, is its name — what a program reads an actor by; its context,
     /// channels and permissions are its own, never written with it.</summary>
     protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)

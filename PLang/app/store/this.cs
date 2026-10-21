@@ -35,7 +35,7 @@ public abstract class @this : global::app.type.item.@this, System.IDisposable
     public abstract Task<data.@this<T>> Get<T>(string table, string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 
     /// <summary>Every value in a table, each forced to its plang item type <typeparamref name="T"/>:
-    /// Data with a list of <c>Data&lt;T&gt;</c>.</summary>
+    /// Data with a list of <c>Data&lt;T&gt;</c>, each named by the key it was set under.</summary>
     public abstract Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 
     /// <summary>Stores a Data by table and key, the table made if it isn't there. The full Data

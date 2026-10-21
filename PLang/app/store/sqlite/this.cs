@@ -149,15 +149,16 @@ public sealed class @this : global::app.store.@this
 
             // Read all rows first (the reader is sync), then deserialize each — keeps the
             // connection lifetime tight and the await off the open reader.
-            var raws = new List<string>();
+            var raws = new List<(string Key, string Data)>();
             using (var reader = cmd.ExecuteReader())
                 while (reader.Read())
-                    if (!reader.IsDBNull(1)) raws.Add(reader.GetString(1));
+                    if (!reader.IsDBNull(1)) raws.Add((reader.GetString(0), reader.GetString(1)));
+            // each row answered under its key — the key it was set under, whatever the Data's own name
             var list = new global::app.type.item.list.@this(Context.App.type.list["list"]);
-            foreach (var raw in raws)
+            foreach (var (key, raw) in raws)
             {
                 var loaded = await Hydrate<T>(raw);
-                if (loaded.Success && !loaded.Peek().IsNull) list.Add(loaded);
+                if (loaded.Success && !loaded.Peek().IsNull) list.Add(loaded.Copy(key));
             }
             return Context.Ok<global::app.type.item.list.@this>(list);
         }
