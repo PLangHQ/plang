@@ -5,7 +5,7 @@ Start
 - set %data% = { "payload": "expiring" }
 - sign %data%, expires in 50 ms, write to %signed%
 - wait for 60 ms
-- verify %signed% with contracts ['C0'], on error call HandleExpired
+- verify %signed%, on error call HandleExpired
 - assert %errorKey% equals "Expired", "expired signature should fail verification"
 
 HandleExpired
