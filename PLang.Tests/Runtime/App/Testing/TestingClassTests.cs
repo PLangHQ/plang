@@ -103,7 +103,7 @@ public class TestingClassTests
         await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Count.ToInt32()).IsEqualTo(0);
     }
 
-    // --test={"timeout":"60s","parallel":4,"include":["fast"],"exclude":["slow"]}
+    // --test.setting={"timeout":"60s","parallel":4,"include":["fast"],"exclude":["slow"]}
     // applies each field to the run's setting via the setting walk (keys are property names).
     [Test]
     public async Task Configure_FromJson_AllFieldsApplied()
@@ -125,7 +125,7 @@ public class TestingClassTests
         await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("slow", _app.actor.list.User.Context).IsTrue();
     }
 
-    // A choice setting given as CLI text (--test={"format":"junit"}) is made by the choice itself.
+    // A choice setting given as CLI text (--test.setting={"format":"junit"}) is made by the choice itself.
     [Test]
     public async Task Configure_AChoiceFromItsText()
     {
@@ -195,7 +195,7 @@ public class TestingClassTests
         await Assert.That(test.StatusReason?.ToString()).IsEqualTo("excluded by tag");
     }
 
-    // Exclude set from the CLI shape (--test={"exclude":["slow"]}) binds and filters.
+    // Exclude set from the CLI shape (--test.setting={"exclude":["slow"]}) binds and filters.
     [Test]
     public async Task From_ExcludeSetThroughTheWalk_Filters()
     {

@@ -82,7 +82,7 @@ public class CurrentNodeTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await ctx.Setting.Set("variable.set.setting.name", ctx.Ok("%x%"));
+        await ctx.Setting.Write("variable.set.setting.name", ctx.Ok("%x%"));
         var read = await Read("%!module.variable.set.setting.name%", ctx);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("%x%");
     }

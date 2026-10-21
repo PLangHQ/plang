@@ -41,7 +41,7 @@ public class EdgeCaseTests
 
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
-    // --test={"timeout":"-5s"} → accepted (the type has no positive-bound). The value is
+    // --test.setting={"timeout":"-5s"} → accepted (the type has no positive-bound). The value is
     // a sentinel, not an error: test.start reads a timeout ≤ 0 as "no timeout".
     [Test]
     public async Task Config_Timeout_NonPositive_AcceptedAsSentinel()
@@ -51,7 +51,7 @@ public class EdgeCaseTests
         await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Timeout.Value.TotalSeconds).IsEqualTo(-5);
     }
 
-    // --test={"parallel":0} or {"parallel":-1} → accepted. Zero/negative is the "auto" sentinel:
+    // --test.setting={"parallel":0} or {"parallel":-1} → accepted. Zero/negative is the "auto" sentinel:
     // test.start reads Parallel ≤ 0 as ProcessorCount. Not a config error.
     [Test]
     public async Task Config_Parallel_ZeroOrNegative_AcceptedAsSentinel()
@@ -85,7 +85,7 @@ public class EdgeCaseTests
         await Assert.That(_app.test.list.Items().Count()).IsEqualTo(0);
     }
 
-    // --test={"path":"../../../etc"} → rejected. Discovery is constrained to
+    // --test.setting={"path":"../../../etc"} → rejected. Discovery is constrained to
     // paths under the app's working directory — prevents a malicious test
     // config from enumerating system directories. (security)
     [Test]
@@ -135,7 +135,7 @@ public class EdgeCaseTests
     // Retired: nested Data (Data-as-a-value) is not a supported shape — the
     // SetValueDirect courier that produced it is now guarded.
 
-    // --test={"format":"csv"} → error. Format is a choice<Format>; the walk's conversion
+    // --test.setting={"format":"csv"} → error. Format is a choice<Format>; the walk's conversion
     // rejects any value outside the closed set (json/junit).
     [Test]
     public async Task Config_Format_InvalidValue_RejectedWithError()

@@ -149,7 +149,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     {
         var written = value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context);
         await written.Value();
-        await context.Setting.Set($"{Path}.{key}", written);
+        await context.Setting.Write($"{Path}.{key}", written);
     }
 
     /// <summary>
@@ -169,7 +169,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
             if (prop?.SetMethod?.IsPublic != true)
                 return context.Error(new global::app.error.@this(
-                    $"Unknown setting '{kvp.Key}' on {node.GetType().Name} — no public-settable property.",
+                    $"Unknown setting '{kvp.Key}' on {(node is @this setting ? setting.Path : context.App.type.list[node.GetType()].Name)} — no public-settable property.",
                     "UnknownSetting", 400));
 
             if (kvp.Value is IDictionary<string, object?> sub && IsComposite(prop.PropertyType))

@@ -48,7 +48,7 @@ public sealed class @this
     /// <summary>
     /// Activates debug tracing: watches the named variables through the User store's own events,
     /// subscribes the LLM request/response hooks, compiles the grep regex, and registers the
-    /// step/goal(/action) event bindings. The config is debug's setting (<c>--debug={…}</c> is this run's
+    /// step/goal(/action) event bindings. The config is debug's setting (<c>--debug.setting.…</c> is this run's
     /// values for it, written before Debug is born); this does the side-effects only —
     /// Debug is born, then activated. No config parsing or callstack cross-write lives here
     /// (callstack config is its own flag, <c>--callstack</c>). A grep that isn't a regex is the caller's

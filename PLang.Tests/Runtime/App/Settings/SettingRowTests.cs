@@ -127,7 +127,7 @@ public class SettingRowTests
     {
         await using var app = new global::app.@this(_dir).Testing();
         await Save(app.actor.list.User, os: false);
-        await app.actor.list.User.Context.Setting.Set("app.goal.list.setting.os", app.actor.list.User.Context.Ok(true));
+        await app.actor.list.User.Context.Setting.Write("app.goal.list.setting.os", app.actor.list.User.Context.Ok(true));
         await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("true");
     }
 

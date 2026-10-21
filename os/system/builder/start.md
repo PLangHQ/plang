@@ -19,7 +19,7 @@ order:
 
 Related docs that stay in `Documentation/`:
 
-- [`Documentation/v0.2/build.md`](../../../Documentation/v0.2/build.md) — the `plang build` CLI (`--build={…}`, cache).
+- [`Documentation/v0.2/build.md`](../../../Documentation/v0.2/build.md) — the `plang build` CLI (`--build.setting={…}`, cache).
 - [`Documentation/v0.2/debug.md`](../../../Documentation/v0.2/debug.md) — the `--debug` property bag (LLM tracing, variable watches).
 
 ## The one rule that bites everyone

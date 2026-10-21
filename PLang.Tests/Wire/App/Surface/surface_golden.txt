@@ -82,7 +82,6 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Error : app.error.this { get; }
   Event : app.data.this { get; }
   EventsSince(System.DateTimeOffset t) : System.Collections.Generic.IEnumerable<app.call.Diff>
-  Format : app.type.kind.this { get; }
   Goal : app.goal.this { get; }
   History : app.type.item.bool.this { get; }
   Isolate(System.Collections.Generic.IEnumerable<app.data.this> names, app.goal.step.action.this held = …, app.call.this caller = …) : app.call.this
@@ -97,7 +96,6 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Root : app.call.this { get; }
   Scope : app.call.this { get; } [LlmBuilder]
   Section : System.String { get; }
-  SetFormat(app.type.kind.this format) : System.Boolean
   Setting : app.call.setting.this { get; } [LlmBuilder]
   Step : app.goal.step.this { get; }
   Tags : app.type.item.bool.this { get; }
@@ -139,7 +137,6 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable
   Error : app.error.this { get; }
   Errors : app.error.list.this { get; } [LlmBuilder]
   Event : app.data.this { get; }
-  Format : app.type.kind.this { get; }
   GetItem<T>() : T
   Handled : app.type.item.bool.this { get; set; }
   Holds(System.String name) : System.Boolean
@@ -166,6 +163,16 @@ enum app.channel.ChannelDirection [Choice, PlangType]
   static const Input : app.channel.ChannelDirection
   static const Output : app.channel.ChannelDirection
 
+class app.channel.format.this : app.type.item.this, app.type.item.ICreate<app.channel.format.this> [PlangType]
+  Kind : app.type.kind.this { get; }
+  ctor(app.type.kind.this kind, app.type.this type)
+  override IsLeaf : System.Boolean { get; }
+  override RawText : System.String { get; }
+  override ToString() : System.String
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.channel.format.this
+  static Internal : System.Boolean { get; }
+
 class app.channel.list.this : app.type.item.this, System.IAsyncDisposable
   App : app.this { get; }
   ChannelNames : System.Collections.Generic.IEnumerable<System.String> { get; }
@@ -187,6 +194,11 @@ class app.channel.list.this : app.type.item.this, System.IAsyncDisposable
   static const Input : System.String
   static const Output : System.String
   static readonly Defaults : System.String[]
+
+class app.channel.setting.this : app.type.item.setting.this
+  Format : app.channel.format.this { get; set; } [Default, Out, Store]
+  ctor(app.type.this type)
+  static Internal : System.Boolean { get; }
 
 abstract class app.channel.this : app.type.item.this, System.IAsyncDisposable, System.IDisposable [PlangType]
   Actor : app.actor.this { get; }
@@ -211,6 +223,7 @@ abstract class app.channel.this : app.type.item.this, System.IAsyncDisposable, S
   protected ResolveEncoding() : System.Text.Encoding
   protected override Clone() : app.type.item.this
   protected override Level(System.Int32 depth, app.actor.context.this context) : app.type.item.this
+  protected virtual Format(app.actor.context.this context) : app.type.kind.this
   virtual AskAsync(app.module.output.ask action, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   virtual Available : System.Boolean { get; }
   virtual CanRead : System.Boolean { get; }
@@ -220,6 +233,10 @@ abstract class app.channel.this : app.type.item.this, System.IAsyncDisposable, S
   virtual DisposeAsync() : System.Threading.Tasks.ValueTask
   virtual ReadAsync(System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   virtual WriteAsync(app.data.this data, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
+
+class app.channel.type.console.this : app.channel.type.stream.this
+  ctor(System.String name, System.IO.Stream stream, app.channel.ChannelDirection direction)
+  protected override Format(app.actor.context.this context) : app.type.kind.this
 
 class app.channel.type.file.this : app.channel.this
   Path : app.type.item.path.file.this { get; } [Debug]
@@ -257,7 +274,6 @@ abstract class app.channel.type.session.this : app.channel.this
 class app.channel.type.stream.this : app.channel.type.session.this
   End : System.String { get; set; } [Debug]
   Framed : System.Boolean { get; init; } [Debug]
-  InPlay : System.Boolean { get; init; } [Debug]
   KeepsLast : System.Boolean { get; init; } [Debug]
   ReadAllBytesAsync(System.Threading.CancellationToken cancellationToken = …) : System.Threading.Tasks.Task<System.Byte[]>
   ReadAllTextAsync(System.Threading.CancellationToken cancellationToken = …) : System.Threading.Tasks.Task<System.String>
@@ -3000,6 +3016,7 @@ class app.type.item.wire.kind.plang.this : app.type.kind.this<app.type.item.wire
   override Decode(System.Byte[] raw, app.actor.context.this context, app.View view, System.String name = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>
   override Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, app.View view, System.Text.Encoding encoding = …, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task<app.data.this>
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
+  override IsText : System.Boolean { get; }
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
 
 class app.type.item.wire.template : app.type.item.wire.this
@@ -3134,12 +3151,7 @@ class app.type.node.current.this<T, L> : app.type.node.this<T, L>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 class app.type.node.root.this : app.type.node.this<app.type.this, app.type.list.this>
-  Format : app.type.kind.this { get; set; }
-  FormatOf(app.actor.context.this context) : app.type.kind.this
-  Named(System.String named) : app.type.kind.this
   ctor(app.this app)
-  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
-  override Set(System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 abstract class app.type.node.this : app.type.item.this [PlangType]
@@ -3389,6 +3401,12 @@ type app.call.setting.frame
 
 type app.channel.list
 
+type app.channel.setting
+
+type app.channel.type.console
+  .buffer : number
+  .mime : text
+
 type app.channel.type.file
   .buffer : number
   .mime : text
@@ -3605,6 +3623,8 @@ type event
 
 type file
   .path : path
+
+type format
 
 type given
 

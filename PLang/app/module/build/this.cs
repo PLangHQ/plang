@@ -36,7 +36,7 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
 
     /// <summary>
     /// Build-mode bootstrap. Confirms the app should be created (interactive y/n
-    /// prompt) when no <c>.build/app.pr</c> exists and <c>--app={"create":true}</c>
+    /// prompt) when no <c>.build/app.pr</c> exists and <c>--app.setting.create=true</c>
     /// wasn't passed; switches to the User actor; dispatches the system Build goal.
     /// Headless / CI-redirected stdin returns NoAppFound rather than blocking on a
     /// prompt nobody can answer.
@@ -47,12 +47,12 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
         var appPrExists = await appPrPath.Exists(_context.App.actor.list.System.Context!);
         // No app marker on disk → confirm creation (or error when headless).
         // Was inverted (fired when the marker DID exist) — that forced every
-        // build of an existing app to need --app={"create":true}.
+        // build of an existing app to need --app.setting.create=true.
         if ((!appPrExists.Success || (await appPrExists.Value())?.Value != true) && !_context.Setting.Of<global::app.setting.@this>().Create.Value)
         {
             if (Console.IsInputRedirected)
                 return Context.Error(new global::app.error.ServiceError(
-                    $"No app found at {_context.App.AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
+                    $"No app found at {_context.App.AbsolutePath}. Run plang build from your app's root directory, or use --app.setting.create=true.", "NoAppFound", 400));
 
             // Creating the app writes it at its root: the User actor's consent, asked through the one consent door
             // (its ask runs as an action, so on.ask fires as for any ask); a no, or no answer, is the denial.

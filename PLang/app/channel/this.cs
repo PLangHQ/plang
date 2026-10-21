@@ -211,9 +211,14 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
         return answer;
     }
 
+    /// <summary>The format this channel writes and reads in, for <paramref name="context"/>: its <see cref="Mime"/>'s. A
+    /// channel whose format is set elsewhere (the console's is the channel setting's) says so itself.</summary>
+    protected virtual global::app.type.kind.@this Format(global::app.actor.context.@this context)
+        => context.App.type.list.Mime(Mime.ToString());
+
     /// <summary>
     /// The one read boundary. A concrete kind reads its source bytes and hands them here; the channel's
-    /// <see cref="Mime"/> is a format, and the format decodes them (<c>kind.Decode</c>) — for a value's format
+    /// <see cref="Format"/> decodes them (<c>kind.Decode</c>) — for a value's format
     /// into <em>lazy</em> Data that materializes on first touch, never at read time, so couriers relay a
     /// value without forcing a parse; for plang's own format (<c>application/plang</c>) into the whole Data
     /// the bytes are. No format is special-cased here.
@@ -222,7 +227,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     {
         var context = Context ?? throw new InvalidOperationException(
             $"channel '{Name}' belongs to no list — it has no context to read in");
-        var format = context.App.type.list.Mime(Mime.ToString());
+        var format = Format(context);
         // text comes in the channel's encoding (a program's output in UTF-16, wsl.exe's): a value's text is UTF-8
         var encoding = ResolveEncoding();
         if (format.IsText && encoding.CodePage != global::System.Text.Encoding.UTF8.CodePage)

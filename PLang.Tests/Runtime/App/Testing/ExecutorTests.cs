@@ -51,14 +51,14 @@ public class ExecutorTests
         await using var _ = engine;
     }
 
-    // --test={"timeout":5} routes through Testing.Apply with the parsed dict and sets
+    // --test.setting={"timeout":5} routes through Testing.Apply with the parsed dict and sets
     // Timeout. Exercises the CommandLineParser JSON collection path.
     [Test]
     public async Task Configure_TestFlagWithConfig_AppliesToTesting()
     {
         var executor = NewExecutor();
         // Keys are property names — the setting walk maps them (no "timeout" alias).
-        var (engine, error) = await executor.Configure(new[] { "--test={\"timeout\":\"5s\",\"parallel\":3}" });
+        var (engine, error) = await executor.Configure(new[] { "--test.setting={\"timeout\":\"5s\",\"parallel\":3}" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
@@ -75,7 +75,7 @@ public class ExecutorTests
     public async Task Configure_TestFlagWithInvalidConfig_ReturnsApplyError()
     {
         var executor = NewExecutor();
-        var (engine, error) = await executor.Configure(new[] { "--test={\"format\":\"csv\"}" });
+        var (engine, error) = await executor.Configure(new[] { "--test.setting.format=csv" });
 
         await Assert.That(error).IsNotNull();
         await error!.IsFailure();
@@ -113,12 +113,12 @@ public class ExecutorTests
         await using var _ = engine;
     }
 
-    // --build={"cache":"skip"} reaches %!build.setting.cache% — llm.query in the builder's goals gets skip.
+    // --build.setting.cache=skip reaches %!build.setting.cache% — llm.query in the builder's goals gets skip.
     [Test]
     public async Task Configure_BuildCacheSkip_ReachesBuildCacheSetting()
     {
         var executor = NewExecutor();
-        var (engine, error) = await executor.Configure(new[] { "--build={\"cache\":\"skip\"}" });
+        var (engine, error) = await executor.Configure(new[] { "--build.setting.cache=skip" });
 
         await Assert.That(error).IsNull();
         await using var _ = engine!;
@@ -202,6 +202,93 @@ public class ExecutorTests
         await using var _ = engine;
     }
 
+    // The command line mirrors the path: --<path>=<value> is this run's value for %!<path>%, `app.` optional, or a dict
+    // at the setting's own path for several options at once.
+    [Test]
+    [Arguments("--app.channel.setting.format=bin")]
+    [Arguments("--channel.setting.format=bin")]
+    [Arguments("--app.channel.setting={\"format\":\"bin\"}")]
+    [Arguments("--channel.setting={\"format\":\"bin\"}")]
+    public async Task Configure_ASettingPath_IsThisRunsValue(string flag)
+    {
+        var (engine, error) = await NewExecutor().Configure(new[] { "Start.goal", flag });
+        await using var _ = engine;
+
+        await Assert.That(error).IsNull();
+        await Assert.That(engine!.actor.list.User.Context.Setting.Of<global::app.channel.setting.@this>().Format.ToString())
+            .IsEqualTo("application/octet-stream");
+    }
+
+    // A path that names no setting, or no option of the setting it names, is refused — as a step's set is.
+    [Test]
+    [Arguments("--channel.setting.fromat=bin", "channel.setting")]
+    [Arguments("--nothing.here=1", "nothing.here")]
+    [Arguments("--callstack={\"timing\":true}", "callstack")]
+    public async Task Configure_APathNoSettingAnswers_IsRefused(string flag, string named)
+    {
+        var (engine, error) = await NewExecutor().Configure(new[] { "Start.goal", flag });
+
+        await Assert.That(engine).IsNull();
+        await error!.IsFailure();
+        await Assert.That(error.Error!.Message).Contains(named);
+    }
+
+    // A mode word takes no settings: they are written at its setting's path.
+    [Test]
+    public async Task Configure_AModeWordWithADict_IsRefused_NamingItsSettingsPath()
+    {
+        var (engine, error) = await NewExecutor().Configure(new[] { "--debug={\"goal\":\"Start\"}" });
+
+        await Assert.That(engine).IsNull();
+        await error!.IsFailure();
+        await Assert.That(error.Error!.Message).Contains("--debug.setting");
+    }
+
+    // A mode is on when the run writes its setting: --debug.setting.goal=Start alone debugs, as the bare word does.
+    [Test]
+    public async Task Configure_ADebugSettingAlone_SwitchesDebugOn()
+    {
+        var (engine, error) = await NewExecutor().Configure(new[] { "Start.goal", "--debug.setting.goal=Start" });
+        await using var _ = engine;
+
+        await Assert.That(error).IsNull();
+        await Assert.That(engine!.Debug != null).IsTrue();
+        await Assert.That(engine.Debug!.Setting.Goal?.ToString()).IsEqualTo("Start");
+    }
+
+    [Test]
+    public async Task Configure_ATestSettingAlone_SwitchesTestOn()
+    {
+        var (engine, error) = await NewExecutor().Configure(new[] { "--test.setting.parallel=3" });
+        await using var _ = engine;
+
+        await Assert.That(error).IsNull();
+        await Assert.That(engine!.test.list.Session != null).IsTrue();
+    }
+
+    [Test]
+    public async Task Configure_ABuildSettingAlone_SwitchesBuildOn()
+    {
+        var (engine, error) = await NewExecutor().Configure(new[] { "--build.setting.cache=skip" });
+        await using var _ = engine;
+
+        await Assert.That(error).IsNull();
+        await Assert.That(engine!.Build != null).IsTrue();
+    }
+
+    // A debug run times its frames, unless the command line says otherwise.
+    [Test]
+    [Arguments(new[] { "--debug" }, true)]
+    [Arguments(new[] { "--debug", "--call.setting.timing=false" }, false)]
+    public async Task Configure_ADebugRun_TimesItsFrames_UnlessTheCommandLineSaysNot(string[] flags, bool timed)
+    {
+        var (engine, error) = await NewExecutor().Configure(flags);
+        await using var _ = engine;
+
+        await Assert.That(error).IsNull();
+        await Assert.That(engine!.actor.list.System.Context.Setting.Of<global::app.call.setting.@this>().Timing.Value).IsEqualTo(timed);
+    }
+
     // Covers Start()'s composition with Configure(): an invalid --test config produces
     // an error from Configure, and Start must propagate that error without calling
     // engine.Start() (no .build/start.pr exists in the fixture filesystem, so if
@@ -212,7 +299,7 @@ public class ExecutorTests
     {
         var executor = NewExecutor();
         // An unknown format value is rejected by the choice<Format> conversion in the walk.
-        var result = await executor.Start(new[] { "--test={\"format\":\"csv\"}" });
+        var result = await executor.Start(new[] { "--test.setting.format=csv" });
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();

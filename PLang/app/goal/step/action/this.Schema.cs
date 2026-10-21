@@ -23,7 +23,7 @@ public partial class @this : global::app.type.item.note.IAbout
 
     /// <summary>What this action reaches outside the process — <c>network</c>, <c>llm</c>. The
     /// handler declares it with <c>[RequiresCapability]</c>; test discovery unions these into a
-    /// test's auto-tags so a run can skip them (<c>--test={"exclude":["network"]}</c>). It is a
+    /// test's auto-tags so a run can skip them (<c>--test.setting.exclude=["network"]</c>). It is a
     /// DECLARATION, not a gate: nothing consults it before Run. Empty when the action declares
     /// nothing, so callers never null-check.</summary>
     [JsonIgnore]

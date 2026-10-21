@@ -4,7 +4,7 @@ namespace app.module.debug.setting.llm;
 /// Granular LLM trace flags — <c>%!debug.setting.llm%</c>. Each flag dumps one slice of the API exchange — set
 /// only what you want to see. Flags compose: enabling System and Response gives the system prompt plus the raw
 /// model response, with no user-message or schema noise.
-/// Set via: <c>--debug={"llm":{"system":true,"user":true,"response":true,"schema":true}}</c>
+/// Set via: <c>--debug.setting.llm={"system":true,"user":true,"response":true,"schema":true}</c>
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {

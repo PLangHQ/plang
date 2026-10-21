@@ -68,8 +68,8 @@ The decider runs in `BuildGoal/Decide.goal` (the `Decide` goal). Watch its rende
 its questions, and its answers:
 
 ```bash
-$BIN build '--build={"files":["<goal>"],"cache":"skip"}' \
-  '--debug={"goal":"Decide","variables":["state","questions","answer"]}' > /tmp/decide.txt 2>&1
+$BIN build '--build.setting={"files":["<goal>"],"cache":"skip"}' \
+  '--debug.setting={"goal":"Decide","variables":["state","questions","answer"]}' > /tmp/decide.txt 2>&1
 cp /tmp/good.pr <restore the .pr>
 ```
 
@@ -87,8 +87,8 @@ a common/popular action), not the writer.
 The writer runs in `BuildGoal/Properties.goal` (the `Properties` goal), one `llm.query`:
 
 ```bash
-$BIN build '--build={"files":["<goal>"],"cache":"skip"}' \
-  '--debug={"goal":"Properties","variables":["propertiesUserMsg"],"llm":{"system":true,"response":true},"length":{"max":50000}}' > /tmp/props.txt 2>&1
+$BIN build '--build.setting={"files":["<goal>"],"cache":"skip"}' \
+  '--debug.setting={"goal":"Properties","variables":["propertiesUserMsg"],"llm":{"system":true,"response":true},"length":{"max":50000}}' > /tmp/props.txt 2>&1
 cp /tmp/good.pr <restore the .pr>
 ```
 

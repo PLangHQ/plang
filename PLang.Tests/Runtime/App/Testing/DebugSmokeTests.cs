@@ -109,7 +109,7 @@ public class DebugSmokeTests
         await Assert.That(debugOut).DoesNotContain("%!error% = (undefined)");
     }
 
-    // --debug={"llm":{"user":true,"response":true}} shows each step's variables: a step that reads the app (the
+    // --debug.setting={"llm":{"user":true,"response":true}} shows each step's variables: a step that reads the app (the
     // builder's `build.load, write to %app%`) shows it, and the run completes — the app is held in the very memory
     // the view lists, and is never walked back into.
     [Test]
@@ -135,7 +135,7 @@ public class DebugSmokeTests
         await Assert.That(debugOut).DoesNotContain("cannot be shown");
     }
 
-    // --debug={"variables":["trace"]} binds through the setting walk as a list of names.
+    // --debug.setting={"variables":["trace"]} binds through the setting walk as a list of names.
     [Test]
     public async Task Debug_Variables_BindAsNames()
     {

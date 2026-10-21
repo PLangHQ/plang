@@ -21,7 +21,7 @@ public class NumberTextTests
 
     private async Task Culture(string name)
     {
-        var set = await _app.actor.list.User.Setting.Set("app.setting.culture", Ctx.Ok(name));
+        var set = await _app.actor.list.User.Setting.Write("app.setting.culture", Ctx.Ok(name));
         await set.IsSuccess();
     }
 

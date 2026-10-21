@@ -122,8 +122,9 @@ public sealed class @this : IDisposable
         return _context.NotFound(keys.Length > 0 ? keys[0] : "setting");
     }
 
-    /// <summary>This run's value for <paramref name="key"/> in this scope; null clears it.</summary>
-    public ValueTask<data.@this> Set(string key, data.@this? value)
+    /// <summary>This run's value for <paramref name="key"/> in this scope, as a setting node wrote it once it checked
+    /// it against its own options (an action's, a module's, a class's); null clears it.</summary>
+    internal ValueTask<data.@this> Write(string key, data.@this? value)
     {
         if (value is null) _values.TryRemove(key, out _);
         else _values[key] = value;
@@ -132,20 +133,77 @@ public sealed class @this : IDisposable
     }
 
     /// <summary>
-    /// This run's values for the setting class at <paramref name="path"/>, from a CLI flag's dict
-    /// (<c>--test={"timeoutSeconds":5}</c> → <c>app.test.setting.timeoutSeconds</c>); a nested dict lands one
-    /// level deeper. A key that isn't one of the class's options, or a value its option can't take, is
-    /// refused — nothing is written then.
+    /// This run's value at <paramref name="path"/> — a setting's path (<c>app.</c> left out or not) and then its option
+    /// (<c>channel.setting.format</c>, <c>call.setting.diff.deep</c>), or the setting's alone with a dict of its
+    /// options (<c>test.setting={"timeout":"5s"}</c>). What the command line writes (<c>--&lt;path&gt;=&lt;value&gt;</c>).
+    /// A path no setting answers to, an option the setting doesn't have, or a value its option can't take is refused —
+    /// nothing is written then. A Data value is held whole. Answers the setting written, at its defaults.
     /// </summary>
-    public data.@this Set(string path, IDictionary<string, object?> values)
+    public data.@this Set(string path, object? value)
     {
-        if (Make(path) is not { } sample)
-            return _context.Error(new global::app.error.@this($"'{path}' names no setting class.", "UnknownSetting", 400));
-        var fits = sample.Apply(values, _context);
+        var found = Find(path);
+        if (!found.Success) return found;
+        var setting = ((global::app.type.item.setting.@this)found.Peek()!).Path;
+        var option = path.Length > found.Name.Length ? path[(found.Name.Length + 1)..] : null;
+        var raw = value is data.@this given ? given.Peek() : value;
+        var options = option == null ? raw as IDictionary<string, object?> : Nested(option, raw);
+        if (options == null)
+            return _context.Error(new global::app.error.@this(
+                $"'{path}' is the setting {setting}: give it its options, {{\"option\": value}}, or name one ({path}.<option>).",
+                "TypeConversionFailed", 400));
+        var fits = Make(setting)!.Apply(options, _context);
         if (!fits.Success) return fits;
-        Flatten(path, values);
+        if (option != null && value is data.@this whole) _values[$"{setting}.{option}"] = whole;
+        else Flatten(setting, options);
         Move();
-        return _context.Ok();
+        return found;
+    }
+
+    /// <summary>
+    /// The setting <paramref name="path"/> names, as the command line names it: the longest path a setting answers to,
+    /// its own or without <c>app.</c> (<c>channel.setting.format</c> → <c>app.channel.setting</c>) — a fresh value of
+    /// it, at its defaults, the Data named by the part of the path it answered to. A path no setting answers to, or
+    /// one two settings answer to, is refused.
+    /// </summary>
+    public data.@this Find(string path)
+    {
+        var flags = _flags ??= Flags();
+        for (var end = path.Length; end > 0; end = path.LastIndexOf('.', end - 1))
+        {
+            if (!flags.TryGetValue(path[..end], out var settings)) continue;
+            if (settings.Count > 1)
+                return _context.Error(new global::app.error.@this(
+                    $"'{path}' names two settings: {string.Join(" and ", settings)} — write the one you mean in full.", "AmbiguousSetting", 400));
+            return new data.@this(path[..end], Make(settings[0]), context: _context);
+        }
+        return _context.Error(new global::app.error.@this(
+            $"'{path}' names no setting — a setting's path is its owner's and then .setting (channel.setting.format).", "UnknownSetting", 400));
+    }
+
+    // Each setting by the paths a flag names it: its own, and without `app.` (app.channel.setting, channel.setting).
+    private Dictionary<string, List<string>>? _flags;
+
+    private Dictionary<string, List<string>> Flags()
+    {
+        var flags = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        const string app = "app.";
+        foreach (var path in (_classes ??= Index()).Keys)
+            foreach (var key in path.StartsWith(app, StringComparison.OrdinalIgnoreCase) ? new[] { path, path[app.Length..] } : new[] { path })
+            {
+                if (!flags.TryGetValue(key, out var paths)) flags[key] = paths = [];
+                paths.Add(path);
+            }
+        return flags;
+    }
+
+    // An option path's value as the options it sets: format → {format: v}, diff.deep → {diff: {deep: v}}.
+    private IDictionary<string, object?> Nested(string option, object? value)
+    {
+        var names = option.Split('.');
+        IDictionary<string, object?> options = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { [names[^1]] = value };
+        for (var i = names.Length - 2; i >= 0; i--)
+            options = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { [names[i]] = options };
+        return options;
     }
 
     private void Flatten(string path, IDictionary<string, object?> values)

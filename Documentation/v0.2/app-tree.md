@@ -235,7 +235,7 @@ Full rule + tests:
 lifetime (AsyncLocal Current, Children, Variables.OnSet subscription) is
 managed by `await using`. Structural data is always captured; richer
 capture (timing, tags, history) is gated by `CallStack.Flags`, populated
-from `--debug={callstack:{...}}` via `Debug.Apply`.
+from `--debug.setting={callstack:{...}}` via `Debug.Apply`.
 
 ## What's NOT on `app` (and where it lives instead)
 

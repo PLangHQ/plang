@@ -23,6 +23,9 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
     public override System.Collections.Generic.IReadOnlyList<string> Extension => [".plang"];
     public override bool Compressible => true;
 
+    /// <summary>Its content is characters — json, one whole Data per line on a framed channel.</summary>
+    public override bool IsText => true;
+
     public override async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
         global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)

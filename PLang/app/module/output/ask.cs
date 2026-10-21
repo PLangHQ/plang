@@ -21,6 +21,10 @@ public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICr
 
     /// <summary>Stops the goal only when it is this goal's own, waiting.</summary>
     public bool ShouldExit() => Waiting;
+
+    /// <summary>In text, an ask is its question — the line a person reads and answers.</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
+        => Question is { } question ? question.Output(writer) : default;
 }
 
 /// <summary>

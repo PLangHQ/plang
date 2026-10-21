@@ -39,13 +39,13 @@ public class SetTests
         await Assert.That((await context.Variable.GetValue("!http.request.setting.timeout"))).IsNull();
     }
 
-    // `set default %!build.setting.cache% = use` leaves --build={"cache":"skip"} standing: a setting's value counts
+    // `set default %!build.setting.cache% = use` leaves --build.setting={"cache":"skip"} standing: a setting's value counts
     // as one already there.
     [Test]
     public async Task SetDefault_OnASetting_KeepsItsValue()
     {
         var context = _app.actor.list.User.Context;
-        await _app.actor.list.System.Setting.Set("build.setting.cache", _app.actor.list.System.Context.Ok("skip"));
+        await _app.actor.list.System.Setting.Write("build.setting.cache", _app.actor.list.System.Context.Ok("skip"));
 
         var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!build.setting.cache%", "variable"), ("value", "use"), ("default", true));
         var result = await action.Start(context);

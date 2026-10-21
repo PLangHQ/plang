@@ -402,22 +402,19 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     public static void WireConsoleChannels(global::app.actor.@this actor, bool interactiveInput)
     {
-        // The console writes and reads in the format in play (%!app.type.format%): text for a person at a
-        // terminal, plang's own for a program that runs this plang (--format=application/plang).
+        // The console writes and reads in the channel setting's format (%!app.channel.setting.format%): text for a
+        // person at a terminal, plang's own for a program that runs this plang (--channel.setting.format=plang).
         if (!actor.Channel.Contains(global::app.channel.list.@this.Output))
-            actor.Channel.Register(new global::app.channel.type.stream.@this(
-                global::app.channel.list.@this.Output, Console.OpenStandardOutput(),
-                global::app.channel.ChannelDirection.Output, ownsStream: false) { Framed = true, InPlay = true });
+            actor.Channel.Register(new global::app.channel.type.console.@this(
+                global::app.channel.list.@this.Output, Console.OpenStandardOutput(), global::app.channel.ChannelDirection.Output));
         if (!actor.Channel.Contains(global::app.channel.list.@this.Error))
-            actor.Channel.Register(new global::app.channel.type.stream.@this(
-                global::app.channel.list.@this.Error, Console.OpenStandardError(),
-                global::app.channel.ChannelDirection.Output, ownsStream: false) { Framed = true, InPlay = true });
+            actor.Channel.Register(new global::app.channel.type.console.@this(
+                global::app.channel.list.@this.Error, Console.OpenStandardError(), global::app.channel.ChannelDirection.Output));
         if (!actor.Channel.Contains(global::app.channel.list.@this.Input))
             actor.Channel.Register(interactiveInput
                 // The one terminal owner (CLI) reads real stdin.
-                ? new global::app.channel.type.stream.@this(
-                    global::app.channel.list.@this.Input, Console.OpenStandardInput(),
-                    global::app.channel.ChannelDirection.Input, ownsStream: false) { InPlay = true }
+                ? new global::app.channel.type.console.@this(
+                    global::app.channel.list.@this.Input, Console.OpenStandardInput(), global::app.channel.ChannelDirection.Input)
                 // Non-interactive: an empty in-memory stream — reads as instant
                 // EOF (ChannelEof), so a prompt with no registered answerer fails
                 // fast instead of blocking on the shared process stdin.

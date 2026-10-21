@@ -1,7 +1,8 @@
 namespace app.module.debug.setting;
 
 /// <summary>
-/// What <c>--debug</c> shows — <c>%!debug%</c>; <c>--debug={…}</c> is this run's values for it.
+/// What <c>--debug</c> shows — <c>%!debug%</c>; <c>--debug.setting.…</c> is this run's values for it (and alone
+/// switches debug on).
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
@@ -18,7 +19,7 @@ public sealed class @this : global::app.type.item.setting.module.@this
     [Out, Store] public global::app.type.item.number.@this? Step { get; set; }
 
     /// <summary>The variables to watch, by name. A watched variable prints at every step and logs each time
-    /// it is created, changed or deleted. <c>--debug={"variables":["trace","goal"]}</c></summary>
+    /// it is created, changed or deleted. <c>--debug.setting.variables=["trace","goal"]</c></summary>
     [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables { get; set; }
 
     /// <summary>How long a line runs before it is cut (<c>length.max</c>, default 500).</summary>
@@ -34,6 +35,6 @@ public sealed class @this : global::app.type.item.setting.module.@this
     [Out, Store] public global::app.type.item.@bool.@this Verbose { get; set; } = false;
 
     /// <summary>Granular LLM tracing — each sub-flag dumps one part of the API exchange.
-    /// <c>--debug={"llm":{"system":true,"user":true,"response":true,"schema":true}}</c></summary>
+    /// <c>--debug.setting.llm={"system":true,"user":true,"response":true,"schema":true}</c></summary>
     [Out] public llm.@this? Llm { get; set; }
 }

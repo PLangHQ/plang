@@ -76,7 +76,7 @@ public class SettingOwnerTests
         await Assert.That((await (await Read("%!app.setting.create%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("true");
     }
 
-    // A setting always has a value — its class default, or the one written: the CLI's --build={"cache":"skip"} reads
+    // A setting always has a value — its class default, or the one written: the CLI's --build.setting={"cache":"skip"} reads
     // as skip in a goal, and a `set default` on it leaves the CLI's value.
     [Test] public async Task ASettingTheCliWrote_ReadsAsWritten_AndASetDefaultLeavesIt()
     {

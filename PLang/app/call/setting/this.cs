@@ -1,7 +1,7 @@
 namespace app.call.setting;
 
 /// <summary>
-/// What a call stack captures — <c>%!app.call.setting%</c>; <c>--callstack={…}</c> is this run's values for
+/// What a call stack captures — <c>%!app.call.setting%</c>; <c>--call.setting.…</c> is this run's values for
 /// it. Each option turns on one tier of a call's data:
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this

@@ -33,3 +33,14 @@
 ```
 **plang's nodes are lowercase.** A concept that maps to a folder is a lowercase member (`app.type`, `app.goal`, `app.variable`, `app.module`, `app.data`, `app.actor`, their `list`, `current`, `all`, `on`), so `%!app.type["text"]%` ↔ `app.type["text"]` ↔ `app/type/item/text/this.cs`. A value's facts may stay PascalCase in C# (`Name`, `Count`, `Created`): plang reads members ignoring case, and a .goal writes them lowercase.
 ```
+
+## coder — item-doors 214/215/218 — 2026-10-21
+**Target:** CLAUDE.md (Debugging)
+**Why:** A command-line flag is now a setting's path (214/215): `--debug={…}` is refused and names its replacement, `--debug.setting.…`. A setting flag alone switches its mode on (218). The two Debugging examples show the removed form.
+**Proposed change:** replace the two `--debug={…}` lines under "## Debugging" with:
+
+```
+- `plang --debug.setting.goal=Start` — debug specific goal (a debug setting alone switches debug on)
+- `plang '--debug.setting={"goal":"Start","step":3}'` — debug specific step (several options at once: a dict at the setting's path)
+- Any setting from the command line: `--<path>=<value>`, `app.` optional — `--channel.setting.format=plang`, `--build.setting.cache=skip`, `--test.setting.parallel=1`. A path no setting takes is refused.
+```

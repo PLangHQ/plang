@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Tester;
 /// Three output surfaces: console (always), file artifact (format-selected), and
 /// coverage tables (console). Output directory is .test/ at the app root — users
 /// narrow focus via include/exclude, report stays predictable.
-/// Format selector: --test={"format":"json"|"junit"}. Default "json".
+/// Format selector: --test.setting={"format":"json"|"junit"}. Default "json".
 /// File format is single-select; if users need both, they run twice.
 /// Failure rendering: Expected/Actual + Variables snapshot block.
 /// </summary>
@@ -127,7 +127,7 @@ public class ReportActionTests
         await Assert.That(json).DoesNotContain("%response%");
     }
 
-    // --test={"format":"junit"}: .test/junit.xml is written, .test/results.json is NOT.
+    // --test.setting={"format":"junit"}: .test/junit.xml is written, .test/results.json is NOT.
     // Single-select format — each file artifact is either-or per run.
     [Test]
     public async Task Report_Format_Junit_WritesJunitXml()

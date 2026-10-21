@@ -38,7 +38,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// pipe ends each with NUL). Null when it was started without one.</summary>
     [LlmBuilder, Out] public global::app.channel.type.stream.@this? pipe { get; internal set; }
 
-    /// <summary>It speaks plang's own format — a plang started with <c>--app.type.format=application/plang</c>: what it
+    /// <summary>It speaks plang's own format — a plang started with <c>--channel.setting.format=plang</c>: what it
     /// writes arrives as Data (an ask as an Ask), and what is sent to it goes as Data, signed.</summary>
     internal bool Plang { get; init; }
 
@@ -312,7 +312,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // A line from a plang that didn't read as Data: said on the error channel, never swallowed.
     private static Task Unread(Error why, Context context) => context.Actor.Channel.Report(context.Error(why));
 
-    /// <summary>plang's own format — the one a plang started with --app.type.format=application/plang speaks.</summary>
+    /// <summary>plang's own format — the one a plang started with --channel.setting.format=plang speaks.</summary>
     internal static global::app.type.kind.@this PlangFormat(Context context) => context.App.type.list.Mime("application/plang");
 
     /// <summary>The app this program runs, when it is a plang that takes calls on its input (PlangOS): its goals are

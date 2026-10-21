@@ -174,7 +174,7 @@ Why the `context` parameter even though the lookup is context-free today: contra
 3. **Cross-type with conversion** — converted `.Value`, state aliased. `T == IEnumerable` delegates to `Data.AsEnumerable()` so the string-not-iterable rule has one source of truth.
 4. **Conversion failure** — `Data<T>.FromError(error)` sentinel; nothing aliased. The post-Run resolution check (see *Resolution semantics* in `data-generic-design.md`) surfaces it.
 
-Aliasing means the four state slots are list refs shared between source and view: `wrapped.Properties.Set(...)` is visible through `source.Properties`; subscribers added to either side fire from either side. Removing any of the four alias assignments in `ConstructWrap<T>` is a silent regression — `--debug={"variables":[...]}` watches and `condition.if`'s `branchIndex` (attached to the result Data via `Properties`) both depend on this.
+Aliasing means the four state slots are list refs shared between source and view: `wrapped.Properties.Set(...)` is visible through `source.Properties`; subscribers added to either side fire from either side. Removing any of the four alias assignments in `ConstructWrap<T>` is a silent regression — `--debug.setting={"variables":[...]}` watches and `condition.if`'s `branchIndex` (attached to the result Data via `Properties`) both depend on this.
 
 **Where it lives**: `app/data/this.cs` — `WrapAs<T>` is the dispatch; `ConstructWrap<T>` is the per-rule constructor. Plain `Data` slots bypass `As<T>` entirely via `AsCanonical` (next entry).
 
@@ -201,7 +201,7 @@ The walker is shared with `AsT_Impl` so plain `Data` and `Data<T>` resolve neste
 When `Variables.Set(dv)` replaces an existing binding under the same name, the store rebinds the
 name to the new `Data` and announces it: `OnCreate` (name, value) for a new name, `OnSet` (name,
 before, after) for a replacement, `OnRemove` (name) on remove. These are the store's own events,
-for any name — the call frame's diff capture and the `--debug={"variables":[...]}` watch listen
+for any name — the call frame's diff capture and the `--debug.setting={"variables":[...]}` watch listen
 there. A `Data` itself carries no subscribers.
 
 **Properties stay with the `Data` instance.** They're metadata about the *value* (e.g. `condition.if`'s `branchIndex`, attached to a step's `!data` Data). A new binding starts with its own `Properties` so stale metadata doesn't bleed across re-bindings.

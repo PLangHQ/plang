@@ -164,12 +164,14 @@ public sealed partial class @this(IProgram asked)
         info.StandardInputEncoding = new UTF8Encoding(false);
     }
 
-    /// <summary>It is a plang told to speak plang's own format (<c>--app.type.format=…</c>, a name of that format).</summary>
+    /// <summary>It is a plang told to speak plang's own format on its console (<c>--channel.setting.format=…</c>, with
+    /// or without <c>app.</c>, a name of that format).</summary>
     internal bool SpeaksPlang(Context context)
     {
-        const string flag = "--app.type.format=";
-        var named = Info!.ArgumentList.FirstOrDefault(a => a.StartsWith(flag, StringComparison.OrdinalIgnoreCase))?[flag.Length..];
-        return named != null && ReferenceEquals(context.App.type.Named(named), process.@this.PlangFormat(context));
+        string[] flags = ["--channel.setting.format=", "--app.channel.setting.format="];
+        var named = Info!.ArgumentList.Select(a => flags.FirstOrDefault(f => a.StartsWith(f, StringComparison.OrdinalIgnoreCase)) is { } f ? a[f.Length..] : null)
+            .FirstOrDefault(n => n != null);
+        return named != null && ReferenceEquals(context.App.type.list.Format(named), process.@this.PlangFormat(context));
     }
 
     public override string ToString() => File?.Absolute ?? asked.App.Peek()?.ToString() ?? "a program";

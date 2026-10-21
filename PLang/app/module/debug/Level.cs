@@ -1,6 +1,6 @@
 namespace app.module.debug;
 
-/// <summary>Debug detail level. Selected via <c>--debug={"level":"step"|"action"}</c>;
+/// <summary>Debug detail level. Selected via <c>--debug.setting.level=step|action</c>;
 /// the walk's <c>choice&lt;Level&gt;</c> conversion rejects any other value. Owner's
 /// namespace (<c>debug</c>) carries the context — no <c>Debug</c> prefix (mirrors <c>test.Format</c>).</summary>
 [global::app.Attributes.PlangType("level"), global::app.Attributes.Choice]

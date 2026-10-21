@@ -17,7 +17,7 @@ Examples:
 
 Why this exists: `pass1.response` in trace files is post-validateResponse +
 post-enrichResponse — NOT the raw LLM API output. To compare raw LLM behaviour,
-use `--debug={"llm":{"response":true}}` on the build instead. This tool gives
+use `--debug.setting={"llm":{"response":true}}` on the build instead. This tool gives
 quick structured views of the post-pipeline state. See `debug.md`.
 """
 import argparse

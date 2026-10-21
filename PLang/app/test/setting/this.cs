@@ -1,7 +1,7 @@
 namespace app.test.setting;
 
 /// <summary>
-/// How a test run runs — <c>%!app.test.setting%</c>; <c>--test={…}</c> is this run's values for it. Bounds are
+/// How a test run runs — <c>%!app.test.setting%</c>; <c>--test.setting.…</c> is this run's values for it (and alone switches test on). Bounds are
 /// sentinels, not errors: a run (<c>app.test.list.Start</c>) reads a timeout ≤ 0 as none and a parallelism ≤ 0 as one per
 /// processor.
 /// </summary>

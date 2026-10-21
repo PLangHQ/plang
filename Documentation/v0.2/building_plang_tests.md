@@ -184,14 +184,14 @@ Any change to the builder (prompt, validator, .pr files) means all previously pa
 
 ```
 plang --build                                                          # Build from current directory
-plang --build={"cache":"skip"}                                          # Build without LLM cache
+plang --build.setting={"cache":"skip"}                                          # Build without LLM cache
 plang --test                                                           # Run tests from current directory
 plang --debug=true                                                     # Debug all steps
-plang --debug={"goal":"GoalName","step":3}                             # Debug specific step
-plang --debug={"goal":"BuildGoal","step":3,"length":{"max":0}}              # No truncation
-plang --debug={"goal":"BuildGoal","step":3,"grep":"condition"}         # Filter output (regex)
-plang --debug={"goal":"BuildGoal","step":3,"length":{"max":0},"grep":"if"}  # Full content, filtered
-plang --build --debug={"goal":"BuildGoal"}                             # Build with debug
+plang --debug.setting={"goal":"GoalName","step":3}                             # Debug specific step
+plang --debug.setting={"goal":"BuildGoal","step":3,"length":{"max":0}}              # No truncation
+plang --debug.setting={"goal":"BuildGoal","step":3,"grep":"condition"}         # Filter output (regex)
+plang --debug.setting={"goal":"BuildGoal","step":3,"length":{"max":0},"grep":"if"}  # Full content, filtered
+plang --build --debug.setting={"goal":"BuildGoal"}                             # Build with debug
 ```
 
 ### Debug Options
@@ -211,7 +211,7 @@ The builder caches LLM responses by default in `.data/data.sqlite` (`LlmCache` t
 
 To force fresh LLM calls (e.g., after changing the builder prompt):
 ```
-plang --build={"cache":"skip"}
+plang --build.setting={"cache":"skip"}
 ```
 
 To clear the cache manually:

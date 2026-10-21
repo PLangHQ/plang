@@ -45,16 +45,46 @@ namespace PLang
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.System);
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
 
-			// A flag that is a path into the app is written there, as a goal's `set` writes it:
-			// --app.type.format=application/plang is `set %!app.type.format% to "application/plang"` — the app's own
-			// format, the one its console writes and reads in. A write the app refuses (a format no type reads) is
-			// the run's answer.
-			foreach (var (key, value) in parameters.Where(p => p.Key.StartsWith("!app.", StringComparison.OrdinalIgnoreCase)).ToList())
+			// A flag is a setting's path: --channel.setting.format=plang is this run's value for
+			// %!app.channel.setting.format%, on the system actor (the user falls back to it); the mode words alone
+			// (--build, --test, --debug) switch their mode on. A flag no setting takes is the run's answer.
+			var modes = new Dictionary<string, global::app.type.item.setting.@this>(StringComparer.OrdinalIgnoreCase)
 			{
-				var written = await new global::app.type.item.variable.@this(key, app.type.list)
-					.Set(value, app.actor.list.System.Context);
-				if (!written.Success) return (null, written);
+				["!debug"] = new global::app.module.debug.setting.@this(app.type.list[typeof(global::app.module.debug.setting.@this)]),
+				["!test"] = new global::app.test.setting.@this(app.type.list[typeof(global::app.test.setting.@this)]),
+				["!build"] = new global::app.module.build.setting.@this(app.type.list[typeof(global::app.module.build.setting.@this)]),
+			};
+			// the flags that are settings' paths, and the setting classes they will write — known before anything is written
+			var flags = new List<(string Path, object? Value)>();
+			var settings = new HashSet<System.Type>();
+			foreach (var (key, value) in parameters.Where(p => p.Key.StartsWith('!')).ToList())
+			{
+				if (modes.TryGetValue(key, out var mode))
+				{
+					if (value is IDictionary<string, object?>)
+						return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
+							$"'--{key[1..]}' takes no settings: write them at its setting's path, --{mode.Path}={{…}} or --{mode.Path}.<option>=value.",
+							"UnknownSetting", 400)));
+					continue;
+				}
+				var found = app.actor.list.System.Setting.Find(key[1..]);
+				if (!found.Success) return (null, found);
+				settings.Add(found.Peek()!.GetType());
+				flags.Add((key[1..], value));
 			}
+
+			// A mode is on when its word is given (and not false), or when the run writes its setting.
+			bool On(string word) => parameters.TryGetValue(word, out var given) && given is not false
+				|| settings.Contains(modes[word].GetType());
+
+			// The modes' defaults, under the command line's values: a debug run shows each step's time, so this run's
+			// call stacks time their frames (--call.setting.timing=false still says not).
+			if (On("!debug"))
+				app.actor.list.System.Setting.Set(new global::app.call.setting.@this(app.type.list[typeof(global::app.call.setting.@this)]).Path + ".timing", true);
+
+			// The command line's values, once: the last word.
+			foreach (var (path, value) in flags)
+				if (app.actor.list.System.Setting.Set(path, value) is { Success: false } refused) return (null, refused);
 
 			var userVars = app.actor.list.User.Context.Variable;
 
@@ -65,58 +95,27 @@ namespace PLang
 				await userVars.Set(param.Key, param.Value);
 			}
 
-			// Each flag's dict is this run's values for its owner's setting class, on the system actor (the
-			// user falls back to it): --debug → %!debug%, --test → %!app.test.setting%, --app →
-			// %!app.setting%, --callstack → %!app.call.setting% (both actors' call stacks read it),
-			// --build → %!build.setting%. A key that isn't one of the class's options is refused.
-			global::app.data.@this? Flag<TSetting>(string name) where TSetting : global::app.type.item.setting.@this
+			// Debug mode — born reading its setting; then activated (watchers, LLM hooks, grep regex, event bindings).
+			if (On("!debug"))
 			{
-				if (!parameters.TryGetValue(name, out var value) || value is not IDictionary<string, object?> dict) return null;
-				var path = ((TSetting)System.Activator.CreateInstance(typeof(TSetting), app.type.list[typeof(TSetting)])!).Path;
-				var set = app.actor.list.System.Setting.Set(path, dict);
-				return set.Success ? null : set;
-			}
-
-			// Debug mode — born under --debug (presence = enabled), reading its setting; then activated
-			// (watchers, LLM hooks, grep regex, event bindings).
-			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
-			{
-				if (Flag<global::app.module.debug.setting.@this>("!debug") is { } debugError) return (null, debugError);
 				app.Debug = new Debug(app.actor.list.System.Context);
 				if (app.Debug.Activate() is { } refused) return (null, app.actor.list.System.Context.Error(refused));
 			}
 
-			// Test mode (--test is canonical; --tester is gone). The setting first: it names the actor the
-			// run's session opens on.
-			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
+			// Test mode: its setting names the actor the run's session opens on.
+			if (On("!test"))
 			{
 				if (!parameters.ContainsKey("path"))
 					await userVars.Set("path", startupDirectory);
-				if (Flag<global::app.test.setting.@this>("!test") is { } testError) return (null, testError);
 				app.test.list.Open();
 			}
 
-			if (Flag<global::app.setting.@this>("!app") is { } appError) return (null, appError);
-
-			// A debug run shows each step's time: this run's call stacks time their frames. An explicit
-			// --callstack={"timing":false} below still has the last word.
-			if (app.Debug != null)
-				app.actor.list.System.Setting.Set(new global::app.call.setting.@this(app.type.list[typeof(global::app.call.setting.@this)]).Path, new Dictionary<string, object?> { ["timing"] = true });
-
-			// Each actor owns its own call tree; both read the one setting (the user's falls back to the
-			// system's). (Service actors are spawned later — carrying the flag to them is a separate concern.)
-			if (Flag<global::app.call.setting.@this>("!callstack") is { } callstackError) return (null, callstackError);
-
-			// Build mode (--build is canonical; --builder is gone). The flag may be a bare
-			// `true` (`plang build` normalizes the subcommand to `--build`) or carry a JSON
-			// config dict (`--build={"files":[...]}`).
-			parameters.TryGetValue("!build", out var buildValue);
-			if (buildValue is not (null or false))
+			// Build mode (`plang build` normalizes the subcommand to `--build`).
+			if (On("!build"))
 			{
 				app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
 				if (!parameters.ContainsKey("path"))
 					await userVars.Set("path", startupDirectory);
-				if (Flag<global::app.module.build.setting.@this>("!build") is { } buildError) return (null, buildError);
 
 				// A build that skips the cache flows DOWN to llm.query as llm's cache setting, so llm.query reads its
 				// own `action.Cache` (which resolves %!llm.query.setting.cache% → %!llm.setting.cache% →
@@ -124,7 +123,7 @@ namespace PLang
 				// The run's value is in memory, so the sync Configure sets it at once.
 				var cache = app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Cache;
 				if (cache.Value == global::app.module.cache.type.cache.skip)
-					await app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this(app.type.list[typeof(global::app.module.llm.setting.@this)]).Path + ".cache", app.actor.list.System.Context.Ok(cache));
+					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this(app.type.list[typeof(global::app.module.llm.setting.@this)]).Path + ".cache", app.actor.list.System.Context.Ok(cache));
 			}
 
 			// Set the goal file on system context — Start() reads it

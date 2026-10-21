@@ -2,8 +2,7 @@ namespace PLang.Tests.App.Debug;
 
 /// <summary>
 /// Callstack knobs are configured through the setting walk — <c>app.actor.list.System.Setting.Set(new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Path, dict)</c>
-/// — the same path <c>--callstack={...}</c> takes at startup. (They used to ride on
-/// <c>--debug={callstack:...}</c> via a Flags.Parse cross-node write; that shorthand is gone.)
+/// — the same path <c>--call.setting={...}</c> takes at startup.
 /// </summary>
 public class CallStackWalkTests
 {

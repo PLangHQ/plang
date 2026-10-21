@@ -172,7 +172,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         var system = context.App.actor.list.System;
         var call = new global::app.call.setting.@this(context.App.type.list[typeof(global::app.call.setting.@this)]).Path;
-        await system.Setting.Set(call + ".timing", system.Context.Ok(true));
+        system.Setting.Set(call + ".timing", system.Context.Ok(true));
 
         var entry = Goal.Path?.ToString();
         bool Own(global::app.goal.step.@this step) => string.Equals(step.Goal.Path?.ToString(), entry, System.StringComparison.Ordinal);

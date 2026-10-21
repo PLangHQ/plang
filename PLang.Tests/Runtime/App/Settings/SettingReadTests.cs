@@ -23,7 +23,7 @@ public class SettingReadTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await ctx.Setting.Set("app.goal.list.setting.os", ctx.Ok(false));
+        await ctx.Setting.Write("app.goal.list.setting.os", ctx.Ok(false));
 
         var read = await Read("%!app.goal.list.setting.os%", ctx);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
@@ -41,7 +41,7 @@ public class SettingReadTests
     [Test] public async Task ModuleOption_FallsBackToTheSystem()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.System.Setting.Set("llm.setting.cache", app.actor.list.System.Context.Ok("skip"));
+        await app.actor.list.System.Setting.Write("llm.setting.cache", app.actor.list.System.Context.Ok("skip"));
 
         var read = await Read("%!llm.setting.cache%", app.actor.list.User.Context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("skip");
@@ -62,10 +62,10 @@ public class SettingReadTests
         var ctx = app.actor.list.User.Context;
         await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("use");
 
-        await ctx.Setting.Set("llm.setting.cache", ctx.Ok("skip"));
+        await ctx.Setting.Write("llm.setting.cache", ctx.Ok("skip"));
         await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("skip");
 
-        await ctx.Setting.Set("llm.query.setting.cache", ctx.Ok("use"));
+        await ctx.Setting.Write("llm.query.setting.cache", ctx.Ok("use"));
         await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("use");
     }
 
@@ -137,7 +137,7 @@ public class SettingReadTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await ctx.Setting.Set("identity.get.setting.name", ctx.Ok("alice"));
+        await ctx.Setting.Write("identity.get.setting.name", ctx.Ok("alice"));
         await Assert.That((await (await Read("%!identity.get.setting.name%", ctx)).Value())?.ToString()).IsEqualTo("alice");
     }
 

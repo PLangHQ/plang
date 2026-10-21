@@ -9,9 +9,9 @@ namespace app.Utils;
 /// Examples:
 ///   plang Start                          → goal=Start.goal
 ///   plang --build                        → !build=true
-///   plang --debug=Start:3                → !debug="Start:3"
+///   plang --debug.setting.goal=Start     → !debug.setting.goal="Start"
 ///   plang name="my app"                  → name="my app"
-///   plang --build={"files":"test.goal"}  → !build={"files":"test.goal"}
+///   plang --build.setting={"files":"test.goal"}  → !build.setting={"files":"test.goal"}
 ///   plang count=42 active=true           → count=42, active=true
 /// </summary>
 public class CommandLineParser

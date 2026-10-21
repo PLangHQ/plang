@@ -202,7 +202,7 @@ public class QueryConversationTests
     public async Task Query_SendsTheSettingsKey()
     {
         Answers("answer");
-        await Ctx.Setting.Set("llm.setting.key", Ctx.Ok("sk-from-the-setting"));
+        await Ctx.Setting.Write("llm.setting.key", Ctx.Ok("sk-from-the-setting"));
 
         await Ask("hello");
 
