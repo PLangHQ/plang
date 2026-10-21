@@ -26,7 +26,7 @@ public class @this : global::app.goal.step.action.@this
     }
 
     /// <summary>A clause belongs to the step action before it, and so does what follows it.</summary>
-    internal override global::app.goal.step.action.@this? Anchor(global::app.goal.step.action.@this? before) => before;
+    internal override bool Belongs(global::app.goal.step.action.@this? before) => true;
 
     /// <summary>A clause was attached when the program was read: its turn leaves the chain's result — and
     /// <c>%!data%</c> — as they stand.</summary>

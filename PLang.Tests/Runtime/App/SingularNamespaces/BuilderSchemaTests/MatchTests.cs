@@ -111,19 +111,29 @@ public class MatchTests
         await Assert.That(result.Error.Message).Contains("your answer writes 1, which the step doesn't");
     }
 
+    // A number is confirmed before anything is refused: among other problems it is still asked of the decider first, and
+    // the confirmed read refuses only what is really wrong — the step whose number the decider confirms keeps its answer.
     [Test]
-    public async Task AmongOtherProblems_AnUnwrittenNumberIsRefusedWithThem()
+    public async Task AmongOtherProblems_AnUnwrittenNumberIsConfirmedFirst()
     {
         await using var app = new global::app.@this("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("call Flaky, on error retry once, ignore"), Make.Step("write out \"b\""));
         await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"), (1, "output.write"));
 
-        var result = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context);   // step 1 has no line
+        var asked = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context);   // step 1 has no line
 
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("StepsRefused");
-        await Assert.That(result.Error.Message).Contains("step 1 (\"write out \"b\"\") — has no entry");
-        await Assert.That(result.Error.Message).Contains("your answer writes 1, which the step doesn't");
+        await asked.IsFailure();
+        await Assert.That(asked.Error!.Key).IsEqualTo("UnwrittenNumber");
+        await Assert.That(asked.Error.Message).DoesNotContain("your answer writes 1, which the step doesn't");
+
+        var confirmed = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context, Confirm("s0_on.error.RetryCount=1", 0.97));
+
+        await confirmed.IsFailure();
+        await Assert.That(confirmed.Error!.Key).IsEqualTo("StepsRefused");
+        await Assert.That(confirmed.Error.Message).Contains("step 1 (\"write out \"b\"\") — has no entry");
+        await Assert.That(confirmed.Error.Message).DoesNotContain("your answer writes 1");
+        await Assert.That(goal.Step[0].Code.Count).IsGreaterThan(0);
+        await Assert.That(confirmed.Error.Details!["steps"]?.ToString()).IsEqualTo("1");
     }
 
     // A quoted text carrying \n (BuildGoal/Start's SourceError message): the answer that writes it holds
@@ -485,8 +495,11 @@ public class MatchTests
         var goal = MaybeProcess(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (0, "variable.set"), (1, "goal.call"), (2, "output.write"));
 
-        var result = await Match(goal, NanoChildOverIndentAnswer.Replace("{ goal.call(Name=\"ProcessItems\") }", "{ variable.set(Name=%x%, Value=1) }"),
-            app.actor.list.System.Context);
+        var answer = NanoChildOverIndentAnswer.Replace("{ goal.call(Name=\"ProcessItems\") }", "{ variable.set(Name=%x%, Value=1) }");
+        // its number is asked first; the confirmed read refuses the body
+        var asked = await Match(goal, answer, app.actor.list.System.Context);
+        await Assert.That(asked.Error!.Key).IsEqualTo("UnwrittenNumber");
+        var result = await Match(goal, answer, app.actor.list.System.Context, Confirm("s0_variable.set.Value=1", 0.03));
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains(

@@ -233,8 +233,10 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
                 : null;
 
         if (whole.Count == 0 && refused.Count == 0 && unconfirmed.Count == 0) return null;
-        // the only problems are numbers to confirm: the decider is asked (the builder's ConfirmNumbers)
-        if (whole.Count == 0 && refused.Count == 0)
+        // numbers to confirm are asked of the decider first (the builder's ConfirmNumbers), whatever else is wrong: a
+        // number it confirms is no problem, so nothing is refused before it answers — the confirmed read refuses only
+        // what is really wrong, and a step whose number is confirmed keeps its answer
+        if (unconfirmed.Count > 0)
             return new global::app.error.@this(
                 $"{unconfirmed.Count} number(s) the steps don't write as digits: {string.Join("; ", unconfirmed.Select(n => $"step {n.Step} {n.Action}.{n.Property}={n.Value}"))}",
                 "UnwrittenNumber", 400)
@@ -245,8 +247,6 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
                     ["steps"] = string.Join(", ", unconfirmed.Select(n => n.Step).Distinct()),
                 },
             };
-        // among other problems, an unconfirmed number is refused with them
-        foreach (var number in unconfirmed) Refuse(number.Step, new global::app.error.@this(number.Message, "UnwrittenNumber", 400));
         var problems = whole.Concat(refused.SelectMany(p => p.Value.Select(cause => Said(p.Key, cause)))).ToList();
         return new global::app.error.@this(string.Join("; ", problems), key ?? "StepsRefused", 400)
         {

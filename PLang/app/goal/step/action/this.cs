@@ -259,8 +259,13 @@ public partial class @this
     /// read does once a step's code is in. A step action attaches to nothing.</summary>
     internal virtual void Attach(@this? before) { }
 
-    /// <summary>The step action the actions after this one belong to: this one.</summary>
-    internal virtual @this? Anchor(@this? before) => this;
+    /// <summary>Whether this action belongs to <paramref name="before"/>, the step action it follows (a clause does: it
+    /// is that action's) — a step action is its own, so after a condition it stands beside it.</summary>
+    internal virtual bool Belongs(@this? before) => false;
+
+    /// <summary>The step action the actions after this one belong to: this one, or — when this one belongs to the
+    /// action before it — that one.</summary>
+    internal @this? Anchor(@this? before) => Belongs(before) ? before : this;
 
     /// <summary>This action's turn in its step's chain, after <paramref name="result"/>: it starts, and its result
     /// is the chain's.</summary>

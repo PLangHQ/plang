@@ -150,7 +150,7 @@ public partial class @this
         try
         {
             var rendered = await asked.Value();
-            if (asked.Success) return new @this(Name, rendered, context: _context) { Properties = Properties.Clone(), Kept = Kept.Copy() };
+            if (asked.Success) return new @this(Name, rendered, context: _context) { Carried = Carried.Copy() };
             why = asked.Error!;
         }
         // a partial template throws for a name it can't read; here that is this value's answer, on the Data
@@ -206,7 +206,7 @@ public partial class @this
     [JsonIgnore]
     [LlmIgnore]
     [Out, Store]
-    public virtual Properties Properties { get; set; } = new();
+    public virtual Properties Properties { get => Carried.Properties; set => Carried.Properties = value; }
 
     /// <summary>The members a program added to this variable's value that the value can't hold itself
     /// (<c>set %name.lang% = "is"</c> on a text) — read with a dot after the value's own members, never with
@@ -214,7 +214,13 @@ public partial class @this
     [JsonIgnore]
     [LlmIgnore]
     [Out, Store]
-    internal virtual global::app.type.item.kept.list.@this Kept { get; set; } = new();
+    internal global::app.type.item.kept.list.@this Kept { get => Carried.Kept; set => Carried.Kept = value; }
+
+    /// <summary>What this variable's value carries — its properties and its added members, together: a face of this
+    /// variable shares it, a copy takes a copy of it.</summary>
+    [JsonIgnore]
+    [LlmIgnore]
+    internal virtual carried Carried { get; set; } = new();
 
 
     [JsonConstructor]
@@ -606,8 +612,7 @@ public partial class @this
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties,
-            Kept = Kept,
+            Carried = Carried,
         };
         clone._item = answer ?? Empty;
         // A declined ask lands its reason on this binding (asking.Fail) and
@@ -638,8 +643,7 @@ public partial class @this
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties,
-            Kept = Kept,
+            Carried = Carried,
             IsInitialized = IsInitialized,
         };
         view._item = _item;
@@ -726,8 +730,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties.Clone(),
-            Kept = Kept.Copy(),
+            Carried = Carried.Copy(),
             Signature = signature ?? Signature,
         };
     }
@@ -744,8 +747,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties.Clone(),
-            Kept = Kept.Copy(),
+            Carried = Carried.Copy(),
         };
     }
 
@@ -923,8 +925,7 @@ public class @this<T> : @this
         copy.Handled = source.Handled;
         copy.Returned = source.Returned;
         copy.ReturnDepth = source.ReturnDepth;
-        copy.Properties = source.Properties;
-        copy.Kept = source.Kept;
+        copy.Carried = source.Carried;
         copy.Snapshot = source.Snapshot;
         return copy;
     }
@@ -976,16 +977,10 @@ public class DynamicData : @this
         _found = found;
     }
 
-    public override Properties Properties
+    internal override carried Carried
     {
-        get => _found(Context)?.Properties ?? base.Properties;
-        set => base.Properties = value;
-    }
-
-    internal override global::app.type.item.kept.list.@this Kept
-    {
-        get => _found(Context)?.Kept ?? base.Kept;
-        set => base.Kept = value;
+        get => _found(Context)?.Carried ?? base.Carried;
+        set => base.Carried = value;
     }
 
     /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
@@ -1002,7 +997,7 @@ public class DynamicData : @this
         global::app.type.item.signature.@this? signature = null)
     {
         var ctx = context ?? Context;
-        return new @this(name, _cell.Compute(ctx), context: ctx) { Properties = Properties.Clone(), Kept = Kept.Copy() };
+        return new @this(name, _cell.Compute(ctx), context: ctx) { Carried = Carried.Copy() };
     }
 }
 
