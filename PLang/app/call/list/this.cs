@@ -174,7 +174,10 @@ public sealed partial class @this : global::app.type.item.@this
     /// <param name="setting">What the stack captures, as its async caller read it (<see cref="Setting"/>).</param>
     /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
     public call.@this Push(global::app.goal.@this goal, setting.@this setting, IEnumerable<global::app.data.@this>? names = null)
-        => Push(goal, null, null, null, setting, names);
+    {
+        var caller = Caller();
+        return Enter(new call.@this(_call, goal, step: null, action: null, caller, this, _datetime, _dict, caller, Variables, setting, names));
+    }
 
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
     /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
@@ -189,24 +192,28 @@ public sealed partial class @this : global::app.type.item.@this
         => Enter(new call.isolated.@this(_isolated, caller ?? _current.Value, this, _datetime, _dict, names, held, setting));
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
-    public call.@this Push(global::app.goal.step.@this step, setting.@this setting) => Push(step.Goal, step, null, null, setting);
+    public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
+    {
+        var caller = Caller();
+        return Enter(new call.@this(_call, step.Goal, step, action: null, caller, this, _datetime, _dict, caller, Variables, setting));
+    }
 
     /// <summary>Pushes the frame of an action starting: its step's goal, its step and itself — an action composed
     /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
-        => Push(action.Step?.Goal, action.Step, action, variables, setting);
+    {
+        var caller = Caller();
+        return Enter(new call.@this(_call, action.Step?.Goal, action.Step, action, caller, this, _datetime, _dict, caller,
+            variables ?? Variables, setting));
+    }
 
-    private call.@this Push(global::app.goal.@this? goal, global::app.goal.step.@this? step,
-        global::app.goal.step.action.@this? action, Variables? variables, setting.@this setting,
-        IEnumerable<global::app.data.@this>? names = null)
+    // The frame a frame pushed now is called from — the current one; past MaxDepth (the caller's own depth) the
+    // overflow.
+    private call.@this? Caller()
     {
         var caller = _current.Value;
-
-        // the caller's depth is its own fact: one more frame past MaxDepth is the overflow
-        if (caller != null && caller.Depth >= MaxDepth)
-            throw new CallStackOverflowException(MaxDepth);
-
-        return Enter(new call.@this(_call, goal, step, action, caller, this, _datetime, _dict, caller, variables ?? Variables, setting, names));
+        if (caller != null && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
+        return caller;
     }
 
     // The frame becomes current: it joins its caller's children (Children owns its own lock + FIFO eviction), and a
