@@ -42,4 +42,7 @@ Source: `.bot/item-doors/codeanalyzer/v3/report.md` (46f7965b5). Section numbers
 
 ## D. Backlog after merge (pre-existing, not introduced by item-doors)
 
+**A real bug first (from A11's dropped TODO, decision 287):** a sub-goal's parent-scope variable doesn't survive an `on.error` retry. A parent-scope `%messages%` reads null on the retry, and null answers ValidationError (`module/llm/code/OpenAi.cs`, the comment now states it). It needs a red test and a trace in the follow-up.
+
+
 §6's `number/this.Arithmetic.cs:43`, `dict/this.cs:306`, `type/this.cs:194`, `Registry.cs` type switches, `Hop.cs` string switch, `property` `switch (Member)`; §7's size/duration R5b/c/d and the CLR unwrap copies, `dict/key` and `modifier/list` (one base), the plang writer as a forwarder; §11's born-without-a-type door, `formal/reader.cs` JSON by concatenation, the dummy-bool overloads, `Apply(object node)` doing two jobs. Each goes to `.bot/item-doors/architect/backlog.md` with its file:line, for a follow-up branch.
