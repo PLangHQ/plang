@@ -148,9 +148,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// via its <c>Create</c>. Used only relationally (who drives/coerces), never a result,
     /// never on the wire. Declared per type on the ×10 table (text 100 … list 750, guid 600,
     /// null 1000); the apex/unranked base is 0. A plugin type declares its own — no central
-    /// catalog. Read off the value's real type (both operands are their real shape by the time
-    /// <see cref="Compare"/> runs — <see cref="Value"/> parsed any source), so it never
-    /// materializes to decide.
+    /// catalog. Read off the value as it is held: an operand may still be unread (a json source answers itself
+    /// unread), and such a source ranks above every value, so it drives — it opens itself and hands the comparison
+    /// to what it stands for. Rank itself never materializes anything.
     /// </summary>
     public virtual int Rank => 0;
 
