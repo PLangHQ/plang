@@ -170,6 +170,21 @@ public class DiscoverActionTests
     }
 
     // A .goal with no matching .pr in .build/ → global::app.test.Status.Stale with reason "no .pr".
+    // A fresh hash says only that the words didn't change: a .pr whose saved code no longer holds against today's
+    // catalogue (a type that is no type any more, a frozen default no action takes) is Stale, saying why.
+    [Test]
+    public async Task Discover_APrWhoseCodeNoLongerHolds_IsStaleWithItsReason()
+    {
+        await CreateTestFile("Old.test.goal", "Start", new[] { "set %x% as json" },
+            new[] { ("variable", "set", new (string, object?)[] { ("Name", "x"), ("Value", "{}"), ("Type", "json") }) });
+
+        var test = (await Discover()).Single();
+
+        await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Stale);
+        await Assert.That(test.StatusReason?.ToString()).StartsWith("rebuild needed: ");
+        await Assert.That(test.StatusReason?.ToString()).Contains("json");
+    }
+
     // A root that is a test file is that one test (`plang --test sub/Bar.test.goal`).
     [Test]
     public async Task Discover_ATestFileAsTheRoot_IsThatOneTest()

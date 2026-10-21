@@ -141,11 +141,24 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         catch (global::app.error.AppException refused) { return Stale(source, refused.Message); }
         if (built == null) return Stale(source, prRead.Error?.Message ?? "pr corrupt");
         if (!string.Equals(source.Hash, built.Hash, StringComparison.OrdinalIgnoreCase)) return Stale(source, "rebuild needed");
+        // the same words, but the saved code must still hold against today's catalogue (the build's own judgement), its
+        // sub-goals' too
+        if (await Invalid(built) is { } invalid) return Stale(source, "rebuild needed: " + invalid.Message);
 
         return await global::app.test.@this.From(built, context);
 
         global::app.test.@this Stale(global::app.goal.@this goal, string reason)
             => new(context.App.type.list) { Goal = goal, Status = Status.Stale, StatusReason = reason };
+
+        // the first step whose saved code no longer holds, in the goal or a sub-goal; null when all hold
+        async Task<global::app.error.@this?> Invalid(global::app.goal.@this goal)
+        {
+            foreach (var step in goal.Step.Items())
+                if (await step.Validate(context) is { } invalid) return invalid;
+            foreach (var sub in goal.Child.Items())
+                if (await Invalid(sub) is { } invalid) return invalid;
+            return null;
+        }
     }
 
     // One test: this run's coverage takes in the goals it reaches (a site that never runs still shows); a test
