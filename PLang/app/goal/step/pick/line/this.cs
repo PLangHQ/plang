@@ -82,11 +82,11 @@ internal sealed class @this(bool nests)
     {
         if (!_produced)
             return calls.Select(c => _kept.FirstOrDefault(k => k.Marker == c) is { Marker: not null } k ? k.Stands : c).ToList();
-        var own = calls.Where(c => _kept.All(k => k.Marker != c)).ToList();
-        var kept = calls.Select(c => _kept.FirstOrDefault(k => k.Marker == c)).Where(k => k.Marker != null).Select(k => k.Follows);
+        var actions = calls.Where(c => _kept.All(k => k.Marker != c)).ToList();
+        var keeps = calls.Select(c => _kept.FirstOrDefault(k => k.Marker == c)).Where(k => k.Marker != null).Select(k => k.Follows);
         // the appended write-to stays last
         var appended = ReferenceEquals(calls, _line) ? _appended : 0;
-        var tail = own.Skip(own.Count - appended).ToList();
-        return own.Take(own.Count - appended).Concat(kept).Concat(tail).ToList();
+        var tail = actions.Skip(actions.Count - appended).ToList();
+        return actions.Take(actions.Count - appended).Concat(keeps).Concat(tail).ToList();
     }
 }

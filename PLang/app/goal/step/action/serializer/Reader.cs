@@ -64,10 +64,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // reads through the same door a built .pr does.
                 case "name": actionName = reader.String(); break;
                 case "property":
-                    var made = Made();
+                    var program = Made();
                     reader.BeginArray();
                     while (reader.NextElement())
-                        made.Property.Add(Property(reader.RawValue(), ctx));
+                        program.Property.Add(Property(reader.RawValue(), ctx));
                     reader.EndArray();
                     break;
                 case "default":
@@ -117,7 +117,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.data.Properties? properties = null;
         // The value's bytes are held until the row closes: the "variable" list after it is what the
         // value is born with.
-        byte[]? held = null;
+        byte[]? json = null;
         IReadOnlyList<global::app.type.item.variable.@this>? variables = null;
         row.BeginObject();
         while (row.NextName(out var key))
@@ -132,7 +132,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "value":
                     if (type is not { IsNull: false })
                         throw new global::app.data.reader.UntypedValueException(name, row.RawValue());
-                    held = row.Slice();
+                    json = row.Slice();
                     break;
                 case "variable": variables = new global::app.type.item.variable.serializer.Entry().Read(ref row, ctx); break;
                 case "properties": properties = global::app.data.Properties.Read(ref row, ctx); break;
@@ -140,15 +140,15 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             }
         }
         row.EndObject();
-        if (held != null)
+        if (json != null)
         {
             // A row marked a template names its variables; one without the list is an older .pr
             // (rebuild), never parsed on load.
             if (type!.Template != null && variables == null)
                 throw new global::app.error.PrFormatOutdatedException($"property '{name}' is a template without its variable list", ctx.Origin);
-            var bytes = new System.Text.Json.Utf8JsonReader(held);
+            var bytes = new System.Text.Json.Utf8JsonReader(json);
             bytes.Read();
-            var slot = new global::app.type.item.kind.json.Reader(bytes, held);
+            var slot = new global::app.type.item.kind.json.Reader(bytes, json);
             var born = ctx with { Variable = variables };
             value = type!.Name == "action" ? Read(ref slot, null, born)
                 : type.Name == "list" && type.kind.Name == "action" ? Actions(ref slot, born)

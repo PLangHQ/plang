@@ -168,7 +168,7 @@ public partial class @this
     /// events, its module's, its catalog action's (when it is another object than this one), its own.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context)
     {
-        var catalog = Module[Name] is { } found && !ReferenceEquals(found, this) ? found : null;
+        var catalog = Module[Name] is { } action && !ReferenceEquals(action, this) ? action : null;
         return depth switch
         {
             0 => context.App.action,
@@ -287,7 +287,7 @@ public partial class @this
     /// a value (not a bare <c>item</c>) produces what a keep in the same step keeps — but not a condition, whose
     /// verdict gates its body and is never kept.</summary>
     internal virtual void Prefill(global::app.goal.step.pick.line.@this line, string call)
-        => line.Add(call, opens: Link == 0, produces: Link == null && Return is { } made && made.Name != "item");
+        => line.Add(call, opens: Link == 0, produces: Link == null && Return is { } type && type.Name != "item");
 
     /// <summary>What this catalog action adds to a step's known code: its call.</summary>
     internal virtual void Know(List<string> line, string call) => line.Add(call);
@@ -381,7 +381,7 @@ public partial class @this
         return _stale ??= Judged();
 
         async Task<global::app.error.@this?> Judged()
-            => handler is global::app.module.IClass own ? (await own.Parse()).FirstOrDefault(declined => declined.Key == "Stale") : null;
+            => handler is global::app.module.IClass @class ? (await @class.Parse()).FirstOrDefault(declined => declined.Key == "Stale") : null;
     }
 
     private Task<global::app.error.@this?>? _stale;

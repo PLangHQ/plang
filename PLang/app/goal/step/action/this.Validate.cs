@@ -34,12 +34,12 @@ public partial class @this
             // The program action's properties against its catalog twin's rules. The LLM omitting a
             // required property is build-breaking. A property the class does not declare is a name
             // the LLM made up.
-            foreach (var declared in element.Property)
+            foreach (var property in element.Property)
             {
-                if (!declared.Required) continue;
-                if (Property[declared.Name] == null)
+                if (!property.Required) continue;
+                if (Property[property.Name] == null)
                     causes.Add(new global::app.error.@this(
-                        $"{Module}.{Name}: required property '{declared.Name}' is missing. " +
+                        $"{Module}.{Name}: required property '{property.Name}' is missing. " +
                         $"Every action must emit all non-nullable, non-default properties.",
                         "MissingProperty", 400));
             }
@@ -51,10 +51,10 @@ public partial class @this
                         $"Its properties are: {string.Join(", ", element.Property.Select(p => p.Name))}.",
                         "UnknownProperty", 400));
                 // an action held as a value belongs only in a slot that takes actions (action, list<action>)
-                else if (property.Value is @this held && !(slot.Type.Name == "action"
+                else if (property.Value is @this action && !(slot.Type.Name == "action"
                          || (slot.Type.Name == "list" && slot.Type.kind.Name == "action")))
                     causes.Add(new global::app.error.@this(
-                        $"{Module}.{Name}'s {property.Name} holds an action ({held.Module.Name}.{held.Name}), but " +
+                        $"{Module}.{Name}'s {property.Name} holds an action ({action.Module.Name}.{action.Name}), but " +
                         $"{property.Name} takes a value. Write the action first, then {Module}.{Name}({property.Name}=%!data%).",
                         "ActionAsValue", 400));
                 // a slot whose kind changed since the build (list<llmmessage> → list<message>)
@@ -75,18 +75,18 @@ public partial class @this
         // the handler's own judgement: the combinations of its properties only it knows are legal. A literal its
         // slot declines is the build's to name, not a judgement — unless it was written in a type its option no
         // longer is (Stale): built against an older catalog, the step is opened again.
-        if (causes.Count == 0 && (await Bind(context)).Handler is global::app.module.IClass own)
+        if (causes.Count == 0 && (await Bind(context)).Handler is global::app.module.IClass @class)
         {
-            var declined = await own.Parse();
+            var declined = await @class.Parse();
             causes.AddRange(declined.Where(d => d.Key == "Stale"));
-            if (declined.Count == 0 && await own.Validate() is { } complaint)
+            if (declined.Count == 0 && await @class.Validate() is { } complaint)
                 causes.Add(new global::app.error.@this($"{Module}.{Name}: {complaint.Message}", complaint.Key, complaint.Status));
         }
 
         // what it holds judges itself too — the actions its properties hold (a callback, a recovery), the steps
         // of its branch body — as the build walks them
-        foreach (var held in Held)
-            if (await held.Validate(context) is { } heldInvalid) causes.Add(heldInvalid);
+        foreach (var action in Held)
+            if (await action.Validate(context) is { } heldInvalid) causes.Add(heldInvalid);
         for (int i = 0; i < Child.Count; i++)
             if (await Child[i].Code.Validate(context) is { } branch) causes.Add(branch);
 

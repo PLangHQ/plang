@@ -345,7 +345,7 @@ public sealed partial class @this
     {
         var pr = Pr(source);
         var context = app.actor.list.System.Context;
-        var loaded = app.goal.list[pr] is { } held ? context.Ok(held) : await Read(pr, app);
+        var loaded = app.goal.list[pr] is { } goal ? context.Ok(goal) : await Read(pr, app);
         if (loaded.Success && await loaded.Value() is @this { IsSetup: true })
             return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
         return loaded;

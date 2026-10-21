@@ -218,9 +218,9 @@ public sealed class @this
         foreach (var (key, (property, value)) in _option)
         {
             var name = key[..key.LastIndexOf('.')];
-            var built = every.Where(a => $"{a.Module.Name}.{a.Name}" == name).ToList();
+            var actions = every.Where(a => $"{a.Module.Name}.{a.Name}" == name).ToList();
             // a capture's options aren't the step's to give: none is held to it
-            if (built.Count > 0 && !built.Any(IsCapture) && built.All(a => a[property.Name] == null) && !await property.IsDefault(value, context))
+            if (actions.Count > 0 && !actions.Any(IsCapture) && actions.All(a => a[property.Name] == null) && !await property.IsDefault(value, context))
             {
                 var option = new global::app.goal.step.action.formal.Writer(context);
                 await option.Option(property.Name, value);
@@ -238,9 +238,9 @@ public sealed class @this
         refused.AddRange(Held(code.Items()).Distinct().Where(a => a != "goal.call" && _listed.All(l => l.Name != a))
             .Select(a => $"step {i} holds {a}, which is not listed; only goal.call may be held without being listed"));
         // the variable the step's words write is written by a variable.set somewhere in the step's code
-        if (Writes() is { } written && !every.Any(a => a.Module.Name == "variable" && a.Name == "set"
-                && string.Equals(a["Name"]?.Value?.ToString()?.Trim('%', '"'), written.Trim('%'), StringComparison.OrdinalIgnoreCase)))
-            refused.Add($"step {i} says it writes {written}, but no action writes it: end the step with variable.set(Name={written}, Value=%!data%)");
+        if (Writes() is { } variable && !every.Any(a => a.Module.Name == "variable" && a.Name == "set"
+                && string.Equals(a["Name"]?.Value?.ToString()?.Trim('%', '"'), variable.Trim('%'), StringComparison.OrdinalIgnoreCase)))
+            refused.Add($"step {i} says it writes {variable}, but no action writes it: end the step with variable.set(Name={variable}, Value=%!data%)");
         var warnings = new List<global::app.warning.@this>();
         foreach (var l in _listed.Where(l => used.Contains(l.Name)))
             if (l.Mark == listed.Mark.Possible)
@@ -261,10 +261,10 @@ public sealed class @this
     {
         foreach (var a in actions)
         {
-            foreach (var held in a.Held)
+            foreach (var action in a.Held)
             {
-                yield return $"{held.Module.Name}.{held.Name}";
-                foreach (var name in Held([held])) yield return name;
+                yield return $"{action.Module.Name}.{action.Name}";
+                foreach (var name in Held([action])) yield return name;
             }
             foreach (var child in a.Child.Items())
                 foreach (var name in Held(child.Code.Items())) yield return name;
@@ -296,7 +296,7 @@ public sealed class @this
             {
                 Name = p.Name, Score = p.Score,
                 Mark = p.Score >= (number)Near && Sure(p.Name) ? listed.Mark.Certain
-                     : popular.ContainsKey(p.Name) && !(_items.FirstOrDefault(i => i.Name == p.Name)?.Score is { } own && own >= (number)Possible)
+                     : popular.ContainsKey(p.Name) && !(_items.FirstOrDefault(i => i.Name == p.Name)?.Score is { } score && score >= (number)Possible)
                          ? listed.Mark.Popular
                      : listed.Mark.Possible,
                 Module = modules.Length > 0 && Through(p.Name) ? modules : null,
@@ -421,11 +421,11 @@ public sealed class @this
     private async Task<List<global::app.type.item.@this>> Offered(global::app.goal.step.action.@this action,
         global::app.type.property.@this property, global::app.actor.context.@this context)
     {
-        var written = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var bound in action.Bound.Cast<global::app.type.item.@this>()) written.Add(await Shown(bound, context));
+        var variables = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var bound in action.Bound.Cast<global::app.type.item.@this>()) variables.Add(await Shown(bound, context));
         var offered = new List<global::app.type.item.@this>();
         foreach (var offer in await property.Type.Offers(_step))
-            if (!written.Contains(await Shown(offer, context))) offered.Add(offer);
+            if (!variables.Contains(await Shown(offer, context))) offered.Add(offer);
         return offered;
     }
 
@@ -547,7 +547,7 @@ public sealed class @this
             // of; below that, stage 2's answer is the pick when it is the stronger, as its own (module) pick
             if (picks.FirstOrDefault(p => p.Name == name) is { } common)
             {
-                if (common.Score is { } own && (own >= (number)Near || score is not { } confirmed || confirmed <= own)) continue;
+                if (common.Score is { } certainty && (certainty >= (number)Near || score is not { } confirmed || confirmed <= certainty)) continue;
                 picks.Remove(common);
             }
             picks.Add(new pick.@this

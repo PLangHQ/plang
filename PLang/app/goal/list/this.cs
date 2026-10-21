@@ -68,7 +68,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (Chain(caller).FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } near)
             return context.Ok(near);
 
-        if (Held(name) is { } held) return context.Ok(held);
+        if (Held(name) is { } match) return context.Ok(match);
 
         var source = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name : name + ".goal";
         if (!source.StartsWith('/') && !source.StartsWith('\\') && caller?.Folder is { } folder)
@@ -142,9 +142,9 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     private goal.@this? Held(string name)
     {
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase)) name = name[..^5];
-        var held = Items().Where(g => !g.IsSetup).Reverse().ToList();
+        var goals = Items().Where(g => !g.IsSetup).Reverse().ToList();
 
-        if (held.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)
+        if (goals.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)
             return named;
 
         var leaf = name.TrimStart('/', '\\').Replace('\\', '/');
@@ -153,7 +153,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 || canonical.Equals(leaf + ".goal", StringComparison.OrdinalIgnoreCase)
                 || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
                 || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase));
-        if (held.FirstOrDefault(g => Written(g.Path?.ToString().Replace('\\', '/'))
+        if (goals.FirstOrDefault(g => Written(g.Path?.ToString().Replace('\\', '/'))
                                      || Written(g.PrPath?.ToString().Replace('\\', '/'))) is { } byPath)
             return byPath;
 
@@ -161,7 +161,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         {
             var qualified = "/" + leaf;
             var leafName = qualified[(qualified.LastIndexOf('/') + 1)..];
-            return held.FirstOrDefault(g => string.Equals(g.Name, leafName, StringComparison.OrdinalIgnoreCase)
+            return goals.FirstOrDefault(g => string.Equals(g.Name, leafName, StringComparison.OrdinalIgnoreCase)
                 && g.Address?.Replace('\\', '/') is { } address
                 && address.EndsWith(qualified, StringComparison.OrdinalIgnoreCase));
         }
@@ -194,8 +194,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             // a walk streams its goals, so a setting it refuses (an option that isn't one) travels as its Error
             if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
         }
-        var held = Items().Where(g => !g.IsSetup && (wants.Os.Value || !g.IsSystem)).ToList();
-        foreach (var goal in held)
+        var goals = Items().Where(g => !g.IsSetup && (wants.Os.Value || !g.IsSystem)).ToList();
+        foreach (var goal in goals)
             foreach (var one in wants.Of(goal)) yield return one;
 
         // the .goal files are the app's own: listed once, as the system
@@ -206,7 +206,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var source in wants.Os.Value ? _app.Concat(_system) : _app)
         {
-            if (!seen.Add(source.ToString()!) || held.Any(g => Equals(g.Path, source))) continue;
+            if (!seen.Add(source.ToString()!) || goals.Any(g => Equals(g.Path, source))) continue;
             var loaded = await global::app.goal.@this.Load(source, App);
             if (!loaded.Success)
             {

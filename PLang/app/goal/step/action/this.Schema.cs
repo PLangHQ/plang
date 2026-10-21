@@ -55,8 +55,8 @@ public partial class @this : global::app.type.item.note.IAbout
     [JsonIgnore]
     internal string? Goal
         => Handler?.GetProperties().FirstOrDefault(p => p.PropertyType == typeof(global::app.data.@this<global::app.goal.@this>)
-                || p.IsDefined(typeof(global::app.Attributes.GoalAttribute))) is { } held
-            ? this[held.Name]?.Value?.ToString()?.Trim('"')
+                || p.IsDefined(typeof(global::app.Attributes.GoalAttribute))) is { } property
+            ? this[property.Name]?.Value?.ToString()?.Trim('"')
             : null;
 
     private global::app.type.@this? _return;

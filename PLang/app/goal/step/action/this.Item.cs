@@ -82,7 +82,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         {
             writer.BeginBody();
             foreach (var step in Child.Items())
-                foreach (var held in step.Code.Items()) await held.Output(writer);
+                foreach (var action in step.Code.Items()) await action.Output(writer);
             writer.EndBody();
         }
     }

@@ -112,11 +112,11 @@ public sealed class Writer : IWriter
     /// fill — when its value writes nothing (<c>Permission</c>: the step gives it, the writer fills it).</summary>
     public async System.Threading.Tasks.ValueTask Option(string name, global::app.type.item.@this value)
     {
-        var written = new Writer(Kind, Context);
-        await value.Output(written);
+        var writer = new Writer(Kind, Context);
+        await value.Output(writer);
         Element();
         _out.Append(name);
-        if (written._out.Length > 0) _out.Append('=').Append(written._out);
+        if (writer._out.Length > 0) _out.Append('=').Append(writer._out);
     }
 
     // A text in double quotes, escaped as JSON escapes it — quote, backslash and control characters;

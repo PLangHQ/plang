@@ -41,12 +41,12 @@ public sealed partial class @this
     {
         var writer = new global::app.goal.step.action.formal.Writer(context);
         await Code.Output(writer);
-        var written = writer.ToString();
+        var answer = writer.ToString();
         var problems = new List<string>();
         // a variable is the same one whatever its case, as the variable list compares names
         var comparer = global::app.type.item.variable.list.@this.Comparer;
         var said = new global::app.type.item.variable.parser.@this(Text, context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
-        var answered = new global::app.type.item.variable.parser.@this(written, context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
+        var answered = new global::app.type.item.variable.parser.@this(answer,context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
         // each told as the step writes it, to be copied exactly — beside the answer's own when it wrote one the step's
         // variables say was meant to be this one
         var step = new global::app.type.item.variable.parser.@this(Text, context.App.type.list);
@@ -61,7 +61,7 @@ public sealed partial class @this
             if (!v.StartsWith("%!") && !said.Contains(v, comparer)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
         // a %!…% the answer names that names nothing — no binding, shortcut, app member or module (%!photo.png%) —
         // reads nothing at run
-        foreach (var v in new global::app.type.item.variable.parser.@this(written, context.App.type.list).Variable.DistinctBy(x => x.Text))
+        foreach (var v in new global::app.type.item.variable.parser.@this(answer,context.App.type.list).Variable.DistinctBy(x => x.Text))
             if (!await v.Code.Root.Names(context))
                 problems.Add($"step {Index}: {v.Text} names nothing plang has — a %!…% reads one of its own: %!data% (the last answer), a shortcut (%!goal%, %!step%, %!error%), %!app…%, or a module's (%!llm.setting.cache%)");
         // a quoted literal is held by one of the answer's values — each asked, as it answers for itself (a separator
@@ -83,7 +83,7 @@ public sealed partial class @this
         // not inside a larger number — a duration's PT5S holds the step's 5 — or held by one of the answer's values as it
         // answers for itself (`sleep 1000 ms` answered 1s: the duration is 1000 milliseconds).
         foreach (var n in Number.Matches(Quoted.Replace(Text, "")).Select(m => m.Value).Distinct())
-            if (!System.Text.RegularExpressions.Regex.IsMatch(written, $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(n)}(?![\d.]|\.\d)")
+            if (!System.Text.RegularExpressions.Regex.IsMatch(answer,$@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(n)}(?![\d.]|\.\d)")
                 && !await Counted((global::app.type.item.number.@this)double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
                 problems.Add($"step {Index}: {n} is in the step but not in your answer: copy it exactly");
         // and a text the answer writes that the step's words don't hold is invented (channel="X" on a
@@ -128,9 +128,9 @@ public sealed partial class @this
         // other fields) is no number it wrote
         var answered = answer == null ? null
             : Number.Matches(Quoted.Replace(answer, "")).Select(m => double.Parse(m.Value, System.Globalization.CultureInfo.InvariantCulture)).ToHashSet();
-        var found = new List<unwritten.@this>();
+        var numbers = new List<unwritten.@this>();
         await Walk(Code.Items());
-        return found.Distinct().ToList();
+        return numbers.Distinct().ToList();
 
         async System.Threading.Tasks.Task Walk(IEnumerable<global::app.goal.step.action.@this> actions)
         {
@@ -144,7 +144,7 @@ public sealed partial class @this
                     foreach (var n in Number.Matches(Quoted.Replace(writer.ToString(), "")).Select(m => m.Value))
                         if (double.Parse(n, System.Globalization.CultureInfo.InvariantCulture) is var number
                             && !said.Contains(number) && (answered == null || answered.Contains(number)))
-                            found.Add(new unwritten.@this(Index, $"{a.Module.Name}.{a.Name}", p.Name, n, Text));
+                            numbers.Add(new unwritten.@this(Index, $"{a.Module.Name}.{a.Name}", p.Name, n, Text));
                 }
                 await Walk(a.Held);
                 foreach (var child in a.Child.Items()) await Walk(child.Code.Items());
