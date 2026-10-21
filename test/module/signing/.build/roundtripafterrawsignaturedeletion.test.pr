@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "Signs a Data and verifies, exercises the sign→canonicalize→hash→sign→verify path\nend-to-end. A clean pass means the typed signing surface is intact.",
+  "comment": "Signs a Data and verifies, exercises the sign→canonicalize→hash→sign→verify path\nend-to-end. A clean pass means the typed signing surface is intact. Signing makes a new,\nsigned value (the signature is a layer around the data); `write to` keeps it.",
   "step": [
     {
       "index": 0,
       "text": "archive identity 'roundtripSigner', force, on error ignore",
       "line": {
-        "number": 4,
+        "number": 5,
         "indent": 0
       },
       "code": [
@@ -49,7 +49,7 @@
       "index": 1,
       "text": "create identity roundtripSigner",
       "line": {
-        "number": 5,
+        "number": 6,
         "indent": 0
       },
       "code": [
@@ -81,7 +81,7 @@
       "index": 2,
       "text": "set %data% = { \"message\": \"round-trip me\" }",
       "line": {
-        "number": 6,
+        "number": 7,
         "indent": 0
       },
       "code": [
@@ -128,9 +128,9 @@
     },
     {
       "index": 3,
-      "text": "sign %data%",
+      "text": "sign %data%, write to %signed%",
       "line": {
-        "number": 7,
+        "number": 8,
         "indent": 0
       },
       "code": [
@@ -157,14 +157,64 @@
               ]
             }
           ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%signed%",
+              "variable": [
+                {
+                  "text": "%signed%",
+                  "code": [
+                    {
+                      "variable": "signed"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
         }
       ]
     },
     {
       "index": 4,
-      "text": "verify %data%, write to %verifyResult%",
+      "text": "verify %signed%, write to %verifyResult%",
       "line": {
-        "number": 8,
+        "number": 9,
         "indent": 0
       },
       "code": [
@@ -178,13 +228,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%data%",
+              "value": "%signed%",
               "variable": [
                 {
-                  "text": "%data%",
+                  "text": "%signed%",
                   "code": [
                     {
-                      "variable": "data"
+                      "variable": "signed"
                     }
                   ]
                 }
@@ -246,9 +296,9 @@
     },
     {
       "index": 5,
-      "text": "assert %verifyResult.Success% is true, \"signed Data must verify on the same actor\"",
+      "text": "assert %verifyResult% is true, \"signed Data must verify on the same actor\"",
       "line": {
-        "number": 9,
+        "number": 10,
         "indent": 0
       },
       "code": [
@@ -262,16 +312,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%verifyResult.Success%",
+              "value": "%verifyResult%",
               "variable": [
                 {
-                  "text": "%verifyResult.Success%",
+                  "text": "%verifyResult%",
                   "code": [
                     {
                       "variable": "verifyResult"
-                    },
-                    {
-                      "property": "Success"
                     }
                   ]
                 }
@@ -291,5 +338,5 @@
   ],
   "visibility": "Public",
   "file": "RoundTripAfterRawSignatureDeletion.test.goal",
-  "hash": "345badbb8e34a71431d16cd73f1bf1c9e7593c797d2b0bd1372954832d1bd2fb"
+  "hash": "043a063ab90ad017a15da1a25ae47218ca980625dc1de55c25a33d0f84ace485"
 }
