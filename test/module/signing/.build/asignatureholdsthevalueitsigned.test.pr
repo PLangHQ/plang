@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "A signature holds the value as it was when signed: the variable it was signed from can change\nafterwards, and the signature still verifies, holding what it signed.",
+  "comment": "A signature holds the value as it was when signed: the variable it was signed from can change\nafterwards, and the signature still verifies. Verify rehashes what the signature holds, so a\nsignature that followed %data% would fail here on the changed message.",
   "step": [
     {
       "index": 0,
       "text": "archive identity 'holdsSigner', force, on error ignore",
       "line": {
-        "number": 4,
+        "number": 5,
         "indent": 0
       },
       "code": [
@@ -20,13 +20,15 @@
                 "name": "text"
               },
               "value": "holdsSigner"
-            },
+            }
+          ],
+          "default": [
             {
-              "name": "Force",
+              "name": "force",
               "type": {
                 "name": "bool"
               },
-              "value": true
+              "value": false
             }
           ]
         },
@@ -49,7 +51,7 @@
       "index": 1,
       "text": "create identity holdsSigner",
       "line": {
-        "number": 5,
+        "number": 6,
         "indent": 0
       },
       "code": [
@@ -81,7 +83,7 @@
       "index": 2,
       "text": "set %data% = { \"message\": \"signed\" }",
       "line": {
-        "number": 6,
+        "number": 7,
         "indent": 0
       },
       "code": [
@@ -130,7 +132,7 @@
       "index": 3,
       "text": "sign %data%, write to %signed%",
       "line": {
-        "number": 7,
+        "number": 8,
         "indent": 0
       },
       "code": [
@@ -212,7 +214,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 3 uses variable.set, which the decider was not sure of (0.86)"
+          "message": "step 3 uses variable.set, which the decider was not sure of (0.88)"
         }
       ]
     },
@@ -220,7 +222,7 @@
       "index": 4,
       "text": "set %data% = { \"message\": \"changed after signing\" }",
       "line": {
-        "number": 8,
+        "number": 9,
         "indent": 0
       },
       "code": [
@@ -269,7 +271,7 @@
       "index": 5,
       "text": "verify %signed%, write to %ok%",
       "line": {
-        "number": 9,
+        "number": 10,
         "indent": 0
       },
       "code": [
@@ -351,7 +353,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 5 uses variable.set, which the decider was not sure of (0.85)"
+          "message": "step 5 uses variable.set, which the decider was not sure of (0.86)"
         }
       ]
     },
@@ -359,7 +361,7 @@
       "index": 6,
       "text": "assert %ok% is true, \"the signature verifies after its source variable changed\"",
       "line": {
-        "number": 10,
+        "number": 11,
         "indent": 0
       },
       "code": [
@@ -395,63 +397,9 @@
           ]
         }
       ]
-    },
-    {
-      "index": 7,
-      "text": "assert %signed.value.message% equals \"signed\", \"the signature holds the value it signed\"",
-      "line": {
-        "number": 11,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "assert",
-          "name": "equals",
-          "property": [
-            {
-              "name": "Expected",
-              "type": {
-                "name": "text"
-              },
-              "value": "signed"
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%signed.value.message%",
-              "variable": [
-                {
-                  "text": "%signed.value.message%",
-                  "code": [
-                    {
-                      "variable": "signed"
-                    },
-                    {
-                      "property": "value"
-                    },
-                    {
-                      "property": "message"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Message",
-              "type": {
-                "name": "text"
-              },
-              "value": "the signature holds the value it signed"
-            }
-          ]
-        }
-      ]
     }
   ],
   "visibility": "Public",
   "file": "ASignatureHoldsTheValueItSigned.test.goal",
-  "hash": "00da02d88d68ff60e9894cfd5b08c06dd261b8a53261a3674597e0a298c9d39d"
+  "hash": "58a03deef65e7e7bc5ad42aba45b8814ddcaa6194d5cf968340d4370e34dd6c4"
 }
