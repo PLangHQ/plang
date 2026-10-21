@@ -242,7 +242,7 @@ public sealed class @this
                 sb.AppendLine($"    at {call}");
         }
 
-        await AppendStepVariables(sb, step, context);
+        await Variables(sb, step, context);
         sb.AppendLine("========================================");
 
         await WriteFiltered(sb, context);
@@ -259,7 +259,7 @@ public sealed class @this
         var took = context.call.Current?.Duration(context) is { } elapsed ? $" ({elapsed.Value.TotalMilliseconds:0.###} ms)" : "";
         sb.AppendLine($"=== DEBUG [AFTER]: Step [{step.Index}] of {goalName}{took} ===");
 
-        await AppendStepVariables(sb, step, context);
+        await Variables(sb, step, context);
         sb.AppendLine("========================================");
 
         await WriteFiltered(sb, context);
@@ -335,7 +335,7 @@ public sealed class @this
         var sb = new StringBuilder();
         sb.AppendLine($"  --- ACTION [BEFORE] in Step [{step.Index}] of {goalName} ---");
 
-        await AppendStepVariables(sb, step, context);
+        await Variables(sb, step, context);
 
         await WriteFiltered(sb, context);
         return context.Ok();
@@ -350,13 +350,14 @@ public sealed class @this
         var sb = new StringBuilder();
         sb.AppendLine($"  --- ACTION [AFTER] in Step [{step.Index}] of {goalName} ---");
 
-        await AppendStepVariables(sb, step, context);
+        await Variables(sb, step, context);
 
         await WriteFiltered(sb, context);
         return context.Ok();
     }
 
-    private static async Task AppendStepVariables(StringBuilder sb, global::app.goal.step.@this step, actor.context.@this context)
+    // The step's variables, as debug shows them, written into sb.
+    private static async Task Variables(StringBuilder sb, global::app.goal.step.@this step, actor.context.@this context)
     {
 
         // the variables the step's values hold, each shown by the name it lives under, then each watched one whole — a
