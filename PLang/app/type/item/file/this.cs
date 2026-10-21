@@ -55,14 +55,16 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
         global::app.data.@this self, System.IO.Stream into, global::app.actor.context.@this context)
         => Path.Pack(self, into, context);
 
-    /// <summary>Saved to a file of its own format before it was read, a file's bytes already are what the other holds:
-    /// they pour from its location as they stream (gated as a read), never held. Read, a template, or another format,
-    /// it is opened and encoded as any value is.</summary>
-    internal override async System.Threading.Tasks.Task<global::app.data.@this> Save(global::app.data.@this self,
-        System.IO.Stream into, global::app.type.kind.@this format, global::app.actor.context.@this context)
-        => !IsLoaded && Type.Template == null && ReferenceEquals(Path.Kind(context).kind, format)
-            ? await Path.Pour(into, context)
-            : await base.Save(self, into, format, context);
+    /// <summary>The file as it streams (gated as a read), its format its path's.</summary>
+    private protected override async System.Threading.Tasks.Task<global::app.data.@this> Stream(
+        System.Func<System.IO.Stream, global::app.type.kind.@this, System.Threading.Tasks.Task<global::app.data.@this>> use,
+        global::app.actor.context.@this context)
+    {
+        if (Path is not global::app.type.item.path.file.@this file) return await base.Stream(use, context);
+        var (stream, refused) = await file.Open(context);
+        if (refused != null) return refused;
+        await using (stream!) return await use(stream!, Format("", context));
+    }
 
     /// <summary>Stat byte-size — the file's `!size` (a <c>size</c>), as its asker may read it; never reads
     /// content.</summary>

@@ -70,11 +70,58 @@ public abstract class @this : global::app.type.item.@this
     /// opened, as unmarked content is.</summary>
     public override bool Cacheable => (Type.Template == null || _plain) && base.Cacheable;
 
-    /// <summary>The format the sampled bytes are in, as the <paramref name="read"/> that fetched them tells — by
-    /// default the path's.</summary>
-    protected virtual System.Threading.Tasks.ValueTask<global::app.type.kind.@this> Format(
-        global::app.data.@this read, global::app.actor.context.@this context)
-        => new(context.App.type.list.Mime(Path.Mime(context).ToString()));
+    /// <summary>The format the content is in, as the <paramref name="media"/> type that came with it tells (a
+    /// response's Content-Type; empty when none came) — by default the path's.</summary>
+    private protected virtual global::app.type.kind.@this Format(string media, global::app.actor.context.@this context)
+        => context.App.type.list.Mime(Path.Mime(context).ToString());
+
+    /// <summary>The content as it streams, with the format it is in, handed to <paramref name="use"/> — through the
+    /// location's gate. By default it is sampled and handed from memory; a location that streams overrides it.</summary>
+    private protected virtual async System.Threading.Tasks.Task<global::app.data.@this> Stream(
+        System.Func<System.IO.Stream, global::app.type.kind.@this, System.Threading.Tasks.Task<global::app.data.@this>> use,
+        global::app.actor.context.@this context)
+    {
+        var sample = await Content(context);
+        if (!sample.Success || sample.Exits) return sample;
+        using var held = new System.IO.MemoryStream(Bytes, writable: false);
+        return await use(held, _format!);
+    }
+
+    /// <summary>
+    /// Saved to a file before it was read, content that would be born a plain value of the file's own family — its
+    /// format reads nothing its own way, the family's value is its bytes (<see cref="IVerbatim"/>), nothing is bound
+    /// to that birth — is what reading and writing it would give: its bytes, poured as they stream, never held. Any
+    /// other is sampled from what is open (a url fetched once) and opened and encoded as any value is.
+    /// </summary>
+    internal override async System.Threading.Tasks.Task<global::app.data.@this> Save(global::app.data.@this self,
+        System.IO.Stream into, global::app.type.kind.@this format, global::app.actor.context.@this context)
+    {
+        if (IsLoaded || Type.Template != null || Type.Strict) return await base.Save(self, into, format, context);
+        return await Stream(async (body, kind) =>
+        {
+            if (Pours(kind, format, context))
+            {
+                await body.CopyToAsync(into, context.CancellationToken);
+                return context.Ok();
+            }
+            if (!IsLoaded)
+            {
+                using var whole = new System.IO.MemoryStream();
+                await body.CopyToAsync(whole, context.CancellationToken);
+                _bytes = whole.ToArray();
+                _format = kind;
+            }
+            return await base.Save(self, into, format, context);
+        }, context);
+    }
+
+    // Content of kind source, written in target: its bytes as they are, when it is born a plain value of target's own
+    // family, a family whose value is its bytes, with nothing bound to that birth.
+    private static bool Pours(global::app.type.kind.@this source, global::app.type.kind.@this target, global::app.actor.context.@this context)
+        => source.IsBorn && source.Owner is { } family && ReferenceEquals(family, target.Owner)
+           && family.ClrType is { } clr && typeof(IVerbatim).IsAssignableFrom(clr)
+           && context.App.type.list[new global::app.type.@this(family.Name, source.IsEmpty ? null : source.Name), context] is var born
+           && !born.on.create.IsBound(born, context);
 
     /// <summary>
     /// The value door — the sample decoded by its format, handed this reference's template, answering with the
@@ -105,7 +152,7 @@ public abstract class @this : global::app.type.item.@this
         if (_bytes != null) return context.Ok<global::app.type.item.binary.@this>(new global::app.type.item.binary.@this(_bytes, context.App.type.list[typeof(global::app.type.item.binary.@this)]));
         var read = await Path.Bytes(context);
         if (!read.Success || read.Exits) return read;
-        _format = await Format(read, context);
+        _format = Format(await read.Properties.Get<string>("contentType") ?? "", context);
         _bytes = (await read.Value())?.Value ?? System.Array.Empty<byte>();
         return read;
     }

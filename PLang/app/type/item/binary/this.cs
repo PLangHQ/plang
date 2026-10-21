@@ -126,7 +126,7 @@ namespace app.type.item.binary;
 [global::app.Attributes.Format("md5")]
 [global::app.Attributes.Format("sfv")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
-    global::app.type.item.IEncode<@this>
+    global::app.type.item.IEncode<@this>, global::app.type.item.IVerbatim
 {
     /// <summary>Binary's formats written: a binary value is its bytes. Any other value asks binary to be born
     /// from it (a text is its UTF-8 bytes; a binding on binary create may answer); when nothing makes binary of

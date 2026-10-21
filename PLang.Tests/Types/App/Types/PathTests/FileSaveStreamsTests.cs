@@ -43,6 +43,77 @@ public class FileSaveStreamsTests
         return 0;
     });
 
+    [Test] public async Task AFileSavedToAnotherFormatOfItsFamily_PoursItsBytes_AndStaysUnread() => await InRoot(async root =>
+    {
+        await System.IO.File.WriteAllBytesAsync(System.IO.Path.Combine(root, "in.zip"), Zip);
+        await using var app = global::PLang.Tests.Session.App(root).Testing();
+
+        var result = await ReadThenSave(app, "in.zip", "out.bin");
+
+        await result.IsSuccess();
+        await Assert.That(await System.IO.File.ReadAllBytesAsync(System.IO.Path.Combine(root, "out.bin"))).IsEquivalentTo(Zip);
+        var held = (await app.actor.list.User.Context.Variable.Get("held"))!.Peek();
+        await Assert.That(held is global::app.type.item.file.@this { IsLoaded: false }).IsTrue()
+            .Because("binary content written to a binary format is its bytes: poured, never read");
+        return 0;
+    });
+
+    [Test] public async Task AFileWhoseFamilyWritesItsOwnWay_IsReadAndWritten() => await InRoot(async root =>
+    {
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(root, "in.csv"), "a,b\n1,2\n");
+        await using var app = global::PLang.Tests.Session.App(root).Testing();
+
+        var result = await ReadThenSave(app, "in.csv", "out.csv");
+
+        await result.IsSuccess();
+        var held = (await app.actor.list.User.Context.Variable.Get("held"))!.Peek();
+        await Assert.That(held is global::app.type.item.file.@this { IsLoaded: true }).IsTrue()
+            .Because("a table is not its bytes: csv is read and written by the table, never poured");
+        return 0;
+    });
+
+    [Test] public async Task AUrlSavedToAFile_PoursTheResponse_AndStaysUnread() => await InRoot(async root =>
+    {
+        using var server = new PLang.Tests.App.Types.PathTests.Http.HttpTestServer();
+        var url = server.MapStoredBody(Zip, "application/zip");
+        await using var app = global::PLang.Tests.Session.App(root).Testing();
+        await Grant(app, url);
+
+        var result = await ReadThenSave(app, url, "out.zip");
+
+        await result.IsSuccess();
+        await Assert.That(await System.IO.File.ReadAllBytesAsync(System.IO.Path.Combine(root, "out.zip"))).IsEquivalentTo(Zip);
+        var held = (await app.actor.list.User.Context.Variable.Get("held"))!.Peek();
+        await Assert.That(held is global::app.type.item.url.@this { IsLoaded: false }).IsTrue()
+            .Because("the response body was poured into the file as it came");
+        return 0;
+    });
+
+    [Test] public async Task AUrlNotPoured_IsFetchedOnce() => await InRoot(async root =>
+    {
+        using var server = new PLang.Tests.App.Types.PathTests.Http.HttpTestServer();
+        var json = "{ \"a\": 1 }"u8.ToArray();
+        var url = server.MapStoredBody(json, "application/json");
+        await using var app = global::PLang.Tests.Session.App(root).Testing();
+        await Grant(app, url);
+
+        var result = await ReadThenSave(app, url, "out.txt");
+
+        await result.IsSuccess();
+        await Assert.That(await System.IO.File.ReadAllBytesAsync(System.IO.Path.Combine(root, "out.txt"))).IsEquivalentTo(json);
+        await Assert.That(server.Requests.Count(r => r.Method == "GET")).IsEqualTo(1)
+            .Because("json is read and written its own way: sampled from the open response, never fetched again");
+        return 0;
+    });
+
+    private static async Task Grant(global::app.@this app, string url)
+    {
+        var ctx = app.actor.list.User.Context;
+        var grant = new global::app.type.item.permission.@this("User", ctx.Url(url).Absolute,
+            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact, ctx.App.type.list[typeof(global::app.type.item.permission.@this)]);
+        await ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: ctx), persist: true);
+    }
+
     [Test] public async Task ASaveThatFails_LeavesTheFileAsItWas_AndNothingBeside() => await InRoot(async root =>
     {
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(root, "in.zip"), "gone soon");

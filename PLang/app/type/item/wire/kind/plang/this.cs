@@ -63,6 +63,9 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
         }
     }
 
+    /// <summary>Read its own way: the bytes are a whole Data, verified.</summary>
+    internal override bool IsBorn => false;
+
     /// <summary>The whole Data the bytes are — reconstructed, its signature verified; between actors (Out) a Data
     /// without a signature is refused. A Data carries its own facts, so a <paramref name="template"/> and an
     /// <paramref name="origin"/> ask nothing of it.</summary>

@@ -262,6 +262,10 @@ public class @this : global::app.type.@this
         return await type.Create(raw, context, name, origin);
     }
 
+    /// <summary>Whether content of this kind is born through its type's create from its bytes (the default
+    /// <see cref="Decode"/>), not read its own way (a .pr into a goal, plang's own format into a Data).</summary>
+    internal virtual bool IsBorn => true;
+
     /// <summary>
     /// A Data written onto a stream in this format — the one encode door, <see cref="Decode"/>'s pair. A kind
     /// whose content is written its own way overrides it (a declared format its type's write, json, plang's

@@ -32,6 +32,9 @@ public sealed class @this<T> : global::app.type.kind.@this<T> where T : global::
 
     public @this(global::app.Attributes.FormatAttribute format, global::app.type.@this owner) : base(format, owner) { }
 
+    /// <summary>Born from its bytes unless T reads its formats itself.</summary>
+    internal override bool IsBorn => _decode == null;
+
     /// <summary>T writes this format itself when it writes its formats; else as any kind writes (its family).</summary>
     public override System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
         global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,

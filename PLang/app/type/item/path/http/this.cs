@@ -206,7 +206,30 @@ public sealed partial class @this : global::app.type.item.path.@this
     {
         var verb = Verb.read;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.binary.@this>.From(early);
-        return data.@this<global::app.type.item.binary.@this>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, context));
+        return data.@this<global::app.type.item.binary.@this>.From(await Send(HttpMethod.Get, content: null, resp => Whole(resp, context), verb, context));
+    }
+
+    /// <summary>The resource as it streams, with the media type the server says it is (empty when it says none),
+    /// handed to <paramref name="use"/> — gated as a read, never held whole.</summary>
+    internal async Task<data.@this> Open(Func<System.IO.Stream, string, Task<data.@this>> use, actor.context.@this context)
+    {
+        if (await AuthGate(Verb.read, context) is { } early) return early;
+        return await Send(HttpMethod.Get, content: null, async resp =>
+        {
+            await using var body = await resp.Content.ReadAsStreamAsync(context.CancellationToken);
+            return await use(body, resp.Content.Headers.ContentType?.MediaType ?? "");
+        }, Verb.read, context);
+    }
+
+    // The body whole, as binary, the response's Content-Type riding as a Property so the url door can stamp by it
+    // (Content-Type rules over the URL extension); empty when the server sent none.
+    private static async Task<data.@this> Whole(HttpResponseMessage resp, actor.context.@this context)
+    {
+        // Wrap bytes born-native so Bytes→From<binary> extracts the value
+        // (From's `source.Value is T` test matches only the wrapper, not raw byte[]).
+        var bytesData = context.Ok((object)new global::app.type.item.binary.@this(await resp.Content.ReadAsByteArrayAsync(), context.App.type.list[typeof(global::app.type.item.binary.@this)]));
+        bytesData.Properties.Set("contentType", resp.Content.Headers.ContentType?.MediaType ?? "");
+        return bytesData;
     }
 
     public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(actor.context.@this context)
@@ -285,7 +308,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     {
         var verb = Verb.write;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb, context);
+        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), body: null, verb, context);
         return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
     }
 
@@ -293,7 +316,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     {
         var verb = Verb.write;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new ByteArrayContent(content), readBody: false, verb, context);
+        var sent = await Send(HttpMethod.Post, new ByteArrayContent(content), body: null, verb, context);
         return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
     }
 
@@ -303,7 +326,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     {
         var verb = Verb.write;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb, context);
+        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), body: null, verb, context);
         return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
     }
 
@@ -340,7 +363,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     {
         var verb = Verb.delete;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Delete, content: null, readBody: false, verb, context);
+        var sent = await Send(HttpMethod.Delete, content: null, body: null, verb, context);
         return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
     }
 
@@ -348,7 +371,7 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     /// <summary>
     /// Issues an HTTP request and shapes the response. 2xx → Ok (body when
-    /// <paramref name="readBody"/>); non-2xx (non-3xx) → Fail with the status;
+    /// <paramref name="body"/>'s answer, read before the response goes); non-2xx (non-3xx) → Fail with the status;
     /// network failure → Fail/NetworkError. 3xx responses delegate to
     /// <see cref="FollowRedirect"/> — each hop costs a fresh
     /// <see cref="@this.AuthGate"/> prompt on the new URL and signs with that
@@ -358,10 +381,10 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// <paramref name="verb"/> rides along so the redirect hop's AuthGate
     /// uses the same verb the calling FS-action started with.
     /// </summary>
-    private Task<data.@this> Send(HttpMethod method, HttpContent? content, bool readBody, Verb verb, actor.context.@this context)
-        => SendWithHops(method, content, readBody, verb, MaxRedirectHops, context);
+    private Task<data.@this> Send(HttpMethod method, HttpContent? content, Func<HttpResponseMessage, Task<data.@this>>? body, Verb verb, actor.context.@this context)
+        => SendWithHops(method, content, body, verb, MaxRedirectHops, context);
 
-    private async Task<data.@this> SendWithHops(HttpMethod method, HttpContent? content, bool readBody, Verb verb, int hopsLeft, actor.context.@this context)
+    private async Task<data.@this> SendWithHops(HttpMethod method, HttpContent? content, Func<HttpResponseMessage, Task<data.@this>>? body, Verb verb, int hopsLeft, actor.context.@this context)
     {
         try
         {
@@ -369,25 +392,17 @@ public sealed partial class @this : global::app.type.item.path.@this
             string? bodyForSign = content is StringContent sc ? await sc.ReadAsStringAsync() : null;
             if (await Sign(req, bodyForSign, method.Method, context) is { } unsigned) return context.Error(unsigned);
 
-            using var resp = await _client.SendAsync(req);
+            // headers first: the body is the reader's, read as it streams (or whole) before the response goes
+            using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, context.CancellationToken);
 
             // 3xx → manual redirect with consent + fresh signing on each hop.
             if ((int)resp.StatusCode >= 300 && (int)resp.StatusCode < 400 && resp.Headers.Location != null)
-                return await FollowRedirect(resp, method, content, readBody, verb, hopsLeft, context);
+                return await FollowRedirect(resp, method, content, body, verb, hopsLeft, context);
 
             if (!resp.IsSuccessStatusCode)
                 return context.Error(MapStatus(resp.StatusCode));
 
-            if (!readBody) return context.Ok();
-
-            // Wrap bytes born-native so Bytes→From<binary> extracts the value
-            // (From's `source.Value is T` test matches only the wrapper, not raw byte[]).
-            // The response Content-Type rides as a Property so the url door can stamp
-            // by it (Content-Type rules over the URL extension); empty when the server
-            // sent none.
-            var bytesData = context.Ok((object)new global::app.type.item.binary.@this(await resp.Content.ReadAsByteArrayAsync(), context.App.type.list[typeof(global::app.type.item.binary.@this)]));
-            bytesData.Properties.Set("contentType", resp.Content.Headers.ContentType?.MediaType ?? "");
-            return bytesData;
+            return body == null ? context.Ok() : await body(resp);
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
@@ -404,7 +419,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// keep method and body.
     /// </summary>
     private async Task<data.@this> FollowRedirect(HttpResponseMessage resp, HttpMethod method, HttpContent? content,
-        bool readBody, Verb verb, int hopsLeft, actor.context.@this context)
+        Func<HttpResponseMessage, Task<data.@this>>? body, Verb verb, int hopsLeft, actor.context.@this context)
     {
         if (hopsLeft <= 0)
             return context.Error(new Error(
@@ -444,7 +459,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         // The consent prompt for the new host. AuthGate returns null on grant.
         if (await nextPath.AuthGate(verb, context) is { } denial) return denial;
 
-        return await nextPath.SendWithHops(nextMethod, nextContent, readBody, verb, hopsLeft - 1, context);
+        return await nextPath.SendWithHops(nextMethod, nextContent, body, verb, hopsLeft - 1, context);
     }
 
     /// <summary>

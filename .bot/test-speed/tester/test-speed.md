@@ -155,6 +155,39 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 26. Another format and a url flow through too
+
+Asked (Ingi): stream the other-format save and the url. Same harness as §25 (Debug, one run each, a url served by
+a separate `python -m http.server`), output byte-identical every time:
+
+| 261 MB (txt: 257 MB) | heap | allocated |
+|---|---|---|
+| zip → zip | +1.8 MB | 1.8 MB |
+| zip → **bin** | +2.6 MB | 2.6 MB |
+| txt → **md** | +3.5 MB | 3.5 MB |
+| **url** zip → zip | +2.0 MB | 2.0 MB |
+| **url** zip → bin | +1.7 MB | 1.7 MB |
+
+The rule, exact by construction (not a format table): content not read yet pours its bytes when it would be born a
+plain value of the target format's own family — its kind reads nothing its own way (`kind.IsBorn`, internal: false
+for a format whose type decodes itself, `.pr`, and plang's wire, so a signed url is still verified), the family's
+value is its bytes (`IVerbatim`: binary, image, text — their encoders write their own values as the bytes they were
+born from), and nothing is bound to that birth (`on.create`). Not template, not strict. The §25 same-format rule is
+gone: it poured `csv → csv`, which the table re-encodes.
+
+Checked against the old path with a probe (13 source × 13 target formats, content loaded first vs unread): every
+cell the same but one row — **text that is not valid UTF-8**, saved to a text format (txt, md, xml, yml), now keeps
+its bytes; before, the bad sequences became U+FFFD. Kept: a save no longer damages the file. csv, json, html, `.pr`
+and cross-family saves (binary → txt, txt → zip) still read and encode whole.
+
+The url: the http path's GET is headers-first and hands its body to a reader (`Bytes` reads it whole; new internal
+`Open(use)` streams it). The reference's content has one stream door (`Stream`, private protected: a file's from its
+path, a url's the response with the format its Content-Type says); a save that doesn't pour samples from the open
+stream, so a url is fetched once. Tests (`FileSaveStreamsTests`, 6): another format of the family pours unread; csv
+is read and written; a url pours unread; a url not poured is fetched once — all red under mutation. Surface re-pinned
+on the playground: binary, image and text gain `IVerbatim`; content's `protected Format(read)` leaves (now private
+protected). C# green but Wire's six; plang the same 11 names.
+
 ## 25. A big file flows through a save
 
 Asked (Ingi): read a 261 MB zip and save it, memory should not grow. `read file 'big.zip', write to %zip%` /

@@ -25,7 +25,7 @@ namespace app.type.item.image;
 [global::app.Attributes.Format("webp", "image/webp", Compressible = false)]
 [global::app.Attributes.Format("heic", "image/heic", Compressible = false)]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer,
-    global::app.type.item.IEncode<@this>
+    global::app.type.item.IEncode<@this>, global::app.type.item.IVerbatim
 {
     /// <summary>Image's formats written: an image value is its bytes (a path-backed one reads them first,
     /// through its own door). Any other value asks image to be born from it (a binding on image create or a

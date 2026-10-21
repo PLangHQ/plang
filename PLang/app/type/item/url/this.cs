@@ -34,13 +34,16 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
 
     /// <summary>The fetched content's format: the response's Content-Type rules; else the url's extension is
     /// the hint (.json → json); else a typeless web response is text, not raw bytes.</summary>
-    protected override async System.Threading.Tasks.ValueTask<global::app.type.kind.@this> Format(
-        global::app.data.@this read, global::app.actor.context.@this context)
-    {
-        var contentType = await read.Properties.Get<string>("contentType");
-        var mime = !string.IsNullOrEmpty(contentType) ? contentType
+    private protected override global::app.type.kind.@this Format(string media, global::app.actor.context.@this context)
+        => context.App.type.list.Mime(media.Length > 0 ? media
             : Path.Extension.IsTruthy() ? Path.Mime(context).ToString()
-            : "text/plain";
-        return context.App.type.list.Mime(mime);
-    }
+            : "text/plain");
+
+    /// <summary>The response body as it streams, its format the one its Content-Type says.</summary>
+    private protected override async System.Threading.Tasks.Task<global::app.data.@this> Stream(
+        System.Func<System.IO.Stream, global::app.type.kind.@this, System.Threading.Tasks.Task<global::app.data.@this>> use,
+        global::app.actor.context.@this context)
+        => Path is global::app.type.item.path.http.@this http
+            ? await http.Open((body, media) => use(body, Format(media, context)), context)
+            : await base.Stream(use, context);
 }

@@ -76,6 +76,9 @@ public sealed class @this : global::app.type.kind.@this
         => Format is { } format ? format.Encode(stream, data, context, view, encoding, ct)
             : base.Encode(stream, data, context, view, encoding, ct);
 
+    /// <summary>Born as the type's own format is; a type with none has its content born.</summary>
+    internal override bool IsBorn => Format?.IsBorn ?? true;
+
     /// <summary>The type's own format reads it (<c>.pr</c> for goal); a type with none has its content born lazily.</summary>
     public override System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
         global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,

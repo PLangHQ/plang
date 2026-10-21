@@ -40,7 +40,7 @@ namespace app.type.item.text;
 // value with its own named values. Unsealed so such a value-subclass kind can derive from it.
 [global::app.Attributes.Kinds]
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
-    System.IEquatable<@this>, global::app.type.item.IEncode<@this>
+    System.IEquatable<@this>, global::app.type.item.IEncode<@this>, global::app.type.item.IVerbatim
 {
     /// <summary>
     /// Text's formats written: a text value is its characters, in the given encoding (UTF-8 when none) — no
