@@ -136,10 +136,10 @@ public sealed class @this : global::app.type.kind.@this
             _kinds.Add(kind);
             var keys = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
             var extensions = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
-            foreach (var held in _kinds)
+            foreach (var entry in _kinds)
             {
-                foreach (var key in held.Keys) keys.TryAdd(key, held);
-                foreach (var extension in held.Extension) extensions.TryAdd(extension.TrimStart('.'), held);
+                foreach (var key in entry.Keys) keys.TryAdd(key, entry);
+                foreach (var extension in entry.Extension) extensions.TryAdd(extension.TrimStart('.'), entry);
             }
             _keys = keys;
             _extensions = extensions;

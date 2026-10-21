@@ -56,7 +56,7 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
         if (raw is TSelf self) return self;
 
         // The pure core builds it — the type owns its own arms (CLR/item coercions in one switch).
-        if (TSelf.Create(raw) is { } made) return made;
+        if (TSelf.Create(raw) is { } value) return value;
 
         // A dict/list deserializes ITSELF to a record / domain item (step, …). Only a
         // container reaches this — a genuine deserialize failure surfaces (it throws).

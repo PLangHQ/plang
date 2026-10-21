@@ -75,11 +75,11 @@ public class source : @this
                    $"a {type.Name} template is born holding the app's type — a bare one holds no types to read its variables with")).Variable : [];
         // THE door for content from outside: what a template holds, by whose bytes these are. Decided ONCE,
         // here — a variable not held is never resolved; it stays as written everywhere downstream.
-        IEnumerable<global::app.type.item.variable.@this> held =
+        IEnumerable<global::app.type.item.variable.@this> variables =
             built ? variable ?? written()                           // the build's own .pr: every variable its row lists
             : origin != null ? written().Where(v => v.IsOwn)        // a file or url read with load vars: the program's own only
             : [];                                                   // anything else (a peer's value, the store): none
-        _variable = held.DistinctBy(v => v.Text).ToList();
+        _variable = variables.DistinctBy(v => v.Text).ToList();
         // A full-match %ref% on ANY declared type is a reference to a binding — resolved at
         // .Value(), never parsed through the type reader.
         IsVariable = _variable is [var only] && only.Text == raw;
@@ -189,9 +189,9 @@ public class source : @this
             // from its text, as from any text). What a variable held is filled once, never read as a template.
             if (Text(asking) is { } template)
             {
-                var made = Type.Make(await template.Value(data), asking);
-                made.history.Add(this);
-                return await made.Value(data);
+                var value = Type.Make(await template.Value(data), asking);
+                value.history.Add(this);
+                return await value.Value(data);
             }
 
             // Kind-first materialization (most-specific owner): a kind that owns its own decode
@@ -216,9 +216,9 @@ public class source : @this
             // the declaration itself named no kind — a kinded declaration parses through its own kind above.
             if (Type.kind.IsEmpty && _format is { } encoded && encoded.Parse(_value, asking) is { } parsed)
             {
-                var made = Type.Make(parsed, asking);
-                made.history.Add(this);
-                return await made.Value(data);
+                var value = Type.Make(parsed, asking);
+                value.history.Add(this);
+                return await value.Value(data);
             }
             var item = Read(asking);
             if (ReferenceEquals(item, this)) return this;

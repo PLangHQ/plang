@@ -51,16 +51,16 @@ public sealed partial class @this
     // extension to one kind; a name two types hold is refused here.
     private global::app.type.kind.@this? Held(string key)
     {
-        global::app.type.kind.@this? found = null;
+        global::app.type.kind.@this? match = null;
         foreach (var type in Types)
         {
             if (type.kind[key] is not { } kind) continue;
-            if (found != null)
+            if (match != null)
                 throw new System.InvalidOperationException(
-                    $"'{key}' is a kind of more than one type ({found.Owner?.Name}, {kind.Owner?.Name}) — ask the type for its kind.");
-            found = kind;
+                    $"'{key}' is a kind of more than one type ({match.Owner?.Name}, {kind.Owner?.Name}) — ask the type for its kind.");
+            match = kind;
         }
-        return found;
+        return match;
     }
 
     /// <summary>
@@ -175,7 +175,7 @@ public sealed partial class @this
     {
         var entry = Named.GetValueOrDefault(type.Name);
         var kind = name == null ? null
-            : entry?.kind[name] is { } held ? (held.IsEmpty ? null : held)
+            : entry?.kind[name] is { } match ? (match.IsEmpty ? null : match)
             : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
         if (entry != null && kind == null && !type.Strict && type.Template == null) return entry;
         return _full.GetOrAdd((entry, type.Name, kind?.Name, type.Strict, type.Template?.Name), _ => entry == null
@@ -256,8 +256,8 @@ public sealed partial class @this
             return ("choice", options.IsEnum && options.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false) is null
                 ? null
                 : global::app.type.item.choice.set.@this.For(options, this)?.Name ?? options.Name);
-        if (typeof(app.type.item.@this).IsAssignableFrom(type) && _classed.GetValueOrDefault(type) is { } own)
-            return (own.Name, null);
+        if (typeof(app.type.item.@this).IsAssignableFrom(type) && _classed.GetValueOrDefault(type) is { } entity)
+            return (entity.Name, null);
         // the app's node for a concept (node<goal>, its current node) is a node
         if (typeof(app.type.node.@this).IsAssignableFrom(type)) return ("node", null);
         // a kind of a family: the family, with the kind whose values are this class (a setting class)
@@ -291,7 +291,7 @@ public sealed partial class @this
     internal property.list.@this Member(System.Type clr) => _member.GetOrAdd(clr, @class =>
     {
         var owner = _classed.GetValueOrDefault(@class)?.Name ?? app.type.item.@this.NameOf(@class);
-        var made = new property.list.@this();
+        var list = new property.list.@this();
         var methods = new Queue<System.Reflection.MethodInfo>(@class.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void))
             .OrderBy(m => m.MetadataToken));
@@ -301,11 +301,11 @@ public sealed partial class @this
             if (!System.Attribute.IsDefined(prop, typeof(global::app.LlmBuilderAttribute))) continue;
             while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
                 && m.MetadataToken < prop.GetMethod!.MetadataToken)
-                made.Add(Method(methods.Dequeue()));
-            made.Add(Property(prop.Name, prop.PropertyType, owner: owner, member: prop));
+                list.Add(Method(methods.Dequeue()));
+            list.Add(Property(prop.Name, prop.PropertyType, owner: owner, member: prop));
         }
-        while (methods.TryDequeue(out var m)) made.Add(Method(m));
-        return made;
+        while (methods.TryDequeue(out var m)) list.Add(Method(m));
+        return list;
 
         // A method as the catalog lists it: what it answers (an asynchronous one, what its task completes with), and —
         // unless it asks only for its asker — what it is called with. The asker's context and a cancellation are the

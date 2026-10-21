@@ -200,9 +200,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         global::app.actor.context.@this context)
     {
         if (!isIndex && Listed(key, context) is { } member) return await member.Write(this, value, context);
-        if (!isIndex && Kept is { } kept)
+        if (!isIndex && Kept is { } list)
         {
-            kept.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
+            list.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
             return context.Ok(this);
         }
         // A plain value holds no member a program adds, and says so: a variable's own binding keeps it beside the value
@@ -331,10 +331,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     {
         switch (slot)
         {
-            case global::app.data.@this held:
-                var value = held.Peek();
+            case global::app.data.@this data:
+                var value = data.Peek();
                 var copy = value?.Copy();
-                return copy == null || ReferenceEquals(copy, value) ? held.Copy(held.Name) : new global::app.data.@this(held.Name, copy, context: held.Context);
+                return copy == null || ReferenceEquals(copy, value) ? data.Copy(data.Name) : new global::app.data.@this(data.Name, copy, context: data.Context);
             case @this item:
                 return item.Copy();
             case IDictionary<string, object?> raw:
@@ -423,7 +423,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         await Output(writer);
         if (writer.ToString().Contains(quoted)) return true;
         foreach (var row in Rows(context) ?? [])
-            if (await row.Value() is { } held && !ReferenceEquals(held, this) && await held.Holds(quoted, context)) return true;
+            if (await row.Value() is { } value && !ReferenceEquals(value, this) && await value.Holds(quoted, context)) return true;
         return false;
     }
 
@@ -438,7 +438,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         if (System.Text.RegularExpressions.Regex.IsMatch(writer.ToString(),
                 $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(number.ToString())}(?![\d.]|\.\d)")) return true;
         foreach (var row in Rows(context) ?? [])
-            if (await row.Value() is { } held && !ReferenceEquals(held, this) && await held.Holds(number, context)) return true;
+            if (await row.Value() is { } value && !ReferenceEquals(value, this) && await value.Holds(number, context)) return true;
         return false;
     }
 
@@ -483,11 +483,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>This value's own events, given to it by its first binding — what a binding is added to.</summary>
     internal global::app.@event.on.own Own()
     {
-        if (_on is global::app.@event.on.own held) return held;
+        if (_on is global::app.@event.on.own events) return events;
         var shared = on;
-        var made = new global::app.@event.on.own(shared.Declared);
-        return System.Threading.Interlocked.CompareExchange(ref _on, made, shared) is global::app.@event.on.own won
-            ? won : made;
+        events = new global::app.@event.on.own(shared.Declared);
+        return System.Threading.Interlocked.CompareExchange(ref _on, events, shared) is global::app.@event.on.own won
+            ? won : events;
     }
 
     /// <summary>The variables this value holds, each once: a template's <c>%…%</c>, a container's
@@ -588,8 +588,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual async System.Threading.Tasks.Task<global::app.data.@this?> Field(string name, global::app.actor.context.@this context)
     {
-        var held = await Get(new global::app.data.@this("", this, context: context), name);
-        return held is { IsInitialized: true, Success: true } ? held : null;
+        var field = await Get(new global::app.data.@this("", this, context: context), name);
+        return field is { IsInitialized: true, Success: true } ? field : null;
     }
 
     /// <summary>The names of this value's fields, to tell a programmer which there are — none known by default.</summary>

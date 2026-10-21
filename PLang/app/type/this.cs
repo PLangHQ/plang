@@ -178,7 +178,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// (a goal, an item, a host) answers its typed null: still null, still this type.</summary>
     public item.@this Empty(global::app.actor.context.@this context)
     {
-        if (_empty is { } made) return made();
+        if (_empty is { } thunk) return thunk();
         var clr = ClrType;
         const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
             | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
@@ -276,7 +276,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         global::app.actor.context.@this context, string name, global::app.type.item.path.@this? origin = null)
     {
         // a value that already is this type is no birth: it is answered as it is, nothing fired, nothing read
-        if (Held(raw) is { } held) return new(new global::app.data.@this(name, held, context: context));
+        if (Held(raw) is { } value) return new(new global::app.data.@this(name, value, context: context));
         // nothing bound: the value, made — nothing awaited, nothing else allocated
         var events = on.create;
         return events.IsBound(this, context)
@@ -306,8 +306,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (await events.Before(this, context, new global::app.data.@this(name, raw, context: context)) is { } answer
             && (!answer.Success || answer.Handled))
             return answer;
-        var made = Made(raw, context, name, origin);
-        return made.Success ? await events.After(this, made, context) : made;
+        var value = Made(raw, context, name, origin);
+        return value.Success ? await events.After(this, value, context) : value;
     }
 
     // The value a birth makes, or the reason this type declined to make it.
@@ -374,7 +374,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             if (!Takes(native.Type)) return native;
             // a decline lands its reason on the carrier — this door throws it, as a leaf's does
             var declined = new global::app.data.@this("", context: context);
-            if (Make(raw, declined) is { } made) return made;
+            if (Make(raw, declined) is { } value) return value;
             if (declined.Error != null) throw Failed(declined.Error);
             return native;
         }
@@ -407,7 +407,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             // build — path parses a text, number parses a token, binary takes a text's bytes). A decline lands
             // its reason on the carrier's Error — this door is the throw boundary (rides MaterializeFailed).
             var carrier = new global::app.data.@this("", context: context);
-            if (Make(leaf, carrier) is { } made) return made;
+            if (Make(leaf, carrier) is { } instance) return instance;
             if (carrier.Error != null) throw Failed(carrier.Error);
             // Nothing in this type builds it from that value (`set %x% as dict = "hello"`): the type refuses the
             // conversion, as its own answer.
@@ -684,7 +684,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// class declares it is offered (a permission: that the step gives one), else the kind's answer: a closed set its
     /// options, any other the step's own variables. The type <c>type</c> offers the types it is born among first.</summary>
     public virtual async System.Threading.Tasks.ValueTask<IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step)
-        => Family._offer is { } declared ? declared
+        => Family._offer is { } offers ? offers
             : Family._types is { } types ? [.. await types.Offers(step), .. await kind.Offers(step)]
             : await kind.Offers(step);
     private IReadOnlyList<item.@this>? _offer;
@@ -774,8 +774,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
         : this(name, clrType, kind, strict, template, known: true)
     {
-        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType) && KindOfClass(clrType, kind, this) is { } declared)
-            _kind = declared;
+        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType) && KindOfClass(clrType, kind, this) is { } format)
+            _kind = format;
     }
 
     // A type born knowing its C# class — its identity: the class, and its namespace for an item class. The registry's

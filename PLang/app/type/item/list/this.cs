@@ -611,21 +611,21 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (elem != null)
         {
             var listType = typeof(List<>).MakeGenericType(elem);
-            var built = (System.Collections.IList)System.Activator.CreateInstance(
+            var list = (System.Collections.IList)System.Activator.CreateInstance(
                 target.IsArray || target.IsInterface || !typeof(System.Collections.IList).IsAssignableFrom(target)
                     ? listType : target)!;
-            foreach (var slot in Slots()) built.Add(Lower(slot, elem));
+            foreach (var slot in Slots()) list.Add(Lower(slot, elem));
             if (target.IsArray)
             {
-                var arr = System.Array.CreateInstance(elem, built.Count); built.CopyTo(arr, 0); return arr;
+                var arr = System.Array.CreateInstance(elem, list.Count); list.CopyTo(arr, 0); return arr;
             }
-            if (target.IsInstanceOfType(built)) return built;   // List<T>/IList<T>/IReadOnlyList<T> target — the list IS it
+            if (target.IsInstanceOfType(list)) return list;   // List<T>/IList<T>/IReadOnlyList<T> target — the list IS it
             // read-only domain wrapper — hand the sequence to its ctor
             var seqCtor = target.GetConstructor(new[] { typeof(IReadOnlyList<>).MakeGenericType(elem) })
                        ?? target.GetConstructor(new[] { typeof(IEnumerable<>).MakeGenericType(elem) })
                        ?? target.GetConstructor(new[] { listType });
-            if (seqCtor != null) return seqCtor.Invoke(new object[] { built });
-            return built;
+            if (seqCtor != null) return seqCtor.Invoke(new object[] { list });
+            return list;
         }
 
         // Non-collection target (a string, a record built off the wire, …) — fall back to
@@ -702,7 +702,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         => Type.Template == null ? [] : Slots()
             .SelectMany(slot => slot switch
             {
-                global::app.data.@this held => held.Peek().Variable,
+                global::app.data.@this data => data.Peek().Variable,
                 global::app.type.item.@this item => item.Variable,
                 _ => [],
             })
@@ -758,9 +758,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public async System.Threading.Tasks.Task<Data> Any(global::app.type.item.text.@this field, global::app.data.Operator op,
         Data value, actor.context.@this context)
     {
-        var kept = await Where(field, op, value, context);
-        if (!kept.Success) return kept;
-        return context.Ok<global::app.type.item.@bool.@this>(await kept.Value() is @this { CountRaw: > 0 });
+        var list = await Where(field, op, value, context);
+        if (!list.Success) return list;
+        return context.Ok<global::app.type.item.@bool.@this>(await list.Value() is @this { CountRaw: > 0 });
     }
 
     /// <summary>Adds <paramref name="value"/> at <paramref name="at"/> when that is a position in this list,
@@ -873,15 +873,15 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// compare path, so equivalent dicts collapse to one. A new list, born through its type.</summary>
     public async System.Threading.Tasks.Task<Data> Unique(actor.context.@this context)
     {
-        var kept = new List<Data>();
+        var elements = new List<Data>();
         foreach (var element in Items(context))
         {
             var seen = false;
-            foreach (var k in kept)
+            foreach (var k in elements)
                 if (await element.Compare(k) == global::app.data.Comparison.Equal) { seen = true; break; }
-            if (!seen) kept.Add(element);
+            if (!seen) elements.Add(element);
         }
-        return await context.App.type.list["list"].Create(kept, context);
+        return await context.App.type.list["list"].Create(elements, context);
     }
 
     /// <summary>The elements with every nested list's elements lifted in its place, however deep; any other
@@ -904,8 +904,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         var order = new List<string>();
         foreach (var element in Items(context))
         {
-            var held = await element.Get(key.ToString());
-            var name = held.IsInitialized ? (await held.Value())?.ToString() ?? "" : "";
+            var field = await element.Get(key.ToString());
+            var name = field.IsInitialized ? (await field.Value())?.ToString() ?? "" : "";
             if (!buckets.TryGetValue(name, out var bucket))
             {
                 buckets[name] = bucket = new @this(context.App.type.list["list"]);
@@ -934,23 +934,23 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         global::app.data.Operator op, Data value, actor.context.@this context)
     {
         var name = field.ToString();
-        var held = new List<(Data element, global::app.type.item.@this? item, Data? field)>();
+        var rows = new List<(Data element, global::app.type.item.@this? item, Data? field)>();
         foreach (var element in Items(context))
         {
             var item = await element.Value();
-            held.Add((element, item, item == null ? null : await item.Field(name, context)));
+            rows.Add((element, item, item == null ? null : await item.Field(name, context)));
         }
-        if (held.Count > 0 && held.All(h => h.field == null))
-            return NoField(name, held.SelectMany(h => h.item?.Fields ?? []), context);
+        if (rows.Count > 0 && rows.All(h => h.field == null))
+            return NoField(name, rows.SelectMany(h => h.item?.Fields ?? []), context);
 
-        var kept = new @this(context.App.type.list["list"]);
-        foreach (var (element, _, at) in held)
+        var list = new @this(context.App.type.list["list"]);
+        foreach (var (element, _, at) in rows)
         {
             var holds = await op.Evaluate(at ?? Data.NotFound(name, context), value, context);
             if (!holds.Success) return holds;
-            if (holds.ToBoolean()) kept.Add(element);
+            if (holds.ToBoolean()) list.Add(element);
         }
-        return await context.App.type.list["list"].Create(kept, context);
+        return await context.App.type.list["list"].Create(list, context);
     }
 
     // ---- Comparison (the unified hook — see app.type.compare) ----

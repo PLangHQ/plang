@@ -12,7 +12,7 @@ public sealed class @this : global::app.snapshot.ISnapshot
         new(System.StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The member kept as <paramref name="name"/>; null when none is.</summary>
-    public global::app.data.@this? this[string name] => _kept.TryGetValue(name, out var kept) ? kept : null;
+    public global::app.data.@this? this[string name] => _kept.TryGetValue(name, out var member) ? member : null;
 
     /// <summary>Keeps <paramref name="value"/> as <paramref name="name"/>, over what was kept by that name.</summary>
     internal void Add(string name, global::app.data.@this value) => _kept[name] = value;
@@ -44,8 +44,8 @@ public sealed class @this : global::app.snapshot.ISnapshot
     {
         var entry = s.Entries.Get("kept", context);
         if (entry == null) return;
-        var kept = await entry.Value<global::app.type.item.dict.@this>();
+        var dict = await entry.Value<global::app.type.item.dict.@this>();
         _kept.Clear();
-        foreach (var member in kept.Entries(context)) _kept[member.Name] = member;
+        foreach (var member in dict.Entries(context)) _kept[member.Name] = member;
     }
 }

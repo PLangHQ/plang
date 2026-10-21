@@ -32,7 +32,7 @@ public sealed class @this<T, L> : global::app.type.node.@this<T, L>
     {
         if (string.Equals(key, "current", System.StringComparison.OrdinalIgnoreCase))
             return current(parent.Context);
-        if (await Own(parent, key) is { } own) return own;
+        if (await Own(parent, key) is { } member) return member;
         // with nothing inside one, a member of it is unset, as any miss is
         var now = current(parent.Context);
         return now.Success ? await now.Peek().Get(now, key) : parent.Context.NotFound(key);

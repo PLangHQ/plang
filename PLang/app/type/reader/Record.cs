@@ -38,15 +38,15 @@ internal sealed class Record : global::app.type.reader.ITypeReader
         var type = string.IsNullOrEmpty(kind) ? owner : new global::app.type.@this(_type, owner.ClrType, kind);
         // Construct, not Make: a settings class is an ICreate<setting> subtype whose own Make declines — its
         // base's Create makes it by its declared.ClrType (decision 789).
-        var made = type.Construct(record, data);
+        var value = type.Construct(record, data);
         // A type that CAN'T be made from its record declines with the reason its own Create gave (789) — a
         // DeclinedException, which source.Value catches and answers softly on the binding (Success=false, the
         // error named), never thrown to the courier. A clean decline (null, no error — a bare setting node that
         // reads as absent) is the null value.
-        if (made is null)
+        if (value is null)
             return data.Error is { } err
                 ? throw new global::app.error.DeclinedException(err)
                 : new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this(_type, kind), ctx.Context]);
-        return made;
+        return value;
     }
 }

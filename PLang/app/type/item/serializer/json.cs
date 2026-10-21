@@ -66,8 +66,8 @@ public partial class json
     // never a template (injection-safe). The text takes the row's variables it holds.
     private object? StringSlot(string s, global::app.type.reader.ReadContext? ctx)
         => ctx?.Template is { } template
-           && new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable) is { HasVariable: true } held
-            ? held
+           && new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable) is { HasVariable: true } value
+            ? value
             : s;
 
     // A typed value WITHOUT the @schema layer marker — a dict/list entry's {type:{name,…}, value:…}
@@ -211,8 +211,8 @@ public partial class json
         // would silently convert the wrapper back via text's implicit operator.
         if (ctx?.Template is { } template)
         {
-            var held = new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable);
-            if (held.HasVariable) return held;
+            var value = new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable);
+            if (value.HasVariable) return value;
         }
         else if (s.Contains('%') && new global::app.type.item.variable.parser.@this(s, _context.App.type.list).Variable.Count > 0)
             return s;

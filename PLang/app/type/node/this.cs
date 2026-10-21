@@ -75,7 +75,7 @@ public class @this<T, L> : @this
         actor.context.@this context)
     {
         await foreach (var p in every)
-            if (await p.Match(key) is { } found) return context.Ok<T>(found);
+            if (await p.Match(key) is { } element) return context.Ok<T>(element);
         return data.@this<T>.FromError(new global::app.error.@this($"no {type.Name} '{key}'", "NotFound", 404), context);
     }
 
@@ -116,8 +116,8 @@ public class @this<T, L> : @this
         if (await T.Select(new global::app.type.item.text.@this(key, _app.type.list[typeof(global::app.type.item.text.@this)]), parent.Context)
             is { IsInitialized: true } selected)
             return selected.Success ? new data.@this(key, selected.Peek(), parent: parent) : selected;
-        var found = await Find(Of(parent.Context).Walk(null, parent.Context), key, parent.Context);
-        if (!found.Success) return found;
-        return new data.@this(key, (await found.Value())!, parent: parent);
+        var element = await Find(Of(parent.Context).Walk(null, parent.Context), key, parent.Context);
+        if (!element.Success) return element;
+        return new data.@this(key, (await element.Value())!, parent: parent);
     }
 }

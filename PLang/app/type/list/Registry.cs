@@ -152,7 +152,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         if ((name ?? NameOf(clr)) is not { } claimed)
             return context.Error(new error.@this($"{clr.FullName} is not a plang type — only items are.", "TypeLoadNotAType", 400));
         // The class that already owns the name adds nothing new: the same answer, whatever the name.
-        if (Types.FirstOrDefault(t => t.Names(claimed)) is { } held && held.ClrType == clr) return context.Ok(held);
+        if (Types.FirstOrDefault(t => t.Names(claimed)) is { } type && type.ClrType == clr) return context.Ok(type);
         var aliases = clr.GetProperty("Alias", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
             ?.GetValue(null) as IReadOnlyList<string> ?? [];
         if (aliases.Prepend(claimed).FirstOrDefault(Sealed.Contains) is { } sealedWord)
