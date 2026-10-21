@@ -310,7 +310,7 @@ public class source : @this
     internal virtual source Declared(global::app.type.@this type)
         // The raw's format is the raw's own fact — the kind object the raw was decoded by — so it rides the
         // re-declaration: a {item, json} re-declared a dict keeps json, and is asked to Parse directly.
-        => new source(_value, type, _variable, _origin, IsBuilt, _format);
+        => type.kind.Make(_value, type, _origin, _variable, IsBuilt, _format);
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),

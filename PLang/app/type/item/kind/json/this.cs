@@ -33,8 +33,10 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
         => new(ctx.Ok(Make(raw, ctx.App.type.list[new global::app.type.@this("item", "json"), ctx], null)));
 
     /// <summary>json content, unread: its characters already are json, so a json document pastes them.</summary>
-    public override global::app.type.item.source Make(object raw, global::app.type.@this type, global::app.type.item.path.@this? origin)
-        => new source(raw, type, this, origin);
+    public override global::app.type.item.source Make(object raw, global::app.type.@this type, global::app.type.item.path.@this? origin,
+        System.Collections.Generic.IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false,
+        global::app.type.kind.@this? format = null)
+        => new source(raw, type, this, origin, variable, built);
 
     // Every character written as itself (Icelandic letters, "—"); the ones a page reads as markup (< > & ' +)
     // still escaped, as json in an HTML page needs.

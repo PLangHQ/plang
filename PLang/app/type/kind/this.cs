@@ -172,10 +172,13 @@ public class @this : global::app.type.@this
     public virtual bool Carries(System.Type clr) => ClrForm is { } form && form.IsAssignableFrom(clr);
 
     /// <summary>Content of this kind, unread: <paramref name="raw"/> (characters or bytes) as a value of
-    /// <paramref name="type"/>, read off <paramref name="origin"/> when it came from a file. By default a source; a kind
-    /// whose content looks different in a format makes its own.</summary>
-    public virtual global::app.type.item.source Make(object raw, global::app.type.@this type, global::app.type.item.path.@this? origin)
-        => new(raw, type, origin: origin);
+    /// <paramref name="type"/>, read off <paramref name="origin"/> when it came from a file — a template holding
+    /// <paramref name="variable"/> (the build's own when <paramref name="built"/>), its raw in <paramref name="format"/>
+    /// when it was read in another. By default a source; a kind whose content looks different in a format makes its own.</summary>
+    public virtual global::app.type.item.source Make(object raw, global::app.type.@this type, global::app.type.item.path.@this? origin,
+        System.Collections.Generic.IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false,
+        @this? format = null)
+        => new(raw, type, variable, origin, built, format);
 
     // A kind's own aliases (int → "integer") — what it answers to by name besides its name; never its owner's, which a
     // kinded type ({text, md}) reads as its family's.

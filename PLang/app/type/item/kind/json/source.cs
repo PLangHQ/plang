@@ -9,9 +9,11 @@ namespace app.type.item.kind.json;
 public class source : global::app.type.item.source
 {
     /// <summary>json content holding <paramref name="raw"/> (characters, or their UTF-8 bytes), of
-    /// <paramref name="type"/>, read by <paramref name="json"/>, off <paramref name="origin"/> when it came from a file.</summary>
-    public source(object raw, global::app.type.@this type, @this json, global::app.type.item.path.@this? origin = null)
-        : base(raw, type, origin: origin, format: json) { }
+    /// <paramref name="type"/>, read by <paramref name="json"/>, off <paramref name="origin"/> when it came from a file —
+    /// a template holding <paramref name="variable"/>, the build's own when <paramref name="built"/>.</summary>
+    public source(object raw, global::app.type.@this type, @this json, global::app.type.item.path.@this? origin = null,
+        System.Collections.Generic.IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false)
+        : base(raw, type, variable, origin, built, json) { }
 
     // What the characters stand for, once opened — kept, so a truth asked first and a navigation after parse once. It
     // holds no context: every asker uses it with their own.

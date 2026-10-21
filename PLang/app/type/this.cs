@@ -461,7 +461,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             // the content source. A literal string under any other type rides the wire (strict,
             // byte-identical). A name was read above, by its own eager reader.
             return Template != null
-                ? new item.source(JsonSerializer.Deserialize<string>(slice)!, this, ctx.Variable, built: ctx.IsBuilt)
+                ? kind.Make(JsonSerializer.Deserialize<string>(slice)!, this, null, ctx.Variable, ctx.IsBuilt)
                 : Make(slice, transport, built: ctx.IsBuilt);
         }
         // EVERY other slot is a wire: a VERBATIM Slice with the capturing transport named at the

@@ -1829,8 +1829,10 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   ctor(System.Text.Json.Utf8JsonWriter writer, app.View view, app.actor.context.this context)
 
 class app.type.item.kind.json.source : app.type.item.source
-  ctor(System.Object raw, app.type.this type, app.type.item.kind.json.this json, app.type.item.path.this origin = …)
+  ctor(System.Object raw, app.type.this type, app.type.item.kind.json.this json, app.type.item.path.this origin = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …)
   override AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
+  override Rank : System.Int32 { get; }
+  protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
   protected override Write(app.type.item.kind.json.Writer writer) : System.Threading.Tasks.ValueTask
   protected override Write(app.type.item.wire.kind.plang.Writer writer) : System.Threading.Tasks.ValueTask
 
@@ -1841,7 +1843,7 @@ class app.type.item.kind.json.this : app.type.kind.this<app.type.item.this>
   override Extension : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override IsText : System.Boolean { get; }
   override Load(System.Object raw, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.data.this>
-  override Make(System.Object raw, app.type.this type, app.type.item.path.this origin) : app.type.item.source
+  override Make(System.Object raw, app.type.this type, app.type.item.path.this origin, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …, app.type.kind.this format = …) : app.type.item.source
   override Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   override Open(System.String characters, app.actor.context.this context) : app.data.this
   override Parse(System.Object raw, app.actor.context.this ctx) : app.type.item.this
@@ -3100,7 +3102,7 @@ class app.type.kind.this : app.type.this
   virtual Item[System.String] : app.type.kind.this { get; }
   virtual Item[System.Type] : app.type.kind.this { get; }
   virtual Load(System.Object raw, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.data.this>
-  virtual Make(System.Object raw, app.type.this type, app.type.item.path.this origin) : app.type.item.source
+  virtual Make(System.Object raw, app.type.this type, app.type.item.path.this origin, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …, app.type.kind.this format = …) : app.type.item.source
   virtual Mime : System.Collections.Generic.IReadOnlyList<System.String> { get; }
   virtual Of(System.Type type) : System.Type
   virtual Open(System.String characters, app.actor.context.this context) : app.data.this
