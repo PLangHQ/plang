@@ -1,0 +1,14 @@
+/ A json file is empty as what it holds is empty: {} and [] are empty, {"a":1} is not.
+JsonFileIsEmptyAsItsValue
+- file.read(Path="object_empty.json"); variable.set(Name=%object%, Value=%!data%)
+- variable.set(Name=%objectEmpty%, Value="no")
+- condition.if(Left=%object%, Operator="isempty") { variable.set(Name=%objectEmpty%, Value="yes") }
+- assert.equals(Expected="yes", Actual=%objectEmpty%, Message="a json file holding {} is empty")
+- file.read(Path="array_empty.json"); variable.set(Name=%array%, Value=%!data%)
+- variable.set(Name=%arrayEmpty%, Value="no")
+- condition.if(Left=%array%, Operator="isempty") { variable.set(Name=%arrayEmpty%, Value="yes") }
+- assert.equals(Expected="yes", Actual=%arrayEmpty%, Message="a json file holding [] is empty")
+- file.read(Path="object_filled.json"); variable.set(Name=%filled%, Value=%!data%)
+- variable.set(Name=%filledEmpty%, Value="no")
+- condition.if(Left=%filled%, Operator="isnotempty") { variable.set(Name=%filledEmpty%, Value="yes") }
+- assert.equals(Expected="yes", Actual=%filledEmpty%, Message="a json file holding {\"a\":1} is not empty")

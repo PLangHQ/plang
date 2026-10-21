@@ -276,7 +276,7 @@ public class source : @this
     /// kind, or one the list doesn't carry): nothing to parse, the value is used as it is. A bad parse throws
     /// — the caller answers it through <see cref="Unread"/>.
     /// </summary>
-    internal global::app.type.item.@this? Parse(global::app.actor.context.@this ctx)
+    internal virtual global::app.type.item.@this? Parse(global::app.actor.context.@this ctx)
         => Type.kind.IsEmpty ? null : ctx.App.type.list.Kind(Type, ctx)?.Parse(_value, ctx);
 
     /// <summary>The text a partial template is, off its text face (a byte raw declared text is its UTF-8) —

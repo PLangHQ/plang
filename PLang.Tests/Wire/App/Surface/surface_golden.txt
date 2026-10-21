@@ -1814,6 +1814,7 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
 
 class app.type.item.kind.json.source : app.type.item.source
   ctor(System.Object raw, app.type.this type, app.type.item.kind.json.this json, app.type.item.path.this origin = …)
+  override AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
   protected override Write(app.type.item.kind.json.Writer writer) : System.Threading.Tasks.ValueTask
   protected override Write(app.type.item.wire.kind.plang.Writer writer) : System.Threading.Tasks.ValueTask
 
