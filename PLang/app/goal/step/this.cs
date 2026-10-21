@@ -13,10 +13,10 @@ public sealed partial class @this
     // A step is an item (this.Item.cs), written and read through its [Store] props.
 
 
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public int Index { get; internal set; }
 
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public string Text { get; internal set; } = "";
 
     /// <summary>
@@ -48,10 +48,10 @@ public sealed partial class @this
     public bool IsAnswered => IsCached || IsFormal;
 
     /// <summary>Where the step is written: its line in the .goal file and its indent.</summary>
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public global::app.goal.step.line.@this Line { get; internal set; } = new();
 
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
 
     /// <summary>A step, born holding its type and its code list from <paramref name="types"/>, the app's type list
@@ -61,7 +61,7 @@ public sealed partial class @this
 
     private global::app.goal.step.action.list.@this _code;
     /// <summary>The step's code: the actions it runs, as the .pr holds them under <c>code</c>.</summary>
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public global::app.goal.step.action.list.@this Code
     {
         // A plain slot. Every action in it was born knowing this step — the reader constructs the
@@ -84,20 +84,20 @@ public sealed partial class @this
         : Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
             System.Text.Encoding.UTF8.GetBytes(Text))).ToLowerInvariant();
 
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public string? Intent { get; internal set; }
 
     /// <summary>Tag set by enrichResponse: "known" (prior text matched), "hint" (text changed, prior available), or "new".</summary>
-    [Store, Debug, Default]
+    [Store, Out, Debug, Default]
     public string? Source { get; set; }
 
-    [Debug]
+    [Store, Out, Debug]
     public global::app.warning.list.@this Warning { get; init; } = new();
 
     /// <summary>Why the build could not write this step: the reasons that still refuse it after the step-fixer's
     /// retry, one cause each in its <c>list</c>. Null for a step that built. A goal holding a step with an Error
     /// does not start.</summary>
-    [Debug]
+    [Store, Out, Debug]
     public global::app.error.@this? Error { get; internal set; }
 
     /// <summary>The goal this step belongs to — a BIRTH FACT. The reader constructs the goal shell

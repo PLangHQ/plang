@@ -2,7 +2,7 @@ namespace app.goal.step;
 
 // The step IS a plang value (item) — see action/this.Item.cs for the ruling. The engine reads the
 // typed internals (Index, Text, Actions, …) directly; the item faces are the boundary only. The step
-// owns its wire: Output writes itself token by token, its serializer/Reader.cs reads itself back.
+// is written by its tags, in declaration order; its serializer/Reader.cs reads itself back.
 [global::app.Attributes.PlangType("step")]
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
@@ -95,7 +95,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         // a step the build could not fix: its error writes itself, as it does everywhere — the goal it belongs to does
         // not start
         if (Error != null) { writer.Name("error"); await Error.Output(writer); }
-        await writer.View.Own(this, writer);
         writer.EndObject();
     }
 }

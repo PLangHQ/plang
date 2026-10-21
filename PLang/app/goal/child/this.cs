@@ -21,4 +21,13 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>
     {
         foreach (var slot in other.Slots()) Admit(slot);
     }
+
+    /// <summary>Writes itself as the bare sub-goal array — each sub-goal writes its own goal shape (not the base's
+    /// per-row value face), the shape the goal reader reads.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    {
+        writer.BeginArray((int)Count);
+        for (int i = 0; i < Count; i++) await this[i].Output(writer);
+        writer.EndArray();
+    }
 }

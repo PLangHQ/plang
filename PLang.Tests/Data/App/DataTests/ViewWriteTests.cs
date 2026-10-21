@@ -96,13 +96,6 @@ public class ViewWriteTests : System.IAsyncDisposable
         public Faulty(global::app.type.@this type) : base(type) { }
 
         [global::app.Debug] public string Probe => throw new System.InvalidOperationException("the probe broke");
-
-        protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-        {
-            writer.BeginObject();
-            await writer.View.Own(this, writer);
-            writer.EndObject();
-        }
     }
 
     [Test] public async Task ADump_ShowsADiagnosticThatThrows_AsItsError_AndGoesOn()

@@ -51,6 +51,12 @@ public abstract class View
             + "not meant to cross the wire. Write what you actually meant to write, or tag the type.",
             "NoWireContract");
 
+    /// <summary>A shown member whose getter threw: the write fails, naming it.</summary>
+    internal virtual System.Threading.Tasks.ValueTask Unread(global::app.type.item.kind.reflection.Tagged.Entry member,
+        System.Exception thrown, global::app.type.format.IWriter writer)
+        => throw new global::app.data.OutputException(
+            $"Output failed reading {member.Property.DeclaringType?.Name}.{member.Property.Name}: {thrown.Message}", "OutputGetterThrew", thrown);
+
     /// <summary>A Data whose value holds variables (a template, a reference), written in this view: its record around
     /// its value, kept as written or used. <paramref name="layer"/>: the Data begins a layer of plang's own format.</summary>
     internal virtual async System.Threading.Tasks.ValueTask Write(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
@@ -64,11 +70,9 @@ public abstract class View
     /// kept as written, or used.</summary>
     internal abstract System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer);
 
-    /// <summary>What only this view shows beside <paramref name="value"/>, as members of the object the value's own write
-    /// is closing: plang's own store the variables a value kept as written names (a <c>.pr</c> row's <c>variable</c>,
-    /// parsed once at build); a dump the value's diagnostics (its <c>[Debug]</c>-only members). What crosses shows
-    /// nothing more.</summary>
-    internal virtual System.Threading.Tasks.ValueTask Own(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+    /// <summary>The variables a value kept as written names, as a member of the object its row is closing: plang's own
+    /// store writes them (a <c>.pr</c> row's <c>variable</c>, parsed once at build); no other view shows them.</summary>
+    internal virtual System.Threading.Tasks.ValueTask Variables(global::app.type.item.@this value, global::app.type.format.IWriter writer)
         => default;
 
     // The value as written: its own write — a template's text, a reference's name, as the step gave them.
@@ -118,7 +122,7 @@ public abstract class View
             => Written(value, writer);
 
         // a value kept as written names its variables beside it, so reading it back never parses
-        internal override async System.Threading.Tasks.ValueTask Own(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        internal override async System.Threading.Tasks.ValueTask Variables(global::app.type.item.@this value, global::app.type.format.IWriter writer)
         {
             if (!value.HasVariable) return;
             writer.Name("variable");
@@ -180,25 +184,12 @@ public abstract class View
         internal override void Undeclared(object value, global::app.type.format.IWriter writer)
             => writer.String(value.ToString() ?? value.GetType().Name);
 
-        // a value's diagnostics: the members only a dump shows ([Debug], neither crossing nor kept), each written itself
-        internal override async System.Threading.Tasks.ValueTask Own(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        // a member that fails to read shows its error: a dump never ends on one
+        internal override async System.Threading.Tasks.ValueTask Unread(global::app.type.item.kind.reflection.Tagged.Entry member,
+            System.Exception thrown, global::app.type.format.IWriter writer)
         {
-            foreach (var property in value.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-            {
-                if (!Is<DebugAttribute>(property) || Is<OutAttribute>(property) || Is<StoreAttribute>(property)
-                    || property.GetIndexParameters().Length > 0) continue;
-                // a member that fails to read shows its error: a dump never ends on one
-                object? member;
-                global::app.error.@this? failed = null;
-                try { member = property.GetValue(value); }
-                catch (System.Reflection.TargetInvocationException thrown) { member = null; failed = global::app.error.@this.FromException(thrown.InnerException ?? thrown); }
-                if (member is null && failed is null) continue;
-                writer.Name(System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Text.Json.Serialization.JsonPropertyNameAttribute>(property)?.Name
-                    ?? System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(property.Name));
-                // a plang value is itself; a C# value is the plang value it makes
-                if (failed != null) await failed.Output(writer);
-                else await global::app.type.item.@this.Create(member, writer.Context).Output(writer);
-            }
+            writer.Name(member.WireName);
+            await global::app.error.@this.FromException(thrown).Output(writer);
         }
 
         // as written, and beside it what it resolves to with its type; that it is not set, when a name it names reads

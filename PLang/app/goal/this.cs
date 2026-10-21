@@ -29,11 +29,11 @@ public sealed partial class @this
     // Read-time scalars are `internal set`, not `init`: the reader constructs the goal SHELL first
     // (so its steps and sub-goals can be born holding it) and fills these as they arrive off the
     // stream. Immutable to everything outside the assembly.
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public string Name { get; internal set; } = "";
 
     /// <summary>The goal's description: the comment lines written above its name.</summary>
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
 
     /// <summary>A goal, born holding its type and its step, child and tag lists from <paramref name="types"/>, the
@@ -46,7 +46,7 @@ public sealed partial class @this
     }
 
     private global::app.goal.step.list.@this _step;
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public global::app.goal.step.list.@this Step
     {
         // A plain slot. Every step in it was born knowing this goal — the reader constructs the
@@ -56,13 +56,18 @@ public sealed partial class @this
     }
 
     /// <summary>The goals written after this one in its file; each knows this goal as its parent.</summary>
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public child.@this Child { get; }
 
     /// <summary>A file's first goal is public; the goals under it are private to it.</summary>
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public global::app.type.item.choice.@this<Visibility> Visibility
         => Parent == null ? global::app.goal.Visibility.Public : global::app.goal.Visibility.Private;
+
+    /// <summary>The name of the goal's .goal file: where its .pr is found is where it is. A sub-goal is in its
+    /// parent's file and names none.</summary>
+    [Store, Out]
+    public string? File => Parent == null ? Path?.Name.ToString() : null;
 
     public override string ToString()
     {
@@ -82,7 +87,7 @@ public sealed partial class @this
     internal global::app.parent.@this? Elsewhere { get; init; }
 
     /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file.</summary>
-    [Store, Debug, LlmBuilder]
+    [Debug, LlmBuilder]
     public global::app.type.item.path.@this? Path { get => Parent?.Path ?? _path; set => _path = value; }
     private global::app.type.item.path.@this? _path;
 
@@ -100,7 +105,7 @@ public sealed partial class @this
     public static global::app.type.item.path.@this Pr(global::app.type.item.path.@this source)
         => source.Parent.Combine(".build").Combine(source.Stem.ToString().ToLowerInvariant() + ".pr");
 
-    [Store, Debug]
+    [Store, Out, Debug]
     public string? Hash
     {
         get
@@ -131,7 +136,7 @@ public sealed partial class @this
     }
     private string? _hash;
 
-    [Store, Debug]
+    [Store, Out, Debug]
     public string? BuilderVersion { get; set; }
 
     /// <summary>A setup goal — named Setup, or in the app's <c>/setup/</c>: it runs only through setup.</summary>
@@ -153,7 +158,7 @@ public sealed partial class @this
 
     /// <summary>The goal's tags — a build-birth fact stamped by <c>test.tag</c>'s Build hook (skip,
     /// user tags). A <c>list&lt;tag&gt;</c> program node; each tag owns its case-insensitive equality.</summary>
-    [Store, Debug]
+    [Store, Out, Debug]
     public global::app.goal.tag.list.@this Tag { get; init; }
 
 

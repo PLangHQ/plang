@@ -846,7 +846,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// primitives (String, Number, Bytes, …); the writer decides how each looks. Every value with a form of its own (a
     /// leaf's one token, a structure's flat shape: error, path, permission, …) overrides this. The default is a
     /// structure's face for the writer's view: the tagged members of its <see cref="Host"/>, each under its wire name
-    /// and nulls left out, each member's value written as the plang value it is. A type of plang's own that declares no
+    /// and nulls and empty lists left out, each member's value written as the plang value it is. A type of plang's own that declares no
     /// face for the view (a context, a callstack) is the view's to answer: the wire and the store refuse it, a dump
     /// names it. A foreign type can't declare, so it shows all its members. Resolved lazily as it reaches each node;
     /// <c>await</c>s happen here, between the writer's synchronous buffer writes.
@@ -868,14 +868,22 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             try { value = entry.Property.GetValue(host); }
             catch (System.Exception ex)
             {
-                throw new global::app.data.OutputException(
-                    $"Output failed reading {type.Name}.{entry.Property.Name}: {ex.Message}", "OutputGetterThrew", ex);
+                await writer.View.Unread(entry, ex.InnerException ?? ex, writer);
+                continue;
             }
             if (value == null) continue;
-            writer.Name(entry.WireName);
             // a member holding a Data writes it whole; any other is the plang value it is
-            if (value is global::app.data.@this data) await data.Output(writer);
-            else await Create(value, writer.Context).Output(writer);
+            if (value is global::app.data.@this data)
+            {
+                writer.Name(entry.WireName);
+                await data.Output(writer);
+                continue;
+            }
+            var member = Create(value, writer.Context);
+            // an empty list says nothing, as a null says nothing
+            if (member.IsSequence && !member.IsTruthy()) continue;
+            writer.Name(entry.WireName);
+            await member.Output(writer);
         }
         writer.EndObject();
     }

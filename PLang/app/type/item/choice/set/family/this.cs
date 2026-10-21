@@ -24,21 +24,21 @@ public sealed class @this : set.@this
     /// <summary>Whether <paramref name="clr"/> is a kind family — an abstract kind its kinds are subclasses of, or an
     /// abstract value whose subclasses are its kinds (<c>[Kinds]</c>).</summary>
     internal static bool Is(System.Type clr)
-        => clr.IsAbstract && (typeof(global::app.type.kind.@this).IsAssignableFrom(clr) || Item(clr));
+        => clr.IsAbstract && (typeof(global::app.type.kind.@this).IsAssignableFrom(clr) || IsItem(clr));
 
     // Whether clr is an item family whose subclasses are its kinds ([Kinds]) — a value, not a kind (a kind is a value too)
-    private static bool Item(System.Type clr)
+    private static bool IsItem(System.Type clr)
         => !typeof(global::app.type.kind.@this).IsAssignableFrom(clr) && typeof(global::app.type.item.@this).IsAssignableFrom(clr)
            && clr.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false);
 
     // The class an option of the family is: the kind itself, or for an item family the kind of it (kind<size>)
     private static System.Type Option(System.Type clr)
-        => Item(clr) ? typeof(global::app.type.kind.@this<>).MakeGenericType(clr) : clr;
+        => IsItem(clr) ? typeof(global::app.type.kind.@this<>).MakeGenericType(clr) : clr;
 
     // The type a family's kinds are kinds of — the value family itself, or the T its kind is a kind<T> of (kind<size>
     // itself, or an abstract kind under it); template's kinds have no type to be T, and name their facet until stage 6.
     private static string Family(System.Type clr)
-        => Item(clr) ? global::app.type.item.@this.NameOf(clr)!
+        => IsItem(clr) ? global::app.type.item.@this.NameOf(clr)!
             : (clr.IsGenericType ? clr : clr.BaseType) is { IsGenericType: true } parent && parent.GetGenericTypeDefinition() == typeof(global::app.type.kind.@this<>)
             ? global::app.type.item.@this.NameOf(parent.GetGenericArguments()[0])!
             : global::app.type.item.template.kind.@this.Facet;

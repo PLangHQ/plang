@@ -223,7 +223,7 @@ public sealed class @this : global::app.type.item.note.IAbout
         if (Value is { HasVariable: true } template)
         {
             await writer.View.Write(template, writer);
-            await writer.View.Own(template, writer);
+            await writer.View.Variables(template, writer);
         }
         else if (Value is { } value) await value.Output(writer);
         else writer.Null();
