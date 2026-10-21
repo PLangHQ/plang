@@ -16,7 +16,7 @@ namespace app.goal.step.action.list;
 // formal — the actions written as calls — is a format of list (a list of actions is what its reader makes), so the
 // kind is {list, formal}; its encode and decode are this class's: decoding formal makes an action list
 [global::app.Attributes.Format(global::app.goal.step.action.formal.Writer.Token, Text = true)]
-public sealed class @this : global::app.type.item.list.@this<Action>, global::app.type.item.ICreate<@this>
+public sealed class @this : global::app.type.item.list.bare.@this<Action>, global::app.type.item.ICreate<@this>
 {
     // Two ways to be born: EMPTY (callers Add each action in — the reader, Nest), or ADOPT a list
     // value's rows (the value→slot materialization, set %step.action% = %json%).
@@ -183,16 +183,6 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
         if (causes.Count == 0) return null;
         return new global::app.error.@this(
             string.Join("; ", causes.Select(c => c.Message)), "BuildFailed", 400) { list = causes };
-    }
-
-    /// <summary>Writes itself to the wire as the bare <c>.pr</c> action array — each element writes its
-    /// own action shape (NOT the base list's self-describing Data-envelope value face). The holder just
-    /// says <c>Action.Output(...)</c>; the node is the iterator of itself, like <see cref="Start"/>.</summary>
-    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-    {
-        writer.BeginArray((int)Count);
-        for (int i = 0; i < Count; i++) await this[i].Output(writer);
-        writer.EndArray();
     }
 
     /// <summary>A step's actions in formal: one line, each action's own call, <c>a; b</c>.</summary>

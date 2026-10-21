@@ -5,19 +5,11 @@ namespace app.type.item.variable.code;
 /// answered and does its one step. Program structure — born with no context, shared by every run;
 /// <see cref="Start"/> and <see cref="Set"/> take the asker's.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<Hop>
+public sealed class @this : global::app.type.item.list.bare.@this<Hop>
 {
-    /// <summary>The code <paramref name="first"/> starts: it and every step after it.</summary>
+    /// <summary>The code <paramref name="first"/> starts: it and every step after it. Its <c>.pr</c> form is the hops
+    /// in order, each under its kind.</summary>
     internal @this(Hop first, global::app.type.@this type) : base(first.Chain, type) { }
-
-    /// <summary>Its <c>.pr</c> form: the hops in order, each under its kind.</summary>
-    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-    {
-        var hops = Items().ToList();
-        writer.BeginArray(hops.Count);
-        foreach (var hop in hops) await hop.Output(writer);
-        writer.EndArray();
-    }
 
     /// <summary>The root: the name the value lives under in memory.</summary>
     public Variable Root => (Variable)this[0];

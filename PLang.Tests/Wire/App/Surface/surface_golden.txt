@@ -1878,6 +1878,13 @@ class app.type.item.kind.reflection.this : app.type.kind.this<app.type.item.this
   override Set(System.Object host, System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this ctx) : System.Threading.Tasks.ValueTask<app.type.item.this>
   protected override OwnInternal : System.Nullable<System.Boolean> { get; }
 
+class app.type.item.list.bare.this<T> : app.type.item.list.this<T>
+  ctor(System.Collections.Generic.IEnumerable<app.type.item.this> values, app.type.this type)
+  ctor(System.Collections.Generic.List<System.Object> backing, app.type.this type)
+  ctor(app.type.item.list.this source, app.type.this type)
+  ctor(app.type.this type)
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+
 class app.type.item.list.kind.element.this : app.type.kind.this<app.type.item.list.this>
   ctor(app.type.this owner, app.type.this element)
   override Of(System.Type type) : System.Type
@@ -2895,13 +2902,12 @@ class app.type.item.variable.code.Variable : app.type.item.variable.code.Hop
   override Start(app.data.this previous, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   protected override Piece(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
-class app.type.item.variable.code.this : app.type.item.list.this<app.type.item.variable.code.Hop>
+class app.type.item.variable.code.this : app.type.item.list.bare.this<app.type.item.variable.code.Hop>
   Ensure(System.Func<System.Threading.Tasks.ValueTask<app.data.this>> value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   Replace(app.data.this expected, app.type.item.this value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   Root : app.type.item.variable.code.Variable { get; }
   Set(System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
   Start(app.actor.context.this context, app.data.this from = …) : System.Threading.Tasks.ValueTask<app.data.this>
-  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 
 class app.type.item.variable.list.this : app.snapshot.ISnapshot
   Capture(app.snapshot.this s) : System.Void

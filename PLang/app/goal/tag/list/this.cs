@@ -10,22 +10,11 @@ namespace app.goal.tag.list;
 /// Sibling of <see cref="app.goal.step.action.list.@this"/> — the tag owns its own normalization and
 /// case-insensitive equality (see <see cref="Tag"/>), so this node never hand-folds case.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<Tag>
+public sealed class @this : global::app.type.item.list.bare.@this<Tag>
 {
     // Two ways to be born: EMPTY (callers Add each tag in) + ADOPT a list value's rows (value→slot).
     public @this(global::app.type.@this type) : base(new List<object?>(), type) { }
     public @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
-
-    /// <summary>Clone/render keep this concrete node type, context-free.</summary>
-
-    /// <summary>Writes the goal's tag array — each tag its bare string, the shape the goal reader reads
-    /// (not the base's per-row value face).</summary>
-    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-    {
-        writer.BeginArray((int)Count);
-        for (int i = 0; i < Count; i++) await this[i].Output(writer);
-        writer.EndArray();
-    }
 
     /// <summary>True when a tag equal to <paramref name="tag"/> is present — case-insensitive, since
     /// equality lives on the tag. Callers ask <c>goal.Tag.Has("skip")</c> rather than folding case.</summary>

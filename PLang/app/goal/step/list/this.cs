@@ -11,7 +11,7 @@ namespace app.goal.step.list;
 /// context — <see cref="Start"/> takes the ASK's. Owns its sequence-run (Rule 5 — the collection owns its
 /// iteration). Twin of <see cref="app.goal.step.action.list.@this"/>.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<Step>
+public sealed class @this : global::app.type.item.list.bare.@this<Step>
 {
     // Two ways to be born: EMPTY (callers Add each step in — the reader, the parser, the fold), or
     // ADOPT a list value's rows (the value→slot materialization when a reader produced a generic list).
@@ -268,13 +268,4 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     // The walk's own store: a System-actor context with no parent — a fresh variable store nothing
     // watches and nothing inherits into, so what the walk binds never reaches the builder's variables.
     private actor.context.@this Scratch(actor.context.@this context) => new(context.App, context.App.actor.list.System);
-
-    /// <summary>Writes itself to the wire as the bare step array — each element writes its own step
-    /// shape (NOT the base's Data-envelope value face). Holders say <c>Step.Output(...)</c>.</summary>
-    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-    {
-        writer.BeginArray((int)Count);
-        for (int i = 0; i < Count; i++) await this[i].Output(writer);
-        writer.EndArray();
-    }
 }

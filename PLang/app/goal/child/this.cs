@@ -5,7 +5,7 @@ namespace app.goal.child;
 /// its parent, wherever it is added from (the build's parse, the <c>.pr</c> reader), so a sub-goal
 /// always knows the goal it lives in: its address (<c>/start#show</c>) and its visibility derive from it.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<goal.@this>
+public sealed class @this : global::app.type.item.list.bare.@this<goal.@this>
 {
     private readonly goal.@this _owner;
 
@@ -20,14 +20,5 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>
     protected override void Admit(global::app.type.item.list.@this other)
     {
         foreach (var slot in other.Slots()) Admit(slot);
-    }
-
-    /// <summary>Writes itself as the bare sub-goal array — each sub-goal writes its own goal shape (not the base's
-    /// per-row value face), the shape the goal reader reads.</summary>
-    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
-    {
-        writer.BeginArray((int)Count);
-        for (int i = 0; i < Count; i++) await this[i].Output(writer);
-        writer.EndArray();
     }
 }
