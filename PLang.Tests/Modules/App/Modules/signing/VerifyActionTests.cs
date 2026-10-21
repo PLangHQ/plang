@@ -275,6 +275,27 @@ public class VerifyActionTests
         await Assert.That(result.Error!.Key).IsEqualTo("ContractMismatch");
     }
 
+    // The digest covers the Data's properties: the held Data with one property changed (same value, same signature
+    // bytes) no longer matches its hash.
+    [Test]
+    public async Task Verify_HeldDataPropertyChanged_DataHashMismatch()
+    {
+        var data = new Data("", "hello", context: Ctx);
+        data.Properties.Set("note", "signed");
+        var signed = await new global::app.goal.step.action.@this(new sign(Ctx) { Data = data }, Ctx).Start(Ctx);
+        await signed.IsSuccess();
+        var l = Layer(signed);
+        var changed = new Data("", l.Value.Peek(), context: Ctx);
+        changed.Properties.Set("note", "changed");
+        var tampered = signed.Context.Ok(new global::app.type.item.signature.@this(
+            l.Type, changed, l.Algorithm, l.Nonce, l.Created, l.Identity, l.Hash, l.Signature, l.Expires, l.Contracts,
+            global::app.type.item.signature.Origin.Signed, null));
+
+        var result = await VerifyHelper(tampered);
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("DataHashMismatch");
+    }
+
     [Test]
     public async Task Verify_DataHashMismatch_Error()
     {
