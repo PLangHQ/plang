@@ -322,6 +322,12 @@ public sealed class @this : IDisposable
         return @class == null ? null : await Get(Address(@class));
     }
 
+    /// <summary>The settings at <paramref name="setting"/>'s address as this scope sees them: the settings class kept there,
+    /// as this scope builds it, else <paramref name="setting"/> itself (an action's options, a module's) — what an owner
+    /// answers <c>%!llm.query.setting%</c> with.</summary>
+    public async ValueTask<data.@this> Get(global::app.type.item.setting.@this setting)
+        => Class(setting.Path) != null ? await Get(setting.Path) : new data.@this(setting.Path, setting, context: _context);
+
     /// <summary>The setting at <paramref name="address"/> as this scope sees it (<c>%!app.test.setting%</c>); NotFound when
     /// no settings class has that address, the error when a value its options can't take is held.</summary>
     public async ValueTask<data.@this> Get(string address)

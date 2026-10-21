@@ -200,14 +200,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>This module's settings — <c>%!llm.setting%</c>: its own class, or the options its actions take.</summary>
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
-    {
-        if (_root == null) return await base.Setting(parent);
-        // its own class, as the asker's settings build it; else the options its actions take, read and written through it
-        var setting = await parent.Context.Setting.Get(Address);
-        return setting.IsInitialized || !setting.Success ? setting
-            : new global::app.data.@this(Address, new global::app.type.item.setting.module.@this(Name,
-                parent.Context.App.type.list[typeof(global::app.type.item.setting.module.@this)]), context: parent.Context);
-    }
+        // its own class, as the asker's settings build it; else the options its actions take, read and written through them
+        => _root == null ? await base.Setting(parent)
+            : await parent.Context.Setting.Get(new global::app.type.item.setting.module.@this(Name,
+                parent.Context.App.type.list[typeof(global::app.type.item.setting.module.@this)]));
 
     /// <summary>Where this module's settings are kept — its name, then <c>.setting</c> (<c>llm.setting</c>).</summary>
     internal string Address => $"{Name}.setting";

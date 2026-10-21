@@ -34,13 +34,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// it has one, else its options as the catalog has them. None once its module was taken out of the app
     /// (module.Remove empties it): no catalog holds it then.</summary>
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
-    {
-        if (Module[Name] is not { } catalog) return null;
-        // its own class, as the asker's settings build it; else its options, read and written through it
-        var setting = await parent.Context.Setting.Get(catalog.Address);
-        return setting.IsInitialized || !setting.Success ? setting
-            : new global::app.data.@this(catalog.Address, new global::app.type.item.setting.action.@this(catalog), context: parent.Context);
-    }
+        // its own class, as the asker's settings build it; else its options, read and written through them
+        => Module[Name] is { } catalog
+            ? await parent.Context.Setting.Get(new global::app.type.item.setting.action.@this(catalog))
+            : null;
 
     /// <summary>Where this action's settings are kept — its module's name, its own, then <c>.setting</c>
     /// (<c>llm.query.setting</c>).</summary>
