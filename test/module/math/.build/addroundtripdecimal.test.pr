@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %a% = \"0.1\" as number/decimal",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -61,7 +62,8 @@
       "index": 1,
       "text": "set %b% = \"0.2\" as number/decimal",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -114,9 +116,58 @@
     },
     {
       "index": 2,
+      "text": "assert %a!type.kind% equals \"decimal\"",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "comment": "the cast holds: a double here would add to 0.30000…4 and still pass the equals below",
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "decimal"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%a!type.kind%",
+              "variable": [
+                {
+                  "text": "%a!type.kind%",
+                  "code": [
+                    {
+                      "variable": "a"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
       "text": "math.add A=%a% B=%b%, write to %sum%",
       "line": {
-        "number": 7
+        "number": 9,
+        "indent": 0
       },
       "code": [
         {
@@ -239,10 +290,58 @@
       ]
     },
     {
-      "index": 3,
+      "index": 4,
+      "text": "assert %sum!type.kind% equals \"decimal\"",
+      "line": {
+        "number": 10,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "decimal"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%sum!type.kind%",
+              "variable": [
+                {
+                  "text": "%sum!type.kind%",
+                  "code": [
+                    {
+                      "variable": "sum"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
       "text": "assert %sum% equals \"0.3\" as number/decimal",
       "line": {
-        "number": 8
+        "number": 11,
+        "indent": 0
       },
       "code": [
         {
@@ -279,9 +378,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/module/math/AddRoundTripDecimal.test.goal",
-  "prPath": "/module/math/.build/addroundtripdecimal.test.pr",
-  "hash": "3a45fd7d456b709086235f4800a422a991f257cfb254386dc5c3cb45f2e3ad38"
+  "file": "AddRoundTripDecimal.test.goal",
+  "hash": "951951798108765f2e42d32fc639e625210236b58a9a7c2544af89b250b02e40"
 }

@@ -5,7 +5,8 @@
       "index": 0,
       "text": "set %name% = \"alice\", type=text/plain",
       "line": {
-        "number": 2
+        "number": 2,
+        "indent": 0
       },
       "code": [
         {
@@ -60,7 +61,8 @@
       "index": 1,
       "text": "assert %name!type.name% equals \"text\"",
       "line": {
-        "number": 3
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -104,10 +106,12 @@
     },
     {
       "index": 2,
-      "text": "assert %name!type.kind% equals \"plain\"",
+      "text": "assert %name!type.kind% is empty",
       "line": {
-        "number": 4
+        "number": 5,
+        "indent": 0
       },
+      "comment": "text/plain is text's own format, not a kind of it: the type holds no kind",
       "code": [
         {
           "module": "assert",
@@ -118,7 +122,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "plain"
+              "value": ""
             },
             {
               "name": "Actual",
@@ -149,9 +153,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/app/data/DataTypeReadsEntity.test.goal",
-  "prPath": "/app/data/.build/datatypereadsentity.test.pr",
-  "hash": "c5e93b3b6cea28d9e5feda2439fc7f31ab1995eaa69cc608e58ab00b79fbd1eb"
+  "file": "DataTypeReadsEntity.test.goal",
+  "hash": "51ed8871005ef99c1a90b070452317928bc67c8170871330859a0f0290b112c7"
 }
