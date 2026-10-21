@@ -1,0 +1,295 @@
+{
+  "name": "Start",
+  "comment": "Signs a Data and verifies, exercises the sign→canonicalize→hash→sign→verify path\nend-to-end. A clean pass means the typed signing surface is intact.",
+  "step": [
+    {
+      "index": 0,
+      "text": "archive identity 'roundtripSigner', force, on error ignore",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "roundtripSigner"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "create identity roundtripSigner",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "create",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "roundtripSigner"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \"message\": \"round-trip me\" }",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"message":"round-trip me"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "sign %data%",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "signing",
+          "name": "sign",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "verify %data%, write to %verifyResult%",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "signing",
+          "name": "verify",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%verifyResult%",
+              "variable": [
+                {
+                  "text": "%verifyResult%",
+                  "code": [
+                    {
+                      "variable": "verifyResult"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %verifyResult.Success% is true, \"signed Data must verify on the same actor\"",
+      "line": {
+        "number": 9,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%verifyResult.Success%",
+              "variable": [
+                {
+                  "text": "%verifyResult.Success%",
+                  "code": [
+                    {
+                      "variable": "verifyResult"
+                    },
+                    {
+                      "property": "Success"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "signed Data must verify on the same actor"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "RoundTripAfterRawSignatureDeletion.test.goal",
+  "hash": "345badbb8e34a71431d16cd73f1bf1c9e7593c797d2b0bd1372954832d1bd2fb"
+}
