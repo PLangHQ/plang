@@ -311,7 +311,6 @@ static class app.data.ComparisonExtensions
 class app.data.DynamicData : app.data.this
   ctor(System.String name, System.Func<app.actor.context.this, app.data.this> found, app.actor.context.this context, app.type.this declared = …)
   override Peek() : app.type.item.this
-  override Properties : app.data.Properties { get; set; }
   override Replace(System.Func<System.Threading.Tasks.ValueTask<app.type.item.this>> previous) : System.Threading.Tasks.ValueTask<app.data.this>
 
 interface app.data.IBooleanResolvable
