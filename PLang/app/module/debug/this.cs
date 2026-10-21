@@ -136,21 +136,21 @@ public sealed class @this
             steps.Bind("start", When.before, (item, _, context) => Mark((global::app.goal.step.@this)item, context, step.Value), user,
                 global::app.@event.binding.Scope.actor, (item, _) => item is global::app.goal.step.@this);
 
-        steps.Bind("start", When.before, (_, _, context) => BeforeStepHandler(context), user, global::app.@event.binding.Scope.actor,
-            (item, context) => item is global::app.goal.step.@this && Debugged(context));
-        steps.Bind("start", When.after, (_, _, context) => AfterStepHandler(context), user, global::app.@event.binding.Scope.actor,
-            (item, context) => item is global::app.goal.step.@this && Debugged(context));
+        steps.Bind("start", When.before, (item, _, context) => Before((global::app.goal.step.@this)item, context), user,
+            global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.@this && Debugged(context));
+        steps.Bind("start", When.after, (item, _, context) => After((global::app.goal.step.@this)item, context), user,
+            global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.@this && Debugged(context));
 
-        goals.Bind("start", When.after, (_, _, context) => AfterGoalHandler(context), user, global::app.@event.binding.Scope.actor,
-            (item, context) => item is global::app.goal.@this && Debugged(context));
+        goals.Bind("start", When.after, (item, _, context) => After((global::app.goal.@this)item, context), user,
+            global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.@this && Debugged(context));
 
         if (setting.Level.Value == global::app.module.debug.Level.Action)
         {
             var actions = types["action"].Own();
-            actions.Bind("start", When.before, (_, _, context) => BeforeActionHandler(context), user, global::app.@event.binding.Scope.actor,
-                (_, context) => Debugged(context));
-            actions.Bind("start", When.after, (_, _, context) => AfterActionHandler(context), user, global::app.@event.binding.Scope.actor,
-                (_, context) => Debugged(context));
+            actions.Bind("start", When.before, (item, _, context) => Before((global::app.goal.step.action.@this)item, context), user,
+                global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.action.@this && Debugged(context));
+            actions.Bind("start", When.after, (item, _, context) => After((global::app.goal.step.action.@this)item, context), user,
+                global::app.@event.binding.Scope.actor, (item, context) => item is global::app.goal.step.action.@this && Debugged(context));
         }
         return null;
     }
@@ -212,11 +212,9 @@ public sealed class @this
         return context.Ok();
     }
 
-    private static async Task<data.@this> BeforeStepHandler(actor.context.@this context)
+    // A step about to run, as debug shows it: its text, its actions as written, the calls it sits in, its variables.
+    private static async Task<data.@this> Before(global::app.goal.step.@this step, actor.context.@this context)
     {
-        var step = context.call.Step;
-        if (step == null) return context.Ok();
-
         var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
 
@@ -244,18 +242,16 @@ public sealed class @this
                 sb.AppendLine($"    at {call}");
         }
 
-        await AppendStepVariables(sb, context);
+        await AppendStepVariables(sb, step, context);
         sb.AppendLine("========================================");
 
         await WriteFiltered(sb, context);
         return context.Ok();
     }
 
-    private static async Task<data.@this> AfterStepHandler(actor.context.@this context)
+    // A step that ran, as debug shows it: how long it took, its variables.
+    private static async Task<data.@this> After(global::app.goal.step.@this step, actor.context.@this context)
     {
-        var step = context.call.Step;
-        if (step == null) return context.Ok();
-
         var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
 
@@ -263,7 +259,7 @@ public sealed class @this
         var took = context.call.Current?.Duration(context) is { } elapsed ? $" ({elapsed.Value.TotalMilliseconds:0.###} ms)" : "";
         sb.AppendLine($"=== DEBUG [AFTER]: Step [{step.Index}] of {goalName}{took} ===");
 
-        await AppendStepVariables(sb, context);
+        await AppendStepVariables(sb, step, context);
         sb.AppendLine("========================================");
 
         await WriteFiltered(sb, context);
@@ -321,49 +317,47 @@ public sealed class @this
         if (context.App?.Debug is { } writer) await writer.Write(output);
     }
 
-    private static async Task<data.@this> AfterGoalHandler(actor.context.@this context)
+    // A goal that ran, as debug shows it.
+    private static async Task<data.@this> After(global::app.goal.@this goal, actor.context.@this context)
     {
-        var goalName = context.call.Goal?.Name ?? "?";
         var debug = context.App?.Debug;
         if (debug != null)
-            await debug.Write($"--- DEBUG: Goal '{goalName}' completed ---{Environment.NewLine}");
+            await debug.Write($"--- DEBUG: Goal '{goal.Name}' completed ---{Environment.NewLine}");
         return context.Ok();
     }
 
-    private static async Task<data.@this> BeforeActionHandler(actor.context.@this context)
+    // An action about to run, as debug shows it: where it is, its step's variables. One composed in C# holds no step.
+    private static async Task<data.@this> Before(global::app.goal.step.action.@this action, actor.context.@this context)
     {
-        var step = context.call.Step;
-        if (step == null) return context.Ok();
+        if (action.Step is not { } step) return context.Ok();
 
         var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
         sb.AppendLine($"  --- ACTION [BEFORE] in Step [{step.Index}] of {goalName} ---");
 
-        await AppendStepVariables(sb, context);
+        await AppendStepVariables(sb, step, context);
 
         await WriteFiltered(sb, context);
         return context.Ok();
     }
 
-    private static async Task<data.@this> AfterActionHandler(actor.context.@this context)
+    // An action that ran, as debug shows it: where it is, its step's variables.
+    private static async Task<data.@this> After(global::app.goal.step.action.@this action, actor.context.@this context)
     {
-        var step = context.call.Step;
-        if (step == null) return context.Ok();
+        if (action.Step is not { } step) return context.Ok();
 
         var goalName = step.Goal?.Name ?? "?";
         var sb = new StringBuilder();
         sb.AppendLine($"  --- ACTION [AFTER] in Step [{step.Index}] of {goalName} ---");
 
-        await AppendStepVariables(sb, context);
+        await AppendStepVariables(sb, step, context);
 
         await WriteFiltered(sb, context);
         return context.Ok();
     }
 
-    private static async Task AppendStepVariables(StringBuilder sb, actor.context.@this context)
+    private static async Task AppendStepVariables(StringBuilder sb, global::app.goal.step.@this step, actor.context.@this context)
     {
-        var step = context.call.Step;
-        if (step == null) return;
 
         // the variables the step's values hold, each shown by the name it lives under, then each watched one whole — a
         // path (%!build.setting.cache%) reaches what it names, which its root alone never shows
