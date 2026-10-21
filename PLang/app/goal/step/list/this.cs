@@ -222,7 +222,7 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
             foreach (var uncovered in await step.Cover(check)) Refuse(i, new global::app.error.@this(uncovered, "NotCovered", 400));
             // a number the words don't write as digits: confirmed by the decider, or asked
             var asked = false;
-            foreach (var number in await step.Unwritten(check))
+            foreach (var number in await step.Unwritten(check, step.IsFormal ? step.Text : lines.GetValueOrDefault(i)))
             {
                 if (confirmed == null) { unconfirmed.Add(number); asked = true; }
                 else if (!await number.Given(confirmed, check)) Refuse(i, new global::app.error.@this(number.Message, "UnwrittenNumber", 400));

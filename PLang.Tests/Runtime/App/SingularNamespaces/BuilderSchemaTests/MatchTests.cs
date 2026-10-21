@@ -165,6 +165,25 @@ public class MatchTests
         await result.IsSuccess();
     }
 
+    // A number is the answer's only when its text writes it: a member its type fills by default (Limit's tool and retry)
+    // is no number the answer wrote, so nothing is asked of the decider about it.
+    [Test]
+    public async Task ANumberTheTypeFilledByDefault_IsNoUnwrittenNumber()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G",
+            Make.Step("ask llm %m%, temperature 0.5, at most 50 tokens, write to %answer%"));
+        await Picked(goal, app.actor.list.System.Context, (0, "llm.query"), (0, "variable.set"));
+
+        var result = await Match(goal,
+            "[0] llm.query(Message=%m%, Temperature=0.5, Limit={\"token\":50}); variable.set(Name=%answer%, Value=%!data%)",
+            app.actor.list.System.Context);
+
+        await Assert.That(result.Error?.Key).IsNotEqualTo("UnwrittenNumber");
+        await result.IsSuccess();
+        await Assert.That(goal.Step[0].Code.Count).IsGreaterThan(0);
+    }
+
     // A value that refuses itself while its step is read (a query `{}`) is that step's refusal: the read goes on, and the
     // other steps take their code.
     [Test]

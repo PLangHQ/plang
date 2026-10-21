@@ -120,9 +120,14 @@ public sealed partial class @this
     /// <summary>The numbers the code writes that the step's words don't write as digits, each with the action and
     /// property writing it — a value the words may give in any language ("retry once"), or an invented one. Only
     /// digits are read: whether the words give it is the decider's to say (<see cref="unwritten.@this"/>).</summary>
-    public async System.Threading.Tasks.Task<List<unwritten.@this>> Unwritten(global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task<List<unwritten.@this>> Unwritten(global::app.actor.context.@this context,
+        string? answer = null)
     {
         var said = Number.Matches(Text).Select(m => double.Parse(m.Value, System.Globalization.CultureInfo.InvariantCulture)).ToHashSet();
+        // only a number the answer's own text writes is the answer's: a member its type filled by default (a record's
+        // other fields) is no number it wrote
+        var answered = answer == null ? null
+            : Number.Matches(Quoted.Replace(answer, "")).Select(m => double.Parse(m.Value, System.Globalization.CultureInfo.InvariantCulture)).ToHashSet();
         var found = new List<unwritten.@this>();
         await Walk(Code.Items());
         return found.Distinct().ToList();
@@ -137,7 +142,8 @@ public sealed partial class @this
                     var writer = new global::app.goal.step.action.formal.Writer(context);
                     await p.Value.Output(writer);
                     foreach (var n in Number.Matches(Quoted.Replace(writer.ToString(), "")).Select(m => m.Value))
-                        if (!said.Contains(double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
+                        if (double.Parse(n, System.Globalization.CultureInfo.InvariantCulture) is var number
+                            && !said.Contains(number) && (answered == null || answered.Contains(number)))
                             found.Add(new unwritten.@this(Index, $"{a.Module.Name}.{a.Name}", p.Name, n, Text));
                 }
                 await Walk(a.Held);
