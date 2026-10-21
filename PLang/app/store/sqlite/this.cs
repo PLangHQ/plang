@@ -71,7 +71,32 @@ public sealed class @this : global::app.store.@this
     // Whether a read here can only find nothing: the database is in memory and nothing has written to it.
     private bool IsBlank => _opened == null && _memory() is { } name && !Written.ContainsKey(name);
 
-    private async Task<string> Open()
+    // The stores open on each database in this process. Its connection pool is the database's, shared by every store
+    // on it (a server's app per request on one file), so it is let go when the last of them lets go — clearing it as
+    // each one goes would throw away the others' connections and leave a retired pool behind every time.
+    private static readonly Dictionary<string, int> Holding = new();
+
+    private static string Hold(string database)
+    {
+        lock (Holding) Holding[database] = Holding.GetValueOrDefault(database) + 1;
+        return database;
+    }
+
+    private static void Release(string database)
+    {
+        lock (Holding)
+        {
+            var left = Holding[database] - 1;
+            if (left > 0) { Holding[database] = left; return; }
+            Holding.Remove(database);
+            SqliteConnection.ClearPool(new SqliteConnection(database));
+        }
+    }
+
+    // The database opened, and held while this store is.
+    private async Task<string> Open() => Hold(await OpenDatabase());
+
+    private async Task<string> OpenDatabase()
     {
         if (_memory() is { } name)
         {
@@ -320,8 +345,9 @@ public sealed class @this : global::app.store.@this
             _sentinel.Dispose();
         }
 
-        // A store that opened lets its database go; one that never opened holds nothing.
+        // A store that opened lets its database go — the pool with it when it was the last; one that never opened
+        // holds nothing.
         if (_opened is { IsCompletedSuccessfully: true } opened)
-            SqliteConnection.ClearPool(new SqliteConnection(opened.Result));
+            Release(opened.Result);
     }
 }

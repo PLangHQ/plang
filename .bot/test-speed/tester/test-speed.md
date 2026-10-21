@@ -155,6 +155,56 @@ the process; the registry binds nothing. Measured on the same machine, 3 runs ×
 classes with reflection** — about 10 – 12 ms of the same answers from the same code, every birth. No lazy or
 private change removes it.
 
+## 29. Soak: what a server keeps after 100k request apps
+
+Asked (Ingi): a leak check. A request app per request (born with shared types, a goal loaded and run, disposed), a
+mix of five test goals (condition, list, foreach over a dict, cache + error clauses, error retry); after every 10k the
+heap collected whole and what is still held written down. Harness kept in the scratchpad (`keep/SoakTests.cs`), not
+committed. `File.test.goal` left out: its copies collide on the same files when run in parallel (a harness limit).
+
+**Found and fixed — the step cache outlived its app.** Each app opens its own `MemoryCache` on its first cached step
+(`app.Cache`, `module/cache/Memory.cs`) and nothing disposed it; a MemoryCache's expiry timers keep it, and every
+entry, alive. `ClausesCompose` (`cache for 60 seconds`) kept **73.5 KB per request**: 223 MB after 3k requests.
+Fix: `ICache : IDisposable` (a default no-op, so a cache outside the process — redis — owes nothing), `Memory`
+disposes its MemoryCache, the app disposes its cache. After: flat at 2.2 MB. Test `CacheLifetimeTests` (red with the
+dispose removed). `ICache` is a module's interface, not on the pinned surface.
+
+**Found, made smaller — the sqlite pool cleared per app.** With the store on disk (no test session) every app grew
+the heap ~290 B — any goal, so it is the birth. Each store cleared the database's connection pool on dispose
+(`SqliteConnection.ClearPool`); a cleared pool is retired and Microsoft.Data.Sqlite lets it go only on its own timer:
+held **3 – 4 minutes** (measured: 7.4 MB held after 20k, 2.2 MB after resting 4 min) — bounded, not a leak, but at
+1,000 req/s that is ~70 MB standing, and the next app reconnects and re-sets WAL (serial: 1.4 ms vs 0.75 ms a
+request). Fix: the pool is the database's, shared by every store on it in the process, so it is cleared when the last
+store holding it lets go (a count per database, `store/sqlite/this.cs`). Parallel servers (8 workers, 50k): flat at
+2.8 MB. A serial one still clears per app (the count reaches 0 between requests). **Open (Ingi/architect):** never
+clear a file database's pool (sqlite idles connections out itself) — but the clear may exist so a folder can be
+deleted right after its app (a Windows file lock); not decided here.
+
+| 100k mix, test session, 1 worker | held after GC | threads | handles |
+|---|---|---|---|
+| 0 | 1.4 MB | 16 | 149 |
+| 20k – 100k | **2.9 MB, flat** | 16 – 17 | 178 – 179 |
+
+Before the cache fix the same mix grew 12.4 KB a request (1/6 of 73.5 KB). No other growth seen: threads and
+handles flat, the shared goal and type caches plateau in the first 10k. C# green but Wire's six; plang the same 11.
+
+## 28. Large data — the map (not built)
+
+Proof of concept done (§25 – §27): a file or url not yet read streams through a save and answers emptiness from its
+first byte. The same shape — a reference opened as a stream at the last moment, or a whole read kept — is still open
+in these places, for whoever takes it into a working branch:
+
+1. **Cross-scheme copy/move** (`file.copy`/`move`, url → file): the path base's default reads `Bytes`, writes, deletes
+   — whole in memory (`path/this.Operations.cs` `MoveTo`/`CopyTo`; file's same-scheme override is fine).
+2. **Upload** (http path `Save`/`WriteBytes`/`WriteText`): the body is a `ByteArrayContent`; a redirect hop buffers it
+   again (`FollowRedirect`). A file value should go as a `StreamContent` from its stream door.
+3. **Hashing a file** (`crypto`): pours the value into the digest, but a file reference has no `Pour` of its own (the
+   base writes json) — likely read whole or hashed as json. Check first.
+4. **Serving a file** from a plang web server (a file value written to a response channel): unchecked whether it
+   streams or buffers.
+5. **Big text, csv, json walked** (`foreach` over lines or rows): decoded whole first. Streaming it is a language
+   decision (a lazy list of lines/rows), not a fix — Ingi's.
+
 ## 27. `if %zip% is empty` answers from the first byte
 
 Asked (Ingi): the empty check should not read the file. It did: a condition asks `data.ToBooleanAsync()`, which

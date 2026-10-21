@@ -657,5 +657,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         await KeepAlive.DisposeAsync();
         // The store lets its database go; one that never opened holds nothing.
         store.Dispose();
+        // The cache lets its entries and timers go; one never opened holds nothing.
+        Cache.Dispose();
     }
 }
