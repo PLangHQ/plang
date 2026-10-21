@@ -19,8 +19,7 @@ brackets, and a step's actions are separated by ; — for a goal of two steps:
   [0] file.read(Path="notes.txt"); variable.set(Name=%content%, Value=%!data%)
   [1] output.write(Data=%content%)
 
-An action is  module.name(Name=value, Name=value)  with only the properties the step gives a value. Write no
-types: the builder knows them. A step's `=> formal:` line is your starting point: it names the certain
+An action is  module.name(Name=value, Name=value)  with only the properties the step gives a value. A step's `=> formal:` line is your starting point: it names the certain
 actions and only their required properties. Write each name standing alone as Name=value, and add every other property the
 step gives a value (a condition's Left, an optional setting the step names).
 
@@ -30,6 +29,7 @@ A value is written as the step writes it:
   true  false   a bool
   null
   %x%           a variable, with its % signs — a value the step uses, never words of the step; %!data% is the result of the action before it in the same step
+  %x!type.name% a fact of the variable itself, not its content (its type, its path, …) — still one variable: copy it whole, every character up to its closing %
   %!…%          a value read from the app itself: %!app.module.file% is the file module as a value, %!llm.setting.cache% the llm setting's cache option. The words inside %…% are its name, never what the step does
   [a, b]        a list
   {k: v}        a dict
