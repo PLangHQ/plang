@@ -7,23 +7,11 @@ namespace app.data;
 /// <see cref="@this.Output"/> / <c>item.Output</c>. One async pass, resolving
 /// lazily at each node — no pre-resolve walk, no Normalize tree.
 ///
-/// <para>Bounded: a depth cap on the self-write prevents stack overflow on a
-/// reference cycle (a graph that contains itself). It raises a typed error hard
-/// at serialize-time — no silent truncation.</para>
+/// <para>Bounded: the view that uses a value (Out) caps how deep values that name each other go, so a reference cycle
+/// raises a typed error at serialize-time — no silent truncation.</para>
 /// </summary>
 public partial class @this
 {
-    /// <summary>Cap on variable-resolution recursion at output. A self-referential variable chain
-    /// (<c>a=%b%</c>, <c>b=%a%</c>) resolves forever; this bounds it to a typed error. NOT a general
-    /// graph-depth cap — Output serializes plang TREES (from wire/literals; the writer fail-closes on
-    /// any non-plang value). Two writes can meet themselves: variable resolution (bounded here) and the
-    /// app, which its asker's memory can hold — the app guards its own write (met again, it writes its
-    /// name).</summary>
-    private const int MaxResolveDepth = 50;
-
-    /// <summary>Tracks variable-resolution recursion depth (AsyncLocal — one chain per serialize walk).</summary>
-    private static readonly System.Threading.AsyncLocal<int> _outputDepth = new();
-
     /// <summary>
     /// The digest of this Data as it crosses the wire in <paramref name="view"/> — the bytes its own <see cref="Output"/>
     /// writes at a layer (its <c>@schema</c>, type, value, properties; no signature), hashed by
@@ -45,33 +33,9 @@ public partial class @this
     /// One async pass, resolving lazily at each node — no pre-resolve walk, no Normalize tree.
     /// <paramref name="layer"/>: this Data begins a layer of plang's own format.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, bool layer = false)
-    {
-        // A Data whose value holds variables (a template, a reference) is the view's to write: kept as written (Store),
-        // used (Out), or both (Debug). It is decided here, before the record, because what crosses (Out) writes the
-        // record of the Data the value resolves to — its type, not the template's. Using one can cycle (a=%b%, b=%a%) —
-        // guarded so it fails typed, not via stack overflow. The app is the other graph that holds itself (through its
-        // asker's memory) and guards its own write; every other value graph is a tree.
-        if (Error == null && HasVariable)
-        {
-            if (_outputDepth.Value++ > MaxResolveDepth)
-            {
-                _outputDepth.Value = 0;
-                throw new global::app.error.AppException(
-                    $"self-referential variable '{Name}' on output", "OutputSelfReference", 500);
-            }
-            try { await writer.View.Write(this, writer, layer); }
-            finally { _outputDepth.Value--; }
-            return;
-        }
-
-        // What this Data holds: its value, or — when it failed — its error, which writes its own face.
-        global::app.type.item.@this value = Error ?? _item;
-
-        // The Data tells the writer what it is; the writer decides how much to show (plang's writer its record, a
-        // bare format only the value). The value writes itself.
-        await writer.BeginRecord(this, layer);
-        await value.Output(writer);
-        await writer.EndRecord(this);
-    }
+    public System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, bool layer = false)
+        // The view writes it: its record around what it holds (its value, or — when it failed — its error); one whose value
+        // holds variables kept as written (Store), used (Out), or both (Debug). What crosses writes the record of the
+        // Data the value resolves to — its type, not the template's.
+        => writer.View.Write(this, writer, layer);
 }

@@ -28,7 +28,7 @@ public class NumberTextTests
     private async Task<string> Text(number value)
     {
         using var ms = new System.IO.MemoryStream();
-        await global::app.type.item.text.@this.Encode(ms, Ctx.Ok(value), Ctx, null, null, default);
+        await global::app.type.item.text.@this.Encode(ms, Ctx.Ok(value), Ctx, global::app.View.Out, null, default);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 

@@ -219,14 +219,13 @@ public sealed class @this : global::app.type.item.note.IAbout
             await Type.Output(writer);
         }
         writer.Name("value");
-        // a value that holds variables is the view's to write: kept as written (with the variables it names), used, or
-        // both in a dump
-        if (Value is { HasVariable: true } template)
+        // the value as the view writes it (one that holds variables kept as written — with the variables it names — used,
+        // or both in a dump)
+        if (Value is { } value)
         {
-            await writer.View.Write(template, writer);
-            await writer.View.Variables(template, writer);
+            await writer.View.Write(value, writer);
+            await writer.View.Variables(value, writer);
         }
-        else if (Value is { } value) await value.Output(writer);
         else writer.Null();
         if (Properties.Count > 0)
         {

@@ -56,7 +56,7 @@ public sealed class Writer : global::app.type.format.IWriter
     public async System.Threading.Tasks.ValueTask EndRecord(global::app.data.@this record)
     {
         // a value kept as written names its variables beside it, as the view keeps them
-        if (record.Peek() is { HasVariable: true } value) await View.Variables(value, this);
+        await View.Variables(record.Peek(), this);
         if (record.Properties.Count > 0)
         {
             _json.Name("properties");

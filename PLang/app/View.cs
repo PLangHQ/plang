@@ -57,18 +57,36 @@ public abstract class View
         => throw new global::app.data.OutputException(
             $"Output failed reading {member.Property.DeclaringType?.Name}.{member.Property.Name}: {thrown.Message}", "OutputGetterThrew", thrown);
 
-    /// <summary>A Data whose value holds variables (a template, a reference), written in this view: its record around
-    /// its value, kept as written or used. <paramref name="layer"/>: the Data begins a layer of plang's own format.</summary>
-    internal virtual async System.Threading.Tasks.ValueTask Write(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
+    /// <summary>A Data written in this view: its record around its value (its error, when it failed). One whose value holds
+    /// variables (a template, a reference) is this view's to write — kept as written, or used. <paramref name="layer"/>:
+    /// the Data begins a layer of plang's own format.</summary>
+    internal async System.Threading.Tasks.ValueTask Write(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
     {
+        if (data.Error == null && data.HasVariable)
+        {
+            await Template(data, writer, layer);
+            return;
+        }
         await writer.BeginRecord(data, layer);
-        await Write(data.Peek(), writer);
+        await ((global::app.type.item.@this?)data.Error ?? data.Peek()).Output(writer);
         await writer.EndRecord(data);
     }
 
-    /// <summary>A value that holds variables, written in this view, with no Data around it (a property row's value):
-    /// kept as written, or used.</summary>
-    internal abstract System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer);
+    /// <summary>A value written in this view, with no Data around it (a property row's value); one that holds variables
+    /// is this view's to write — kept as written, or used.</summary>
+    internal System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        => value.HasVariable ? Template(value, writer) : value.Output(writer);
+
+    /// <summary>A Data whose value holds variables, in this view: its record around its value as this view takes it.</summary>
+    private protected virtual async System.Threading.Tasks.ValueTask Template(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
+    {
+        await writer.BeginRecord(data, layer);
+        await Template(data.Peek(), writer);
+        await writer.EndRecord(data);
+    }
+
+    /// <summary>A value that holds variables, in this view: kept as written, used, or both in a dump.</summary>
+    private protected abstract System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer);
 
     /// <summary>The variables a value kept as written names, as a member of the object its row is closing: plang's own
     /// store writes them (a <c>.pr</c> row's <c>variable</c>, parsed once at build); no other view shows them.</summary>
@@ -124,7 +142,7 @@ public abstract class View
 
         internal override string? Name(global::app.data.@this record) => record.Name;
 
-        internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        private protected override System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => Written(value, writer);
 
         // plang's own store keeps a Data as written: its references and templates with the variables they name
@@ -150,16 +168,30 @@ public abstract class View
         internal override bool Masks(System.Reflection.PropertyInfo property)
             => Is<SensitiveAttribute>(property) || Is<MaskedAttribute>(property);
 
+        // How deep a write of values that name each other has gone, on this flow: using one can cycle (a=%b%, b=%a%), and
+        // the cycle fails typed, not by stack overflow.
+        private readonly System.Threading.AsyncLocal<int> _depth = new();
+        private const int MaxDepth = 50;
+
         // used: a reference writes the Data it names, a template its render — each opened, as writing out is a use
-        internal override async System.Threading.Tasks.ValueTask Write(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
+        private protected override async System.Threading.Tasks.ValueTask Template(global::app.data.@this data, global::app.type.format.IWriter writer, bool layer)
         {
-            var used = await Used(data);
-            await writer.BeginRecord(used, layer);
-            await Written(await Opened(used), writer);
-            await writer.EndRecord(used);
+            if (_depth.Value++ > MaxDepth)
+            {
+                _depth.Value = 0;
+                throw new global::app.error.AppException($"self-referential variable '{data.Name}' on output", "OutputSelfReference", 500);
+            }
+            try
+            {
+                var used = await Used(data);
+                await writer.BeginRecord(used, layer);
+                await Written(await Opened(used), writer);
+                await writer.EndRecord(used);
+            }
+            finally { _depth.Value--; }
         }
 
-        internal override async System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        private protected override async System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => await Written(await Opened(await Used(new global::app.data.@this("", value, context: writer.Context))), writer);
 
         // what a used Data holds, opened (a reference's content); a value that fails to open is the write's error
@@ -208,7 +240,7 @@ public abstract class View
 
         // as written, and beside it what it resolves to with its type; that it is not set, when a name it names reads
         // nothing; or the error it resolves to, as itself
-        internal override async System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value, global::app.type.format.IWriter writer)
+        private protected override async System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer)
         {
             writer.BeginObject();
             writer.Name("written");
