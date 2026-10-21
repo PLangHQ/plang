@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %a% = 1.5",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -54,7 +55,8 @@
       "index": 1,
       "text": "set %b% = \"0.1\" as number/decimal",
       "line": {
-        "number": 8
+        "number": 8,
+        "indent": 0
       },
       "code": [
         {
@@ -90,7 +92,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "number"
+              "value": {"name":"number","kind":"decimal"}
             }
           ],
           "default": [
@@ -109,7 +111,8 @@
       "index": 2,
       "text": "set %sum% = %a% + %b%, on error call CaughtIt",
       "line": {
-        "number": 9
+        "number": 9,
+        "indent": 0
       },
       "code": [
         {
@@ -173,43 +176,6 @@
           ]
         },
         {
-          "module": "on",
-          "name": "error",
-          "property": [
-            {
-              "name": "Recovery",
-              "type": {
-                "name": "list",
-                "kind": "action"
-              },
-              "value": [
-                {
-                  "module": "goal",
-                  "name": "call",
-                  "property": [
-                    {
-                      "name": "Name",
-                      "type": {
-                        "name": "goal"
-                      },
-                      "value": "CaughtIt"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "default": [
-            {
-              "name": "ignore",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        },
-        {
           "module": "variable",
           "name": "set",
           "property": [
@@ -258,6 +224,86 @@
               "value": false
             }
           ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%sum%",
+                      "variable": [
+                        {
+                          "text": "%sum%",
+                          "code": [
+                            {
+                              "variable": "sum"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "item",
+                        "template": "plang"
+                      },
+                      "value": "%!data%",
+                      "variable": [
+                        {
+                          "text": "%!data%",
+                          "code": [
+                            {
+                              "variable": "!data"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 2 uses math.add, which the decider was not sure of (0.96)"
         }
       ]
     },
@@ -265,7 +311,8 @@
       "index": 3,
       "text": "assert %caught% equals true",
       "line": {
-        "number": 10
+        "number": 10,
+        "indent": 0
       },
       "code": [
         {
@@ -310,7 +357,8 @@
           "index": 0,
           "text": "set %caught% = true",
           "line": {
-            "number": 13
+            "number": 13,
+            "indent": 0
           },
           "code": [
             {
@@ -355,15 +403,11 @@
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/module/math/DoublePlusDecimal_Errors.test.goal",
-      "prPath": "/module/math/.build/doubleplusdecimal_errors.test.pr",
       "hash": "65f7d0491a73798a96498734ceb97da8861cbad66923811b17d66f4a32c781d4"
     }
   ],
   "visibility": "Public",
-  "path": "/module/math/DoublePlusDecimal_Errors.test.goal",
-  "prPath": "/module/math/.build/doubleplusdecimal_errors.test.pr",
+  "file": "DoublePlusDecimal_Errors.test.goal",
   "hash": "4219a262a32ddcd4ad4860fdbde83a3e8013401a56a14e5caff97b71d5830cec"
 }

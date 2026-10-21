@@ -43,7 +43,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "number"
+              "value": {"name":"number","kind":"decimal"}
             }
           ],
           "default": [
@@ -99,7 +99,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "number"
+              "value": {"name":"number","kind":"decimal"}
             }
           ],
           "default": [
@@ -268,13 +268,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "number"
             }
           ],
           "default": [
@@ -286,6 +279,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 3 uses variable.set, which the decider was not sure of (0.89)"
         }
       ]
     },
