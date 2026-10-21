@@ -1,0 +1,162 @@
+{
+  "name": "TextLengthOp",
+  "comment": "%s.length% works through text.@this's own length member — the behavioral sweep moved\n`is string s => s.Length` onto the wrapper.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %s% = \"Hello\"",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%s%",
+              "variable": [
+                {
+                  "text": "%s%",
+                  "code": [
+                    {
+                      "variable": "s"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "Hello"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %n% = %s.length%",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%s.length%",
+              "variable": [
+                {
+                  "text": "%s.length%",
+                  "code": [
+                    {
+                      "variable": "s"
+                    },
+                    {
+                      "property": "length"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %n% equals 5",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "5"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "TextLengthOp.test.goal",
+  "hash": "8927fc621d7f2964086de853994fed1f045d855ab1c6782041394ebf4bbf0ff0"
+}
