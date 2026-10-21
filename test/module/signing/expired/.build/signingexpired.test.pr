@@ -111,7 +111,7 @@
               "type": {
                 "name": "dict"
               },
-              "value": {"payload":"expiring"}
+              "value": {"k":"payload","v":"expiring"}
             }
           ],
           "default": [
@@ -161,7 +161,7 @@
               "type": {
                 "name": "duration"
               },
-              "value": "PT0.05S"
+              "value": "50ms"
             }
           ]
         },
