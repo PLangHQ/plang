@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %tries% = 0",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -40,7 +41,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -49,13 +50,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %tries% = 0': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 1,
       "text": "set %recoveries% = 0",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -89,7 +96,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -98,13 +105,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'set %recoveries% = 0': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 2,
       "text": "foreach [1, 2, 3], call Attempt",
       "line": {
-        "number": 8
+        "number": 8,
+        "indent": 0
       },
       "code": [
         {
@@ -161,14 +174,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
       "text": "assert %recoveries% equals 1, \"only the first try fails\"",
       "line": {
-        "number": 9
+        "number": 9,
+        "indent": 0
       },
       "code": [
         {
@@ -209,14 +222,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 4,
       "text": "assert %tries% equals 2, \"a recovery is never cached; a success is\"",
       "line": {
-        "number": 10
+        "number": 10,
+        "indent": 0
       },
       "code": [
         {
@@ -257,8 +270,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [
@@ -269,7 +281,8 @@
           "index": 0,
           "text": "call MaybeFail, cache for 10 minutes, on error call Recover",
           "line": {
-            "number": 13
+            "number": 13,
+            "indent": 0
           },
           "code": [
             {
@@ -279,18 +292,9 @@
                 {
                   "name": "Name",
                   "type": {
-                    "name": "text"
+                    "name": "goal"
                   },
                   "value": "MaybeFail"
-                }
-              ],
-              "default": [
-                {
-                  "name": "parallel",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
                 }
               ]
             },
@@ -303,7 +307,7 @@
                   "type": {
                     "name": "duration"
                   },
-                  "value": "PT10M"
+                  "value": "10m"
                 }
               ],
               "default": [
@@ -321,6 +325,14 @@
               "name": "error",
               "property": [
                 {
+                  "name": "Order",
+                  "type": {
+                    "name": "choice",
+                    "kind": "errororder"
+                  },
+                  "value": "GoalFirst"
+                },
+                {
                   "name": "Recovery",
                   "type": {
                     "name": "list",
@@ -334,18 +346,9 @@
                         {
                           "name": "Name",
                           "type": {
-                            "name": "text"
+                            "name": "goal"
                           },
                           "value": "Recover"
-                        }
-                      ],
-                      "default": [
-                        {
-                          "name": "parallel",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": false
                         }
                       ]
                     }
@@ -354,7 +357,7 @@
               ],
               "default": [
                 {
-                  "name": "ignoreerror",
+                  "name": "ignore",
                   "type": {
                     "name": "bool"
                   },
@@ -363,18 +366,16 @@
               ]
             }
           ],
-          "waitForExecution": true
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'call MaybeFail, cache for 10 minutes, on error call Recover': on.error: the default frozen for 'ignoreerror' is no option of this action any more."
+            }
+          ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/module/on/cache/RecoveryIsNeverCached.test.goal",
-      "prPath": "/plan/app-systems/module/on/cache/.build/recoveryisnevercached.test.pr",
-      "hash": "5f5dee583c5537f3c2e7eb940301dde1eade6fd2f0c66cffa60027c2b2ea3259",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "5f5dee583c5537f3c2e7eb940301dde1eade6fd2f0c66cffa60027c2b2ea3259"
     },
     {
       "name": "MaybeFail",
@@ -383,7 +384,8 @@
           "index": 0,
           "text": "set %tries% = %tries% + 1",
           "line": {
-            "number": 16
+            "number": 16,
+            "indent": 0
           },
           "code": [
             {
@@ -477,7 +479,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -486,13 +488,23 @@
               ]
             }
           ],
-          "waitForExecution": true
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %tries% = %tries% + 1': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+            },
+            {
+              "key": "Unsure",
+              "message": "step 0 uses math.add, which the decider was not sure of (0.98)"
+            }
+          ]
         },
         {
           "index": 1,
           "text": "if %tries% equals 1, throw error \"the first try fails\"",
           "line": {
-            "number": 17
+            "number": 17,
+            "indent": 0
           },
           "code": [
             {
@@ -538,7 +550,8 @@
                   "index": 0,
                   "text": "error.throw(Message=\"the first try fails\")",
                   "line": {
-                    "number": 17
+                    "number": 17,
+                    "indent": 0
                   },
                   "code": [
                     {
@@ -555,9 +568,9 @@
                       ],
                       "default": [
                         {
-                          "name": "statuscode",
+                          "name": "status",
                           "type": {
-                            "name": "number"
+                            "name": "status"
                           },
                           "value": 400
                         },
@@ -570,24 +583,25 @@
                         }
                       ]
                     }
-                  ],
-                  "waitForExecution": true
+                  ]
                 }
               ]
             }
           ],
-          "waitForExecution": true
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 1's saved code no longer holds — rebuilt: step 1 'if %tries% equals 1, throw error \"the first try fails\"': error.throw: the default frozen for 'statuscode' is no option of this action any more."
+            },
+            {
+              "key": "Unsure",
+              "message": "step 1 uses error.throw, which the decider was not sure of (0.95)"
+            }
+          ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/module/on/cache/RecoveryIsNeverCached.test.goal",
-      "prPath": "/plan/app-systems/module/on/cache/.build/recoveryisnevercached.test.pr",
-      "hash": "6d8b815b7374b9d6ffb31a0919f534965055d1ba4704177149dacefa043974f3",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "6d8b815b7374b9d6ffb31a0919f534965055d1ba4704177149dacefa043974f3"
     },
     {
       "name": "Recover",
@@ -596,7 +610,8 @@
           "index": 0,
           "text": "set %recoveries% = %recoveries% + 1",
           "line": {
-            "number": 20
+            "number": 20,
+            "indent": 0
           },
           "code": [
             {
@@ -690,7 +705,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -699,26 +714,23 @@
               ]
             }
           ],
-          "waitForExecution": true
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %recoveries% = %recoveries% + 1': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+            },
+            {
+              "key": "Unsure",
+              "message": "step 0 uses math.add, which the decider was not sure of (0.98)"
+            }
+          ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/module/on/cache/RecoveryIsNeverCached.test.goal",
-      "prPath": "/plan/app-systems/module/on/cache/.build/recoveryisnevercached.test.pr",
-      "hash": "e05cab81770cd00d9b7a6ceb2d50171438875b5252c6f2f3162323ef10d1d233",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "e05cab81770cd00d9b7a6ceb2d50171438875b5252c6f2f3162323ef10d1d233"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/app-systems/module/on/cache/RecoveryIsNeverCached.test.goal",
-  "prPath": "/plan/app-systems/module/on/cache/.build/recoveryisnevercached.test.pr",
-  "hash": "afc5113c3d0bec9b82cc8ed9320495ca2e68b7fbb005a3c706cf7aba66ad51d2",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "RecoveryIsNeverCached.test.goal",
+  "hash": "afc5113c3d0bec9b82cc8ed9320495ca2e68b7fbb005a3c706cf7aba66ad51d2"
 }

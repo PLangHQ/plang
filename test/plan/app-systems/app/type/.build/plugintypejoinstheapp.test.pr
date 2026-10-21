@@ -6,7 +6,8 @@
       "index": 0,
       "text": "code.load Path=TypeProvider.dll",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -22,14 +23,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
       "text": "set %types% = %!app.type.list%",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -80,7 +81,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -89,13 +90,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'set %types% = %!app.type.list%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 2,
       "text": "any %types% where \"name\" == \"money\", write to %joined%",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -185,7 +192,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -194,13 +201,23 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 2's saved code no longer holds — rebuilt: step 2 'any %types% where \"name\" == \"money\", write to %joined%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        },
+        {
+          "key": "Unsure",
+          "message": "step 2 uses list.any, which the decider was not sure of (0.96)"
+        }
+      ]
     },
     {
       "index": 3,
       "text": "assert %joined% is true, \"the plugin's type joined the app's list\"",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -234,14 +251,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 4,
       "text": "assert %!app.type.money.name% equals \"money\", \"and is reached like a built-in\"",
       "line": {
-        "number": 8
+        "number": 8,
+        "indent": 0
       },
       "code": [
         {
@@ -291,17 +308,10 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/plan/app-systems/app/type/PluginTypeJoinsTheApp.test.goal",
-  "prPath": "/plan/app-systems/app/type/.build/plugintypejoinstheapp.test.pr",
-  "hash": "9fbbd1fb4a7590f22fde4c661c62fd62d54ab10c9040bc1222fe62bc84f55f58",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "PluginTypeJoinsTheApp.test.goal",
+  "hash": "9fbbd1fb4a7590f22fde4c661c62fd62d54ab10c9040bc1222fe62bc84f55f58"
 }

@@ -6,7 +6,8 @@
       "index": 0,
       "text": "file.delete(Path=\"never-there.txt\"); on.error(Key=\"NotFound\", Recovery=[goal.call(Name=\"Caught\")])",
       "line": {
-        "number": 3
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -84,14 +85,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
       "text": "assert.equals(Expected=\"NotFound\", Actual=%caught%, Message=\"a missing file is NotFound\")",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -132,14 +133,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
       "text": "file.delete(Path=\"never-there.txt\"); on.error(Key=\"NotFound\", Ignore=true)",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -184,14 +185,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
       "text": "variable.set(Name=%after%, Value=\"went on\")",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -225,7 +226,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -234,13 +235,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 3's saved code no longer holds — rebuilt: step 3 'variable.set(Name=%after%, Value=\"went on\")': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 4,
       "text": "assert.equals(Expected=\"went on\", Actual=%after%, Message=\"on error 'NotFound' ignore carries on\")",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -281,8 +288,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [
@@ -293,7 +299,8 @@
           "index": 0,
           "text": "variable.set(Name=%caught%, Value=%!error.Key%)",
           "line": {
-            "number": 10
+            "number": 10,
+            "indent": 0
           },
           "code": [
             {
@@ -341,7 +348,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -350,26 +357,19 @@
               ]
             }
           ],
-          "waitForExecution": true
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'variable.set(Name=%caught%, Value=%!error.Key%)': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+            }
+          ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/module/file/delete/MissingIsNotFoundIgnored.test.goal",
-      "prPath": "/plan/app-systems/module/file/delete/.build/missingisnotfoundignored.test.pr",
-      "hash": "1c82b97e2056f80bcbcad9e9db5ab5b387ba5b6e2872e4d16535ad2b53cd4937",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "1c82b97e2056f80bcbcad9e9db5ab5b387ba5b6e2872e4d16535ad2b53cd4937"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/app-systems/module/file/delete/MissingIsNotFoundIgnored.test.goal",
-  "prPath": "/plan/app-systems/module/file/delete/.build/missingisnotfoundignored.test.pr",
-  "hash": "ee1523e28a43079945e5e908379a766aa42fcfa5981bdd8048a73deb4534f9fa",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "MissingIsNotFoundIgnored.test.goal",
+  "hash": "ee1523e28a43079945e5e908379a766aa42fcfa5981bdd8048a73deb4534f9fa"
 }

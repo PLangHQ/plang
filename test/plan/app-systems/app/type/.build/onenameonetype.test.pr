@@ -6,7 +6,8 @@
       "index": 0,
       "text": "code.load Path=\"IdentityShadow.dll\", on error key \"TypeLoadCollision\" call Refused",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -47,18 +48,9 @@
                     {
                       "name": "Name",
                       "type": {
-                        "name": "text"
+                        "name": "goal"
                       },
                       "value": "Refused"
-                    }
-                  ],
-                  "default": [
-                    {
-                      "name": "parallel",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": false
                     }
                   ]
                 }
@@ -67,7 +59,7 @@
           ],
           "default": [
             {
-              "name": "ignoreerror",
+              "name": "ignore",
               "type": {
                 "name": "bool"
               },
@@ -76,13 +68,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'code.load Path=\"IdentityShadow.dll\", on error key \"TypeLoadCollision\" call Refused': on.error: the default frozen for 'ignoreerror' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 1,
       "text": "assert %refused% equals \"TypeLoadCollision\", \"a second 'identity' is refused\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -123,14 +121,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
       "text": "assert %!app.type.identity.name% equals \"identity\", \"the built-in identity still stands\"",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -180,8 +178,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [
@@ -192,7 +189,8 @@
           "index": 0,
           "text": "set %refused% = %!error.Key%",
           "line": {
-            "number": 9
+            "number": 9,
+            "indent": 0
           },
           "code": [
             {
@@ -240,7 +238,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -249,26 +247,19 @@
               ]
             }
           ],
-          "waitForExecution": true
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %refused% = %!error.Key%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+            }
+          ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/app/type/OneNameOneType.test.goal",
-      "prPath": "/plan/app-systems/app/type/.build/onenameonetype.test.pr",
-      "hash": "fe1fd7996b5ad179aa83280826451ee54a8c8b4882b84ae4512827cd91f6859d",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "fe1fd7996b5ad179aa83280826451ee54a8c8b4882b84ae4512827cd91f6859d"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/app-systems/app/type/OneNameOneType.test.goal",
-  "prPath": "/plan/app-systems/app/type/.build/onenameonetype.test.pr",
-  "hash": "9a584ed62ab9e310cbe1aa01db3c58791937367e4d57f3e5847b357edca3a7ff",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "OneNameOneType.test.goal",
+  "hash": "9a584ed62ab9e310cbe1aa01db3c58791937367e4d57f3e5847b357edca3a7ff"
 }

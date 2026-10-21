@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %names% = [\"a\", \"b\"]",
       "line": {
-        "number": 3
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -40,7 +41,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -49,13 +50,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %names% = [\"a\", \"b\"]': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 1,
       "text": "foreach %names%, call Remember",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -123,14 +130,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
       "text": "assert %last% equals \"b\", \"inside the body the item is each element\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -171,14 +178,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
       "text": "assert %item% is null, \"the loop's item ends with the loop\"",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -212,8 +219,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [
@@ -224,7 +230,8 @@
           "index": 0,
           "text": "set %last% = %item%",
           "line": {
-            "number": 9
+            "number": 9,
+            "indent": 0
           },
           "code": [
             {
@@ -269,7 +276,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -278,26 +285,19 @@
               ]
             }
           ],
-          "waitForExecution": true
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %last% = %item%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+            }
+          ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/module/loop/foreach/LoopItemEndsWithTheLoop.test.goal",
-      "prPath": "/plan/app-systems/module/loop/foreach/.build/loopitemendswiththeloop.test.pr",
-      "hash": "345a6cc966d7dfa78e44cb29dc2f5fabbdda397ea7f703c029026960389d26bf",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "345a6cc966d7dfa78e44cb29dc2f5fabbdda397ea7f703c029026960389d26bf"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/app-systems/module/loop/foreach/LoopItemEndsWithTheLoop.test.goal",
-  "prPath": "/plan/app-systems/module/loop/foreach/.build/loopitemendswiththeloop.test.pr",
-  "hash": "4131b89773635bd5d26050e6cbbf5a901d0698da7f7662f1e80ed653d1e5a211",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "LoopItemEndsWithTheLoop.test.goal",
+  "hash": "4131b89773635bd5d26050e6cbbf5a901d0698da7f7662f1e80ed653d1e5a211"
 }

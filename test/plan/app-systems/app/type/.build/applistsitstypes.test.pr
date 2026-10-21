@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %types% = %!app.type.list%",
       "line": {
-        "number": 3
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -57,7 +58,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -66,13 +67,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %types% = %!app.type.list%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 1,
       "text": "any %types% where \"name\" == \"text\", write to %hasText%",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -162,7 +169,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -171,13 +178,23 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'any %types% where \"name\" == \"text\", write to %hasText%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        },
+        {
+          "key": "Unsure",
+          "message": "step 1 uses list.any, which the decider was not sure of (0.95)"
+        }
+      ]
     },
     {
       "index": 2,
       "text": "assert %hasText% is true, \"a built-in type is one of the app's\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -211,14 +228,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
       "text": "any %types% where \"name\" == \"goal\", write to %hasGoal%",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -308,7 +325,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -317,13 +334,27 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 3's saved code no longer holds — rebuilt: step 3 'any %types% where \"name\" == \"goal\", write to %hasGoal%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        },
+        {
+          "key": "Unsure",
+          "message": "step 3 uses list.any, which the decider was not sure of (0.95)"
+        },
+        {
+          "key": "Unsure",
+          "message": "step 3 uses variable.set, which the decider was not sure of (0.85)"
+        }
+      ]
     },
     {
       "index": 4,
       "text": "assert %hasGoal% is true, \"a concept is a type too\"",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -357,17 +388,10 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/plan/app-systems/app/type/AppListsItsTypes.test.goal",
-  "prPath": "/plan/app-systems/app/type/.build/applistsitstypes.test.pr",
-  "hash": "a4b4d147cdf896a5ca7c2df267e51b41aa1108dcac6c75ebe8cdb58f7d0be775",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "AppListsItsTypes.test.goal",
+  "hash": "a4b4d147cdf896a5ca7c2df267e51b41aa1108dcac6c75ebe8cdb58f7d0be775"
 }

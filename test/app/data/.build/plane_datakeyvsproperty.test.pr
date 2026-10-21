@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %x% = '{\"size\": 10, \"name\": \"box\"}', type=json",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -42,7 +43,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "json"
+              "value": "item"
             }
           ],
           "default": [
@@ -55,13 +56,20 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %x% = '{\"size\": 10, \"name\": \"box\"}', type=json': variable.set: cannot make a 'json' from a text value"
+        }
       ]
     },
     {
       "index": 1,
       "text": "set %x!size% = 28",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -112,7 +120,8 @@
       "index": 2,
       "text": "assert %x.size% equals 10",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -155,7 +164,8 @@
       "index": 3,
       "text": "assert %x!size% equals 28",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -198,7 +208,8 @@
       "index": 4,
       "text": "assert %x.name% equals \"box\"",
       "line": {
-        "number": 8
+        "number": 8,
+        "indent": 0
       },
       "code": [
         {
@@ -238,9 +249,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/app/data/Plane_DataKeyVsProperty.test.goal",
-  "prPath": "/app/data/.build/plane_datakeyvsproperty.test.pr",
+  "file": "Plane_DataKeyVsProperty.test.goal",
   "hash": "4da4b9070e58eba653e5352eea215475c22e459ec986b86173a6a755b360c50c"
 }

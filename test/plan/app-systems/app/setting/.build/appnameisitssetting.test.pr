@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %!app.setting.name% = \"Shop\"",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -46,7 +47,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -55,13 +56,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %!app.setting.name% = \"Shop\"': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 1,
       "text": "assert %!app.name% equals \"Shop\", \"the app answers its name from its setting\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -105,14 +112,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
       "text": "remove %!app.setting%",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -142,17 +149,10 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/plan/app-systems/app/setting/AppNameIsItsSetting.test.goal",
-  "prPath": "/plan/app-systems/app/setting/.build/appnameisitssetting.test.pr",
-  "hash": "aa14b62b5183116f2b5fe50f1d76fe99777997759124ba8dc89e2496c7883c0f",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "AppNameIsItsSetting.test.goal",
+  "hash": "aa14b62b5183116f2b5fe50f1d76fe99777997759124ba8dc89e2496c7883c0f"
 }

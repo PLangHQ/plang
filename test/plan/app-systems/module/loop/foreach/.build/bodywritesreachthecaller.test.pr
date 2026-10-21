@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %total% = 0",
       "line": {
-        "number": 3
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -40,7 +41,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -49,13 +50,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %total% = 0': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 1,
       "text": "foreach [1, 2, 3], call AddUp",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -112,14 +119,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
       "text": "assert %total% equals 6, \"each run of the body adds to the caller's total\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -160,8 +167,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [
@@ -172,7 +178,8 @@
           "index": 0,
           "text": "set %total% = %total% + %item%",
           "line": {
-            "number": 8
+            "number": 8,
+            "indent": 0
           },
           "code": [
             {
@@ -277,7 +284,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -286,26 +293,19 @@
               ]
             }
           ],
-          "waitForExecution": true
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %total% = %total% + %item%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+            }
+          ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/module/loop/foreach/BodyWritesReachTheCaller.test.goal",
-      "prPath": "/plan/app-systems/module/loop/foreach/.build/bodywritesreachthecaller.test.pr",
-      "hash": "c8eaacdedc9e2beaf5849c417512bf8c3eba70289f088aa80c1309c863ba66e9",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "c8eaacdedc9e2beaf5849c417512bf8c3eba70289f088aa80c1309c863ba66e9"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/app-systems/module/loop/foreach/BodyWritesReachTheCaller.test.goal",
-  "prPath": "/plan/app-systems/module/loop/foreach/.build/bodywritesreachthecaller.test.pr",
-  "hash": "f1b8807146988653f229ead67ced35f17376371643a2aec8ebda95d165375301",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "BodyWritesReachTheCaller.test.goal",
+  "hash": "f1b8807146988653f229ead67ced35f17376371643a2aec8ebda95d165375301"
 }

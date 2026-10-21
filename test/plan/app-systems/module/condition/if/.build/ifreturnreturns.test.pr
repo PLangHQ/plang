@@ -6,7 +6,8 @@
       "index": 0,
       "text": "call Early done=true, write to %result%",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -16,7 +17,7 @@
             {
               "name": "Name",
               "type": {
-                "name": "text"
+                "name": "goal"
               },
               "value": "Early"
             },
@@ -26,15 +27,6 @@
                 "name": "list"
               },
               "value": [{"name":"done","type":{"name":"bool"},"value":true}]
-            }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
             }
           ]
         },
@@ -80,7 +72,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -89,13 +81,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'call Early done=true, write to %result%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 1,
       "text": "assert %result% equals \"early\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -129,14 +127,14 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
       "text": "call Early done=false, write to %result%",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -146,7 +144,7 @@
             {
               "name": "Name",
               "type": {
-                "name": "text"
+                "name": "goal"
               },
               "value": "Early"
             },
@@ -156,15 +154,6 @@
                 "name": "list"
               },
               "value": [{"name":"done","type":{"name":"bool"},"value":false}]
-            }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
             }
           ]
         },
@@ -210,7 +199,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -219,13 +208,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 2's saved code no longer holds — rebuilt: step 2 'call Early done=false, write to %result%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 3,
       "text": "assert %result% equals \"late\", \"the return is inside the if, so a false condition runs on\"",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -266,8 +261,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [
@@ -278,7 +272,8 @@
           "index": 0,
           "text": "if %done% is true, return \"early\"",
           "line": {
-            "number": 10
+            "number": 10,
+            "indent": 0
           },
           "code": [
             {
@@ -324,7 +319,8 @@
                   "index": 0,
                   "text": "goal.return(Data=\"early\")",
                   "line": {
-                    "number": 10
+                    "number": 10,
+                    "indent": 0
                   },
                   "code": [
                     {
@@ -349,19 +345,18 @@
                         }
                       ]
                     }
-                  ],
-                  "waitForExecution": true
+                  ]
                 }
               ]
             }
-          ],
-          "waitForExecution": true
+          ]
         },
         {
           "index": 1,
           "text": "return \"late\"",
           "line": {
-            "number": 11
+            "number": 11,
+            "indent": 0
           },
           "code": [
             {
@@ -386,27 +381,14 @@
                 }
               ]
             }
-          ],
-          "waitForExecution": true
+          ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/module/condition/if/IfReturnReturns.test.goal",
-      "prPath": "/plan/app-systems/module/condition/if/.build/ifreturnreturns.test.pr",
-      "hash": "1a719e90cf5247e9fb2e32cc50796bbabccce092790abfdfd39099a47b388bfd",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "1a719e90cf5247e9fb2e32cc50796bbabccce092790abfdfd39099a47b388bfd"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/app-systems/module/condition/if/IfReturnReturns.test.goal",
-  "prPath": "/plan/app-systems/module/condition/if/.build/ifreturnreturns.test.pr",
-  "hash": "47f80b89315cc02c7770e817e783e2f1b95c071f1cb8e6fd42a835bc5b3a0155",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "IfReturnReturns.test.goal",
+  "hash": "47f80b89315cc02c7770e817e783e2f1b95c071f1cb8e6fd42a835bc5b3a0155"
 }

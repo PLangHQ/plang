@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %message% = \"boom\"",
       "line": {
-        "number": 3
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -40,7 +41,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -49,13 +50,19 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %message% = \"boom\"': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 1,
       "text": "render template \"Failed: {{ error }}\", error=%message%, write to %html%",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -120,7 +127,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -129,13 +136,23 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'render template \"Failed: {{ error }}\", error=%message%, write to %html%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        },
+        {
+          "key": "Unsure",
+          "message": "step 1 uses variable.set, which the decider was not sure of (0.81)"
+        }
+      ]
     },
     {
       "index": 2,
       "text": "assert %html% equals \"Failed: boom\", \"the named argument reaches the template\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -176,17 +193,10 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/plan/app-systems/module/ui/render/RenderTakesNamedArguments.test.goal",
-  "prPath": "/plan/app-systems/module/ui/render/.build/rendertakesnamedarguments.test.pr",
-  "hash": "ff023138385b864a83ab770cc66e21987a088aa6110ed7d5c0c5a90f60c16266",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "file": "RenderTakesNamedArguments.test.goal",
+  "hash": "ff023138385b864a83ab770cc66e21987a088aa6110ed7d5c0c5a90f60c16266"
 }
