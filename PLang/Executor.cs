@@ -55,33 +55,23 @@ namespace PLang
 				["!test"] = typeof(global::app.test.setting.@this),
 				["!build"] = typeof(global::app.module.build.setting.@this),
 			};
-			// the flags that are settings' paths, and the setting classes they will write — known before anything is written
-			var flags = new List<(string Address, object? Value)>();
-			var settings = new HashSet<System.Type>();
-			foreach (var (key, value) in parameters.Where(p => p.Key.StartsWith('!')).ToList())
-			{
-				if (modes.TryGetValue(key, out var mode))
-				{
-					if (value is IDictionary<string, object?>)
-						return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
-							$"'--{key[1..]}' takes no settings: write them at its setting's path, --{app.actor.list.System.Setting.Address(mode)}={{…}} or --{app.actor.list.System.Setting.Address(mode, "<option>")}=value.",
-							"UnknownSetting", 400)));
-					continue;
-				}
-				// the setting the flag names, the option under it, and the value it takes — a typo is refused before
-				// anything is written
-				var context = app.actor.list.System.Context;
-				var setting = app.actor.list.System.Setting.Find(key[1..]);
-				if (!setting.Success) return (null, setting);
-				var values = (await setting.Value())!.Apply(key[1..], value, context);
-				if (!values.Success) return (null, values);
-				settings.Add((await setting.Value())!.GetType());
-				foreach (var entry in (await values.Value())!.Entries(context)) flags.Add((entry.Name, entry));
-			}
+			var store = app.actor.list.System.Setting;
+			// a mode word takes no settings of its own: they are written at its setting's path
+			foreach (var (key, value) in parameters)
+				if (modes.TryGetValue(key, out var mode) && value is IDictionary<string, object?>)
+					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
+						$"'--{key[1..]}' takes no settings: write them at its setting's path, --{store.Address(mode)}={{…}} or --{store.Address(mode, "<option>")}=value.",
+						"UnknownSetting", 400)));
+			// the flags that are settings' paths, each checked by its setting before anything is written; a typo is the
+			// run's answer
+			var flags = await store.Flags(parameters.Where(p => p.Key.StartsWith('!') && !modes.ContainsKey(p.Key))
+				.Select(p => new KeyValuePair<string, object?>(p.Key[1..], p.Value)), app.actor.list.System.Context);
+			if (!flags.Success) return (null, flags);
+			var written = (await flags.Value())!.Entries(app.actor.list.System.Context).ToList();
 
 			// A mode is on when its word is given (and not false), or when the run writes its setting.
 			bool On(string word) => parameters.TryGetValue(word, out var given) && given is not false
-				|| settings.Contains(modes[word]);
+				|| written.Any(entry => entry.Name.StartsWith(store.Address(modes[word]) + ".", StringComparison.OrdinalIgnoreCase));
 
 			// The modes' defaults, under the command line's values: a debug run shows each step's time, so this run's
 			// call stacks time their frames (--call.setting.timing=false still says not).
@@ -89,8 +79,8 @@ namespace PLang
 				app.actor.list.System.Setting.Set(app.actor.list.System.Setting.Address(typeof(global::app.call.setting.@this), "timing"), true);
 
 			// The command line's values, once: the last word.
-			foreach (var (address, value) in flags)
-				app.actor.list.System.Setting.Set(address, value);
+			foreach (var entry in written)
+				store.Set(entry.Name, entry);
 
 			var userVars = app.actor.list.User.Context.Variable;
 
