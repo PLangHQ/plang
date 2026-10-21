@@ -177,8 +177,16 @@ held **3 – 4 minutes** (measured: 7.4 MB held after 20k, 2.2 MB after resting 
 request). Fix: the pool is the database's, shared by every store on it in the process, so it is cleared when the last
 store holding it lets go (a count per database, `store/sqlite/this.cs`). Parallel servers (8 workers, 50k): flat at
 2.8 MB. A serial one still clears per app (the count reaches 0 between requests). **Open (Ingi/architect):** never
-clear a file database's pool (sqlite idles connections out itself) — but the clear may exist so a folder can be
-deleted right after its app (a Windows file lock); not decided here.
+clear a file database's pool per app. What the pool is: Microsoft.Data.Sqlite keeps closed connections open, keyed
+by the database path, so the next open is nearly free; `ClearPool` really closes them. The per-app clear only buys
+deleting the file right after its app — a Windows lock; on Linux an open file can be deleted. Two cases stay on any
+OS: (1) a database deleted and created again at the same path — a pooled connection still points at the old file
+(on Linux a deleted inode), so the next app writes into a file nobody sees; (2) many distinct database files (one
+per user or tenant) — the pool keeps connections for every path seen, growing with the number of files, not
+traffic. Suggested shape: clear only when plang itself deletes or replaces a database (covers (1) on every OS);
+bound idle connections if (2) is real. Not built here (Ingi: write it down).
+
+Run time: 103 s for the 100k, one request at a time (~970 req/s, forced full GCs every 10k included).
 
 | 100k mix, test session, 1 worker | held after GC | threads | handles |
 |---|---|---|---|
