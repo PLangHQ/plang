@@ -24,9 +24,10 @@ public sealed class @this
     private void Add(ISchemaReader reader) => _readers[reader.Schema] = reader;
 
     /// <summary>The reader for <paramref name="schema"/>, or throws LOUDLY for an unknown
-    /// layer — a wire @schema value with no reader is a malformed/forward-version payload.</summary>
+    /// layer — a wire @schema value with no reader is a malformed/forward-version payload, the read's error (the reader
+    /// runs inside the sync read, where no result can be returned).</summary>
     public ISchemaReader Reader(string schema)
         => _readers.TryGetValue(schema, out var reader) ? reader
-           : throw new System.NotSupportedException(
-               $"no reader for @schema '{schema}' — a Data wire layer must be a registered ISchemaReader.");
+           : throw new global::app.error.AppException(new global::app.error.@this(
+               $"no reader for @schema '{schema}' — a Data wire layer must be a registered ISchemaReader.", "UnknownSchema", 400));
 }

@@ -59,7 +59,8 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
         }
         // a write that refused itself (a getter that threw, a type with no wire contract) is the encode's answer
         catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
-        catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException)
+        // what the json writer itself refuses (System.Text.Json's own throw, which carries no Error)
+        catch (JsonException ex)
         {
             return context.Error(new global::app.error.ServiceError(
                 $"Plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
@@ -101,9 +102,11 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
                     "plang content arrived unsigned — between actors a Data rides signed", "UnsignedPlang", 403));
             return read;
         }
-        // what the bytes say a value is, refused by that value (a signature whose hash is of no kind) — the read's answer
-        catch (global::app.error.DeclinedException refused) { return context.Error(refused.Error); }
-        catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException)
+        // what the bytes say a value is, refused by that value (a signature whose hash is of no kind), or a layer no
+        // reader reads — the read's answer, its Error whole
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
+        // bytes the json reader itself refuses (System.Text.Json's own throw, which carries no Error)
+        catch (JsonException ex)
         {
             return context.Error(new global::app.error.ServiceError(
                 $"Plang deserialize failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
