@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %d% = '{\"a\": 1}', type=json",
       "line": {
-        "number": 3
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -42,7 +43,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "dict"
+              "value": {"name":"item","kind":"json"}
             }
           ],
           "default": [
@@ -61,7 +62,8 @@
       "index": 1,
       "text": "set %n% = 5",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -109,7 +111,8 @@
       "index": 2,
       "text": "set %caught% = \"\"",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -157,7 +160,8 @@
       "index": 3,
       "text": "if %d% == %n% then\non error call Caught",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -260,6 +264,43 @@
               ]
             }
           ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "Caught"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
         }
       ]
     },
@@ -267,7 +308,8 @@
       "index": 5,
       "text": "assert %caught% equals \"EvaluationError\"",
       "line": {
-        "number": 9
+        "number": 9,
+        "indent": 0
       },
       "code": [
         {
@@ -312,7 +354,8 @@
           "index": 0,
           "text": "set %caught% = %!error.Key%",
           "line": {
-            "number": 12
+            "number": 12,
+            "indent": 0
           },
           "code": [
             {
@@ -371,15 +414,11 @@
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/module/condition/compare/Failure_DictEqNumber.test.goal",
-      "prPath": "/module/condition/compare/.build/failure_dicteqnumber.test.pr",
       "hash": "ec0f5fc53113edce508631be46166dab0372210530613172a5ff489cca506038"
     }
   ],
   "visibility": "Public",
-  "path": "/module/condition/compare/Failure_DictEqNumber.test.goal",
-  "prPath": "/module/condition/compare/.build/failure_dicteqnumber.test.pr",
+  "file": "Failure_DictEqNumber.test.goal",
   "hash": "aa62948ad387bcf05239f3e8de9f31ec13b3420b9bbe5748ddaaf2d36b919ec9"
 }
