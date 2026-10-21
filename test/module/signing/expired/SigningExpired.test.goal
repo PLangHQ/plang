@@ -1,12 +1,12 @@
-/ Test: sign with short TTL, wait, verify fails as expired
+/ Test: sign with short TTL, wait, verify fails as expired — not as any other refusal
 Start
 - archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data% = { "payload": "expiring" }
-- sign %data%, expires in 50 ms
+- sign %data%, expires in 50 ms, write to %signed%
 - wait for 60 ms
-- verify %data% with contracts ['C0'], on error call HandleExpired
-- assert %expired% is true, "expired signature should fail verification"
+- verify %signed% with contracts ['C0'], on error call HandleExpired
+- assert %errorKey% equals "Expired", "expired signature should fail verification"
 
 HandleExpired
-- set %expired% = true
+- set %errorKey% = %!error.Key%

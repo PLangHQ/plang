@@ -1,9 +1,10 @@
 / Signs a Data and verifies, exercises the sign→canonicalize→hash→sign→verify path
-/ end-to-end. A clean pass means the typed signing surface is intact.
+/ end-to-end. A clean pass means the typed signing surface is intact. Signing makes a new,
+/ signed value (the signature is a layer around the data); `write to` keeps it.
 Start
 - archive identity 'roundtripSigner', force, on error ignore
 - create identity roundtripSigner
 - set %data% = { "message": "round-trip me" }
-- sign %data%
-- verify %data%, write to %verifyResult%
-- assert %verifyResult.Success% is true, "signed Data must verify on the same actor"
+- sign %data%, write to %signed%
+- verify %signed%, write to %verifyResult%
+- assert %verifyResult% is true, "signed Data must verify on the same actor"

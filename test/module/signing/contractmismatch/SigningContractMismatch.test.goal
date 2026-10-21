@@ -1,11 +1,11 @@
-/ Test: verify with wrong contracts fails
+/ Test: verify with wrong contracts fails — as a contract mismatch, not as any other refusal
 Start
 - archive identity 'testSigner', force, on error ignore
 - create identity testSigner
 - set %data% = { "payload": "test" }
-- sign %data% with contracts ['C0']
-- verify %data% with contracts ['C1'], on error call HandleContractError
-- assert %contractFailed% is true, "contract mismatch should fail verification"
+- sign %data% with contracts ['C0'], write to %signed%
+- verify %signed% with contracts ['C1'], on error call HandleContractError
+- assert %errorKey% equals "ContractMismatch", "contract mismatch should fail verification"
 
 HandleContractError
-- set %contractFailed% = true
+- set %errorKey% = %!error.Key%
