@@ -72,12 +72,14 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         global::app.type.item.variable.@this? keyVariable, System.Collections.Generic.IReadOnlyList<global::app.goal.step.action.@this> body)
     {
         int count = 0;
+        // one ask for the loop: every item's frame is pushed through this door, on this context
+        var setting = await Context.call.Setting();
         await foreach (var (names, failed) in Bound(itemVariable, keyVariable))
         {
             if (failed != null) return failed;
             if (Context.CancellationToken.IsCancellationRequested)
                 return await Result(count, complete: false);
-            await using (Context.call.Push(names, await Context.call.Setting()))
+            await using (Context.call.Push(names, setting))
                 foreach (var action in body)
                 {
                     var result = await action.Start(Context);

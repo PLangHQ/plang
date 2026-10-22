@@ -514,11 +514,13 @@ public sealed class OpenAi : ILlm
     private static async Task<data.@this> Call(query action, ToolCall toolCall, List<Tool>? tools)
     {
         var context = action.Context;
+        // one ask for the tool call: its OnToolCall frame and the tool's own are pushed through this door
+        var setting = await context.call.Setting();
 
         // OnToolCall — starting. The run-state binds in a frame for the held call (never the caller's own
         // variables: a user's %name% stays theirs); the held call runs as itself.
         if (action.OnToolCall != null && await action.OnToolCall.Value() is { } onToolCall)
-            await using (context.call.Push(toolCall.State("starting", null, context), await context.call.Setting(), onToolCall))
+            await using (context.call.Push(toolCall.State("starting", null, context), setting, onToolCall))
                 await onToolCall.Start(context);
 
         if (tools?.Find(t => t.Name == toolCall.Name) is not { } tool)
@@ -530,7 +532,7 @@ public sealed class OpenAi : ILlm
         // keeps the frame it was started in).
         var parameters = tool.Arguments(toolCall.Arguments, context);
         if (parameters.Find(p => !p.Success) is { } unread) return unread;
-        await using (context.call.Isolate(parameters, await context.call.Setting(), tool.Held))
+        await using (context.call.Isolate(parameters, setting, tool.Held))
             return await tool.Held.Start(context);
     }
 
