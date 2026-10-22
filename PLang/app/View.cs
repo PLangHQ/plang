@@ -102,10 +102,10 @@ public abstract class View
         if (!data.Success) return data;
         // what the Data settles to — a reference the Data it names, a template its render; not initialized when a
         // name it names holds nothing, which is the write's error
-        var settled = await data.Settle();
-        if (!settled.IsInitialized || !settled.Success)
-            throw new global::app.error.AppException(settled.Error ?? new global::app.error.VariableNotFoundException(data.Name).Error);
-        return settled;
+        var answer = await data.Settle();
+        if (!answer.IsInitialized || !answer.Success)
+            throw new global::app.error.AppException(answer.Error ?? new global::app.error.VariableNotFoundException(data.Name).Error);
+        return answer;
     }
 
     /// <summary>Whether <paramref name="type"/> carries any wire tag (Out, Store, Sensitive, Masked): a deliberate host
@@ -175,10 +175,10 @@ public abstract class View
             }
             try
             {
-                var settled = await Settle(data);
-                await writer.BeginRecord(settled, layer);
-                await (await Open(settled)).Output(writer);
-                await writer.EndRecord(settled);
+                var record = await Settle(data);
+                await writer.BeginRecord(record, layer);
+                await (await Open(record)).Output(writer);
+                await writer.EndRecord(record);
             }
             finally { _depth.Value--; }
         }
@@ -186,11 +186,11 @@ public abstract class View
         private protected override async System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer)
             => await (await Open(await Settle(new global::app.data.@this("", value, context: writer.Context)))).Output(writer);
 
-        // opens what a settled Data holds (a reference's content); a value that fails to open is the write's error
-        private async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Open(global::app.data.@this settled)
+        // opens what the record holds (a reference's content); a value that fails to open is the write's error
+        private async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Open(global::app.data.@this record)
         {
-            var value = await settled.Value();
-            if (!settled.Success) throw new global::app.error.AppException(settled.Error!);
+            var value = await record.Value();
+            if (!record.Success) throw new global::app.error.AppException(record.Error!);
             return value;
         }
 
