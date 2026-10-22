@@ -66,15 +66,14 @@ public sealed class @this
 
     /// <summary>What this start's flags set, by the address each is kept at (<c>--test.setting.timeout=5s</c> is the
     /// path <c>test.setting.timeout</c> and its value), every flag checked by the setting it names in
-    /// <paramref name="store"/> — but those named in <paramref name="except"/> (a caller's own words). The first a setting
-    /// refuses (a path no setting goes by, an option it doesn't have, a value its option can't take) is the answer.
-    /// Nothing is written.</summary>
+    /// <paramref name="store"/> — but those that are the caller's own <paramref name="words"/> (its mode words), left out.
+    /// The first a setting refuses (a path no setting goes by, an option it doesn't have, a value its option can't take)
+    /// is the answer. Nothing is written.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this<global::app.type.item.dict.@this>> Values(
-        global::app.actor.setting.@this store, global::app.actor.context.@this context, IEnumerable<string>? except = null)
+        global::app.actor.setting.@this store, global::app.actor.context.@this context, IEnumerable<string>? words = null)
     {
-        var left = except?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
         var values = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
-        foreach (var flag in property.Items().Where(p => p.IsFlag && !left.Contains(p.Name)))
+        foreach (var flag in property.Items().Where(p => p.IsFlag && words?.Contains(p.Name, StringComparer.OrdinalIgnoreCase) != true))
         {
             var setting = store.Find(flag.Name);
             if (!setting.Success) return context.Error<global::app.type.item.dict.@this>(setting.Error!);
@@ -88,9 +87,9 @@ public sealed class @this
     /// <summary>What this start's flags set (<see cref="Values"/>), written into <paramref name="store"/> with its one
     /// Set — all of them, or, on a refusal, none.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this<global::app.type.item.dict.@this>> Set(
-        global::app.actor.setting.@this store, global::app.actor.context.@this context, IEnumerable<string>? except = null)
+        global::app.actor.setting.@this store, global::app.actor.context.@this context, IEnumerable<string>? words = null)
     {
-        var values = await Values(store, context, except);
+        var values = await Values(store, context, words);
         if (!values.Success) return values;
         foreach (var entry in (await values.Value())!.Entries(context)) store.Set(entry.Name, entry);
         return values;
