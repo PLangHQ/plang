@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "One High open: S1 — a step can set an [Own] setting (permission.setting.grant / identity) and save it, minting a standing grant with no prompt (proven by StepWrittenGrantTests). Signing, wire reader, [Sensitive], CLI/files otherwise clean; 6 Lows + 3 informational. Next bot: coder (via architect, locked-core adjacent)." }
