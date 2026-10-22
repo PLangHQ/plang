@@ -2525,7 +2525,7 @@ class app.type.item.signature.this : app.type.item.this, app.type.item.ICreate<a
   ContractStrings() : System.Collections.Generic.IEnumerable<System.String>
   Contracts : app.type.item.list.this { get; }
   Created : app.type.item.datetime.this { get; }
-  Expired(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.Boolean>
+  Expired(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.bool.this> [LlmBuilder]
   Expires : app.type.item.datetime.this { get; }
   Hash : app.module.crypto.type.hash.this { get; }
   Identity : app.type.item.text.this { get; }
@@ -2538,7 +2538,6 @@ class app.type.item.signature.this : app.type.item.this, app.type.item.ICreate<a
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
-  override ToString() : System.String
   protected override Write(app.type.format.IWriter w) : System.Threading.Tasks.ValueTask
   static Shape : System.String { get; }
   static const WireSchemaSignature : System.String
@@ -3794,6 +3793,7 @@ type setting
 type shortcut
 
 type signature
+  .expired : bool
 
 type size
 

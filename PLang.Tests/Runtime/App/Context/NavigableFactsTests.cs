@@ -25,6 +25,8 @@ public class NavigableFactsTests
         // a dict's keys, born per ask from its key names: nothing kept, the dict untouched
         "app.type.item.dict.key.this.list",
         "app.type.item.input.modifier.list.this.list",
+        // a signature past its expiry by the asker's clock: the clock read, nothing changed
+        "app.type.item.signature.this.Expired",
         // the same location written from the asker's root
         "app.type.item.path.this.Relative",
         "app.type.item.path.file.this.Relative",

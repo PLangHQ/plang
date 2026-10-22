@@ -84,7 +84,7 @@ public class Ed25519 : ISigning
         var app = action.Context.App;
 
         // 1. Expiry — the signature answers it: what its signer signed, or, read live, its window after it was made.
-        if (await signature.Expired(action.Context))
+        if ((await signature.Expired(action.Context)).Value)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError(
                 $"Signature has expired (at {signature.Expires!.Value:O})", "Expired", 400));
 

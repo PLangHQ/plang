@@ -74,21 +74,21 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>Whether the signature is past its <see cref="Expires"/> by the clock <paramref name="context"/>
-    /// reads — <c>%x!signature.expired%</c>.</summary>
-    public async System.Threading.Tasks.ValueTask<bool> Expired(global::app.actor.context.@this context)
+    /// reads — <c>%x!signature.expired%</c>, read as its asker's.</summary>
+    [global::app.LlmBuilder]
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.@bool.@this> Expired(global::app.actor.context.@this context)
     {
-        if (Expires is not { } expires) return false;
+        var type = context.App.type.list[typeof(global::app.type.item.@bool.@this)];
+        if (Expires is not { } expires) return new(false, type);
         var now = await (await context.Variable.Get("NowUtc")).Clr<System.DateTimeOffset>(System.DateTimeOffset.UtcNow);
-        return now > expires.Value;
+        return new(now > expires.Value, type);
     }
 
-    /// <summary>One step down: <c>expired</c> asks the clock (<see cref="Expired"/>); <c>identity</c> names the signer
-    /// only of a Data this signature verifies — the Data it is read off (its bearer) is verified first, and a verify
-    /// that fails is the answer, never the name; every other member as any item answers it.</summary>
+    /// <summary>One step down: <c>identity</c> names the signer only of a Data this signature verifies — the Data it is
+    /// read off (its bearer) is verified first, and a verify that fails is the answer, never the name; every other
+    /// member as any item answers it.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
-        if (string.Equals(key, "expired", System.StringComparison.OrdinalIgnoreCase) && parent.Context is { } context)
-            return new global::app.data.@this(key, await Expired(context), parent: parent);
         if (string.Equals(key, nameof(Identity), System.StringComparison.OrdinalIgnoreCase))
         {
             if (parent.Parent is not { } bearer)
@@ -170,8 +170,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The CLR exit door hands back the attested inner Data.</summary>
     internal override object? Clr(System.Type target)
         => target.IsAssignableFrom(typeof(global::app.data.@this)) ? Value : ClrConvert(Value, target);
-
-    public override string ToString() => $"signature({Algorithm}) over {Identity}";
 
     /// <summary>
     /// Renders the flat <c>{@schema:"signature", …fields…, value:&lt;inner&gt;}</c>
