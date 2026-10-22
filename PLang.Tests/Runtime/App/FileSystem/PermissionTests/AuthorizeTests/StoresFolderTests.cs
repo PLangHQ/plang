@@ -75,6 +75,18 @@ public class StoresFolderTests : System.IAsyncDisposable
         await Assert.That(System.IO.File.ReadAllText(key)).IsEqualTo("the identity's private key");
     }
 
+    // the OS-rooted form of the same file (//<root>/…, a .. in it too) is the same file to the gate
+    [Test]
+    [Arguments("")]
+    [Arguments("/sub/..")]
+    public async Task TheDoubleSlashForm_IsRefused_NeverAsked(string detour)
+    {
+        if (System.OperatingSystem.IsWindows()) return;   // // is the OS-rooted form on Unix only
+        var user = app.actor.list.User.Context;
+        var form = "/" + root + detour + "/.data/setting/data.sqlite";
+        await Refused(await user.File(form).Read(user));
+    }
+
     [Test] public async Task TheSystem_ReadsTheStoresFolder_ThroughItsStandingGrant()
     {
         var system = app.actor.list.System.Context;

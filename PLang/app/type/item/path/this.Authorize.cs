@@ -114,7 +114,7 @@ public partial class @this
     }
 
     /// <summary>
-    /// Returns true when <see cref="Absolute"/> sits under (or equals)
+    /// Returns true when <see cref="Location"/> sits under (or equals)
     /// <paramref name="rootCandidate"/>.
     /// </summary>
     private bool IsUnder(string? rootCandidate, StringComparison cmp)
@@ -123,9 +123,13 @@ public partial class @this
         var rootWithSeparator = rootCandidate.EndsWith(PathHelper.DirectorySeparatorChar)
             ? rootCandidate
             : rootCandidate + PathHelper.DirectorySeparatorChar;
-        return Absolute.StartsWith(rootWithSeparator, cmp)
-            || string.Equals(Absolute, rootCandidate, cmp);
+        return Location.StartsWith(rootWithSeparator, cmp)
+            || string.Equals(Location, rootCandidate, cmp);
     }
+
+    /// <summary>Where the gate finds this path: the place the OS opens for it — its absolute form, unless a scheme keeps
+    /// that in a form of its own.</summary>
+    private protected virtual string Location => Absolute;
 
     /// <summary>
     /// Extra text appended to the Authorize prompt before the y/n/a choices: what a yes means beyond the words.

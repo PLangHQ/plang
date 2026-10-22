@@ -49,6 +49,11 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     [Out, Store] public override string Scheme => "file";
 
+    // The OS-rooted form (//x on Unix) is kept as written, its .. unresolved; the OS opens /x for it, resolved — the
+    // place the gate finds.
+    private protected override string Location => !OperatingSystem.IsWindows() && Absolute.StartsWith("//")
+        ? PathHelper.GetFullPath(Absolute) : Absolute;
+
     /// <summary>How big the file at this path is, as its asker may read it — through the gate; a size, written in the
     /// asker's standard; 0 when nothing is there.</summary>
     [LlmBuilder] public async Task<data.@this<global::app.type.item.size.@this>> Size(actor.context.@this context)
