@@ -16,7 +16,32 @@ public class @this
     /// <summary>Where the OS lands for <paramref name="folder"/> — one of an app's fixed folders, each link on the way
     /// followed — read here once and kept: what the gate holds every path against.</summary>
     internal string Anchor(string folder)
-        => _anchors.GetOrAdd(folder, f => new file.@this(f, new global::app.type.@this("path", typeof(file.@this), "file")).Landing(this)?.Absolute ?? f);
+        => _anchors.GetOrAdd(folder, f => Long(new file.@this(f, new global::app.type.@this("path", typeof(file.@this), "file")).Landing(this)?.Absolute ?? f));
+
+    /// <summary><paramref name="path"/> with each part as the OS holds its name: on Windows an 8.3 short part
+    /// (<c>DATA~1</c>) is its long name, in its real case, for the part of the path that exists; elsewhere the path
+    /// itself.</summary>
+    internal string Long(string path)
+    {
+        if (!OperatingSystem.IsWindows()) return path;
+        // the deepest part that exists is what the OS can name; what is under it is written as asked
+        var at = path;
+        var rest = new Stack<string>();
+        while (!System.IO.Directory.Exists(at) && !System.IO.File.Exists(at))
+        {
+            if (PathHelper.GetDirectoryName(at) is not { } parent) return path;
+            rest.Push(PathHelper.GetFileName(at));
+            at = parent;
+        }
+        var buffer = new char[32768];
+        var length = GetLongPathNameW(at, buffer, (uint)buffer.Length);
+        if (length == 0 || length > buffer.Length) return path;
+        return PathHelper.Combine([new string(buffer, 0, (int)length), .. rest]);
+    }
+
+    // The OS boundary's own call (kernel32): a path's long form, every short part expanded. Windows only.
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    private static extern uint GetLongPathNameW(string shortPath, char[] longPath, uint size);
 
     public virtual bool IsFile(file.@this p) => System.IO.File.Exists(p.Absolute);
 

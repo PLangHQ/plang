@@ -100,6 +100,27 @@ public class StoresFolderTests : System.IAsyncDisposable
         await Refused(await user.File(shout).Read(user));
     }
 
+    // Windows: the stores' folder by its 8.3 short name (DATA~1) is the stores' folder — refused, never asked
+    [Test] public async Task TheStoresFolder_ByItsShortName_IsRefused_NeverAsked()
+    {
+        if (!System.OperatingSystem.IsWindows()) return;
+        var folder = System.IO.Path.Combine(root, ".data");
+        var buffer = new char[32768];
+        var length = GetShortPathNameW(folder, buffer, (uint)buffer.Length);
+        var shortened = length == 0 ? folder : new string(buffer, 0, (int)length);
+        if (string.Equals(System.IO.Path.GetFileName(shortened), ".data", System.StringComparison.OrdinalIgnoreCase))
+        {
+            // the volume makes no short names: nothing to test here
+            System.Console.WriteLine("8.3 short names are off on this volume — not applicable");
+            return;
+        }
+        var user = app.actor.list.User.Context;
+        await Refused(await user.File(System.IO.Path.Combine(shortened, "setting", "data.sqlite")).Read(user));
+    }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    private static extern uint GetShortPathNameW(string longPath, char[] shortPath, uint size);
+
     [Test] public async Task TheSystem_ReadsTheStoresFolder_ThroughItsStandingGrant()
     {
         var system = app.actor.list.System.Context;
