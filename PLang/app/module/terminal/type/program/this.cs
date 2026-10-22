@@ -168,14 +168,18 @@ public sealed partial class @this(IProgram asked)
     /// its own (<c>--channel.setting.format=plang</c>, with or without <c>app.</c>, or the setting's dict).</summary>
     internal async Task<bool> IsPlang(Context context)
     {
-        // the child's settings as its command line sets them, in a layer of their own, kept where the setting each flag
-        // names says (as the child's own command line does); a flag that is no setting (a mode word), or one its setting
-        // refuses, is the child's to refuse when it starts, not this read's — so each argument (whole, as the program is
-        // handed it) is read as a start of its own
-        using var child = new global::app.actor.setting.@this(context);
+        // what each flag of the child's line sets, read by the setting it names (as the child reads its own line), nothing
+        // written; a flag that is no setting (a mode word), or one its setting refuses, is the child's to refuse when it
+        // starts, not this read's — so each argument (whole, as the program is handed it) is a start of its own, and the
+        // last that sets the channel's format says which
+        var address = context.Setting.Address(typeof(global::app.channel.setting.@this), "format");
+        global::app.data.@this? format = null;
         foreach (var argument in Info!.ArgumentList)
-            await global::app.start.@this.Parse([argument]).Set(child, context);
-        return (await child.Get<global::app.channel.setting.@this>()).Format.IsPlang;
+            if (await global::app.start.@this.Parse([argument]).Values(context.Setting, context) is { Success: true } values
+                && (await values.Value())!.Get(address, context) is { } value)
+                format = value;
+        return format != null && context.App.type.list[typeof(global::app.channel.format.@this)].Make(format.Peek(), format)
+            is global::app.channel.format.@this { IsPlang: true };
     }
 
     public override string ToString() => File?.Absolute ?? asked.App.Peek()?.ToString() ?? "a program";

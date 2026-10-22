@@ -8,12 +8,12 @@ namespace app.start;
 ///
 /// Examples:
 ///   plang Start                          → Goal=Start (the goal to run)
-///   plang --test module/math             → Goal=module/math (what to test), !test=true
-///   plang --build                        → !build=true
-///   plang --debug.setting.goal=Start     → !debug.setting.goal="Start"
-///   plang name="my app"                  → name="my app"
-///   plang --build.setting={"files":"test.goal"}  → !build.setting={"files":"test.goal"}
-///   plang count=42 active=true           → count=42, active=true
+///   plang --test module/math             → Goal=module/math (what to test), the flag test=true
+///   plang --build                        → the flag build=true
+///   plang --debug.setting.goal=Start     → the flag debug.setting.goal="Start"
+///   plang name="my app"                  → the value name="my app"
+///   plang --build.setting={"files":"test.goal"}  → the flag build.setting={"files":"test.goal"}
+///   plang count=42 active=true           → the values count=42, active=true
 /// </summary>
 public sealed class @this
 {
@@ -21,7 +21,7 @@ public sealed class @this
     /// test; null when none is given.</summary>
     public string? Goal { get; }
 
-    /// <summary>The properties the line gives: its flags (<c>--x</c>, kept as <c>!x</c>) and its values (<c>x=…</c>).</summary>
+    /// <summary>The properties the line gives: its flags (<c>--x</c>) and its values (<c>x=…</c>).</summary>
     public property.list.@this property { get; } = new();
 
     private @this(string? goal, property.list.@this properties)
@@ -51,7 +51,7 @@ public sealed class @this
             // a bare flag (--build) is true
             if (equals < 0)
             {
-                properties.Add(new property.@this(flag ? "!" + arg : arg, true));
+                properties.Add(new property.@this(arg, flag, true));
                 continue;
             }
 
@@ -59,30 +59,41 @@ public sealed class @this
             var raw = arg[(equals + 1)..];
             // a value starting { or [ runs on until its JSON is whole
             if (raw.StartsWith('{') || raw.StartsWith('[')) raw = Json(raw, args, ref i);
-            properties.Add(new property.@this(flag ? "!" + key : key, Value(raw)));
+            properties.Add(new property.@this(key, flag, Value(raw)));
         }
         return new(goal, properties);
     }
 
-    /// <summary>The flags left on this start written into <paramref name="store"/>, each by the address it is kept at
-    /// (<c>--test.setting.timeout=5s</c> is the path <c>test.setting.timeout</c> and its value) — every flag checked by
-    /// the setting it names before any is written, then all of them. The first a setting refuses (a path no setting
-    /// goes by, an option it doesn't have, a value its option can't take) is the answer, and nothing is written.</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.data.@this<global::app.type.item.dict.@this>> Set(
-        global::app.actor.setting.@this store, global::app.actor.context.@this context)
+    /// <summary>What this start's flags set, by the address each is kept at (<c>--test.setting.timeout=5s</c> is the
+    /// path <c>test.setting.timeout</c> and its value), every flag checked by the setting it names in
+    /// <paramref name="store"/> — but those named in <paramref name="except"/> (a caller's own words). The first a setting
+    /// refuses (a path no setting goes by, an option it doesn't have, a value its option can't take) is the answer.
+    /// Nothing is written.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this<global::app.type.item.dict.@this>> Values(
+        global::app.actor.setting.@this store, global::app.actor.context.@this context, IEnumerable<string>? except = null)
     {
+        var left = except?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
         var values = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
-        foreach (var flag in property.Items().Where(p => p.Name.StartsWith('!')))
+        foreach (var flag in property.Items().Where(p => p.IsFlag && !left.Contains(p.Name)))
         {
-            var path = flag.Name[1..];
-            var setting = store.Find(path);
+            var setting = store.Find(flag.Name);
             if (!setting.Success) return context.Error<global::app.type.item.dict.@this>(setting.Error!);
-            var set = (await setting.Value())!.Apply(path, flag.Value, context);
+            var set = (await setting.Value())!.Apply(flag.Name, flag.Value, context);
             if (!set.Success) return set;
             foreach (var entry in (await set.Value())!.Entries(context)) values.Set(entry.Name, entry);
         }
-        foreach (var entry in values.Entries(context)) store.Set(entry.Name, entry);
         return context.Ok(values);
+    }
+
+    /// <summary>What this start's flags set (<see cref="Values"/>), written into <paramref name="store"/> with its one
+    /// Set — all of them, or, on a refusal, none.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this<global::app.type.item.dict.@this>> Set(
+        global::app.actor.setting.@this store, global::app.actor.context.@this context, IEnumerable<string>? except = null)
+    {
+        var values = await Values(store, context, except);
+        if (!values.Success) return values;
+        foreach (var entry in (await values.Value())!.Entries(context)) store.Set(entry.Name, entry);
+        return values;
     }
 
     // A JSON value that may span several arguments (spaces in it): read on until it parses, moving past what it took.

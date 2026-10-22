@@ -21,25 +21,25 @@ public sealed partial class @this
     // precision settings ride as whole plang values (choice). The op unwraps them at the leaf
     // (the internal DoOp takes the enum; choice → enum is implicit) — no decompose at the call.
     public @this Add(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Birth(Wrap(() => DoOp(this, b, ArithOp.Add, overflow, precision)), b);
+        => Retype(Wrap(() => DoOp(this, b, ArithOp.Add, overflow, precision)), b);
     public @this Subtract(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Birth(Wrap(() => DoOp(this, b, ArithOp.Sub, overflow, precision)), b);
+        => Retype(Wrap(() => DoOp(this, b, ArithOp.Sub, overflow, precision)), b);
     public @this Multiply(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Birth(Wrap(() => DoOp(this, b, ArithOp.Mul, overflow, precision)), b);
+        => Retype(Wrap(() => DoOp(this, b, ArithOp.Mul, overflow, precision)), b);
     public @this Modulo(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Birth(Wrap(() => DoOp(this, b, ArithOp.Mod, overflow, precision)), b);
+        => Retype(Wrap(() => DoOp(this, b, ArithOp.Mod, overflow, precision)), b);
     public @this Divide(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Birth(Wrap(() => DoDivide(this, b, precision)), b);
+        => Retype(Wrap(() => DoDivide(this, b, precision)), b);
     public @this IntDivide(@this b, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Birth(Wrap(() => DoIntDivide(this, b, overflow)), b);
+        => Retype(Wrap(() => DoIntDivide(this, b, overflow)), b);
     public @this Power(@this exponent, global::app.type.item.choice.@this<Overflow> overflow, global::app.type.item.choice.@this<Precision> precision)
-        => Birth(Wrap(() => DoPower(this, exponent, overflow, precision)), exponent);
+        => Retype(Wrap(() => DoPower(this, exponent, overflow, precision)), exponent);
 
-    // Births a result: one of this number's kind (or the other operand's) holds that one's type, the
+    // Gives a result its type: one of this number's kind (or the other operand's) holds that one's type, the
     // app's. A result whose kind climbed (int → long) holds the app's {number, <kind>}, found through this number's
     // family — a type object per result (the list keys its types by entry, not by (entry, kind)). An
     // operator-born operand (a type built from the class, no app) leaves the result the operator's birth.
-    private @this Birth(@this result, @this? other = null)
+    private @this Retype(@this result, @this? other = null)
         => ReferenceEquals(result, this) || ReferenceEquals(result, other) ? result
          : string.Equals(result.Kind.Name, Kind.Name, System.StringComparison.OrdinalIgnoreCase) ? new(Type, result)
          : other != null && string.Equals(result.Kind.Name, other.Kind.Name, System.StringComparison.OrdinalIgnoreCase) ? new(other.Type, result)

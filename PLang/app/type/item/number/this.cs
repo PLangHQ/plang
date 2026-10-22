@@ -180,7 +180,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                     $"Cannot convert {raw?.GetType().Name} to number.", "NumberConversionFailed", 400));
                 return null;
             }
-            try { return Birth(kind.Create(value)); }
+            try { return Retype(kind.Create(value)); }
             // a value the kind can't hold (a fraction as an integer kind, NaN) says why under its own key
             catch (global::app.error.AppException e)
             {
@@ -193,15 +193,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 return null;
             }
         }
-        if (Create(raw) is { } n) return ReferenceEquals(n, raw) ? n : Birth(n);
+        if (Create(raw) is { } n) return ReferenceEquals(n, raw) ? n : Retype(n);
         data.Fail(new global::app.error.@this(
             $"Cannot convert {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} to number.",
             "NumberConversionFailed", 400));
         return null;
 
-        // births a number made here holding the app's {number, <its kind>}, as the binding's asker names the app (a
-        // binding with no context, the operator's, keeps the operator's birth)
-        @this Birth(@this number) => data.Context is { } context
+        // gives a number made here the app's {number, <its kind>}, as the binding's asker names the app (a binding with
+        // no context, the operator's, keeps the operator's birth)
+        @this Retype(@this number) => data.Context is { } context
             ? new(context.App.type.list[new global::app.type.@this("number", number.Kind.Name), context], number)
             : number;
     }

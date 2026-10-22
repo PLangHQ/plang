@@ -4,6 +4,10 @@ namespace PLang.Tests.App.Core;
 
 public class StartTests
 {
+    // the property the start gives under name, a flag or a value
+    private static global::app.start.property.@this? Property(Start start, string name, bool flag = false)
+        => start.property.Items().FirstOrDefault(p => p.Name == name && p.IsFlag == flag);
+
     [Test]
     public async Task Parse_NoArgs_HasNoGoal()
     {
@@ -28,8 +32,8 @@ public class StartTests
         var start = Start.Parse(["--test", "module/math"]);
 
         await Assert.That(start.Goal).IsEqualTo("module/math");
-        await Assert.That(start.property["!test"]).IsNotNull();
-        await Assert.That(start.property["module/math"]).IsNull();
+        await Assert.That(Property(start, "test", flag: true)).IsNotNull();
+        await Assert.That(start.property.Has("module/math")).IsFalse();
     }
 
     [Test]
@@ -46,7 +50,7 @@ public class StartTests
         var start = Start.Parse(["name=Ingi"]);
 
         await Assert.That(start.Goal).IsNull();
-        await Assert.That(start.property["name"]!.Value).IsEqualTo("Ingi");
+        await Assert.That(Property(start, "name")!.Value).IsEqualTo("Ingi");
     }
 
     [Test]
@@ -54,7 +58,7 @@ public class StartTests
     {
         var start = Start.Parse(["isActive=true"]);
 
-        await Assert.That(start.property["isActive"]!.Value).IsEqualTo(true);
+        await Assert.That(Property(start, "isActive")!.Value).IsEqualTo(true);
     }
 
     [Test]
@@ -62,7 +66,7 @@ public class StartTests
     {
         var start = Start.Parse(["count=42"]);
 
-        await Assert.That(start.property["count"]!.Value).IsEqualTo(42L);
+        await Assert.That(Property(start, "count")!.Value).IsEqualTo(42L);
     }
 
     [Test]
@@ -71,8 +75,8 @@ public class StartTests
         var start = Start.Parse(["TestGoal", "name=Ingi", "isActive=true"]);
 
         await Assert.That(start.Goal).IsEqualTo("TestGoal");
-        await Assert.That(start.property["name"]!.Value).IsEqualTo("Ingi");
-        await Assert.That(start.property["isActive"]!.Value).IsEqualTo(true);
+        await Assert.That(Property(start, "name")!.Value).IsEqualTo("Ingi");
+        await Assert.That(Property(start, "isActive")!.Value).IsEqualTo(true);
     }
 
     [Test]
@@ -80,15 +84,17 @@ public class StartTests
     {
         var start = Start.Parse(["greeting=\"Hello World\""]);
 
-        await Assert.That(start.property["greeting"]!.Value).IsEqualTo("Hello World");
+        await Assert.That(Property(start, "greeting")!.Value).IsEqualTo("Hello World");
     }
 
+    // a flag is named bare and answers that it is one; a value of the same name is another property
     [Test]
     public async Task Parse_Flag_DoubleDashIsAFlagThatIsTrue()
     {
-        var start = Start.Parse(["--verbose"]);
+        var start = Start.Parse(["--verbose", "verbose=no"]);
 
-        await Assert.That(start.property["!verbose"]!.Value).IsEqualTo(true);
+        await Assert.That(Property(start, "verbose", flag: true)!.Value).IsEqualTo(true);
+        await Assert.That(Property(start, "verbose")!.Value).IsEqualTo("no");
     }
 
     [Test]
@@ -96,7 +102,7 @@ public class StartTests
     {
         var start = Start.Parse(["llm.service=openai"]);
 
-        await Assert.That(start.property["llm.service"]!.Value).IsEqualTo("openai");
+        await Assert.That(Property(start, "llm.service")!.Value).IsEqualTo("openai");
     }
 
     [Test]
@@ -104,20 +110,34 @@ public class StartTests
     {
         var start = Start.Parse(["a=1", "b=2"]);
 
-        await Assert.That(start.property["a"]).IsNotNull();
-        await Assert.That(start.property["b"]).IsNotNull();
+        await Assert.That(start.property.Has("a")).IsTrue();
+        await Assert.That(start.property.Has("b")).IsTrue();
         foreach (var property in start.property.Items())
             await Assert.That(property.Name.Trim()).IsEqualTo(property.Name);
     }
 
-    // a mode word taken out of the start is no longer among its properties
+    // Has answers a value given, never a flag of that name
     [Test]
-    public async Task Remove_TakesThePropertyOut()
+    public async Task Has_AFlagOfTheName_IsNoValueGiven()
     {
+        var start = Start.Parse(["--path=x"]);
+
+        await Assert.That(start.property.Has("path")).IsFalse();
+    }
+
+    // the words a caller keeps for itself are left out of what the flags set, so they are never refused as no setting
+    [Test]
+    public async Task Values_LeaveOutTheCallersWords()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var context = app.actor.list.System.Context;
         var start = Start.Parse(["--debug", "--call.setting.timing=false"]);
 
-        await Assert.That(start.property.Remove("!debug")!.Value).IsEqualTo(true);
-        await Assert.That(start.property["!debug"]).IsNull();
-        await Assert.That(start.property["!call.setting.timing"]).IsNotNull();
+        var refused = await start.Values(app.actor.list.System.Setting, context);
+        var values = await start.Values(app.actor.list.System.Setting, context, ["debug"]);
+
+        await Assert.That(refused.Success).IsFalse();
+        await values.IsSuccess();
+        await Assert.That((await values.Value())!.KeyNames.Count()).IsEqualTo(1);
     }
 }
