@@ -92,7 +92,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     private static long? Count(string text, long step, string[] units)
     {
         var form = System.Text.RegularExpressions.Regex.Match(text.Trim(), @"^(\d+(?:\.\d+)?)\s*([a-z]+)$",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.NonBacktracking);
         if (!form.Success) return null;
         var unit = System.Array.FindIndex(units, u => string.Equals(u, form.Groups[2].Value, System.StringComparison.OrdinalIgnoreCase));
         if (unit < 0) return null;

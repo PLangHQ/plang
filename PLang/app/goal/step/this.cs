@@ -40,7 +40,8 @@ public sealed partial class @this
     public bool IsCached => PriorText != null && PriorText == Text && Code.Count > 0;
 
     // an action call at the start of the text: module.action(
-    private static readonly System.Text.RegularExpressions.Regex FormalHead = new(@"^[a-z]+\.[A-Za-z_]+\(");
+    private static readonly System.Text.RegularExpressions.Regex FormalHead = new(@"^[a-z]+\.[A-Za-z_]+\(",
+        System.Text.RegularExpressions.RegexOptions.NonBacktracking);
 
     /// <summary>The step is written in formal — its text is its code. It is read as written, with every
     /// check an answer's line gets, and asked of no one: not the decider, not the LLM. Build-time only.</summary>

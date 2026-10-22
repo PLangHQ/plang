@@ -44,7 +44,8 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
         static System.TimeSpan? Read(string text)
         {
             var form = System.Text.RegularExpressions.Regex.Match(text, @"^(-?)(?:(\d+(?:\.\d+)?)\s*(ms|d|h|m|s)\s*)+$",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                // timed, not linear: the linear engine keeps only a repeated group's last capture, and each unit is one
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase, System.TimeSpan.FromSeconds(1));
             if (!form.Success) return null;
             var span = System.TimeSpan.Zero;
             for (var i = 0; i < form.Groups[2].Captures.Count; i++)

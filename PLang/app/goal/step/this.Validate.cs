@@ -25,13 +25,19 @@ public sealed partial class @this
     }
 
     // A quoted literal ("…", or '…' when not inside a word, so `don't` is not one); a number that stands
-    // alone. These, and a %variable% (the parser's), are plang's own markers — no human language is read.
-    private static readonly System.Text.RegularExpressions.Regex Literal = new(@"""([^""]*)""|(?<!\w)'([^']*)'(?!\w)");
-    private static readonly System.Text.RegularExpressions.Regex Number = new(@"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])");
-    private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""");
+    // alone. These, and a %variable% (the parser's), are plang's own markers — no human language is read. A step's
+    // words are its author's: each read is bounded — linear where the pattern has no lookaround, else timed.
+    private static readonly System.TimeSpan Bound = System.TimeSpan.FromSeconds(1);
+    private static readonly System.Text.RegularExpressions.Regex Literal = new(@"""([^""]*)""|(?<!\w)'([^']*)'(?!\w)",
+        System.Text.RegularExpressions.RegexOptions.None, Bound);
+    private static readonly System.Text.RegularExpressions.Regex Number = new(@"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])",
+        System.Text.RegularExpressions.RegexOptions.None, Bound);
+    private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""",
+        System.Text.RegularExpressions.RegexOptions.NonBacktracking);
     // A path a step writes bare: a word starting `/`, `./` or `../` (`pack /photos to /backup/photos.tar.gz`) — never
     // inside a word (`and/or`) or a url (`http://`).
-    private static readonly System.Text.RegularExpressions.Regex BarePath = new(@"(?<![\w/.:%~])\.{0,2}/[\w.\-/]+");
+    private static readonly System.Text.RegularExpressions.Regex BarePath = new(@"(?<![\w/.:%~])\.{0,2}/[\w.\-/]+",
+        System.Text.RegularExpressions.RegexOptions.None, Bound);
 
     /// <summary>What the step's words hold that its code doesn't: a %variable%, a quoted literal — and what the
     /// code writes that the words don't: a variable, a text. (A number is <see cref="Unwritten"/>'s: words can
@@ -83,7 +89,8 @@ public sealed partial class @this
         // not inside a larger number — a duration's PT5S holds the step's 5 — or held by one of the answer's values as it
         // answers for itself (`sleep 1000 ms` answered 1s: the duration is 1000 milliseconds).
         foreach (var n in Number.Matches(Quoted.Replace(Text, "")).Select(m => m.Value).Distinct())
-            if (!System.Text.RegularExpressions.Regex.IsMatch(answer,$@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(n)}(?![\d.]|\.\d)")
+            if (!System.Text.RegularExpressions.Regex.IsMatch(answer,$@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(n)}(?![\d.]|\.\d)",
+                    System.Text.RegularExpressions.RegexOptions.None, Bound)
                 && !await Counted((global::app.type.item.number.@this)double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
                 problems.Add($"step {Index}: {n} is in the step but not in your answer: copy it exactly");
         // and a text the answer writes that the step's words don't hold is invented (channel="X" on a

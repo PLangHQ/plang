@@ -14,7 +14,7 @@ public abstract partial class @this
         if (string.IsNullOrWhiteSpace(raw)) return null;
         raw = raw.Trim();
         var count = System.Text.RegularExpressions.Regex.Match(raw, @"^(\d+)\s*(?:b|bytes?)?$",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.NonBacktracking);
         if (count.Success && long.TryParse(count.Groups[1].Value, out var bytes)) return Create(bytes, context);
         foreach (var type in context.App.type.list["size"].kind.list(context).Items().Where(type => !type.Internal))
             if (type.Make(raw, new global::app.data.@this("", context: context)) is @this size) return size;
