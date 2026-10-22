@@ -7,10 +7,9 @@ namespace app.call.isolated;
 /// </summary>
 public sealed class @this : binding.@this
 {
-    internal @this(global::app.type.@this type, call.@this? caller, list.@this stack, global::app.type.@this datetime,
-        global::app.type.@this dict,
+    internal @this(global::app.type.@this type, call.@this? caller, list.@this stack,
         IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? callee, global::app.call.setting.@this setting)
-        : base(type, caller, stack, datetime, dict, names, callee, setting) { }
+        : base(type, caller, stack, names, callee, setting) { }
 
     /// <summary>Every write lands here.</summary>
     internal override call.@this Keeper(string name) => this;

@@ -55,6 +55,12 @@ public sealed partial class @this : global::app.type.item.@this
     private readonly global::app.type.@this _datetime;
     private readonly global::app.type.@this _dict;
 
+    /// <summary>The app's datetime type — a frame's start and end are of it.</summary>
+    internal global::app.type.@this Datetime => _datetime;
+
+    /// <summary>The app's dict type — a frame's tags are of it.</summary>
+    internal global::app.type.@this Dict => _dict;
+
     /// <summary>A context's calls, of the app's <paramref name="types"/>, reading what they capture through its
     /// <paramref name="settings"/>; <paramref name="audit"/> is where every error they observe is kept.</summary>
     public @this(global::app.type.list.@this types,
@@ -174,42 +180,32 @@ public sealed partial class @this : global::app.type.item.@this
     /// <param name="setting">What the stack captures, as its async caller read it (<see cref="Setting"/>).</param>
     /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
     public call.@this Push(global::app.goal.@this goal, setting.@this setting, IEnumerable<global::app.data.@this>? names = null)
-    {
-        var caller = Caller();
-        return Enter(new call.@this(_call, goal, step: null, action: null, caller, this, _datetime, _dict, caller, Variables, setting, names));
-    }
+        => Enter(new call.@this(_call, this, goal, setting, names));
 
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
     /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
     public call.@this Push(IEnumerable<global::app.data.@this>? names, setting.@this setting, global::app.goal.step.action.@this? held = null)
-        => Enter(new call.binding.@this(_binding, _current.Value, this, _datetime, _dict, names, held, setting));
+        => Enter(new call.binding.@this(_binding, _current.Value, this, names, held, setting));
 
     /// <summary>Pushes a frame with memory of its own, born with <paramref name="names"/>: every write under it stays
     /// in it (a tool's goal, a shortcut's). A task's run starts its chain with one whose <paramref name="caller"/> is
     /// the frame its caller was in — reads fall through to the caller's frames and memory.</summary>
     public call.@this Isolate(IEnumerable<global::app.data.@this>? names, setting.@this setting,
         global::app.goal.step.action.@this? held = null, call.@this? caller = null)
-        => Enter(new call.isolated.@this(_isolated, caller ?? _current.Value, this, _datetime, _dict, names, held, setting));
+        => Enter(new call.isolated.@this(_isolated, caller ?? _current.Value, this, names, held, setting));
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
     public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
-    {
-        var caller = Caller();
-        return Enter(new call.@this(_call, step.Goal, step, action: null, caller, this, _datetime, _dict, caller, Variables, setting));
-    }
+        => Enter(new call.@this(_call, this, step, setting));
 
     /// <summary>Pushes the frame of an action starting: its step's goal, its step and itself — an action composed
     /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
-    {
-        var caller = Caller();
-        return Enter(new call.@this(_call, action.Step?.Goal, action.Step, action, caller, this, _datetime, _dict, caller,
-            variables ?? Variables, setting));
-    }
+        => Enter(new call.@this(_call, this, action, setting, variables));
 
     // The frame a frame pushed now is called from — the current one; past MaxDepth (the caller's own depth) the
     // overflow.
-    private call.@this? Caller()
+    internal call.@this? Caller()
     {
         var caller = _current.Value;
         if (caller != null && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);

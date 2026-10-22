@@ -192,21 +192,34 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// <summary>Whether this is a goal's own frame — its run's scope (<c>%!call.scope%</c>): a goal, no step.</summary>
     internal virtual bool IsGoal => Goal != null && Step == null;
 
+    /// <summary>A goal's frame: the goal starting, born with its call's <paramref name="names"/>.</summary>
+    internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.@this goal,
+        global::app.call.setting.@this setting, IEnumerable<global::app.data.@this>? names)
+        : this(type, goal, null, null, stack.Caller(), stack, stack.Variables, setting, names) { }
+
+    /// <summary>A step's frame: its goal and itself.</summary>
+    internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.step.@this step,
+        global::app.call.setting.@this setting)
+        : this(type, step.Goal, step, null, stack.Caller(), stack, stack.Variables, setting) { }
+
+    /// <summary>An action's frame: its step's goal, its step and itself; <paramref name="variables"/> the store a diff
+    /// captures, else the stack's.</summary>
+    internal @this(global::app.type.@this type, global::app.call.list.@this stack, global::app.goal.step.action.@this action,
+        global::app.call.setting.@this setting, Variables? variables)
+        : this(type, action.Step?.Goal, action.Step, action, stack.Caller(), stack, variables ?? stack.Variables, setting) { }
+
     /// <summary>
-    /// Constructed by <see cref="global::app.call.list.@this.Push"/>. Holds back-references to the
-    /// owning stack and previous AsyncLocal current so DisposeAsync can restore them and
-    /// remove self from Children when history is off. <paramref name="names"/> are the variables it is born with.
+    /// Every frame's making: it holds back-references to the owning stack and the frame current when it was pushed, so
+    /// DisposeAsync can restore them and remove self from Children when history is off. <paramref name="names"/> are
+    /// the variables it is born with.
     /// </summary>
-    internal @this(
+    private protected @this(
         global::app.type.@this type,
         global::app.goal.@this? goal,
         global::app.goal.step.@this? step,
         global::app.goal.step.action.@this? action,
         @this? caller,
         global::app.call.list.@this stack,
-        global::app.type.@this datetime,
-        global::app.type.@this dict,
-        @this? previousCurrent,
         Variables? diffSource,
         global::app.call.setting.@this setting,
         IEnumerable<global::app.data.@this>? names = null,
@@ -220,11 +233,11 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         Caller = caller;
         _depth = (caller?._depth ?? 0) + (Deepens ? 1 : 0);
         _stack = stack;
-        _previousCurrent = previousCurrent;
+        _previousCurrent = stack.Current;
         _diffSource = diffSource;
         _for = callee;
-        _datetime = datetime;
-        Tags = new global::app.type.item.dict.@this(dict);
+        _datetime = stack.Datetime;
+        Tags = new global::app.type.item.dict.@this(stack.Dict);
         Errors =new global::app.error.list.@this(stack.Audit.Type);
         Children = new child.list.@this(stack);
         foreach (var name in names ?? [])
