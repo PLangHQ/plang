@@ -1,4 +1,4 @@
 {
  "status": "fail",
- "summary": "Re-check a3260edf5: S1, L1, L4 closed; L6 by diff. I1 NOT closed \u2014 ancestor-folder copy/move/delete carries .data out (Medium), symlink into .data (Medium), '//' form asked not refused, listing leaks names, plus first-run Mkdir of bare .data refused for System. 5 red probes in StoresFolderProbeTests. Next bot: coder."
+ "summary": "Re-check 2 at f65796aae: S1/I1/K/L1/L4/L6/consent door/anchors closed or clean. OPEN: R1 High \u2014 an [Own] row signed by ANY key is read as the actor's own (shipped .data from a cloned app seeds grants; red probe ForeignSignedOwnRowTests); R2 Medium \u2014 tree copy writes through a link already in the destination with no ask (red probes); R3-R5 Low. Next bot: coder."
 }
