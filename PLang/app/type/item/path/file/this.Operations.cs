@@ -332,6 +332,9 @@ public sealed partial class @this
                 if (!recursive.Value && files.List(this, "*", recursive: false).Any())
                     return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(
                         $"Directory is not empty: {Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
+                // all it holds is deleted with it: each entry asked of the gate before any is
+                if (recursive.Value && await Refusal(Tree(null, subfolder: true, files), Verb.delete, Verb.delete, context) is { } refused)
+                    return data.@this<global::app.type.item.path.@this>.From(refused);
                 files.Delete(this, recursive.Value);
             }
             else
@@ -386,11 +389,26 @@ public sealed partial class @this
         if (sourceAuth is { Success: false }) return data.@this<global::app.type.item.path.@this>.From(sourceAuth);
         if (destAuth is { Success: false }) return data.@this<global::app.type.item.path.@this>.From(destAuth);
 
+        // A folder's entries, walked once: each asked of the gate, both ends, before anything is touched — an entry it
+        // refuses refuses the transfer whole; one it would ask is covered by the top's answer. The copy takes this walk.
+        List<(@this Entry, @this? Into)>? tree;
+        try
+        {
+            var files = context.FileSystem;
+            tree = files.IsFolder(this) ? Tree(destination, subfolder || isMove, files).ToList() : null;
+        }
+        catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
+        {
+            return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+        }
+        if (tree != null && await Refusal(tree, sourceVerb, destVerb, context) is { } refused)
+            return data.@this<global::app.type.item.path.@this>.From(refused);
+
         bool sourceOk = sourceAuth?.Success == true;
         bool destOk   = destAuth?.Success == true;
 
         if (sourceOk && destOk)
-            return await PerformTransfer(destination, isMove, overwrite, subfolder, context);
+            return await PerformTransfer(destination, isMove, overwrite, tree, context);
 
         var question = new StringBuilder();
         question.Append(context.Actor!.Name).Append(" wants to:");
@@ -404,9 +422,38 @@ public sealed partial class @this
         {
             if (!sourceOk) await StoreGrant(sourceVerb, persist, context);
             if (!destOk)   await destination.StoreGrant(destVerb, persist, context);
-            return await PerformTransfer(destination, isMove, overwrite, subfolder, context);
+            return await PerformTransfer(destination, isMove, overwrite, tree, context);
         });
         return data.@this<global::app.type.item.path.@this>.From(consented);
+    }
+
+    // The entries a verb over this folder touches, each beside where it lands under to (null: nowhere — a delete): its
+    // files, and its folders with all under them when subfolder; a folder before what it holds. Through the caller's
+    // filesystem (the disk, or the build's overlay).
+    private IEnumerable<(@this Entry, @this? Into)> Tree(@this? to, bool subfolder, filesystem.@this files)
+    {
+        foreach (var entry in files.List(this, "*", recursive: false).ToList())
+        {
+            var into = to == null ? null : new @this(PathHelper.Combine(to.Absolute, entry.Name.ToString()), to.Type);
+            if (files.IsFile(entry)) yield return (entry, into);
+            else if (subfolder)
+            {
+                yield return (entry, into);
+                foreach (var under in entry.Tree(into, subfolder, files)) yield return under;
+            }
+        }
+    }
+
+    // The first entry the gate refuses, asked without asking: each entry for verb, where it lands for toward. Null when
+    // none is refused — an entry it would ask is the top's answer's.
+    private async Task<data.@this?> Refusal(IEnumerable<(@this Entry, @this? Into)> tree, Verb verb, Verb toward, actor.context.@this context)
+    {
+        foreach (var (entry, into) in tree)
+        {
+            if (await entry.Standing(verb, context) is { Success: false } refused) return refused;
+            if (into != null && await into.Standing(toward, context) is { Success: false } landing) return landing;
+        }
+        return null;
     }
 
     private async Task StoreGrant(Verb verb, bool persist, actor.context.@this context)
@@ -424,19 +471,18 @@ public sealed partial class @this
     /// subfolders) — absorbs <c>file/code/Default.cs::Default.Copy/Move</c>.
     /// Returns the new Path (post-transfer) wrapped in Data.
     /// </summary>
-    private async Task<data.@this<global::app.type.item.path.@this>> PerformTransfer(@this destination, bool isMove, bool overwrite, bool subfolder, actor.context.@this context)
+    private async Task<data.@this<global::app.type.item.path.@this>> PerformTransfer(@this destination, bool isMove, bool overwrite,
+        List<(@this Entry, @this? Into)>? tree, actor.context.@this context)
     {
         var files = context.FileSystem;
-        // A folder copied whole: its files, and its folders' too when subfolder.
-        async Task Copy(@this from, @this to)
+        // A folder copied whole: the entries its walk holds (its files, and its folders' when subfolder), each where it
+        // lands — the entries the gate checked.
+        async Task Copy()
         {
-            files.Create(to);
-            foreach (var entry in files.List(from, "*", recursive: false).ToList())
-            {
-                var into = new @this(PathHelper.Combine(to.Absolute, entry.Name.ToString()), to.Type);
-                if (files.IsFile(entry)) await files.Copy(entry, into, overwrite);
-                else if (subfolder) await Copy(entry, into);
-            }
+            files.Create(destination);
+            foreach (var (entry, into) in tree!)
+                if (files.IsFile(entry)) await files.Copy(entry, into!, overwrite);
+                else files.Create(into!);
         }
         try
         {
@@ -447,7 +493,7 @@ public sealed partial class @this
             if (files.IsFolder(this))
             {
                 if (isMove) await files.Move(this, destination, overwrite);
-                else await Copy(this, destination);
+                else await Copy();
                 return context.Ok<global::app.type.item.path.@this>(new @this(destination.Absolute, destination.Type) { Raw = destination.Raw });
             }
 
