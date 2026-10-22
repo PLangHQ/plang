@@ -2,8 +2,6 @@
 / end-to-end. A clean pass means the typed signing surface is intact. Signing makes a new,
 / signed value (the signature is a layer around the data); `write to` keeps it.
 Start
-- archive identity 'roundtripSigner', force, on error ignore
-- create identity roundtripSigner
 - set %data% = { "message": "round-trip me" }
 - sign %data%, write to %signed%
 - verify %signed%, write to %verifyResult%

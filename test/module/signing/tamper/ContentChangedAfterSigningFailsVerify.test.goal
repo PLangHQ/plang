@@ -1,8 +1,6 @@
 / A signed value is the Data it signed, holding its signature: changing its content after
 / signing fails verify as a hash mismatch, not as any other refusal.
 Start
-- archive identity 'tamperSigner', force, on error ignore
-- create identity tamperSigner
 - set %data% = { "message": "as signed" }
 - sign %data%, write to %signed%
 - set %signed.message% = "changed after signing"

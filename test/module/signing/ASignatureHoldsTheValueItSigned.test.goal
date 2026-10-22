@@ -2,8 +2,6 @@
 / afterwards, and the signature still verifies. Verify rehashes what the signature holds, so a
 / signature that followed %data% would fail here on the changed message.
 Start
-- archive identity 'holdsSigner', force, on error ignore
-- create identity holdsSigner
 - set %data% = { "message": "signed" }
 - sign %data%, write to %signed%
 - set %data% = { "message": "changed after signing" }

@@ -1,8 +1,6 @@
 / The signature covers the Data whole — its properties too: a property added to the signed
 / value after signing fails verify as a hash mismatch, not as any other refusal.
 Start
-- archive identity 'tamperSigner', force, on error ignore
-- create identity tamperSigner
 - set %data% = { "message": "as signed" }
 - sign %data%, write to %signed%
 - set %signed!note% = "added after signing"
