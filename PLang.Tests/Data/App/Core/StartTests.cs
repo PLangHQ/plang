@@ -140,4 +140,19 @@ public class StartTests
         await values.IsSuccess();
         await Assert.That((await values.Value())!.KeyNames.Count()).IsEqualTo(1);
     }
+
+    // the flags are written all or none: a refused one after a good one leaves the good one unwritten too
+    [Test]
+    public async Task Set_ARefusedFlag_WritesNoneOfTheOthers()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var context = app.actor.list.System.Context;
+        var store = app.actor.list.System.Setting;
+        var start = Start.Parse(["--math.setting.equal.digits=3", "--nothing.here=1"]);
+
+        var set = await start.Set(store, context);
+
+        await Assert.That(set.Success).IsFalse();
+        await Assert.That((await store.Get<global::app.module.math.setting.@this>()).Equal.Digits.ToInt32()).IsEqualTo(15);
+    }
 }
