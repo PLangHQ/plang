@@ -98,5 +98,10 @@ public partial class @this
     /// <paramref name="place"/> is where the OS lands for it.
     /// </summary>
     protected virtual string Question(Verb verb, @this place, actor.context.@this context)
-        => $"Allow {context.Actor.Name} to {verb} {Absolute}? (y/n/a)";
+        => $"Allow {context.Actor.Name} to {verb} {Where(place)}? (y/n/a)";
+
+    /// <summary>This path as a question names it: as written, and where the OS lands for it (<paramref name="place"/>)
+    /// when a link leads elsewhere — the place a yes is given on.</summary>
+    private protected string Where(@this place)
+        => string.Equals(place.Absolute, Absolute, StringComparison.Ordinal) ? Absolute : $"{Absolute}, which is {place.Absolute}";
 }

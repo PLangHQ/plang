@@ -1,1 +1,1 @@
-Allow User to read //tmp/plang-perm-out.txt? (y/n/a)
+Allow User to read //tmp/plang-perm-out.txt, which is /tmp/plang-perm-out.txt? (y/n/a)
