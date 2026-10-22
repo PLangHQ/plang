@@ -23,8 +23,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     global::app.type.item.IList<Error, global::app.error.list.@this>
 {
     /// <summary>Every error, whichever its class, is of the type <c>error</c>. Its makers have no app (an owner
-    /// throws, a handler builds it), so it holds a type built from the class — until the implicit-conversion branch,
-    /// where its status goes too.</summary>
+    /// throws, a handler builds it), so it holds a type built from the class.</summary>
     protected internal override global::app.type.@this Type => new(typeof(Error));
 
     /// <summary>The error in play for the asker (<c>%!app.error.current%</c>) — its call stack's, not yet handled.</summary>

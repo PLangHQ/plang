@@ -110,7 +110,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// name — read from the class's <c>[Format]</c>: the facts (MIME, extension, whether it is characters) a
     /// value carries without asking the app, a kind of <paramref name="owner"/>, the class-built type asking. Null
     /// when the class declares no such format, so the caller keeps the bare by-name kind. Only a class-built type
-    /// asks; it goes with the implicit-conversion branch.</summary>
+    /// asks: a value born through an operator, with no app.</summary>
     private static global::app.type.kind.@this? KindOfClass(System.Type clr, string? name, @this owner)
     {
         var wanted = name ?? "";
@@ -770,7 +770,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>A type built from a C# class where no app is in reach — the class-built fallbacks (the C# operator
     /// births, error, event): its kind carries its class's [Format] facts, read from the class, so the value's own
     /// type answers its MIME / extension / text without asking an app. A class that declares no such format keeps the
-    /// bare by-name kind. Goes with the implicit-conversion branch, when every value is born from its app's list.</summary>
+    /// bare by-name kind. It exists for the values born through an operator, with no app's list to be born from.</summary>
     internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
         : this(name, clrType, kind, strict, template, known: true)
     {

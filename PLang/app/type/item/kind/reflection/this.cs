@@ -12,7 +12,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.@t
     public @this(global::app.type.@this owner) : base("*", owner) { }
 
     /// <summary>The reflection kind of a class-built item type — for a write or a C# lowering with no context to name
-    /// the app (a value born without one). Goes with the implicit-conversion branch, when no value is.</summary>
+    /// the app (a value born without one, through an operator).</summary>
     internal static readonly @this Fallback = new(new global::app.type.@this("item", typeof(global::app.type.item.@this)));
 
     // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out.

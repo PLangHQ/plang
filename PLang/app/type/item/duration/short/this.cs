@@ -8,8 +8,7 @@ public sealed class @this : duration.@this, global::app.type.item.ICreate<@this>
     /// <summary>A span born holding <paramref name="type"/>, the app's <c>{duration, short}</c>.</summary>
     public @this(System.TimeSpan value, global::app.type.@this type) : base(value, type) { }
 
-    // A span through the C# implicit conversion: its type built from its class, until the implicit-conversion branch
-    // removes that conversion.
+    // A span through the C# implicit conversion: its type built from its class, as no app is asked.
     internal @this(System.TimeSpan value) : base(value, new global::app.type.@this("duration", typeof(@this))) { }
 
     protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)

@@ -13,11 +13,11 @@ namespace app.type.item.number;
 public sealed partial class @this
 {
     // The number's own operations — the op on the carrier, another operand riding whole.
-    [LlmBuilder] public @this Abs() => Derived(Wrap(() => DoAbs(this)));
-    [LlmBuilder] public @this Floor() => Derived(Wrap(() => DoFloor(this)));
-    [LlmBuilder] public @this Ceiling() => Derived(Wrap(() => DoCeiling(this)));
-    [LlmBuilder] public @this Sqrt() => Derived(Wrap(() => DoSqrt(this)));
-    [LlmBuilder] public @this Round(@this decimals) => Derived(Wrap(() => DoRound(this, decimals)));
+    [LlmBuilder] public @this Abs() => Birth(Wrap(() => DoAbs(this)));
+    [LlmBuilder] public @this Floor() => Birth(Wrap(() => DoFloor(this)));
+    [LlmBuilder] public @this Ceiling() => Birth(Wrap(() => DoCeiling(this)));
+    [LlmBuilder] public @this Sqrt() => Birth(Wrap(() => DoSqrt(this)));
+    [LlmBuilder] public @this Round(@this decimals) => Birth(Wrap(() => DoRound(this, decimals)));
     // No overflow/precision axis for min/max (the winner keeps its exact kind), so no settings needed.
     [LlmBuilder] public @this Min(@this b) => Wrap(() => this.CompareTo(b) <= 0 ? this : b);
     [LlmBuilder] public @this Max(@this b) => Wrap(() => this.CompareTo(b) >= 0 ? this : b);

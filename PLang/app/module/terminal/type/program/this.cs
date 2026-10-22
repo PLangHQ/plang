@@ -53,7 +53,7 @@ public sealed partial class @this(IProgram asked)
         if (given == null && named != null)
             return context.Error(new ActionError(
                 $"The step gives the program permissions, but {named} holds none — leave Permission out to run it free.", "PermissionInvalid", 400));
-        if (await Found(sandbox: given != null) is { } failed) return failed;
+        if (await Locate(sandbox: given != null) is { } failed) return failed;
         // a start trusted by its origin runs by the terminal's defaults, none of the actor's settings
         Setting = Trusted ? new(context.App.type.list[typeof(setting.@this)]) : await context.Setting.Get<setting.@this>();
         if (given == null) return null;
@@ -62,7 +62,7 @@ public sealed partial class @this(IProgram asked)
         return sandbox == null ? refused : null;
     }
 
-    private async Task<Data?> Found(bool sandbox)
+    private async Task<Data?> Locate(bool sandbox)
     {
         var context = asked.Context;
         var (app, parameter, environment, workingDirectory, clean, keep) =

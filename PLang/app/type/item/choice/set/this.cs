@@ -38,7 +38,7 @@ public abstract class @this : global::app.type.kind.@this
     protected abstract override System.Collections.Generic.IReadOnlyList<string>? OwnValues { get; }
 
     /// <summary>A choice is one of its options, whatever the step's words — each a choice from this set, born as the
-    /// T → choice operator births one (no app is asked for an offer) until the implicit-operator branch.</summary>
+    /// T → choice operator births one (no app is asked for an offer).</summary>
     public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
         => new(Values!.Select(option => (global::app.type.item.@this)System.Activator.CreateInstance(_form,
             BindingFlags.Instance | BindingFlags.NonPublic, null, [Member(option)], null)!).ToList());

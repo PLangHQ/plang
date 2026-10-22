@@ -36,11 +36,11 @@ public sealed class @this : global::app.data.schema.ISchemaReader
     public Data Read(ref global::app.type.item.kind.json.Reader reader,
         global::app.type.reader.ReadContext ctx)
     {
-        var born = ctx.Context;
+        var context = ctx.Context;
         string name = "";
         global::app.type.@this? typeRef = null;
         Properties? properties = null;
-        global::app.type.item.kept.list.@this? kept = null;
+        global::app.type.item.kept.list.@this? members = null;
         // The value slot — a lazy source (content or wire) or an eagerly-read item (goal.call);
         // a source IS an item, so one local carries every arm. Its bytes are held until the row
         // closes: the "variable" list written after it is what the value is born with.
@@ -75,7 +75,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     // The null citizen is written without a type: its value is null.
                     if (typeRef is not { IsNull: false } && reader.Null())
                     {
-                        value = born.App.type.list["null"].Empty(born);
+                        value = context.App.type.list["null"].Empty(context);
                         break;
                     }
                     // Loud, never a guess — plang is strongly typed. The build's retry hands this
@@ -91,9 +91,9 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     break;
                 case "kept":
                     // the members a program added to the value, each the Data it was given
-                    kept = new global::app.type.item.kept.list.@this();
+                    members = new global::app.type.item.kept.list.@this();
                     reader.BeginObject();
-                    while (reader.NextName(out var member)) kept.Add(member, Read(ref reader, ctx));
+                    while (reader.NextName(out var member)) members.Add(member, Read(ref reader, ctx));
                     reader.EndObject();
                     break;
                 default:
@@ -121,19 +121,19 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             // an error is that failure (a failed result written out writes its error), so the step that
             // reads it fails and its on error runs.
             var d = value is global::app.error.@this received
-                ? new Data(name, context: born) { Error = received }
-                : new Data(name, value, context: born);
+                ? new Data(name, context: context) { Error = received }
+                : new Data(name, value, context: context);
             if (properties != null) d.Properties = properties;
-            if (kept != null) d.Kept = kept;
+            if (members != null) d.Kept = members;
             return d;
         }
         // No value slot — a typed absence under its declared type (the absence the type's own
         // door makes for a null raw), born with the same context as a value.
         var typedNull = typeRef is { IsNull: false }
-            ? new Data(name, new global::app.type.item.@null.@this(typeRef), context: born)
-            : new Data(name, (object?)null, context: born);
+            ? new Data(name, new global::app.type.item.@null.@this(typeRef), context: context)
+            : new Data(name, (object?)null, context: context);
         if (properties != null) typedNull.Properties = properties;
-        if (kept != null) typedNull.Kept = kept;
+        if (members != null) typedNull.Kept = members;
         return typedNull;
     }
 }

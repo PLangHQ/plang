@@ -9,7 +9,7 @@ namespace app.test.format;
 public sealed class @this
 {
     // the format kinds plang declares, the ones that write a report — a format is named by its text, with no app to
-    // ask, so each is built holding a class-built type of its kind<T>'s T; they go with the implicit-conversion branch
+    // ask, so each is built holding a class-built type of its kind<T>'s T
     private static readonly global::app.type.kind.@this[] Reporting = typeof(@this).Assembly.GetTypes()
         .Where(t => t is { IsAbstract: false, ContainsGenericParameters: false, BaseType.IsGenericType: true }
                     && t.BaseType.GetGenericTypeDefinition() == typeof(global::app.type.kind.@this<>)

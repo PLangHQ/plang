@@ -47,13 +47,13 @@ public partial class @this
 
         // The value takes the child, or answers why it can't — `set %!app.goal.list.setting.foo% = 1` is a program's
         // mistake, answered as one.
-        @this written;
+        @this answer;
         // a value the child refuses outright (a reserved key) says why
-        try { written = await target.Set(key, isIndex, value, _context!); }
+        try { answer = await target.Set(key, isIndex, value, _context!); }
         catch (global::app.error.AppException ex) { return _context?.Error(ex.Error) ?? this; }
-        if (!written.Success)
+        if (!answer.Success)
         {
-            if (!written.Error!.Status.IsNotFound) return _context?.Error(written.Error) ?? this;
+            if (!answer.Error!.Status.IsNotFound) return _context?.Error(answer.Error) ?? this;
             // a variable's own binding (keeps) holds a member its value has no place for (`set %name.lang% = "is"`); a
             // plain value inside another has nowhere to keep one
             if (keeps && !isIndex)
@@ -62,10 +62,10 @@ public partial class @this
                 return this;
             }
             return _context?.Error(new global::app.error.@this(
-                $"{written.Error.Message}: %{Path}% is a {target.Type.Name} inside another value, and has nowhere to keep a member",
+                $"{answer.Error.Message}: %{Path}% is a {target.Type.Name} inside another value, and has nowhere to keep a member",
                 "CannotSetChild", 400)) ?? this;
         }
-        if (!ReferenceEquals(written.Peek(), Peek())) SetValue(written.Peek());
+        if (!ReferenceEquals(answer.Peek(), Peek())) SetValue(answer.Peek());
         return this;
     }
 }

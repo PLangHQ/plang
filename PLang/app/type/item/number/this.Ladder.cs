@@ -110,7 +110,7 @@ public sealed partial class @this
     {
         if (base.IsKind(name)) return true;
         // the kinds its family names — the app's number entry's; an operator-born number (a type built from the class,
-        // no app) names them by the class's own until the implicit-conversion branch
+        // no app) names them by the class's own
         var named = Type.Family.kind[name] as kind.@this
                     ?? System.Linq.Enumerable.FirstOrDefault(Kinds.Values, kind => kind.Names(name));
         if (named == null) return false;

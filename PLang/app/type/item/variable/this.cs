@@ -224,7 +224,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public @this(string name, global::app.type.list.@this types) : this(new parser.@this(name, types).Whole
                                      ?? throw new System.ArgumentException($"'{name}' is not a variable name.", nameof(name))) { }
 
-    private @this(@this born) : this(born.Text, born.Code, born.Type) { }
+    private @this(@this variable) : this(variable.Text, variable.Code, variable.Type) { }
 
     public override string ToString() => Name;
 

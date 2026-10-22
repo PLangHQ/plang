@@ -321,8 +321,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The empty text — what a text holds before anything is in it (type.Empty hands its type).</summary>
     internal @this(global::app.type.@this type) : this(string.Empty, type) { }
 
-    // The string → text operator's birth: no app to ask, so it holds a type built from the class — until the
-    // implicit-operator branch.
+    // The string → text operator's birth: no app to ask, so it holds a type built from the class.
     private @this(string value) : this(value, new global::app.type.@this("text", typeof(@this))) { }
 
     // The same content and variables, born holding the declared type.

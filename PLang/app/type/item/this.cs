@@ -394,7 +394,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
     /// <summary>A value born without a type: the root type (its own type) and the type list (which answers its own
     /// type from itself) — the two makers of types. A value born through a C# implicit conversion reaches here too,
-    /// its type rebuilt from its class, until the implicit-conversion branch removes those conversions.</summary>
+    /// its type rebuilt from its class.</summary>
     protected @this() { }
 
     /// <summary>

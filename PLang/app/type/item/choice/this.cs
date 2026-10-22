@@ -38,7 +38,7 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     public @this(T value, global::app.type.@this type) : base(type) { Value = value; }
 
     // The T → choice operator's birth: it has no app to ask, so it holds {choice, <set>} built from the set's name
-    // (its T's own [PlangType]; a T with no name is a bare choice type) — until the implicit-operator branch.
+    // (its T's own [PlangType]; a T with no name is a bare choice type).
     private @this(T value)
         : base(new global::app.type.@this(typeof(@this<T>),
             (System.Attribute.GetCustomAttribute(typeof(T), typeof(global::app.Attributes.PlangTypeAttribute), inherit: false)

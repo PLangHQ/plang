@@ -26,8 +26,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The empty bool, false — what a bool holds before anything is in it (type.Empty hands its type).</summary>
     internal @this(global::app.type.@this type) : this(false, type) { }
 
-    // True, False and the bool → bool operator's birth: no app to ask, so they hold a type built from the class —
-    // until the implicit-operator branch.
+    // True, False and the bool → bool operator's birth: no app to ask, so they hold a type built from the class.
     private @this(bool value) : base(new global::app.type.@this(typeof(@this))) { Value = value; }
 
     public static readonly @this True = new(true);

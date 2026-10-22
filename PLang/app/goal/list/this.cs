@@ -77,16 +77,16 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             var walks = source.Contains('/') || source.Contains('\\');
             for (var at = folder; at.Raw is not ("/" or "\\" or "." or ""); at = at.Parent)
             {
-                var beside = await Loaded(at.Combine(source).Raw);
+                var beside = await Open(at.Combine(source).Raw);
                 if (beside.IsInitialized) return beside;
                 if (!walks) break;
             }
         }
-        return await Loaded("/" + source.TrimStart('/', '\\'));
+        return await Open("/" + source.TrimStart('/', '\\'));
 
-        // the goal the .goal at `raw` is built to, resolved as written (the app's /system/ first); its name is
+        // opens the goal the .goal at `raw` is built to, resolved as written (the app's /system/ first); its name is
         // a goal's, compared as plang names are (case aside) — its folder is a path, as written
-        async Task<data.@this<goal.@this>> Loaded(string raw)
+        async Task<data.@this<goal.@this>> Open(string raw)
         {
             var at = global::app.type.item.path.@this.Resolve(raw, context);
             if (!await (await at.Exists(context)).ToBooleanAsync())

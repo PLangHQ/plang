@@ -32,7 +32,7 @@ public class Ed25519 : ISigning
         var view = action.StoreView != null && (await action.StoreView.Value())?.Value == true ? global::app.View.Store : global::app.View.Out;
         global::app.data.@this data;
         try { data = await action.Data!.Settle(view); }
-        catch (global::app.error.AppException unread) { return action.Context.Error(unread.Error); }
+        catch (global::app.error.AppException exception) { return action.Context.Error(exception.Error); }
         // The digest of the inner data as it crosses the wire, in that view — what binds the value into the signed
         // bytes — by the kind of hash the signing setting names.
         var hash = await data.Digest(view, (await action.Context.Setting.Get<global::app.module.signing.setting.@this>()).Hash.Value, action.Context);

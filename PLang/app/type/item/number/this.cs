@@ -32,8 +32,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public kind.@this Kind => (kind.@this)Type.kind;
 
     // The operator's birth (the 15 CLR lifts, Parse with no type in hand, a kind's Create/Read, a result whose kind
-    // climbed): no app to ask, so it holds {number, <kind>} built from the class, carrying the kind — until the
-    // implicit-operator branch and the kinds item.
+    // climbed): no app to ask, so it holds {number, <kind>} built from the class, carrying the kind.
     private @this(object value, kind.@this kind)
         : base(new global::app.type.@this("number", typeof(@this)) { kind = kind }) => _value = value;
 
@@ -78,7 +77,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static string Shape => "string";
 
     // ── the 15 kind singletons — the operator births' kinds only (a CLR lift has no app; every number born with an
-    //    app holds its app's registered kind). They go with the implicit-conversion branch. Verbatim-lowercase
+    //    app holds its app's registered kind). Verbatim-lowercase
     //    names (@int, @long, …) = the kind tokens; PascalCase would shadow the CLR type names
     //    (Int128.MinValue, BigInteger.Pow) used across number/Ladder. Each a kind of the one class-built number type. ──
     private static readonly global::app.type.@this family = new("number", typeof(@this));
@@ -99,7 +98,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private static readonly kind.@this biginteger = new kind.biginteger.@this(family);
 
     /// <summary>The 15 kind singletons by name — what an operator-born number (no app) names its kinds by; a number
-    /// with an app asks its family. Goes with the implicit-conversion branch.</summary>
+    /// with an app asks its family.</summary>
     internal static readonly System.Collections.Generic.IReadOnlyDictionary<string, kind.@this> Kinds =
         new System.Collections.Generic.Dictionary<string, kind.@this>(System.StringComparer.OrdinalIgnoreCase)
         {
@@ -181,7 +180,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                     $"Cannot convert {raw?.GetType().Name} to number.", "NumberConversionFailed", 400));
                 return null;
             }
-            try { return Typed(kind.Create(value)); }
+            try { return Birth(kind.Create(value)); }
             // a value the kind can't hold (a fraction as an integer kind, NaN) says why under its own key
             catch (global::app.error.AppException e)
             {
@@ -194,15 +193,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 return null;
             }
         }
-        if (Create(raw) is { } n) return ReferenceEquals(n, raw) ? n : Typed(n);
+        if (Create(raw) is { } n) return ReferenceEquals(n, raw) ? n : Birth(n);
         data.Fail(new global::app.error.@this(
             $"Cannot convert {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} to number.",
             "NumberConversionFailed", 400));
         return null;
 
-        // a number made here is born holding the app's {number, <its kind>}, as the binding's asker names the app (a
+        // births a number made here holding the app's {number, <its kind>}, as the binding's asker names the app (a
         // binding with no context, the operator's, keeps the operator's birth)
-        @this Typed(@this number) => data.Context is { } context
+        @this Birth(@this number) => data.Context is { } context
             ? new(context.App.type.list[new global::app.type.@this("number", number.Kind.Name), context], number)
             : number;
     }

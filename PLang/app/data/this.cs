@@ -297,8 +297,7 @@ public partial class @this
         Updated = Created;
     }
 
-    /// <summary>A value through the C# implicit conversion, held with no context until the implicit-conversion
-    /// branch removes those conversions: the one Data born without one.</summary>
+    /// <summary>A value through the C# implicit conversion, held with no context: the one Data born without one.</summary>
     private protected @this(global::app.type.item.@this instance)
     {
         Name = "";
@@ -599,7 +598,7 @@ public partial class @this
             return null;
         }
         // T is made by the app's type for it: this Data's asker names the app (a Data the C# operator made has no
-        // asker, so its refusal check holds a type built from T — until the implicit-operator branch)
+        // asker, so its refusal check holds a type built from T)
         var type = Context?.App.type.list[typeof(T)];
         return value.Refuses(type ?? new global::app.type.@this(typeof(T)), this) ? null : T.Create(value, type, this);
     }
@@ -823,7 +822,7 @@ public class @this<T> : @this
         actor.context.@this? context = null)
         : base(name, value, type, parent, context) { }
 
-    // A value through the C# implicit conversion, held with no context until the implicit-conversion branch.
+    // A value through the C# implicit conversion, held with no context.
     private @this(T value) : base(value) { }
 
     /// <summary>Settles as a <typeparamref name="T"/> slot: what the reference names, made into a
@@ -963,8 +962,8 @@ public class DynamicData : @this
     // time it asks.
     private readonly global::app.type.item.computed _cell;
 
-    // The Data this stands for, found per read with the asker's context.
-    private readonly Func<actor.context.@this, @this?> _data;
+    // Finds the Data this stands for, per read, with the asker's context.
+    private readonly Func<actor.context.@this, @this?> _find;
 
     /// <summary>A Data <paramref name="found"/> at each read. <paramref name="declared"/> labels what it is
     /// before it is read (<c>%Now%</c> is a datetime).</summary>
@@ -975,17 +974,17 @@ public class DynamicData : @this
     {
     }
 
-    private DynamicData(string name, global::app.type.item.computed cell, Func<actor.context.@this, @this?> data,
+    private DynamicData(string name, global::app.type.item.computed cell, Func<actor.context.@this, @this?> find,
         actor.context.@this context)
         : base(name, cell, context: context)
     {
         _cell = cell;
-        _data = data;
+        _find = find;
     }
 
     internal override attachment Attachment
     {
-        get => _data(Context)?.Attachment ?? base.Attachment;
+        get => _find(Context)?.Attachment ?? base.Attachment;
         set => base.Attachment = value;
     }
 
