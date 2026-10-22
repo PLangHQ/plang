@@ -62,8 +62,8 @@ public sealed partial class @this
         return places.FirstOrDefault(Present) ?? places.FirstOrDefault(Housed) ?? path;
 
         // Where a /system/ path is found is decided on the app's disk: the runtime's own files are never a build's.
-        bool Present(string absolute) => new @this(absolute, file) is var at && (app.FileSystem.IsFile(at) || app.FileSystem.IsFolder(at));
-        bool Housed(string absolute) => PathHelper.GetDirectoryName(absolute) is { } folder && app.FileSystem.IsFolder(new @this(folder, file));
+        bool Present(string absolute) => new @this(absolute, file) is var at && (app.Filesystem.IsFile(at) || app.Filesystem.IsFolder(at));
+        bool Housed(string absolute) => PathHelper.GetDirectoryName(absolute) is { } folder && app.Filesystem.IsFolder(new @this(folder, file));
     }
 
     /// <summary>The places this path names, the app's own first: a <c>/system/</c> path is the app's own

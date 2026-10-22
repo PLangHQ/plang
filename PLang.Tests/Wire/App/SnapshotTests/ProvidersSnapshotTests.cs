@@ -67,7 +67,7 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
             global::app.type.item.permission.Verb.execute,
         };
         var permission = new global::app.type.item.permission.@this(
-            Actor: dst.actor.list.User.Name, Path: resolved.Location(dst.actor.list.User.Context.FileSystem), Verbs: verbs,
+            Actor: dst.actor.list.User.Name, Path: resolved.Location(dst.actor.list.User.Context.Filesystem), Verbs: verbs,
             Match: global::app.type.item.permission.Match.exact,
             dst.type.list[typeof(global::app.type.item.permission.@this)]);
         await dst.actor.list.User.Permission.Add(

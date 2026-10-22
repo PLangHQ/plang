@@ -28,7 +28,7 @@ public sealed class Default : ITerminal
             foreach (var extension in Extensions(name))
             {
                 var candidate = new global::app.type.item.path.file.@this(global::app.Utils.PathHelper.Combine(folder, name + extension), file);
-                if (context.FileSystem.IsFile(candidate)) return candidate;
+                if (context.Filesystem.IsFile(candidate)) return candidate;
             }
         return null;
     }

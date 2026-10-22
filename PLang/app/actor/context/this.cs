@@ -120,16 +120,16 @@ public sealed class @this : IDisposable
     /// What this context's file paths read and write once their gate has passed: the one it was born with,
     /// else its parent's, else the app's disk. A build checks a goal in a context born with the build's overlay.
     /// </summary>
-    public global::app.type.item.path.file.filesystem.@this FileSystem { get; }
+    public global::app.type.item.path.file.filesystem.@this Filesystem { get; }
 
     public @this(app.@this app, ActorType owner, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null,
-        global::app.type.item.path.file.filesystem.@this? fileSystem = null)
+        global::app.type.item.path.file.filesystem.@this? filesystem = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         App = app;
         Trace = new(app.type.list);
         Actor = owner;
-        FileSystem = fileSystem ?? parent?.FileSystem ?? app.FileSystem;
+        Filesystem = filesystem ?? parent?.Filesystem ?? app.Filesystem;
         Variable = variables ?? new Variables(this);
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
@@ -287,7 +287,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public @this Clone(Variables? variables = null)
     {
-        var clone = new @this(App, Actor, variables ?? Variable.Clone(), Parent, fileSystem: FileSystem)
+        var clone = new @this(App, Actor, variables ?? Variable.Clone(), Parent, filesystem: Filesystem)
         {
             IsAsync = IsAsync,
             Setup = Setup,

@@ -45,8 +45,8 @@ public abstract class @this : global::app.type.kind.@this<global::app.module.arc
     /// to do.</summary>
     protected async Task Clear(global::app.type.item.path.file.@this at, global::app.actor.context.@this context)
     {
-        var files = context.FileSystem;
-        if (files.Link(at) != null || files.IsFile(at) || files.IsFolder(at))
+        var filesystem = context.Filesystem;
+        if (filesystem.Link(at) != null || filesystem.IsFile(at) || filesystem.IsFolder(at))
             await at.Delete((global::app.type.item.@bool.@this)true, context);
     }
 }

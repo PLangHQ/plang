@@ -38,7 +38,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     internal void Stand(string folder, params Verb[] verbs)
     {
         // on the place: where the OS lands for the folder
-        folder = _actor.Context.FileSystem.Anchor(folder);
+        folder = _actor.Context.Filesystem.Anchor(folder);
         Grant[] grants =
         [
             new(_actor.Name, folder, new HashSet<Verb>(verbs), MatchMode.exact, _actor.App.type.list[typeof(Grant)]),
@@ -101,7 +101,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     /// </summary>
     public Task<global::app.data.@this?> Find(path requestPath, Verb verb)
         // a grant is on the place: the request names where the OS lands for the path
-        => Find(requestPath.Location(_actor.Context.FileSystem), verb);
+        => Find(requestPath.Location(_actor.Context.Filesystem), verb);
 
     /// <summary>The first grant allowing <paramref name="verb"/> at <paramref name="place"/> — where the OS lands for a
     /// path, worked out by the gate once per call; null when none does.</summary>

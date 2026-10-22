@@ -489,7 +489,7 @@ public partial class @this
     /// <summary>
     /// Captures user-visible variables for failure diagnostics (e.g. assertion errors).
     /// Excludes:
-    ///  - infrastructure vars (!-prefixed, e.g. !app, !fileSystem)
+    ///  - infrastructure vars (!-prefixed, e.g. !app, !filesystem)
     ///  - dynamic system vars (Now, NowUtc, GUID) — always-fresh, no diagnostic value
     /// Each variable rides whole — its Data (name, type, value), held by reference — keyed by its
     /// name, so <c>%!error.Variables.foo%</c> navigates to it. Called when an error happens (assert,

@@ -168,7 +168,7 @@ public sealed class @this : global::app.type.item.list.bare.@this<Step>
         // variables are its own: the checks read none of the builder's (its goals, its answers), and the settings
         // come through the parent.
         using var check = new actor.context.@this(context.App, context.Actor, parent: context,
-            fileSystem: context.App.Build?.Files ?? throw new System.InvalidOperationException("A goal's steps are read in a build: the app has no Build."));
+            filesystem: context.App.Build?.Files ?? throw new System.InvalidOperationException("A goal's steps are read in a build: the app has no Build."));
         // The steps are checked inside their goal's frame, as they will run: what a step names relative to its
         // goal (a file 'note.txt') is found where the goal is, not where the builder's own goal is. Each context
         // has its own calls, so the frame is pushed in each the checks run in.

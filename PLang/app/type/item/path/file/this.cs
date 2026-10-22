@@ -52,7 +52,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     // Where the OS lands for this file: each link on the way followed (the OS-rooted //x form read as /x, its ..
     // resolved), each part as the OS holds its name (an 8.3 short part long). A loop lands nowhere the OS opens: it is
     // read as written.
-    internal override string Location(filesystem.@this files) => files.Long(Landing(files)?.Absolute ?? Absolute);
+    internal override string Location(global::app.type.item.path.file.filesystem.@this filesystem) => filesystem.Long(Landing(filesystem)?.Absolute ?? Absolute);
 
     /// <summary>How big the file at this path is, as its asker may read it — through the gate; a size, written in the
     /// asker's standard; 0 when nothing is there.</summary>

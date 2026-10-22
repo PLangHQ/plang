@@ -37,7 +37,7 @@ public abstract class @this : kind.@this
         global::app.actor.context.@this context)
     {
         var folder = await self.As<global::app.type.item.path.@this>().Value() as File;
-        if (folder == null || !context.FileSystem.IsFolder(folder))
+        if (folder == null || !context.Filesystem.IsFolder(folder))
             return (context.Error(new global::app.error.ServiceError(
                 $"a {Name} packs a folder, and %{self.Name}% is none", "PackNeedsFolder", 400)), null);
         var listed = await folder.List((global::app.type.item.text.@this)"*", (global::app.type.item.@bool.@this)true, context);
@@ -63,9 +63,9 @@ public abstract class @this : kind.@this
         {
             if (child is not File at || !at.Absolute.StartsWith(root, StringComparison.Ordinal)) continue;
             var name = at.Absolute[root.Length..];
-            if (context.FileSystem.Link(at) is { } target)
+            if (context.Filesystem.Link(at) is { } target)
                 yield return new entry.@this(name, Kind.Link, File_, target);
-            else if (context.FileSystem.IsFolder(at))
+            else if (context.Filesystem.IsFolder(at))
                 yield return new entry.@this(name, Kind.Folder, Folder);
             else
             {
@@ -117,15 +117,15 @@ public abstract class @this : kind.@this
     // is removed, and is the unpack's refusal, naming it. A link replaced since (a file, a folder) is none to read.
     private async Task<global::app.data.@this?> Leaving(File into, IEnumerable<string> names, global::app.actor.context.@this context)
     {
-        var files = context.FileSystem;
-        if (into.Landing(files) is not { } inside) return null;
+        var filesystem = context.Filesystem;
+        if (into.Landing(filesystem) is not { } inside) return null;
         var folder = inside.Absolute.TrimEnd('/') + "/";
         foreach (var name in names.Distinct())
         {
             var (at, _) = await Under(into, name, context);
-            if (at == null || files.Link(at) == null) continue;
+            if (at == null || filesystem.Link(at) == null) continue;
             // a loop leads nowhere: the OS refuses it too
-            if (at.Landing(files) is not { } lands || lands.Absolute == inside.Absolute || lands.Absolute.StartsWith(folder, StringComparison.Ordinal))
+            if (at.Landing(filesystem) is not { } lands || lands.Absolute == inside.Absolute || lands.Absolute.StartsWith(folder, StringComparison.Ordinal))
                 continue;
             await at.Delete(context);
             return context.Error(new global::app.error.ServiceError(
@@ -144,7 +144,7 @@ public abstract class @this : kind.@this
         switch (entry.Kind)
         {
             case Kind.Folder:
-                if (context.FileSystem.Link(at) != null) await at.Delete(context);
+                if (context.Filesystem.Link(at) != null) await at.Delete(context);
                 var folder = await at.Mkdir(context);
                 return folder.Success ? await at.Mode(entry.Mode, context) : folder;
             case Kind.File:
@@ -159,7 +159,7 @@ public abstract class @this : kind.@this
                 var (target, unfollowed) = await into.Follow(entry.Target ?? "", last: true, context);
                 if (target == null) return unfollowed!;
                 await Clear(at, context);
-                if (!context.FileSystem.IsFile(target)) return context.Ok();
+                if (!context.Filesystem.IsFile(target)) return context.Ok();
                 return await target.CopyTo(at, (global::app.type.item.@bool.@this)true, (global::app.type.item.@bool.@this)false, context);
             default:
                 // devices, fifos and the rest: never made by someone unpacking as themselves

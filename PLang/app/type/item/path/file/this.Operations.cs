@@ -9,7 +9,7 @@ namespace app.type.item.path.file;
 
 /// <summary>
 /// FilePath verb implementations. Every method passes through <see cref="@this.AuthGate"/> (defined on the
-/// base) first, then reaches the caller's filesystem (<c>context.FileSystem</c>) — the disk, or the overlay a
+/// base) first, then reaches the caller's filesystem (<c>context.Filesystem</c>) — the disk, or the overlay a
 /// build checks its goals over. Same-scheme MoveTo/CopyTo override the base's naive default with the
 /// filesystem's own Move/Copy and the bundled-consent prompt for fresh out-of-root pairs. Every verb acts as the
 /// caller: its context carries the actor asked for permission and is the context the result Data is born with.
@@ -27,7 +27,7 @@ public sealed partial class @this
     {
         if (await AuthGate(Verb.execute, context) is { } early)
             return early;
-        if (!context.FileSystem.IsFile(this))
+        if (!context.Filesystem.IsFile(this))
             return context.Error(new global::app.error.ServiceError($"Not found: {this}", "NotFound", 404));
         try
         {
@@ -77,13 +77,13 @@ public sealed partial class @this
     }
 
     public override void Add(actor.context.@this context, global::app.type.item.path.@this? source = null)
-        => context.FileSystem.Add(source is @this from ? Into(from, context.FileSystem) : this);
+        => context.Filesystem.Add(source is @this from ? Into(from, context.Filesystem) : this);
 
-    public override void Remove(actor.context.@this context) => context.FileSystem.Remove(this);
+    public override void Remove(actor.context.@this context) => context.Filesystem.Remove(this);
 
     // Where a file sent here lands: under this location when it is a folder, else here.
-    private @this Into(@this source, filesystem.@this files)
-        => files.IsFolder(this) ? new @this(PathHelper.Combine(Absolute, source.Name.ToString()), Type) : this;
+    private @this Into(@this source, global::app.type.item.path.file.filesystem.@this filesystem)
+        => filesystem.IsFolder(this) ? new @this(PathHelper.Combine(Absolute, source.Name.ToString()), Type) : this;
 
     // A location whose extension names a format — its kind carries extensions ({binary, xyz} for an unknown one carries none).
     private bool Known(actor.context.@this context) => Kind(context).kind.Extension.Count > 0;
@@ -91,11 +91,11 @@ public sealed partial class @this
     internal override async Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context)
     {
         if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.binary.@this>.From(early);
-        if (!context.FileSystem.IsFile(this))
+        if (!context.Filesystem.IsFile(this))
             return context.Error<global::app.type.item.binary.@this>(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
         try
         {
-            return context.Ok<global::app.type.item.binary.@this>(new global::app.type.item.binary.@this(await context.FileSystem.Read(this), context.App.type.list[typeof(global::app.type.item.binary.@this)]));
+            return context.Ok<global::app.type.item.binary.@this>(new global::app.type.item.binary.@this(await context.Filesystem.Read(this), context.App.type.list[typeof(global::app.type.item.binary.@this)]));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
@@ -106,7 +106,7 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(actor.context.@this context)
     {
         if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
-        return context.Ok<global::app.type.item.@bool.@this>(context.FileSystem.IsFile(this) || context.FileSystem.IsFolder(this));
+        return context.Ok<global::app.type.item.@bool.@this>(context.Filesystem.IsFile(this) || context.Filesystem.IsFolder(this));
     }
 
     /// <summary>
@@ -130,20 +130,20 @@ public sealed partial class @this
     {
         if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
         var listType = context.App.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.path.@this>)];
-        if (entry == Entry.file && context.FileSystem.IsFile(this))
+        if (entry == Entry.file && context.Filesystem.IsFile(this))
             return context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(
                 new global::app.type.item.list.@this<global::app.type.item.path.@this>(
                     System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(pattern.ToString(), Name.ToString())
                         ? [new data.@this("", this, context: context)] : [], listType));
-        if (!context.FileSystem.IsFolder(this))
+        if (!context.Filesystem.IsFolder(this))
             return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
         {
             // Each entry is this folder combined with its place under it — typed text included. An entry the gate
             // refuses (the stores' folder, and all under it) is left out; one it would ask about is listed, as named.
             var files = new List<data.@this>();
-            foreach (var f in context.FileSystem.List(this, pattern.ToString(), recursive.Value)
-                         .Where(entry == Entry.folder ? context.FileSystem.IsFolder : context.FileSystem.IsFile).ToList())
+            foreach (var f in context.Filesystem.List(this, pattern.ToString(), recursive.Value)
+                         .Where(entry == Entry.folder ? context.Filesystem.IsFolder : context.Filesystem.IsFile).ToList())
             {
                 if (await f.Standing(Verb.read, context) is { Success: false }) continue;
                 files.Add(new data.@this("", Combine(f.Absolute[Absolute.Length..].TrimStart(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar)),
@@ -161,7 +161,7 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this.StatInfo>> Stat(actor.context.@this context)
     {
         if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.path.@this.StatInfo>.From(early);
-        return context.Ok<global::app.type.item.path.@this.StatInfo>(context.FileSystem.Stat(this, context));
+        return context.Ok<global::app.type.item.path.@this.StatInfo>(context.Filesystem.Stat(this, context));
     }
 
     // --- Writes --------------------------------------------------------------
@@ -169,7 +169,7 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this>> WriteText(string content, actor.context.@this context)
     {
         if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        await context.FileSystem.Write(this, Encoding.UTF8.GetBytes(content));
+        await context.Filesystem.Write(this, Encoding.UTF8.GetBytes(content));
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
@@ -191,7 +191,7 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this>> WriteBytes(byte[] content, actor.context.@this context)
     {
         if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        await context.FileSystem.Write(this, content);
+        await context.Filesystem.Write(this, content);
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
@@ -200,7 +200,7 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this>> Write(System.IO.Stream content, actor.context.@this context)
     {
         if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        await context.FileSystem.Write(this, content, context.CancellationToken);
+        await context.Filesystem.Write(this, content, context.CancellationToken);
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
@@ -208,11 +208,11 @@ public sealed partial class @this
     public override async Task<data.@this> Pour(System.IO.Stream into, actor.context.@this context)
     {
         if (await AuthGate(Verb.read, context) is { } early) return early;
-        if (!context.FileSystem.IsFile(this))
+        if (!context.Filesystem.IsFile(this))
             return context.Error(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
         try
         {
-            await using var file = await context.FileSystem.Open(this);
+            await using var file = await context.Filesystem.Open(this);
             await file.CopyToAsync(into, context.CancellationToken);
             return context.Ok();
         }
@@ -227,7 +227,7 @@ public sealed partial class @this
     internal override async Task<(data.@this result, string held, string? name)> Pack(data.@this self, System.IO.Stream into,
         actor.context.@this context)
     {
-        if (context.FileSystem.IsFolder(this))
+        if (context.Filesystem.IsFolder(this))
             return (context.Error(new global::app.error.ServiceError(
                 $"{Raw} is a folder, and a folder has no bytes of its own: name a bundle — tar.gz, zip", "PackNeedsBundle", 400)), "file", null);
         return (await Pour(into, context), "file", Name.ToString());
@@ -238,9 +238,9 @@ public sealed partial class @this
     internal async Task<(System.IO.Stream? stream, data.@this? refused)> Open(actor.context.@this context)
     {
         if (await AuthGate(Verb.read, context) is { } early) return (null, early);
-        if (!context.FileSystem.IsFile(this))
+        if (!context.Filesystem.IsFile(this))
             return (null, context.Error(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404)));
-        return (await context.FileSystem.Open(this), null);
+        return (await context.Filesystem.Open(this), null);
     }
 
     /// <summary>Makes this a link leading to <paramref name="target"/>, as it is written — what is here is replaced
@@ -248,9 +248,9 @@ public sealed partial class @this
     internal async Task<data.@this<global::app.type.item.path.@this>> Link(string target, actor.context.@this context)
     {
         if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        var files = context.FileSystem;
-        if (files.Link(this) != null || files.IsFile(this) || files.IsFolder(this)) files.Delete(this, recursive: true);
-        files.Link(this, target);
+        var filesystem = context.Filesystem;
+        if (filesystem.Link(this) != null || filesystem.IsFile(this) || filesystem.IsFolder(this)) filesystem.Delete(this, recursive: true);
+        filesystem.Link(this, target);
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
@@ -277,8 +277,8 @@ public sealed partial class @this
         if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         if (OperatingSystem.IsWindows()) return context.Ok<global::app.type.item.path.@this>(this);
         var permissions = mode | System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite
-                   | (context.FileSystem.IsFolder(this) ? System.IO.UnixFileMode.UserExecute : 0);
-        context.FileSystem.Mode(this, permissions & ~(System.IO.UnixFileMode.SetUser | System.IO.UnixFileMode.SetGroup));
+                   | (context.Filesystem.IsFolder(this) ? System.IO.UnixFileMode.UserExecute : 0);
+        context.Filesystem.Mode(this, permissions & ~(System.IO.UnixFileMode.SetUser | System.IO.UnixFileMode.SetGroup));
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
@@ -292,17 +292,17 @@ public sealed partial class @this
     internal async Task<(@this? at, data.@this? refused)> Follow(string relative, bool last, actor.context.@this context)
     {
         if (await AuthGate(Verb.read, context) is { } early) return (null, early);
-        return Reach(relative, last, context.FileSystem) is { } at ? (at, null)
+        return Reach(relative, last, context.Filesystem) is { } at ? (at, null)
             : (null, context.Error(new global::app.error.ServiceError($"too many links resolving {relative} in {Raw}", "LinkLoop", 400)));
     }
 
-    /// <summary>Where the OS lands for this path, read in <paramref name="files"/>: from the host's root, each link on the
+    /// <summary>Where the OS lands for this path, read in <paramref name="filesystem"/>: from the host's root, each link on the
     /// way followed as the OS follows it (an absolute target from the host's root, a relative one from the link's own
     /// folder), this path's own last part too; null on a loop. Not gated: it reads only what links say.</summary>
-    internal @this? Landing(filesystem.@this files)
+    internal @this? Landing(global::app.type.item.path.file.filesystem.@this filesystem)
     {
         var root = PathHelper.GetPathRoot(Absolute);
-        return string.IsNullOrEmpty(root) ? this : new @this(root, Type).Reach(Absolute[root.Length..], last: true, files);
+        return string.IsNullOrEmpty(root) ? this : new @this(root, Type).Reach(Absolute[root.Length..], last: true, filesystem);
     }
 
     // what parts a path is written in: / everywhere, \ too on Windows (a legal name character elsewhere)
@@ -311,7 +311,7 @@ public sealed partial class @this
     // relative from this folder as its root, each link on the way followed (the last part only when last), .. never
     // above this folder; null past 40 links. An absolute link starts again from this folder — but a walk from a drive's
     // root (the OS's reading) starts again from the link's own drive.
-    private @this? Reach(string relative, bool last, filesystem.@this files)
+    private @this? Reach(string relative, bool last, global::app.type.item.path.file.filesystem.@this filesystem)
     {
         var separator = PathHelper.DirectorySeparatorChar;
         var host = string.Equals(PathHelper.GetPathRoot(Absolute), Absolute, RootComparison);
@@ -325,7 +325,7 @@ public sealed partial class @this
             if (part == ".") continue;
             if (part == "..") { if (at.Count > 0) at.RemoveAt(at.Count - 1); continue; }
             var here = new @this(root + separator + string.Join(separator, at.Append(part)), Type);
-            if ((parts.Count > 0 || last) && files.Link(here) is { } link)
+            if ((parts.Count > 0 || last) && filesystem.Link(here) is { } link)
             {
                 if (++hops > 40) return null;
                 var linkRoot = PathHelper.GetPathRoot(link);
@@ -346,14 +346,14 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)
     {
         if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        await context.FileSystem.Append(this, content);
+        await context.Filesystem.Append(this, content);
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
     public override async Task<data.@this<global::app.type.item.path.@this>> Mkdir(actor.context.@this context)
     {
         if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        context.FileSystem.Create(this);
+        context.Filesystem.Create(this);
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
@@ -370,24 +370,24 @@ public sealed partial class @this
         if (await AuthGate(Verb.delete, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         try
         {
-            var files = context.FileSystem;
-            if (files.Link(this) != null || files.IsFile(this))
-                files.Delete(this, recursive: false);
-            else if (files.IsFolder(this))
+            var filesystem = context.Filesystem;
+            if (filesystem.Link(this) != null || filesystem.IsFile(this))
+                filesystem.Delete(this, recursive: false);
+            else if (filesystem.IsFolder(this))
             {
-                if (!recursive.Value && files.List(this, "*", recursive: false).Any())
+                if (!recursive.Value && filesystem.List(this, "*", recursive: false).Any())
                     return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(
                         $"Directory is not empty: {Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
                 // all it holds is deleted with it: each entry asked of the gate before any is, then each removed alone,
                 // children first — a folder is a plain remove, so an entry that appeared since the check fails it
                 if (recursive.Value)
                 {
-                    var tree = Tree(null, subfolder: true, files).ToList();
+                    var tree = Tree(null, subfolder: true, filesystem).ToList();
                     if (await Refusal(tree, Verb.delete, Verb.delete, context) is { } refused)
                         return data.@this<global::app.type.item.path.@this>.From(refused);
-                    foreach (var (entry, _) in Enumerable.Reverse(tree)) files.Delete(entry, recursive: false);
+                    foreach (var (entry, _) in Enumerable.Reverse(tree)) filesystem.Delete(entry, recursive: false);
                 }
-                files.Delete(this, recursive: false);
+                filesystem.Delete(this, recursive: false);
             }
             else
                 return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError($"Not found: {Raw}", "NotFound", 404));
@@ -451,8 +451,8 @@ public sealed partial class @this
         List<(@this Entry, @this? Into)>? tree;
         try
         {
-            var files = context.FileSystem;
-            tree = files.IsFolder(this) ? Tree(destination, subfolder || isMove, files).ToList() : null;
+            var filesystem = context.Filesystem;
+            tree = filesystem.IsFolder(this) ? Tree(destination, subfolder || isMove, filesystem).ToList() : null;
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
@@ -487,17 +487,17 @@ public sealed partial class @this
     // The entries a verb over this folder touches, each beside where it lands under to (null: nowhere — a delete): its
     // files, and its folders with all under them when subfolder; a folder before what it holds. Through the caller's
     // filesystem (the disk, or the build's overlay).
-    private IEnumerable<(@this Entry, @this? Into)> Tree(@this? to, bool subfolder, filesystem.@this files)
+    private IEnumerable<(@this Entry, @this? Into)> Tree(@this? to, bool subfolder, global::app.type.item.path.file.filesystem.@this filesystem)
     {
-        foreach (var entry in files.List(this, "*", recursive: false).ToList())
+        foreach (var entry in filesystem.List(this, "*", recursive: false).ToList())
         {
             var into = to == null ? null : new @this(PathHelper.Combine(to.Absolute, entry.Name.ToString()), to.Type);
             // a link is an entry of its own: never descended, never read through
-            if (files.Link(entry) != null || files.IsFile(entry)) yield return (entry, into);
+            if (filesystem.Link(entry) != null || filesystem.IsFile(entry)) yield return (entry, into);
             else if (subfolder)
             {
                 yield return (entry, into);
-                foreach (var under in entry.Tree(into, subfolder, files)) yield return under;
+                foreach (var under in entry.Tree(into, subfolder, filesystem)) yield return under;
             }
         }
     }
@@ -532,40 +532,40 @@ public sealed partial class @this
     private async Task<data.@this<global::app.type.item.path.@this>> PerformTransfer(@this destination, bool isMove, bool overwrite,
         List<(@this Entry, @this? Into)>? tree, actor.context.@this context)
     {
-        var files = context.FileSystem;
+        var filesystem = context.Filesystem;
         // A folder copied whole: the entries its walk holds (its files, and its folders' when subfolder), each where it
         // lands — the entries the gate checked. A link is made again with its target as written, never read through.
         async Task Copy()
         {
-            files.Create(destination);
+            filesystem.Create(destination);
             foreach (var (entry, into) in tree!)
-                if (files.Link(entry) is { } target) Relink(into!, target);
-                else if (files.IsFile(entry)) await files.Copy(entry, into!, overwrite);
-                else files.Create(into!);
+                if (filesystem.Link(entry) is { } target) Relink(into!, target);
+                else if (filesystem.IsFile(entry)) await filesystem.Copy(entry, into!, overwrite);
+                else filesystem.Create(into!);
         }
         // a link over what was there, as a copy of a file over one
         void Relink(@this at, string target)
         {
-            if (files.Link(at) != null || files.IsFile(at)) files.Delete(at, recursive: false);
-            files.Link(at, target);
+            if (filesystem.Link(at) != null || filesystem.IsFile(at)) filesystem.Delete(at, recursive: false);
+            filesystem.Link(at, target);
         }
         try
         {
-            if (!files.IsFile(this) && !files.IsFolder(this))
+            if (!filesystem.IsFile(this) && !filesystem.IsFolder(this))
                 return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError($"Not found: {Raw}", "NotFound", 404));
 
             // Directory transfer ------------------------------------------------
-            if (files.IsFolder(this))
+            if (filesystem.IsFolder(this))
             {
-                if (isMove) await files.Move(this, destination, overwrite);
+                if (isMove) await filesystem.Move(this, destination, overwrite);
                 else await Copy();
                 return context.Ok<global::app.type.item.path.@this>(new @this(destination.Absolute, destination.Type) { Raw = destination.Raw });
             }
 
             // File transfer: into the destination when it names a folder ---------
-            var target = destination.Into(this, files);
-            if (isMove) await files.Move(this, target, overwrite);
-            else await files.Copy(this, target, overwrite);
+            var target = destination.Into(this, filesystem);
+            if (isMove) await filesystem.Move(this, target, overwrite);
+            else await filesystem.Copy(this, target, overwrite);
 
             // The destination as given — or, when it named a folder, the file under it.
             var destTyped = ReferenceEquals(target, destination) ? destination.Raw : destination.Combine(Name.ToString()).Raw;

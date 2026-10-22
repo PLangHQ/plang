@@ -109,7 +109,7 @@ public class RealPathGateTests : System.IAsyncDisposable
     [Test] public async Task OneGateCall_ReadsThePathsLinksOnce()
     {
         var counting = new Counting();
-        var ctx = new global::app.actor.context.@this(app, app.actor.list.User, parent: user, fileSystem: counting);
+        var ctx = new global::app.actor.context.@this(app, app.actor.list.User, parent: user, filesystem: counting);
         var file = ctx.File(System.IO.Path.Combine(root, "a.txt"));
         await (await file.Authorize(global::app.type.item.permission.Verb.read, ctx)).IsSuccess();
 
@@ -122,11 +122,11 @@ public class RealPathGateTests : System.IAsyncDisposable
     // a build's overlay holds its own links: one made there is answered there, and the disk is untouched
     [Test] public async Task TheOverlay_HoldsItsOwnLinks()
     {
-        var overlay = new global::app.type.item.path.file.filesystem.overlay.@this(app.FileSystem);
+        var overlay = new global::app.type.item.path.file.filesystem.overlay.@this(app.Filesystem);
         var at = user.File(System.IO.Path.Combine(root, "made"));
         overlay.Link(at, "a.txt");
         await Assert.That(overlay.Link(at)).IsEqualTo("a.txt");
-        await Assert.That(app.FileSystem.Link(at)).IsNull();
+        await Assert.That(app.Filesystem.Link(at)).IsNull();
         await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(root, "made"))).IsFalse();
     }
 }

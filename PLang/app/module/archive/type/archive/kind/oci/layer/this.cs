@@ -32,7 +32,7 @@ public sealed class @this : tar.@this
         if (folder == null) return refused!;
         if (entry.Leaf == Opaque)
         {
-            if (!context.FileSystem.IsFolder(folder)) return context.Ok();
+            if (!context.Filesystem.IsFolder(folder)) return context.Ok();
             var listed = await folder.List(context);
             if (!listed.Success) return listed;
             foreach (var child in (await listed.Value())!.Items())

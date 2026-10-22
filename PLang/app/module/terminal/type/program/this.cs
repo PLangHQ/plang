@@ -103,7 +103,7 @@ public sealed partial class @this(IProgram asked)
         var name = (await app.Value())!.Clr<string>()!;
         // a name with a folder in it is a plang path; a bare name is the terminal's to find, on this machine's PATH
         var program = name.Contains('/') || name.Contains('\\')
-            ? FilePath.Resolve(name, context) is var given && context.FileSystem.IsFile(given) ? given : null
+            ? FilePath.Resolve(name, context) is var given && context.Filesystem.IsFile(given) ? given : null
             : asked.Terminal.Find(name, context);
         if (program == null)
             return context.Error(new ActionError($"Program not found: {name}. Not a path, and not on PATH.", "ProgramNotFound", 404));

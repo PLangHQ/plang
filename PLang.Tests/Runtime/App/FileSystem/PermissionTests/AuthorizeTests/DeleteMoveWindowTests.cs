@@ -56,7 +56,7 @@ public class DeleteMoveWindowTests : System.IAsyncDisposable
         System.IO.Directory.CreateDirectory(At("gone", "sub"));
         System.IO.File.WriteAllText(At("gone", "a.txt"), "a");
         System.IO.File.WriteAllText(At("gone", "sub", "late.txt"), "late");
-        var ctx = new global::app.actor.context.@this(app, app.actor.list.User, parent: user, fileSystem: new Late(At("gone", "sub", "late.txt")));
+        var ctx = new global::app.actor.context.@this(app, app.actor.list.User, parent: user, filesystem: new Late(At("gone", "sub", "late.txt")));
 
         var deleted = await ctx.File(At("gone")).Delete(true, ctx);
         await deleted.IsFailure();
@@ -68,7 +68,7 @@ public class DeleteMoveWindowTests : System.IAsyncDisposable
     [Test] public async Task MovingTheRoot_BeforeItsStoresAreMade_IsRefused()
     {
         System.IO.File.WriteAllText(At("a.txt"), "a");
-        var ctx = new global::app.actor.context.@this(app, app.actor.list.User, parent: user, fileSystem: new Late(At(".data")));
+        var ctx = new global::app.actor.context.@this(app, app.actor.list.User, parent: user, filesystem: new Late(At(".data")));
 
         var moved = await ctx.File(root).MoveTo(ctx.File(outside), overwrite: false, ctx);
         await moved.IsFailure();

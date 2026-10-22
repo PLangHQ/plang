@@ -8,7 +8,7 @@ public partial class @this : ISnapshot
     /// <summary>
     /// Captures user-visible variables into the snapshot. Honours the existing
     /// partition (the <see cref="Snapshot()"/> method documents the rules):
-    ///  - skip !-prefix (infrastructure vars: !app, !fileSystem, !error, …)
+    ///  - skip !-prefix (infrastructure vars: !app, !filesystem, !error, …)
     ///  - skip DynamicData (Now, NowUtc, GUID — always-fresh)
     /// Each remaining variable is cloned so the snapshot is detached from
     /// further mutations on the live store. Full Data shape is preserved

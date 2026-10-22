@@ -37,7 +37,7 @@ public partial class @this
             ?? throw new InvalidOperationException("Path.Authorize requires the caller's context with an actor");
 
         // where the OS lands for this path, worked out once for the whole call (a link can change between calls)
-        var place = Location(context.FileSystem);
+        var place = Location(context.Filesystem);
 
         // In its root, or a grant it holds: yes; the stores' folder with no grant: no — neither asks
         if (await Standing(verb, context, place) is { } answer) return answer;
@@ -55,7 +55,7 @@ public partial class @this
     }
 
     protected Task<data.@this> SignAndStore(actor.@this actor, Verb verb, bool persist, actor.context.@this context)
-        => Keep(actor, verb, persist, Location(actor.Context.FileSystem), context);
+        => Keep(actor, verb, persist, Location(actor.Context.Filesystem), context);
 
     // The actor's answer kept as a grant on place. Nothing in memory signs: a persisted grant is signed when it crosses
     // the application/plang boundary into the settings store; persist says which.
@@ -66,7 +66,7 @@ public partial class @this
     }
 
     // a grant is on the place: the request names where the OS lands for this path
-    protected permission.@this BuildRequest(actor.@this actor, Verb verb) => Request(actor, verb, Location(actor.Context.FileSystem));
+    protected permission.@this BuildRequest(actor.@this actor, Verb verb) => Request(actor, verb, Location(actor.Context.Filesystem));
 
     private permission.@this Request(actor.@this actor, Verb verb, string place) =>
         permission.@this.Request(actor, place, verb, MatchMode.exact);
@@ -75,29 +75,29 @@ public partial class @this
     /// stores' folder (<see cref="IsStore"/>), whose keys nobody is asked for; null when the actor is to be asked. Every
     /// door that asks takes this answer first.</summary>
     private protected Task<data.@this?> Standing(Verb verb, actor.context.@this context)
-        => Standing(verb, context, Location(context.FileSystem));
+        => Standing(verb, context, Location(context.Filesystem));
 
     // The same, for place: where the OS lands for this path, worked out once by the caller.
     private async Task<data.@this?> Standing(Verb verb, actor.context.@this context, string place)
     {
-        var files = context.FileSystem;
-        if (IsInRoot(files, context.App, place)) return context.Ok();
+        var filesystem = context.Filesystem;
+        if (IsInRoot(filesystem, context.App, place)) return context.Ok();
         if (await context.Actor!.Permission.Find(place, verb) != null) return context.Ok();
-        if (IsStore(files, context.App, place)) return context.Error(new global::app.error.PermissionDenied(Request(context.Actor!, verb, place)));
+        if (IsStore(filesystem, context.App, place)) return context.Error(new global::app.error.PermissionDenied(Request(context.Actor!, verb, place)));
         return null;
     }
 
     // In-root is under the app's own folder. The os folder is never in-root, even when an app is rooted there: what an
     // actor may do there is its standing grants (every actor reads and runs; only the system writes). Nor is the stores'
     // folder: only the system reaches it, through its standing grant.
-    protected bool IsInRoot(actor.context.@this context) => IsInRoot(context.FileSystem, context.App, Location(context.FileSystem));
+    protected bool IsInRoot(actor.context.@this context) => IsInRoot(context.Filesystem, context.App, Location(context.Filesystem));
 
     // Each where the OS lands: place, and the app's folders it is held against (read once, kept).
-    private bool IsInRoot(file.filesystem.@this files, global::app.@this? app, string place)
+    private bool IsInRoot(file.filesystem.@this filesystem, global::app.@this? app, string place)
     {
         if (app == null) return false;
-        if (IsUnder(files, place, app.OsAbsolutePath, RootComparison) || IsStore(files, app, place)) return false;
-        return IsUnder(files, place, app.AbsolutePath, RootComparison);
+        if (IsUnder(filesystem, place, app.OsAbsolutePath, RootComparison) || IsStore(filesystem, app, place)) return false;
+        return IsUnder(filesystem, place, app.AbsolutePath, RootComparison);
     }
 
     /// <summary>Whether the stores' folder's place (<c>&lt;root&gt;/.data</c>, there yet or not) is this path or under it,
@@ -105,17 +105,17 @@ public partial class @this
     private protected bool IsAboveStores(actor.context.@this context)
     {
         if (context.App is not { } app) return false;
-        var files = context.FileSystem;
-        var place = Location(files);
-        var stores = files.Anchor(PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder));
+        var filesystem = context.Filesystem;
+        var place = Location(filesystem);
+        var stores = filesystem.Anchor(PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder));
         var under = place.EndsWith(PathHelper.DirectorySeparatorChar) ? place : place + PathHelper.DirectorySeparatorChar;
         return stores.StartsWith(under, StringComparison.OrdinalIgnoreCase) || string.Equals(stores, place, StringComparison.OrdinalIgnoreCase);
     }
 
     // Under the stores' folder of the app's root (<root>/.data/), where its stores and an identity's key are kept — in
     // any case, as a case-blind disk opens it (.DATA is .data there).
-    private bool IsStore(file.filesystem.@this files, global::app.@this? app, string place)
-        => app != null && IsUnder(files, place, PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder), StringComparison.OrdinalIgnoreCase);
+    private bool IsStore(file.filesystem.@this filesystem, global::app.@this? app, string place)
+        => app != null && IsUnder(filesystem, place, PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder), StringComparison.OrdinalIgnoreCase);
 
     // The running app's anchors: the only variables a goal that ships with plang may hold in what it names itself and
     // still be trusted — each a fact no caller can set (pinned). Every other variable, any other %!…% included
@@ -142,19 +142,19 @@ public partial class @this
 
     /// <summary>
     /// Returns true when <paramref name="place"/> (where the OS lands for this path) sits under (or equals) where
-    /// <paramref name="rootCandidate"/> lands, read in <paramref name="files"/>.
+    /// <paramref name="rootCandidate"/> lands, read in <paramref name="filesystem"/>.
     /// </summary>
-    private bool IsUnder(file.filesystem.@this files, string place, string? rootCandidate, StringComparison cmp)
+    private bool IsUnder(file.filesystem.@this filesystem, string place, string? rootCandidate, StringComparison cmp)
     {
         if (string.IsNullOrEmpty(rootCandidate)) return false;
-        var root = files.Anchor(rootCandidate);
+        var root = filesystem.Anchor(rootCandidate);
         var rootWithSeparator = root.EndsWith(PathHelper.DirectorySeparatorChar) ? root : root + PathHelper.DirectorySeparatorChar;
         return place.StartsWith(rootWithSeparator, cmp) || string.Equals(place, root, cmp);
     }
 
-    /// <summary>Where the gate finds this path, read in <paramref name="files"/>: the place the OS opens for it — its
+    /// <summary>Where the gate finds this path, read in <paramref name="filesystem"/>: the place the OS opens for it — its
     /// absolute form, unless a scheme reads it otherwise (a file: each link on the way followed).</summary>
-    internal virtual string Location(file.filesystem.@this files) => Absolute;
+    internal virtual string Location(file.filesystem.@this filesystem) => Absolute;
 
     /// <summary>
     /// Extra text appended to the Authorize prompt before the y/n/a choices: what a yes means beyond the words.
@@ -164,7 +164,7 @@ public partial class @this
     /// </summary>
     protected virtual string AuthorizationHint(Verb verb, actor.context.@this context)
         => verb is Verb.write or Verb.delete
-           && IsUnder(context.FileSystem, Location(context.FileSystem), context.App?.OsAbsolutePath, RootComparison)
+           && IsUnder(context.Filesystem, Location(context.Filesystem), context.App?.OsAbsolutePath, RootComparison)
             ? "(files under /system/ ship with plang; a goal there runs programs without asking)"
             : "";
 }

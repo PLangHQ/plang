@@ -200,7 +200,7 @@ public class AppNodesTests
 
     private static readonly string[] Shown = ["goal", "type", "actor", "error", "test", "shortcut", "module", "store",
         "parent", "id", "created", "updated"];
-    private static readonly string[] Plumbing = ["cache", "fileSystem", "code", "debug", "build", "keepAlive", "absolutePath",
+    private static readonly string[] Plumbing = ["cache", "filesystem", "code", "debug", "build", "keepAlive", "absolutePath",
         "osAbsolutePath", "startedAt", "uptime"];
 
     // `write out %!app%`: on the wire the app writes what it holds — never the asker's memory, never its C# plumbing.

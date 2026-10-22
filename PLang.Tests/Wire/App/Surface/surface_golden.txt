@@ -978,7 +978,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Debug : app.module.debug.this { get; set; }
   DisposeAsync() : System.Threading.Tasks.ValueTask
   Environment(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.text.this> [LlmBuilder]
-  FileSystem : app.type.item.path.file.filesystem.this { get; }
+  Filesystem : app.type.item.path.file.filesystem.this { get; }
   Id : System.String { get; } [Out, Store]
   KeepAlive : app.keepalive.this { get; }
   Load() : System.Threading.Tasks.Task<app.data.this>

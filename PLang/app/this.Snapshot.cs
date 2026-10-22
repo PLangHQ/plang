@@ -11,7 +11,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// <summary>
     /// The App's state as a snapshot: each owner captures its own section. Only owners implementing
     /// <see cref="global::app.snapshot.ISnapshot"/> participate — the rest (Modules, Goals, Channels,
-    /// Cache, Events, Settings, Types, Config, FileSystem, …) reconstruct on build.
+    /// Cache, Events, Settings, Types, Config, Filesystem, …) reconstruct on build.
     /// </summary>
     public snapshot.@this Snapshot(actor.context.@this context)
         => Capture(context, Snapshotted(context.Variable, context.call));

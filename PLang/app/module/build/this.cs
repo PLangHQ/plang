@@ -22,7 +22,7 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
     public @this(actor.context.@this context)
     {
         _context = context;
-        Files = new(context.App.FileSystem);
+        Files = new(context.App.Filesystem);
     }
 
     /// <summary>The files the build checks its goals over, for the whole build: the disk, with what the goals'

@@ -45,7 +45,7 @@ public class VariablesSnapshotTests
         await Assert.That(snapshot.Held("baz")).IsNotNull();
     }
 
-    // Convention: %!app%, %!fileSystem%, Now, GUID, etc. are excluded from the default
+    // Convention: %!app%, %!filesystem%, Now, GUID, etc. are excluded from the default
     // assertion-failure view. The renderer may opt in to include specific system vars
     // the user referenced in the failing step (see Batch 11).
     [Test]

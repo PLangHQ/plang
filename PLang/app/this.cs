@@ -180,10 +180,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
     /// <summary>
     /// The disk — what a file path's verbs reach once their gate has passed. A context reads and writes
-    /// through its own (<c>context.FileSystem</c>): this one, or the overlay a build checks its goals over.
+    /// through its own (<c>context.Filesystem</c>): this one, or the overlay a build checks its goals over.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.type.item.path.file.filesystem.@this FileSystem { get; } = new();
+    public global::app.type.item.path.file.filesystem.@this Filesystem { get; } = new();
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
