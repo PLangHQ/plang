@@ -46,6 +46,15 @@ public class StoresFolderTests : System.IAsyncDisposable
         }
     }
 
+    // the file's text, read beside whoever holds it open (the app's settings store does; Windows refuses a plain open)
+    private static string Shared(string path)
+    {
+        using var stream = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read,
+            System.IO.FileShare.ReadWrite | System.IO.FileShare.Delete);
+        using var reader = new System.IO.StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
     private async Task Refused(global::app.data.@this answer)
     {
         await answer.IsFailure();
@@ -72,7 +81,7 @@ public class StoresFolderTests : System.IAsyncDisposable
         var mine = System.IO.Path.Combine(root, "mine");
         System.IO.File.WriteAllText(mine, "rows");
         await Refused(await user.File(mine).CopyTo(user.File(key), overwrite: true, subfolder: true, user));
-        await Assert.That(System.IO.File.ReadAllText(key)).IsEqualTo("the identity's private key");
+        await Assert.That(Shared(key)).IsEqualTo("the identity's private key");
     }
 
     // the OS-rooted form of the same file (//<root>/…, a .. in it too) is the same file to the gate

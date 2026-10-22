@@ -57,8 +57,14 @@ public class EntryGateTests : System.IAsyncDisposable
         await Assert.That(answer.Error!.Key).IsEqualTo("PermissionDenied");
     }
 
+    // the stores' file read beside whoever holds it open (the app's settings store does; Windows refuses a plain open)
     private async Task StoresUntouched()
-        => await Assert.That(System.IO.File.ReadAllText(key)).IsEqualTo("the identity's private key");
+    {
+        using var stream = new System.IO.FileStream(key, System.IO.FileMode.Open, System.IO.FileAccess.Read,
+            System.IO.FileShare.ReadWrite | System.IO.FileShare.Delete);
+        using var reader = new System.IO.StreamReader(stream);
+        await Assert.That(await reader.ReadToEndAsync()).IsEqualTo("the identity's private key");
+    }
 
     [Test] public async Task MovingTheRoot_IsRefused_NothingMoved()
     {
