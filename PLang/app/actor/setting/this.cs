@@ -232,8 +232,8 @@ public sealed class @this : IDisposable
         return null;
     }
 
-    // Whether the class at path is an actor's own — its values never come from the actor it falls back to.
-    private bool Own(string path) => Class(path) is { } clr && System.Attribute.IsDefined(clr, typeof(global::app.type.item.setting.OwnAttribute));
+    // Whether the class address is kept under is an actor's own — its values come from its actor's own row alone.
+    private bool Own(string address) => Of(address) is { } clr && System.Attribute.IsDefined(clr, typeof(global::app.type.item.setting.OwnAttribute));
 
     // One option of a saved row: a setting's (its property), or one an address with no class kept (its entry).
     private data.@this? Option(data.@this row, string name) => row.Peek() switch
@@ -398,15 +398,15 @@ public sealed class @this : IDisposable
 
     // This run's values under path, the closest scope winning, as the options they set — a key deeper than
     // an option (path.llm.system) nests under it. A node set both as a whole and by its members (diff = true,
-    // diff.deep = true) keeps its own value as its enabled. An actor's own class stops at that actor's scope.
+    // diff.deep = true) keeps its own value as its enabled. An actor's own class takes none: its row is all it holds.
     private Dictionary<string, object?> Under(string path)
     {
         var under = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        if (Own(path)) return under;
         var prefix = path + ".";
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var isActor = Own(path);
         const string enabled = "enabled";
-        for (@this? s = this; s != null; s = isActor && s._actor != null ? null : s._parent)
+        for (@this? s = this; s != null; s = s._parent)
             foreach (var (key, value) in s._values)
             {
                 if (!key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || !seen.Add(key)) continue;

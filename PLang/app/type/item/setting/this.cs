@@ -123,13 +123,22 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     protected virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Next(global::app.data.@this parent, string key)
         => System.Threading.Tasks.ValueTask.FromResult(parent.Context.NotFound(key));
 
+    /// <summary>What a step's write, save or remove of this setting is denied with, when its class is an actor's own
+    /// (<see cref="OwnAttribute"/>): only its owner's code writes its row — a grant is given when the actor is asked at
+    /// the gate, an identity changes through the identity actions. Null for any other setting.</summary>
+    internal global::app.error.@this? Refusal => System.Attribute.IsDefined(GetType(), typeof(OwnAttribute))
+        ? new($"'{Path}' is the actor's own: no step writes, saves or removes it — a grant is given when the actor is asked at the gate; an identity changes through the identity actions.",
+            "PermissionDenied", 403)
+        : null;
+
     /// <summary>Writes an option for this run: the value lands in the writer's settings under this class's
     /// path (<c>set %!app.goal.list.setting.os% = true</c> → <c>app.goal.list.setting.os</c>), where the next read
     /// builds it from. The answer is a copy with the option set; this instance — the one the settings handed out,
-    /// read-only — is unchanged.</summary>
+    /// read-only — is unchanged. An actor's own setting is denied (<see cref="Refusal"/>).</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex,
         object? value, global::app.actor.context.@this context)
     {
+        if (Refusal is { } refused) return context.Error(refused);
         if (Property(key) == null && Switch(key)?.SetMethod == null)
             return context.Error(new global::app.error.@this($"setting '{Path}' has no option '{key}'", "NoOption", 404));
         // onto a copy through the one convert walk (a choice from its text) — a value the option can't take is
@@ -290,9 +299,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// (<c>channel.setting.format</c>, <c>call.setting.diff.deep</c>), or its own alone with a dict of its options — onto a
     /// copy of this setting, through the one convert walk. Answers where each value it sets is kept, by address
     /// (<c>{"app.test.setting.timeout": "5s", "app.test.setting.parallel": 3}</c>), or the refusal: a path that isn't this
-    /// setting's, an option it doesn't have, or a value its option can't take.</summary>
+    /// setting's, an option it doesn't have, a value its option can't take, or an actor's own setting
+    /// (<see cref="Refusal"/>).</summary>
     public global::app.data.@this<global::app.type.item.dict.@this> Apply(string path, object? value, global::app.actor.context.@this context)
     {
+        if (Refusal is { } refused) return context.Error<global::app.type.item.dict.@this>(refused);
         foreach (var address in Paths)
         {
             var isOwnPath = string.Equals(path, address, System.StringComparison.OrdinalIgnoreCase);
