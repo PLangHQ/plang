@@ -3,7 +3,7 @@
 / page (an app window needs a real page; about:blank opens a tab): the page it shows is the caller's to give, over the
 / pipe — never on this command line.
 / Trusted by origin (579): this goal ships with plang, so it starts Chromium without asking — only because it names
-/ the program, every flag and the environment itself. %!app.AbsolutePath% and %!app.OsAbsolutePath% are the app's own
+/ the program, every flag and the environment itself. %!app.filesystem.root% and %!app.filesystem.os% are the app's own
 / anchors (no caller sets them); any other variable here would make the start the caller's, and asked.
 Screen
 / a Chromium that was killed (PlangOS closed hard) leaves its profile's lock naming its process; in a new PlangOS
@@ -17,9 +17,9 @@ Screen
     '--num-raster-threads=4', '--hide-crash-restore-bubble', '--disable-quic',
     '--disable-blink-features=AutomationControlled', '--in-process-gpu',
     '--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup',
-    '--user-data-dir=%!app.AbsolutePath%/.browser', '--remote-debugging-pipe',
-    '--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',
-    with environment variables XDG_RUNTIME_DIR="%!app.AbsolutePath%/.run" and WAYLAND_DISPLAY="wayland-plang",
+    '--user-data-dir=%!app.filesystem.root%/.browser', '--remote-debugging-pipe',
+    '--app=file://%!app.filesystem.os%/system/browser/blank.html',
+    with environment variables XDG_RUNTIME_DIR="%!app.filesystem.root%/.run" and WAYLAND_DISPLAY="wayland-plang",
     with a clean environment, keep 'PULSE_SERVER', 'HOME' from plang's environment,
     keep running, with pipe, write to %program%
 - return %program%
