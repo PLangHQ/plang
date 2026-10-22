@@ -89,6 +89,8 @@ public abstract class @this : kind.@this
         var folder = await into.Mkdir(context);
         if (!folder.Success) return folder;
         var cap = new cap.@this(max);
+        // the links it makes, by name — read again once all is unpacked, as a later entry can change where one leads
+        var links = new List<string>();
         try
         {
             await foreach (var entry in Entries(from, context.CancellationToken))
@@ -96,7 +98,9 @@ public abstract class @this : kind.@this
                 if (entry.Name.Length == 0) continue;
                 var landed = await Land(entry, into, cap, context);
                 if (!landed.Success) return landed;
+                if (entry.Kind == Kind.Link) links.Add(entry.Name);
             }
+            if (await Leaving(into, links, context) is { } leaving) return leaving;
             return context.Ok<global::app.type.item.path.@this>(into);
         }
         catch (global::app.error.AppException refused)
@@ -107,6 +111,27 @@ public abstract class @this : kind.@this
         {
             return context.Error(new global::app.error.ServiceError($"Could not unpack {Name} into {into.Raw}: {ex.Message}", "UnpackFailed", 500));
         }
+    }
+
+    // Each link the unpack made, read the OS's way in the folder's final state: the first that leads outside the folder
+    // is removed, and is the unpack's refusal, naming it. A link replaced since (a file, a folder) is none to read.
+    private async Task<global::app.data.@this?> Leaving(File into, IEnumerable<string> names, global::app.actor.context.@this context)
+    {
+        var files = context.FileSystem;
+        if (into.Landing(files) is not { } inside) return null;
+        var folder = inside.Absolute.TrimEnd('/') + "/";
+        foreach (var name in names.Distinct())
+        {
+            var (at, _) = await Under(into, name, context);
+            if (at == null || files.Link(at) == null) continue;
+            // a loop leads nowhere: the OS refuses it too
+            if (at.Landing(files) is not { } lands || lands.Absolute == inside.Absolute || lands.Absolute.StartsWith(folder, StringComparison.Ordinal))
+                continue;
+            await at.Delete(context);
+            return context.Error(new global::app.error.ServiceError(
+                $"the link {name} unpacked into {into.Raw} leads outside it, to {lands.Absolute} — it was removed", "LinkLeaves", 400));
+        }
+        return null;
     }
 
     /// <summary>One entry, landed where it belongs inside <paramref name="into"/>. A format whose entries mean more

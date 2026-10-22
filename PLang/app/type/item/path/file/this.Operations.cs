@@ -288,6 +288,20 @@ public sealed partial class @this
     internal async Task<(@this? at, data.@this? refused)> Follow(string relative, bool last, actor.context.@this context)
     {
         if (await AuthGate(Verb.read, context) is { } early) return (null, early);
+        return Reach(relative, last, context.FileSystem) is { } at ? (at, null)
+            : (null, context.Error(new global::app.error.ServiceError($"too many links resolving {relative} in {Raw}", "LinkLoop", 400)));
+    }
+
+    /// <summary>Where the OS lands for this path, read in <paramref name="files"/>: from the host's root, each link on the
+    /// way followed as the OS follows it (an absolute target from the host's root, a relative one from the link's own
+    /// folder), this path's own last part too; null on a loop. Not gated: it reads only what links say.</summary>
+    internal @this? Landing(filesystem.@this files)
+        => OperatingSystem.IsWindows() ? this : new @this("/", Type).Reach(Absolute, last: true, files);
+
+    // relative from this folder as its root, each link on the way followed (the last part only when last), .. never
+    // above this folder; null past 40 links
+    private @this? Reach(string relative, bool last, filesystem.@this files)
+    {
         var root = Absolute.TrimEnd('/');
         var parts = new Stack<string>(relative.Split('/', StringSplitOptions.RemoveEmptyEntries).Reverse());
         var at = new List<string>();
@@ -298,10 +312,9 @@ public sealed partial class @this
             if (part == ".") continue;
             if (part == "..") { if (at.Count > 0) at.RemoveAt(at.Count - 1); continue; }
             var here = new @this(root + "/" + string.Join('/', at.Append(part)), Type);
-            if ((parts.Count > 0 || last) && context.FileSystem.Link(here) is { } link)
+            if ((parts.Count > 0 || last) && files.Link(here) is { } link)
             {
-                if (++hops > 40)
-                    return (null, context.Error(new global::app.error.ServiceError($"too many links resolving {relative} in {Raw}", "LinkLoop", 400)));
+                if (++hops > 40) return null;
                 // the link's parts go first; an absolute link starts again from this folder
                 foreach (var linked in link.Split('/', StringSplitOptions.RemoveEmptyEntries).Reverse()) parts.Push(linked);
                 if (link.StartsWith('/')) at.Clear();
@@ -309,7 +322,7 @@ public sealed partial class @this
             }
             at.Add(part);
         }
-        return (at.Count == 0 ? this : new @this(root + "/" + string.Join('/', at), Type), null);
+        return at.Count == 0 ? this : new @this(root + "/" + string.Join('/', at), Type);
     }
 
     public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)

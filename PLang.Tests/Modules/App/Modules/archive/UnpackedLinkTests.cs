@@ -92,6 +92,23 @@ public class UnpackedLinkTests : IDisposable
         await Assert.That(_channel.Count).IsEqualTo(0);
     }
 
+    // A later entry changes how an earlier link resolves: x → a/.. is written while a doesn't exist, then a → . lands;
+    // and y → d/secret.txt is written while d doesn't exist, then d → <outside> lands. Each link is written as a relative
+    // target from its own real folder to a spot inside, and every link the unpack writes is one, so a later one on the
+    // way leads inside too: the folder's final state reads inside.
+    [Test] public async Task ALaterEntry_ChangingWhereAnEarlierLinkLeads_StillReadsInside()
+    {
+        if (!OperatingSystem.IsLinux()) return;
+        var archive = Tar(Link("x", "a/.."), Link("a", "."), Link("y", "d/secret.txt"), Link("d", _outside));
+        await (await Into(archive, "up")).IsSuccess();
+        await Assert.That(new FileInfo(Path.Combine(_root, "up/x")).LinkTarget).IsEqualTo(".");
+        await Assert.That(new FileInfo(Path.Combine(_root, "up/a")).LinkTarget).IsEqualTo(".");
+        var read = await Context.File(Path.Combine(_root, "up", "y")).Read(Context);
+        var leaked = read.Success && (await read.Value())?.ToString() == "outside";
+        await Assert.That(leaked).IsFalse();
+        await Assert.That(_channel.Count).IsEqualTo(0);
+    }
+
     [Test] public async Task ARelativeLinkClimbingOut_ReadsNothingOutside()
     {
         if (!OperatingSystem.IsLinux()) return;
