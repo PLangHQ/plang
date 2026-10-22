@@ -49,10 +49,9 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     [Out, Store] public override string Scheme => "file";
 
-    // The OS-rooted form (//x on Unix) is kept as written, its .. unresolved; the OS opens /x for it, resolved — the
-    // place the gate finds.
-    private protected override string Location => !OperatingSystem.IsWindows() && Absolute.StartsWith("//")
-        ? PathHelper.GetFullPath(Absolute) : Absolute;
+    // Where the OS lands for this file: each link on the way followed (the OS-rooted //x form read as /x, its ..
+    // resolved). A loop lands nowhere the OS opens: it is read as written.
+    internal override string Location(filesystem.@this files) => Landing(files)?.Absolute ?? Absolute;
 
     /// <summary>How big the file at this path is, as its asker may read it — through the gate; a size, written in the
     /// asker's standard; 0 when nothing is there.</summary>

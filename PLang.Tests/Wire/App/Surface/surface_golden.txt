@@ -2225,6 +2225,8 @@ class app.type.item.path.file.filesystem.overlay.this : app.type.item.path.file.
   override Delete(app.type.item.path.file.this p, System.Boolean recursive) : System.Void
   override IsFile(app.type.item.path.file.this p) : System.Boolean
   override IsFolder(app.type.item.path.file.this p) : System.Boolean
+  override Link(app.type.item.path.file.this p) : System.String
+  override Link(app.type.item.path.file.this p, System.String target) : System.Void
   override List(app.type.item.path.file.this folder, System.String pattern, System.Boolean recursive) : System.Collections.Generic.IEnumerable<app.type.item.path.file.this>
   override Move(app.type.item.path.file.this from, app.type.item.path.file.this to, System.Boolean overwrite) : System.Threading.Tasks.Task
   override Open(app.type.item.path.file.this p) : System.Threading.Tasks.Task<System.IO.Stream>

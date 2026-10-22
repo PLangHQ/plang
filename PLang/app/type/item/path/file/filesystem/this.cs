@@ -10,6 +10,14 @@ namespace app.type.item.path.file.filesystem;
 /// </summary>
 public class @this
 {
+    // Where each of an app's fixed folders lands (its root, its os folder, its stores' folder), read once and kept.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _anchors = new(StringComparer.Ordinal);
+
+    /// <summary>Where the OS lands for <paramref name="folder"/> — one of an app's fixed folders, each link on the way
+    /// followed — read here once and kept: what the gate holds every path against.</summary>
+    internal string Anchor(string folder)
+        => _anchors.GetOrAdd(folder, f => new file.@this(f, new global::app.type.@this("path", typeof(file.@this), "file")).Landing(this)?.Absolute ?? f);
+
     public virtual bool IsFile(file.@this p) => System.IO.File.Exists(p.Absolute);
 
     public virtual bool IsFolder(file.@this p) => System.IO.Directory.Exists(p.Absolute);

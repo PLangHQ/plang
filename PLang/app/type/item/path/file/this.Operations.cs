@@ -296,14 +296,23 @@ public sealed partial class @this
     /// way followed as the OS follows it (an absolute target from the host's root, a relative one from the link's own
     /// folder), this path's own last part too; null on a loop. Not gated: it reads only what links say.</summary>
     internal @this? Landing(filesystem.@this files)
-        => OperatingSystem.IsWindows() ? this : new @this("/", Type).Reach(Absolute, last: true, files);
+    {
+        var root = PathHelper.GetPathRoot(Absolute);
+        return string.IsNullOrEmpty(root) ? this : new @this(root, Type).Reach(Absolute[root.Length..], last: true, files);
+    }
+
+    // what parts a path is written in: / everywhere, \ too on Windows (a legal name character elsewhere)
+    private char[] Separators => OperatingSystem.IsWindows() ? ['/', '\\'] : ['/'];
 
     // relative from this folder as its root, each link on the way followed (the last part only when last), .. never
-    // above this folder; null past 40 links
+    // above this folder; null past 40 links. An absolute link starts again from this folder — but a walk from a drive's
+    // root (the OS's reading) starts again from the link's own drive.
     private @this? Reach(string relative, bool last, filesystem.@this files)
     {
-        var root = Absolute.TrimEnd('/');
-        var parts = new Stack<string>(relative.Split('/', StringSplitOptions.RemoveEmptyEntries).Reverse());
+        var separator = PathHelper.DirectorySeparatorChar;
+        var host = string.Equals(PathHelper.GetPathRoot(Absolute), Absolute, RootComparison);
+        var root = Absolute.TrimEnd(Separators);
+        var parts = new Stack<string>(relative.Split(Separators, StringSplitOptions.RemoveEmptyEntries).Reverse());
         var at = new List<string>();
         var hops = 0;
         while (parts.Count > 0)
@@ -311,18 +320,23 @@ public sealed partial class @this
             var part = parts.Pop();
             if (part == ".") continue;
             if (part == "..") { if (at.Count > 0) at.RemoveAt(at.Count - 1); continue; }
-            var here = new @this(root + "/" + string.Join('/', at.Append(part)), Type);
+            var here = new @this(root + separator + string.Join(separator, at.Append(part)), Type);
             if ((parts.Count > 0 || last) && files.Link(here) is { } link)
             {
                 if (++hops > 40) return null;
-                // the link's parts go first; an absolute link starts again from this folder
-                foreach (var linked in link.Split('/', StringSplitOptions.RemoveEmptyEntries).Reverse()) parts.Push(linked);
-                if (link.StartsWith('/')) at.Clear();
+                var linkRoot = PathHelper.GetPathRoot(link);
+                // the link's parts go first; an absolute link starts again from this folder, or its own drive
+                foreach (var linked in link[linkRoot.Length..].Split(Separators, StringSplitOptions.RemoveEmptyEntries).Reverse()) parts.Push(linked);
+                if (linkRoot.Length > 0)
+                {
+                    at.Clear();
+                    if (host && linkRoot.TrimEnd(Separators).Length > 0) root = linkRoot.TrimEnd(Separators);
+                }
                 continue;
             }
             at.Add(part);
         }
-        return at.Count == 0 ? this : new @this(root + "/" + string.Join('/', at), Type);
+        return at.Count == 0 && root == Absolute.TrimEnd(Separators) ? this : new @this(root + separator + string.Join(separator, at), Type);
     }
 
     public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)

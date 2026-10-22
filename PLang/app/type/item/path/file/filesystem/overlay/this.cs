@@ -19,6 +19,8 @@ public sealed class @this : filesystem.@this
     private readonly HashSet<string> _folders;
     // what was deleted here: what the one under holds there is hidden; what is put here after shows
     private readonly HashSet<string> _gone;
+    // links made here, each with its target as written
+    private readonly Dictionary<string, string> _links;
 
     public @this(filesystem.@this under)
     {
@@ -27,6 +29,29 @@ public sealed class @this : filesystem.@this
         _files = new(comparer);
         _folders = new(comparer);
         _gone = new(comparer);
+        _links = new(comparer);
+    }
+
+    /// <summary>A link made here answers its target; a file or folder made here, or what was deleted here, is none;
+    /// else what the one under holds.</summary>
+    public override string? Link(file.@this p)
+    {
+        lock (_lock)
+        {
+            if (_links.TryGetValue(p.Absolute, out var target)) return target;
+            if (_files.ContainsKey(p.Absolute) || _folders.Contains(p.Absolute) || Gone(p.Absolute)) return null;
+        }
+        return _under.Link(p);
+    }
+
+    /// <summary>A link is made here, in memory, over whatever was at <paramref name="p"/>: the disk is untouched.</summary>
+    public override void Link(file.@this p, string target)
+    {
+        lock (_lock)
+        {
+            _files.Remove(p.Absolute);
+            _links[p.Absolute] = target;
+        }
     }
 
     /// <summary>Puts a file at <paramref name="p"/> — with <paramref name="content"/>, or empty when what it
@@ -97,6 +122,7 @@ public sealed class @this : filesystem.@this
         {
             _files.Keys.Where(k => Within(k, p.Absolute)).ToList().ForEach(k => _files.Remove(k));
             _folders.RemoveWhere(k => Within(k, p.Absolute));
+            _links.Keys.Where(k => Within(k, p.Absolute)).ToList().ForEach(k => _links.Remove(k));
             _gone.Add(p.Absolute);
         }
     }

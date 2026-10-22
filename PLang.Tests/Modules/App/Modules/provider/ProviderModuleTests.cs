@@ -69,7 +69,8 @@ public class ProviderModuleTests
         };
         var permission = new global::app.type.item.permission.@this(
             Actor: _app.actor.list.System.Name,
-            Path: resolved.Absolute,
+            // the grant's key is the place the gate reads the path at, where the OS lands for it
+            Path: resolved.Location(Ctx.FileSystem),
             Verbs: verbs,
             Match: global::app.type.item.permission.Match.exact,
             _app.type.list[typeof(global::app.type.item.permission.@this)]);

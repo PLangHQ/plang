@@ -37,6 +37,8 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     /// </summary>
     internal void Stand(string folder, params Verb[] verbs)
     {
+        // on the place: where the OS lands for the folder
+        folder = _actor.Context.FileSystem.Anchor(folder);
         Grant[] grants =
         [
             new(_actor.Name, folder, new HashSet<Verb>(verbs), MatchMode.exact, _actor.App.type.list[typeof(Grant)]),
@@ -99,7 +101,8 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     /// </summary>
     public async Task<global::app.data.@this?> Find(path requestPath, Verb verb)
     {
-        var request = Grant.Request(_actor, requestPath.Absolute, verb, MatchMode.exact);
+        // a grant is on the place: the request names where the OS lands for the path
+        var request = Grant.Request(_actor, requestPath.Location(_actor.Context.FileSystem), verb, MatchMode.exact);
 
         // A grant read here is already trustworthy, so it is asked only whether it allows the request: a persisted
         // grant was verified at the I/O boundary on load (auto-verify-on-read peels + validates its signature

@@ -61,8 +61,9 @@ public partial class @this
         return context.Ok();
     }
 
+    // a grant is on the place: the request names where the OS lands for this path
     protected permission.@this BuildRequest(actor.@this actor, Verb verb) =>
-        permission.@this.Request(actor, Absolute, verb, MatchMode.exact);
+        permission.@this.Request(actor, Location(actor.Context.FileSystem), verb, MatchMode.exact);
 
     /// <summary>What the gate answers the actor without asking: yes in its own root or by a grant it holds; no in the
     /// stores' folder (<see cref="IsStore"/>), whose keys nobody is asked for; null when the actor is to be asked. Every
@@ -78,18 +79,20 @@ public partial class @this
     // In-root is under the app's own folder. The os folder is never in-root, even when an app is rooted there: what an
     // actor may do there is its standing grants (every actor reads and runs; only the system writes). Nor is the stores'
     // folder: only the system reaches it, through its standing grant.
+    // Each where the OS lands: this path, and the app's folders it is held against (read once, kept).
     protected bool IsInRoot(actor.context.@this context)
     {
         var app = context.App;
         if (app == null) return false;
-        if (IsUnder(app.OsAbsolutePath, RootComparison) || IsStore(context)) return false;
-        return IsUnder(app.AbsolutePath, RootComparison);
+        var files = context.FileSystem;
+        if (IsUnder(files, app.OsAbsolutePath, RootComparison) || IsStore(context)) return false;
+        return IsUnder(files, app.AbsolutePath, RootComparison);
     }
 
     // Under the stores' folder of the app's root (<root>/.data/), where its stores and an identity's key are kept — in
     // any case, as a case-blind disk opens it (.DATA is .data there).
     private bool IsStore(actor.context.@this context)
-        => context.App is { } app && IsUnder(PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder), StringComparison.OrdinalIgnoreCase);
+        => context.App is { } app && IsUnder(context.FileSystem, PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder), StringComparison.OrdinalIgnoreCase);
 
     // The running app's anchors: the only variables a goal that ships with plang may hold in what it names itself and
     // still be trusted — each a fact no caller can set (pinned). Every other variable, any other %!…% included
@@ -115,22 +118,21 @@ public partial class @this
     }
 
     /// <summary>
-    /// Returns true when <see cref="Location"/> sits under (or equals)
-    /// <paramref name="rootCandidate"/>.
+    /// Returns true when this path's <see cref="Location"/> sits under (or equals) where
+    /// <paramref name="rootCandidate"/> lands, both read in <paramref name="files"/>.
     /// </summary>
-    private bool IsUnder(string? rootCandidate, StringComparison cmp)
+    private bool IsUnder(file.filesystem.@this files, string? rootCandidate, StringComparison cmp)
     {
         if (string.IsNullOrEmpty(rootCandidate)) return false;
-        var rootWithSeparator = rootCandidate.EndsWith(PathHelper.DirectorySeparatorChar)
-            ? rootCandidate
-            : rootCandidate + PathHelper.DirectorySeparatorChar;
-        return Location.StartsWith(rootWithSeparator, cmp)
-            || string.Equals(Location, rootCandidate, cmp);
+        var root = files.Anchor(rootCandidate);
+        var rootWithSeparator = root.EndsWith(PathHelper.DirectorySeparatorChar) ? root : root + PathHelper.DirectorySeparatorChar;
+        var location = Location(files);
+        return location.StartsWith(rootWithSeparator, cmp) || string.Equals(location, root, cmp);
     }
 
-    /// <summary>Where the gate finds this path: the place the OS opens for it — its absolute form, unless a scheme keeps
-    /// that in a form of its own.</summary>
-    private protected virtual string Location => Absolute;
+    /// <summary>Where the gate finds this path, read in <paramref name="files"/>: the place the OS opens for it — its
+    /// absolute form, unless a scheme reads it otherwise (a file: each link on the way followed).</summary>
+    internal virtual string Location(file.filesystem.@this files) => Absolute;
 
     /// <summary>
     /// Extra text appended to the Authorize prompt before the y/n/a choices: what a yes means beyond the words.
@@ -139,7 +141,7 @@ public partial class @this
     /// 'a' would persist a URL with query-string secrets verbatim to the local sqlite.
     /// </summary>
     protected virtual string AuthorizationHint(Verb verb, actor.context.@this context)
-        => verb is Verb.write or Verb.delete && IsUnder(context.App?.OsAbsolutePath, RootComparison)
+        => verb is Verb.write or Verb.delete && IsUnder(context.FileSystem, context.App?.OsAbsolutePath, RootComparison)
             ? "(files under /system/ ship with plang; a goal there runs programs without asking)"
             : "";
 }

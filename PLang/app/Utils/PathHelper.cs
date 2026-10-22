@@ -64,4 +64,10 @@ internal static class PathHelper
     /// Pure string operation — does not stat or read the filesystem.
     /// </summary>
     public static string GetRelativePath(string relativeTo, string path) => System.IO.Path.GetRelativePath(relativeTo, path);
+
+    /// <summary>
+    /// The root <paramref name="path"/> is written from (<c>/</c>, <c>C:\</c>); empty when it is relative.
+    /// Pure string operation — does not stat or read the filesystem.
+    /// </summary>
+    public static string GetPathRoot(string path) => System.IO.Path.GetPathRoot(path) ?? "";
 }
