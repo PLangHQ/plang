@@ -97,18 +97,15 @@ public abstract class View
     /// <summary>The Data as this view takes it: what it writes, settled once — a reference a copy of the Data it names,
     /// a template its render, a name that reads nothing the error. A Data that is a failure is taken as it is: the
     /// failure is what it carries. plang's own store keeps it as written.</summary>
-    internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Settle(global::app.data.@this data)
-        => data.Success ? Used(data) : new(data);
-
-    // Used where it must be: a name it can't read is the write's error.
-    private protected async System.Threading.Tasks.ValueTask<global::app.data.@this> Used(global::app.data.@this data)
+    internal virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Settle(global::app.data.@this data)
     {
+        if (!data.Success) return data;
         // what the Data settles to — a reference the Data it names, a template its render; not initialized when a
-        // name it names holds nothing
-        var used = await data.Settle();
-        if (!used.IsInitialized || !used.Success)
-            throw new global::app.error.AppException(used.Error ?? new global::app.error.VariableNotFoundException(data.Name).Error);
-        return used;
+        // name it names holds nothing, which is the write's error
+        var settled = await data.Settle();
+        if (!settled.IsInitialized || !settled.Success)
+            throw new global::app.error.AppException(settled.Error ?? new global::app.error.VariableNotFoundException(data.Name).Error);
+        return settled;
     }
 
     /// <summary>Whether <paramref name="type"/> carries any wire tag (Out, Store, Sensitive, Masked): a deliberate host
@@ -122,13 +119,13 @@ public abstract class View
 
     // [JsonIgnore] keeps a runtime-graph member (a path's goal call, a context) out of a store and a dump unless an
     // explicit [Out] or [Store] opts it back in.
-    private protected bool Ignored(System.Reflection.PropertyInfo property)
+    private protected bool IsIgnored(System.Reflection.PropertyInfo property)
         => Is<System.Text.Json.Serialization.JsonIgnoreAttribute>(property) && !Is<OutAttribute>(property) && !Is<StoreAttribute>(property);
 
     private sealed class store : View
     {
         internal override bool Shows(System.Reflection.PropertyInfo property, bool tagged)
-            => !Ignored(property) && (!tagged || Is<StoreAttribute>(property));
+            => !IsIgnored(property) && (!tagged || Is<StoreAttribute>(property));
 
         // nothing is hidden from plang's own store
         internal override bool Masks(System.Reflection.PropertyInfo property) => false;
@@ -178,22 +175,22 @@ public abstract class View
             }
             try
             {
-                var used = await Used(data);
-                await writer.BeginRecord(used, layer);
-                await (await Opened(used)).Output(writer);
-                await writer.EndRecord(used);
+                var settled = await Settle(data);
+                await writer.BeginRecord(settled, layer);
+                await (await Open(settled)).Output(writer);
+                await writer.EndRecord(settled);
             }
             finally { _depth.Value--; }
         }
 
         private protected override async System.Threading.Tasks.ValueTask Template(global::app.type.item.@this value, global::app.type.format.IWriter writer)
-            => await (await Opened(await Used(new global::app.data.@this("", value, context: writer.Context)))).Output(writer);
+            => await (await Open(await Settle(new global::app.data.@this("", value, context: writer.Context)))).Output(writer);
 
-        // what a used Data holds, opened (a reference's content); a value that fails to open is the write's error
-        private async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Opened(global::app.data.@this used)
+        // opens what a settled Data holds (a reference's content); a value that fails to open is the write's error
+        private async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Open(global::app.data.@this settled)
         {
-            var value = await used.Value();
-            if (!used.Success) throw new global::app.error.AppException(used.Error!);
+            var value = await settled.Value();
+            if (!settled.Success) throw new global::app.error.AppException(settled.Error!);
             return value;
         }
 
@@ -205,7 +202,7 @@ public abstract class View
         // a tagged type shows its tagged members (what crosses, what is kept, what only a dump shows); an untagged one
         // is transparent
         internal override bool Shows(System.Reflection.PropertyInfo property, bool tagged)
-            => !Ignored(property) && (!tagged || Is<OutAttribute>(property) || Is<StoreAttribute>(property)
+            => !IsIgnored(property) && (!tagged || Is<OutAttribute>(property) || Is<StoreAttribute>(property)
                 || Is<DebugAttribute>(property) || Is<SensitiveAttribute>(property) || Is<MaskedAttribute>(property));
 
         // a dump tells "not set" from "set but hidden": it never unmasks
