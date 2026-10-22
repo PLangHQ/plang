@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "v4 items 1-4 fixed at the root, 5 fixed as triaged, 6 fixed; open: app/start packs flag-ness in the property Name (!), null as not-given, Set depends on the Executor removing mode words, program still builds a store to read IsPlang." }

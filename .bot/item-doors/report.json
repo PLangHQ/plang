@@ -612,6 +612,34 @@
         "health": "fail, short list",
         "notes": "no build/tests; A9 renames across ~100 files not read hunk by hunk"
       }
+    },
+    {
+      "id": "ec1f8989-693b-417c-ab08-276092655b4e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-22T01:08:58Z",
+      "intent": "Last pass on the v4 short list (items 1-6) over a2bf26adc..HEAD",
+      "before": {
+        "assumptions": "decision 294 and B/C/D not re-raised",
+        "risk": "app/start is new code"
+      },
+      "plan": ".bot/item-doors/codeanalyzer/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/item-doors/codeanalyzer/v5/report.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the whole 36-file diff; re-grepped HEAD for leftovers. Items 1-4 fixed, 5 as triaged, 6 fixed; three small open items in app/start and program."
+        }
+      ],
+      "timestamp_end": "2026-10-22T01:08:58Z",
+      "after": {
+        "status": "report written: .bot/item-doors/codeanalyzer/v5/report.md",
+        "health": "fail, short list of three",
+        "notes": "no build/tests run"
+      }
     }
   ]
 }

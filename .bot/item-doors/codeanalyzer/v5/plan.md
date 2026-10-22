@@ -1,0 +1,2 @@
+# v5 plan: last pass on the v4 short list (items 1-6)
+Scope: coder commits a2bf26adc..HEAD (05e8d7bad, d8ada0b19, 6790703a8, 5de668c09, 61868b5d1, 36bc10f3f incl. app/start). Per v4 item: fixed at the root / not, file:line, plus NEW smells (v3 checklist, names). Not re-raised: decision 294 (Action, builder walks), Annotation(prop, slot), moved private parser statics in start, B/C/D. Read only; commit only the report.
