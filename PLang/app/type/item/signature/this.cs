@@ -153,13 +153,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>A copy of this layer with the signature bytes filled in — used by
     /// the signing module after it signs <see cref="ToSigningBytes"/> (the layer is
     /// immutable; build the unsigned form, sign, then stamp the bytes).</summary>
-    public @this Signed(binary signature)
-        => new(Type, Value, Algorithm, Nonce, Created, Identity, Hash, signature, _expires, Contracts, Origin.Value, _window);
+    public @this Signed(binary signature) => Copy(signature: signature);
 
     /// <summary>This layer over <paramref name="bearer"/> — the Data that holds it, as it is now. What verify re-hashes and
     /// what a write sends, so a bearer changed after signing is one the signature doesn't cover.</summary>
-    internal @this Over(global::app.data.@this bearer)
-        => new(Type, bearer, Algorithm, Nonce, Created, Identity, Hash, Signature, _expires, Contracts, Origin.Value, _window);
+    internal @this Over(global::app.data.@this bearer) => Copy(value: bearer);
+
+    // This layer again, with the value it signs or its signature bytes in place of its own — every other member as it is.
+    private @this Copy(global::app.data.@this? value = null, binary? signature = null)
+        => new(Type, value ?? Value, Algorithm, Nonce, Created, Identity, Hash, signature ?? Signature, _expires, Contracts, Origin.Value, _window);
 
     /// <summary>Structural — the inner value is a nested record, not a leaf.</summary>
     public override bool IsLeaf => false;
@@ -194,6 +196,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // data records — emit the strings directly.
         if (Contracts is not null)
         {
+            // bare strings, as signed: the list's own write gives each a Data record ({type, value}), not this slot's shape
             w.Name("contracts");
             w.BeginArray(-1);
             foreach (var c in ContractStrings()) w.String(c);

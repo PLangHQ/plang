@@ -61,6 +61,18 @@ public class VerifyActionTests
         return await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
     }
 
+    // A signature's contracts cross as bare strings, in their slot of the layer: ["C0"], never Data records.
+    [Test]
+    public async Task ASignaturesContracts_CrossAsBareStrings()
+    {
+        var signed = await SignHelper("hello", ["C0"]);
+        await signed.IsSuccess();
+        using var stream = new System.IO.MemoryStream();
+        await (await _app.type.list.Mime("application/plang").Encode(stream, signed, Ctx, global::app.View.Out)).IsSuccess();
+        var wire = System.Text.Json.Nodes.JsonNode.Parse(stream.ToArray())!;
+        await Assert.That(wire["contracts"]!.ToJsonString()).IsEqualTo("[\"C0\"]");
+    }
+
     // sign answers the Data it signed, holding its layer (immutable). To
     // "tamper", rebuild the layer with one field changed but the ORIGINAL
     // signature bytes — verify then fails because the sig no longer covers the
