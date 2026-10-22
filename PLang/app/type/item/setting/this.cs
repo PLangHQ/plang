@@ -134,7 +134,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>Whether a saved row of this setting signed by <paramref name="signature"/> is the app's own — signed by
     /// one of the app's identities. A row signed by any other key (a store shipped with a cloned app) verifies against
     /// the key it carries, and is not the app's.</summary>
-    internal virtual async System.Threading.Tasks.ValueTask<bool> IsMine(global::app.type.item.signature.@this signature,
+    internal virtual async System.Threading.Tasks.ValueTask<bool> IsOwn(global::app.type.item.signature.@this signature,
         global::app.actor.context.@this context)
     {
         var (provider, missing) = context.App.Code.Get<global::app.module.identity.code.IIdentity>();

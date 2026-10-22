@@ -472,8 +472,8 @@ public sealed partial class @this
 
         var question = new StringBuilder();
         question.Append(context.Actor!.Name).Append(" wants to:");
-        if (!sourceOk) question.Append("\n  - read ").Append(Where(source));
-        if (!destOk)   question.Append("\n  - write ").Append(destination.Where(target));
+        if (!sourceOk) question.Append("\n  - read ").Append(Naming(source));
+        if (!destOk)   question.Append("\n  - write ").Append(destination.Naming(target));
         question.Append("\n(y/n/a — covers all)");
 
         // the denial names the side not yet granted; an answer's grants are on the places asked about

@@ -339,7 +339,7 @@ public sealed class @this : IDisposable
         var setting = Build(address);
         // an own row signed by a key that is not the app's (a store shipped with a cloned app) is refused, loud — as an
         // unsigned one is
-        if (Own(address) && Saved(address)?.Signature is { } signature && !await setting.IsMine(signature, _context))
+        if (Own(address) && Saved(address)?.Signature is { } signature && !await setting.IsOwn(signature, _context))
             throw new global::app.error.AppException(new global::app.error.@this(
                 $"setting '{address}' is the actor's own and its stored row is signed by a key that is not this app's identity — it was not written by this app, and is not read",
                 "SettingForeign", 403));

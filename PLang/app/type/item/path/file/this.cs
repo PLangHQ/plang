@@ -61,7 +61,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         actor.context.@this context)
         => verb is global::app.type.item.permission.Verb.write or global::app.type.item.permission.Verb.delete
            && place.IsUnder(context.Filesystem.os).Value
-            ? $"Allow {context.Actor.Name} to {verb} {Where(place)}? (files under /system/ ship with plang; a goal there runs programs without asking) (y/n/a)"
+            ? $"Allow {context.Actor.Name} to {verb} {Naming(place)}? (files under /system/ ship with plang; a goal there runs programs without asking) (y/n/a)"
             : base.Question(verb, place, context);
 
     /// <summary>How big the file at this path is, as its asker may read it — through the gate; a size, written in the

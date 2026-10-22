@@ -18,7 +18,7 @@ public sealed class @this : global::app.type.item.setting.module.@this
 
     /// <summary>The identities' row is the app's when one of the identities it holds signed it — the first is signed by
     /// the key it brings, so it can't ask the app's identities, which it is.</summary>
-    internal override async System.Threading.Tasks.ValueTask<bool> IsMine(global::app.type.item.signature.@this signature,
+    internal override async System.Threading.Tasks.ValueTask<bool> IsOwn(global::app.type.item.signature.@this signature,
         global::app.actor.context.@this context)
     {
         foreach (var each in Identity.Items(context))
