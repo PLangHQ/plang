@@ -15,15 +15,21 @@ public class source : global::app.type.item.source
         System.Collections.Generic.IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false)
         : base(raw, type, variable, origin, built, json) { }
 
-    // What the characters stand for, once opened — kept, so a truth asked first and a navigation after parse once. It
-    // holds no context: every asker uses it with their own.
-    private global::app.type.item.@this? _opened;
+    // What the characters stand for, once opened, per context that opened them — kept, so a truth asked first and a
+    // navigation after parse once; never handed to another context (a typed row inside is born with the one that
+    // parsed it). Weakly held: a context gone takes its parse with it.
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<global::app.actor.context.@this, global::app.type.item.@this> _opened = new();
 
     // the characters as they are: bytes are their UTF-8
     private string Characters => Raw as string ?? System.Text.Encoding.UTF8.GetString((byte[])Raw);
 
     internal override global::app.type.item.@this? Parse(global::app.actor.context.@this ctx)
-        => _opened ??= base.Parse(ctx);
+    {
+        if (_opened.TryGetValue(ctx, out var opened)) return opened;
+        var parsed = base.Parse(ctx);
+        if (parsed != null) _opened.AddOrUpdate(ctx, parsed);
+        return parsed;
+    }
 
     /// <summary>Whether it holds anything is what it stands for's answer — opening it is a use (<c>{}</c>, <c>[]</c>,
     /// <c>""</c>, <c>0</c>, <c>false</c> and <c>null</c> are empty). Characters that are no json answer why.</summary>
