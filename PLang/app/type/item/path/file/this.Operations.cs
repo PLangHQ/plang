@@ -383,7 +383,7 @@ public sealed partial class @this
                 if (recursive.Value)
                 {
                     var tree = Tree(null, subfolder: true, filesystem).ToList();
-                    if (await Refusal(tree, Verb.delete, Verb.delete, context) is { } refused)
+                    if (await Refusal(tree, Verb.delete, Verb.delete, null, context) is { } refused)
                         return data.@this<global::app.type.item.path.@this>.From(refused);
                     foreach (var (entry, _) in Enumerable.Reverse(tree)) filesystem.Delete(entry, recursive: false);
                 }
@@ -461,7 +461,7 @@ public sealed partial class @this
         {
             return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
         }
-        if (tree != null && await Refusal(tree, sourceVerb, destVerb, context) is { } refused)
+        if (tree != null && await Refusal(tree, sourceVerb, destVerb, target, context) is { } refused)
             return data.@this<global::app.type.item.path.@this>.From(refused);
 
         bool sourceOk = sourceAuth?.Success == true;
@@ -506,14 +506,23 @@ public sealed partial class @this
     }
 
     // The first entry the gate refuses, asked without asking: each entry for verb, where it lands for toward. Null when
-    // none is refused — an entry it would ask is the top's answer's.
-    private async Task<data.@this?> Refusal(IEnumerable<(@this Entry, @this? Into)> tree, Verb verb, Verb toward, actor.context.@this context)
+    // none is refused — an entry it would ask is the top's answer's while it lands under the top's place (target); one a
+    // link in the destination leads out of it is no part of what the top's answer covers, and without a grant of its own
+    // is refused.
+    private async Task<data.@this?> Refusal(IEnumerable<(@this Entry, @this? Into)> tree, Verb verb, Verb toward,
+        global::app.type.item.path.@this? target, actor.context.@this context)
     {
         var filesystem = context.Filesystem;
         foreach (var (entry, into) in tree)
         {
             if (await entry.Location(filesystem).Standing(verb, context) is { Success: false } refused) return refused;
-            if (into != null && await into.Location(filesystem).Standing(toward, context) is { Success: false } landing) return landing;
+            if (into == null) continue;
+            var place = into.Location(filesystem);
+            var standing = await place.Standing(toward, context);
+            if (standing is { Success: false }) return standing;
+            var outside = target != null && !place.IsUnder(target).Value;
+            if (standing == null && outside)
+                return context.Error(new global::app.error.PermissionDenied(place.Request(context.Actor, toward)));
         }
         return null;
     }
