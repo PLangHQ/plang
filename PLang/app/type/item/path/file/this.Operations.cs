@@ -374,10 +374,16 @@ public sealed partial class @this
                 if (!recursive.Value && files.List(this, "*", recursive: false).Any())
                     return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(
                         $"Directory is not empty: {Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
-                // all it holds is deleted with it: each entry asked of the gate before any is
-                if (recursive.Value && await Refusal(Tree(null, subfolder: true, files), Verb.delete, Verb.delete, context) is { } refused)
-                    return data.@this<global::app.type.item.path.@this>.From(refused);
-                files.Delete(this, recursive.Value);
+                // all it holds is deleted with it: each entry asked of the gate before any is, then each removed alone,
+                // children first — a folder is a plain remove, so an entry that appeared since the check fails it
+                if (recursive.Value)
+                {
+                    var tree = Tree(null, subfolder: true, files).ToList();
+                    if (await Refusal(tree, Verb.delete, Verb.delete, context) is { } refused)
+                        return data.@this<global::app.type.item.path.@this>.From(refused);
+                    foreach (var (entry, _) in Enumerable.Reverse(tree)) files.Delete(entry, recursive: false);
+                }
+                files.Delete(this, recursive: false);
             }
             else
                 return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError($"Not found: {Raw}", "NotFound", 404));
@@ -423,6 +429,11 @@ public sealed partial class @this
     {
         var sourceVerb = Verb.read;
         var destVerb   = Verb.write;
+
+        // a move carries what the folder holds in one rename: a folder that holds the stores' folder's place is never
+        // moved, whether the stores are there yet or not
+        if (isMove && IsAboveStores(context))
+            return context.Error<global::app.type.item.path.@this>(new global::app.error.PermissionDenied(BuildRequest(context.Actor!, Verb.delete)));
 
         var sourceAuth = await Standing(sourceVerb, context);
         var destAuth   = await destination.Standing(destVerb, context);

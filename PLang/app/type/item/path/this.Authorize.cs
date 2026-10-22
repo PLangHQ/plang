@@ -100,6 +100,18 @@ public partial class @this
         return IsUnder(files, place, app.AbsolutePath, RootComparison);
     }
 
+    /// <summary>Whether the stores' folder's place (<c>&lt;root&gt;/.data</c>, there yet or not) is this path or under it,
+    /// each read where the OS lands — a folder whose move would carry the stores.</summary>
+    private protected bool IsAboveStores(actor.context.@this context)
+    {
+        if (context.App is not { } app) return false;
+        var files = context.FileSystem;
+        var place = Location(files);
+        var stores = files.Anchor(PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder));
+        var under = place.EndsWith(PathHelper.DirectorySeparatorChar) ? place : place + PathHelper.DirectorySeparatorChar;
+        return stores.StartsWith(under, StringComparison.OrdinalIgnoreCase) || string.Equals(stores, place, StringComparison.OrdinalIgnoreCase);
+    }
+
     // Under the stores' folder of the app's root (<root>/.data/), where its stores and an identity's key are kept — in
     // any case, as a case-blind disk opens it (.DATA is .data there).
     private bool IsStore(file.filesystem.@this files, global::app.@this? app, string place)
