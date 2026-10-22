@@ -201,7 +201,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         // the .goal files are the app's own: listed once, as the system
         var system = App.actor.list.System.Context!;
         _app ??= await Listed(global::app.type.item.path.@this.Resolve("/", system));
-        _system ??= await Listed(global::app.type.item.path.@this.Resolve(App.OsAbsolutePath + "/system", system));
+        _system ??= await Listed(App.filesystem.os.Combine("system"));
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var source in wants.Os.Value ? _app.Concat(_system) : _app)

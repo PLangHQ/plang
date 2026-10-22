@@ -34,7 +34,7 @@ public class AppRootTests
         try
         {
             await using var runner = new global::app.@this(root).Testing();
-            await using var app = new global::app.@this(runner.AbsolutePath).Testing();
+            await using var app = new global::app.@this(runner.filesystem.root.Absolute).Testing();
             var ch = new AskCountingChannel(app.actor.list.User.Context);
             app.actor.list.User.Channel.Register(ch);
 

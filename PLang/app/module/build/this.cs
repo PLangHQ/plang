@@ -22,7 +22,7 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
     public @this(actor.context.@this context)
     {
         _context = context;
-        Files = new(context.App.Filesystem);
+        Files = new(context.App.filesystem);
     }
 
     /// <summary>The files the build checks its goals over, for the whole build: the disk, with what the goals'
@@ -52,14 +52,15 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
         {
             if (Console.IsInputRedirected)
                 return Context.Error(new global::app.error.ServiceError(
-                    $"No app found at {_context.App.AbsolutePath}. Run plang build from your app's root directory, or use --app.setting.create=true.", "NoAppFound", 400));
+                    $"No app found at {_context.App.filesystem.root.Absolute}. Run plang build from your app's root directory, or use --app.setting.create=true.", "NoAppFound", 400));
 
             // Creating the app writes it at its root: the User actor's consent, asked through the one consent door
-            // (its ask runs as an action, so on.ask fires as for any ask); a no, or no answer, is the denial.
+            // (of the actor's own input); a no, or no answer, is the denial.
             var userContext = _context.App.actor.list.User.Context;
             var asker = userContext.Actor!;
-            var consent = await asker.Permission.Ask($"No app found at {_context.App.AbsolutePath}. Create new app? (y/n)",
-                global::app.type.item.permission.@this.Request(asker, _context.App.AbsolutePath, global::app.type.item.permission.Verb.write),
+            var root = _context.App.filesystem.root;
+            var consent = await asker.Permission.Ask($"No app found at {root.Absolute}. Create new app? (y/n)",
+                global::app.type.item.permission.@this.Request(asker, root.Absolute, global::app.type.item.permission.Verb.write),
                 userContext, _ => System.Threading.Tasks.Task.FromResult(userContext.Ok()));
             if (!consent.Success) return consent;
         }
@@ -69,9 +70,7 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
         // system may write, so that build runs as the system — chosen here, at the build's start, never by a
         // program. Its goal loads through the goal collection, which registers what it loads.
         var app = _context.App;
-        var separator = global::app.Utils.PathHelper.DirectorySeparatorChar;
-        var isOs = string.Equals(app.AbsolutePath.TrimEnd(separator), app.OsAbsolutePath.TrimEnd(separator),
-            System.OperatingSystem.IsWindows() ? System.StringComparison.OrdinalIgnoreCase : System.StringComparison.Ordinal);
+        var isOs = app.filesystem.root.Equals(app.filesystem.os);
         var builder = (isOs ? app.actor.list.System : app.actor.list.User).Context;
         var loaded = await app.goal.Load("/system/builder/Build.goal");
         if (!loaded.Success) return loaded;

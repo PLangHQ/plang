@@ -161,7 +161,7 @@ public class GoalCallResolutionTests
     public async Task AnOsGoal_CallingAGoalBesideIt_FindsTheAppsCopy()
     {
         await WritePr("system/builder/.build/buildgoal.pr", "BuildGoal");
-        var caller = CallerAt(_app.OsAbsolutePath + "/system/builder/Build.goal");
+        var caller = CallerAt(_app.filesystem.os.Absolute + "/system/builder/Build.goal");
 
         var goal = await _app.goal.list.Find("BuildGoal", caller).Found();
 

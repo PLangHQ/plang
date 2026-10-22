@@ -970,7 +970,6 @@ class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.thi
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.module.this
 
 class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnapshot, app.type.item.setting.ISetting<app.setting.this>
-  AbsolutePath : System.String { get; } [LlmBuilder]
   Build : app.module.build.this { get; set; } [LlmBuilder]
   Cache : app.module.cache.ICache { get; }
   Code : app.module.code.this { get; }
@@ -978,13 +977,11 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Debug : app.module.debug.this { get; set; }
   DisposeAsync() : System.Threading.Tasks.ValueTask
   Environment(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.text.this> [LlmBuilder]
-  Filesystem : app.type.item.path.file.filesystem.this { get; }
   Id : System.String { get; } [Out, Store]
   KeepAlive : app.keepalive.this { get; }
   Load() : System.Threading.Tasks.Task<app.data.this>
   Mode : app.type.item.choice.this<app.Mode> { get; }
   Name(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.text.this> [LlmBuilder]
-  OsAbsolutePath : System.String { get; } [LlmBuilder]
   RequestShutdown() : System.Void
   Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
   ResumeFromWire(System.String json, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
@@ -1007,6 +1004,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
   error : app.type.node.current.this<app.error.this, app.error.list.this> { get; } [LlmBuilder, Out]
   event(app.actor.context.this context) : app.data.this [LlmBuilder]
+  filesystem : app.type.item.path.file.filesystem.this { get; } [LlmBuilder]
   goal : app.type.node.current.this<app.goal.this, app.goal.list.this> { get; } [LlmBuilder, Out]
   module : app.module.this { get; } [LlmBuilder, Out]
   override IsLeaf : System.Boolean { get; }
@@ -2239,8 +2237,8 @@ class app.type.item.path.file.filesystem.overlay.this : app.type.item.path.file.
 class app.type.item.path.file.filesystem.this
   ctor(System.String folder)
   ctor(app.type.item.path.file.filesystem.this under)
-  os : app.type.item.path.file.this { get; }
-  root : app.type.item.path.file.this { get; }
+  os : app.type.item.path.file.this { get; } [LlmBuilder]
+  root : app.type.item.path.file.this { get; } [LlmBuilder]
   virtual Add(app.type.item.path.file.this p, System.Byte[] content = …) : System.Void
   virtual Append(app.type.item.path.file.this p, System.String text) : System.Threading.Tasks.Task
   virtual Copy(app.type.item.path.file.this from, app.type.item.path.file.this to, System.Boolean overwrite) : System.Threading.Tasks.Task
@@ -3359,8 +3357,6 @@ type app
   .name : text
   .created : datetime
   .updated : datetime
-  .absolutePath : text
-  .osAbsolutePath : text
   .environment : text
   .call : app.call.list
   .trace : app.actor.context.trace
@@ -3370,6 +3366,7 @@ type app
   .uptime : duration
   .module : module
   .goal : node
+  .filesystem : clr
   .store : store
   .test : node
   .error : node

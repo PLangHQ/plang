@@ -175,7 +175,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         foreach (var goal in test.Reach) Report.Coverage.Add(goal);
         if (test.Status == Status.Ready)
         {
-            await using var app = new global::app.@this(_app.AbsolutePath);
+            await using var app = new global::app.@this(_app.filesystem.root.Absolute);
             await app.test.list.Open(test);
             Made?.Invoke(app);
             await test.Start(app, context);

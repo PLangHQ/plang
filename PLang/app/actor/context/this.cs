@@ -129,7 +129,7 @@ public sealed class @this : IDisposable
         App = app;
         Trace = new(app.type.list);
         Actor = owner;
-        Filesystem = filesystem ?? parent?.Filesystem ?? app.Filesystem;
+        Filesystem = filesystem ?? parent?.Filesystem ?? app.filesystem;
         Variable = variables ?? new Variables(this);
         Parent = parent;
         CreatedAt = DateTime.UtcNow;

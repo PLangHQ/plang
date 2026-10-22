@@ -41,9 +41,9 @@ public class LoadSeamTests
 
     private image PathBackedPng(string name)
     {
-        System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.AbsolutePath, name), Png1x1);
+        System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.filesystem.root.Absolute, name), Png1x1);
         return _app.actor.list.User.Context.Image(global::app.type.item.path.@this.Resolve(
-            System.IO.Path.Combine(_app.AbsolutePath, name), _app.actor.list.User.Context));
+            System.IO.Path.Combine(_app.filesystem.root.Absolute, name), _app.actor.list.User.Context));
     }
 
     [Test] public async Task Value_MaterializesPathBackedImage_SyncBytesThenReal()

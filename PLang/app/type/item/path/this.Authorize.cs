@@ -75,8 +75,8 @@ public partial class @this
     // (settings are the asker's view, %!data% what the caller's steps left, a goal sets its own %!x%), is the caller's.
     private static readonly HashSet<string> Anchors = new(StringComparer.OrdinalIgnoreCase)
     {
-        "%!app.AbsolutePath%",
-        "%!app.OsAbsolutePath%",
+        "%!app.filesystem.root%",
+        "%!app.filesystem.os%",
     };
 
     /// <summary>A variable a step may hold and still name what it starts itself: one of the running app's anchors.</summary>

@@ -9,6 +9,21 @@ public class AppNodesTests
     private static System.Threading.Tasks.ValueTask<global::app.data.@this> Read(string variable, global::app.actor.context.@this context)
         => new global::app.type.item.variable.@this(variable.Trim('%'), context.App.type.list).Start(context);
 
+    // %!app.filesystem.root% and %!app.filesystem.os% are the app's folder and the runtime's os folder, as paths
+    [Test]
+    public async Task TheFilesystemsFolders_ReadAsPaths()
+    {
+        await using var app = NewApp();
+        var user = app.actor.list.User.Context;
+
+        var root = await (await Read("%!app.filesystem.root%", user)).Value();
+        var os = await (await Read("%!app.filesystem.os%", user)).Value();
+
+        await Assert.That(root).IsTypeOf<global::app.type.item.path.file.@this>();
+        await Assert.That(((global::app.type.item.path.@this)root!).Absolute).IsEqualTo(app.filesystem.root.Absolute);
+        await Assert.That(((global::app.type.item.path.@this)os!).Absolute).IsEqualTo(app.filesystem.os.Absolute);
+    }
+
     [Test]
     public async Task Callstack_IsTheAskersCallStack()
     {

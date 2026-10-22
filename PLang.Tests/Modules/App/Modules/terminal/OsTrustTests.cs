@@ -45,13 +45,13 @@ public class OsTrustTests : IDisposable
     // a goal of plang's own: in the runtime's os folder. Made in memory, never written there: read off the wire (so
     // its steps are its own, as a loaded .pr's are), then placed in the os folder — a /system/ path is found on disk,
     // and with no file there the read would have put it in the app
-    private string Os(string name) => Path.Combine(_app.OsAbsolutePath, "system", "trust", name);
+    private string Os(string name) => Path.Combine(_app.filesystem.os.Absolute, "system", "trust", name);
 
     private async Task<global::app.goal.@this> OsGoal(string name, params Make.StepDef[] steps)
     {
         var goal = await Goal(Os(name), steps);
         goal.Path = global::app.type.item.path.file.@this.Resolve(Os(name), Context);
-        await Assert.That(goal.Folder!.Absolute.StartsWith(_app.OsAbsolutePath.TrimEnd('/') + "/", StringComparison.Ordinal))
+        await Assert.That(goal.Folder!.Absolute.StartsWith(_app.filesystem.os.Absolute.TrimEnd('/') + "/", StringComparison.Ordinal))
             .IsTrue().Because("the goal is one of plang's own, under the os folder");
         return goal;
     }
@@ -135,24 +135,34 @@ public class OsTrustTests : IDisposable
     [Test]
     public async Task AnOsGoal_NamingTheAppsRootAnchor_StartsUnasked_WithTheRealRoot()
     {
-        var os = await OsGoal("Anchor.goal", Make.Step("echo the root", Echo("%!app.AbsolutePath%")));
+        var os = await OsGoal("Anchor.goal", Make.Step("echo the root", Echo("%!app.filesystem.root%")));
         var ran = await _app.Start(os, Context);
         await ran.IsSuccess();
         await Assert.That((await ran.Value())?.ToString()?.TrimEnd('/')).IsEqualTo(_root.TrimEnd('/'));
+    }
+
+    // a folder inside an argument's text (the browser goals' --user-data-dir=…) reaches the program as its OS location
+    [Test]
+    public async Task AnOsGoal_ArgumentHoldingTheRootInItsText_GetsTheOsLocation()
+    {
+        var os = await OsGoal("AnchorText.goal", Make.Step("echo the browser folder", Echo("--user-data-dir=%!app.filesystem.root%/.browser")));
+        var ran = await _app.Start(os, Context);
+        await ran.IsSuccess();
+        await Assert.That((await ran.Value())?.ToString()?.Trim()).IsEqualTo("--user-data-dir=" + _root.TrimEnd('/') + "/.browser");
     }
 
     [Test]
     public async Task TheRootAnchor_CantBeSetByAUserGoal()
     {
         // a user goal tries to point the anchor elsewhere, then calls the os goal that names it
-        var os = await OsGoal("Anchored.goal", Make.Step("echo the root", Echo("%!app.AbsolutePath%")));
+        var os = await OsGoal("Anchored.goal", Make.Step("echo the root", Echo("%!app.filesystem.root%")));
         var user = await Goal("/Shadow.goal",
             Make.Step("point the root elsewhere", Make.Action(Context, "variable", "set",
-                Make.Param(Context, "Name", "!app.AbsolutePath", "variable"), ("Value", "/"))),
+                Make.Param(Context, "Name", "!app.filesystem.root", "variable"), ("Value", "/"))),
             Make.Step("call the os goal", Make.Action(Context, "goal", "call", ("Name", Os("Anchored")))));
         var ran = await _app.Start(user, Context);
-        await Assert.That(ran.Success).IsFalse().Because("the app's own member can't be set over");
-        await Assert.That(ran.Error!.Key).IsEqualTo("OwnMember");
+        await Assert.That(ran.Success).IsFalse().Because("the app's filesystem's folder can't be set over");
+        await Assert.That(ran.Error!.Key).IsEqualTo("CannotSetChild");
         // and after the try, the os goal still starts with the real root, unasked
         var after = await _app.Start(os, Context);
         await after.IsSuccess();

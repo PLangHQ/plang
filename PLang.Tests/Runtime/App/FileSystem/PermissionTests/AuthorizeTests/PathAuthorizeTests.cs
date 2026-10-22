@@ -228,7 +228,7 @@ public class PathAuthorizeTests
         // OrdinalIgnoreCase bug, IsInRoot=true and Ok() comes back instead.
         app.actor.list.User.Channel.Register(new CannedAnswerChannel(new[] { "n" }, app.actor.list.User.Context));
         var context = app.actor.list.User.Context;
-        var uppered = app.AbsolutePath.ToUpperInvariant() + "/file.txt";
+        var uppered = app.filesystem.root.Absolute.ToUpperInvariant() + "/file.txt";
         var path = app.actor.list.User.Context.File(uppered);
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
@@ -245,7 +245,7 @@ public class PathAuthorizeTests
         // No channel registered — if Authorize tried to prompt, it would
         // throw or return non-Ok. Auto-grant means Ok with no ask.
         var context = app.actor.list.User.Context;
-        var osDir = app.OsAbsolutePath;
+        var osDir = app.filesystem.os.Absolute;
         var osPath = System.IO.Path.Combine(osDir, "system", "test", "fixture.goal");
         var path = app.actor.list.User.Context.File(osPath);
 

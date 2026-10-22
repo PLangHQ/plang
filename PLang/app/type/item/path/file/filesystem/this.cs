@@ -25,10 +25,13 @@ public class @this
     /// <summary>A filesystem over <paramref name="under"/>: its folders are the ones under it.</summary>
     protected @this(@this under) => (_root, _os, _store) = (under._root, under._os, under._store);
 
-    /// <summary>The app's folder — what <c>/</c> is — where the OS lands for it.</summary>
+    /// <summary>The app's folder — what <c>/</c> is — where the OS lands for it: <c>%!app.filesystem.root%</c>.</summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.path.file.@this root => _root.Value;
 
-    /// <summary>The runtime's os folder — what <c>/system/</c> falls back to — where the OS lands for it.</summary>
+    /// <summary>The runtime's os folder — what <c>/system/</c> falls back to — where the OS lands for it:
+    /// <c>%!app.filesystem.os%</c>.</summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.path.file.@this os => _os.Value;
 
     /// <summary>The app's stores' folder (<c>&lt;root&gt;/.data</c>), there yet or not — where the OS lands for it.</summary>

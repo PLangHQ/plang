@@ -146,7 +146,7 @@ public class RunActionTests
 
         void Probe(global::app.@this childApp)
         {
-            if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
+            if (!childApp.filesystem.root.Absolute.StartsWith(_tempDir)) return;
             childApp.type.list["action"].Own().Bind("start", global::app.@event.When.before,
                 async (_, _, context) =>
                 {
@@ -259,8 +259,8 @@ public class RunActionTests
         string? observedChildOsDir = null;
         void Probe(global::app.@this childApp)
         {
-            if (childApp.AbsolutePath.StartsWith(_tempDir))
-                observedChildOsDir = childApp.OsAbsolutePath;
+            if (childApp.filesystem.root.Absolute.StartsWith(_tempDir))
+                observedChildOsDir = childApp.filesystem.os.Absolute;
         }
         _app.test.list.Made += Probe;
         try
@@ -276,7 +276,7 @@ public class RunActionTests
             var folder = System.IO.Path.GetFullPath(System.IO.Path.Combine(System.AppContext.BaseDirectory, "os"));
             var executables = System.IO.Directory.ResolveLinkTarget(folder, returnFinalTarget: true)?.FullName ?? folder;
             await Assert.That(observedChildOsDir).IsEqualTo(executables);
-            await Assert.That(_app.OsAbsolutePath).IsEqualTo(executables);
+            await Assert.That(_app.filesystem.os.Absolute).IsEqualTo(executables);
         }
         finally
         {
@@ -293,7 +293,7 @@ public class RunActionTests
         bool? observed = null;
         void Probe(global::app.@this childApp)
         {
-            if (childApp.AbsolutePath.StartsWith(_tempDir))
+            if (childApp.filesystem.root.Absolute.StartsWith(_tempDir))
                 observed = childApp.test.list.Session != null;
         }
         _app.test.list.Made += Probe;
@@ -327,7 +327,7 @@ public class RunActionTests
         int childAppsCreated = 0;
         void Probe(global::app.@this childApp)
         {
-            if (childApp.AbsolutePath.StartsWith(_tempDir))
+            if (childApp.filesystem.root.Absolute.StartsWith(_tempDir))
                 Interlocked.Increment(ref childAppsCreated);
         }
         _app.test.list.Made += Probe;
@@ -466,7 +466,7 @@ public class RunActionTests
         var errStream = new System.IO.MemoryStream();
         void Probe(global::app.@this childApp)
         {
-            if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
+            if (!childApp.filesystem.root.Absolute.StartsWith(_tempDir)) return;
             childApp.actor.list.User.Channel.Register(new StreamChannel(
                 global::app.channel.list.@this.Error, errStream,
                 ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });

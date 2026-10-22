@@ -16,12 +16,12 @@ public class OsNavigatedMemberTests : System.IAsyncDisposable
         => await new global::app.type.item.variable.parser.@this(text, _app.type.list).Variable[0].Start(Ctx);
 
     [Test]
-    public async Task TheAppsOsAbsolutePath_Reads()
+    public async Task TheAppsOsFolder_Reads()
     {
-        var read = await Read("%!app.OsAbsolutePath%");
+        var read = await Read("%!app.filesystem.os%");
 
         await Assert.That(read.Error?.Key).IsNotEqualTo("NotFound");
-        await Assert.That((await read.Value())?.ToString()).IsEqualTo(_app.OsAbsolutePath);
+        await Assert.That(((global::app.type.item.path.@this)(await read.Value())!).Absolute).IsEqualTo(_app.filesystem.os.Absolute);
     }
 
     // a fresh goal holds no cache, so what reads it is the goal's member list: Cache is on it

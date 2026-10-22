@@ -169,9 +169,7 @@ public sealed class @this : browser.@this
         var (program, failed) = await Started("Screen", context);
         if (program == null) return global::app.data.@this<browser.@this>.From(failed!);
         var cdp = new cdp.@this(program.pipe!);
-        var file = context.App.type.list[new global::app.type.@this("path", "file"), context];
-        var browser = new @this(url, display, program, cdp,
-            new FilePath(context.App.AbsolutePath, file), new FilePath(context.App.OsAbsolutePath, file),
+        var browser = new @this(url, display, program, cdp, context.App.filesystem.root, context.App.filesystem.os,
             error => context.Actor.Channel.Report(context.Error(error)));
         // Chromium stopping by itself is said, with what it said last — never a black screen without a word
         browser.Watched();

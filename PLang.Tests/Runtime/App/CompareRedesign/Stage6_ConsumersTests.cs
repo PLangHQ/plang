@@ -108,7 +108,7 @@ public class Stage6_ConsumersTests
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
         // in the app's root: a file's size is read through the gate, which asks for anything outside it
-        var dir = System.IO.Path.Combine(app.AbsolutePath, "sortsize");
+        var dir = System.IO.Path.Combine(app.filesystem.root.Absolute, "sortsize");
         Directory.CreateDirectory(dir);
         try
         {

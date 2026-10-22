@@ -110,11 +110,11 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// there is no root, and it is written as typed.</summary>
     public override global::app.type.item.path.@this Relative(actor.context.@this context)
     {
-        var root = context.App?.AbsolutePath;
+        var root = context.App?.filesystem.root.Absolute;
         if (root == null) return this;
         var under = root.EndsWith(PathHelper.DirectorySeparatorChar) || root.EndsWith(PathHelper.AltDirectorySeparatorChar)
             ? root : root + PathHelper.DirectorySeparatorChar;
-        var system = PathHelper.Combine(context.App!.OsAbsolutePath, "system");
+        var system = context.App!.filesystem.os.Combine("system").Absolute;
         var raw = Absolute.StartsWith(under, RootComparison) ? "/" + Absolute[under.Length..].Replace('\\', '/')
             : string.Equals(Absolute, root, RootComparison) ? "/"
             // the system folder and everything under it: its location replaced by /system

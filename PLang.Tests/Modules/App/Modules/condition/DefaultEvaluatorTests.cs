@@ -228,8 +228,8 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     [Test] public async Task Is_AFilesKind_BeforeAndAfterItIsRead()
     {
         var ctx = _app.actor.list.User.Context;
-        System.IO.Directory.CreateDirectory(_app.AbsolutePath);
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_app.AbsolutePath, "c.json"), "{\"a\":1}");
+        System.IO.Directory.CreateDirectory(_app.filesystem.root.Absolute);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_app.filesystem.root.Absolute, "c.json"), "{\"a\":1}");
         var file = new global::app.type.item.file.@this(global::app.type.item.path.@this.Resolve("/c.json", ctx), ctx);
 
         await Assert.That(IsTrue(await EvalIf(file, "is", "json"))).IsTrue();
@@ -270,8 +270,8 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     [Test] public async Task IfExists_PathToExistingFile_IsTrue()
     {
         // In the evaluating caller's root — the caller's actor is the one the existence probe asks for.
-        System.IO.Directory.CreateDirectory(_app.AbsolutePath);
-        var file = System.IO.Path.Combine(_app.AbsolutePath, "present-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt");
+        System.IO.Directory.CreateDirectory(_app.filesystem.root.Absolute);
+        var file = System.IO.Path.Combine(_app.filesystem.root.Absolute, "present-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt");
         System.IO.File.WriteAllText(file, "x");
         var fp = _app.actor.list.User.Context.File(file);
         await Assert.That(IsTrue(await EvalIf(fp, "==", true))).IsTrue();
@@ -280,7 +280,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
 
     [Test] public async Task IfExists_PathToMissingFile_IsFalse()
     {
-        var missing = System.IO.Path.Combine(_app.AbsolutePath, "not-here.txt");
+        var missing = System.IO.Path.Combine(_app.filesystem.root.Absolute, "not-here.txt");
         var fp = _app.actor.list.User.Context.File(missing);
         await Assert.That(IsFalse(await EvalIf(fp, "==", true))).IsTrue();
     }
@@ -295,8 +295,8 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
 
     [Test] public async Task BareIf_ExistingPath_IsTrue()
     {
-        System.IO.Directory.CreateDirectory(_app.AbsolutePath);
-        var file = System.IO.Path.Combine(_app.AbsolutePath, "present-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt");
+        System.IO.Directory.CreateDirectory(_app.filesystem.root.Absolute);
+        var file = System.IO.Path.Combine(_app.filesystem.root.Absolute, "present-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt");
         System.IO.File.WriteAllText(file, "x");
         await Assert.That(IsTrue(await Truth(_app.actor.list.User.Context.File(file)))).IsTrue();
         System.IO.File.Delete(file);
@@ -304,7 +304,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
 
     [Test] public async Task BareIf_MissingPath_IsFalse()
         => await Assert.That(IsFalse(await Truth(_app.actor.list.User.Context.File(
-            System.IO.Path.Combine(_app.AbsolutePath, "not-here.txt"))))).IsTrue();
+            System.IO.Path.Combine(_app.filesystem.root.Absolute, "not-here.txt"))))).IsTrue();
 
     // --- Operands, judged at build ---
 

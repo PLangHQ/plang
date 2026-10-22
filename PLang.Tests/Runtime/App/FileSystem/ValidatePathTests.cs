@@ -99,7 +99,7 @@ public class ValidatePathTests
     private static string SystemFolder(global::app.@this app, out string folder)
     {
         folder = "vp-" + System.Guid.NewGuid().ToString("N")[..8];
-        var at = System.IO.Path.Join(app.OsAbsolutePath, "system", folder);
+        var at = System.IO.Path.Join(app.filesystem.os.Absolute, "system", folder);
         System.IO.Directory.CreateDirectory(at);
         return at;
     }

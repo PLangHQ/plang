@@ -68,7 +68,7 @@ public sealed partial class @this(IProgram asked)
         var (app, parameter, environment, workingDirectory, clean, keep) =
             (asked.App, asked.Parameter, asked.Environment, asked.WorkingDirectory, asked.Clean, asked.Keep);
         // the step names what it starts itself when the program, its arguments, environment, folder, whether it is clean
-        // and what it keeps are all written in it — no variable but the running app's anchors (%!app.AbsolutePath%),
+        // and what it keeps are all written in it — no variable but the running app's anchors (%!app.filesystem.root%),
         // nothing its caller handed it: only then may a goal that ships with plang start it unasked (any
         // other variable there is the caller's, and is asked as the caller)
         static bool Written(Data? given)
@@ -117,7 +117,7 @@ public sealed partial class @this(IProgram asked)
             if (readable.Exits || !readable.Success) return readable;
         }
 
-        var info = new ProcessStartInfo(program.Absolute) { WorkingDirectory = folder?.Absolute ?? context.App.AbsolutePath };
+        var info = new ProcessStartInfo(program.Absolute) { WorkingDirectory = folder?.Absolute ?? context.App.filesystem.root.Absolute };
         var parameters = parameter == null || !await parameter.ToBooleanAsync() ? null : (await parameter.Value())!.Clr<List<object?>>();
         foreach (var p in parameters ?? []) info.ArgumentList.Add(p?.ToString() ?? "");
 

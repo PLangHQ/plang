@@ -103,7 +103,7 @@ public class Stage5MessagesEndToEndTests
         // is identified by (Actor + Path + Verb) — App.Id no longer scopes
         // grants — so app2's Find must hit without a fresh prompt.
         var (app1, foreignFile) = Setup("a");
-        var root = app1.AbsolutePath;
+        var root = app1.filesystem.root.Absolute;
         var path1 = app1.actor.list.User.Context.File(foreignFile);
         var firstRead = await path1.Touch(app1.actor.list.User.Context);
         await firstRead.IsSuccess();
@@ -127,7 +127,7 @@ public class Stage5MessagesEndToEndTests
     [Test] public async Task Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow()
     {
         var (app1, foreignFile) = Setup("a");
-        var root = app1.AbsolutePath;
+        var root = app1.filesystem.root.Absolute;
         var path1 = app1.actor.list.User.Context.File(foreignFile);
         var firstRead = await path1.Touch(app1.actor.list.User.Context);
         await firstRead.IsSuccess();
@@ -160,7 +160,7 @@ public class Stage5MessagesEndToEndTests
     [Test] public async Task Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt()
     {
         var (app1, foreignFile) = Setup("a");
-        var root = app1.AbsolutePath;
+        var root = app1.filesystem.root.Absolute;
         var path1 = app1.actor.list.User.Context.File(foreignFile);
         await (await path1.Touch(app1.actor.list.User.Context)).IsSuccess();   // create persisted grant
 

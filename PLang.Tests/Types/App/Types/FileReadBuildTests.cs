@@ -34,10 +34,10 @@ public class FileReadBuildTests
         // lifts to an image value with Type=image. Path inside the App root
         // so AuthGate doesn't deny.
         await using var app = NewApp();
-        System.IO.Directory.CreateDirectory(app.AbsolutePath);
+        System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
         var pngBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
         var rel = "fr-img-" + System.Guid.NewGuid().ToString("N")[..8] + ".png";
-        var abs = System.IO.Path.Combine(app.AbsolutePath, rel);
+        var abs = System.IO.Path.Combine(app.filesystem.root.Absolute, rel);
         System.IO.File.WriteAllBytes(abs, pngBytes);
         try
         {
@@ -55,9 +55,9 @@ public class FileReadBuildTests
     [Test] public async Task FileReadRun_TextMime_ReturnsStringValue()
     {
         await using var app = NewApp();
-        System.IO.Directory.CreateDirectory(app.AbsolutePath);
+        System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
         var rel = "fr-txt-" + System.Guid.NewGuid().ToString("N")[..8] + ".txt";
-        var abs = System.IO.Path.Combine(app.AbsolutePath, rel);
+        var abs = System.IO.Path.Combine(app.filesystem.root.Absolute, rel);
         System.IO.File.WriteAllText(abs, "hello");
         try
         {

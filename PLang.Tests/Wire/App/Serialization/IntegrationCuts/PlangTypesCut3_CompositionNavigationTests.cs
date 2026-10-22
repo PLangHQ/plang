@@ -29,8 +29,8 @@ public class PlangTypesCut3_CompositionNavigationTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut3b-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        System.IO.Directory.CreateDirectory(app.AbsolutePath);
-        var abs = System.IO.Path.Combine(app.AbsolutePath, "present.png");
+        System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
+        var abs = System.IO.Path.Combine(app.filesystem.root.Absolute, "present.png");
         System.IO.File.WriteAllBytes(abs, PngBytes);
         try
         {
@@ -48,8 +48,8 @@ public class PlangTypesCut3_CompositionNavigationTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut3c-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        System.IO.Directory.CreateDirectory(app.AbsolutePath);
-        var abs = System.IO.Path.Combine(app.AbsolutePath, "missing-" + System.Guid.NewGuid().ToString("N")[..8] + ".png");
+        System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
+        var abs = System.IO.Path.Combine(app.filesystem.root.Absolute, "missing-" + System.Guid.NewGuid().ToString("N")[..8] + ".png");
         // Don't create the file.
         var p = global::app.type.item.path.@this.Resolve(abs, app.actor.list.User.Context) as global::app.type.item.path.file.@this;
         var img = app.actor.list.User.Context.Image(p!, PngBytes);

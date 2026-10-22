@@ -177,7 +177,7 @@ public class GoalPathTests
     {
         await using var app = new global::app.@this(TempApp()).Testing();
         var ctx = app.actor.list.System.Context;
-        var system = System.IO.Path.Combine(app.OsAbsolutePath, "system");
+        var system = System.IO.Path.Combine(app.filesystem.os.Absolute, "system");
 
         await Assert.That(global::app.type.item.path.@this.Resolve(system, ctx).Raw).IsEqualTo("/system");
         await Assert.That(global::app.type.item.path.@this.Resolve(System.IO.Path.Combine(system, "error", "Show.goal"), ctx).Raw)

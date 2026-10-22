@@ -80,8 +80,8 @@ public class CreateEventTests : System.IAsyncDisposable
 
     [Test] public async Task ReadingAFile_IsTheBirthOfAFile_ThroughItsTypesCreate()
     {
-        System.IO.Directory.CreateDirectory(app.AbsolutePath);
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "born.txt"), "x");
+        System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.filesystem.root.Absolute, "born.txt"), "x");
         object? seen = null;
         On("file", global::app.@event.When.after, (data, _) => { seen = data.Peek(); return data; });
 
@@ -94,8 +94,8 @@ public class CreateEventTests : System.IAsyncDisposable
 
     [Test] public async Task ReadingAFile_AndKeepingItAsAFile_IsOneBirth()
     {
-        System.IO.Directory.CreateDirectory(app.AbsolutePath);
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "once.txt"), "x");
+        System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.filesystem.root.Absolute, "once.txt"), "x");
         var births = new System.Collections.Generic.List<string>();
         On("file", global::app.@event.When.after, (data, _) => { births.Add(System.Environment.StackTrace); return data; });
 
@@ -110,8 +110,8 @@ public class CreateEventTests : System.IAsyncDisposable
 
     [Test] public async Task KeepingAReadFileAsAFile_LeavesItUnread_UntilItIsUsed()
     {
-        System.IO.Directory.CreateDirectory(app.AbsolutePath);
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "lazy.txt"), "x");
+        System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.filesystem.root.Absolute, "lazy.txt"), "x");
 
         var landed = await global::app.type.item.path.@this.Resolve("lazy.txt", Ctx).Read(Ctx);
         await Ctx.Variable.Set("!data", landed);
@@ -127,8 +127,8 @@ public class CreateEventTests : System.IAsyncDisposable
 
     [Test] public async Task WhatAnActionWasGiven_HoldsAGivenFileUnread()
     {
-        System.IO.Directory.CreateDirectory(app.AbsolutePath);
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "given.txt"), "x");
+        System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.filesystem.root.Absolute, "given.txt"), "x");
         await Ctx.Variable.Set("doc", await global::app.type.item.path.@this.Resolve("given.txt", Ctx).Read(Ctx));
 
         var (handler, _) = await global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%y%", "variable"), ("value", "%doc%")).Bind(Ctx);

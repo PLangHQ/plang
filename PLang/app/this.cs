@@ -92,19 +92,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public string? Version { get; internal set; }
 
     /// <summary>
-    /// The OS absolute path of the application (e.g. C:\myapp or /home/user/app) — its filesystem's root, where the OS
-    /// lands for the folder it was started in.
-    /// </summary>
-    [global::app.LlmBuilder]
-    public string AbsolutePath => Filesystem.root.Absolute;
-
-    /// <summary>
-    /// The runtime's <c>os/</c> folder next to the executable — its filesystem's os folder, where the OS lands for it.
-    /// </summary>
-    [global::app.LlmBuilder]
-    public string OsAbsolutePath => Filesystem.os.Absolute;
-
-    /// <summary>
     /// The environment the app runs in ("production", "development") as <paramref name="context"/>'s settings
     /// have it (<c>%!app.setting.environment%</c>) — <c>%!app.environment%</c> answers as its asker.
     /// </summary>
@@ -173,11 +160,13 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.type.node.current.@this<Goal, global::app.goal.list.@this> goal { get; }
 
     /// <summary>
-    /// The disk — what a file path's verbs reach once their gate has passed. A context reads and writes
-    /// through its own (<c>context.Filesystem</c>): this one, or the overlay a build checks its goals over.
+    /// The disk — what a file path's verbs reach once their gate has passed, and the app's folders as paths:
+    /// <c>%!app.filesystem.root%</c> (what <c>/</c> is) and <c>%!app.filesystem.os%</c> (the runtime's os folder). A
+    /// context reads and writes through its own (<c>context.Filesystem</c>): this one, or the overlay a build checks
+    /// its goals over.
     /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.type.item.path.file.filesystem.@this Filesystem { get; }
+    [global::app.LlmBuilder, System.Text.Json.Serialization.JsonIgnore]
+    public global::app.type.item.path.file.filesystem.@this filesystem { get; }
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -303,7 +292,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
         _folder = lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
         // the app's disk, holding the app's folder as what / is
-        Filesystem = new(absolutePath);
+        filesystem = new(absolutePath);
 
         // The types come first: every value is born holding its type from this list, the actors' contexts too.
         type = new(this);

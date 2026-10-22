@@ -140,15 +140,15 @@ public class StoresFolderOpenTests : System.IAsyncDisposable
     [Test] public async Task TheAppsStoreAndTheSettingsStore_StillOpen()
     {
         var system = app.actor.list.System.Context;
-        await Assert.That(System.IO.Directory.Exists(System.IO.Path.Combine(app.AbsolutePath, ".data"))).IsFalse();
+        await Assert.That(System.IO.Directory.Exists(System.IO.Path.Combine(app.filesystem.root.Absolute, ".data"))).IsFalse();
         // the app's store first, by a read that signs nothing (a write signs, which reads a setting, which opens the
         // settings' store — whose folder under the stores' folder would make it first)
         await (await app.store.Tables()).IsSuccess();
         await (await app.store.Set("probe", "k", new global::app.data.@this("k", "v", context: system))).IsSuccess();
         await (await app.actor.list.System.Setting.Load()).IsSuccess();
         await (await app.actor.list.User.Setting.Load()).IsSuccess();
-        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(app.AbsolutePath, ".data", "data.sqlite"))).IsTrue();
-        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(app.AbsolutePath, ".data", "setting", "data.sqlite"))).IsTrue();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(app.filesystem.root.Absolute, ".data", "data.sqlite"))).IsTrue();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(app.filesystem.root.Absolute, ".data", "setting", "data.sqlite"))).IsTrue();
     }
 
     // the system's standing grant covers the stores' folder itself, not only what is under it: the app's store makes it
@@ -157,7 +157,7 @@ public class StoresFolderOpenTests : System.IAsyncDisposable
     [Test] public async Task TheSystem_MakesTheStoresFolder_OnAFreshRoot()
     {
         var system = app.actor.list.System.Context;
-        var folder = System.IO.Path.Combine(app.AbsolutePath, ".data");
+        var folder = System.IO.Path.Combine(app.filesystem.root.Absolute, ".data");
         await Assert.That(System.IO.Directory.Exists(folder)).IsFalse();
         await (await system.File(folder).Mkdir(system)).IsSuccess();
         await (await system.File(folder).Authorize(global::app.type.item.permission.Verb.read, system)).IsSuccess();
@@ -167,6 +167,6 @@ public class StoresFolderOpenTests : System.IAsyncDisposable
     [Test] public async Task EveryActor_ReadsTheOsFolderItself()
     {
         var user = app.actor.list.User.Context;
-        await (await user.File(app.OsAbsolutePath).Authorize(global::app.type.item.permission.Verb.read, user)).IsSuccess();
+        await (await user.File(app.filesystem.os.Absolute).Authorize(global::app.type.item.permission.Verb.read, user)).IsSuccess();
     }
 }

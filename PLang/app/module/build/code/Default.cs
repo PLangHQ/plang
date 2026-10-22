@@ -29,10 +29,10 @@ public class Default : IBuilder
         // building"), not goal-relative. The runtime auto-seeds %path% to the
         // app root before Build.goal runs, so by the time we get here
         // (await action.Path.Value()) is typically already the absolute cwd. For the literal
-        // "/" / "." / empty cases (no auto-seed), fall back to app.AbsolutePath.
+        // "/" / "." / empty cases (no auto-seed), fall back to the app's root.
         // For any other input that doesn't start with the root or with
         // "/", treat as a sibling-relative subpath under the root.
-        var rootDir = app.AbsolutePath;
+        var rootDir = app.filesystem.root.Absolute;
         string rootRelative;
         if (searchPath == "." || searchPath == "/" || searchPath == "\\")
             rootRelative = rootDir;

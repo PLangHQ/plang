@@ -140,9 +140,9 @@ public class TaskTests
     public async Task AParallelCallsParameter_GoesUpToTheParent_AsWhatItHolds()
     {
         string? sent = null;
-        System.IO.Directory.CreateDirectory(_app.AbsolutePath);
-        System.IO.File.WriteAllText(System.IO.Path.Combine(_app.AbsolutePath, "agent.md"), "Answer in json.");
-        System.IO.File.WriteAllText(System.IO.Path.Combine(_app.AbsolutePath, "instructions.md"), "{% if window == 0 %}be brief{% endif %}");
+        System.IO.Directory.CreateDirectory(_app.filesystem.root.Absolute);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_app.filesystem.root.Absolute, "agent.md"), "Answer in json.");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_app.filesystem.root.Absolute, "instructions.md"), "{% if window == 0 %}be brief{% endif %}");
         _app.parent.Link = json =>
         {
             sent = json;

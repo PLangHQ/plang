@@ -100,7 +100,7 @@ public class GoalPathTypingTests
         await Assert.That(loaded).IsNotNull();
         await Assert.That(loaded!.Path).IsNotNull();
         await Assert.That(loaded.Path!.Relative(ctx2).Raw).IsEqualTo("/Start.goal");
-        await Assert.That(loaded.Path!.Absolute).StartsWith(app2.AbsolutePath);
+        await Assert.That(loaded.Path!.Absolute).StartsWith(app2.filesystem.root.Absolute);
     }
 
     [Test] public async Task Goal_JsonRoundTrip_ResolvesPathUnderReaderRoot()

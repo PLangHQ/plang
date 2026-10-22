@@ -186,7 +186,7 @@ public class GoalsTests : System.IAsyncDisposable
     public async Task Load_RefusesAHeldSetupGoal()
     {
         // rooted where Named's paths resolve, so the held goal's .pr is the one loaded
-        await using var app = new global::app.@this(this.app.AbsolutePath).Testing();
+        await using var app = new global::app.@this(this.app.filesystem.root.Absolute).Testing();
         app.goal.list.Add(Named("SetupDb", "/setup/SetupDb.goal"));
 
         var result = await app.goal.Load("/setup/SetupDb.goal");

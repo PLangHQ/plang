@@ -33,8 +33,8 @@ public sealed partial class @this
             throw new ArgumentException("path cannot be empty", nameof(path));
 
         // the app's folder and the runtime's os folder, as its filesystem holds them
-        var rootAbsolutePath = app.Filesystem.root.Absolute.AdjustPathToOs().TrimEnd(PathHelper.DirectorySeparatorChar);
-        var osAbsolutePath = app.Filesystem.os.Absolute;
+        var rootAbsolutePath = app.filesystem.root.Absolute.AdjustPathToOs().TrimEnd(PathHelper.DirectorySeparatorChar);
+        var osAbsolutePath = app.filesystem.os.Absolute;
 
         if (IsOsRooted(path))
         {
@@ -62,8 +62,8 @@ public sealed partial class @this
         return places.FirstOrDefault(Present) ?? places.FirstOrDefault(Housed) ?? path;
 
         // Where a /system/ path is found is decided on the app's disk: the runtime's own files are never a build's.
-        bool Present(string absolute) => new @this(absolute, file) is var at && (app.Filesystem.IsFile(at) || app.Filesystem.IsFolder(at));
-        bool Housed(string absolute) => PathHelper.GetDirectoryName(absolute) is { } folder && app.Filesystem.IsFolder(new @this(folder, file));
+        bool Present(string absolute) => new @this(absolute, file) is var at && (app.filesystem.IsFile(at) || app.filesystem.IsFolder(at));
+        bool Housed(string absolute) => PathHelper.GetDirectoryName(absolute) is { } folder && app.filesystem.IsFolder(new @this(folder, file));
     }
 
     /// <summary>The places this path names, the app's own first: a <c>/system/</c> path is the app's own
@@ -76,8 +76,8 @@ public sealed partial class @this
     private static IReadOnlyList<string> Places(string absolute, global::app.@this app)
     {
         var separator = PathHelper.DirectorySeparatorChar;
-        var root = app.Filesystem.root.Absolute.AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
-        var os = app.Filesystem.os.Absolute.AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
+        var root = app.filesystem.root.Absolute.AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
+        var os = app.filesystem.os.Absolute.AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
         if (absolute.StartsWith(root, StringComparison.OrdinalIgnoreCase))
             return [absolute, PathHelper.GetFullPath(os + absolute[root.Length..])];
         if (absolute.StartsWith(os, StringComparison.OrdinalIgnoreCase))

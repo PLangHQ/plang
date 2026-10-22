@@ -122,11 +122,11 @@ public class RealPathGateTests : System.IAsyncDisposable
     // a build's overlay holds its own links: one made there is answered there, and the disk is untouched
     [Test] public async Task TheOverlay_HoldsItsOwnLinks()
     {
-        var overlay = new global::app.type.item.path.file.filesystem.overlay.@this(app.Filesystem);
+        var overlay = new global::app.type.item.path.file.filesystem.overlay.@this(app.filesystem);
         var at = user.File(System.IO.Path.Combine(root, "made"));
         overlay.Link(at, "a.txt");
         await Assert.That(overlay.Link(at)).IsEqualTo("a.txt");
-        await Assert.That(app.Filesystem.Link(at)).IsNull();
+        await Assert.That(app.filesystem.Link(at)).IsNull();
         await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(root, "made"))).IsFalse();
     }
 }

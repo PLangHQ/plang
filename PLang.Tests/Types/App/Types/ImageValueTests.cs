@@ -40,7 +40,7 @@ public class ImageValueTests : System.IAsyncDisposable
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-img-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        var raw = System.IO.Path.Combine(app.AbsolutePath, "photo.png");
+        var raw = System.IO.Path.Combine(app.filesystem.root.Absolute, "photo.png");
         var p = global::app.type.item.path.@this.Resolve(raw, app.actor.list.User.Context);
         var img = app.actor.list.User.Context.Image(p, PngHeader);
         await Assert.That(img.Path).IsNotNull();

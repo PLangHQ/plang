@@ -46,7 +46,7 @@ public sealed class @this : screen.@this
     // written by the json writer, one per line; kept across starts.
     internal static async Task Kept(System.Threading.Channels.ChannelReader<byte[]> errors, global::app.actor.context.@this context)
     {
-        var file = global::app.type.item.path.file.@this.Resolve(PathHelper.Combine(context.App.AbsolutePath, "errors.jsonl"), context);
+        var file = global::app.type.item.path.file.@this.Resolve("/errors.jsonl", context);
         var json = context.App.type.list.Mime("application/json");
         await foreach (var sent in errors.ReadAllAsync())
         {
@@ -73,9 +73,9 @@ public sealed class @this : screen.@this
         global::app.goal.step.action.@this? onInput, global::app.goal.step.action.@this? onClose, global::app.actor.context.@this context)
     {
         // watched from outside (the os bot); started anew now and then, so it stays small
-        var stats = PathHelper.Combine(context.App.AbsolutePath, "stats.jsonl");
+        const string stats = "/stats.jsonl";
         // what PlangOS's browser says of its media players (Chromium's media log), kept beside: what a video did when it stopped
-        var media = PathHelper.Combine(context.App.AbsolutePath, "media.jsonl");
+        const string media = "/media.jsonl";
         var recorded = 0;
         var heard = 0;
         await foreach (var e in events.ReadAllAsync())
