@@ -32,9 +32,9 @@ public sealed partial class @this
         if (string.IsNullOrWhiteSpace(path))
             throw new ArgumentException("path cannot be empty", nameof(path));
 
-        var rootAbsolutePath = PathHelper.GetFullPath(app.AbsolutePath).AdjustPathToOs()
-            .TrimEnd(PathHelper.DirectorySeparatorChar);
-        var osAbsolutePath = app.OsAbsolutePath;
+        // the app's folder and the runtime's os folder, as its filesystem holds them
+        var rootAbsolutePath = app.Filesystem.root.Absolute.AdjustPathToOs().TrimEnd(PathHelper.DirectorySeparatorChar);
+        var osAbsolutePath = app.Filesystem.os.Absolute;
 
         if (IsOsRooted(path))
         {
@@ -76,8 +76,8 @@ public sealed partial class @this
     private static IReadOnlyList<string> Places(string absolute, global::app.@this app)
     {
         var separator = PathHelper.DirectorySeparatorChar;
-        var root = PathHelper.GetFullPath(app.AbsolutePath).AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
-        var os = PathHelper.GetFullPath(app.OsAbsolutePath).AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
+        var root = app.Filesystem.root.Absolute.AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
+        var os = app.Filesystem.os.Absolute.AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
         if (absolute.StartsWith(root, StringComparison.OrdinalIgnoreCase))
             return [absolute, PathHelper.GetFullPath(os + absolute[root.Length..])];
         if (absolute.StartsWith(os, StringComparison.OrdinalIgnoreCase))

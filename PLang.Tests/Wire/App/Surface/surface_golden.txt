@@ -2237,7 +2237,10 @@ class app.type.item.path.file.filesystem.overlay.this : app.type.item.path.file.
   override Write(app.type.item.path.file.this p, System.IO.Stream content, System.Threading.CancellationToken ct = …) : System.Threading.Tasks.Task
 
 class app.type.item.path.file.filesystem.this
-  ctor()
+  ctor(System.String folder)
+  ctor(app.type.item.path.file.filesystem.this under)
+  os : app.type.item.path.file.this { get; }
+  root : app.type.item.path.file.this { get; }
   virtual Add(app.type.item.path.file.this p, System.Byte[] content = …) : System.Void
   virtual Append(app.type.item.path.file.this p, System.String text) : System.Threading.Tasks.Task
   virtual Copy(app.type.item.path.file.this from, app.type.item.path.file.this to, System.Boolean overwrite) : System.Threading.Tasks.Task
@@ -2288,6 +2291,7 @@ class app.type.item.path.file.this : app.type.item.path.this [PathScheme]
   override Write(System.IO.Stream content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   override WriteBytes(System.Byte[] content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   override WriteText(System.String content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
+  protected override Question(app.type.item.permission.Verb verb, app.type.item.path.this place, app.actor.context.this context) : System.String
   static Resolve(System.String rawPath, app.actor.context.this context) : app.type.item.path.file.this
   static ValidatePath(System.String path, app.this app) : System.String
 
@@ -2314,7 +2318,7 @@ class app.type.item.path.http.this : app.type.item.path.this, app.type.item.ICre
   override WithName(System.String name) : app.type.item.path.this
   override WriteBytes(System.Byte[] content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   override WriteText(System.String content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
-  protected override AuthorizationHint(app.type.item.permission.Verb verb, app.actor.context.this context) : System.String
+  protected override Question(app.type.item.permission.Verb verb, app.type.item.path.this place, app.actor.context.this context) : System.String
   static Create(System.Object value) : app.type.item.path.http.this
   static Create(System.Object value, app.type.this type, app.data.this data) : app.type.item.path.http.this
   static Resolve(System.String rawPath, app.actor.context.this context) : app.type.item.path.http.this
@@ -2374,12 +2378,9 @@ abstract class app.type.item.path.this : app.type.item.this, app.type.item.ICrea
   override GetHashCode() : System.Int32
   override ToString() : System.String
   protected AuthGate(app.type.item.permission.Verb verb, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
-  protected BuildRequest(app.actor.this actor, app.type.item.permission.Verb verb) : app.type.item.permission.this
-  protected IsInRoot(app.actor.context.this context) : System.Boolean
   protected Reference(System.String type, app.actor.context.this context) : app.type.this
-  protected SignAndStore(app.actor.this actor, app.type.item.permission.Verb verb, System.Boolean persist, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
-  protected virtual AuthorizationHint(app.type.item.permission.Verb verb, app.actor.context.this context) : System.String
+  protected virtual Question(app.type.item.permission.Verb verb, app.type.item.path.this place, app.actor.context.this context) : System.String
   static Create(System.Object value) : app.type.item.path.this
   static Create(System.Object value, app.type.this type, app.data.this data) : app.type.item.path.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }

@@ -22,7 +22,8 @@ public sealed class @this : filesystem.@this
     // links made here, each with its target as written
     private readonly Dictionary<string, string> _links;
 
-    public @this(filesystem.@this under)
+    /// <summary>An overlay over <paramref name="under"/>: its folders are its disk's.</summary>
+    public @this(filesystem.@this under) : base(under)
     {
         _under = under;
         var comparer = StringComparer.FromComparison(global::app.type.item.path.@this.RootComparison);

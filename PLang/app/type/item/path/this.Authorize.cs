@@ -7,24 +7,15 @@ using MatchMode = global::app.type.item.permission.Match;
 namespace app.type.item.path;
 
 /// <summary>
-/// Permission gate. FS methods call <c>path.Authorize(verb, context)</c> before any
-/// I/O — Find existing grant, ask the actor on miss, sign + store the answer. The
-/// actor is the caller's: the same path value, read by two actors, checks each one.
-///
-/// The known-awkward <c>BuildRequest</c>/<c>SignAndStore</c> shape is a
-/// consequence of <c>output.ask</c> being text-only: the Permission gets
-/// constructed once to format the question and again to seal on the answer.
-/// When <c>output.ask</c> grows structured options the Permission becomes a
-/// first-class option, defined once, signed once. Tracked in todos.md.
+/// The permission gate: every path verb asks whether the asking actor may act on the path before any I/O. The path is
+/// judged where the OS lands for it (its <see cref="Location"/>: each link on the way followed), against the
+/// filesystem's folders, each landed once and kept: in the root it may; in the stores' folder it may not, and nobody is
+/// asked; anywhere else a grant it holds, or its answer when asked. The actor is the caller's: the same path, read by two
+/// actors, checks each one. An answer's grant is on the place asked about — kept in memory for the run, or, answered
+/// "always", in the actor's permission setting, signed as it crosses into the settings' store.
 /// </summary>
 public partial class @this
 {
-    // Routing today: signed grants → sqlite, unsigned → in-memory. "a"
-    // answers sign without an expiry argument because the signing layer's
-    // public surface is text-only. When EnsureSigned grows an Expires
-    // parameter, the "a" branch in this file should pass a far-future
-    // TimeSpan (architect's "AlwaysExpiry" intent). Tracked in todos.md.
-
     /// <summary>The actor may <paramref name="verb"/> this path: in its own root it may; else a grant it holds, or its
     /// answer when asked. <paramref name="named"/>: the asking step names this path itself — written in the step, no
     /// %ref%, nothing its caller gave — and then a step of a goal that ships with plang (under the os folder,
@@ -33,89 +24,51 @@ public partial class @this
     /// a path an os goal was handed (a parameter, a variable) is asked as any other.</summary>
     public async Task<data.@this> Authorize(Verb verb, actor.context.@this context, bool named = false)
     {
-        var actor = context?.Actor
-            ?? throw new InvalidOperationException("Path.Authorize requires the caller's context with an actor");
-
+        var actor = context.Actor;
         // where the OS lands for this path, worked out once for the whole call (a link can change between calls)
         var place = Location(context.Filesystem);
 
         // In its root, or a grant it holds: yes; the stores' folder with no grant: no — neither asks
-        if (await Standing(verb, context, place) is { } answer) return answer;
+        if (await place.Standing(verb, context) is { } answer) return answer;
 
         // What ships with plang asks nobody for what it names itself — the actor stays the user's own
         if (named && AskedByOs(context)) return context.Ok();
 
-        // Schemes can append a hint — e.g. HttpPath warns when answering 'a' would persist a URL with a query
-        // string verbatim to the local sqlite. Base returns "".
-        var hint = AuthorizationHint(verb, context);
-        var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
-        // the grant an answer gives is on the place asked about
-        return await actor.Permission.Ask($"Allow {actor.Name} to {verb} {Absolute}?{hintSuffix} (y/n/a)",
-            Request(actor, verb, place), context, persist => Keep(actor, verb, persist, place, context));
+        return await actor.Permission.Ask(Question(verb, place, context),
+            place.Request(actor, verb), context, persist => place.Keep(actor, verb, persist, context));
     }
 
-    protected Task<data.@this> SignAndStore(actor.@this actor, Verb verb, bool persist, actor.context.@this context)
-        => Keep(actor, verb, persist, Location(actor.Context.Filesystem), context);
+    /// <summary>The grant this place is asked for: the actor, this place, the verb, exactly.</summary>
+    internal permission.@this Request(actor.@this actor, Verb verb) => permission.@this.Request(actor, Absolute, verb, MatchMode.exact);
 
-    // The actor's answer kept as a grant on place. Nothing in memory signs: a persisted grant is signed when it crosses
-    // the application/plang boundary into the settings store; persist says which.
-    private async Task<data.@this> Keep(actor.@this actor, Verb verb, bool persist, string place, actor.context.@this context)
+    /// <summary>The actor's answer kept as a grant on this place: in memory for the run, or persisted
+    /// (<paramref name="persist"/>, the answer "always"), signed as it crosses into the settings' store.</summary>
+    internal async Task<data.@this> Keep(actor.@this actor, Verb verb, bool persist, actor.context.@this context)
     {
-        await actor.Permission.Add(new data.@this<permission.@this>("", Request(actor, verb, place), context: context), persist);
+        await actor.Permission.Add(new data.@this<permission.@this>("", Request(actor, verb), context: context), persist);
         return context.Ok();
     }
 
-    // a grant is on the place: the request names where the OS lands for this path
-    protected permission.@this BuildRequest(actor.@this actor, Verb verb) => Request(actor, verb, Location(actor.Context.Filesystem));
-
-    private permission.@this Request(actor.@this actor, Verb verb, string place) =>
-        permission.@this.Request(actor, place, verb, MatchMode.exact);
-
-    /// <summary>What the gate answers the actor without asking: yes in its own root or by a grant it holds; no in the
-    /// stores' folder (<see cref="IsStore"/>), whose keys nobody is asked for; null when the actor is to be asked. Every
-    /// door that asks takes this answer first.</summary>
-    private protected Task<data.@this?> Standing(Verb verb, actor.context.@this context)
-        => Standing(verb, context, Location(context.Filesystem));
-
-    // The same, for place: where the OS lands for this path, worked out once by the caller.
-    private async Task<data.@this?> Standing(Verb verb, actor.context.@this context, string place)
+    /// <summary>What the gate answers the actor about this place without asking: yes in its root or by a grant it holds;
+    /// no in the stores' folder, whose keys nobody is asked for; null when the actor is to be asked. Asked of a place — a
+    /// path's <see cref="Location"/>. Every door that asks takes this answer first.</summary>
+    internal async Task<data.@this?> Standing(Verb verb, actor.context.@this context)
     {
         var filesystem = context.Filesystem;
-        if (IsInRoot(filesystem, context.App, place)) return context.Ok();
-        if (await context.Actor!.Permission.Find(place, verb) != null) return context.Ok();
-        if (IsStore(filesystem, context.App, place)) return context.Error(new global::app.error.PermissionDenied(Request(context.Actor!, verb, place)));
+        if (IsInRoot(filesystem)) return context.Ok();
+        if (await context.Actor.Permission.Find(Absolute, verb) != null) return context.Ok();
+        if (IsStore(filesystem)) return context.Error(new global::app.error.PermissionDenied(Request(context.Actor, verb)));
         return null;
     }
 
-    // In-root is under the app's own folder. The os folder is never in-root, even when an app is rooted there: what an
-    // actor may do there is its standing grants (every actor reads and runs; only the system writes). Nor is the stores'
-    // folder: only the system reaches it, through its standing grant.
-    protected bool IsInRoot(actor.context.@this context) => IsInRoot(context.Filesystem, context.App, Location(context.Filesystem));
+    // In the root: under the filesystem's root, and neither the os folder (what an actor may do there is its standing
+    // grants: every actor reads and runs, only the system writes) nor the stores' folder (the system's alone).
+    private bool IsInRoot(file.filesystem.@this filesystem)
+        => IsUnder(filesystem.root).Value && !IsUnder(filesystem.os).Value && !IsStore(filesystem);
 
-    // Each where the OS lands: place, and the app's folders it is held against (read once, kept).
-    private bool IsInRoot(file.filesystem.@this filesystem, global::app.@this? app, string place)
-    {
-        if (app == null) return false;
-        if (IsUnder(filesystem, place, app.OsAbsolutePath, RootComparison) || IsStore(filesystem, app, place)) return false;
-        return IsUnder(filesystem, place, app.AbsolutePath, RootComparison);
-    }
-
-    /// <summary>Whether the stores' folder's place (<c>&lt;root&gt;/.data</c>, there yet or not) is this path or under it,
-    /// each read where the OS lands — a folder whose move would carry the stores.</summary>
-    private protected bool IsAboveStores(actor.context.@this context)
-    {
-        if (context.App is not { } app) return false;
-        var filesystem = context.Filesystem;
-        var place = Location(filesystem);
-        var stores = filesystem.Anchor(PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder));
-        var under = place.EndsWith(PathHelper.DirectorySeparatorChar) ? place : place + PathHelper.DirectorySeparatorChar;
-        return stores.StartsWith(under, StringComparison.OrdinalIgnoreCase) || string.Equals(stores, place, StringComparison.OrdinalIgnoreCase);
-    }
-
-    // Under the stores' folder of the app's root (<root>/.data/), where its stores and an identity's key are kept — in
-    // any case, as a case-blind disk opens it (.DATA is .data there).
-    private bool IsStore(file.filesystem.@this filesystem, global::app.@this? app, string place)
-        => app != null && IsUnder(filesystem, place, PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder), StringComparison.OrdinalIgnoreCase);
+    // In the stores' folder, where the app's stores and an identity's key are kept — in any case, as a case-blind disk
+    // opens it (.DATA is .data there).
+    private bool IsStore(file.filesystem.@this filesystem) => IsUnder(filesystem.store, StringComparison.OrdinalIgnoreCase);
 
     // The running app's anchors: the only variables a goal that ships with plang may hold in what it names itself and
     // still be trusted — each a fact no caller can set (pinned). Every other variable, any other %!…% included
@@ -133,38 +86,17 @@ public partial class @this
     /// call frame running the step), never one further up. A start trusted so takes nothing of the actor's settings
     /// that changes what runs (the terminal's environment).</summary>
     internal static bool AskedByOs(actor.context.@this context)
-    {
-        var os = context.App?.OsAbsolutePath;
-        if (string.IsNullOrEmpty(os) || context.call?.Goal?.Folder is not { } folder) return false;
-        var under = os.EndsWith(PathHelper.DirectorySeparatorChar) ? os : os + PathHelper.DirectorySeparatorChar;
-        return folder.Absolute.StartsWith(under, RootComparison) || string.Equals(folder.Absolute, os, RootComparison);
-    }
+        => context.call.Goal?.Folder is { } folder && folder.Location(context.Filesystem).IsUnder(context.Filesystem.os).Value;
+
+    /// <summary>Where the gate finds this path, read in <paramref name="filesystem"/>: the place the OS opens for it — the
+    /// path itself, unless a scheme reads it otherwise (a file: each link on the way followed).</summary>
+    internal virtual @this Location(file.filesystem.@this filesystem) => this;
 
     /// <summary>
-    /// Returns true when <paramref name="place"/> (where the OS lands for this path) sits under (or equals) where
-    /// <paramref name="rootCandidate"/> lands, read in <paramref name="filesystem"/>.
+    /// The question the actor is asked to <paramref name="verb"/> this path, whole — each scheme writes its own: what a
+    /// yes means, in its words (a file under the os folder says what ships with plang; a url says what "always" keeps).
+    /// <paramref name="place"/> is where the OS lands for it.
     /// </summary>
-    private bool IsUnder(file.filesystem.@this filesystem, string place, string? rootCandidate, StringComparison cmp)
-    {
-        if (string.IsNullOrEmpty(rootCandidate)) return false;
-        var root = filesystem.Anchor(rootCandidate);
-        var rootWithSeparator = root.EndsWith(PathHelper.DirectorySeparatorChar) ? root : root + PathHelper.DirectorySeparatorChar;
-        return place.StartsWith(rootWithSeparator, cmp) || string.Equals(place, root, cmp);
-    }
-
-    /// <summary>Where the gate finds this path, read in <paramref name="filesystem"/>: the place the OS opens for it — its
-    /// absolute form, unless a scheme reads it otherwise (a file: each link on the way followed).</summary>
-    internal virtual string Location(file.filesystem.@this filesystem) => Absolute;
-
-    /// <summary>
-    /// Extra text appended to the Authorize prompt before the y/n/a choices: what a yes means beyond the words.
-    /// A change under the os folder (write, delete) changes what ships with plang — and a goal there runs programs
-    /// without asking, so the question says so — it asks, it doesn't refuse. HttpPath overrides to warn when an
-    /// 'a' would persist a URL with query-string secrets verbatim to the local sqlite.
-    /// </summary>
-    protected virtual string AuthorizationHint(Verb verb, actor.context.@this context)
-        => verb is Verb.write or Verb.delete
-           && IsUnder(context.Filesystem, Location(context.Filesystem), context.App?.OsAbsolutePath, RootComparison)
-            ? "(files under /system/ ship with plang; a goal there runs programs without asking)"
-            : "";
+    protected virtual string Question(Verb verb, @this place, actor.context.@this context)
+        => $"Allow {context.Actor.Name} to {verb} {Absolute}? (y/n/a)";
 }

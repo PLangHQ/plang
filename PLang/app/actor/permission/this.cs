@@ -26,19 +26,18 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         _actor = actor;
         // Every actor's standing grant on the runtime's shared os folder: it reads and runs what is there (the
         // builder's goals, /system/error/show). Writing there is the system actor's alone (Stand).
-        Stand(actor.App.OsAbsolutePath, Verb.read, Verb.execute);
+        Stand(actor.App.Filesystem.os, Verb.read, Verb.execute);
     }
 
     /// <summary>
-    /// This actor's standing grant on <paramref name="folder"/> (absolute) and all under it — the runtime's shared os
-    /// folder, the stores' folder — held in memory for the run, never persisted or asked; it replaces the one before
-    /// on that folder (the grant store keys by path). Two grants: the folder itself (a glob's <c>/**</c> doesn't match
-    /// its own folder), and all under it.
+    /// This actor's standing grant on <paramref name="place"/> (one of the filesystem's folders, where the OS lands for
+    /// it) and all under it — the runtime's shared os folder, the stores' folder — held in memory for the run, never
+    /// persisted or asked; it replaces the one before on that folder (the grant store keys by path). Two grants: the
+    /// folder itself (a glob's <c>/**</c> doesn't match its own folder), and all under it.
     /// </summary>
-    internal void Stand(string folder, params Verb[] verbs)
+    internal void Stand(path place, params Verb[] verbs)
     {
-        // on the place: where the OS lands for the folder
-        folder = _actor.Context.Filesystem.Anchor(folder);
+        var folder = place.Absolute;
         Grant[] grants =
         [
             new(_actor.Name, folder, new HashSet<Verb>(verbs), MatchMode.exact, _actor.App.type.list[typeof(Grant)]),
@@ -101,7 +100,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     /// </summary>
     public Task<global::app.data.@this?> Find(path requestPath, Verb verb)
         // a grant is on the place: the request names where the OS lands for the path
-        => Find(requestPath.Location(_actor.Context.Filesystem), verb);
+        => Find(requestPath.Location(_actor.Context.Filesystem).Absolute, verb);
 
     /// <summary>The first grant allowing <paramref name="verb"/> at <paramref name="place"/> — where the OS lands for a
     /// path, worked out by the gate once per call; null when none does.</summary>

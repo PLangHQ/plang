@@ -52,7 +52,17 @@ public sealed partial class @this : global::app.type.item.path.@this
     // Where the OS lands for this file: each link on the way followed (the OS-rooted //x form read as /x, its ..
     // resolved), each part as the OS holds its name (an 8.3 short part long). A loop lands nowhere the OS opens: it is
     // read as written.
-    internal override string Location(global::app.type.item.path.file.filesystem.@this filesystem) => filesystem.Long(Landing(filesystem)?.Absolute ?? Absolute);
+    internal override global::app.type.item.path.@this Location(global::app.type.item.path.file.filesystem.@this filesystem)
+        => filesystem.Long(Landing(filesystem) ?? this);
+
+    // A change under the os folder (write, delete) changes what ships with plang — and a goal there runs programs
+    // without asking — so the question says so; it asks, it doesn't refuse.
+    protected override string Question(global::app.type.item.permission.Verb verb, global::app.type.item.path.@this place,
+        actor.context.@this context)
+        => verb is global::app.type.item.permission.Verb.write or global::app.type.item.permission.Verb.delete
+           && place.IsUnder(context.Filesystem.os).Value
+            ? $"Allow {context.Actor.Name} to {verb} {Absolute}? (files under /system/ ship with plang; a goal there runs programs without asking) (y/n/a)"
+            : base.Question(verb, place, context);
 
     /// <summary>How big the file at this path is, as its asker may read it — through the gate; a size, written in the
     /// asker's standard; 0 when nothing is there.</summary>

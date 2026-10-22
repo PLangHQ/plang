@@ -145,7 +145,7 @@ public sealed partial class @this
             foreach (var f in context.Filesystem.List(this, pattern.ToString(), recursive.Value)
                          .Where(entry == Entry.folder ? context.Filesystem.IsFolder : context.Filesystem.IsFile).ToList())
             {
-                if (await f.Standing(Verb.read, context) is { Success: false }) continue;
+                if (await f.Location(context.Filesystem).Standing(Verb.read, context) is { Success: false }) continue;
                 files.Add(new data.@this("", Combine(f.Absolute[Absolute.Length..].TrimStart(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar)),
                     context: context));
             }
@@ -433,14 +433,18 @@ public sealed partial class @this
     {
         var sourceVerb = Verb.read;
         var destVerb   = Verb.write;
+        var filesystem = context.Filesystem;
+        // each end where the OS lands for it, worked out once for the whole transfer
+        var source = Location(filesystem);
+        var target = destination.Location(filesystem);
 
         // a move carries what the folder holds in one rename: a folder that holds the stores' folder's place is never
         // moved, whether the stores are there yet or not
-        if (isMove && IsAboveStores(context))
-            return context.Error<global::app.type.item.path.@this>(new global::app.error.PermissionDenied(BuildRequest(context.Actor!, Verb.delete)));
+        if (isMove && filesystem.store.IsUnder(source).Value)
+            return context.Error<global::app.type.item.path.@this>(new global::app.error.PermissionDenied(source.Request(context.Actor, Verb.delete)));
 
-        var sourceAuth = await Standing(sourceVerb, context);
-        var destAuth   = await destination.Standing(destVerb, context);
+        var sourceAuth = await source.Standing(sourceVerb, context);
+        var destAuth   = await target.Standing(destVerb, context);
 
         // a side the gate refuses without asking (the stores' folder) is the answer, never asked
         if (sourceAuth is { Success: false }) return data.@this<global::app.type.item.path.@this>.From(sourceAuth);
@@ -451,7 +455,6 @@ public sealed partial class @this
         List<(@this Entry, @this? Into)>? tree;
         try
         {
-            var filesystem = context.Filesystem;
             tree = filesystem.IsFolder(this) ? Tree(destination, subfolder || isMove, filesystem).ToList() : null;
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
@@ -473,12 +476,12 @@ public sealed partial class @this
         if (!destOk)   question.Append("\n  - write ").Append(destination.Absolute);
         question.Append("\n(y/n/a — covers all)");
 
-        // the denial names the side not yet granted
-        var request = !sourceOk ? BuildRequest(context.Actor!, sourceVerb) : BuildRequest(context.Actor!, destVerb);
-        var consented = await context.Actor!.Permission.Ask(question.ToString(), request, context, async persist =>
+        // the denial names the side not yet granted; an answer's grants are on the places asked about
+        var request = !sourceOk ? source.Request(context.Actor, sourceVerb) : target.Request(context.Actor, destVerb);
+        var consented = await context.Actor.Permission.Ask(question.ToString(), request, context, async persist =>
         {
-            if (!sourceOk) await StoreGrant(sourceVerb, persist, context);
-            if (!destOk)   await destination.StoreGrant(destVerb, persist, context);
+            if (!sourceOk) await source.Keep(context.Actor, sourceVerb, persist, context);
+            if (!destOk)   await target.Keep(context.Actor, destVerb, persist, context);
             return await PerformTransfer(destination, isMove, overwrite, tree, context);
         });
         return data.@this<global::app.type.item.path.@this>.From(consented);
@@ -506,21 +509,13 @@ public sealed partial class @this
     // none is refused — an entry it would ask is the top's answer's.
     private async Task<data.@this?> Refusal(IEnumerable<(@this Entry, @this? Into)> tree, Verb verb, Verb toward, actor.context.@this context)
     {
+        var filesystem = context.Filesystem;
         foreach (var (entry, into) in tree)
         {
-            if (await entry.Standing(verb, context) is { Success: false } refused) return refused;
-            if (into != null && await into.Standing(toward, context) is { Success: false } landing) return landing;
+            if (await entry.Location(filesystem).Standing(verb, context) is { Success: false } refused) return refused;
+            if (into != null && await into.Location(filesystem).Standing(toward, context) is { Success: false } landing) return landing;
         }
         return null;
-    }
-
-    private async Task StoreGrant(Verb verb, bool persist, actor.context.@this context)
-    {
-        var grant = BuildRequest(context.Actor!, verb);
-        var d = new data.@this<global::app.type.item.permission.@this>("", grant, context: context);
-        // Signing is at the I/O boundary now: a persisted grant is signed when it
-        // crosses application/plang into the settings store. `persist` carries intent.
-        await context.Actor!.Permission.Add(d, persist);
     }
 
     /// <summary>

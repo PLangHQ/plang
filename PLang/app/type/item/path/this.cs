@@ -166,15 +166,18 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// typed query that replaces consumer-side <c>Relative.StartsWith</c>
     /// string math. Same root-comparison rule the permission gate uses.
     /// </summary>
-    public global::app.type.item.@bool.@this IsUnder(@this root)
+    public global::app.type.item.@bool.@this IsUnder(@this root) => IsUnder(root, RootComparison);
+
+    // The one containment check, by comparison: the root's rule, or case-blind where a folder is held in any case (the
+    // stores' folder, as a case-blind disk opens it).
+    private protected bool IsUnder(@this root, StringComparison comparison)
     {
         var rootAbs = root.Absolute;
         if (string.IsNullOrEmpty(rootAbs)) return false;
         var rootWithSep = rootAbs.EndsWith(PathHelper.DirectorySeparatorChar) || rootAbs.EndsWith(PathHelper.AltDirectorySeparatorChar)
             ? rootAbs
             : rootAbs + PathHelper.DirectorySeparatorChar;
-        return Absolute.StartsWith(rootWithSep, RootComparison)
-            || string.Equals(Absolute, rootAbs, RootComparison);
+        return Absolute.StartsWith(rootWithSep, comparison) || string.Equals(Absolute, rootAbs, comparison);
     }
 
     /// <summary>

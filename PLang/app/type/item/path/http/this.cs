@@ -113,11 +113,11 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// strip <c>?token=…</c> before sharing the URL elsewhere gets the same
     /// signal here. Suppressed when there is no query string.
     /// </summary>
-    protected override string AuthorizationHint(global::app.type.item.permission.Verb verb, global::app.actor.context.@this context)
-    {
-        if (string.IsNullOrEmpty(_uri.Query) || _uri.Query == "?") return "";
-        return "(note: answering 'a' saves the full URL — query string included — to your local permission store)";
-    }
+    // A url with a query string says that "always" keeps it whole.
+    protected override string Question(global::app.type.item.permission.Verb verb, global::app.type.item.path.@this place,
+        global::app.actor.context.@this context)
+        => string.IsNullOrEmpty(_uri.Query) || _uri.Query == "?" ? base.Question(verb, place, context)
+            : $"Allow {context.Actor.Name} to {verb} {Absolute}? (note: answering 'a' saves the full URL — query string included — to your local permission store) (y/n/a)";
 
     /// <summary>
     /// Canonical-form URL — two HttpPaths addressing the same logical resource

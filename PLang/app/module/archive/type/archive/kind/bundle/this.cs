@@ -58,11 +58,11 @@ public abstract class @this : kind.@this
     private async IAsyncEnumerable<entry.@this> Walk(File folder, IEnumerable<global::app.type.item.path.@this> children,
         global::app.actor.context.@this context)
     {
-        var root = folder.Absolute.TrimEnd('/') + "/";
         foreach (var child in children)
         {
-            if (child is not File at || !at.Absolute.StartsWith(root, StringComparison.Ordinal)) continue;
-            var name = at.Absolute[root.Length..];
+            if (child is not File at || !at.IsUnder(folder).Value) continue;
+            // its name from the folder, / between its parts, as a bundle writes it
+            var name = global::app.Utils.PathHelper.GetRelativePath(folder.Absolute, at.Absolute).Replace('\\', '/');
             if (context.Filesystem.Link(at) is { } target)
                 yield return new entry.@this(name, Kind.Link, File_, target);
             else if (context.Filesystem.IsFolder(at))
@@ -119,13 +119,12 @@ public abstract class @this : kind.@this
     {
         var filesystem = context.Filesystem;
         if (into.Landing(filesystem) is not { } inside) return null;
-        var folder = inside.Absolute.TrimEnd('/') + "/";
         foreach (var name in names.Distinct())
         {
             var (at, _) = await Under(into, name, context);
             if (at == null || filesystem.Link(at) == null) continue;
             // a loop leads nowhere: the OS refuses it too
-            if (at.Landing(filesystem) is not { } lands || lands.Absolute == inside.Absolute || lands.Absolute.StartsWith(folder, StringComparison.Ordinal))
+            if (at.Landing(filesystem) is not { } lands || lands.IsUnder(inside).Value)
                 continue;
             await at.Delete(context);
             return context.Error(new global::app.error.ServiceError(

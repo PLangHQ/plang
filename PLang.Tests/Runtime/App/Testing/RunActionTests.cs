@@ -272,7 +272,9 @@ public class RunActionTests
 
             await RunTests(new List<global::app.test.@this> { test });
 
-            var executables = System.IO.Path.GetFullPath(System.IO.Path.Combine(System.AppContext.BaseDirectory, "os"));
+            // the executable's os folder, where the OS lands for it (a test bin's os is a link to the repo's)
+            var folder = System.IO.Path.GetFullPath(System.IO.Path.Combine(System.AppContext.BaseDirectory, "os"));
+            var executables = System.IO.Directory.ResolveLinkTarget(folder, returnFinalTarget: true)?.FullName ?? folder;
             await Assert.That(observedChildOsDir).IsEqualTo(executables);
             await Assert.That(_app.OsAbsolutePath).IsEqualTo(executables);
         }
