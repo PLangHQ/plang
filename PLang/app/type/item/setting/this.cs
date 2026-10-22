@@ -131,6 +131,22 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             "PermissionDenied", 403)
         : null;
 
+    /// <summary>Whether a saved row of this setting signed by <paramref name="signature"/> is the app's own — signed by
+    /// one of the app's identities. A row signed by any other key (a store shipped with a cloned app) verifies against
+    /// the key it carries, and is not the app's.</summary>
+    internal virtual async System.Threading.Tasks.ValueTask<bool> IsMine(global::app.type.item.signature.@this signature,
+        global::app.actor.context.@this context)
+    {
+        var (provider, missing) = context.App.Code.Get<global::app.module.identity.code.IIdentity>();
+        if (provider == null) throw new global::app.error.AppException(missing!);
+        var identities = await provider.ListAsync(new global::app.module.identity.list(context));
+        if (!identities.Success) throw new global::app.error.AppException(identities.Error!);
+        foreach (var each in (await identities.Value())!.Items(context))
+            if (await each.Value<global::app.module.identity.Identity>() is { } identity
+                && string.Equals(identity.PublicKey, signature.Identity.ToString(), System.StringComparison.Ordinal)) return true;
+        return false;
+    }
+
     /// <summary>Writes an option for this run: the value lands in the writer's settings under this class's
     /// path (<c>set %!app.goal.list.setting.os% = true</c> → <c>app.goal.list.setting.os</c>), where the next read
     /// builds it from. The answer is a copy with the option set; this instance — the one the settings handed out,

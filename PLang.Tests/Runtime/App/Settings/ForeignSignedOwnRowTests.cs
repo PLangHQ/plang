@@ -65,9 +65,14 @@ public class ForeignSignedOwnRowTests
             await Assert.That(await user.Permission.Find(user.Context.File(secret), Verb.read)).IsNotNull();
         }
 
-        // the victim opens the cloned app with their own identity: the shipped row isn't theirs
+        // the victim opens the cloned app with their own identity: the shipped row isn't theirs — refused loud, as an
+        // unsigned own row is, never a grant
         await using var victim = new global::app.@this(root).TestIdentity();
         var victimUser = victim.actor.list.User;
-        await Assert.That(await victimUser.Permission.Find(victimUser.Context.File(secret), Verb.read)).IsNull();
+        var refused = await Assert.ThrowsAsync<global::app.error.AppException>(
+            async () => await victimUser.Permission.Find(victimUser.Context.File(secret), Verb.read));
+        await Assert.That(refused!.Error.Key).IsEqualTo("SettingForeign");
+        var read = await victimUser.Setting.Get("app.actor.permission.setting");
+        await Assert.That(read.Error!.Key).IsEqualTo("SettingForeign");
     }
 }

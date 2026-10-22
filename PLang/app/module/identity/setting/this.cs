@@ -15,4 +15,15 @@ public sealed class @this : global::app.type.item.setting.module.@this
 
     /// <summary>Each identity, its keys with it; the one marked default signs for the actor.</summary>
     [Out, Store] public global::app.type.item.list.@this<global::app.module.identity.Identity> Identity { get; set; }
+
+    /// <summary>The identities' row is the app's when one of the identities it holds signed it — the first is signed by
+    /// the key it brings, so it can't ask the app's identities, which it is.</summary>
+    internal override async System.Threading.Tasks.ValueTask<bool> IsMine(global::app.type.item.signature.@this signature,
+        global::app.actor.context.@this context)
+    {
+        foreach (var each in Identity.Items(context))
+            if (await each.Value<global::app.module.identity.Identity>() is { } identity
+                && string.Equals(identity.PublicKey, signature.Identity.ToString(), System.StringComparison.Ordinal)) return true;
+        return false;
+    }
 }

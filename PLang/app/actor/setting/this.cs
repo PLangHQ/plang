@@ -284,8 +284,11 @@ public sealed class @this : IDisposable
                     $"setting '{address}' is the actor's own and its stored row is not signed — it was written outside plang, and is not read",
                     "SettingUnsigned", 403));
             }
+            // an own row keeps the signature it was read in: whose key signed it is asked when the setting is built
             else if (value is { IsNull: false })
-                rows[address] = new data.@this(row.Name, value, row.Type, context: _context);
+                rows[address] = Own(address)
+                    ? new data.@this(row.Name, value, row.Type, context: _context).Copy(row.Signature!)
+                    : new data.@this(row.Name, value, row.Type, context: _context);
         }
         return rows;
     }
@@ -332,7 +335,14 @@ public sealed class @this : IDisposable
         await Load();
         var version = System.Threading.Interlocked.Read(ref Root._version);
         if (_built.TryGetValue(@class, out var entry) && entry.Version == version) return entry.Built;
-        var setting = Build(Address(@class));
+        var address = Address(@class);
+        var setting = Build(address);
+        // an own row signed by a key that is not the app's (a store shipped with a cloned app) is refused, loud — as an
+        // unsigned one is
+        if (Own(address) && Saved(address)?.Signature is { } signature && !await setting.IsMine(signature, _context))
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"setting '{address}' is the actor's own and its stored row is signed by a key that is not this app's identity — it was not written by this app, and is not read",
+                "SettingForeign", 403));
         _built[@class] = (version, setting);
         return setting;
     }
