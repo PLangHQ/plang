@@ -477,7 +477,8 @@ public sealed partial class @this
         foreach (var entry in files.List(this, "*", recursive: false).ToList())
         {
             var into = to == null ? null : new @this(PathHelper.Combine(to.Absolute, entry.Name.ToString()), to.Type);
-            if (files.IsFile(entry)) yield return (entry, into);
+            // a link is an entry of its own: never descended, never read through
+            if (files.Link(entry) != null || files.IsFile(entry)) yield return (entry, into);
             else if (subfolder)
             {
                 yield return (entry, into);
@@ -518,13 +519,20 @@ public sealed partial class @this
     {
         var files = context.FileSystem;
         // A folder copied whole: the entries its walk holds (its files, and its folders' when subfolder), each where it
-        // lands — the entries the gate checked.
+        // lands — the entries the gate checked. A link is made again with its target as written, never read through.
         async Task Copy()
         {
             files.Create(destination);
             foreach (var (entry, into) in tree!)
-                if (files.IsFile(entry)) await files.Copy(entry, into!, overwrite);
+                if (files.Link(entry) is { } target) Relink(into!, target);
+                else if (files.IsFile(entry)) await files.Copy(entry, into!, overwrite);
                 else files.Create(into!);
+        }
+        // a link over what was there, as a copy of a file over one
+        void Relink(@this at, string target)
+        {
+            if (files.Link(at) != null || files.IsFile(at)) files.Delete(at, recursive: false);
+            files.Link(at, target);
         }
         try
         {
