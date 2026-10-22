@@ -65,16 +65,26 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         // Loop, not recursion: a channel that keeps returning garbage would grow the async state machine
         // without bound under recursion.
         var prefix = "";
-        // asked of the actor's own input, never through output.ask: no variable a step can set (%!ask.answer%) answers
-        // for the actor. The input's on.ask still fires, as for any ask.
+        // Asked of the actor's own input itself — the question written on its output, the answer read off its input —
+        // never through output.ask or the input's ask event: nothing a step can set (%!ask.answer%) or bind (on ask)
+        // answers for the actor. A consent can be watched on the output, never answered but by the actor's input.
         if (context.Actor.Channel.Get(global::app.channel.list.@this.Input) is not { } input)
             return context.Error(new global::app.error.PermissionDenied(request));
         while (true)
         {
-            var asked = await input.AskAsync(new global::app.module.output.ask(context)
+            global::app.data.@this asked;
+            try
             {
-                Question = new global::app.data.@this<global::app.type.item.text.@this>("", prefix + question, context: context),
-            }, context.CancellationToken);
+                asked = await input.Ask(new global::app.module.output.ask(context)
+                {
+                    Question = new global::app.data.@this<global::app.type.item.text.@this>("", prefix + question, context: context),
+                }, context.CancellationToken);
+            }
+            // an input that couldn't answer (cancelled, its transport broken): nobody answered, so no
+            catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+            {
+                return context.Error(new global::app.error.PermissionDenied(request) { list = [global::app.error.@this.FromException(ex)] });
+            }
             // decided before the exit check, which would otherwise hand the failed ask back as itself
             if (!asked.Success && asked.Error!.Unanswered)
                 return context.Error(new global::app.error.PermissionDenied(request) { list = [asked.Error] });

@@ -50,6 +50,28 @@ public class AskAnswerTests : System.IAsyncDisposable
         await Assert.That(channel.Count).IsEqualTo(1);
     }
 
+    // a binding before the input's ask that answers "a" in the channel's place — what a step's `on ask on "input"`
+    // binding does — never answers a consent: it may watch it, never answer it
+    private void Binding()
+        => channel.Own().ask.before.Add((item, data, ctx) =>
+        {
+            var answer = ctx.Ok("a");
+            answer.Handled = true;
+            return Task.FromResult(answer);
+        }, app.actor.list.User, global::app.@event.binding.Scope.actor, (item, ctx) => true);
+
+    [Test] public async Task ABindingOnTheInputsAsk_DoesNotAnswerARead()
+    {
+        Binding();
+        await Refused(await user.File(System.IO.Path.Combine(outside, "secret.txt")).Read(user));
+    }
+
+    [Test] public async Task ABindingOnTheInputsAsk_DoesNotAnswerAnExport()
+    {
+        Binding();
+        await Refused(await (await user.Action("identity.export()")).Start(user));
+    }
+
     [Test] public async Task AStepSettingTheAskAnswer_IsStillAskedForARead()
     {
         await Answering();
