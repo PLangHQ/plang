@@ -321,11 +321,11 @@ public sealed class @this : IDisposable
         return @class == null ? null : await Get(Address(@class));
     }
 
-    /// <summary>The settings at <paramref name="setting"/>'s address as this scope sees them: the settings class kept there,
-    /// as this scope builds it, else <paramref name="setting"/> itself (an action's options, a module's) — what an owner
-    /// answers <c>%!llm.query.setting%</c> with.</summary>
-    public async ValueTask<data.@this> Get(global::app.type.item.setting.@this setting)
-        => Class(setting.Path) != null ? await Get(setting.Path) : new data.@this(setting.Path, setting, context: _context);
+    /// <summary>The settings at <paramref name="address"/> as this scope sees them: the settings class kept there, as this
+    /// scope builds it, else the setting <paramref name="options"/> makes (an action's options, a module's), made only
+    /// then — what an owner answers <c>%!llm.query.setting%</c> with.</summary>
+    public async ValueTask<data.@this> Get(string address, Func<global::app.type.item.setting.@this> options)
+        => Class(address) != null ? await Get(address) : new data.@this(address, options(), context: _context);
 
     /// <summary>The setting at <paramref name="address"/> as this scope sees it (<c>%!app.test.setting%</c>); NotFound when
     /// no settings class has that address, the error when a value its options can't take is held.</summary>
@@ -367,7 +367,7 @@ public sealed class @this : IDisposable
         return instance;
     }
 
-    // The settings classes by address, from actor/setting's own index over the settings types (774 A: actor/setting owns
+    // The settings classes by address, from actor/setting's own index over the settings types (actor/setting owns
     // the address keys, the type list owns the names — a settings class's name is its namespace, its address its path,
     // and they differ). Built once from the app's types, each class made once here.
     private System.Collections.Generic.Dictionary<string, System.Type>? _classes;

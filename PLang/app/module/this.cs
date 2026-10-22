@@ -202,7 +202,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
         // its own class, as the asker's settings build it; else the options its actions take, read and written through them
         => _root == null ? await base.Setting(parent)
-            : await parent.Context.Setting.Get(new global::app.type.item.setting.module.@this(Name,
+            : await parent.Context.Setting.Get(Address, () => new global::app.type.item.setting.module.@this(Name,
                 parent.Context.App.type.list[typeof(global::app.type.item.setting.module.@this)]));
 
     /// <summary>Where this module's settings are kept — its name, then <c>.setting</c> (<c>llm.setting</c>).</summary>

@@ -29,7 +29,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
         // its own class, as the asker's settings build it; else its options, read and written through them
         => Module[Name] is { } catalog
-            ? await parent.Context.Setting.Get(new global::app.type.item.setting.action.@this(catalog))
+            ? await parent.Context.Setting.Get(Address, () => new global::app.type.item.setting.action.@this(catalog))
             : null;
 
     /// <summary>Where this action's settings are kept — its module's name, its own, then <c>.setting</c>
