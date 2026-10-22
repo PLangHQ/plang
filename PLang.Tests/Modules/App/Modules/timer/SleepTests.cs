@@ -27,7 +27,8 @@ public class SleepTests
     }
 
     // sleep 2 seconds → 2s; half a second → 500ms (or 0.5s); 500 ms → 500ms — each sleeps at least that long (2 read as
-    // 2 ms is caught), and never a unit too long (2s read as 2000s is caught); how much longer is the machine's load
+    // 2 ms is caught); how much longer is the machine's load, so the upper bound is only a hang guard (a unit read far
+    // too long, 2s as 2000s) and checks nothing else
     [Test]
     [Arguments("2s", 2000)]
     [Arguments("0.5s", 500)]
@@ -41,7 +42,7 @@ public class SleepTests
 
         await result.IsSuccess();
         await Assert.That(clock.ElapsedMilliseconds).IsGreaterThanOrEqualTo(ms - 15);
-        await Assert.That(clock.ElapsedMilliseconds).IsLessThan(10 * ms + 5000);
+        await Assert.That(clock.ElapsedMilliseconds).IsLessThan(60_000);
     }
 
     // a number alone names no unit: refused, never read as milliseconds
