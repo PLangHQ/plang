@@ -34,7 +34,7 @@ public class SensitivePropertyFilterTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_sensitive_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir).Consenting();
     }
 
     [After(Test)]
@@ -198,8 +198,12 @@ public class SensitivePropertyFilterTests
         // End-to-end: create real identity, serialize, verify PrivateKey absent
         var create = new Create(_app.actor.list.System.Context) { Name = (global::app.type.item.text.@this)"e2e", Default = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, _app.actor.list.System.Context);
-        var result = await create.Start();
-        var identity = (await result.Value()) as Identity;
+        await (await create.Start()).IsSuccess();
+        // the identity whole, its key in it, as its owner holds it (a step's copy holds no key to leave out)
+        Identity? identity = null;
+        foreach (var row in (await _app.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity.Items(Ctx))
+            if ((await row.Value()) is Identity stored && stored.Name == "e2e") identity = stored;
+        await Assert.That(identity!.PrivateKey).IsNotEmpty();
 
         var json = (await Json.Serialize(_app.Ok(identity), Ctx).Value())!.Clr<string>()!;
 
