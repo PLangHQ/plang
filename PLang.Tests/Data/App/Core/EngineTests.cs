@@ -403,6 +403,27 @@ public class EngineTests : System.IAsyncDisposable
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
     }
 
+    // A regex that runs past its match timeout throws RegexMatchTimeoutException: the action answers it as a 500
+    // (ServiceError), the step answers the same, and the run goes on — the next step in the same context runs.
+    [Test]
+    public async Task ARegexTimeout_Answers500_AtTheActionAndTheStep_AndTheRunGoesOn()
+    {
+        app.module.Register("regex", "timeout", typeof(RegexTimeoutHandler));
+        app.module.Register("regex", "fine", typeof(FineHandler));
+        var context = app.actor.list.User.Context;
+
+        var step = MakeStep("regex", "timeout");
+        var action = await step.Code[0].Start(context);
+        await action.IsFailure();
+        await Assert.That(action.Error!.Status.Code.ToInt32()).IsEqualTo(500);
+
+        var steps = await new GoalSteps(app.type.list) { MakeStep("regex", "timeout") }.Start(context);
+        await steps.IsFailure();
+        await Assert.That(steps.Error!.Status.Code.ToInt32()).IsEqualTo(500);
+
+        await (await new GoalSteps(app.type.list) { MakeStep("regex", "fine") }.Start(context)).IsSuccess();
+    }
+
     [Test]
     public async Task StepRunAsync_HandlerWithoutICodeGenerated_ReturnsError()
     {
@@ -506,6 +527,35 @@ public class EngineTests : System.IAsyncDisposable
 
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Context.Ok());
+    }
+
+    // A handler whose regex ran past its match timeout.
+    private class RegexTimeoutHandler : IAction, ICodeGenerated
+    {
+        public global::app.goal.step.action.@this Action { get; set; } = null!;
+        public global::app.@this App { get; private set; } = null!;
+        public global::app.actor.context.@this Context { get; private set; } = null!;
+        public System.Type? ParameterType => null;
+
+        public RegexTimeoutHandler(global::app.actor.context.@this context) => Initialize(context.App!, context);
+
+        public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
+        public Task<Data> Start()
+            => throw new System.Text.RegularExpressions.RegexMatchTimeoutException("x", "(a+)+$", System.TimeSpan.FromSeconds(1));
+    }
+
+    // A handler that answers Ok.
+    private class FineHandler : IAction, ICodeGenerated
+    {
+        public global::app.goal.step.action.@this Action { get; set; } = null!;
+        public global::app.@this App { get; private set; } = null!;
+        public global::app.actor.context.@this Context { get; private set; } = null!;
+        public System.Type? ParameterType => null;
+
+        public FineHandler(global::app.actor.context.@this context) => Initialize(context.App!, context);
+
+        public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
+        public Task<Data> Start() => Task.FromResult(Context.Ok());
     }
 
     private class ThrowingHandler : IAction, ICodeGenerated
