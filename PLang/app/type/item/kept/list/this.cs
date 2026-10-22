@@ -20,8 +20,10 @@ public sealed class @this : global::app.snapshot.ISnapshot
     /// <summary>How many members are kept.</summary>
     internal int Count => _kept.Count;
 
-    /// <summary>The kept members, each the Data it was given, under its name.</summary>
-    internal System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, global::app.data.@this>> Members => _kept;
+    /// <summary>The kept members, each the Data it was given, under its name — by name, as its keys are case-blind, so
+    /// the same members answer in the same order however they were added (a Data's digest covers them).</summary>
+    internal System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, global::app.data.@this>> Members
+        => _kept.OrderBy(member => member.Key, System.StringComparer.OrdinalIgnoreCase);
 
     /// <summary>A list keeping the same members — the list is copied, the members shared, as a variable's copy keeps
     /// what its value was given.</summary>
@@ -35,9 +37,9 @@ public sealed class @this : global::app.snapshot.ISnapshot
     /// <summary>Its section in a snapshot.</summary>
     public string Section => "Kept";
 
-    /// <summary>Writes the kept members, by name, each as the Data it is.</summary>
+    /// <summary>Writes the kept members, by name, each as the Data it is, in their order.</summary>
     public void Capture(global::app.snapshot.@this s)
-        => s.Write("kept", new System.Collections.Generic.Dictionary<string, global::app.data.@this>(_kept, System.StringComparer.OrdinalIgnoreCase));
+        => s.Write("kept", new System.Collections.Generic.Dictionary<string, global::app.data.@this>(Members, System.StringComparer.OrdinalIgnoreCase));
 
     /// <summary>Puts back the kept members the section holds — a section without them leaves what is kept as it is.</summary>
     public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
