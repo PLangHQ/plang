@@ -139,12 +139,16 @@ public sealed partial class @this
             return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
         {
-            // Each entry is this folder combined with its place under it — typed text included.
-            var files = context.FileSystem.List(this, pattern.ToString(), recursive.Value)
-                .Where(entry == Entry.folder ? context.FileSystem.IsFolder : context.FileSystem.IsFile)
-                .Select(f => new data.@this("", Combine(f.Absolute[Absolute.Length..].TrimStart(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar)),
-                    context: context))
-                .ToList();
+            // Each entry is this folder combined with its place under it — typed text included. An entry the gate
+            // refuses (the stores' folder, and all under it) is left out; one it would ask about is listed, as named.
+            var files = new List<data.@this>();
+            foreach (var f in context.FileSystem.List(this, pattern.ToString(), recursive.Value)
+                         .Where(entry == Entry.folder ? context.FileSystem.IsFolder : context.FileSystem.IsFile).ToList())
+            {
+                if (await f.Standing(Verb.read, context) is { Success: false }) continue;
+                files.Add(new data.@this("", Combine(f.Absolute[Absolute.Length..].TrimStart(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar)),
+                    context: context));
+            }
             return context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(
                 new global::app.type.item.list.@this<global::app.type.item.path.@this>(files, listType));
         }
