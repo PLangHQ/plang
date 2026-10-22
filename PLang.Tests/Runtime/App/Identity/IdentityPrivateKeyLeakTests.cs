@@ -57,6 +57,20 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
         await Assert.That(asking.Count).IsEqualTo(2);
     }
 
+    // the export question says what a yes means: the key as text the step can send anywhere, this call only, asked
+    // every time, never kept
+    [Test]
+    public async Task TheExportQuestion_SaysWhatAYesMeans()
+    {
+        var asking = new Asking(User, "n");
+        app.actor.list.User.Channel.Register(asking);
+        await Run("identity.export()");
+        await Assert.That(asking.Question).Contains("send anywhere");
+        await Assert.That(asking.Question).Contains("this call only");
+        await Assert.That(asking.Question).Contains("every time");
+        await Assert.That(asking.Question).Contains("never kept");
+    }
+
     // a change to the app's identities asks the actor: without its yes it is refused, nothing made
     [Test]
     public async Task Create_WithoutTheActorsYes_IsRefused()
@@ -80,12 +94,14 @@ public class IdentityPrivateKeyLeakTests : System.IAsyncDisposable
         private readonly global::app.actor.context.@this _ctx;
         private readonly string _answer;
         public int Count { get; private set; }
+        public string Question { get; private set; } = "";
         public Asking(global::app.actor.context.@this ctx, string answer) { _ctx = ctx; _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             Count++;
+            Question = action.Question.Peek()?.ToString() ?? "";
             return Task.FromResult(action.Context.Ok(_answer));
         }
     }

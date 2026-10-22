@@ -200,7 +200,9 @@ public sealed class Default : IIdentity
         var identity = await ResolveIdentityAsync(action, name);
         if (!identity.Success) return identity;
         var exported = (await identity.Value())!;
-        if (await Consent(action, $"export the private key of the identity '{exported.Name}'", exported.Name,
+        // what a yes means, said plainly: the key leaves as text the step can send anywhere — this once
+        if (await Consent(action, $"export the private key of the identity '{exported.Name}' — the step gets the key as text it " +
+                "can send anywhere, for this call only; you are asked every time, and the answer is never kept", exported.Name,
                 global::app.type.item.permission.Verb.read) is { } refused)
             return data.@this<Identity>.From(refused);
         return identity;
