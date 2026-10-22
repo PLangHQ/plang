@@ -12,6 +12,8 @@ public sealed class @this<T> : global::app.type.kind.@this<T> where T : global::
     private readonly System.Type _class;
     // The subclass's own static Offer, read once at construction (as a type reads a declared fact), never per Offers call.
     private readonly System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>? _offer;
+    // Whether the subclass declares itself a kind no program names (its own static Internal), read once; no say otherwise.
+    private readonly bool? _internal;
 
     /// <summary>The kind <paramref name="name"/> of <paramref name="owner"/> (the app's <typeparamref name="T"/>), whose
     /// values are <paramref name="class"/>.</summary>
@@ -21,9 +23,13 @@ public sealed class @this<T> : global::app.type.kind.@this<T> where T : global::
         _offer = @class.GetProperty("Offer", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
                 | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null)
             as System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>;
+        _internal = @class.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(null) is true ? true : null;
     }
 
     public override System.Type? ClrForm => _class;
+
+    protected override bool? OwnInternal => _internal;
 
     /// <summary>The class values of this kind are: the subclass itself (a <c>{text, separator}</c> value is a
     /// <c>separator.@this</c>, a <c>{screen, window}</c> a <c>window</c>) — so Create, Offer and the read use it,

@@ -1556,7 +1556,13 @@ class app.type.item.duration.short.this : app.type.item.duration.this, app.type.
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.duration.short.this
 
-class app.type.item.duration.this : app.type.item.this, System.IEquatable<app.type.item.duration.this>, app.type.item.ICreate<app.type.item.duration.this>, app.type.item.setting.ISetting<app.type.item.duration.setting.this> [Choice, Kinds, PlangType]
+class app.type.item.duration.span.this : app.type.item.duration.this, app.type.item.ICreate<app.type.item.duration.span.this>
+  ctor(System.TimeSpan value, app.type.this type)
+  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.duration.span.this
+  static Internal : System.Boolean { get; }
+
+abstract class app.type.item.duration.this : app.type.item.this, System.IEquatable<app.type.item.duration.this>, app.type.item.ICreate<app.type.item.duration.this>, app.type.item.setting.ISetting<app.type.item.duration.setting.this> [Choice, Kinds, PlangType]
   AreEqual(System.Object other) : System.Boolean
   Days(app.actor.context.this context) : app.data.this<app.type.item.number.this> [LlmBuilder]
   Equals(app.type.item.duration.this other) : System.Boolean
@@ -1571,8 +1577,8 @@ class app.type.item.duration.this : app.type.item.this, System.IEquatable<app.ty
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
   override Rank : System.Int32 { get; }
+  protected abstract Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected override Order(app.type.item.this other, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.Comparison>
-  protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
   protected static Measure(System.Object raw, System.Func<System.String, System.Nullable<System.TimeSpan>> read) : System.Nullable<System.TimeSpan>
   protected static Refuse(System.Object raw, System.String standard, System.String written, app.data.this data) : System.Void
   static Create(System.Object raw, app.actor.context.this context) : app.type.item.duration.this
@@ -2534,6 +2540,12 @@ class app.type.item.signature.this : app.type.item.this, app.type.item.ICreate<a
   static Shape : System.String { get; }
   static const WireSchemaSignature : System.String
 
+class app.type.item.size.count.this : app.type.item.size.this, app.type.item.ICreate<app.type.item.size.count.this>
+  ctor(System.Int64 bytes, app.type.this type)
+  override Text(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.String>
+  static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.size.count.this
+  static Internal : System.Boolean { get; }
+
 class app.type.item.size.iec.this : app.type.item.size.this, app.type.item.ICreate<app.type.item.size.iec.this>
   ctor(System.Int64 bytes, app.type.this type)
   override Text(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.String>
@@ -2559,9 +2571,10 @@ class app.type.item.size.si.this : app.type.item.size.this, app.type.item.ICreat
   override ToString() : System.String
   static Create(System.Object raw, app.type.this type, app.data.this data) : app.type.item.size.si.this
 
-class app.type.item.size.this : app.type.item.this, System.IEquatable<app.type.item.size.this>, app.type.item.ICreate<app.type.item.size.this>, app.type.item.setting.ISetting<app.type.item.size.setting.this> [Choice, Kinds, PlangType]
+abstract class app.type.item.size.this : app.type.item.this, System.IEquatable<app.type.item.size.this>, app.type.item.ICreate<app.type.item.size.this>, app.type.item.setting.ISetting<app.type.item.size.setting.this> [Choice, Kinds, PlangType]
   Equals(app.type.item.size.this other) : System.Boolean
   Value : System.Int64 { get; }
+  abstract Text(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.String>
   ctor(System.Int64 bytes, app.type.this type)
   override Equals(System.Object obj) : System.Boolean
   override GetHashCode() : System.Int32
@@ -2578,7 +2591,6 @@ class app.type.item.size.this : app.type.item.this, System.IEquatable<app.type.i
   static Create(System.Object value, app.type.this type, app.data.this data) : app.type.item.size.this
   static Resolve(System.String raw, app.actor.context.this context) : app.type.item.size.this
   static Shape : System.String { get; }
-  virtual Text(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.String>
 
 class app.type.item.source : app.type.item.this
   Raw : System.Object { get; }
@@ -3070,6 +3082,7 @@ class app.type.kind.subclass.this<T> : app.type.kind.this<T>
   override ClrForm : System.Type { get; }
   override Of(System.Type type) : System.Type
   override Offers(app.goal.step.this step) : System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<app.type.item.this>>
+  protected override OwnInternal : System.Nullable<System.Boolean> { get; }
 
 class app.type.kind.this : app.type.this
   Decode(System.Byte[] raw, app.actor.context.this context, System.String name = …, System.Threading.CancellationToken ct = …, app.type.item.template.kind.this template = …, app.type.item.path.this origin = …) : System.Threading.Tasks.Task<app.data.this>

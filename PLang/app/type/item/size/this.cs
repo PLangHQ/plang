@@ -8,7 +8,7 @@ namespace app.type.item.size;
 /// text rounds.
 /// </summary>
 [global::app.Attributes.PlangType("size"), global::app.Attributes.Kinds, global::app.Attributes.Choice]
-public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
+public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.setting.ISetting<setting.@this>, System.IEquatable<@this>
 {
     public static string Shape => "string";
@@ -24,27 +24,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public override bool IsLeaf => true;
 
     /// <summary>Its text in its standard — <c>95.4 MiB</c>, <c>100 MB</c>; <c>%s.text%</c>. One born with no standard (a
-    /// file's length, a download's bytes) is written in the one <paramref name="context"/>'s setting names, read once.</summary>
-    public virtual async System.Threading.Tasks.ValueTask<string> Text(global::app.actor.context.@this context)
-    {
-        var standard = (await context.Setting.Get<setting.@this>()).Standard.Value;
-        var size = Of(Value, standard, new global::app.data.@this("", context: context))
-            ?? throw new System.InvalidOperationException($"the size standard {standard.Name} made no size of {Value} bytes.");
-        return await size.Text(context);
-    }
+    /// file's length, a download's bytes) is a <c>count</c>, written in the one <paramref name="context"/>'s setting names.</summary>
+    public abstract System.Threading.Tasks.ValueTask<string> Text(global::app.actor.context.@this context);
 
     /// <summary>A size writes its text in the standard it is: <c>100 MB</c> stays <c>100 MB</c>; one with no standard,
     /// in its asker's.</summary>
     protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
         => writer.String(await Text(writer.Context));
 
-    /// <summary>A count of bytes with no standard of its own, written in the one its asker's setting names.</summary>
+    /// <summary>A count of bytes with no standard of its own: a <c>{size, count}</c>, written in the one its asker's
+    /// setting names.</summary>
     public static @this Create(long bytes, global::app.actor.context.@this context)
-        => new(bytes, context.App.type.list["size"]);
-
-    // a count made by its standard, through the app's entry for {size, <standard>}
-    private static @this? Of(long bytes, global::app.type.kind.@this<@this> standard, global::app.data.@this data)
-        => data.Context.App.type.list[new global::app.type.@this("size", standard.Name), data.Context].Make(bytes, data) as @this;
+        => new global::app.type.item.size.count.@this(bytes, context.App.type.list[new global::app.type.@this("size", "count"), context]);
 
     // raw as a size: a count made by its asker's standard, a text the standard its suffix names
     private static @this? Read(object? raw, global::app.actor.context.@this context)

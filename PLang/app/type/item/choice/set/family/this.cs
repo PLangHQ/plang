@@ -19,6 +19,8 @@ public sealed class @this : set.@this
                     .Select(t => (global::app.type.kind.@this)System.Activator.CreateInstance(t)!)
                 : types.Items().Select(type => type.kind).OfType<global::app.type.kind.empty.@this>()
                     .SelectMany(root => root.Kinds).Where(Option(clr).IsInstanceOfType))
+            // a kind no program names is no choice a program makes
+            .Where(k => !k.Internal)
             .OrderBy(k => k.Name, System.StringComparer.Ordinal).ToList());
 
     /// <summary>Whether <paramref name="clr"/> is a kind family — an abstract kind its kinds are subclasses of, or a value
