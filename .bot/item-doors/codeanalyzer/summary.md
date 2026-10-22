@@ -1,16 +1,16 @@
 # codeanalyzer summary
 
-**Version:** v3
+**Version:** v4
 
-**What this is:** An OBP scan of the whole item-doors diff before merge (decision 269): `git diff 1adfb9555..HEAD -- PLang PLang.Generators PlangConsole`, 431 files, weight on the code since my v2 re-check (b96c60765). Read only. Report: `v3/report.md`.
+**What this is:** A short re-check of the coder's fixes for my v3 section A (architect triage, decision 279): commits 46f7965b5..HEAD, 223 production files. Read only, not built or run. Report: `v4/report.md`.
 
-**What was done:** Three region readers plus my spot checks ran every named smell and Ingi's list (role/origin words, verb+noun, `is`/`typeof`/`ReferenceEquals`, sentinels, a second answer in `Name`, throwaway objects). v2 R3, R4, R6, R8 and R5a are closed; R1 (now in the plang format and the signature reader), R2, R5b/c/d and R7 remain. New weight: a throwaway Data made to carry a refusal (~29 unnamed Data), settings built per class to read an address, a row key packed into a Data's name, and many role-word names.
+**What was done:** Each A item rated against my v3 root fix. Fixed at the root: A1, A2, A8, A10, A12, A13, A14, A15. Open for one thing each: A3 (two `Set` tails), A4 (throwaway node), A6 (one 12-argument frame constructor with nulls, written three times), A7 (`actor.Equals(user)` is still reference equality). Partly: A9 (role words and five misleading names remain), A11 ("774 A" and 13 "until the … branch" comments). New smells: the Executor's mode test parses a Data's Name; A13's reflection by name with a tri-state `OwnInternal`.
 
-**Next:** the coder fixes the ranked findings at the root; locked-core items (typed `Bind<T>`, `Make` answering value-or-error, class answering its settings address, `item`'s json/plang virtuals) go to Ingi as proposals. I did not build or run tests.
+**Next:** the coder closes the short list in the report, then a last check. B/C/D untouched.
 
 **Code example:**
 ```csharp
-// today: a Data made only to carry the refusal           duration/serializer/Reader.cs:22
-var carrier = new data("", …); … ?? throw new FormatException(carrier.Error?.Message …);
-// root: the type answers value-or-error; no carrier
+// A7 today: renamed, not removed
+if (await Actor() is not { } actor || actor.Equals(user)) return session;   // test/list/this.cs:43, no Equals override: still reference equality
+// root: the actor answers IsUser
 ```

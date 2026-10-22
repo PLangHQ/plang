@@ -584,6 +584,34 @@
         "health": "fail: root fixes needed (kept-or-used, view by constant, throwaway Data, name words)",
         "notes": "no build or tests run; some reader line numbers not re-grepped"
       }
+    },
+    {
+      "id": "ad95c1da-7544-4906-8c2d-3c90ea877df7",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-22T00:15:19Z",
+      "intent": "Re-check the coder's fixes for v3 section A (A1-A4, A6-A15)",
+      "before": {
+        "assumptions": "commits 46f7965b5..HEAD; B/C/D not re-raised",
+        "risk": "renames across 223 files can hide a fix that moved a smell"
+      },
+      "plan": ".bot/item-doors/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/item-doors/codeanalyzer/v4/report.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Re-check of v3 section A over 46f7965b5..HEAD by two readers plus a direct check of A7. Eight fixed, four open for one thing, two partly. Read only."
+        }
+      ],
+      "timestamp_end": "2026-10-22T00:18:07Z",
+      "after": {
+        "status": "report written: .bot/item-doors/codeanalyzer/v4/report.md",
+        "health": "fail, short list",
+        "notes": "no build/tests; A9 renames across ~100 files not read hunk by hunk"
+      }
     }
   ]
 }
