@@ -82,12 +82,24 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return now > expires.Value;
     }
 
-    /// <summary>One step down: <c>expired</c> asks the clock (<see cref="Expired"/>); every other member as any
-    /// item answers it.</summary>
+    /// <summary>One step down: <c>expired</c> asks the clock (<see cref="Expired"/>); <c>identity</c> names the signer
+    /// only of a Data this signature verifies — the Data it is read off (its bearer) is verified first, and a verify
+    /// that fails is the answer, never the name; every other member as any item answers it.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-        => string.Equals(key, "expired", System.StringComparison.OrdinalIgnoreCase) && parent.Context is { } context
-            ? new global::app.data.@this(key, await Expired(context), parent: parent)
-            : await base.Get(parent, key);
+    {
+        if (string.Equals(key, "expired", System.StringComparison.OrdinalIgnoreCase) && parent.Context is { } context)
+            return new global::app.data.@this(key, await Expired(context), parent: parent);
+        if (string.Equals(key, nameof(Identity), System.StringComparison.OrdinalIgnoreCase))
+        {
+            if (parent.Parent is not { } bearer)
+                return parent.Context.Error(new global::app.error.@this(
+                    "a signature's identity is read off the Data it signs (%x!signature.identity%)", "SignatureInvalid", 400));
+            var verified = await new global::app.goal.step.action.@this(
+                new global::app.module.signing.verify(parent.Context) { Data = bearer }, parent.Context).Start(parent.Context);
+            if (!verified.Success) return verified;
+        }
+        return await base.Get(parent, key);
+    }
 
     /// <summary>The signing identity (public-key name).</summary>
     public text Identity { get; }

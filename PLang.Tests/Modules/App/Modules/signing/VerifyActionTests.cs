@@ -179,6 +179,28 @@ public class VerifyActionTests
         await Assert.That((await Read("signed!signature")).Peek()).IsTypeOf<global::app.type.item.signature.@this>();
     }
 
+    // %x!signature.identity% names the signer only of a Data its signature verifies: a member written after signing
+    // keeps the signature, but the identity read is verify's error, never the name.
+    [Test]
+    public async Task TheSignersIdentity_OfADataChangedAfterSigning_IsTheVerifysError()
+    {
+        await SignedOrder();
+        await new global::app.type.item.variable.@this("signed.message", _app.type.list).Set("changed", Ctx);
+
+        var identity = await Read("signed!signature.identity");
+        await identity.IsFailure();
+        await Assert.That(identity.Error!.Key).IsEqualTo("DataHashMismatch");
+    }
+
+    [Test]
+    public async Task TheSignersIdentity_OfAnUntouchedSignedData_IsItsName()
+    {
+        await SignedOrder();
+        var identity = await Read("signed!signature.identity");
+        await identity.IsSuccess();
+        await Assert.That((await identity.Value())?.ToString()).IsNotEmpty();
+    }
+
     // A member written after signing is a different Data: verify names it (the digest no longer matches), the write
     // doesn't drop the signature.
     [Test]
