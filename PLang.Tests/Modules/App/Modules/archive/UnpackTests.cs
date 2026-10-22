@@ -61,7 +61,9 @@ public class UnpackTests : IDisposable
             File_("bin/busybox", "#!"));
         await (await Into(archive, "root")).IsSuccess();
         await Assert.That(System.IO.File.ReadAllText(Path.Combine(_root, "root/etc/os"))).IsEqualTo("alpine");
-        await Assert.That(new FileInfo(Path.Combine(_root, "root/bin/sh")).LinkTarget).IsEqualTo("/bin/busybox");
+        // written as the folder reads it, relative from bin/ to the folder's own bin/busybox — the OS reads it inside,
+        // never the host's /bin/busybox
+        await Assert.That(new FileInfo(Path.Combine(_root, "root/bin/sh")).LinkTarget).IsEqualTo("busybox");
     }
 
     [Test]

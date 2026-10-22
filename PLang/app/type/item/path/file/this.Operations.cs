@@ -250,6 +250,21 @@ public sealed partial class @this
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
+    /// <summary>Makes <paramref name="at"/>, inside this folder, a link leading where <paramref name="target"/> leads as
+    /// this folder reads it (<see cref="Follow"/>: an absolute target from this folder, <c>..</c> never above it, each
+    /// link on the way followed), written relative to the link's own folder: the OS, reading it from there, lands at the
+    /// same place, inside (<c>bin/sh → /bin/busybox</c> is written <c>busybox</c>). Or why it can't be (not allowed, a
+    /// link loop).</summary>
+    internal async Task<data.@this<global::app.type.item.path.@this>> Link(@this at, string target, actor.context.@this context)
+    {
+        var folder = PathHelper.GetDirectoryName(at.Absolute) ?? Absolute;
+        var from = PathHelper.GetRelativePath(Absolute, folder);
+        // a relative target leads from the link's own folder; an absolute one from this folder
+        var (spot, refused) = await Follow(target.StartsWith('/') || from == "." ? target : from + "/" + target, last: true, context);
+        if (spot == null) return data.@this<global::app.type.item.path.@this>.From(refused!);
+        return await at.Link(PathHelper.GetRelativePath(folder, spot.Absolute), context);
+    }
+
     /// <summary>Sets who may read, write and run what is here, as someone running as themselves may: a setuid or setgid
     /// bit is dropped, and the owner always keeps read and write (and search on a folder), so it can be changed again.
     /// Gated as a write; nothing on a system with no such modes.</summary>

@@ -7,7 +7,9 @@ namespace app.module.archive.type.archive.kind.bundle;
 /// A bundle — a folder held in one archive (<c>tar</c>, <c>tar.gz</c>, <c>zip</c>, <c>oci.layer</c>). Each format reads
 /// and writes its own entries; what an entry may do to the folder it unpacks into is decided here, once, for every
 /// format. Nothing in it lands outside that folder: a name with <c>..</c> stays inside, a link in the folder is followed
-/// as the folder's own (an absolute one from the folder, never the host's root), a file written over a link replaces
+/// as the folder's own (an absolute one from the folder, never the host's root), a link unpacked is written as the folder
+/// reads it — relative from where it is to where it leads inside (<c>bin/sh → /bin/busybox</c> lands as
+/// <c>busybox</c>), so the OS reads it inside for every step after the unpack — a file written over a link replaces
 /// the link, a hard link is a copy of a file inside or nothing, nothing is written over the folder itself. Devices and
 /// fifos are never made; a setuid or setgid bit is dropped and the owner always keeps read and write. The whole unpack
 /// writes at most its cap. Every read and write goes through the folder's gated verbs.
@@ -125,7 +127,8 @@ public abstract class @this : kind.@this
                 var file = entry.Content == null ? await at.WriteBytes([], context) : await at.Write(cap.Over(entry.Content), context);
                 return file.Success ? await at.Mode(entry.Mode, context) : file;
             case Kind.Link:
-                return await at.Link(entry.Target ?? "", context);
+                // written as the folder reads it, so the OS reads it inside for every step after the unpack
+                return await into.Link(at, entry.Target ?? "", context);
             case Kind.HardLink:
                 // a copy of the file it names inside the folder — a hard link needs link(2); a copy is the same bytes
                 var (target, unfollowed) = await into.Follow(entry.Target ?? "", last: true, context);

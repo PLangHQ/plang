@@ -58,4 +58,10 @@ internal static class PathHelper
     /// </summary>
     public static string GetFullPath(string path) => System.IO.Path.GetFullPath(path);
     public static string GetFullPath(string path, string basePath) => System.IO.Path.GetFullPath(path, basePath);
+
+    /// <summary>
+    /// <paramref name="path"/> written relative to <paramref name="relativeTo"/> (<c>.</c> when they are one).
+    /// Pure string operation — does not stat or read the filesystem.
+    /// </summary>
+    public static string GetRelativePath(string relativeTo, string path) => System.IO.Path.GetRelativePath(relativeTo, path);
 }
