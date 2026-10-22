@@ -28,3 +28,32 @@ Tip `50ed915a1`, merge base `1adfb9555`. Read-only; one proving test added (red 
 ## Checked, clean
 
 Sign settles once and hashes the same Data; verify follows the variable and rehashes the bearer (`[Whole]`), digest never includes `Signature`; digest covers type/value/properties/kept; sign and verify views agree (Store only for `.pr`, view from local `Origin` never wire); Encode re-emits a held signature over the changed value (refused, never re-signed); list rows keep signatures; nonce recorded after hash+signature. `[Sensitive]` not reachable via `PrivateKey`, `!PrivateKey`, `!Value`, `!Context…` (probed). Wire: `MaxReadDepth=64` intact, `kept` recursion on the same default-depth reader, no new JsonReaderOptions/JsonDocument overrides, `kept` cannot dispatch a signature schema, `Record.cs`/`setting.Create` guards unchanged, no wire-named type instantiation. Settings: per-actor `<actor>!<path>` isolation; `[Own]` stops at the actor's layer in `Saved()`/`Under()`; only 4 callers of the blind `Set`, each checked. CLI/files: `--test <path>` resolves canonically and lists/reads through the gate; file channel gated then `WriteBytes`; `.pr` `file` bare-name rule, `Find` `..` refusal, `AskedByOs`/`IsInRoot` unchanged; no banned System.IO/Console/Assembly.Load/Process in added lines.
+
+---
+
+# Re-check at a3260edf5 (decision 300: S1, I1, L1, L4, L6)
+
+## Verdict: FAIL — S1, L1, L4 closed; I1 is not closed (5 holes + 1 breakage risk); L6 reviewed by diff only
+
+### S1 — CLOSED
+Probed every step-reachable route to an `[Own]` row / run value: in-place `variable.Change`/`list.add` on `%!app.actor.permission.setting.grant%` (list mutated, write-back refused; `Find` stays null — proven with the real action), a variable typed as the permission setting handed to `setting.save`/`setting.remove` (`Refusal` reads the instance's own class, 403), a dict made into the base `setting` + kind path (declines `SettingsUnreadable`), the CLI / a child program's `--app.actor.permission.setting.grant=` line (`start.Set`, refused, pinned), callback/snapshot/wire reads (go through `Record.cs` into an instance; `Refusal` blocks at save; they write no row), `code.load` (still `AuthGate(execute)`). Blind `Setting.Set` callers (`Executor.cs:120`, `test/this.cs:174`) hit non-`[Own]` addresses; `Setting.Save` callers are owner code only (`permission/this.cs:192`, `identity/code/Default.cs:243`, non-`[Own]` `llm/setting`). `StepWrittenGrantTests` 6/6 green.
+Informational: `identity.*` actions write the System identity row for whichever actor asks (`identity/code/Default.cs:223-244`) — the design question of whether a user actor may create/import the app's identities is the architect's.
+
+### L1, L4 — CLOSED
+`KeptDigestOrderTests` 1/1 and `MalformedWireTests` 3/3 green (run by me).
+
+### L6 — by diff only
+NonBacktracking / 1 s timeouts read correctly in the diff; a timeout throw answered as a 500 at the action/step boundary was not exercised.
+
+### I1 — NOT CLOSED. Probe file `PLang.Tests/Runtime/App/FileSystem/PermissionTests/AuthorizeTests/StoresFolderProbeTests.cs` (committed with this re-check, 5/5 red, run by me: `./dev.sh test StoresFolderProbeTests`).
+
+- **H1 (Medium) — an ancestor-folder verb carries `.data` out (P1).** `CopyTo`/`MoveTo`/recursive `Delete` of `/` pass `Standing` on the in-root top, then `PerformTransfer.Copy` (`path/file/this.Operations.cs:431-440`) recurses with no per-entry gate: `user.File(root).CopyTo(/snap, subfolder)` lands `/snap/.data/setting/data.sqlite` (unmasked identity key) in the user's reach; Move/Delete of `/` hit the stores likewise. Fix: gate per entry — skip or refuse an `IsStore` entry in the recursive verbs.
+- **H2 (Medium) — symlink into `.data` (P3).** The check is lexical; `/lnk -> /.data` makes `/lnk/setting/data.sqlite` in-root and the OS follows it. An untrusted archive can plant the link (`bundle/this.cs:128` → `Link`, `Operations.cs:244`, `filesystem/this.cs:58-61`, verbatim target). The bypass is older, I1 inherits it. Fix: gate the resolved real path (deepest existing ancestor with links resolved), or refuse link targets leaving the unpack folder.
+- **H3 (Low-Medium) — `//` form is asked, not refused (P2).** `//home/…/.data/…` keeps its `//` prefix (`path/file/this.cs` `Canonicalize`, `Validate.cs:41`); `IsUnder` compares it against `/home/…`, so it is neither `IsStore` nor in-root and falls to `Ask` — 'y' reads the key. Fix: normalise a leading `//` inside `IsUnder`/`IsStore`.
+- **H4 (Low) — listing leaks names (P5).** Recursive `List` of `/` names `.data/…`. Fix: filter `IsStore` entries.
+- **H5 (Low, macOS, not probed)** — `RootComparison` is Ordinal off Windows; on a case-insensitive FS `/root/.DATA/…` is in-root and not `IsStore`.
+- **Breakage risk (P4):** `System` `Mkdir` on the bare `<root>/.data` is refused — the standing grant is `<root>/.data/**`, which does not match the folder itself, while `IsStore` does (equals). `store/sqlite/this.cs:83-84` calls `parent.Mkdir(Context)` and discards the result, so on a FIRST run (no `.data` yet) the store cannot create its folder and `ReadWriteCreate` then fails. Fix: include the folder itself in the standing grant (second `Stand` on the exact folder).
+
+Clean: `..`/`.`, trailing separator, `.database` prefix confusion, the bare folder for a user, relative path against the goal folder; file Read/Open/Pour/Stat/Exists/Write/Append all gated; `Find` before the refusal cannot be exploited (a user can't mint a matching grant: `[Own]` closed, no ask can be raised on `.data`); pack opens each file through the gate; no goal, `os/system` file or test reads `.data` as the User actor, so denying it to users breaks no legitimate user path.
+
+Root of H1-H3: the refusal is decided on the top path's lexical form; the stores' boundary needs to be decided on each entry actually touched, on its canonical resolved form.

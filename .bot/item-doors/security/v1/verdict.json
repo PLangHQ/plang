@@ -1,1 +1,4 @@
-{ "status": "fail", "summary": "One High open: S1 — a step can set an [Own] setting (permission.setting.grant / identity) and save it, minting a standing grant with no prompt (proven by StepWrittenGrantTests). Signing, wire reader, [Sensitive], CLI/files otherwise clean; 6 Lows + 3 informational. Next bot: coder (via architect, locked-core adjacent)." }
+{
+ "status": "fail",
+ "summary": "Re-check a3260edf5: S1, L1, L4 closed; L6 by diff. I1 NOT closed \u2014 ancestor-folder copy/move/delete carries .data out (Medium), symlink into .data (Medium), '//' form asked not refused, listing leaks names, plus first-run Mkdir of bare .data refused for System. 5 red probes in StoresFolderProbeTests. Next bot: coder."
+}
