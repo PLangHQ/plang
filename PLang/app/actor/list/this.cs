@@ -12,9 +12,12 @@ public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyn
     {
         System = new actor.@this("System", app, app.ShutdownToken);
         // the runtime's shared os folder is the system's to write: every actor reads and runs there, only it writes
-        System.Permission.Stand(
+        System.Permission.Stand(app.OsAbsolutePath,
             global::app.type.item.permission.Verb.read, global::app.type.item.permission.Verb.execute,
             global::app.type.item.permission.Verb.write, global::app.type.item.permission.Verb.delete);
+        // the stores' folder is the system's alone: it opens the stores there; no other actor reaches it
+        System.Permission.Stand(global::app.Utils.PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder),
+            global::app.type.item.permission.Verb.read, global::app.type.item.permission.Verb.write, global::app.type.item.permission.Verb.delete);
         User = new actor.@this("User", app, System.CancellationToken, fallback: System);
         Add(System);
         Add(User);

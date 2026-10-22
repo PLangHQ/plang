@@ -379,8 +379,12 @@ public sealed partial class @this
         var sourceVerb = Verb.read;
         var destVerb   = Verb.write;
 
-        var sourceAuth = await TryAuthorizeWithoutAsk(sourceVerb, context);
-        var destAuth   = await destination.TryAuthorizeWithoutAsk(destVerb, context);
+        var sourceAuth = await Standing(sourceVerb, context);
+        var destAuth   = await destination.Standing(destVerb, context);
+
+        // a side the gate refuses without asking (the stores' folder) is the answer, never asked
+        if (sourceAuth is { Success: false }) return data.@this<global::app.type.item.path.@this>.From(sourceAuth);
+        if (destAuth is { Success: false }) return data.@this<global::app.type.item.path.@this>.From(destAuth);
 
         bool sourceOk = sourceAuth?.Success == true;
         bool destOk   = destAuth?.Success == true;
@@ -403,13 +407,6 @@ public sealed partial class @this
             return await PerformTransfer(destination, isMove, overwrite, subfolder, context);
         });
         return data.@this<global::app.type.item.path.@this>.From(consented);
-    }
-
-    private async Task<data.@this?> TryAuthorizeWithoutAsk(Verb verb, actor.context.@this context)
-    {
-        if (IsInRoot(context)) return context.Ok();
-        var existing = await context.Actor!.Permission.Find(this, verb);
-        return existing != null ? context.Ok() : null;
     }
 
     private async Task StoreGrant(Verb verb, bool persist, actor.context.@this context)

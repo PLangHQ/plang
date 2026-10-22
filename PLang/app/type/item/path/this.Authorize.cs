@@ -36,14 +36,11 @@ public partial class @this
         var actor = context?.Actor
             ?? throw new InvalidOperationException("Path.Authorize requires the caller's context with an actor");
 
-        // In-root paths are auto-granted — the actor owns its own root.
-        if (IsInRoot(context)) return context.Ok();
+        // In its root, or a grant it holds: yes; the stores' folder with no grant: no — neither asks
+        if (await Standing(verb, context) is { } answer) return answer;
 
         // What ships with plang asks nobody for what it names itself — the actor stays the user's own
         if (named && AskedByOs(context)) return context.Ok();
-
-        var existing = await actor.Permission.Find(this, verb);
-        if (existing != null) return context.Ok();
 
         // Schemes can append a hint — e.g. HttpPath warns when answering 'a' would persist a URL with a query
         // string verbatim to the local sqlite. Base returns "".
@@ -67,15 +64,31 @@ public partial class @this
     protected permission.@this BuildRequest(actor.@this actor, Verb verb) =>
         permission.@this.Request(actor, Absolute, verb, MatchMode.exact);
 
+    /// <summary>What the gate answers the actor without asking: yes in its own root or by a grant it holds; no in the
+    /// stores' folder (<see cref="IsStore"/>), whose keys nobody is asked for; null when the actor is to be asked. Every
+    /// door that asks takes this answer first.</summary>
+    private protected async Task<data.@this?> Standing(Verb verb, actor.context.@this context)
+    {
+        if (IsInRoot(context)) return context.Ok();
+        if (await context.Actor!.Permission.Find(this, verb) != null) return context.Ok();
+        if (IsStore(context)) return context.Error(new global::app.error.PermissionDenied(BuildRequest(context.Actor!, verb)));
+        return null;
+    }
+
     // In-root is under the app's own folder. The os folder is never in-root, even when an app is rooted there: what an
-    // actor may do there is its standing grants (every actor reads and runs; only the system writes).
+    // actor may do there is its standing grants (every actor reads and runs; only the system writes). Nor is the stores'
+    // folder: only the system reaches it, through its standing grant.
     protected bool IsInRoot(actor.context.@this context)
     {
         var app = context.App;
         if (app == null) return false;
-        if (IsUnder(app.OsAbsolutePath, RootComparison)) return false;
+        if (IsUnder(app.OsAbsolutePath, RootComparison) || IsStore(context)) return false;
         return IsUnder(app.AbsolutePath, RootComparison);
     }
+
+    // Under the stores' folder of the app's root (<root>/.data/), where its stores and an identity's key are kept.
+    private bool IsStore(actor.context.@this context)
+        => context.App is { } app && IsUnder(PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder), RootComparison);
 
     // The running app's anchors: the only variables a goal that ships with plang may hold in what it names itself and
     // still be trusted — each a fact no caller can set (pinned). Every other variable, any other %!…% included

@@ -59,7 +59,7 @@ public sealed class @this : IDisposable
         {
             var (provider, error) = context.App.Code.Get<global::app.store.code.IStore>();
             if (provider == null) throw new global::app.error.AppException(error!);
-            return provider.Open(global::app.type.item.path.@this.Resolve("/.data/setting/data.sqlite", context),
+            return provider.Open(global::app.type.item.path.@this.Resolve("/" + global::app.store.@this.Folder + "/setting/data.sqlite", context),
                 () => context.App.Mode.Value == global::app.Mode.Test ? $"setting-{context.App.Id}" : null,
                 context);
         });

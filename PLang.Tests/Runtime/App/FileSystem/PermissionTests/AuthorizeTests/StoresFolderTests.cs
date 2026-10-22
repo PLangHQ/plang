@@ -1,0 +1,102 @@
+using TUnit.Core;
+using TUnit.Assertions;
+using TUnit.Assertions.Extensions;
+
+namespace PLang.Tests.App.FileSystem.PermissionTests.AuthorizeTests;
+
+/// The stores' folder (<c>&lt;root&gt;/.data/</c>) holds the settings' rows, an identity's private key among them: it is
+/// not in-root. The system reaches it through its standing grant; any other actor is refused, never asked — a
+/// channel that would answer "a" is never asked at all.
+public class StoresFolderTests : System.IAsyncDisposable
+{
+    private readonly string root;
+    private readonly string key;
+    private readonly global::app.@this app;
+    private readonly Asking channel;
+
+    public StoresFolderTests()
+    {
+        root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-data-" + System.Guid.NewGuid().ToString("N")[..8]);
+        key = System.IO.Path.Combine(root, ".data", "setting", "data.sqlite");
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(key)!);
+        System.IO.File.WriteAllText(key, "the identity's private key");
+        app = new global::app.@this(root).TestSigning();
+        channel = new Asking(app.actor.list.User.Context);
+        app.actor.list.User.Channel.Register(channel);
+    }
+
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    // An input that grants whatever it is asked, counting the asks.
+    private sealed class Asking : global::app.channel.@this
+    {
+        private readonly global::app.actor.context.@this _ctx;
+        public int Count { get; private set; }
+        public Asking(global::app.actor.context.@this ctx)
+        {
+            _ctx = ctx; Name = "input";
+            Direction = global::app.channel.ChannelDirection.Bidirectional;
+        }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
+        {
+            Count++;
+            return Task.FromResult(action.Context.Ok("a"));
+        }
+    }
+
+    private async Task Refused(global::app.data.@this answer)
+    {
+        await answer.IsFailure();
+        await Assert.That(answer.Error!.Key).IsEqualTo("PermissionDenied");
+        await Assert.That(channel.Count).IsEqualTo(0);
+    }
+
+    [Test] public async Task AUserReadingTheSettingsStore_IsRefused_NeverAsked()
+    {
+        var user = app.actor.list.User.Context;
+        await Refused(await user.File(key).Read(user));
+    }
+
+    [Test] public async Task AUserCopyingTheSettingsStoreOut_IsRefused_NeverAsked()
+    {
+        var user = app.actor.list.User.Context;
+        await Refused(await user.File(key).CopyTo(user.File(System.IO.Path.Combine(root, "stolen")), overwrite: true, subfolder: true, user));
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(root, "stolen"))).IsFalse();
+    }
+
+    [Test] public async Task AUserCopyingIntoTheStoresFolder_IsRefused_NeverAsked()
+    {
+        var user = app.actor.list.User.Context;
+        var mine = System.IO.Path.Combine(root, "mine");
+        System.IO.File.WriteAllText(mine, "rows");
+        await Refused(await user.File(mine).CopyTo(user.File(key), overwrite: true, subfolder: true, user));
+        await Assert.That(System.IO.File.ReadAllText(key)).IsEqualTo("the identity's private key");
+    }
+
+    [Test] public async Task TheSystem_ReadsTheStoresFolder_ThroughItsStandingGrant()
+    {
+        var system = app.actor.list.System.Context;
+        await (await system.File(key).Read(system)).IsSuccess();
+    }
+}
+
+/// The stores open in the stores' folder, on disk, with the system's context: the app's and the settings'.
+public class StoresFolderOpenTests : System.IAsyncDisposable
+{
+    private readonly global::app.@this app = new global::app.@this(
+        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-stores-" + System.Guid.NewGuid().ToString("N")[..8])).TestSigning();
+
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    [Test] public async Task TheAppsStoreAndTheSettingsStore_StillOpen()
+    {
+        var system = app.actor.list.System.Context;
+        await (await app.store.Set("probe", "k", new global::app.data.@this("k", "v", context: system))).IsSuccess();
+        await (await app.actor.list.System.Setting.Load()).IsSuccess();
+        await (await app.actor.list.User.Setting.Load()).IsSuccess();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(app.AbsolutePath, ".data", "data.sqlite"))).IsTrue();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(app.AbsolutePath, ".data", "setting", "data.sqlite"))).IsTrue();
+    }
+}

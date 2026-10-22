@@ -10,6 +10,11 @@ namespace app.store;
 [global::app.Attributes.PlangType("store")]
 public abstract class @this : global::app.type.item.@this, System.IDisposable
 {
+    /// <summary>The stores' folder, by its name in the app's root: the app's store and the settings' live in it. It
+    /// holds an identity's private key, so it is no actor's but the system's (its standing grant); a file verb of any
+    /// other actor is refused there, never asked.</summary>
+    internal const string Folder = ".data";
+
     /// <summary>The kind of store — where its tables are kept (sqlite).</summary>
     protected abstract string Kind { get; }
 

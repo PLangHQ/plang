@@ -26,17 +26,18 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         _actor = actor;
         // Every actor's standing grant on the runtime's shared os folder: it reads and runs what is there (the
         // builder's goals, /system/error/show). Writing there is the system actor's alone (Stand).
-        Stand(Verb.read, Verb.execute);
+        Stand(actor.App.OsAbsolutePath, Verb.read, Verb.execute);
     }
 
     /// <summary>
-    /// This actor's standing grant on the runtime's shared os folder — held in memory for the run, never persisted
-    /// or asked; it replaces the one before (the grant store keys by path).
+    /// This actor's standing grant on <paramref name="folder"/> (absolute) and all under it — the runtime's shared os
+    /// folder, the stores' folder — held in memory for the run, never persisted or asked; it replaces the one before
+    /// on that folder (the grant store keys by path).
     /// </summary>
-    internal void Stand(params Verb[] verbs)
+    internal void Stand(string folder, params Verb[] verbs)
     {
         var grant = new Grant(_actor.Name,
-            _actor.App.OsAbsolutePath + global::app.Utils.PathHelper.DirectorySeparatorChar + "**",
+            folder + global::app.Utils.PathHelper.DirectorySeparatorChar + "**",
             new HashSet<Verb>(verbs), MatchMode.glob, _actor.App.type.list[typeof(Grant)]);
         var entry = new global::app.data.@this<Grant>("", grant, context: _actor.Context);
         lock (_lock)

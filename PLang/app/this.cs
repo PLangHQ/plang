@@ -357,7 +357,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         {
             var (provider, error) = Code.Get<global::app.store.code.IStore>();
             if (provider == null) throw new global::app.error.AppException(error!);
-            return provider.Open(global::app.type.item.path.@this.Resolve("/.data/data.sqlite", actor.list.System.Context),
+            return provider.Open(global::app.type.item.path.@this.Resolve("/" + global::app.store.@this.Folder + "/data.sqlite", actor.list.System.Context),
                 () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
                 actor.list.System.Context);
         });
