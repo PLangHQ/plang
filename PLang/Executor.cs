@@ -62,25 +62,22 @@ namespace PLang
 					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
 						$"'--{key[1..]}' takes no settings: write them at its setting's path, --{store.Address(mode)}={{…}} or --{store.Address(mode, "<option>")}=value.",
 						"UnknownSetting", 400)));
-			// the flags that are settings' paths, each checked by its setting before anything is written; a typo is the
-			// run's answer
+			// the flags that are settings' paths, each checked by its setting, then all written — the command line's
+			// values, the last word; a typo is the run's answer, and nothing is written
 			var flags = await store.Flags(parameters.Where(p => p.Key.StartsWith('!') && !modes.ContainsKey(p.Key))
 				.Select(p => new KeyValuePair<string, object?>(p.Key[1..], p.Value)), app.actor.list.System.Context);
 			if (!flags.Success) return (null, flags);
-			var values = (await flags.Value())!.Entries(app.actor.list.System.Context).ToList();
+			var wrote = (await flags.Value())!;
 
 			// A mode is on when its word is given (and not false), or when the run writes its setting.
 			bool On(string word) => parameters.TryGetValue(word, out var given) && given is not false
-				|| values.Any(entry => entry.Name.StartsWith(store.Address(modes[word]) + ".", StringComparison.OrdinalIgnoreCase));
+				|| wrote.KeyNames.Any(address => store.Of(address) == modes[word]);
 
 			// The modes' defaults, under the command line's values: a debug run shows each step's time, so this run's
-			// call stacks time their frames (--call.setting.timing=false still says not).
-			if (On("!debug"))
-				app.actor.list.System.Setting.Set(app.actor.list.System.Setting.Address(typeof(global::app.call.setting.@this), "timing"), true);
-
-			// The command line's values, once: the last word.
-			foreach (var entry in values)
-				store.Set(entry.Name, entry);
+			// call stacks time their frames, unless the line set timing itself (--call.setting.timing=false still says not).
+			var timing = store.Address(typeof(global::app.call.setting.@this), "timing");
+			if (On("!debug") && !wrote.Has(timing))
+				store.Set(timing, true);
 
 			var userVars = app.actor.list.User.Context.Variable;
 

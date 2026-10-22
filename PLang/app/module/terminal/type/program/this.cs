@@ -174,8 +174,7 @@ public sealed partial class @this(IProgram asked)
         // the child's to refuse when it starts, not this read's
         using var child = new global::app.actor.setting.@this(context);
         foreach (var (key, value) in parameters.Where(p => p.Key.StartsWith('!')))
-            if (await child.Flags([new(key[1..], value)], context) is { Success: true } flag)
-                foreach (var entry in (await flag.Value())!.Entries(context)) child.Set(entry.Name, entry);
+            await child.Flags([new(key[1..], value)], context);
         return (await child.Get<global::app.channel.setting.@this>()).Format.IsPlang;
     }
 

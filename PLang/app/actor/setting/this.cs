@@ -142,8 +142,9 @@ public sealed class @this : IDisposable
     /// <summary>
     /// The values a command line's <paramref name="flags"/> set (<c>--test.setting.timeout=5s</c> is the path
     /// <c>test.setting.timeout</c> and its value), each by the address it is kept at — every flag checked by the setting it
-    /// names before any is answered. The first a setting refuses (a path no setting goes by, an option it doesn't have, a
-    /// value its option can't take) is the answer. Nothing is written: the caller sets them.
+    /// names before any is written, then all written here — answered as the values written, by address. The first a
+    /// setting refuses (a path no setting goes by, an option it doesn't have, a value its option can't take) is the
+    /// answer, and nothing is written.
     /// </summary>
     public async ValueTask<data.@this<global::app.type.item.dict.@this>> Flags(
         IEnumerable<KeyValuePair<string, object?>> flags, actor.context.@this context)
@@ -157,6 +158,7 @@ public sealed class @this : IDisposable
             if (!set.Success) return set;
             foreach (var entry in (await set.Value())!.Entries(context)) values.Set(entry.Name, entry);
         }
+        foreach (var entry in values.Entries(context)) Set(entry.Name, entry);
         return context.Ok(values);
     }
 
@@ -372,6 +374,15 @@ public sealed class @this : IDisposable
     // and they differ). Built once from the app's types, each class made once here.
     private System.Collections.Generic.Dictionary<string, System.Type>? _classes;
     private System.Type? Class(string address) => Classes().GetValueOrDefault(address);
+
+    /// <summary>The settings class <paramref name="address"/> is kept under — the class's own address or one of its
+    /// options' (<c>app.debug.setting.goal</c> → debug's); null when no class keeps it.</summary>
+    public System.Type? Of(string address)
+    {
+        for (var end = address.Length; end > 0; end = address.LastIndexOf('.', end - 1))
+            if (Class(address[..end]) is { } @class) return @class;
+        return null;
+    }
 
     /// <summary>Where the settings class <paramref name="class"/> is kept (<c>app.call.setting</c>), or one of its options
     /// (<c>app.call.setting.timing</c>) — known without making one. A class that is no settings class is a program's
