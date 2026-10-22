@@ -30,6 +30,14 @@ public static class AppTesting
     /// signing per Data dominates wall-clock and, run massively in parallel, makes suites look hung. The mock
     /// replaces both ISigning and IKey (keygen); IsBuiltIn keeps it out of the Code snapshot.
     /// </summary>
+    public static global::app.@this Consenting(this global::app.@this app)
+    {
+        // every actor's input answers yes: the consent a change to the app's identities (or an exported key) asks for
+        foreach (var actor in new[] { app.actor.list.System, app.actor.list.User })
+            actor.Channel.Register(new global::PLang.Tests.App.Types.PathTests.Contract.CannedAnswerChannel("y"));
+        return app;
+    }
+
     public static global::app.@this TestSigning(this global::app.@this app)
     {
         var provider = new global::PLang.Tests.Shared.TestSigning { IsBuiltIn = true };

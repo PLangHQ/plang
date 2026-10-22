@@ -50,4 +50,14 @@ public sealed class Identity : global::app.type.item.@this, global::app.type.ite
     /// String context returns the public key — %MyIdentity% in a string gives the public key.
     /// </summary>
     public override string ToString() => PublicKey;
+
+    /// <summary>This identity as a step may hold it: every member but its private key, which stays in its owner's
+    /// setting (signing reads it there; only <c>identity.export</c>, asked each time, hands it out).</summary>
+    internal Identity Public() => new(Name, Type)
+    {
+        PublicKey = PublicKey,
+        IsDefault = IsDefault,
+        IsArchived = IsArchived,
+        Created = Created,
+    };
 }

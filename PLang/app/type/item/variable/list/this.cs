@@ -68,7 +68,8 @@ public partial class @this
         // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read from the asker's
         // actor, so a setDefault or rename is reflected, and born with the memory — not set — so an actor born at any
         // time has them at once and nothing bound to a variable's set runs for them.
-        _variables["MyIdentity"] = new data.DynamicData("MyIdentity", asker => asker.Ok(asker.Actor.DefaultIdentity), context);
+        // a step holds an identity without its private key
+        _variables["MyIdentity"] = new data.DynamicData("MyIdentity", asker => asker.Ok(asker.Actor.DefaultIdentity?.Public()), context);
         _variables["Identity"] = new data.DynamicData("Identity",
             asker => asker.Ok((asker.Actor.Identity ?? asker.Actor.DefaultIdentity)?.PublicKey), context);
     }

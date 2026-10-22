@@ -21,7 +21,15 @@ public class IdentityKeyProviderTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_keyprovider_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir).Consenting();
+    }
+
+    // The private key the identity's owner holds — its row in the system's identity setting (a step holds none).
+    private async Task<string> StoredKey(string name)
+    {
+        foreach (var row in (await _app.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity.Items(Ctx))
+            if ((await row.Value()) is Identity identity && identity.Name == name) return identity.PrivateKey;
+        return "";
     }
 
     [After(Test)]
@@ -53,7 +61,7 @@ public class IdentityKeyProviderTests
         var identity = (await result.Value()) as Identity;
         await Assert.That(identity).IsNotNull();
         await Assert.That(identity!.PublicKey).IsEqualTo(mockProvider.Keys.PublicKey);
-        await Assert.That(identity.PrivateKey).IsEqualTo(mockProvider.Keys.PrivateKey);
+        await Assert.That(await StoredKey("test-identity")).IsEqualTo(mockProvider.Keys.PrivateKey);
     }
 
     [Test]
@@ -69,7 +77,7 @@ public class IdentityKeyProviderTests
 
         // Ed25519 keys are 32 bytes each
         var pubBytes = System.Buffers.Text.Base64Url.DecodeFromChars(identity!.PublicKey);
-        var privBytes = Convert.FromBase64String(identity.PrivateKey);
+        var privBytes = Convert.FromBase64String(await StoredKey("test-identity"));
         await Assert.That(pubBytes.Length).IsEqualTo(32);
         await Assert.That(privBytes.Length).IsEqualTo(32);
     }
@@ -109,7 +117,9 @@ public class IdentityKeyProviderTests
         var loaded = (await getResult.Value()) as Identity;
         await Assert.That(loaded).IsNotNull();
         await Assert.That(loaded!.PublicKey).IsEqualTo(mockProvider.Keys.PublicKey);
-        await Assert.That(loaded.PrivateKey).IsEqualTo(mockProvider.Keys.PrivateKey);
+        // get hands the step no key; the stored row holds the provider's
+        await Assert.That(loaded.PrivateKey).IsEqualTo("");
+        await Assert.That(await StoredKey("stored-test")).IsEqualTo(mockProvider.Keys.PrivateKey);
     }
 
     [Test]

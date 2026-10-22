@@ -21,8 +21,11 @@ public class Ed25519 : ISigning
 
     public virtual async Task<data.@this> SignAsync(sign action)
     {
-        // Get identity
-        var identityResult = await new global::app.goal.step.action.@this(new identity.Get(action.Context), action.Context).Start(action.Context);
+        // The app's identity, its key whole, from its owner (the identity setting) — never through identity.get, which
+        // hands a step the identity without its key
+        var (provider, missing) = action.Context.App.Code.Get<global::app.module.identity.code.IIdentity>();
+        if (provider == null) return action.Context.Error(missing!);
+        var identityResult = await provider.GetOrCreateDefaultAsync(new identity.Get(action.Context));
         if (!identityResult.Success) return identityResult;
         var identity = (Identity)(await identityResult.Value())!;
 
