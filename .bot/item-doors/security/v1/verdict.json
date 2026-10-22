@@ -1,4 +1,7 @@
 {
- "status": "fail",
- "summary": "Re-check 2 at f65796aae: S1/I1/K/L1/L4/L6/consent door/anchors closed or clean. OPEN: R1 High \u2014 an [Own] row signed by ANY key is read as the actor's own (shipped .data from a cloned app seeds grants; red probe ForeignSignedOwnRowTests); R2 Medium \u2014 tree copy writes through a link already in the destination with no ask (red probes); R3-R5 Low. Next bot: coder."
+ "status": "pass",
+ "summary": "Re-check 3 at 7e35b1b68: R1-R4 closed (SettingForeign loud refusal, copy into linked destination, question names the landing, link loop refused); OsTrustTests 21/21 and the regex-timeout test run green. One residual OPEN for Ingi: R1b \u2014 a whole shipped .data/ whose identity row and permission row the author signed is read as the victim's own (the app's identity lives in the same store); pinned by ShippedIdentityStoreTests. Merge with that decision made or accepted in the docs. Next bot: auditor.",
+ "open": [
+  "R1b: where an app's identity lives (Medium-High, design call for Ingi)"
+ ]
 }
