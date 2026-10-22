@@ -650,6 +650,8 @@ public partial class @this
             ReturnDepth = ReturnDepth,
             Attachment = Attachment,
             IsInitialized = IsInitialized,
+            // the same binding: the signature it arrived in is the face's too
+            Signature = Signature,
         };
         view._item = _item;
         if (_error != null) view.Fail(_error);

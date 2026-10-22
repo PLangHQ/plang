@@ -275,6 +275,15 @@ public sealed class @this : IDisposable
                 await (_context.App.Debug?.Write($"settings: '{address}' could not be read — {row.Error?.Message}") ?? Task.CompletedTask);
                 rows[address] = row;
             }
+            // An actor's own row is its owner's code's, saved signed: one without its signature was written below plang,
+            // and is refused — held with why, so a read of that setting is loud, never a grant nobody asked for
+            else if (Own(address) && row.Signature == null)
+            {
+                await (_context.App.Debug?.Write($"settings: '{address}' is the actor's own and arrived unsigned — refused") ?? Task.CompletedTask);
+                rows[address] = _context.Error(new global::app.error.@this(
+                    $"setting '{address}' is the actor's own and its stored row is not signed — it was written outside plang, and is not read",
+                    "SettingUnsigned", 403));
+            }
             else if (value is { IsNull: false })
                 rows[address] = new data.@this(row.Name, value, row.Type, context: _context);
         }
