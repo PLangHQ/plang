@@ -139,28 +139,6 @@ public sealed class @this : IDisposable
         return value as data.@this ?? _context.Ok();
     }
 
-    /// <summary>
-    /// The values a command line's <paramref name="flags"/> set (<c>--test.setting.timeout=5s</c> is the path
-    /// <c>test.setting.timeout</c> and its value), each by the address it is kept at — every flag checked by the setting it
-    /// names before any is written, then all written here — answered as the values written, by address. The first a
-    /// setting refuses (a path no setting goes by, an option it doesn't have, a value its option can't take) is the
-    /// answer, and nothing is written.
-    /// </summary>
-    public async ValueTask<data.@this<global::app.type.item.dict.@this>> Flags(
-        IEnumerable<KeyValuePair<string, object?>> flags, actor.context.@this context)
-    {
-        var values = new global::app.type.item.dict.@this(_context.App.type.list[typeof(global::app.type.item.dict.@this)]);
-        foreach (var (path, value) in flags)
-        {
-            var setting = Find(path);
-            if (!setting.Success) return context.Error<global::app.type.item.dict.@this>(setting.Error!);
-            var set = (await setting.Value())!.Apply(path, value, context);
-            if (!set.Success) return set;
-            foreach (var entry in (await set.Value())!.Entries(context)) values.Set(entry.Name, entry);
-        }
-        foreach (var entry in values.Entries(context)) Set(entry.Name, entry);
-        return context.Ok(values);
-    }
 
     /// <summary>
     /// The setting <paramref name="path"/> names: the longest path a setting goes by

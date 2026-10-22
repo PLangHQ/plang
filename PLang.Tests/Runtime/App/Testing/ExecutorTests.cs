@@ -3,11 +3,9 @@ using global::PLang;
 namespace PLang.Tests.App.Tester;
 
 /// <summary>
-/// Coverage for PLang.Executor.Configure — the CLI argv parsing and routing layer.
-/// The previous test surface covered Testing.Apply / Debug.Apply directly with
-/// dictionaries, but the argv → CommandLineParser → engine-state pipeline was 0%.
-/// Mis-mapped flags (e.g. --test silently not enabling, --debug= value not reaching
-/// Debug.Apply) would ship without a test catching them.
+/// Coverage for PLang.Executor.Configure — the CLI argv parsing and routing layer:
+/// the argv → start → engine-state pipeline. Mis-mapped flags (e.g. --test silently
+/// not enabling, --debug= value not reaching the debug setting) are caught here.
 ///
 /// Tests exercise Configure() — the split that returns the configured engine without
 /// executing Start(). Run() is Configure() + Start(), so covering Configure covers the
@@ -52,7 +50,7 @@ public class ExecutorTests
     }
 
     // --test.setting={"timeout":5} routes through Testing.Apply with the parsed dict and sets
-    // Timeout. Exercises the CommandLineParser JSON collection path.
+    // Timeout. Exercises the start's JSON collection path.
     [Test]
     public async Task Configure_TestFlagWithConfig_AppliesToTesting()
     {

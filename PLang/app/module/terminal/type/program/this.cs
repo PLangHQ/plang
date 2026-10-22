@@ -168,13 +168,13 @@ public sealed partial class @this(IProgram asked)
     /// its own (<c>--channel.setting.format=plang</c>, with or without <c>app.</c>, or the setting's dict).</summary>
     internal async Task<bool> IsPlang(Context context)
     {
-        var (_, parameters) = global::app.Utils.CommandLineParser.Parse([.. Info!.ArgumentList]);
         // the child's settings as its command line sets them, in a layer of their own, kept where the setting each flag
-        // names says (as the child's own command line does); a flag that is no setting, or one its setting refuses, is
-        // the child's to refuse when it starts, not this read's
+        // names says (as the child's own command line does); a flag that is no setting (a mode word), or one its setting
+        // refuses, is the child's to refuse when it starts, not this read's — so each argument (whole, as the program is
+        // handed it) is read as a start of its own
         using var child = new global::app.actor.setting.@this(context);
-        foreach (var (key, value) in parameters.Where(p => p.Key.StartsWith('!')))
-            await child.Flags([new(key[1..], value)], context);
+        foreach (var argument in Info!.ArgumentList)
+            await global::app.start.@this.Parse([argument]).Set(child, context);
         return (await child.Get<global::app.channel.setting.@this>()).Format.IsPlang;
     }
 

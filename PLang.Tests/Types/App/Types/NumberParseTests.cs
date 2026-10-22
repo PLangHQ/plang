@@ -84,7 +84,7 @@ public class NumberParseTests
         }
         var json = Token(written);
         var value = new global::app.type.format.value.Reader(written);
-        var cli = global::app.Utils.CommandLineParser.Parse(new[] { "Start.goal", "n=" + written }).parameters["n"];
+        var cli = global::app.start.@this.Parse(new[] { "Start.goal", "n=" + written }).property["n"]!.Value;
 
         await Assert.That(((number)json).Kind.Name).IsEqualTo(kind);
         await Assert.That(((number)value.Number()).Kind.Name).IsEqualTo(kind);

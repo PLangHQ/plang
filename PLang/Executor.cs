@@ -35,7 +35,7 @@ namespace PLang
 			if (args.Length > 0 && args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
 				args = ["--build", .. args[1..]];
 
-			var (positional, parameters) = CommandLineParser.Parse(args);
+			var start = global::app.start.@this.Parse(args);
 
 			// The CLI is the one interactive terminal owner: opt out of the
 			// ctor's non-interactive auto-wire and bind real stdin explicitly so
@@ -56,36 +56,37 @@ namespace PLang
 				["!build"] = typeof(global::app.module.build.setting.@this),
 			};
 			var store = app.actor.list.System.Setting;
-			// a mode word takes no settings of its own: they are written at its setting's path
-			foreach (var (key, value) in parameters)
-				if (modes.TryGetValue(key, out var mode) && value is IDictionary<string, object?>)
+			// the mode words are the Executor's: taken out of the start before its flags are written; a mode word takes
+			// no settings of its own: they are written at its setting's path
+			var words = modes.Keys.Select(start.property.Remove).OfType<global::app.start.property.@this>().ToList();
+			foreach (var word in words)
+				if (word.Value is IDictionary<string, object?>)
 					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
-						$"'--{key[1..]}' takes no settings: write them at its setting's path, --{store.Address(mode)}={{…}} or --{store.Address(mode, "<option>")}=value.",
+						$"'--{word.Name[1..]}' takes no settings: write them at its setting's path, --{store.Address(modes[word.Name])}={{…}} or --{store.Address(modes[word.Name], "<option>")}=value.",
 						"UnknownSetting", 400)));
 			// the flags that are settings' paths, each checked by its setting, then all written — the command line's
 			// values, the last word; a typo is the run's answer, and nothing is written
-			var flags = await store.Flags(parameters.Where(p => p.Key.StartsWith('!') && !modes.ContainsKey(p.Key))
-				.Select(p => new KeyValuePair<string, object?>(p.Key[1..], p.Value)), app.actor.list.System.Context);
-			if (!flags.Success) return (null, flags);
-			var wrote = (await flags.Value())!;
+			var set = await start.Set(store, app.actor.list.System.Context);
+			if (!set.Success) return (null, set);
+			var values = (await set.Value())!;
 
 			// A mode is on when its word is given (and not false), or when the run writes its setting.
-			bool On(string word) => parameters.TryGetValue(word, out var given) && given is not false
-				|| wrote.KeyNames.Any(address => store.Of(address) == modes[word]);
+			bool On(string mode) => words.Any(word => string.Equals(word.Name, mode, StringComparison.OrdinalIgnoreCase) && word.Value is not false)
+				|| values.KeyNames.Any(address => store.Of(address) == modes[mode]);
 
 			// The modes' defaults, under the command line's values: a debug run shows each step's time, so this run's
 			// call stacks time their frames, unless the line set timing itself (--call.setting.timing=false still says not).
 			var timing = store.Address(typeof(global::app.call.setting.@this), "timing");
-			if (On("!debug") && !wrote.Has(timing))
+			if (On("!debug") && !values.Has(timing))
 				store.Set(timing, true);
 
 			var userVars = app.actor.list.User.Context.Variable;
 
-			// Route CLI parameters to user Variables
-			foreach (var param in parameters)
+			// The line's values are the user's variables; its flags are the app's settings, not variables
+			foreach (var property in start.property.Items())
 			{
-				if (param.Key.StartsWith("!")) continue; // app config, not variables
-				await userVars.Set(param.Key, param.Value);
+				if (property.Name.StartsWith('!')) continue;
+				await userVars.Set(property.Name, property.Value);
 			}
 
 			// Debug mode — born reading its setting; then activated (watchers, LLM hooks, grep regex, event bindings).
@@ -100,9 +101,9 @@ namespace PLang
 			if (On("!test"))
 			{
 				// a folder or test named on the command line is the starting folder's, resolved once here
-				if (!parameters.ContainsKey("path"))
-					await userVars.Set("path", positional == null ? startupDirectory
-						: global::app.type.item.path.@this.Resolve("/" + positional.TrimStart('/', '\\'), app.actor.list.User.Context));
+				if (start.property["path"] == null)
+					await userVars.Set("path", start.Goal == null ? startupDirectory
+						: global::app.type.item.path.@this.Resolve("/" + start.Goal.TrimStart('/', '\\'), app.actor.list.User.Context));
 				await app.test.list.Open();
 			}
 
@@ -110,7 +111,7 @@ namespace PLang
 			if (On("!build"))
 			{
 				app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
-				if (!parameters.ContainsKey("path"))
+				if (start.property["path"] == null)
 					await userVars.Set("path", startupDirectory);
 
 				// A build that skips the cache flows DOWN to llm.query as llm's cache setting, so llm.query reads its
@@ -131,7 +132,7 @@ namespace PLang
 			}
 
 			// the .goal to run (Start when none is named); the goal finds its own .pr
-			var goalFile = positional ?? "Start";
+			var goalFile = start.Goal ?? "Start";
 			var source = goalFile.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? goalFile : goalFile + ".goal";
 			await app.actor.list.System.Context.Variable.Set("goalFile", "/" + source.TrimStart('/', '\\'));
 
