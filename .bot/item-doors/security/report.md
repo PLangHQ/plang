@@ -57,3 +57,13 @@ NonBacktracking / 1 s timeouts read correctly in the diff; a timeout throw answe
 Clean: `..`/`.`, trailing separator, `.database` prefix confusion, the bare folder for a user, relative path against the goal folder; file Read/Open/Pour/Stat/Exists/Write/Append all gated; `Find` before the refusal cannot be exploited (a user can't mint a matching grant: `[Own]` closed, no ask can be raised on `.data`); pack opens each file through the gate; no goal, `os/system` file or test reads `.data` as the User actor, so denying it to users breaks no legitimate user path.
 
 Root of H1-H3: the refusal is decided on the top path's lexical form; the stores' boundary needs to be decided on each entry actually touched, on its canonical resolved form.
+
+---
+
+# 313 — actor choice (ACCEPTED-RISK, owner ruling via architect 313f)
+
+**S2 (Critical as a threat, ACCEPTED by Ingi's ruling "by design", relayed in 313f): a step may run a goal as the System actor, or replace its actor's channels, unchecked.** `actor/list/this.cs:35-41` `Use` returns `this[name].Context` with no check; reached by `goal.call` (`goal/call.cs:86`), `channel.set` (`channel/set.cs:38`) and `channel.remove` (`channel/remove.cs:17`). Ingi: running a goal as System is "programmatic and fine"; replacing channels is flexibility ("send all ask request to my computer through the network").
+
+Recorded consequence, so the accepted risk is not misread later: S1 (`[Own]` settings), I1 (`.data` stores), K (private key asks) and the consent door guard what runs **as the User actor**. They do NOT stop a third-party app's own code from choosing System: such an app can `call goal X Actor=system` and have X write the os folder, read the identity key under `.data`, and answer its own asks. Running a third-party app is therefore trusting its code with System; the consent gate is a guard against what the User actor does unasked, not a sandbox against the app's code. Docs should say so in plain words wherever consent is described as protecting the user from an app.
+
+What stays in scope under this model (reported if found): anything that reaches another actor, or answers consent, without the app's code choosing it (a variable/setting a consent reads, a wire-borne resume answer, a user-data-controlled actor name inside an os goal, `named`/anchor spoofing).
