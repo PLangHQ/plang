@@ -49,6 +49,24 @@ public class SqliteAuthorizeDenialTests
         await Assert.That(System.IO.File.Exists(outOfRoot)).IsFalse();
     }
 
+    // the file granted but its folder refused: the open answers the folder's refusal, never a database that can't open
+    [Test] public async Task SqliteOpen_FolderRefused_AnswersTheRefusal()
+    {
+        var app = NewApp(out _);
+        var user = app.actor.list.User;
+        user.Channel.Register(new CannedChannel("n", user.Context));
+        var folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
+        var outOfRoot = System.IO.Path.Combine(folder, "external.sqlite");
+        var grant = global::app.type.item.permission.@this.Request(user, outOfRoot, global::app.type.item.permission.Verb.write);
+        await user.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: user.Context), persist: false);
+        using var store = new global::app.store.sqlite.@this(user.Context.File(outOfRoot), () => null, user.Context);
+
+        var read = await store.Get<global::app.type.item.@this>("t", "k");
+        await Assert.That(read.Success).IsFalse();
+        await Assert.That(read.Error!.Key).IsEqualTo("PermissionDenied");
+        await Assert.That(System.IO.Directory.Exists(folder)).IsFalse();
+    }
+
     [Test] public async Task SqliteOpen_DataSourceInRoot_OpensSilently()
     {
         var app = NewApp(out var root);

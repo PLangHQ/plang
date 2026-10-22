@@ -80,8 +80,9 @@ public sealed class @this : global::app.store.@this
         // fail the open — sqlite never sees them.
         var auth = await _file.Authorize(global::app.type.item.permission.Verb.write, Context);
         if (!auth.Success) throw new global::app.error.AppException(auth.Error!);
-        if (_file.Parent is { } parent)
-            await parent.Mkdir(Context);
+        // a folder that can't be made is the open's answer, as a refused file is — never a database that then can't open
+        if (_file.Parent is { } parent && await parent.Mkdir(Context) is { Success: false } made)
+            throw new global::app.error.AppException(made.Error!);
 
         var connectionString = new SqliteConnectionStringBuilder
         {
