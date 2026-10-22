@@ -25,8 +25,9 @@ public partial class @this
     public async Task<data.@this> Authorize(Verb verb, actor.context.@this context, bool named = false)
     {
         var actor = context.Actor;
-        // where the OS lands for this path, worked out once for the whole call (a link can change between calls)
-        var place = Location(context.Filesystem);
+        // where the OS lands for this path, worked out once for the whole call (a link can change between calls); one
+        // that lands nowhere the gate can tell is refused
+        if (Location(context.Filesystem) is not { } place) return context.Error(Loop);
 
         // In its root, or a grant it holds: yes; the stores' folder with no grant: no — neither asks
         if (await place.Standing(verb, context) is { } answer) return answer;
@@ -86,11 +87,17 @@ public partial class @this
     /// call frame running the step), never one further up. A start trusted so takes nothing of the actor's settings
     /// that changes what runs (the terminal's environment).</summary>
     internal static bool AskedByOs(actor.context.@this context)
-        => context.call.Goal?.Folder is { } folder && folder.Location(context.Filesystem).IsUnder(context.Filesystem.os).Value;
+        => context.call.Goal?.Folder is { } folder && folder.Location(context.Filesystem) is { } place
+           && place.IsUnder(context.Filesystem.os).Value;
 
     /// <summary>Where the gate finds this path, read in <paramref name="filesystem"/>: the place the OS opens for it — the
-    /// path itself, unless a scheme reads it otherwise (a file: each link on the way followed).</summary>
-    internal virtual @this Location(file.filesystem.@this filesystem) => this;
+    /// path itself, unless a scheme reads it otherwise (a file: each link on the way followed). Null when it lands
+    /// nowhere the gate can tell (a file: its links loop, or run past 40) — every door refuses it (<see cref="Loop"/>).</summary>
+    internal virtual @this? Location(file.filesystem.@this filesystem) => this;
+
+    /// <summary>What the gate refuses this path with when it lands nowhere it can tell.</summary>
+    internal global::app.error.@this Loop
+        => new($"{Absolute} leads through links that loop or run past 40 — where it lands can't be told, so it is refused", "LinkLoop", 403);
 
     /// <summary>
     /// The question the actor is asked to <paramref name="verb"/> this path, whole — each scheme writes its own: what a

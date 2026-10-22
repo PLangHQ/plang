@@ -145,7 +145,7 @@ public sealed partial class @this
             foreach (var f in context.Filesystem.List(this, pattern.ToString(), recursive.Value)
                          .Where(entry == Entry.folder ? context.Filesystem.IsFolder : context.Filesystem.IsFile).ToList())
             {
-                if (await f.Location(context.Filesystem).Standing(Verb.read, context) is { Success: false }) continue;
+                if (f.Location(context.Filesystem) is not { } place || await place.Standing(Verb.read, context) is { Success: false }) continue;
                 files.Add(new data.@this("", Combine(f.Absolute[Absolute.Length..].TrimStart(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar)),
                     context: context));
             }
@@ -435,8 +435,8 @@ public sealed partial class @this
         var destVerb   = Verb.write;
         var filesystem = context.Filesystem;
         // each end where the OS lands for it, worked out once for the whole transfer
-        var source = Location(filesystem);
-        var target = destination.Location(filesystem);
+        if (Location(filesystem) is not { } source) return context.Error<global::app.type.item.path.@this>(Loop);
+        if (destination.Location(filesystem) is not { } target) return context.Error<global::app.type.item.path.@this>(destination.Loop);
 
         // a move carries what the folder holds in one rename: a folder that holds the stores' folder's place is never
         // moved, whether the stores are there yet or not
@@ -515,9 +515,10 @@ public sealed partial class @this
         var filesystem = context.Filesystem;
         foreach (var (entry, into) in tree)
         {
-            if (await entry.Location(filesystem).Standing(verb, context) is { Success: false } refused) return refused;
+            if (entry.Location(filesystem) is not { } at) return context.Error(entry.Loop);
+            if (await at.Standing(verb, context) is { Success: false } refused) return refused;
             if (into == null) continue;
-            var place = into.Location(filesystem);
+            if (into.Location(filesystem) is not { } place) return context.Error(into.Loop);
             var standing = await place.Standing(toward, context);
             if (standing is { Success: false }) return standing;
             var outside = target != null && !place.IsUnder(target).Value;

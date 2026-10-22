@@ -50,10 +50,10 @@ public sealed partial class @this : global::app.type.item.path.@this
     [Out, Store] public override string Scheme => "file";
 
     // Where the OS lands for this file: each link on the way followed (the OS-rooted //x form read as /x, its ..
-    // resolved), each part as the OS holds its name (an 8.3 short part long). A loop lands nowhere the OS opens: it is
-    // read as written.
-    internal override global::app.type.item.path.@this Location(global::app.type.item.path.file.filesystem.@this filesystem)
-        => filesystem.Long(Landing(filesystem) ?? this);
+    // resolved), each part as the OS holds its name (an 8.3 short part long). Links that loop or run past 40 land
+    // nowhere the gate can tell: null, never the path as written (an OS that follows more links may land elsewhere).
+    internal override global::app.type.item.path.@this? Location(global::app.type.item.path.file.filesystem.@this filesystem)
+        => Landing(filesystem) is { } landing ? filesystem.Long(landing) : null;
 
     // A change under the os folder (write, delete) changes what ships with plang — and a goal there runs programs
     // without asking — so the question says so; it asks, it doesn't refuse.

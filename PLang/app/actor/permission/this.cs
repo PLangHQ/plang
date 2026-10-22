@@ -112,8 +112,9 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     /// Find calls on the same in-memory grant don't re-verify.
     /// </summary>
     public Task<global::app.data.@this?> Find(path requestPath, Verb verb)
-        // a grant is on the place: the request names where the OS lands for the path
-        => Find(requestPath.Location(_actor.Context.Filesystem).Absolute, verb);
+        // a grant is on the place: the request names where the OS lands for the path — one that lands nowhere the gate
+        // can tell has none
+        => requestPath.Location(_actor.Context.Filesystem) is { } place ? Find(place.Absolute, verb) : Task.FromResult<global::app.data.@this?>(null);
 
     /// <summary>The first grant allowing <paramref name="verb"/> at <paramref name="place"/> — where the OS lands for a
     /// path, worked out by the gate once per call; null when none does.</summary>
