@@ -100,6 +100,9 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
             else if (view == global::app.View.Out)
                 return context.Error(new global::app.error.ServiceError(
                     "plang content arrived unsigned — between actors a Data rides signed", "UnsignedPlang", 403));
+            // between actors a Data's name is no part of what crosses (not written, not signed): it is named by its
+            // receiver, never by what the wire says
+            if (view == global::app.View.Out) read.Name = name;
             return read;
         }
         // what the bytes say a value is, refused by that value (a signature whose hash is of no kind), or a layer no
