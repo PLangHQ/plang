@@ -32,19 +32,23 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     /// <summary>
     /// This actor's standing grant on <paramref name="folder"/> (absolute) and all under it — the runtime's shared os
     /// folder, the stores' folder — held in memory for the run, never persisted or asked; it replaces the one before
-    /// on that folder (the grant store keys by path).
+    /// on that folder (the grant store keys by path). Two grants: the folder itself (a glob's <c>/**</c> doesn't match
+    /// its own folder), and all under it.
     /// </summary>
     internal void Stand(string folder, params Verb[] verbs)
     {
-        var grant = new Grant(_actor.Name,
-            folder + global::app.Utils.PathHelper.DirectorySeparatorChar + "**",
-            new HashSet<Verb>(verbs), MatchMode.glob, _actor.App.type.list[typeof(Grant)]);
-        var entry = new global::app.data.@this<Grant>("", grant, context: _actor.Context);
+        Grant[] grants =
+        [
+            new(_actor.Name, folder, new HashSet<Verb>(verbs), MatchMode.exact, _actor.App.type.list[typeof(Grant)]),
+            new(_actor.Name, folder + global::app.Utils.PathHelper.DirectorySeparatorChar + "**",
+                new HashSet<Verb>(verbs), MatchMode.glob, _actor.App.type.list[typeof(Grant)]),
+        ];
         lock (_lock)
-        {
-            _inMemory.RemoveAll(d => d.Peek() is Grant g && string.Equals(g.Path, grant.Path, StringComparison.Ordinal));
-            _inMemory.Add(entry);
-        }
+            foreach (var grant in grants)
+            {
+                _inMemory.RemoveAll(d => d.Peek() is Grant g && string.Equals(g.Path, grant.Path, StringComparison.Ordinal));
+                _inMemory.Add(new global::app.data.@this<Grant>("", grant, context: _actor.Context));
+            }
     }
 
     /// <summary>

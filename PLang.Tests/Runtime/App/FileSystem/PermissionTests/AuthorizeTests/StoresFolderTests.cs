@@ -82,7 +82,8 @@ public class StoresFolderTests : System.IAsyncDisposable
     }
 }
 
-/// The stores open in the stores' folder, on disk, with the system's context: the app's and the settings'.
+/// The stores open in the stores' folder, on disk, with the system's context: the app's and the settings'. A first run
+/// has no stores' folder: the app's store, opened before any setting is read, makes it itself.
 public class StoresFolderOpenTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this(
@@ -93,10 +94,33 @@ public class StoresFolderOpenTests : System.IAsyncDisposable
     [Test] public async Task TheAppsStoreAndTheSettingsStore_StillOpen()
     {
         var system = app.actor.list.System.Context;
+        await Assert.That(System.IO.Directory.Exists(System.IO.Path.Combine(app.AbsolutePath, ".data"))).IsFalse();
+        // the app's store first, by a read that signs nothing (a write signs, which reads a setting, which opens the
+        // settings' store — whose folder under the stores' folder would make it first)
+        await (await app.store.Tables()).IsSuccess();
         await (await app.store.Set("probe", "k", new global::app.data.@this("k", "v", context: system))).IsSuccess();
         await (await app.actor.list.System.Setting.Load()).IsSuccess();
         await (await app.actor.list.User.Setting.Load()).IsSuccess();
         await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(app.AbsolutePath, ".data", "data.sqlite"))).IsTrue();
         await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(app.AbsolutePath, ".data", "setting", "data.sqlite"))).IsTrue();
+    }
+
+    // the system's standing grant covers the stores' folder itself, not only what is under it: the app's store makes it
+    // (its parent) on a first run, and a refusal there was hidden only because reading a grant opens the settings' store,
+    // whose own folder under it makes it first
+    [Test] public async Task TheSystem_MakesTheStoresFolder_OnAFreshRoot()
+    {
+        var system = app.actor.list.System.Context;
+        var folder = System.IO.Path.Combine(app.AbsolutePath, ".data");
+        await Assert.That(System.IO.Directory.Exists(folder)).IsFalse();
+        await (await system.File(folder).Mkdir(system)).IsSuccess();
+        await (await system.File(folder).Authorize(global::app.type.item.permission.Verb.read, system)).IsSuccess();
+    }
+
+    // the os folder's standing grant covers the folder itself too: every actor reads it
+    [Test] public async Task EveryActor_ReadsTheOsFolderItself()
+    {
+        var user = app.actor.list.User.Context;
+        await (await user.File(app.OsAbsolutePath).Authorize(global::app.type.item.permission.Verb.read, user)).IsSuccess();
     }
 }
