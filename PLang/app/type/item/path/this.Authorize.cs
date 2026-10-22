@@ -86,9 +86,10 @@ public partial class @this
         return IsUnder(app.AbsolutePath, RootComparison);
     }
 
-    // Under the stores' folder of the app's root (<root>/.data/), where its stores and an identity's key are kept.
+    // Under the stores' folder of the app's root (<root>/.data/), where its stores and an identity's key are kept — in
+    // any case, as a case-blind disk opens it (.DATA is .data there).
     private bool IsStore(actor.context.@this context)
-        => context.App is { } app && IsUnder(PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder), RootComparison);
+        => context.App is { } app && IsUnder(PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder), StringComparison.OrdinalIgnoreCase);
 
     // The running app's anchors: the only variables a goal that ships with plang may hold in what it names itself and
     // still be trusted — each a fact no caller can set (pinned). Every other variable, any other %!…% included

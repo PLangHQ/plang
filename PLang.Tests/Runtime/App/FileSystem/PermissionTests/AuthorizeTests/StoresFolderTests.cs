@@ -87,6 +87,19 @@ public class StoresFolderTests : System.IAsyncDisposable
         await Refused(await user.File(form).Read(user));
     }
 
+    // the stores' folder in any case is refused: a case-blind disk (macOS) opens .DATA as .data
+    [Test] public async Task TheStoresFolder_InAnyCase_IsRefused_NeverAsked()
+    {
+        var shout = System.IO.Path.Combine(root, ".DATA", "setting", "data.sqlite");
+        if (!System.IO.File.Exists(shout))
+        {
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(shout)!);
+            System.IO.File.WriteAllText(shout, "the identity's private key");
+        }
+        var user = app.actor.list.User.Context;
+        await Refused(await user.File(shout).Read(user));
+    }
+
     [Test] public async Task TheSystem_ReadsTheStoresFolder_ThroughItsStandingGrant()
     {
         var system = app.actor.list.System.Context;
