@@ -40,9 +40,10 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         user.Channel.Register(session);
         // then where test's setting says, when that is another actor: the session moves there — opened on it first, so
         // the app never stops testing, then the default actor given back its channel; one session is left, never two
-        if (await Actor() is not { } actor || actor.Equals(user)) return session;
+        var actor = await Actor();
+        if (actor == global::app.actor.Name.user) return session;
         var name = session.Name;
-        session = Open(actor, test);
+        session = Open(_app.actor.list[actor], test);
         if (channel != null) await user.Channel.Set(channel);
         else await user.Channel.Remove(name, user.Context);
         return session;
@@ -63,9 +64,9 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         if (Session is { } session) await session.Actor.Channel.Remove(session.Name, session.Actor.Context);
     }
 
-    // The actor test's setting names — one of the app's, which the actor list holds.
-    private async Task<global::app.actor.@this> Actor()
-        => _app.actor.list[(await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Actor];
+    // The name of the actor test's setting names — one of the app's, which the actor list holds by it.
+    private async Task<global::app.actor.Name> Actor()
+        => (await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Actor;
 
     /// <summary>The App this run belongs to — reporters read its version for drift.</summary>
     internal global::app.@this App => _app;
