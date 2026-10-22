@@ -65,13 +65,16 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         // Loop, not recursion: a channel that keeps returning garbage would grow the async state machine
         // without bound under recursion.
         var prefix = "";
+        // asked of the actor's own input, never through output.ask: no variable a step can set (%!ask.answer%) answers
+        // for the actor. The input's on.ask still fires, as for any ask.
+        if (context.Actor.Channel.Get(global::app.channel.list.@this.Input) is not { } input)
+            return context.Error(new global::app.error.PermissionDenied(request));
         while (true)
         {
-            // asked as an action, so on.ask fires as for any ask
-            var asked = await new global::app.goal.step.action.@this(new global::app.module.output.ask(context)
+            var asked = await input.AskAsync(new global::app.module.output.ask(context)
             {
                 Question = new global::app.data.@this<global::app.type.item.text.@this>("", prefix + question, context: context),
-            }, context).Start(context);
+            }, context.CancellationToken);
             // decided before the exit check, which would otherwise hand the failed ask back as itself
             if (!asked.Success && asked.Error!.Unanswered)
                 return context.Error(new global::app.error.PermissionDenied(request) { list = [asked.Error] });
