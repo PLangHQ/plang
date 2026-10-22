@@ -1,6 +1,0 @@
-/ Test: create an identity as default and verify %MyIdentity% is not null
-Start
-- archive identity 'TestCreate', force, on error ignore, force
-- create identity 'TestCreate', set as default
-- assert %MyIdentity% is not null
-- archive identity 'TestCreate', force

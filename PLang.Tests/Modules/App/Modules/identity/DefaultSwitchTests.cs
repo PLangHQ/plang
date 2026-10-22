@@ -41,6 +41,30 @@ public class DefaultSwitchTests
         return true;
     });
 
+    // archiving an identity that is not the default leaves the default — %MyIdentity% — as it was
+    [Test] public async Task ArchivingANonDefault_LeavesTheDefault() => await InApp(async app =>
+    {
+        var ctx = app.actor.list.User.Context;
+        await Run(ctx, "create", ("Name", "TestArcNonDefA"), ("Default", true));
+        await Run(ctx, "create", ("Name", "TestArcNonDefB"));
+
+        await Run(ctx, "archive", ("Name", "TestArcNonDefB"), ("Force", true));
+
+        await Assert.That(await MyIdentityName(ctx)).IsEqualTo("TestArcNonDefA");
+        await Assert.That(await Defaults(app)).IsEqualTo(1);
+        return true;
+    });
+
+    // %MyIdentity.IsDefault% reads true off the default identity, by dot navigation
+    [Test] public async Task MyIdentity_IsDefault_ReadsTrue() => await InApp(async app =>
+    {
+        var ctx = app.actor.list.User.Context;
+        await Run(ctx, "create", ("Name", "TestDotNav"), ("Default", true));
+        var isDefault = await (await new global::app.type.item.variable.@this("MyIdentity.IsDefault", ctx.App.type.list).Start(ctx)).Value();
+        await Assert.That(isDefault?.ToString()).IsEqualTo("true");
+        return true;
+    });
+
     [Test] public async Task CreateAsDefault_OverAnExistingDefault_LeavesExactlyOne() => await InApp(async app =>
     {
         var ctx = app.actor.list.User.Context;

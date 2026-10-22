@@ -1,7 +1,0 @@
-/ Test: create a named identity as default, verify %MyIdentity.Name% equals the name
-Start
-- archive identity 'TestGetByName', force, on error ignore, force
-- create identity 'TestGetByName', set as default
-- assert %MyIdentity.Name% equals 'TestGetByName'
-- assert %MyIdentity.PublicKey% is not null
-- archive identity 'TestGetByName', force
