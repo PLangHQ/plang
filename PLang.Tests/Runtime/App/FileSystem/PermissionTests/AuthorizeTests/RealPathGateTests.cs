@@ -97,6 +97,28 @@ public class RealPathGateTests : System.IAsyncDisposable
         await Assert.That(channel.Count).IsEqualTo(0);
     }
 
+    // A disk that counts the links it is asked about.
+    private sealed class Counting : global::app.type.item.path.file.filesystem.@this
+    {
+        public int Links { get; set; }
+        public override string? Link(global::app.type.item.path.file.@this p) { Links++; return base.Link(p); }
+    }
+
+    // one gate call reads where the OS lands for the path once: each part of it asked about once (the app's folders
+    // are read once and kept, so a second call asks about them no more)
+    [Test] public async Task OneGateCall_ReadsThePathsLinksOnce()
+    {
+        var counting = new Counting();
+        var ctx = new global::app.actor.context.@this(app, app.actor.list.User, parent: user, fileSystem: counting);
+        var file = ctx.File(System.IO.Path.Combine(root, "a.txt"));
+        await (await file.Authorize(global::app.type.item.permission.Verb.read, ctx)).IsSuccess();
+
+        counting.Links = 0;
+        await (await file.Authorize(global::app.type.item.permission.Verb.read, ctx)).IsSuccess();
+        var parts = file.Absolute.Split(System.IO.Path.DirectorySeparatorChar, System.StringSplitOptions.RemoveEmptyEntries).Length;
+        await Assert.That(counting.Links).IsEqualTo(parts);
+    }
+
     // a build's overlay holds its own links: one made there is answered there, and the disk is untouched
     [Test] public async Task TheOverlay_HoldsItsOwnLinks()
     {

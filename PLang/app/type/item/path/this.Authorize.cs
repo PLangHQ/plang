@@ -36,8 +36,11 @@ public partial class @this
         var actor = context?.Actor
             ?? throw new InvalidOperationException("Path.Authorize requires the caller's context with an actor");
 
+        // where the OS lands for this path, worked out once for the whole call (a link can change between calls)
+        var place = Location(context.FileSystem);
+
         // In its root, or a grant it holds: yes; the stores' folder with no grant: no — neither asks
-        if (await Standing(verb, context) is { } answer) return answer;
+        if (await Standing(verb, context, place) is { } answer) return answer;
 
         // What ships with plang asks nobody for what it names itself — the actor stays the user's own
         if (named && AskedByOs(context)) return context.Ok();
@@ -46,53 +49,61 @@ public partial class @this
         // string verbatim to the local sqlite. Base returns "".
         var hint = AuthorizationHint(verb, context);
         var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
+        // the grant an answer gives is on the place asked about
         return await actor.Permission.Ask($"Allow {actor.Name} to {verb} {Absolute}?{hintSuffix} (y/n/a)",
-            BuildRequest(actor, verb), context, persist => SignAndStore(actor, verb, persist, context));
+            Request(actor, verb, place), context, persist => Keep(actor, verb, persist, place, context));
     }
 
-    protected async Task<data.@this> SignAndStore(actor.@this actor, Verb verb, bool persist, actor.context.@this context)
+    protected Task<data.@this> SignAndStore(actor.@this actor, Verb verb, bool persist, actor.context.@this context)
+        => Keep(actor, verb, persist, Location(actor.Context.FileSystem), context);
+
+    // The actor's answer kept as a grant on place. Nothing in memory signs: a persisted grant is signed when it crosses
+    // the application/plang boundary into the settings store; persist says which.
+    private async Task<data.@this> Keep(actor.@this actor, Verb verb, bool persist, string place, actor.context.@this context)
     {
-        var grant = BuildRequest(actor, verb);
-        var d = new data.@this<permission.@this>("", grant, context: context);
-        // Nothing in memory signs: a persisted grant is signed when it
-        // crosses the application/plang boundary into the settings store. The
-        // caller's `persist` intent decides persisted vs in-memory.
-        await actor.Permission.Add(d, persist);
+        await actor.Permission.Add(new data.@this<permission.@this>("", Request(actor, verb, place), context: context), persist);
         return context.Ok();
     }
 
     // a grant is on the place: the request names where the OS lands for this path
-    protected permission.@this BuildRequest(actor.@this actor, Verb verb) =>
-        permission.@this.Request(actor, Location(actor.Context.FileSystem), verb, MatchMode.exact);
+    protected permission.@this BuildRequest(actor.@this actor, Verb verb) => Request(actor, verb, Location(actor.Context.FileSystem));
+
+    private permission.@this Request(actor.@this actor, Verb verb, string place) =>
+        permission.@this.Request(actor, place, verb, MatchMode.exact);
 
     /// <summary>What the gate answers the actor without asking: yes in its own root or by a grant it holds; no in the
     /// stores' folder (<see cref="IsStore"/>), whose keys nobody is asked for; null when the actor is to be asked. Every
     /// door that asks takes this answer first.</summary>
-    private protected async Task<data.@this?> Standing(Verb verb, actor.context.@this context)
+    private protected Task<data.@this?> Standing(Verb verb, actor.context.@this context)
+        => Standing(verb, context, Location(context.FileSystem));
+
+    // The same, for place: where the OS lands for this path, worked out once by the caller.
+    private async Task<data.@this?> Standing(Verb verb, actor.context.@this context, string place)
     {
-        if (IsInRoot(context)) return context.Ok();
-        if (await context.Actor!.Permission.Find(this, verb) != null) return context.Ok();
-        if (IsStore(context)) return context.Error(new global::app.error.PermissionDenied(BuildRequest(context.Actor!, verb)));
+        var files = context.FileSystem;
+        if (IsInRoot(files, context.App, place)) return context.Ok();
+        if (await context.Actor!.Permission.Find(place, verb) != null) return context.Ok();
+        if (IsStore(files, context.App, place)) return context.Error(new global::app.error.PermissionDenied(Request(context.Actor!, verb, place)));
         return null;
     }
 
     // In-root is under the app's own folder. The os folder is never in-root, even when an app is rooted there: what an
     // actor may do there is its standing grants (every actor reads and runs; only the system writes). Nor is the stores'
     // folder: only the system reaches it, through its standing grant.
-    // Each where the OS lands: this path, and the app's folders it is held against (read once, kept).
-    protected bool IsInRoot(actor.context.@this context)
+    protected bool IsInRoot(actor.context.@this context) => IsInRoot(context.FileSystem, context.App, Location(context.FileSystem));
+
+    // Each where the OS lands: place, and the app's folders it is held against (read once, kept).
+    private bool IsInRoot(file.filesystem.@this files, global::app.@this? app, string place)
     {
-        var app = context.App;
         if (app == null) return false;
-        var files = context.FileSystem;
-        if (IsUnder(files, app.OsAbsolutePath, RootComparison) || IsStore(context)) return false;
-        return IsUnder(files, app.AbsolutePath, RootComparison);
+        if (IsUnder(files, place, app.OsAbsolutePath, RootComparison) || IsStore(files, app, place)) return false;
+        return IsUnder(files, place, app.AbsolutePath, RootComparison);
     }
 
     // Under the stores' folder of the app's root (<root>/.data/), where its stores and an identity's key are kept — in
     // any case, as a case-blind disk opens it (.DATA is .data there).
-    private bool IsStore(actor.context.@this context)
-        => context.App is { } app && IsUnder(context.FileSystem, PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder), StringComparison.OrdinalIgnoreCase);
+    private bool IsStore(file.filesystem.@this files, global::app.@this? app, string place)
+        => app != null && IsUnder(files, place, PathHelper.Combine(app.AbsolutePath, global::app.store.@this.Folder), StringComparison.OrdinalIgnoreCase);
 
     // The running app's anchors: the only variables a goal that ships with plang may hold in what it names itself and
     // still be trusted — each a fact no caller can set (pinned). Every other variable, any other %!…% included
@@ -118,16 +129,15 @@ public partial class @this
     }
 
     /// <summary>
-    /// Returns true when this path's <see cref="Location"/> sits under (or equals) where
-    /// <paramref name="rootCandidate"/> lands, both read in <paramref name="files"/>.
+    /// Returns true when <paramref name="place"/> (where the OS lands for this path) sits under (or equals) where
+    /// <paramref name="rootCandidate"/> lands, read in <paramref name="files"/>.
     /// </summary>
-    private bool IsUnder(file.filesystem.@this files, string? rootCandidate, StringComparison cmp)
+    private bool IsUnder(file.filesystem.@this files, string place, string? rootCandidate, StringComparison cmp)
     {
         if (string.IsNullOrEmpty(rootCandidate)) return false;
         var root = files.Anchor(rootCandidate);
         var rootWithSeparator = root.EndsWith(PathHelper.DirectorySeparatorChar) ? root : root + PathHelper.DirectorySeparatorChar;
-        var location = Location(files);
-        return location.StartsWith(rootWithSeparator, cmp) || string.Equals(location, root, cmp);
+        return place.StartsWith(rootWithSeparator, cmp) || string.Equals(place, root, cmp);
     }
 
     /// <summary>Where the gate finds this path, read in <paramref name="files"/>: the place the OS opens for it — its
@@ -141,7 +151,8 @@ public partial class @this
     /// 'a' would persist a URL with query-string secrets verbatim to the local sqlite.
     /// </summary>
     protected virtual string AuthorizationHint(Verb verb, actor.context.@this context)
-        => verb is Verb.write or Verb.delete && IsUnder(context.FileSystem, context.App?.OsAbsolutePath, RootComparison)
+        => verb is Verb.write or Verb.delete
+           && IsUnder(context.FileSystem, Location(context.FileSystem), context.App?.OsAbsolutePath, RootComparison)
             ? "(files under /system/ ship with plang; a goal there runs programs without asking)"
             : "";
 }

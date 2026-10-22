@@ -99,10 +99,15 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     /// verification is cached via the Data instance's Properties bag — repeat
     /// Find calls on the same in-memory grant don't re-verify.
     /// </summary>
-    public async Task<global::app.data.@this?> Find(path requestPath, Verb verb)
-    {
+    public Task<global::app.data.@this?> Find(path requestPath, Verb verb)
         // a grant is on the place: the request names where the OS lands for the path
-        var request = Grant.Request(_actor, requestPath.Location(_actor.Context.FileSystem), verb, MatchMode.exact);
+        => Find(requestPath.Location(_actor.Context.FileSystem), verb);
+
+    /// <summary>The first grant allowing <paramref name="verb"/> at <paramref name="place"/> — where the OS lands for a
+    /// path, worked out by the gate once per call; null when none does.</summary>
+    internal async Task<global::app.data.@this?> Find(string place, Verb verb)
+    {
+        var request = Grant.Request(_actor, place, verb, MatchMode.exact);
 
         // A grant read here is already trustworthy, so it is asked only whether it allows the request: a persisted
         // grant was verified at the I/O boundary on load (auto-verify-on-read peels + validates its signature
