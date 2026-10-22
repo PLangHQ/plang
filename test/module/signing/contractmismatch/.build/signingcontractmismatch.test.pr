@@ -4,84 +4,9 @@
   "step": [
     {
       "index": 0,
-      "text": "archive identity 'testSigner', force, on error ignore",
-      "line": {
-        "number": 3,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "identity",
-          "name": "archive",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "text"
-              },
-              "value": "testSigner"
-            },
-            {
-              "name": "Force",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
-            }
-          ]
-        },
-        {
-          "module": "on",
-          "name": "error",
-          "property": [
-            {
-              "name": "Ignore",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 1,
-      "text": "create identity testSigner",
-      "line": {
-        "number": 4,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "identity",
-          "name": "create",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "text"
-              },
-              "value": "testSigner"
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 2,
       "text": "set %data% = { \"payload\": \"test\" }",
       "line": {
-        "number": 5,
+        "number": 3,
         "indent": 0
       },
       "code": [
@@ -127,10 +52,10 @@
       ]
     },
     {
-      "index": 3,
+      "index": 1,
       "text": "sign %data% with contracts ['C0'], write to %signed%",
       "line": {
-        "number": 6,
+        "number": 4,
         "indent": 0
       },
       "code": [
@@ -218,10 +143,10 @@
       ]
     },
     {
-      "index": 4,
+      "index": 2,
       "text": "verify %signed% with contracts ['C1'], on error call HandleContractError",
       "line": {
-        "number": 7,
+        "number": 5,
         "indent": 0
       },
       "code": [
@@ -296,10 +221,10 @@
       ]
     },
     {
-      "index": 5,
+      "index": 3,
       "text": "assert %errorKey% equals \"ContractMismatch\", \"contract mismatch should fail verification\"",
       "line": {
-        "number": 8,
+        "number": 6,
         "indent": 0
       },
       "code": [
@@ -352,7 +277,7 @@
           "index": 0,
           "text": "set %errorKey% = %!error.Key%",
           "line": {
-            "number": 11,
+            "number": 9,
             "indent": 0
           },
           "code": [
@@ -418,5 +343,5 @@
   ],
   "visibility": "Public",
   "file": "SigningContractMismatch.test.goal",
-  "hash": "51726fe1c94ca6b02ce4bdd21f6e234eb9508fb277b7c25f45566fc4337357fb"
+  "hash": "0078393df2bebfcbee2fabfad97984485bbbf67d7851f92bef5a1aaf294aeb91"
 }

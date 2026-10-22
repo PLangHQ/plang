@@ -4,86 +4,9 @@
   "step": [
     {
       "index": 0,
-      "text": "archive identity 'holdsSigner', force, on error ignore",
-      "line": {
-        "number": 5,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "identity",
-          "name": "archive",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "text"
-              },
-              "value": "holdsSigner"
-            }
-          ],
-          "default": [
-            {
-              "name": "force",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        },
-        {
-          "module": "on",
-          "name": "error",
-          "property": [
-            {
-              "name": "Ignore",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 1,
-      "text": "create identity holdsSigner",
-      "line": {
-        "number": 6,
-        "indent": 0
-      },
-      "code": [
-        {
-          "module": "identity",
-          "name": "create",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "text"
-              },
-              "value": "holdsSigner"
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 2,
       "text": "set %data% = { \"message\": \"signed\" }",
       "line": {
-        "number": 7,
+        "number": 5,
         "indent": 0
       },
       "code": [
@@ -129,10 +52,10 @@
       ]
     },
     {
-      "index": 3,
+      "index": 1,
       "text": "sign %data%, write to %signed%",
       "line": {
-        "number": 8,
+        "number": 6,
         "indent": 0
       },
       "code": [
@@ -219,10 +142,10 @@
       ]
     },
     {
-      "index": 4,
+      "index": 2,
       "text": "set %data% = { \"message\": \"changed after signing\" }",
       "line": {
-        "number": 9,
+        "number": 7,
         "indent": 0
       },
       "code": [
@@ -268,10 +191,10 @@
       ]
     },
     {
-      "index": 5,
+      "index": 3,
       "text": "verify %signed%, write to %ok%",
       "line": {
-        "number": 10,
+        "number": 8,
         "indent": 0
       },
       "code": [
@@ -358,10 +281,10 @@
       ]
     },
     {
-      "index": 6,
+      "index": 4,
       "text": "assert %ok% is true, \"the signature verifies after its source variable changed\"",
       "line": {
-        "number": 11,
+        "number": 9,
         "indent": 0
       },
       "code": [
@@ -401,5 +324,5 @@
   ],
   "visibility": "Public",
   "file": "ASignatureHoldsTheValueItSigned.test.goal",
-  "hash": "58a03deef65e7e7bc5ad42aba45b8814ddcaa6194d5cf968340d4370e34dd6c4"
+  "hash": "2e4aad590c955898a8e6eea1fcb38eff42383f3c65cc86326c0463f4892e04e3"
 }
