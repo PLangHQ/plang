@@ -2,6 +2,10 @@
 
 What came up on item-doors and goes on after it, so nothing waits on us (Ingi, 2026-10-23: "put this into the list of next branches, so we can continue … then everybody can finish it and not wait for us"). Each is a starting point, not a design; Ingi decides each when its branch starts. Newest first.
 
+## To discuss with Ingi
+
+0. **A new C# project** (Ingi, 2026-10-23: "is this a new c# project, start from scratch, copy over what we need, same intent just structred differently", then "I actually want to discuss new project, but that can be later add it to the list"). Not discussed yet. Starting points: the ABP idea (Ingi: "app based pattern, app.snapshot.start() { .. }", every node entered by its Start, its body a block that navigates from the root), handlers as blocks with their carriers resolved before Start (§3), and what fast-apps learns about a birth.
+
 ## Brainstormed with Ingi, not designed (decision 318)
 
 1. **Diff: a save writes only what changed** (new, Ingi: "that needs to be added, but not into this branch, this is something new"). The diff is between two values, the new content and the file; it answers a `patch` (NEW type): pieces, each `start` (a byte position in the file as it is now) and `bytes` (as the file's own format writes them, so positions, encoding and line endings agree with a whole save), and `length` (the file's length after). A piece that changes length carries the rest of the file with it; no change answers no pieces; no file answers one piece at 0. Save's handler stays as it is; the step's code chains the two (`text.diff(…); file.save(Value=%!data%)`). Open: the patch's own write into a file (each piece at its start, then the length), since today the file channel writes a value from the start through the extension's format (`path/file/this.Operations.cs:183`). Why not a `Diff` property that rewrites the action's `Text`: the dependency on order is invisible, a resolve before Start makes the rewrite too late, and actions are shared across runs (`goal/step/action/this.cs:186`).
