@@ -115,3 +115,11 @@ Tests, all 0 failed: ForeignSignedOwnRowTests 1/1, RealPathGateReCheckProbeTests
 - **Verdict handling:** record as OPEN with the decision to Ingi (the architect is taking it). I recommend the merge goes ahead only with that decision made or the residual accepted in writing in the docs ("unzipping an app that ships its `.data/` trusts that store").
 
 Not covered: Windows junctions / 8.3 names (host run), hard links to the store file, whether the snapshot writer masks `[Sensitive]` (snapshot tests pass; writer not read), unpack into a linked destination.
+
+---
+
+# R1b — ACCEPTED-RISK (Ingi, decision 317, 28cabc035)
+
+R1b (a whole shipped `.data/` whose identity and permission rows the author signed is read as the victim's own) is accepted in writing by Ingi: "if they give us zip with .data then that is ok, it is what it is" — a downloaded app never has a private key or even a `.data` folder; the runtime creates those on first run, so a folder that arrives with one is that author's whole app, its `.pr` included (313e). Neither the root fix (identity outside the app folder) nor the ask-once guard is built. Residual stays pinned by `ShippedIdentityStoreTests`. Docs line: plang makes `.data/` on an app's first run, and an app folder that arrives with one is used as it is, identity and settings included. Per-actor stores and identities: later branch (`.bot/item-doors/architect/backlog.md` §4).
+
+**Final item-doors security status:** no open findings; accepted risks S2 (actor choice, 313f) and R1b (shipped `.data/`, 317); informational/follow-up per decisions 300/305. My part is done unless the auditor's pass changes gate code.

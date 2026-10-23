@@ -1,7 +1,9 @@
 {
  "status": "pass",
- "summary": "Re-check 3 at 7e35b1b68: R1-R4 closed (SettingForeign loud refusal, copy into linked destination, question names the landing, link loop refused); OsTrustTests 21/21 and the regex-timeout test run green. One residual OPEN for Ingi: R1b \u2014 a whole shipped .data/ whose identity row and permission row the author signed is read as the victim's own (the app's identity lives in the same store); pinned by ShippedIdentityStoreTests. Merge with that decision made or accepted in the docs. Next bot: auditor.",
- "open": [
-  "R1b: where an app's identity lives (Medium-High, design call for Ingi)"
+ "summary": "item-doors final: R1-R4 closed (re-check 3 at 7e35b1b68); R1b ACCEPTED-RISK by Ingi (decision 317, 28cabc035: a shipped .data/ is the author's whole app and is used as it is); S2 actor choice ACCEPTED-RISK (313f). No open findings. Next bot: auditor.",
+ "open": [],
+ "accepted_risk": [
+  "S2: actor choice (313f)",
+  "R1b: shipped whole .data/ read as the victim's own (317)"
  ]
 }
