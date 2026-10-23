@@ -450,18 +450,20 @@ public sealed partial class @this
         if (sourceAuth is { Success: false }) return data.@this<global::app.type.item.path.@this>.From(sourceAuth);
         if (destAuth is { Success: false }) return data.@this<global::app.type.item.path.@this>.From(destAuth);
 
-        // A folder's entries, walked once: each asked of the gate, both ends, before anything is touched — an entry it
-        // refuses refuses the transfer whole; one it would ask is covered by the top's answer. The copy takes this walk.
-        List<(@this Entry, @this? Into)>? tree;
+        // The entries the transfer writes, walked once: a folder's, or a file alone where it lands (under the destination
+        // when that names a folder). Each asked of the gate, both ends, before anything is touched — an entry it refuses
+        // refuses the transfer whole; one it would ask is covered by the top's answer. The transfer takes this walk.
+        List<(@this Entry, @this? Into)> tree;
         try
         {
-            tree = filesystem.IsFolder(this) ? Tree(destination, subfolder || isMove, filesystem).ToList() : null;
+            tree = filesystem.IsFolder(this) ? Tree(destination, subfolder || isMove, filesystem).ToList()
+                : [(this, destination.Into(this, filesystem))];
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
             return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
         }
-        if (tree != null && await Refusal(tree, sourceVerb, destVerb, target, context) is { } refused)
+        if (await Refusal(tree, sourceVerb, destVerb, target, context) is { } refused)
             return data.@this<global::app.type.item.path.@this>.From(refused);
 
         bool sourceOk = sourceAuth?.Success == true;
@@ -535,7 +537,7 @@ public sealed partial class @this
     /// Returns the new Path (post-transfer) wrapped in Data.
     /// </summary>
     private async Task<data.@this<global::app.type.item.path.@this>> PerformTransfer(@this destination, bool isMove, bool overwrite,
-        List<(@this Entry, @this? Into)>? tree, actor.context.@this context)
+        List<(@this Entry, @this? Into)> tree, actor.context.@this context)
     {
         var filesystem = context.Filesystem;
         // A folder copied whole: the entries its walk holds (its files, and its folders' when subfolder), each where it
@@ -543,7 +545,7 @@ public sealed partial class @this
         async Task Copy()
         {
             filesystem.Create(destination);
-            foreach (var (entry, into) in tree!)
+            foreach (var (entry, into) in tree)
                 if (filesystem.Link(entry) is { } target) Relink(into!, target);
                 else if (filesystem.IsFile(entry)) await filesystem.Copy(entry, into!, overwrite);
                 else filesystem.Create(into!);
@@ -567,8 +569,8 @@ public sealed partial class @this
                 return context.Ok<global::app.type.item.path.@this>(new @this(destination.Absolute, destination.Type) { Raw = destination.Raw });
             }
 
-            // File transfer: into the destination when it names a folder ---------
-            var target = destination.Into(this, filesystem);
+            // File transfer: the one entry the gate checked, where it lands ------
+            var target = tree[0].Into!;
             if (isMove) await filesystem.Move(this, target, overwrite);
             else await filesystem.Copy(this, target, overwrite);
 

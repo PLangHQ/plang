@@ -86,6 +86,42 @@ public class RealPathGateReCheckProbeTests : System.IAsyncDisposable
         await Assert.That(System.IO.File.ReadAllText(target)).IsEqualTo("original");
     }
 
+    // A single file copied into dst, where dst/x.txt (shipped) is a link to a file outside: the copy writes the outside
+    // file. dst is in the root and free; the entry the copy writes lands outside and is no part of that.
+    [Test] public async Task AFileCopiedIntoAFolder_NeverWritesThroughALinkThere_ToOutsideTheRoot()
+    {
+        if (!Unix) return;
+        System.IO.File.WriteAllText(At("x.txt"), "planted");
+        System.IO.Directory.CreateDirectory(At("dst"));
+        var target = System.IO.Path.Combine(outside, "target.txt");
+        System.IO.File.WriteAllText(target, "original");
+        System.IO.File.CreateSymbolicLink(At("dst", "x.txt"), target);
+
+        var copied = await user.File(At("x.txt")).CopyTo(user.File(At("dst")), overwrite: true, subfolder: false, user);
+
+        await copied.IsFailure();
+        await Assert.That(System.IO.File.ReadAllText(target)).IsEqualTo("original");
+        await Assert.That(channel.Count).IsEqualTo(0);
+    }
+
+    // The same for a move: the file never lands where the link in dst leads.
+    [Test] public async Task AFileMovedIntoAFolder_NeverWritesThroughALinkThere_ToOutsideTheRoot()
+    {
+        if (!Unix) return;
+        System.IO.File.WriteAllText(At("x.txt"), "planted");
+        System.IO.Directory.CreateDirectory(At("dst"));
+        var target = System.IO.Path.Combine(outside, "target.txt");
+        System.IO.File.WriteAllText(target, "original");
+        System.IO.File.CreateSymbolicLink(At("dst", "x.txt"), target);
+
+        var moved = await user.File(At("x.txt")).MoveTo(user.File(At("dst")), overwrite: true, user);
+
+        await moved.IsFailure();
+        await Assert.That(System.IO.File.ReadAllText(target)).IsEqualTo("original");
+        await Assert.That(System.IO.File.Exists(At("x.txt"))).IsTrue();
+        await Assert.That(channel.Count).IsEqualTo(0);
+    }
+
     // ---- what the question says -----------------------------------------------------------------------------------
 
     // a link in the root leading out is asked about; the question must name where it lands, not the innocent-looking name
