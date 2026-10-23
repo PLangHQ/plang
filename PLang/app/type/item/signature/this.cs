@@ -129,8 +129,28 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         global::app.type.item.list.@this? contracts = null,
         global::app.type.item.signature.Origin origin = global::app.type.item.signature.Origin.Signed,
         global::app.type.item.duration.@this? window = null)
+        : this(type, value, algorithm, nonce, created, identity, hash, signature, expires, contracts, origin, window, new Arrival())
+    {
+    }
+
+    // Born holding the arrival it is a copy of — every Copy shares the one its first layer was born with.
+    private @this(
+        global::app.type.@this type,
+        global::app.data.@this value,
+        text algorithm,
+        text nonce,
+        datetime created,
+        text identity,
+        hash hash,
+        binary signature,
+        datetime? expires,
+        global::app.type.item.list.@this? contracts,
+        global::app.type.item.signature.Origin origin,
+        global::app.type.item.duration.@this? window,
+        Arrival arrival)
         : base(type)
     {
+        _arrival = arrival;
         // a signature read live is good only for its window: without one it would never end, and verify could not
         // say how long its nonce is remembered
         if (origin == global::app.type.item.signature.Origin.Live && window == null)
@@ -161,7 +181,31 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     // This layer again, with the value it signs or its signature bytes in place of its own — every other member as it is.
     private @this Copy(global::app.data.@this? value = null, binary? signature = null)
-        => new(Type, value ?? Value, Algorithm, Nonce, Created, Identity, Hash, signature ?? Signature, _expires, Contracts, Origin.Value, _window);
+        => new(Type, value ?? Value, Algorithm, Nonce, Created, Identity, Hash, signature ?? Signature, _expires, Contracts, Origin.Value, _window, _arrival);
+
+    // The read this layer arrived by, shared by every copy of it: whether its nonce was presented, and the answer.
+    private readonly Arrival _arrival;
+
+    /// <summary>This arrival's nonce, presented once: the first caller runs <paramref name="add"/> (the atomic add of the
+    /// nonce, true when it was not there); every later or concurrent caller — on this layer or any copy of it — awaits
+    /// that same answer. A replayed arrival is a replay on every verify; one presented first, never one.</summary>
+    internal System.Threading.Tasks.Task<bool> Present(System.Func<System.Threading.Tasks.Task<bool>> add) => _arrival.Present(add);
+
+    // One read off the wire: its nonce's answer, settled once.
+    private sealed class Arrival
+    {
+        private System.Threading.Tasks.Task<bool>? _presented;
+
+        internal async System.Threading.Tasks.Task<bool> Present(System.Func<System.Threading.Tasks.Task<bool>> add)
+        {
+            var mine = new System.Threading.Tasks.TaskCompletionSource<bool>(System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously);
+            if (System.Threading.Interlocked.CompareExchange(ref _presented, mine.Task, null) is { } first) return await first;
+            // an add that throws is every caller's answer, so none waits on it forever
+            try { mine.SetResult(await add()); }
+            catch (System.Exception ex) { mine.SetException(ex); }
+            return await mine.Task;
+        }
+    }
 
     /// <summary>Structural — the inner value is a nested record, not a leaf.</summary>
     public override bool IsLeaf => false;

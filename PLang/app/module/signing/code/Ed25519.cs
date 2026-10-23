@@ -88,15 +88,7 @@ public class Ed25519 : ISigning
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError(
                 $"Signature has expired (at {signature.Expires!.Value:O})", "Expired", 400));
 
-        // 2. Nonce replay — a signature read live presents its nonce once. One read from plang's own store
-        // re-presents the same nonce on every read, which isn't replay. Only a look here: the nonce is
-        // recorded once the hash and signature pass (step 6), so an unverified wire never uses one up.
-        var nonceCacheKey = $"nonce:{signature.Nonce}";
-        var live = signature.Origin.Value == global::app.type.item.signature.Origin.Live;
-        if (live && await app.Cache.GetAsync(nonceCacheKey) != null)
-            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
-
-        // 3. Contract matching — Contracts may be an unset/absent slot (the
+        // 2. Contract matching — Contracts may be an unset/absent slot (the
         // boundary-verify path never sets it), so guard the resolved value too.
         var contractsList = action.Contracts == null ? null : await action.Contracts.Value();
         var expectedContracts = contractsList == null ? null
@@ -105,7 +97,7 @@ public class Ed25519 : ISigning
         if (!ContractsMatch(System.Linq.Enumerable.ToList(signature.ContractStrings()), expectedContracts))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
-        // 4. Data hash verification — rehash the Data that holds the signature, as it is now, compare to the
+        // 3. Data hash verification — rehash the Data that holds the signature, as it is now, compare to the
         // signed digest (which carries its own algorithm).
         var storedHash = signature.Hash;
         if (storedHash.Bytes.Length == 0)
@@ -121,7 +113,7 @@ public class Ed25519 : ISigning
         if (!(await signature.Over(bearer).Value.Digest(view, kind, action.Context)).DigestEquals(storedHash))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
-        // 5. Signature verification — over the signature's canonical signing bytes.
+        // 4. Signature verification — over the signature's canonical signing bytes.
         if (signature.Signature.Value.Length == 0)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Missing signature", "SignatureInvalid", 400));
 
@@ -136,15 +128,19 @@ public class Ed25519 : ISigning
             return action.Context.Error<global::app.type.item.@bool.@this>(ActionError.FromException(ex, "SignatureInvalid", 400));
         }
 
-        // 6. The verified live wire records its nonce until the signature expires — atomically, so of two
-        // concurrent reads of one wire only the first verifies. After it expires, the expiry refuses it.
-        if (live)
-        {
-            var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(DateTimeOffset.UtcNow);
-            var remembered = (long)Math.Max(1, (signature.Expires!.Value - now).TotalMilliseconds);
-            if (!await app.Cache.TryAddAsync(nonceCacheKey, action.Context.Ok(true), new CacheSettings { DurationMs = remembered }))
-                return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
-        }
+        // 5. Nonce replay — a replay is a wire arriving twice. A signature read live presents its nonce once, for the
+        // arrival its read birthed: the first verify that passes the hash and signature records it until the
+        // signature expires — atomically, so of two reads of one wire only the first arrives — and every copy of that
+        // arrival shares the answer. One read from plang's own store re-presents the same nonce on every read, which
+        // isn't replay. After it expires, the expiry refuses it.
+        if (signature.Origin.Value == global::app.type.item.signature.Origin.Live
+            && !await signature.Present(async () =>
+            {
+                var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(DateTimeOffset.UtcNow);
+                var remembered = (long)Math.Max(1, (signature.Expires!.Value - now).TotalMilliseconds);
+                return await app.Cache.TryAddAsync($"nonce:{signature.Nonce}", action.Context.Ok(true), new CacheSettings { DurationMs = remembered });
+            }))
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
         return action.Context.Ok<global::app.type.item.@bool.@this>(true);
     }
 

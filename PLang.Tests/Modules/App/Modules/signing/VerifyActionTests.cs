@@ -12,7 +12,7 @@ namespace PLang.Tests.App.Modules.signing;
 
 /// <summary>
 /// Tests the verify action handler.
-/// Verify checks in order: NoSignature → Expired → NonceReplay (a live read only) → ContractMismatch → DataHashMismatch → SignatureInvalid
+/// Verify checks in order: NoSignature → Expired → ContractMismatch → DataHashMismatch → SignatureInvalid → NonceReplay (a live read only)
 /// </summary>
 public class VerifyActionTests
 {
@@ -380,12 +380,11 @@ public class VerifyActionTests
     public async Task Verify_NonceReplay_Error()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        var live = Live(signed);
-        var first = await VerifyHelper(live, contracts: new List<string> { "C0" });
+        var first = await VerifyHelper(Live(signed), contracts: new List<string> { "C0" });
         await first.IsSuccess();
 
-        // Second verify of the live read — same nonce → replay.
-        var second = await VerifyHelper(live, contracts: new List<string> { "C0" });
+        // The same signature arriving again — a second live read, same nonce → replay.
+        var second = await VerifyHelper(Live(signed), contracts: new List<string> { "C0" });
         await second.IsFailure();
         await Assert.That(second.Error!.Key).IsEqualTo("NonceReplay");
     }
