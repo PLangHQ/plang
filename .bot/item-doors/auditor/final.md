@@ -1,5 +1,32 @@
 # item-doors — the auditor's final audit before merge
 
+## Re-check at 351fae93e: PASS — X1, X2 and X3 are closed; next: docs
+
+Scope: X1–X3 and anything their fixes introduced (b4af67960, 3483f9d88, 02ffa24a7; log 319–319d). N1–N18 stay next-branch.
+
+| # | Fix | Design | My probes at the tip |
+|---|---|---|---|
+| X1 | A file's transfer is a tree of one entry, `(this, destination.Into(this))`, asked of the same `Refusal` as a folder's entries. PerformTransfer writes that entry (`Operations.cs` BundledTransfer and PerformTransfer). The `tree == null` fork is gone. | At the root: one walk, one check, for a file as for a folder. | A file copied into `dst/` holding `x.txt -> /outside/target.txt`: the outside file stays "original". A move into that folder: it stays "original" too. |
+| X2 | Each door names the place it acts on. An open uses `Location`, which follows links. An unlink or rename uses `Spot`: its folder's landing plus its own name, never followed (`path/this.Authorize.cs`, `file/this.cs`, `Landing(fs, last)`). A move judges both ends at `Spot`, and a file sent into an existing folder lands under that folder's `Location`. A move's source is asked read and delete, kept as one grant. `Leaving`, `Land` and `Clear` answer their delete's result, and `Clear` is now `Task<data?>`. | At the root: the gate judges the entry the verb acts on. It matches 306(2) and 319b. The read+delete source fixes N4 in passing. | An outside link into the root, deleted: asked once, refused, and the link stays. Moved: refused, and the link stays. An in-root link to an outside file, deleted: unasked, only the link goes, and no grant is kept on the outside file. |
+| X3 | The nonce belongs to the arrival, not to the Data. The wire reader (`data/schema/signature.cs:97`) births a layer holding a private `Arrival`. Every `Copy` shares it (`signature/this.cs` private ctor, `Copy`). `verify` presents a Live nonce once through it, after the hash and signature pass, and every later caller awaits the same answer. The early cache look is gone. | Sound. Only the wire reader and `sign` (Origin Signed) build a layer directly, so no production path makes a copy without the arrival. A forged wire never burns the nonce, and the same bytes decoded twice are two arrivals. | Sign → Encode Out → Decode Out: `%arrived!signature.identity%` succeeds, and `verify %arrived%` succeeds twice. The same bytes decoded again answer **NonceReplay**. |
+
+What the diffs introduced, checked:
+- `Canonicalize` drops a trailing separator (`file/this.cs` `Trimmed`). The only trailing-separator checks in path code (`path/this.cs:177`, `file/this.cs:128`) handle both forms, and the zip one reads entry names. The sweep is unchanged.
+- `filesystem.Delete` removes a folder link as a folder, alone (Windows junctions).
+- Two minor notes, not findings:
+  - `Spot` is a new `internal virtual` on path, beside `Location`'s own precedent. It is not on the public golden ("surface unmoved").
+  - An `Arrival` whose cache add throws keeps that exception for every copy of that read. A cache failure fails the read closed.
+
+Tests at 351fae93e (built fresh):
+- C#: Modules 1333, Types 951, Data 863, Generator 191 and Runtime 1242 all green. Wire is 590/596, the same six snapshot tests.
+- plang: 299 total, 294 pass, 1 fail (`BareLiteralJudgedByForm`, by choice), 3 stale, 1 skipped. Unchanged.
+
+The probes ran in a throwaway worktree, since removed. Nothing in it was committed.
+
+---
+
+The audit below is the one at 469003c50, kept as it was.
+
 Range: my last verdict `1bc356ba9` → `origin/item-doors` `469003c50` (444 commits, 323 production files, +4.1k / −3.1k). Read-only on the code. I ran probes in two throwaway worktrees, then removed them. Nothing in them was committed. I did not read the codeanalyzer's report.
 
 ## Verdict: FAIL — three merge blockers, each a small fix
