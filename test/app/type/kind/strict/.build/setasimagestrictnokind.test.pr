@@ -42,7 +42,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "image"
+              "value": {"name":"image","strict":true}
             }
           ],
           "default": [
@@ -191,7 +191,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/app/type/kind/strict/SetAsImageStrictNoKind.test.goal",
-  "prPath": "/app/type/kind/strict/.build/setasimagestrictnokind.test.pr",
+  "file": "SetAsImageStrictNoKind.test.goal",
   "hash": "d44e0b49a3aeb6bed0fdacba91585424c4ef7f05ceda39eafa65125fb88794b6"
 }

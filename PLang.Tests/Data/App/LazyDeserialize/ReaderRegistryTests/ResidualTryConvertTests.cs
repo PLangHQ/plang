@@ -17,7 +17,7 @@ public class ResidualTryConvertTests : System.IAsyncDisposable
     [Test] public async Task Scalar_LowersToNumericTarget()
     {
         // A text scalar lowers itself to a numeric CLR target (invariant ChangeType).
-        await Assert.That(new global::app.type.item.text.@this("5").Clr<long>()).IsEqualTo(5L);
+        await Assert.That(Ctx.Text("5").Clr<long>()).IsEqualTo(5L);
     }
 
     [Test] public async Task Number_LowersToAssignableTarget()
@@ -27,10 +27,10 @@ public class ResidualTryConvertTests : System.IAsyncDisposable
 
     [Test] public async Task List_LowersEachElement_ToTypedList()
     {
-        var lst = new global::app.type.item.list.@this();
-        lst.Add(new global::app.type.item.text.@this("1"));
-        lst.Add(new global::app.type.item.text.@this("2"));
-        lst.Add(new global::app.type.item.text.@this("3"));
+        var lst = new global::app.type.item.list.@this(app.type.list["list"]);
+        lst.Add(Ctx.Text("1"));
+        lst.Add(Ctx.Text("2"));
+        lst.Add(Ctx.Text("3"));
 
         var list = lst.Clr<System.Collections.Generic.List<int>>();
         await Assert.That(list).IsNotNull();

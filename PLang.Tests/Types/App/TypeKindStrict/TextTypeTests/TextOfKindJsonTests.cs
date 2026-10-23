@@ -13,7 +13,7 @@ public class TextOfKindJsonTests
     [Test] public async Task APlainText_StillCantBeNavigated()
     {
         await using var app = new global::app.@this("/app").Testing();
-        var data = new global::app.data.@this("x", new TextType("{\"a\": 1}"), context: app.actor.list.User.Context);
+        var data = new global::app.data.@this("x", app.actor.list.User.Context.Text("{\"a\": 1}"), context: app.actor.list.User.Context);
 
         var a = await data.Get("a");
 

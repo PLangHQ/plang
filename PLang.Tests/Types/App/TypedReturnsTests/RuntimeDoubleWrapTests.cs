@@ -37,7 +37,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { 42L, "two", "three" });
 
-        var action = new First(context) { ListName = new global::app.type.item.variable.@this("xs") };
+        var action = new First(context) { ListName = new global::app.type.item.variable.@this("xs", context.App.type.list) };
         await action.Attach(null, context);
         var result = await action.Start();
 
@@ -53,7 +53,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { "a", "b", "c" });
 
-        var action = new Get(context) { ListName = new global::app.type.item.variable.@this("xs"), Index = (global::app.type.item.number.@this)1 };
+        var action = new Get(context) { ListName = new global::app.type.item.variable.@this("xs", context.App.type.list), Index = (global::app.type.item.number.@this)1 };
         await action.Attach(null, context);
         var result = await action.Start();
 
@@ -68,7 +68,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { 1L, 2L, 3L });
 
-        var action = new Last(context) { ListName = new global::app.type.item.variable.@this("xs") };
+        var action = new Last(context) { ListName = new global::app.type.item.variable.@this("xs", context.App.type.list) };
         await action.Attach(null, context);
         var result = await action.Start();
 
@@ -141,9 +141,9 @@ public class RuntimeDoubleWrapTests
         // so Data<object>.Ok does not double-wrap. (list.where was replaced by list.query.)
         var app = new global::app.@this("/app").Testing();
         var context = app.actor.list.User.Context;
-        var users = new global::app.type.item.list.@this();
-        var u1 = new global::app.type.item.dict.@this(); u1.Set(new global::app.data.@this("age", 25L, context: context)); users.Add(new global::app.data.@this("", u1));
-        var u2 = new global::app.type.item.dict.@this(); u2.Set(new global::app.data.@this("age", 15L, context: context)); users.Add(new global::app.data.@this("", u2));
+        var users = new global::app.type.item.list.@this(app.type.list["list"]);
+        var u1 = context.Dict(); u1.Set(new global::app.data.@this("age", 25L, context: context)); users.Add(new global::app.data.@this("", u1, context: context));
+        var u2 = context.Dict(); u2.Set(new global::app.data.@this("age", 15L, context: context)); users.Add(new global::app.data.@this("", u2, context: context));
 
         var written = new Dictionary<string, object?> { ["where"] = new Dictionary<string, object?> { ["field"] = "age", ["op"] = ">", ["value"] = 20L } };
         var made = global::app.module.list.type.query.@this.Create(global::app.type.item.@this.Create(written, context), null, new global::app.data.@this("q", null, context: context));

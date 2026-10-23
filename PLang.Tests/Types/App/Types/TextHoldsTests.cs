@@ -23,7 +23,7 @@ public class TextHoldsTests
     public async Task AJsonText_HoldsTheQuotedLiteral_ByItsCharacters()
     {
         const string literal = """{"size": 10, "name": "box"}""";
-        var json = new text(literal);
+        var json = Ctx.Text(literal);
 
         await Assert.That(await json.Holds(literal, Ctx)).IsTrue();
     }
@@ -31,7 +31,7 @@ public class TextHoldsTests
     [Test]
     public async Task APlainText_HoldsItsCharacters_AndNothingElse()
     {
-        var plain = new text("Hello world");
+        var plain = Ctx.Text("Hello world");
 
         await Assert.That(await plain.Holds("world", Ctx)).IsTrue();
         await Assert.That(await plain.Holds("planet", Ctx)).IsFalse();

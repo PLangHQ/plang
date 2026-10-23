@@ -5,4 +5,4 @@ namespace app.type.item.setting;
 /// plang reads them through the owner — <c>%!app.goal.list.setting.os%</c> — as the asker's settings
 /// build them; <c>set</c> writes this run's, <c>save</c> the actor's row.
 /// </summary>
-public interface ISetting<T> where T : @this, new();
+public interface ISetting<T> where T : @this;

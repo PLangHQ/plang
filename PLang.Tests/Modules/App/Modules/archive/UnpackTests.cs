@@ -48,9 +48,9 @@ public class UnpackTests : IDisposable
     private async Task<global::app.data.@this> Into(Stream archive, string folder, bool layer = false, long max = 100 * 1024 * 1024)
     {
         global::app.module.archive.type.archive.kind.bundle.@this bundle = layer
-            ? new global::app.module.archive.type.archive.kind.oci.layer.@this()
-            : new global::app.module.archive.type.archive.kind.tar.@this();
-        return await bundle.Unpack(archive, null, new File(Path.Combine(_root, folder)), new global::app.type.item.size.@this(max, Context), Context);
+            ? (global::app.module.archive.type.archive.kind.oci.layer.@this)Context.App.type.list[typeof(global::app.module.archive.type.archive.@this)].kind["oci.layer"]!
+            : (global::app.module.archive.type.archive.kind.tar.@this)Context.App.type.list[typeof(global::app.module.archive.type.archive.@this)].kind["tar"]!;
+        return await bundle.Unpack(archive, null, Context.File(Path.Combine(_root, folder)), global::app.type.item.size.@this.Create(max, Context), Context);
     }
 
     [Test]
@@ -61,7 +61,9 @@ public class UnpackTests : IDisposable
             File_("bin/busybox", "#!"));
         await (await Into(archive, "root")).IsSuccess();
         await Assert.That(System.IO.File.ReadAllText(Path.Combine(_root, "root/etc/os"))).IsEqualTo("alpine");
-        await Assert.That(new FileInfo(Path.Combine(_root, "root/bin/sh")).LinkTarget).IsEqualTo("/bin/busybox");
+        // written as the folder reads it, relative from bin/ to the folder's own bin/busybox — the OS reads it inside,
+        // never the host's /bin/busybox
+        await Assert.That(new FileInfo(Path.Combine(_root, "root/bin/sh")).LinkTarget).IsEqualTo("busybox");
     }
 
     [Test]

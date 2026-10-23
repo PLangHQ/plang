@@ -41,26 +41,26 @@ public class EdgeCaseTests
 
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
-    // --test={"timeout":"-5s"} → accepted (the type has no positive-bound). The value is
+    // --test.setting={"timeout":"-5s"} → accepted (the type has no positive-bound). The value is
     // a sentinel, not an error: test.start reads a timeout ≤ 0 as "no timeout".
     [Test]
     public async Task Config_Timeout_NonPositive_AcceptedAsSentinel()
     {
-        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["timeout"] = "-5s" });
+        var result = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["timeout"] = "-5s" }, _app.actor.list.System.Context);
         await result.IsSuccess();
-        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Timeout.Value.TotalSeconds).IsEqualTo(-5);
+        await Assert.That((await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Timeout.Value.TotalSeconds).IsEqualTo(-5);
     }
 
-    // --test={"parallel":0} or {"parallel":-1} → accepted. Zero/negative is the "auto" sentinel:
+    // --test.setting={"parallel":0} or {"parallel":-1} → accepted. Zero/negative is the "auto" sentinel:
     // test.start reads Parallel ≤ 0 as ProcessorCount. Not a config error.
     [Test]
     public async Task Config_Parallel_ZeroOrNegative_AcceptedAsSentinel()
     {
-        var zero = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = 0 });
+        var zero = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["parallel"] = 0 }, _app.actor.list.System.Context);
         await zero.IsSuccess();
-        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(0);
+        await Assert.That((await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Parallel.ToInt32()).IsEqualTo(0);
 
-        var neg = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = -1 });
+        var neg = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["parallel"] = -1 }, _app.actor.list.System.Context);
         await neg.IsSuccess();
     }
 
@@ -85,17 +85,17 @@ public class EdgeCaseTests
         await Assert.That(_app.test.list.Items().Count()).IsEqualTo(0);
     }
 
-    // --test={"path":"../../../etc"} → rejected. Discovery is constrained to
+    // --test.setting={"path":"../../../etc"} → rejected. Discovery is constrained to
     // paths under the app's working directory — prevents a malicious test
     // config from enumerating system directories. (security)
     [Test]
     public async Task Discover_PathTraversal_OutsideProjectRoot_Rejected()
     {
-        var action = new global::app.module.test.discover(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+        var action = new global::app.module.test.discover(_app.actor.list.User.Context) { Path = _app.actor.list.User.Context.Ok<global::app.type.item.path.@this>(
                 global::app.type.item.path.@this.Resolve("../../../etc", _app.actor.list.User.Context)),
-            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
+            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal", context: _app.actor.list.User.Context),
             Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.type.item.path.subfolder>>("Subfolder",
-                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(global::app.type.item.path.subfolder.include))
+                _app.actor.list.User.Context.Choice(global::app.type.item.path.subfolder.include), context: _app.actor.list.User.Context)
         };
 
         // Post-Stage-5: discover routes through path.List → AuthGate. An
@@ -117,9 +117,9 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new global::app.test.@this() { Goal = new Goal { Name = "X", Path = global::app.type.item.path.@this.Resolve("/test/X.test.goal", _app.actor.list.User.Context) } };
+        var run = new global::app.test.@this(_app.type.list) { Goal = new Goal(_app.type.list) { Name = "X", Path = global::app.type.item.path.@this.Resolve("/test/X.test.goal", _app.actor.list.User.Context) } };
         run.Stdout = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
-        run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError("Expected: 1, Actual: 2", 1, 2, null));
+        run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError("Expected: 1, Actual: 2", "1", "2", null));
         _app.test.list.Add(run);
 
         var action = new global::app.module.test.report(_app.actor.list.User.Context);
@@ -135,12 +135,12 @@ public class EdgeCaseTests
     // Retired: nested Data (Data-as-a-value) is not a supported shape — the
     // SetValueDirect courier that produced it is now guarded.
 
-    // --test={"format":"csv"} → error. Format is a choice<Format>; the walk's conversion
+    // --test.setting={"format":"csv"} → error. Format is a choice<Format>; the walk's conversion
     // rejects any value outside the closed set (json/junit).
     [Test]
     public async Task Config_Format_InvalidValue_RejectedWithError()
     {
-        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "csv" });
+        var result = await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "csv" }, _app.actor.list.System.Context);
         await result.IsFailure();
     }
 }

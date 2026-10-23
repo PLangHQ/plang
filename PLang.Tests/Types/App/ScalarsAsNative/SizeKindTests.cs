@@ -4,10 +4,13 @@ namespace PLang.Tests.App.ScalarsAsNative;
 
 // A size's standards are its kinds (iec 95.4 MiB, si 100 MB): a size read from text is born with the one its suffix
 // names and writes back in it; a size made from a count is written in the standard its asker's setting names.
-public class SizeKindTests
+public class SizeKindTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static async Task<global::app.data.@this> Read(global::app.actor.context.@this context, string path)
-        => await new global::app.type.item.variable.parser.@this(path).Variable.Single().Start(context);
+        => await new global::app.type.item.variable.parser.@this(path, context.App.type.list).Variable.Single().Start(context);
 
     [Test]
     [Arguments("100 MB", "si", 100_000_000L)]
@@ -18,10 +21,10 @@ public class SizeKindTests
     [Arguments("1.5 GiB", "iec", 1_610_612_736L)]
     public async Task TheSuffix_NamesTheStandard(string text, string kind, long bytes)
     {
-        var size = Size.Resolve(text, null)!;
+        var size = Size.Resolve(text, app.actor.list.User.Context)!;
 
         await Assert.That(size.Value).IsEqualTo(bytes);
-        await Assert.That(new global::app.data.@this("s", size).Type.kind.Name).IsEqualTo(kind);
+        await Assert.That(new global::app.data.@this("s", size, context: app.actor.list.User.Context).Type.kind.Name).IsEqualTo(kind);
     }
 
     [Test]
@@ -31,26 +34,26 @@ public class SizeKindTests
     [Arguments("500 KiB")]
     [Arguments("2 GiB")]
     public async Task ASizeReadFromText_WritesItBack(string text)
-        => await Assert.That(Size.Resolve(text, null)!.Text).IsEqualTo(text);
+        => await Assert.That(await Size.Resolve(text, app.actor.list.User.Context)!.Text(app.actor.list.User.Context)).IsEqualTo(text);
 
     [Test]
     [Arguments(512L, "512 B")]
     [Arguments(1024L, "1 KiB")]
     [Arguments(100_000_000L, "95.4 MiB")]
     [Arguments(0L, "0 B")]
-    public async Task ACountWithNoAsker_IsIec_InItsLargestUnit(long bytes, string text)
-        => await Assert.That(Size.Create(bytes)!.Text).IsEqualTo(text);
+    public async Task ACountWithNothingSet_IsIec_InItsLargestUnit(long bytes, string text)
+        => await Assert.That(await Size.Create(bytes, app.actor.list.User.Context).Text(app.actor.list.User.Context)).IsEqualTo(text);
 
     [Test]
     [Arguments("12 parsecs")]
     [Arguments("MB")]
     [Arguments("1.5")]
     public async Task ATextInNoStandard_IsNoSize(string text)
-        => await Assert.That(Size.Resolve(text, null)).IsNull();
+        => await Assert.That(Size.Resolve(text, app.actor.list.User.Context)).IsNull();
 
     [Test]
     public async Task OneSizeInTwoStandards_IsEqual_ByItsBytes()
-        => await Assert.That(Size.Resolve("1 MB", null)!.Equals(Size.Resolve("1000 kB", null))).IsTrue();
+        => await Assert.That(Size.Resolve("1 MB", app.actor.list.User.Context)!.Equals(Size.Resolve("1000 kB", app.actor.list.User.Context))).IsTrue();
 
     // The setting names the standard a counted size is written in: si, set for this run, writes 100000000 as 100 MB.
     [Test]
@@ -59,13 +62,13 @@ public class SizeKindTests
         await using var app = new global::app.@this("/app").Testing();
         var context = app.actor.list.User.Context;
 
-        var set = await new global::app.type.item.variable.parser.@this("%!app.type.size.setting.standard%").Variable.Single()
-            .Set(context.Ok(new global::app.type.item.text.@this("si")), context);
+        var set = await new global::app.type.item.variable.parser.@this("%!app.type.size.setting.standard%", context.App.type.list).Variable.Single()
+            .Set(context.Ok(context.Text("si")), context);
         var standard = await Read(context, "%!app.type.size.setting.standard%");
 
         await set.IsSuccess();
         await Assert.That((await standard.Value())?.ToString()).IsEqualTo("si");
-        await Assert.That(new Size(100_000_000L, context).Text).IsEqualTo("100 MB");
+        await Assert.That(await Size.Create(100_000_000L, context).Text(context)).IsEqualTo("100 MB");
     }
 
     [Test]
@@ -73,19 +76,19 @@ public class SizeKindTests
     {
         await using var app = new global::app.@this("/app").Testing();
 
-        await Assert.That(new Size(100_000_000L, app.actor.list.User.Context).Text).IsEqualTo("95.4 MiB");
+        await Assert.That(await Size.Create(100_000_000L, app.actor.list.User.Context).Text(app.actor.list.User.Context)).IsEqualTo("95.4 MiB");
     }
 
-    // `as si`: the declared type names the kind, and the same bytes are written in it.
+    // `as si`: the declared type names the kind, and a count is made by it, written in it.
     [Test]
     public async Task AKindAskedFor_WritesTheBytesInIt()
     {
         await using var app = new global::app.@this("/app").Testing();
         var carrier = new global::app.data.@this("s", context: app.actor.list.User.Context);
 
-        var converted = Size.Create("100 MiB", new global::app.type.@this("size", "si"), carrier)!;
+        var converted = Size.Create(104_857_600L, new global::app.type.@this("size", "si"), carrier)!;
 
-        await Assert.That(converted.Text).IsEqualTo("104.9 MB");
+        await Assert.That(await converted.Text(app.actor.list.User.Context)).IsEqualTo("104.9 MB");
         await Assert.That(converted.Value).IsEqualTo(104_857_600L);
     }
 
@@ -94,7 +97,7 @@ public class SizeKindTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var context = app.actor.list.User.Context;
-        var size = new global::app.data.@this("s", Size.Resolve("1 KiB", null)!, context: context);
+        var size = new global::app.data.@this("s", Size.Resolve("1 KiB", app.actor.list.User.Context)!, context: context);
 
         await Assert.That(await size.Compare(new global::app.data.@this("n", (global::app.type.item.number.@this)2048L, context: context)))
             .IsEqualTo(global::app.data.Comparison.Less);
@@ -115,7 +118,7 @@ public class SizeKindTests
             var size = await (await file.Size(context)).Value();
 
             await Assert.That(size!.Value).IsEqualTo(2048L);
-            await Assert.That(size.Text).IsEqualTo("2 KiB");
+            await Assert.That(await size.Text(context)).IsEqualTo("2 KiB");
         }
         finally { System.IO.Directory.Delete(root, true); }
     }

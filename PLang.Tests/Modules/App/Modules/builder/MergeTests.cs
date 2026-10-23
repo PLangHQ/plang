@@ -20,13 +20,13 @@ public class MergeTests : System.IAsyncDisposable
     [Test]
     public async Task StepMerge_CopiesActions()
     {
-        var target = new Step { Text = "do something", Index = 0 };
-        var source = new Step
+        var target = new Step(app.type.list) { Text = "do something", Index = 0 };
+        var source = new Step(app.type.list)
         {
             Text = "do something",
-            Code = new StepActions(new[]
+            Code = new StepActions(app.type.list, new[]
             {
-                new Action { Module = app.actor.list.User.Context.App.Module("output"), Name = "write", Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Message", "hello", context: app.actor.list.User.Context) }) }
+                new Action(app.type.list) { Module = app.actor.list.User.Context.App.Module("output"), Name = "write", Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Message", "hello", context: app.actor.list.User.Context) }) }
             })
         };
 
@@ -39,15 +39,15 @@ public class MergeTests : System.IAsyncDisposable
     [Test]
     public async Task StepMerge_PreservesStructuralFields()
     {
-        var target = new Step { Text = "original text", Index = 5, Line = new() { Number = 10, Indent = 2 } };
-        var source = new Step
+        var target = new Step(app.type.list) { Text = "original text", Index = 5, Line = new() { Number = 10, Indent = 2 } };
+        var source = new Step(app.type.list)
         {
             Text = "different text",
             Index = 99,
             Line = new() { Number = 1 },
-            Code = new StepActions(new[]
+            Code = new StepActions(app.type.list, new[]
             {
-                new Action { Module = app.actor.list.User.Context.App.Module("file"), Name = "read" }
+                new Action(app.type.list) { Module = app.actor.list.User.Context.App.Module("file"), Name = "read" }
             })
         };
 
@@ -65,13 +65,13 @@ public class MergeTests : System.IAsyncDisposable
     [Test]
     public async Task StepMerge_EmptySource_LeavesTargetUnchanged()
     {
-        var originalAction = new Action { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" };
-        var target = new Step
+        var originalAction = new Action(app.type.list) { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" };
+        var target = new Step(app.type.list)
         {
             Text = "step",
-            Code = new StepActions(new[] { originalAction })
+            Code = new StepActions(app.type.list, new[] { originalAction })
         };
-        var source = new Step { Text = "step" }; // Empty LLM fields
+        var source = new Step(app.type.list) { Text = "step" }; // Empty LLM fields
 
         target.Merge(source);
 
@@ -82,26 +82,26 @@ public class MergeTests : System.IAsyncDisposable
     [Test]
     public async Task StepMerge_WarningsReplacedOnlyWhenSourceHasEntries()
     {
-        var target = new Step
+        var target = new Step(app.type.list)
         {
             Text = "step",
-            Warning = { new global::app.warning.@this { Key = "W1", Message = "original warning" } }
         };
+        target.Warning.Add(new global::app.warning.@this(app.type.list) { Key = "W1", Message = "original warning" });
 
         // Source with no warnings — target keeps its warnings
-        var emptySource = new Step { Text = "step" };
+        var emptySource = new Step(app.type.list) { Text = "step" };
         target.Merge(emptySource);
-        await Assert.That(target.Warning.Count).IsEqualTo(1);
+        await Assert.That(target.Warning.CountRaw).IsEqualTo(1);
         await Assert.That(target.Warning[0].Key).IsEqualTo("W1");
 
         // Source with warnings — target warnings replaced
-        var sourceWithWarnings = new Step
+        var sourceWithWarnings = new Step(app.type.list)
         {
             Text = "step",
-            Warning = { new global::app.warning.@this { Key = "W2", Message = "new warning" } }
         };
+        sourceWithWarnings.Warning.Add(new global::app.warning.@this(app.type.list) { Key = "W2", Message = "new warning" });
         target.Merge(sourceWithWarnings);
-        await Assert.That(target.Warning.Count).IsEqualTo(1);
+        await Assert.That(target.Warning.CountRaw).IsEqualTo(1);
         await Assert.That(target.Warning[0].Key).IsEqualTo("W2");
     }
 
@@ -112,27 +112,27 @@ public class MergeTests : System.IAsyncDisposable
     [Test]
     public async Task GoalMergeFrom_MatchesByText_MergesLlmFields()
     {
-        var freshGoal = new Goal
+        var freshGoal = new Goal(app.type.list)
         {
             Name = "Test",
-            Step = new GoalSteps
+            Step = new GoalSteps(app.type.list)
             {
-                new Step { Text = "do something", Index = 0 },
-                new Step { Text = "do another thing", Index = 1 }
+                new Step(app.type.list) { Text = "do something", Index = 0 },
+                new Step(app.type.list) { Text = "do another thing", Index = 1 }
             }
         };
 
-        var existingGoal = new Goal
+        var existingGoal = new Goal(app.type.list)
         {
             Name = "Test",
-            Step = new GoalSteps
+            Step = new GoalSteps(app.type.list)
             {
-                new Step
+                new Step(app.type.list)
                 {
                     Text = "do something",
-                    Code = new StepActions(new[]
+                    Code = new StepActions(app.type.list, new[]
                     {
-                        new Action { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" }
+                        new Action(app.type.list) { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" }
                     })
                 }
             }
@@ -149,26 +149,26 @@ public class MergeTests : System.IAsyncDisposable
     [Test]
     public async Task GoalMergeFrom_UnmatchedSteps_KeepEmptyActions()
     {
-        var freshGoal = new Goal
+        var freshGoal = new Goal(app.type.list)
         {
             Name = "Test",
-            Step = new GoalSteps
+            Step = new GoalSteps(app.type.list)
             {
-                new Step { Text = "new step that didn't exist before", Index = 0 }
+                new Step(app.type.list) { Text = "new step that didn't exist before", Index = 0 }
             }
         };
 
-        var existingGoal = new Goal
+        var existingGoal = new Goal(app.type.list)
         {
             Name = "Test",
-            Step = new GoalSteps
+            Step = new GoalSteps(app.type.list)
             {
-                new Step
+                new Step(app.type.list)
                 {
                     Text = "old step text",
-                    Code = new StepActions(new[]
+                    Code = new StepActions(app.type.list, new[]
                     {
-                        new Action { Module = app.actor.list.User.Context.App.Module("file"), Name = "read" }
+                        new Action(app.type.list) { Module = app.actor.list.User.Context.App.Module("file"), Name = "read" }
                     })
                 }
             }
@@ -182,10 +182,10 @@ public class MergeTests : System.IAsyncDisposable
     [Test]
     public async Task GoalMergeFrom_NullExisting_NoOp()
     {
-        var freshGoal = new Goal
+        var freshGoal = new Goal(app.type.list)
         {
             Name = "Test",
-            Step = new GoalSteps { new Step { Text = "step", Index = 0 } }
+            Step = new GoalSteps(app.type.list) { new Step(app.type.list) { Text = "step", Index = 0 } }
         };
 
         // Should not throw
@@ -199,27 +199,27 @@ public class MergeTests : System.IAsyncDisposable
     public async Task GoalMergeFrom_DuplicateStepText_FirstMatchOnly()
     {
         // Two steps with identical text in fresh goal, one match in existing
-        var freshGoal = new Goal
+        var freshGoal = new Goal(app.type.list)
         {
             Name = "Test",
-            Step = new GoalSteps
+            Step = new GoalSteps(app.type.list)
             {
-                new Step { Text = "do something", Index = 0 },
-                new Step { Text = "do something", Index = 1 }
+                new Step(app.type.list) { Text = "do something", Index = 0 },
+                new Step(app.type.list) { Text = "do something", Index = 1 }
             }
         };
 
-        var existingGoal = new Goal
+        var existingGoal = new Goal(app.type.list)
         {
             Name = "Test",
-            Step = new GoalSteps
+            Step = new GoalSteps(app.type.list)
             {
-                new Step
+                new Step(app.type.list)
                 {
                     Text = "do something",
-                    Code = new StepActions(new[]
+                    Code = new StepActions(app.type.list, new[]
                     {
-                        new Action { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" }
+                        new Action(app.type.list) { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" }
                     })
                 }
             }

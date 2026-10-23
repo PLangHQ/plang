@@ -23,10 +23,10 @@ public sealed class TypeSafe : IDecider
         // nothing asked (every step cached) — nothing to send: the answer is empty
         var questions = await action.Question.Value();
         if (questions == null || questions.CountRaw == 0)
-            return context.Ok(new global::app.type.item.dict.@this());
+            return context.Ok(new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]));
 
         // the decider's own settings: the saved row, else the environment's, else the service's endpoint
-        var setting = context.Setting.Of<global::app.module.llm.decider.setting>();
+        var setting = await context.Setting.Get<global::app.module.llm.decider.setting>();
         var endpoint = setting.Endpoint.ToString();
         var apiKey = setting.Key.ToString();
 
@@ -42,13 +42,13 @@ public sealed class TypeSafe : IDecider
 
         var http = new request(context)
         {
-            Url = new data.@this<global::app.type.item.text.@this>("", endpoint),
-            Method = new data.@this<global::app.type.item.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
+            Url = new data.@this<global::app.type.item.text.@this>("", endpoint, context: context),
+            Method = new data.@this<global::app.type.item.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST, context: context),
             Body = new data.@this("", body, context: context),
             Header = new data.@this<global::app.type.item.dict.@this>("",
-                (global::app.type.item.dict.@this)global::app.type.item.@this.Create(headers, context)),
-            Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true),
-            Timeout = new data.@this<global::app.type.item.duration.@this>("", new global::app.type.item.duration.@this(System.TimeSpan.FromMinutes(2))),
+                (global::app.type.item.dict.@this)global::app.type.item.@this.Create(headers, context), context: context),
+            Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true, context: context),
+            Timeout = new data.@this<global::app.type.item.duration.@this>("", global::app.type.item.duration.@this.Create(System.TimeSpan.FromMinutes(2), context), context: context),
         };
 
         var result = await new global::app.goal.step.action.@this(http, context).Start(context);
@@ -58,10 +58,11 @@ public sealed class TypeSafe : IDecider
         // caller gets the answers under the ids it chose; usage rides as a property rather than
         // mixing accounting into the value.
         var answers = await result.Get("answers");
+        var dict = context.App.type.list[typeof(global::app.type.item.dict.@this)];
         var shaped = answers == null
-            ? new global::app.type.item.dict.@this()
+            ? new global::app.type.item.dict.@this(dict)
             : await answers.Value<global::app.type.item.dict.@this>()
-              ?? new global::app.type.item.dict.@this();
+              ?? new global::app.type.item.dict.@this(dict);
 
         var answer = context.Ok(shaped).As<global::app.type.item.dict.@this>();
         if (await result.Get("usage") is { } usage) answer.Properties.Set("usage", await usage.Value());

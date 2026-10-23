@@ -54,7 +54,7 @@ public class RegistryFoldTests
     public async Task Conversion_TextScalar_LowersToNumericTarget()
     {
         // A value lowers itself to a CLR target through its own Clr — no central door.
-        await Assert.That(new global::app.type.item.text.@this("42").Clr<int>()).IsEqualTo(42);
+        await Assert.That(_app.actor.list.User.Context.Text("42").Clr<int>()).IsEqualTo(42);
     }
 
     [Test]

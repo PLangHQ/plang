@@ -24,13 +24,12 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     private IReadOnlyList<global::app.type.item.path.@this>? _app, _system;
 
     /// <summary>The goals of <paramref name="app"/> — the list is born knowing the App it loads for.</summary>
-    public @this(app.@this app) : base(new List<object?>())
+    public @this(app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
     {
         App = app;
         Setup = new setup.@this(this);
     }
 
-    protected override global::app.type.item.list.@this Empty() => new @this(App);
 
     /// <summary>
     /// Adds a goal read from its <c>.pr</c>; the goal held from the same <c>.pr</c> gives way.
@@ -69,7 +68,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         if (Chain(caller).FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } near)
             return context.Ok(near);
 
-        if (Held(name) is { } held) return context.Ok(held);
+        if (Goal(name) is { } match) return context.Ok(match);
 
         var source = name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? name : name + ".goal";
         if (!source.StartsWith('/') && !source.StartsWith('\\') && caller?.Folder is { } folder)
@@ -78,18 +77,18 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             var walks = source.Contains('/') || source.Contains('\\');
             for (var at = folder; at.Raw is not ("/" or "\\" or "." or ""); at = at.Parent)
             {
-                var beside = await Loaded(at.Combine(source).Raw);
+                var beside = await Open(at.Combine(source).Raw);
                 if (beside.IsInitialized) return beside;
                 if (!walks) break;
             }
         }
-        return await Loaded("/" + source.TrimStart('/', '\\'));
+        return await Open("/" + source.TrimStart('/', '\\'));
 
-        // the goal the .goal at `written` is built to, resolved as written (the app's /system/ first); its name is
+        // opens the goal the .goal at `raw` is built to, resolved as written (the app's /system/ first); its name is
         // a goal's, compared as plang names are (case aside) — its folder is a path, as written
-        async Task<data.@this<goal.@this>> Loaded(string written)
+        async Task<data.@this<goal.@this>> Open(string raw)
         {
-            var at = global::app.type.item.path.@this.Resolve(written, context);
+            var at = global::app.type.item.path.@this.Resolve(raw, context);
             if (!await (await at.Exists(context)).ToBooleanAsync())
             {
                 if (await Spelled(at) is not { } file) return data.@this<goal.@this>.From(context.NotFound(name));
@@ -136,51 +135,16 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         }
     }
 
-    /// <summary>The goals <paramref name="step"/> can call by name, as <see cref="Find"/> reaches them from its goal (the
-    /// same walk): the goal itself and its children, then each ancestor and its children, then the <c>.goal</c> files
-    /// beside it, then those one folder down by the slash name a step writes (<c>voice/Key</c>) — each name once, as a
-    /// text. One folder down, not deeper: the offers are shown on every question, and a neighbour folder's goal is what
-    /// a step names with one folder; a deeper name is still found when written. A hidden folder (<c>.build</c>) holds
-    /// none. Find's other reaches are not offered: a goal already read anywhere is no goal of this step's, and an
-    /// ancestor folder is reached only by a slash-qualified name.</summary>
-    internal override async System.Threading.Tasks.ValueTask<IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
-    {
-        var context = App.actor.list.System.Context;
-        var names = Chain(step.Goal).Select(g => g.Name).ToList();
-        if (step.Goal?.Folder is { } folder)
-        {
-            await foreach (var file in Beside(folder, context)) names.Add(file.Stem.ToString());
-            await foreach (var sub in Under(folder, context))
-                await foreach (var file in Beside(sub, context)) names.Add($"{sub.Name}/{file.Stem}");
-        }
-        return names.Distinct(StringComparer.OrdinalIgnoreCase)
-            .Select(name => (global::app.type.item.@this)new global::app.type.item.text.@this(name)).ToList();
-    }
-
-    // The folders directly in `folder`, in each place it names, but a hidden one (.build, .db).
-    private async IAsyncEnumerable<global::app.type.item.path.@this> Under(global::app.type.item.path.@this folder,
-        global::app.actor.context.@this context)
-    {
-        foreach (var each in folder.Place(context))
-        {
-            if (!await (await each.Exists(context)).ToBooleanAsync()) continue;
-            var listed = await each.List("*", false, context, global::app.type.item.path.Entry.folder);
-            if (!listed.Success || await listed.Value() is not { } folders) continue;
-            foreach (var sub in folders.Items())
-                if (!sub.Name.ToString().StartsWith('.')) yield return sub;
-        }
-    }
-
     // The goal already read that a call's name writes: its name (the last read wins — sub-goals in
     // different files may share one), its .goal or .pr path in any of the forms a call writes, or a
     // slash-qualified name whose folder is part of it (BuildGoal/Start is Start in a BuildGoal folder).
     // A setup goal runs only through setup, never by a call.
-    private goal.@this? Held(string name)
+    private goal.@this? Goal(string name)
     {
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase)) name = name[..^5];
-        var held = Items().Where(g => !g.IsSetup).Reverse().ToList();
+        var goals = Items().Where(g => !g.IsSetup).Reverse().ToList();
 
-        if (held.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)
+        if (goals.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } named)
             return named;
 
         var leaf = name.TrimStart('/', '\\').Replace('\\', '/');
@@ -189,7 +153,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
                 || canonical.Equals(leaf + ".goal", StringComparison.OrdinalIgnoreCase)
                 || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
                 || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase));
-        if (held.FirstOrDefault(g => Written(g.Path?.ToString().Replace('\\', '/'))
+        if (goals.FirstOrDefault(g => Written(g.Path?.ToString().Replace('\\', '/'))
                                      || Written(g.PrPath?.ToString().Replace('\\', '/'))) is { } byPath)
             return byPath;
 
@@ -197,7 +161,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         {
             var qualified = "/" + leaf;
             var leafName = qualified[(qualified.LastIndexOf('/') + 1)..];
-            return held.FirstOrDefault(g => string.Equals(g.Name, leafName, StringComparison.OrdinalIgnoreCase)
+            return goals.FirstOrDefault(g => string.Equals(g.Name, leafName, StringComparison.OrdinalIgnoreCase)
                 && g.Address?.Replace('\\', '/') is { } address
                 && address.EndsWith(qualified, StringComparison.OrdinalIgnoreCase));
         }
@@ -221,7 +185,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     {
         // goal.list's setting as the asker's actor sees it (its defaults, a saved row, this run's), the
         // call's own values on top through the one convert walk — onto this walk's own copy
-        var wants = context.Setting.Of<setting.@this>();
+        var wants = await context.Setting.Get<setting.@this>();
         if (setting != null)
         {
             wants = (global::app.goal.list.setting.@this)wants.Copy();
@@ -230,19 +194,19 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             // a walk streams its goals, so a setting it refuses (an option that isn't one) travels as its Error
             if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
         }
-        var held = Items().Where(g => !g.IsSetup && (wants.Os.Value || !g.IsSystem)).ToList();
-        foreach (var goal in held)
+        var goals = Items().Where(g => !g.IsSetup && (wants.Os.Value || !g.IsSystem)).ToList();
+        foreach (var goal in goals)
             foreach (var one in wants.Of(goal)) yield return one;
 
         // the .goal files are the app's own: listed once, as the system
         var system = App.actor.list.System.Context!;
         _app ??= await Listed(global::app.type.item.path.@this.Resolve("/", system));
-        _system ??= await Listed(global::app.type.item.path.@this.Resolve(App.OsAbsolutePath + "/system", system));
+        _system ??= await Listed(App.filesystem.os.Combine("system"));
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var source in wants.Os.Value ? _app.Concat(_system) : _app)
         {
-            if (!seen.Add(source.ToString()!) || held.Any(g => Equals(g.Path, source))) continue;
+            if (!seen.Add(source.ToString()!) || goals.Any(g => Equals(g.Path, source))) continue;
             var loaded = await global::app.goal.@this.Load(source, App);
             if (!loaded.Success)
             {

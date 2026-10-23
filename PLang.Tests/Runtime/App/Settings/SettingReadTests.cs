@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Settings;
 public class SettingReadTests
 {
     private static async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
-        => await new global::app.type.item.variable.parser.@this(text).Variable.Single().Start(ctx);
+        => await new global::app.type.item.variable.parser.@this(text, ctx.App.type.list).Variable.Single().Start(ctx);
 
     [Test] public async Task ClassOption_IsItsDefault()
     {
@@ -23,7 +23,7 @@ public class SettingReadTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await ctx.Setting.Set("app.goal.list.setting.os", ctx.Ok(false));
+        ctx.Setting.Set("app.goal.list.setting.os", ctx.Ok(false));
 
         var read = await Read("%!app.goal.list.setting.os%", ctx);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
@@ -41,7 +41,7 @@ public class SettingReadTests
     [Test] public async Task ModuleOption_FallsBackToTheSystem()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.System.Setting.Set("llm.setting.cache", app.actor.list.System.Context.Ok("skip"));
+        app.actor.list.System.Setting.Set("llm.setting.cache", app.actor.list.System.Context.Ok("skip"));
 
         var read = await Read("%!llm.setting.cache%", app.actor.list.User.Context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("skip");
@@ -62,10 +62,10 @@ public class SettingReadTests
         var ctx = app.actor.list.User.Context;
         await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("use");
 
-        await ctx.Setting.Set("llm.setting.cache", ctx.Ok("skip"));
+        ctx.Setting.Set("llm.setting.cache", ctx.Ok("skip"));
         await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("skip");
 
-        await ctx.Setting.Set("llm.query.setting.cache", ctx.Ok("use"));
+        ctx.Setting.Set("llm.query.setting.cache", ctx.Ok("use"));
         await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("use");
     }
 
@@ -76,7 +76,7 @@ public class SettingReadTests
         var ctx = app.actor.list.User.Context;
         await Assert.That((await (await Read("%!llm.query.setting.limit.token%", ctx)).Value())?.ToString()).IsEqualTo("16000");
 
-        await new global::app.type.item.variable.parser.@this("%!llm.query.setting.limit%").Variable.Single()
+        await new global::app.type.item.variable.parser.@this("%!llm.query.setting.limit%", ctx.App.type.list).Variable.Single()
             .Set(global::app.type.item.@this.Create(new Dictionary<string, object?> { ["token"] = 500 }, ctx), ctx);
         await Assert.That((await (await Read("%!llm.query.setting.limit.token%", ctx)).Value())?.ToString()).IsEqualTo("500");
         await Assert.That((await (await Read("%!llm.query.setting.limit.tool%", ctx)).Value())?.ToString()).IsEqualTo("10");
@@ -127,7 +127,7 @@ public class SettingReadTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        var set = await new global::app.type.item.variable.parser.@this("%!app.goal.list.setting.foo%").Variable.Single()
+        var set = await new global::app.type.item.variable.parser.@this("%!app.goal.list.setting.foo%", ctx.App.type.list).Variable.Single()
             .Set(new global::app.data.@this("foo", 1, context: ctx), ctx);
         await set.IsFailure();
     }
@@ -137,7 +137,7 @@ public class SettingReadTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await ctx.Setting.Set("identity.get.setting.name", ctx.Ok("alice"));
+        ctx.Setting.Set("identity.get.setting.name", ctx.Ok("alice"));
         await Assert.That((await (await Read("%!identity.get.setting.name%", ctx)).Value())?.ToString()).IsEqualTo("alice");
     }
 
@@ -155,7 +155,7 @@ public class SettingReadTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        var written = await new global::app.type.item.variable.parser.@this("%!app.goal.list.setting.os%").Variable.Single()
+        var written = await new global::app.type.item.variable.parser.@this("%!app.goal.list.setting.os%", ctx.App.type.list).Variable.Single()
             .Set(new global::app.data.@this("os", false, context: ctx), ctx);
         await written.IsSuccess();
 

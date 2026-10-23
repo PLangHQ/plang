@@ -29,33 +29,26 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // The single backing — key → raw-or-wrapped slot, mirroring list's _items. A
     // slot holds EITHER a raw CLR value (a scalar off the wire, a native
     // sub-container) OR a wrapped value (a Data / item dropped in by `set`/`add`
-    // carrying its own type/signature). Store raw, type on read: an entry borns a
-    // FRESH Data on read, never cached back, so a pure-read backing stays pristine
-    // and the CLR exit door hands this exact instance back (same-ref, O(1)).
+    // carrying its own type/signature). Store raw, type on read: an entry is made a
+    // FRESH Data on read, never written back, so a read leaves the backing as it was.
     //
     // The Dictionary IS the order (insertion order) and the casing (the key string).
     // PLang builds its own dicts case-insensitive (OrdinalIgnoreCase); an aliased
     // foreign dict keeps whatever comparer it came with — the dict object does not
     // police casing, the construction site picks the comparer.
     private readonly Dictionary<string, object?> _value;
-
-    // The backing has diverged from a pure-raw form — a slot holds a Data/wrapper.
-    // Drives the .Clr same-ref fast path (clean → hand _value straight back).
-    private bool _hasWrapped;
-
-    // A slot that must be peeled at the CLR exit door — a Data or a plang wrapper. A raw
-    // scalar or a raw nested container rides verbatim.
-    private static bool IsWrapped(object? slot)
-        => slot is Data or global::app.type.item.@this;
+    // what the one mutation door writes under: an entry kept for a write is made and stored in one step
+    private readonly object _gate = new();
 
     // A dict stores no context: an entry is handed out with the context of whoever asks for it
     // (Slot, Entries, Get). A stored Data keeps its own.
-    public @this()
-        : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase)) { }
+    /// <summary>An empty dict born holding <paramref name="type"/> — the app's dict, or the row's (its template mode),
+    /// handed in by its maker; the dict itself never checks its content.</summary>
+    public @this(global::app.type.@this type)
+        : this(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase), type) { }
 
     /// <summary>A dict's own type entity — the type owns its name (no namespace reflection). Carries
     /// the template flag so a template=plang dict resolves its %var% leaves at .Value().</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this)) { Template = Template };
 
     /// <summary>THE PURE CORE — a container coerces INTO nothing (highest rank), so the core only
     /// passes a <c>dict</c> through; any other value declines (<c>null</c>). Real construction
@@ -65,11 +58,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The ICreate courier face — a <c>dict</c> passes through; a blank string is an empty
     /// dict (the LLM emits <c>""</c> for <c>{}</c>); a native container re-tags through its own
     /// <c>Clr</c>. Uses <c>data.Context</c> for the born-with-context construction.</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         if (value is @this self) return self;
         var text = ((value as global::app.type.item.@this)?.Clr<object>() ?? value) as string;
-        if (text != null && string.IsNullOrWhiteSpace(text)) return new @this();
+        if (text != null && string.IsNullOrWhiteSpace(text)) return new @this(data.Context.App.type.list[typeof(@this)]);
         // A text holding a json object (a rendered template, an LLM's answer) is that object, read
         // through the same DOM narrower; any other text is not a dict.
         if (text != null)
@@ -90,13 +83,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>Aliases a foreign CLR dictionary as the backing — true O(1), no walk,
     /// no copy. The handoff contract: the source becomes the backing (its slots are
-    /// raw values, type-on-read). A pure read keeps it pristine, so <see cref="Clr"/>
-    /// hands the same instance back; the first write diverges it (<see cref="_hasWrapped"/>).
+    /// raw values, type-on-read). A read writes nothing back, so the source stays as it was
+    /// handed over until the dict itself is written.
     /// The comparer is the source's own — PLang's own dicts are built case-insensitive
     /// via the default ctor.</summary>
-    internal @this(Dictionary<string, object?> backing) => _value = backing;
-
-    private @this(Dictionary<string, object?> backing, bool wrapped) : this(backing) => _hasWrapped = wrapped;
+    internal @this(Dictionary<string, object?> backing, global::app.type.@this type)
+        : base(type) => _value = backing;
 
     /// <summary>A dict no other holder's change reaches: its entries copied (a nested container copied, every other
     /// value shared), in their order, with its keys' casing.</summary>
@@ -104,7 +96,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         var entries = new Dictionary<string, object?>(_value.Comparer);
         foreach (var (key, slot) in _value) entries[key] = Copied(slot);
-        return new @this(entries, _hasWrapped) { Template = Template };
+        return new @this(entries, Type);
     }
 
     // Type-on-read: hand back the entry under `key` as a FRESH Data born with the asker's
@@ -114,16 +106,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private Data Slot(string key, actor.context.@this context)
     {
         var raw = _value[key];
-        if (raw is Data d)
-        {
-            // The dict key is authoritative — a nested entry value carries no name of
-            // its own on the wire (only the key rides, as the JSON property name), so a
-            // reconstructed entry borns Name="". Re-stamp the key, matching the raw-slot
-            // path below (new Data(key, …)). Without this the round-tripped entry serialises
-            // under "" — breaking both signature canonicalisation and key navigation.
-            if (d.Name != key) d.Name = key;
-            return d;
-        }
+        // The dict key is authoritative: an entry is read under its key. A stored Data is held under its key already
+        // (Put); one in a handed-in backing named otherwise (a C# dictionary's value) is answered as a copy under the
+        // key — the slot, and whoever else holds that Data, unchanged.
+        if (raw is Data d) return d.Name == key ? d : d.Copy(key);
         // Born a FRESH Data each read — never cached back. Leaving the slot raw keeps
         // the aliased backing pristine, so the CLR exit door stays same-ref.
         return new Data(key, global::app.type.item.@this.Create(raw, context), context: context);
@@ -137,18 +123,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The interior raw count — loop bounds and emptiness checks.</summary>
     internal int CountRaw => _value.Count;
 
-    /// <summary>Keys in insertion order, as a native <c>list&lt;text&gt;</c> —
-    /// the public surface answers in PLang values (<c>%dict!keys%</c>).</summary>
-    public global::app.type.item.list.@this<global::app.type.item.text.@this> Keys
-    {
-        get
-        {
-            var keys = new global::app.type.item.list.@this<global::app.type.item.text.@this>();
-            foreach (var k in _value.Keys)
-                keys.Add(new Data(k, new global::app.type.item.text.@this(k)));
-            return keys;
-        }
-    }
+    /// <summary>The dict's key (<c>%dict!key%</c>): read alone its first key, <c>.list</c> every key.</summary>
+    public key.@this Key(global::app.actor.context.@this context) => new(this, context.App.type.list[typeof(key.@this)]);
+
+    /// <summary>A dict's own facts, read with <c>!</c>: <c>key</c>.</summary>
+    internal override System.Threading.Tasks.ValueTask<Data?> Fact(string key, Data parent)
+        => string.Equals(key, "key", System.StringComparison.OrdinalIgnoreCase) && parent.Context is { } context
+            ? new(new Data(key, Key(context), parent: parent))
+            : default;
 
     /// <summary>Keys in insertion order — the interior raw view.</summary>
     internal IEnumerable<string> KeyNames => _value.Keys;
@@ -169,15 +151,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>Writes itself as an object whose entries each write themselves, resolved lazily as they're
     /// reached; the writer decides how an object looks (json on a json channel, json text on a text one).</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        foreach (var entry in Entries(context!))
+        foreach (var entry in Entries(writer.Context))
         {
             writer.Name(entry.Name);
-            await entry.Output(writer, mode, context);
+            await entry.Output(writer);
         }
         writer.EndObject();
     }
@@ -277,10 +257,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>A dict owns its child write — set the key (create or overwrite). A dict keys by
     /// name whether the leaf was <c>[k]</c> or <c>.k</c>, so <paramref name="isIndex"/> is moot.</summary>
-    public override System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex, object? value, actor.context.@this context)
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex, object? value, actor.context.@this context)
     {
         Set(key, value);
-        return new(this);
+        return new(context.Ok(this));
     }
 
     /// <summary>
@@ -290,7 +270,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// so the caller falls through. An entry is handed out with the asker's context.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<Data> Get(Data parent, string key)
-        => Get(key, parent.Context) ?? await Member(parent, key) ?? Data.NotFound(key);
+        => Get(key, parent.Context) ?? await Member(parent, key) ?? parent.Context.NotFound(key);
 
     // The one mutation seam — last-wins on a duplicate key (json object
     // semantics), order preserved at the position of the first occurrence (the
@@ -303,30 +283,57 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (string.Equals(key, "@schema", System.StringComparison.OrdinalIgnoreCase))
             throw new global::app.error.AppException(
                 "'@schema' is the wire marker and cannot be a dict key.", "ReservedKey", 400);
-        // A wrapped slot diverges the dict — the CLR exit door must peel. A raw scalar
-        // leaves it clean (the .Clr fast path still hands the backing back).
-        if (IsWrapped(slot)) _hasWrapped = true;
-        _value[key] = slot;
+        // A Data is held under its key: one named otherwise (a variable's binding handed in) is held as a copy under
+        // the key, so the one who handed it keeps its own name.
+        if (slot is Data d && d.Name != key) slot = d.Copy(key);
+        lock (_gate) _value[key] = slot;
+    }
+
+    /// <summary>The entry at <paramref name="key"/> a write goes into: kept under its key, so the write lands in the
+    /// dict. A key it doesn't hold is what a read answers (its own surface, else NotFound).</summary>
+    public override async System.Threading.Tasks.ValueTask<Data> Child(Data parent, string key, bool isIndex)
+        => Entry(key, parent.Context) ?? await Get(parent, key, isIndex);
+
+    // The entry under a key, kept: a Data held under its key as it is; any other slot made its value (a Data named
+    // otherwise, its copy under the key) and stored there, in one step under the dict's lock. Null when the key is
+    // not held.
+    private Data? Entry(string key, actor.context.@this context)
+    {
+        lock (_gate)
+        {
+            if (!_value.ContainsKey(key)) return null;
+            var entry = Slot(key, context);
+            if (!ReferenceEquals(entry, _value[key])) Put(key, entry);
+            return entry;
+        }
     }
 
     /// <summary>
-    /// The CLR exit door. A <b>compatible</b> target
-    /// (<c>Dictionary&lt;string,object?&gt;</c>, <c>object</c>, <c>IDictionary</c>) gets
-    /// the backing itself — same instance, O(1), and a Data / item slot (a signed
-    /// <c>signature</c>, a number wrapper) rides intact: the dict's CLR IS its backing.
-    /// A <b>different</b> typed target (a record, <c>Dictionary&lt;string,T&gt;</c>) is a
-    /// real conversion — peel each entry to its raw form, then convert. A signed value
-    /// never rides a typed record/map, so a value with no raw form can't be wrong-unwrapped.
+    /// The CLR exit door: a C# dictionary of its own, never this dict's backing. A map target (<c>object</c>,
+    /// <c>IDictionary</c>, <c>Dictionary&lt;string,T&gt;</c>) gets each entry lowered as C# reads it — a raw slot as it
+    /// is, a Data or an item through its own lowering — in the dict's order, keyed by the dict's own comparer (a
+    /// plang dict's keys stay case-insensitive). A record target is a real conversion — each entry peeled to its raw
+    /// form, then converted. A signed value never rides a typed record/map, so a value with no raw form can't be
+    /// wrong-unwrapped.
     /// </summary>
+    // The empty C# map a target names, keyed by this dict's comparer: object or a dictionary interface is a
+    // Dictionary<string, T>; a map class is itself (with the comparer when it takes one). Null for any other target.
+    private System.Collections.IDictionary? Map(System.Type target)
+    {
+        if (target == typeof(object)) return new Dictionary<string, object?>(_value.Comparer);
+        if (target.IsInterface && target.IsGenericType && target.GetGenericArguments() is [var k, var v] && k == typeof(string)
+            && target.IsAssignableFrom(typeof(Dictionary<,>).MakeGenericType(k, v)))
+            return (System.Collections.IDictionary)System.Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(k, v), _value.Comparer)!;
+        if (!typeof(System.Collections.IDictionary).IsAssignableFrom(target) || target.IsAbstract) return null;
+        return (System.Collections.IDictionary?)(target.GetConstructor([typeof(IEqualityComparer<string>)]) is { } compared
+            ? compared.Invoke([_value.Comparer])
+            : System.Activator.CreateInstance(target));
+    }
+
     internal override object? Clr(System.Type target)
     {
-        // All-raw backing IS the raw map the caller wants → hand it back (O(1)).
-        if (!_hasWrapped && target.IsInstanceOfType(_value)) return _value;
-
-        // A Dictionary<string,T> target — lower each entry to T STRUCTURALLY: each value lowers
-        // ITSELF via Clr, recursive, no json round-trip (the internal-serialize smell dies here).
-        if (typeof(System.Collections.IDictionary).IsAssignableFrom(target)
-            && System.Activator.CreateInstance(target) is System.Collections.IDictionary map)
+        // A map target — each entry lowers ITSELF via Clr to the element type, recursive, no json round-trip.
+        if (Map(target) is { } map)
         {
             var elementType = target.IsGenericType ? target.GetGenericArguments()[^1] : typeof(object);
             foreach (var key in _value.Keys)
@@ -342,8 +349,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // A settable-prop CLR record target — the reflection kind builds it from THIS dict's slots
         // (each value lowers itself via its own Clr). No STJ, no self-serialize round-trip — the
         // firing site for dict.Json dies here.
-        return new global::app.type.item.kind.reflection.@this().Read(this, target);
+        return global::app.type.item.kind.reflection.@this.Fallback.Read(this, target);
     }
+
+    // A plang value read from this dict's slots that is born holding its type is handed the app's — the asker's
+    // context names it; anything else is the record read above.
+    internal override object? Clr(System.Type target, global::app.actor.context.@this? context)
+        => context != null && typeof(global::app.type.item.@this).IsAssignableFrom(target)
+           && target.GetConstructor([typeof(global::app.type.@this)]) is { } typed
+            ? ((global::app.type.item.kind.reflection.@this)context.App.type.list["item"].kind["*"]!)
+                .Read(this, typed.Invoke([context.App.type.list[target]]), context)
+            : Clr(target);
 
     /// <summary>The entry under <paramref name="key"/> lowered to <paramref name="target"/> at the
     /// CLR exit door. A raw slot is already a CLR value, so no context is needed; a stored Data or
@@ -364,14 +380,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // on the consumer or a sync Clr.
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
-        if (Template == null) return this;
-        var result = new @this();
+        if (Type.Template == null) return this;
+        // what its entries read is plain: the app's dict, no template
+        var result = new @this(data.Context.App.type.list[typeof(@this)]);
         foreach (var key in _value.Keys)
         {
             var entry = Slot(key, data.Context);
             var value = await entry.Value();
             // an entry that can't be read (a %variable% not set) fails the dict, as reading it anywhere fails
-            if (!entry.Success) { data.Fail(entry.Error!); return Absent; }
+            if (!entry.Success) { data.Fail(entry.Error!); return data.Empty; }
             result.Set(key, value);
         }
         return result;
@@ -385,14 +402,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override bool IsTruthy() => _value.Count > 0;
 
     /// <summary>A stamped container's render depends on outside state — never kept.</summary>
-    public override bool Cacheable => Template == null;
+    public override bool Cacheable => Type.Template == null;
 
     /// <summary>A stamped container holds the variables its entries hold.</summary>
     public override IReadOnlyList<global::app.type.item.variable.@this> Variable
-        => Template == null ? [] : _value.Values
+        => Type.Template == null ? [] : _value.Values
             .SelectMany(slot => slot switch
             {
-                global::app.data.@this held => held.Peek().Variable,
+                global::app.data.@this data => data.Peek().Variable,
                 global::app.type.item.@this item => item.Variable,
                 _ => [],
             })
@@ -431,8 +448,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override async System.Threading.Tasks.Task<Data> Where(global::app.type.item.text.@this field,
         global::app.data.Operator op, Data value, actor.context.@this context)
     {
-        if (await Field(field.ToString(), context) is not { } held) return NoField(field.ToString(), Fields, context);
-        var holds = await op.Evaluate(held, value, context);
+        if (await Field(field.ToString(), context) is not { } entry) return NoField(field.ToString(), Fields, context);
+        var holds = await op.Evaluate(entry, value, context);
         if (!holds.Success) return holds;
         return holds.ToBoolean() ? context.Ok(this) : context.Ok(null, context.App.type.list["dict"]);
     }

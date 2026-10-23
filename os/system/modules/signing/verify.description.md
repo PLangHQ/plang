@@ -1,1 +1,1 @@
-Verify a signed envelope against expected contracts and headers
+Verify a signed envelope against expected contracts

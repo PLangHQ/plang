@@ -111,19 +111,29 @@ public class MatchTests
         await Assert.That(result.Error.Message).Contains("your answer writes 1, which the step doesn't");
     }
 
+    // A number is confirmed before anything is refused: among other problems it is still asked of the decider first, and
+    // the confirmed read refuses only what is really wrong — the step whose number the decider confirms keeps its answer.
     [Test]
-    public async Task AmongOtherProblems_AnUnwrittenNumberIsRefusedWithThem()
+    public async Task AmongOtherProblems_AnUnwrittenNumberIsConfirmedFirst()
     {
         await using var app = new global::app.@this("/test").Testing().Building();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("call Flaky, on error retry once, ignore"), Make.Step("write out \"b\""));
         await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"), (1, "output.write"));
 
-        var result = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context);   // step 1 has no line
+        var asked = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context);   // step 1 has no line
 
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("StepsRefused");
-        await Assert.That(result.Error.Message).Contains("step 1 (\"write out \"b\"\") has no entry");
-        await Assert.That(result.Error.Message).Contains("your answer writes 1, which the step doesn't");
+        await asked.IsFailure();
+        await Assert.That(asked.Error!.Key).IsEqualTo("UnwrittenNumber");
+        await Assert.That(asked.Error.Message).DoesNotContain("your answer writes 1, which the step doesn't");
+
+        var confirmed = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context, Confirm("s0_on.error.RetryCount=1", 0.97));
+
+        await confirmed.IsFailure();
+        await Assert.That(confirmed.Error!.Key).IsEqualTo("StepsRefused");
+        await Assert.That(confirmed.Error.Message).Contains("step 1 (\"write out \"b\"\") — has no entry");
+        await Assert.That(confirmed.Error.Message).DoesNotContain("your answer writes 1");
+        await Assert.That(goal.Step[0].Code.Count).IsGreaterThan(0);
+        await Assert.That(confirmed.Error.Details!["steps"]?.ToString()).IsEqualTo("1");
     }
 
     // A quoted text carrying \n (BuildGoal/Start's SourceError message): the answer that writes it holds
@@ -153,6 +163,95 @@ public class MatchTests
         var result = await Match(goal, "[0] output.write(Data=%Greeting%)", app.actor.list.System.Context);
 
         await result.IsSuccess();
+    }
+
+    // A number is the answer's only when its text writes it: a member its type fills by default (Limit's tool and retry)
+    // is no number the answer wrote, so nothing is asked of the decider about it.
+    [Test]
+    public async Task ANumberTheTypeFilledByDefault_IsNoUnwrittenNumber()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G",
+            Make.Step("ask llm %m%, temperature 0.5, at most 50 tokens, write to %answer%"));
+        await Picked(goal, app.actor.list.System.Context, (0, "llm.query"), (0, "variable.set"));
+
+        var result = await Match(goal,
+            "[0] llm.query(Message=%m%, Temperature=0.5, Limit={\"token\":50}); variable.set(Name=%answer%, Value=%!data%)",
+            app.actor.list.System.Context);
+
+        await Assert.That(result.Error?.Key).IsNotEqualTo("UnwrittenNumber");
+        await result.IsSuccess();
+        await Assert.That(goal.Step[0].Code.Count).IsGreaterThan(0);
+    }
+
+    // A value that refuses itself while its step is read (a query `{}`) is that step's refusal: the read goes on, and the
+    // other steps take their code.
+    [Test]
+    public async Task AValueThatRefusesItselfInTheRead_IsItsStepsRefusal_TheOthersTakeTheirCode()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G",
+            Make.Step("query %nums%"), Make.Step("set %x% to \"a\""), Make.Step("set %y% to \"b\""));
+        await Picked(goal, app.actor.list.System.Context, (0, "list.query"), (1, "variable.set"), (2, "variable.set"));
+
+        var result = await Match(goal,
+            "[0] list.query(List=%nums%, Query={})\n[1] variable.set(Name=%x%, Value=\"a\")\n[2] variable.set(Name=%y%, Value=\"b\")",
+            app.actor.list.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("StepsRefused");
+        await Assert.That(result.Error.Details!["steps"]?.ToString()).IsEqualTo("0");
+        await Assert.That(result.Error.Message).Contains("step 0 (");
+        await Assert.That(goal.Step[1].Code.Count).IsGreaterThan(0);
+        await Assert.That(goal.Step[2].Code.Count).IsGreaterThan(0);
+    }
+
+    // A variable in a closed-set slot (a choice) stays the variable: the build answer holds it, and the check passes it.
+    [Test]
+    public async Task AVariableInAChoiceSlot_StaysTheVariable()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G",
+            Make.Step("ask llm %m%, model gpt-5.4-nano, cache %!build.setting.cache%, write to %answer%"));
+        await Picked(goal, app.actor.list.System.Context, (0, "llm.query"), (0, "variable.set"));
+
+        var result = await Match(goal,
+            "[0] llm.query(Message=%m%, Model=\"gpt-5.4-nano\", Cache=%!build.setting.cache%); variable.set(Name=%answer%, Value=%!data%)",
+            app.actor.list.System.Context);
+
+        await Assert.That(result.Error?.Message ?? "").DoesNotContain("%!build.setting.cache% is in the step but not in your answer");
+        await result.IsSuccess();
+    }
+
+    // A refusal quotes the step's own text and the answer's, so the retry copies the step's: an answer whose variable
+    // doesn't close names the step's variable it should be.
+    [Test]
+    public async Task AnAnswerWhoseVariableDoesNotClose_IsRefused_NamingTheStepsVariable()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("set %x% = %!error.data[1]%"));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
+
+        var result = await Match(goal, "[0] variable.set(Name=%x%, Value=%!error.data[1%])", app.actor.list.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("the step writes `%!error.data[1]%`");
+        await Assert.That(result.Error!.Message).Contains("your answer has `%!error.data[1%]`");
+        await Assert.That(result.Error!.Message).Contains("copy it exactly");
+    }
+
+    // What the step writes and the answer dropped is quoted to be copied exactly.
+    [Test]
+    public async Task WhatTheStepWritesAndTheAnswerDropped_IsToBeCopiedExactly()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("set %Name% to \"each element is born typed\""));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
+
+        var result = await Match(goal, "[0] variable.set(Name=%Name%, Value=\"each element\")", app.actor.list.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("\"each element is born typed\" is in the step but not in your answer: copy it exactly");
     }
 
     [Test]
@@ -386,7 +485,8 @@ public class MatchTests
         var result = await Match(goal, "[0] output.write(Data=\"a\")\n[1] ", app.actor.list.System.Context);
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Message).Contains("step 1 does not parse: a step holds at least one action");
+        await Assert.That(result.Error!.Message).Contains("— does not parse, in: [1]");
+        await Assert.That(result.Error!.Message).Contains("a step holds at least one action");
     }
 
     [Test]
@@ -436,8 +536,11 @@ public class MatchTests
         var goal = MaybeProcess(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (0, "variable.set"), (1, "goal.call"), (2, "output.write"));
 
-        var result = await Match(goal, NanoChildOverIndentAnswer.Replace("{ goal.call(Name=\"ProcessItems\") }", "{ variable.set(Name=%x%, Value=1) }"),
-            app.actor.list.System.Context);
+        var answer = NanoChildOverIndentAnswer.Replace("{ goal.call(Name=\"ProcessItems\") }", "{ variable.set(Name=%x%, Value=1) }");
+        // its number is asked first; the confirmed read refuses the body
+        var asked = await Match(goal, answer, app.actor.list.System.Context);
+        await Assert.That(asked.Error!.Key).IsEqualTo("UnwrittenNumber");
+        var result = await Match(goal, answer, app.actor.list.System.Context, Confirm("s0_variable.set.Value=1", 0.03));
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains(
@@ -478,7 +581,7 @@ public class MatchTests
         await Picked(goal, app.actor.list.System.Context, (4, "condition.if"), (4, "goal.call"));
 
         var result = await Match(goal,
-            "[4] condition.if(Left=%order.coupon%, Operator=isempty, Right=null) { } ; condition.else() { goal.call(Name=\"ApplyCoupon\", Parameter={code: %order.coupon%, order: %order%}) }",
+            "[4] condition.if(Left=%order.coupon%, Operator=isempty, Right=null) { } ; condition.else() { goal.call(Name=\"ApplyCoupon\", Parameter=[{code: %order.coupon%}, {order: %order%}]) }",
             app.actor.list.System.Context);
 
         await result.IsFailure();

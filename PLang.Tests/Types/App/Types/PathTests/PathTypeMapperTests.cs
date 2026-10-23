@@ -25,7 +25,7 @@ public class PathTypeMapperTests
     // the raw string, landing any failure on the carrier Data.
     private static (PLangPath? value, global::app.error.@this? error) Build(string raw, global::app.actor.context.@this ctx)
     {
-        var d = new global::app.data.@this("", new global::app.type.item.@null.@this("path", null), context: ctx);
+        var d = new global::app.data.@this("", new global::app.type.item.@null.@this(new global::app.type.@this("path")), context: ctx);
         var v = PLangPath.Create(raw, d.Type, d);
         return (v, d.Error);
     }
@@ -77,7 +77,7 @@ public class PathTypeMapperTests
 
         // Resolve a Path the way a handler parameter does, then run file.read.
         var (value, _) = Build("greeting.txt", context);
-        var read = new global::app.module.file.Read(context) { Path = new global::app.data.@this<PLangPath>("", (PLangPath)value!),
+        var read = new global::app.module.file.Read(context) { Path = new global::app.data.@this<PLangPath>("", (PLangPath)value!, context: context),
         };
         var result = await read.Start();
         await result.IsSuccess();

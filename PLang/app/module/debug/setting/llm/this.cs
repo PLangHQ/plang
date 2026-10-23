@@ -4,11 +4,14 @@ namespace app.module.debug.setting.llm;
 /// Granular LLM trace flags — <c>%!debug.setting.llm%</c>. Each flag dumps one slice of the API exchange — set
 /// only what you want to see. Flags compose: enabling System and Response gives the system prompt plus the raw
 /// model response, with no user-message or schema noise.
-/// Set via: <c>--debug={"llm":{"system":true,"user":true,"response":true,"schema":true}}</c>
+/// Set via: <c>--debug.setting.llm={"system":true,"user":true,"response":true,"schema":true}</c>
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {
-    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
+    /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
     /// <summary>Dump system messages from each LLM API call.</summary>

@@ -2,7 +2,7 @@
 
 PLang has a built-in debugger that dumps step execution info to stderr. It shows step text, actions, parameters, call stack, and variable values before and after each step.
 
-All debug options are passed as JSON via `--debug={...}`. The JSON properties map to the `debug` settings class (`debug.setting`).
+Debug options are the `debug` settings class (`debug.setting`), written at its path on the command line: one option as `--debug.setting.goal=Start`, several as a dict at the setting's path, `--debug.setting={...}` (`app.` may be left out of any path: `--app.debug.setting…` is the same). Writing a debug setting alone switches debug on, as the bare `--debug` does. `--debug={...}` is refused, naming `--debug.setting`; so is a path no setting answers.
 
 Code: `PLang/app/module/debug/this.cs`
 
@@ -13,22 +13,22 @@ Code: `PLang/app/module/debug/this.cs`
 plang --debug
 
 # Debug a specific goal
-plang '--debug={"goal":"BuildGoal"}'
+plang '--debug.setting={"goal":"BuildGoal"}'
 
 # Debug a specific step index within a goal
-plang '--debug={"goal":"BuildGoal","step":3}'
+plang '--debug.setting={"goal":"BuildGoal","step":3}'
 
 # Watch variables: each prints at every step and logs its create, change and delete
-plang '--debug={"variables":["response","goal"]}'
+plang '--debug.setting={"variables":["response","goal"]}'
 
 # Set max line length (default 500)
-plang '--debug={"length":{"max":2000}}'
+plang '--debug.setting={"length":{"max":2000}}'
 
 # Filter output lines by regex
-plang '--debug={"grep":"actions"}'
+plang '--debug.setting={"grep":"actions"}'
 
 # Combine options
-plang '--debug={"goal":"BuildGoal","step":3,"variables":["actions"],"length":{"max":2000},"grep":"Module"}'
+plang '--debug.setting={"goal":"BuildGoal","step":3,"variables":["actions"],"length":{"max":2000},"grep":"Module"}'
 ```
 
 ## Properties
@@ -44,7 +44,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["actions"],"length":{"m
 | `llm` | object | null | Granular LLM tracing — see [LLM Message Tracing](#llm-message-tracing). |
 | `verbose` | bool | false | Include stack traces in error output. |
 
-> Callstack capture is **not** a `--debug` option — it is its own flag, `--callstack={...}`. See [CallStack](#callstack---callstack).
+> Callstack capture is **not** a `--debug` option — it is its own flag, `--call.setting={...}`. See [CallStack](#callstack---callstack).
 
 ## Detail Levels
 
@@ -53,7 +53,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["actions"],"length":{"m
 **action**: Also shows BEFORE/AFTER for each action within a step. Useful for seeing how `%!data%` flows between actions like `goal.call` → `variable.set`.
 
 ```bash
-plang '--debug={"level":"action","variables":["!data"]}'
+plang '--debug.setting={"level":"action","variables":["!data"]}'
 ```
 
 ## Output Format
@@ -107,7 +107,7 @@ All debug output goes to **stderr** (not stdout), so it doesn't interfere with p
 
 ```bash
 # Build one file, debug the BuildGoal steps, watch a variable
-plang build '--build={"files":"myfile.goal","cache":"skip"}' '--debug={"goal":"BuildGoal","variables":["actionSummary"]}'
+plang build '--build.setting={"files":"myfile.goal","cache":"skip"}' '--debug.setting={"goal":"BuildGoal","variables":["actionSummary"]}'
 ```
 
 The `cache:skip` option bypasses the LLM cache, forcing a fresh LLM call.
@@ -119,7 +119,7 @@ logs each time it is created, changed or deleted. The watch listens to the User 
 store, which announces every create, change and delete for any name; it logs the ones it watches.
 
 ```bash
-plang build '--build={"files":"myfile.goal","cache":"skip"}' '--debug={"variables":["trace"]}'
+plang build '--build.setting={"files":"myfile.goal","cache":"skip"}' '--debug.setting={"variables":["trace"]}'
 ```
 
 Output:
@@ -149,16 +149,16 @@ Why granular: a full trace is too noisy when you're hunting a specific question.
 
 ```bash
 # Just the response — most common when chasing "what did the LLM produce?"
-plang build '--build={"cache":"skip"}' '--debug={"llm":{"response":true}}'
+plang build '--build.setting={"cache":"skip"}' '--debug.setting={"llm":{"response":true}}'
 
 # System prompt only — verify catalog/types render correctly. Bump length.max.
-plang build '--build={"cache":"skip"}' '--debug={"llm":{"system":true},"length":{"max":50000}}'
+plang build '--build.setting={"cache":"skip"}' '--debug.setting={"llm":{"system":true},"length":{"max":50000}}'
 
 # Schema only — when chasing type-fidelity bugs (e.g. permissive value?: object)
-plang build '--build={"cache":"skip"}' '--debug={"llm":{"schema":true}}'
+plang build '--build.setting={"cache":"skip"}' '--debug.setting={"llm":{"schema":true}}'
 
 # Combine flags freely
-plang build '--build={"cache":"skip"}' '--debug={"llm":{"system":true,"response":true},"length":{"max":50000}}'
+plang build '--build.setting={"cache":"skip"}' '--debug.setting={"llm":{"system":true,"response":true},"length":{"max":50000}}'
 ```
 
 Output (each block fires only when its flag is on):
@@ -177,10 +177,10 @@ module.action(Name=value) that the builder parses into the program...
 Combine with `grep` to filter further:
 ```bash
 # Only response lines mentioning a specific module
-plang build '--debug={"llm":{"response":true},"grep":"file.read"}'
+plang build '--debug.setting={"llm":{"response":true},"grep":"file.read"}'
 ```
 
-**Important — the trace files are not the LLM payload.** The `.build/traces/{id}/<goal>.json` files record only `{id, timestamp, goal, subGoals, durationMs}` (plus a `buildError` block on failure) — they do **not** carry what the LLM saw or returned. Always use `--debug={"llm":{...}}` to see the actual API payload; the trace is for which goals ran and timing. (Full trace doc: [trace.md](trace.md).)
+**Important — the trace files are not the LLM payload.** The `.build/traces/{id}/<goal>.json` files record only `{id, timestamp, goal, subGoals, durationMs}` (plus a `buildError` block on failure) — they do **not** carry what the LLM saw or returned. Always use `--debug.setting={"llm":{...}}` to see the actual API payload; the trace is for which goals ran and timing. (Full trace doc: [trace.md](trace.md).)
 
 ## Writing C# Diagnostic Lines (`context.App.Debug.Write`)
 
@@ -196,30 +196,30 @@ Or `await` it at an async call site. Fire-and-forget (`_ =`) is fine when the di
 - `app.Debug.IsEnabled` is the gate. When `--debug` is off, `Write` returns immediately at zero cost. **Leave the calls in source** — they're free in production.
 - When enabled, forwards to the `"debug"` channel — pre-registered to stderr; users can override by re-registering. Goes through the same serializer pipeline as other channel writes, so `[Sensitive]` properties are masked.
 
-**Filter with `--debug={"grep":"..."}`:**
+**Filter with `--debug.setting={"grep":"..."}`:**
 ```bash
-plang build '--debug={"grep":"merge:|goal.call"}'
+plang build '--debug.setting={"grep":"merge:|goal.call"}'
 ```
 Picks out only the diagnostic lines you care about, hiding the rest of the per-step BEFORE/AFTER blocks.
 
 **What to write:**
 - ✅ Type/shape at a boundary: `"value type={x.GetType().Name}, declared={schemaProp.PropertyType.Name}"`
 - ✅ Count/key fields surviving a transform: `"after merge: actions={n}, modifiers={m}"`
-- ❌ Stack traces (use `--debug={"verbose":true}` for that)
-- ❌ Full payload dumps (use `--debug={"llm":{"response":true}}` for LLM data, or `--debug={"variables":[...]}` for vars)
+- ❌ Stack traces (use `--debug.setting={"verbose":true}` for that)
+- ❌ Full payload dumps (use `--debug.setting={"llm":{"response":true}}` for LLM data, or `--debug.setting={"variables":[...]}` for vars)
 - ❌ "I'm here" markers without context
 
-## CallStack (`--callstack`)
+## CallStack (`--call.setting`)
 
 Each actor keeps its **own** call tree at `Actor.CallStack` (a cross-actor call starts a
 separate tree — actor-model style). Structural data (Action / Caller / Cause / Errors) is
 **always on** — every action's push/pop is ~50ns and gives error traces a useful chain
-without any flag. Richer per-knob capture is its **own flag**, `--callstack={...}` — it is
+without any flag. Richer per-knob capture is its **own flag**, `--call.setting={...}` — it is
 no longer carried on `--debug`. The knobs apply to the run's startup actors (System + User):
 
 ```bash
 # Explicit per-knob control — no shorthand; name each knob you want on.
-plang '--callstack={"timing":true,"diff":true,"tags":true,"history":true,"frame":{"max":500}}'
+plang '--call.setting={"timing":true,"diff":true,"tags":true,"history":true,"frame":{"max":500}}'
 ```
 
 | Sub-flag | Default | What it does |
@@ -231,7 +231,7 @@ plang '--callstack={"timing":true,"diff":true,"tags":true,"history":true,"frame"
 | `history` | false | When on, popped Calls stay in `Caller.Children` instead of being removed on dispose. Combined with `frame.max` for retention cap (FIFO eviction). Off → live tree only; popped Calls are removed from Children. |
 | `frame.max` | 1000 | Sibling retention cap when `history:true`. The (N+1)th Push under the same Caller evicts the oldest from Children. Also doubles as the runaway-recursion guard for the Caller chain length — Push throws `CallStackOverflowException` when the chain reaches this depth. |
 
-There is no shorthand — name each knob explicitly. A bare `--callstack` (no object) does nothing.
+There is no shorthand — name each knob explicitly. `--callstack={...}` is refused; the knobs are written at `--call.setting`.
 
 ### Reading from PLang
 

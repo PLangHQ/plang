@@ -12,7 +12,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
     private readonly global::app.@this _app;
     private readonly System.Lazy<System.Threading.Tasks.Task<global::app.data.@this>> _read;
 
-    public @this(global::app.@this app) : base(new List<object?>())
+    public @this(global::app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
     {
         _app = app;
         _read = new(() => Fill(), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
@@ -33,14 +33,14 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
     {
         var context = _app.actor.list.System.Context;
         // the system's names, the app's /system/shortcut/ and the os's; each found as the goal list finds it
-        var system = (await Names("/system/shortcut"))
-            .Union(await Names(_app.OsAbsolutePath + "/system/shortcut"), global::app.type.item.variable.list.@this.Comparer);
+        var system = (await Names(global::app.type.item.path.@this.Resolve("/system/shortcut", context)))
+            .Union(await Names(_app.filesystem.os.Combine("system").Combine("shortcut")), global::app.type.item.variable.list.@this.Comparer);
         foreach (var name in system)
-            if (await Goal("/system/shortcut/" + name) is { } goal) Add(new global::app.shortcut.@this(goal));
-        foreach (var name in await Names("/shortcut"))
+            if (await Goal("/system/shortcut/" + name) is { } goal) Add(new global::app.shortcut.@this(goal, Shortcut));
+        foreach (var name in await Names(global::app.type.item.path.@this.Resolve("/shortcut", context)))
         {
             if (await Goal("/shortcut/" + name) is not { } goal) continue;
-            var shortcut = new global::app.shortcut.@this(goal);
+            var shortcut = new global::app.shortcut.@this(goal, Shortcut);
             if (Items().FirstOrDefault(s => s.IsSystem && global::app.type.item.variable.list.@this.Comparer.Equals(s.Name, shortcut.Name)) is { } taken)
                 return context.Error(new global::app.error.@this(
                     $"{goal.Path} names %!{shortcut.Name}%, a system shortcut ({taken.Goal.Path}) — to change it, write " +
@@ -51,11 +51,13 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
         return context.Ok(this);
     }
 
+    // The type each shortcut is born holding: the app's shortcut.
+    private global::app.type.@this Shortcut => _app.type.list[typeof(global::app.shortcut.@this)];
+
     // The goal names (.goal files, no extension) in `folder`; none when the folder isn't there.
-    private async System.Threading.Tasks.Task<List<string>> Names(string folder)
+    private async System.Threading.Tasks.Task<List<string>> Names(global::app.type.item.path.@this at)
     {
         var context = _app.actor.list.System.Context;
-        var at = global::app.type.item.path.@this.Resolve(folder, context);
         if (!await (await at.Exists(context)).ToBooleanAsync()) return [];
         var listed = await at.List("*.goal", recursive: false, context);
         if (!listed.Success || await listed.Value() is not { } files) return [];
@@ -65,9 +67,9 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
     // The goal the address names, found as a call finds it; one that doesn't load is left out, said on debug.
     private async System.Threading.Tasks.Task<global::app.goal.@this?> Goal(string address)
     {
-        var found = await _app.goal.list.Find(address);
-        if (found.Peek() is global::app.goal.@this goal) return goal;
-        await (_app.Debug?.Write($"shortcut: {address} left out — {found.Error?.Message ?? "not found"}") ?? System.Threading.Tasks.Task.CompletedTask);
+        var data = await _app.goal.list.Find(address);
+        if (data.Peek() is global::app.goal.@this goal) return goal;
+        await (_app.Debug?.Write($"shortcut: {address} left out — {data.Error?.Message ?? "not found"}") ?? System.Threading.Tasks.Task.CompletedTask);
         return null;
     }
 }

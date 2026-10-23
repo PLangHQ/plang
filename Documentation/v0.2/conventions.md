@@ -92,4 +92,4 @@ A boolean option is false by default, and true only when something says so. Name
 **The choices in plang (Ingi, 2026-10-02):** each set is a `[PlangType]` enum beside the concept it configures, with the common case as the default:
 - `Empty: keep | drop` (`empty`, with text's split, `type/item/text/`): `list.split`;
 - `Subfolder: include | skip` (`subfolder`, with the path walk, `type/item/path/`): `file.copy`, `test.discover`;
-- `Cache: use | skip` (`cache`, `module/cache/type/`): `llm.query`, `llm.setting`, `build.setting`; on the command line `--build={"cache":"skip"}`.
+- `Cache: use | skip` (`cache`, `module/cache/type/`): `llm.query`, `llm.setting`, `build.setting`; on the command line `--build.setting={"cache":"skip"}`.

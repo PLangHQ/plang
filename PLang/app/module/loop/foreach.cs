@@ -72,12 +72,14 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         global::app.type.item.variable.@this? keyVariable, System.Collections.Generic.IReadOnlyList<global::app.goal.step.action.@this> body)
     {
         int count = 0;
+        // one ask for the loop: every item's frame is pushed through this door, on this context
+        var setting = await Context.call.Setting();
         await foreach (var (names, failed) in Bound(itemVariable, keyVariable))
         {
             if (failed != null) return failed;
             if (Context.CancellationToken.IsCancellationRequested)
                 return await Result(count, complete: false);
-            await using (Context.call.Push(names))
+            await using (Context.call.Push(names, setting))
                 foreach (var action in body)
                 {
                     var result = await action.Start(Context);
@@ -127,13 +129,13 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
             await foreach (var (names, unread) in Bound(itemVariable, keyVariable))
             {
                 if (unread != null) return unread;
-                items.Add(actor.Task.Start(goal, async own =>
+                items.Add(actor.Task.Start(goal, async token =>
                 {
-                    await places.WaitAsync(own);
+                    await places.WaitAsync(token);
                     try
                     {
-                        using var child = Context.Child(actor, own);
-                        await using (child.call.Isolate(names, caller: from))
+                        using var child = Context.Child(actor, token);
+                        await using (child.call.Isolate(names, await child.call.Setting(), caller: from))
                             foreach (var action in body)
                             {
                                 var result = await action.Start(child);

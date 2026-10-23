@@ -28,7 +28,7 @@ public class PathAskerContextTests
     // A step's read: %name.member% through plang's own variable door, as the asker.
     private static async Task<string?> Read(global::app.actor.context.@this ctx, string variable)
     {
-        var read = await new global::app.type.item.variable.parser.@this(variable).Variable.Single().Start(ctx);
+        var read = await new global::app.type.item.variable.parser.@this(variable, ctx.App.type.list).Variable.Single().Start(ctx);
         return read.Success ? (await read.Value())?.ToString() : "refused: " + read.Error?.Key;
     }
 
@@ -59,8 +59,8 @@ public class PathAskerContextTests
     {
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(app.AbsolutePath, "data"));
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "data", "config.json"), "{\"path\": \"its own key\"}");
+        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(app.filesystem.root.Absolute, "data"));
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.filesystem.root.Absolute, "data", "config.json"), "{\"path\": \"its own key\"}");
         var read = await global::app.type.item.path.@this.Resolve("/data/config.json", ctx).Read(ctx);
         await read.IsSuccess();
         await ctx.Variable.Set("config", read);
@@ -73,7 +73,7 @@ public class PathAskerContextTests
     {
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var inside = System.IO.Path.Combine(app.AbsolutePath, "data", "x.txt");
+        var inside = System.IO.Path.Combine(app.filesystem.root.Absolute, "data", "x.txt");
         var outside = "//tmp/plang-outside-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt";
 
         await Assert.That(global::app.type.item.path.@this.Resolve(inside, ctx).ToString()).IsEqualTo("/data/x.txt");
@@ -86,7 +86,7 @@ public class PathAskerContextTests
     {
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var dir = System.IO.Path.Combine(app.AbsolutePath, "docs");
+        var dir = System.IO.Path.Combine(app.filesystem.root.Absolute, "docs");
         System.IO.Directory.CreateDirectory(dir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "a.txt"), "a");
 

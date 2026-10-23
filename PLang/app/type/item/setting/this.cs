@@ -12,22 +12,25 @@ namespace app.type.item.setting;
 [global::app.Attributes.PlangType("setting")]
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    /// <summary>A node: the path it stands for.</summary>
-    public @this(string path) => Path = path;
+    /// <summary>A node: the path it stands for, born holding <paramref name="type"/> — the app's, handed in by its
+    /// maker.</summary>
+    public @this(string path, global::app.type.@this type)
+        : base(type) => Path = path;
 
-    /// <summary>A class of options: its path is its namespace — a module's read from the module, so
-    /// <c>app.module.llm.setting</c> is <c>llm.setting</c>; a type's read where types are, at <c>app.type</c>, so
-    /// <c>app.type.item.size.setting</c> is <c>app.type.size.setting</c>. A class declared inside what it configures
-    /// (an action's: <c>app.module.llm.decider.setting</c>, the action being a class) is read the same way, through
-    /// its owner: <c>llm.decider.setting</c>.</summary>
-    protected @this()
+    /// <summary>A class of options, born holding its type (the app's list hands it its own class's type). Its path is
+    /// its namespace — a module's read from the module, so <c>app.module.llm.setting</c> is <c>llm.setting</c>; a
+    /// type's read where types are, at <c>app.type</c>, so <c>app.type.item.size.setting</c> is
+    /// <c>app.type.size.setting</c>. A class declared inside what it configures (an action's:
+    /// <c>app.module.llm.decider.setting</c>, the action being a class) is read the same way, through its owner:
+    /// <c>llm.decider.setting</c>.</summary>
+    protected @this(global::app.type.@this type) : base(type)
     {
-        var path = GetType() is { DeclaringType: { } owner } declared
-            ? $"{declared.Namespace}.{owner.Name}.{declared.Name}"
+        var path = GetType() is { DeclaringType: { } owner } @class
+            ? $"{@class.Namespace}.{owner.Name}.{@class.Name}"
             : GetType().Namespace!;
-        const string module = "app.module.", type = "app.type.item.";
+        const string module = "app.module.", at = "app.type.item.";
         Path = path.StartsWith(module) ? path[module.Length..]
-            : path.StartsWith(type) ? "app.type." + path[type.Length..]
+            : path.StartsWith(at) ? "app.type." + path[at.Length..]
             : path;
     }
 
@@ -46,34 +49,34 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>A setting node read as a bool is whether it is on.</summary>
     public override bool IsTruthy() => Enabled.Value;
 
-    /// <summary>A setting is its own stored record read back into its class (decision 789/790): a fresh one of the
+    /// <summary>A setting is its own stored record read back into its class: a new one of the
     /// class the declaration names, each of its options taken from the record. A stored row of an older shape — not
     /// this class's record — is <c>SettingsUnreadable</c>: pre-1.0 there is no reader for it, so it is fixed by
     /// hand, deleted and set again.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this setting) return setting;
         if (raw is global::app.type.item.dict.@this record
-            && declared?.ClrType is { IsAbstract: false } clr && typeof(@this).IsAssignableFrom(clr)
+            && type?.ClrType is { IsAbstract: false } clr && typeof(@this).IsAssignableFrom(clr)
             && clr != typeof(@this))
         {
-            var fresh = (@this)System.Activator.CreateInstance(clr)!;
+            var instance = (@this)System.Activator.CreateInstance(clr, data.Context.App.type.list[clr])!;
             // each option the record holds, read through the option's own type in Apply (the convert walk the
             // CLI flags take); a field that is no option of this class (the base's Enabled, a dropped option) is
             // not applied — the class takes only its own.
             var options = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
             foreach (var entry in record.Entries(data.Context))
-                if (fresh.Option(entry.Name) is not null) options[entry.Name] = entry.Peek();
-            var applied = fresh.Apply(options, data.Context);
-            if (applied.Success) return fresh;
-            data.Fail(Unreadable(fresh.Path, applied.Error));
+                if (instance.Property(entry.Name) is not null) options[entry.Name] = entry.Peek();
+            var applied = instance.Apply(options, data.Context);
+            if (applied.Success) return instance;
+            data.Fail(Unreadable(instance.Path, applied.Error));
             return null;
         }
         if (raw is global::app.type.item.dict.@this)
         {
             // a record declared the base setting with a kind is an older-shape row ({setting, kind: <path>}),
             // whose key is the path its kind names — no reader for it pre-1.0, so it is fixed by hand (loud)
-            if (declared?.kind is { IsEmpty: false } k) { data.Fail(Unreadable(k.Name, null)); return null; }
+            if (type?.kind is { IsEmpty: false } k) { data.Fail(Unreadable(k.Name, null)); return null; }
             // a bare base setting (a node — a module/action with no class of its own) is not made FROM a record;
             // it reads as absent, as the base setting read did before 789. A clean decline (no Fail) that the
             // record reader answers with the null value, never the loud SettingsUnreadable.
@@ -90,14 +93,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         => new($"setting '{key}' was saved in an older shape and can't be read — delete it and set it again.",
             "SettingsUnreadable", 400) { list = cause is { } c ? new() { c } : new() };
 
-    /// <summary>A settings CLASS is its own type, named like any type by its namespace
-    /// (<c>app.module.llm.setting</c>) — settings are settings, not kinds (decision 774); a saved row
-    /// reads back into its class by its KEY (the path), never by a kind. A bare NODE (a module/action
-    /// with no class) is a value of the base <c>setting</c> type.</summary>
-    protected internal override global::app.type.@this Type
-        => GetType() == typeof(@this)
-            ? new(NameOf(typeof(@this)), typeof(@this))
-            : new(NameOf(GetType()), GetType());
 
     /// <summary>A structure — written through the reflection kind, its [Out] members.</summary>
     public override bool IsLeaf => false;
@@ -108,10 +103,11 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     {
         // a setting answers its own identity and teaching — its address and its option rows — beside its options
         if (key.Equals(nameof(Path), System.StringComparison.OrdinalIgnoreCase))
-            return new global::app.data.@this(key, new global::app.type.item.text.@this(Path), parent: parent);
+            return new global::app.data.@this(key, new global::app.type.item.text.@this(Path,
+                parent.Context.App.type.list[typeof(global::app.type.item.text.@this)]), parent: parent);
         if (key.Equals(nameof(Rows), System.StringComparison.OrdinalIgnoreCase))
             return new global::app.data.@this(key, Rows(parent.Context), parent: parent);
-        if ((Option(key) ?? Switch(key)) is { } option)
+        if ((Property(key) ?? Switch(key)) is { } option)
             return new global::app.data.@this(key, option.GetValue(this), parent: parent);
         return await Next(parent, key);
     }
@@ -127,23 +123,48 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     protected virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Next(global::app.data.@this parent, string key)
         => System.Threading.Tasks.ValueTask.FromResult(parent.Context.NotFound(key));
 
+    /// <summary>What a step's write, save or remove of this setting is denied with, when its class is an actor's own
+    /// (<see cref="OwnAttribute"/>): only its owner's code writes its row — a grant is given when the actor is asked at
+    /// the gate, an identity changes through the identity actions. Null for any other setting.</summary>
+    internal global::app.error.@this? Refusal => System.Attribute.IsDefined(GetType(), typeof(OwnAttribute))
+        ? new($"'{Path}' is the actor's own: no step writes, saves or removes it — a grant is given when the actor is asked at the gate; an identity changes through the identity actions.",
+            "PermissionDenied", 403)
+        : null;
+
+    /// <summary>Whether a saved row of this setting signed by <paramref name="signature"/> is the app's own — signed by
+    /// one of the app's identities. A row signed by any other key (a store shipped with a cloned app) verifies against
+    /// the key it carries, and is not the app's.</summary>
+    internal virtual async System.Threading.Tasks.ValueTask<bool> IsOwn(global::app.type.item.signature.@this signature,
+        global::app.actor.context.@this context)
+    {
+        var (provider, missing) = context.App.Code.Get<global::app.module.identity.code.IIdentity>();
+        if (provider == null) throw new global::app.error.AppException(missing!);
+        var identities = await provider.ListAsync(new global::app.module.identity.list(context));
+        if (!identities.Success) throw new global::app.error.AppException(identities.Error!);
+        foreach (var each in (await identities.Value())!.Items(context))
+            if (await each.Value<global::app.module.identity.Identity>() is { } identity
+                && string.Equals(identity.PublicKey, signature.Identity.ToString(), System.StringComparison.Ordinal)) return true;
+        return false;
+    }
+
     /// <summary>Writes an option for this run: the value lands in the writer's settings under this class's
     /// path (<c>set %!app.goal.list.setting.os% = true</c> → <c>app.goal.list.setting.os</c>), where the next read
     /// builds it from. The answer is a copy with the option set; this instance — the one the settings handed out,
-    /// read-only — is unchanged.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex,
+    /// read-only — is unchanged. An actor's own setting is denied (<see cref="Refusal"/>).</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex,
         object? value, global::app.actor.context.@this context)
     {
-        if (Option(key) == null && Switch(key)?.SetMethod == null)
-            throw new System.NotSupportedException($"setting '{Path}' has no option '{key}'");
+        if (Refusal is { } refused) return context.Error(refused);
+        if (Property(key) == null && Switch(key)?.SetMethod == null)
+            return context.Error(new global::app.error.@this($"setting '{Path}' has no option '{key}'", "NoOption", 404));
         // onto a copy through the one convert walk (a choice from its text) — a value the option can't take is
         // refused before this run holds it
-        var raw = value is global::app.data.@this held ? await held.Value() : value;
+        var raw = value is global::app.data.@this given ? await given.Value() : value;
         var set = Copy();
         var applied = set.Apply(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { [key] = raw }, context);
-        if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
+        if (!applied.Success) return context.Error(applied.Error!);
         await Write(key, value, context);
-        return set;
+        return context.Ok(set);
     }
 
     /// <summary>This run's value for <paramref name="key"/> under this setting's path, in the writer's
@@ -151,9 +172,9 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// goes in whole.</summary>
     protected async System.Threading.Tasks.ValueTask Write(string key, object? value, global::app.actor.context.@this context)
     {
-        var written = value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context);
-        await written.Value();
-        await context.Setting.Set($"{Path}.{key}", written);
+        var data = value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context);
+        await data.Value();
+        context.Setting.Set($"{Path}.{key}", data);
     }
 
     /// <summary>
@@ -173,7 +194,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
             if (prop?.SetMethod?.IsPublic != true)
                 return context.Error(new global::app.error.@this(
-                    $"Unknown setting '{kvp.Key}' on {node.GetType().Name} — no public-settable property.",
+                    $"Unknown setting '{kvp.Key}' on {(node is @this setting ? setting.Path : context.App.type.list[node.GetType()].Name)} — no public-settable property.",
                     "UnknownSetting", 400));
 
             if (kvp.Value is IDictionary<string, object?> sub && IsComposite(prop.PropertyType))
@@ -201,22 +222,22 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 object? val;
                 try
                 {
-                    var built = global::app.type.item.@this.Create(kvp.Value, context);
+                    var item = global::app.type.item.@this.Create(kvp.Value, context);
                     // a slot the born value doesn't fit (a choice from its text, a list<path> from a list) is
                     // made by the slot's own type, through the type door; one it refuses with why (a culture no one
                     // has) is the answer
-                    if (!prop.PropertyType.IsInstanceOfType(built))
+                    if (!prop.PropertyType.IsInstanceOfType(item))
                     {
                         var asked = new global::app.data.@this(kvp.Key, context: context);
-                        if (context.App.type.list[prop.PropertyType].Make(kvp.Value, asked) is { } made
-                            && prop.PropertyType.IsInstanceOfType(made))
-                            built = made;
+                        if (context.App.type.list[prop.PropertyType].Make(kvp.Value, asked) is { } value
+                            && prop.PropertyType.IsInstanceOfType(value))
+                            item = value;
                         else if (!asked.Success)
                             return context.Error(asked.Error!);
                     }
                     // a list whose element is itself a closed type (list<choice<visibility>>) the type door can't
                     // close yet — its element kind names no single type — is re-tagged by its CLR form
-                    val = prop.PropertyType.IsInstanceOfType(built) ? built : built.Clr(prop.PropertyType);
+                    val = prop.PropertyType.IsInstanceOfType(item) ? item : item.Clr(prop.PropertyType, context);
                 }
                 catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
                     or System.OverflowException or System.NotSupportedException)
@@ -227,6 +248,31 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 }
                 prop.SetValue(node, val);
             }
+        }
+        // a member the values leave out holds its declared default, made by its type from the app ([Default("iec")] is
+        // the app's iec); one that can't be null and declares none holds the empty value its own class is born as,
+        // holding the app's type for it: an empty list or dict, a nested setting at its defaults, the machine's culture
+        const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
+            | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+        var nullability = new System.Reflection.NullabilityInfoContext();
+        foreach (var member in node.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            if (member.SetMethod?.IsPublic != true || !typeof(global::app.type.item.@this).IsAssignableFrom(member.PropertyType)
+                || member.GetValue(node) != null) continue;
+            if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.DefaultAttribute>(member) is { } @default)
+            {
+                var asked = new global::app.data.@this(member.Name, context: context);
+                if (context.App.type.list[member.PropertyType].Make(@default.Value, asked) is { } value
+                    && member.PropertyType.IsInstanceOfType(value))
+                    member.SetValue(node, value);
+                else
+                    return context.Error(asked.Error ?? new global::app.error.@this(
+                        $"setting '{member.Name}' declares a default its {member.PropertyType.Name} cannot be made from: {@default.Value}",
+                        "TypeConversionFailed", 400));
+            }
+            else if (nullability.Create(member).WriteState != System.Reflection.NullabilityState.Nullable
+                && member.PropertyType.GetConstructor(any, [typeof(global::app.type.@this)]) is { } empty)
+                member.SetValue(node, empty.Invoke([context.App.type.list[member.PropertyType]]));
         }
         return context.Ok();
     }
@@ -246,17 +292,72 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     // A composite the walk found null: one that takes a context gets the asker's; else parameterless.
     private object Construct(System.Type t, global::app.actor.context.@this context)
+        => System.Activator.CreateInstance(t, context.App.type.list[t])!;
+
+    /// <summary>The property of the option named <paramref name="key"/> — a public settable property this class
+    /// declares (the base's own members are not options); null when there is none.</summary>
+    internal System.Reflection.PropertyInfo? Property(string key)
+        => Options.FirstOrDefault(o => string.Equals(o.Name, key, System.StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The paths this setting goes by: its own, and it without <c>app.</c> (<c>app.channel.setting</c>,
+    /// <c>channel.setting</c>).</summary>
+    public IEnumerable<string> Paths
     {
-        var withContext = t.GetConstructor(new[] { typeof(global::app.actor.context.@this) });
-        return withContext != null
-            ? withContext.Invoke(new object[] { context })
-            : System.Activator.CreateInstance(t)!;
+        get
+        {
+            const string app = "app.";
+            yield return Path;
+            if (Path.StartsWith(app, System.StringComparison.OrdinalIgnoreCase)) yield return Path[app.Length..];
+        }
     }
 
-    /// <summary>The option named <paramref name="key"/> — a public settable property this class declares
-    /// (the base's own members are not options); null when there is none.</summary>
-    internal System.Reflection.PropertyInfo? Option(string key)
-        => Options.FirstOrDefault(o => string.Equals(o.Name, key, System.StringComparison.OrdinalIgnoreCase));
+    /// <summary>Takes <paramref name="value"/> at <paramref name="path"/> — a path this setting goes by, then an option
+    /// (<c>channel.setting.format</c>, <c>call.setting.diff.deep</c>), or its own alone with a dict of its options — onto a
+    /// copy of this setting, through the one convert walk. Answers where each value it sets is kept, by address
+    /// (<c>{"app.test.setting.timeout": "5s", "app.test.setting.parallel": 3}</c>), or the refusal: a path that isn't this
+    /// setting's, an option it doesn't have, a value its option can't take, or an actor's own setting
+    /// (<see cref="Refusal"/>).</summary>
+    public global::app.data.@this<global::app.type.item.dict.@this> Apply(string path, object? value, global::app.actor.context.@this context)
+    {
+        if (Refusal is { } refused) return context.Error<global::app.type.item.dict.@this>(refused);
+        foreach (var address in Paths)
+        {
+            var isOwnPath = string.Equals(path, address, System.StringComparison.OrdinalIgnoreCase);
+            if (!isOwnPath && !path.StartsWith(address + ".", System.StringComparison.OrdinalIgnoreCase)) continue;
+            // the setting's own path takes a dict of its options; an option's path takes its value
+            var options = isOwnPath ? value as IDictionary<string, object?> : Nested(path[(address.Length + 1)..], value);
+            if (options == null)
+                return context.Error<global::app.type.item.dict.@this>(new global::app.error.@this(
+                    $"'{path}' is the setting {Path}: give it its options, {{\"option\": value}}, or name one ({path}.<option>).",
+                    "TypeConversionFailed", 400));
+            // the options must fit, on a copy: this setting is read-only
+            var fits = Copy().Apply(options, context);
+            if (!fits.Success) return context.Error<global::app.type.item.dict.@this>(fits.Error!);
+            var values = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
+            Leaves(Path, options, values);
+            return context.Ok(values);
+        }
+        return context.Error<global::app.type.item.dict.@this>(new global::app.error.@this(
+            $"'{path}' is not a path of the setting {Path}.", "UnknownSetting", 400));
+    }
+
+    // Each leaf of options, at its address under address (diff.deep → app.call.setting.diff.deep), into values.
+    private void Leaves(string address, IDictionary<string, object?> options, global::app.type.item.dict.@this values)
+    {
+        foreach (var (key, value) in options)
+            if (value is IDictionary<string, object?> nested) Leaves($"{address}.{key}", nested, values);
+            else values.Set($"{address}.{key}", value);
+    }
+
+    // An option path's value as the options it sets: format → {format: v}, diff.deep → {diff: {deep: v}}.
+    private IDictionary<string, object?> Nested(string option, object? value)
+    {
+        var names = option.Split('.');
+        IDictionary<string, object?> options = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { [names[^1]] = value };
+        for (var i = names.Length - 2; i >= 0; i--)
+            options = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { [names[i]] = options };
+        return options;
+    }
 
     /// <summary>A copy of this setting, its own to change: every option as it is, an owned setting (a composite —
     /// debug's <c>length</c>, math's <c>equal</c>) copied too, so nothing is shared with this one. What the settings
@@ -285,8 +386,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>This setting's options as the builder teaches them — each by the name a <c>%!path%</c>
     /// writes (<c>cache</c>), its type (named through <paramref name="context"/>'s types), and its default
     /// (the value itself, which writes its own text); a sensitive option shows no default. The rows the
-    /// decider prompt reads from what <c>step.Setting</c> holds — moved here from the setting kind (774:
-    /// the value holds what it offers). Takes the asker's context, so the value need store none.</summary>
+    /// decider prompt reads from what <c>step.Setting</c> holds — the value holds what it offers. Takes the asker's context, so the value need store none.</summary>
     public global::app.type.property.list.@this Rows(global::app.actor.context.@this context)
     {
         var rows = new global::app.type.property.list.@this();

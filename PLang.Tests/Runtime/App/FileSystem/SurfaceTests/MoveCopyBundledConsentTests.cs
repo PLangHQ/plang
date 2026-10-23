@@ -24,15 +24,16 @@ public class MoveCopyBundledConsentTests
         public string LastQuestion { get; private set; } = "";
         public int AskCount { get; private set; }
         private readonly string _answer;
-        public CapturingChannel(string answer)
+        private readonly global::app.actor.context.@this _ctx;
+        public CapturingChannel(string answer, global::app.actor.context.@this ctx)
         {
-            _answer = answer; Name = "input";
+            _answer = answer; _ctx = ctx; Name = "input";
             Direction = global::app.channel.ChannelDirection.Bidirectional;
         }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok());
+            => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+            => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             LastQuestion = (action.Question.Peek()?.ToString()) ?? "";
@@ -54,14 +55,14 @@ public class MoveCopyBundledConsentTests
         // Source out-of-root (no grant), destination in-root (auto-granted).
         // The bundled prompt should mention only the source.
         var app = NewApp(out var root);
-        var ch = new CapturingChannel("a");
+        var ch = new CapturingChannel("a", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
         System.IO.File.WriteAllText(srcFile, "data");
-        var src = new Path(srcFile);
-        var dst = new Path(System.IO.Path.Combine(root, "y"));
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "y"));
 
         var result = await src.MoveTo(dst, overwrite: true, app.actor.list.User.Context);
         await result.IsSuccess();
@@ -77,7 +78,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_BothPathsMissing_ProducesBundledAsk_OneQuestionTwoPaths()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("a");
+        var ch = new CapturingChannel("a", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
@@ -86,8 +87,8 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
 
         var result = await src.MoveTo(dst, overwrite: true, app.actor.list.User.Context);
         await result.IsSuccess();
@@ -103,7 +104,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Copy_MirrorsMove_BundledBehavior()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("a");
+        var ch = new CapturingChannel("a", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
@@ -112,8 +113,8 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
 
         var result = await src.CopyTo(dst, overwrite: true, subfolder: true, app.actor.list.User.Context);
         await result.IsSuccess();
@@ -125,7 +126,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task BundledAsk_AnswerA_StoresBothGrants_SourceReadAndDestWrite()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("a");
+        var ch = new CapturingChannel("a", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
@@ -134,32 +135,35 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
         await src.MoveTo(dst, overwrite: true, app.actor.list.User.Context);
 
         // Both grants landed.
         await Assert.That(await app.actor.list.User.Permission.Find(src, global::app.type.item.permission.Verb.read)).IsNotNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(src, global::app.type.item.permission.Verb.delete)).IsNotNull();
         await Assert.That(await app.actor.list.User.Permission.Find(dst, global::app.type.item.permission.Verb.write)).IsNotNull();
     }
 
     private sealed class StatelessChannel : global::app.channel.type.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        private readonly global::app.actor.context.@this _ctx;
+        public StatelessChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok());
+            => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+            => Task.FromResult(_ctx.Ok((object?)null));
     }
 
     // Nobody able to answer (a closed input): the ask fails ChannelEof.
     private sealed class EofChannel : global::app.channel.@this
     {
-        public EofChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        private readonly global::app.actor.context.@this _ctx;
+        public EofChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok());
+            => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+            => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
             => Task.FromResult(action.Context.Error(new global::app.error.NoAnswer("no interactive answerer")));
     }
@@ -168,13 +172,13 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_BundledAsk_EmptyAnswer_IsDenied_AskedOnce()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("");
+        var ch = new CapturingChannel("", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var srcFile = System.IO.Path.Combine(ForeignDir(), "x");
         System.IO.File.WriteAllText(srcFile, "data");
         var dstFile = System.IO.Path.Combine(ForeignDir(), "y");
 
-        var result = await new Path(srcFile).MoveTo(new Path(dstFile), overwrite: true, app.actor.list.User.Context);
+        var result = await app.actor.list.User.Context.File(srcFile).MoveTo(app.actor.list.User.Context.File(dstFile), overwrite: true, app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
@@ -186,12 +190,12 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_BundledAsk_ClosedInput_IsPermissionDenied_WithTheChannelCause()
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new EofChannel());
+        app.actor.list.User.Channel.Register(new EofChannel(app.actor.list.User.Context));
         var srcFile = System.IO.Path.Combine(ForeignDir(), "x");
         System.IO.File.WriteAllText(srcFile, "data");
         var dstFile = System.IO.Path.Combine(ForeignDir(), "y");
 
-        var result = await new Path(srcFile).MoveTo(new Path(dstFile), overwrite: true, app.actor.list.User.Context);
+        var result = await app.actor.list.User.Context.File(srcFile).MoveTo(app.actor.list.User.Context.File(dstFile), overwrite: true, app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
@@ -202,7 +206,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_BundledAsk_AnswerN_ReturnsPermissionDenied_NoFsMutation()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("n");
+        var ch = new CapturingChannel("n", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
@@ -211,8 +215,8 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
 
         var result = await src.MoveTo(dst, overwrite: true, app.actor.list.User.Context);
         await result.IsFailure();
@@ -227,7 +231,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Copy_BundledAsk_AnswerN_ReturnsPermissionDenied_NoFsMutation()
     {
         var app = NewApp(out _);
-        var ch = new CapturingChannel("n");
+        var ch = new CapturingChannel("n", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
@@ -236,8 +240,8 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
 
         var result = await src.CopyTo(dst, overwrite: true, subfolder: true, app.actor.list.User.Context);
         await result.IsFailure();
@@ -249,7 +253,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_StatelessChannel_BubblesDataAskUnchanged_NoFsMutation()
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new StatelessChannel());
+        app.actor.list.User.Channel.Register(new StatelessChannel(app.actor.list.User.Context));
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -257,8 +261,8 @@ public class MoveCopyBundledConsentTests
         var dstDir = ForeignDir();
         var dstFile = System.IO.Path.Combine(dstDir, "y");
 
-        var src = new Path(srcFile);
-        var dst = new Path(dstFile);
+        var src = app.actor.list.User.Context.File(srcFile);
+        var dst = app.actor.list.User.Context.File(dstFile);
 
         var result = await src.MoveTo(dst, overwrite: true, app.actor.list.User.Context);
         // Stateless: ask result is Exit-typed — Move bubbles it unchanged.
@@ -282,7 +286,7 @@ public class MoveCopyBundledConsentTests
         var roundTripped = await System.IO.File.ReadAllTextAsync(abs);
         await Assert.That(roundTripped).IsEqualTo("v1-still-here");
         // And the v2 surface sees the same bytes.
-        var v2 = new Path(abs);
+        var v2 = app.actor.list.User.Context.File(abs);
         var v2Read = await v2.Touch(app.actor.list.User.Context);
         await v2Read.IsSuccess();
         await Assert.That((await v2Read.Value())?.ToString()).IsEqualTo("v1-still-here");

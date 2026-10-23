@@ -294,8 +294,8 @@ public class PermissionTests : IDisposable
     {
         Context.Actor!.Channel.Register(new CannedAnswerChannel(answer));
         var made = Make.Goal(Context, "Run" + Guid.NewGuid().ToString("N")[..6], Make.Step("run it"));
-        var step = new global::app.goal.step.@this { Goal = made };
-        var read = new global::app.goal.step.action.formal.Reader(step, Context.App.module.list).Read(formal, Context);
+        var step = new global::app.goal.step.@this(Context.App.type.list) { Goal = made };
+        var read = await new global::app.goal.step.action.formal.Reader(step, Context.App.module.list).Read(formal, Context);
         await read.IsSuccess();
         var actions = ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToArray();
         var goal = Make.Goal(Context, made.Name, Make.Step(formal, actions));

@@ -6,9 +6,7 @@ namespace app.type.item.number;
 /// The Ladder — the cross-kind RELATION (which size an overflow climbs to), the one place that knows
 /// the ORDER between kinds. "int overflows to long" is not int's knowledge nor long's — it's knowledge
 /// about the order, so it lives here, keyed by kind NAME (the kind's identity). A LEVEL owns its range
-/// and answers its own <see cref="Level.Fits"/>. Logic is byte-for-byte the old tower; only the key
-/// type (NumberKind enum → name token) and the names (Tower→Ladder, Rung→Level, NarrowInteger→Narrow)
-/// changed. The three arithmetic categories (integer / binary-float / decimal) live here too.
+/// and answers its own <see cref="Level.Fits"/>. The three arithmetic categories (integer / binary-float / decimal) live here too.
 /// </summary>
 public sealed partial class @this
 {
@@ -111,7 +109,10 @@ public sealed partial class @this
     protected internal override bool IsKind(string name)
     {
         if (base.IsKind(name)) return true;
-        var named = System.Linq.Enumerable.FirstOrDefault(Kinds.Values, kind => kind.Names(name));
+        // the kinds its family names — the app's number entry's; an operator-born number (a type built from the class,
+        // no app) names them by the class's own
+        var named = Type.Family.kind[name] as kind.@this
+                    ?? System.Linq.Enumerable.FirstOrDefault(Kinds.Values, kind => kind.Names(name));
         if (named == null) return false;
         if (CategoryOf(named.Name) != Category.Integer) return true;
         BigInteger? whole = Cat switch

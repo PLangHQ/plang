@@ -21,7 +21,37 @@ public class Fluid : ITemplate
     {
         var parser = new FluidParser();
         parser.RegisterExpressionTag("callGoal", CallGoalTagAsync);
+        // A template's order (`>`, `<`, `>=`, `<=`) is the values' own: liquid's operators order only its own number
+        // and string classes, so a plang value would never order.
+        parser.RegisteredOperators[">"] = (left, right) => new Ordered(left, right, global::app.data.Comparison.Greater, false);
+        parser.RegisteredOperators[">="] = (left, right) => new Ordered(left, right, global::app.data.Comparison.Greater, true);
+        parser.RegisteredOperators["<"] = (left, right) => new Ordered(left, right, global::app.data.Comparison.Less, false);
+        parser.RegisteredOperators["<="] = (left, right) => new Ordered(left, right, global::app.data.Comparison.Less, true);
         return parser;
+    }
+
+    /// <summary>
+    /// A template's order between two values, asked of the values themselves: each a plang value (a liquid literal
+    /// made the value the render's context makes of it), ordered by its own <c>Compare</c>. True when the order is
+    /// <paramref name="wanted"/>, or equal when <paramref name="orEqual"/>; a value with no order to the other
+    /// (nil, a dict against a number) is false.
+    /// </summary>
+    private sealed class Ordered(global::Fluid.Ast.Expression left, global::Fluid.Ast.Expression right,
+        global::app.data.Comparison wanted, bool orEqual) : global::Fluid.Ast.BinaryExpression(left, right)
+    {
+        public override async ValueTask<FluidValue> EvaluateAsync(TemplateContext ctx)
+        {
+            var context = (global::app.actor.context.@this)ctx.AmbientValues["context"];
+            var a = await Left.EvaluateAsync(ctx);
+            var b = await Right.EvaluateAsync(ctx);
+            if (a.IsNil() || b.IsNil()) return BooleanValue.False;
+            var order = await Plang(a, context).Compare(Plang(b, context), context);
+            return BooleanValue.Create(order == wanted || (orEqual && order == global::app.data.Comparison.Equal));
+        }
+
+        // the plang value a liquid value stands for: one it holds whole, else the value its raw form makes
+        private static global::app.type.item.@this Plang(FluidValue value, global::app.actor.context.@this context)
+            => value is Item plang ? plang.Held : global::app.type.item.@this.Create(value.ToObjectValue(), context);
     }
 
     public async Task<global::app.data.@this> Render(Render action)
@@ -85,23 +115,24 @@ public class Fluid : ITemplate
         options.ValueConverters.Add(value =>
             value is global::app.type.item.@null.@this ? NilValue.Instance : null);
 
-        // A plang container — a dict, a list, a json host, a file's content, any value that is not a
-        // leaf — is one Fluid value that reads through the item's own doors (Item, below), whatever the
-        // container is. Converters run wherever FluidValue.Create does — the variable-binding loops
-        // below and every member or element a render reaches.
+        // A plang value — a dict, a list, a file, a number, a duration, any value — is one Fluid value that answers
+        // each question Liquid asks through the value's own doors (Item, below): how it shows (its Output), whether
+        // it is true, how it compares, what it holds. Converters run wherever FluidValue.Create does — the
+        // variable-binding loops below and every member or element a render reaches.
+        var culture = (await action.Context.Setting.Get<global::app.setting.@this>()).Culture;
         options.ValueConverters.Add(value =>
-            value is global::app.type.item.@this { IsLeaf: false } container ? Item.Liquid(container, action.Context, options) : null);
+            value is global::app.type.item.@this item ? Item.Liquid(item, action.Context, options, culture) : null);
 
         // `{{ x | json }}` writes the value through plang's json format, as the json writer shows it, compact
         // (liquid's `json: true` indent is not honoured). Liquid's own json filter reflects the C# object behind
         // the value (IsSequence, RawBytes, …). The value is taken as it is: a text holding %…% is those characters.
         options.Filters.AddFilter("json", async (input, _, _) =>
         {
-            var value = new global::app.data.@this("", global::app.type.item.@this.Create(input.ToObjectValue(), action.Context),
-                context: action.Context);
+            var value = new global::app.data.@this("", input is Item plang ? plang.Held
+                : global::app.type.item.@this.Create(input.ToObjectValue(), action.Context), context: action.Context);
             using var json = new MemoryStream();
-            var written = await action.Context.App.type.list.Mime("application/json").Encode(json, value, action.Context);
-            if (!written.Success) throw new AppException(written.Error!);
+            var answer = await action.Context.App.type.list.Mime("application/json").Encode(json, value, action.Context);
+            if (!answer.Success) throw new AppException(answer.Error!);
             return new StringValue(System.Text.Encoding.UTF8.GetString(json.ToArray()));
         });
 
@@ -109,12 +140,11 @@ public class Fluid : ITemplate
         // the value's own text form, never the C# object's ToString.
         options.Filters.AddFilter("text", async (input, _, _) =>
         {
-            var held = input.ToObjectValue();
-            var value = new global::app.data.@this("",
-                held as global::app.type.item.@this ?? global::app.type.item.@this.Create(held, action.Context), context: action.Context);
+            var value = new global::app.data.@this("", input is Item plang ? plang.Held
+                : global::app.type.item.@this.Create(input.ToObjectValue(), action.Context), context: action.Context);
             using var text = new MemoryStream();
-            var written = await action.Context.App.type.list.Mime("text/plain").Encode(text, value, action.Context);
-            if (!written.Success) throw new AppException(written.Error!);
+            var answer = await action.Context.App.type.list.Mime("text/plain").Encode(text, value, action.Context);
+            if (!answer.Success) throw new AppException(answer.Error!);
             return new StringValue(System.Text.Encoding.UTF8.GetString(text.ToArray()));
         });
 
@@ -155,23 +185,24 @@ public class Fluid : ITemplate
             var rendered = writer.ToString();
             // The rendered characters go through the declared format's OWN birth (kind.Decode — the same door a
             // url served that format decodes through, content.@this): a .json template is born an unread
-            // {item, json} (773/804). A plain or inline template has no format and is born a text. Never a late
-            // stamp — json is the item's kind, never put onto a text (773).
+            // {item, json}. A plain or inline template has no format and is born a text. Never a late
+            // stamp — json is the item's kind, never put onto a text.
             // The rendered characters ARE text. A format a program then navigates as a structure — json, the
-            // item's kind (773/804) — rests as that structure through its own birth, so a rendered .json is an
+            // item's kind — rests as that structure through its own birth, so a rendered .json is an
             // unread {item, json}. Any other format (html, md: a code/text format) is the rendered characters
             // themselves, a plain text — never a late stamp, and never a non-text value that a text comparison
             // then refuses.
             return format is { Name: "item" }
                 ? await format.kind.Decode(System.Text.Encoding.UTF8.GetBytes(rendered), action.Context)
-                : action.Context.Ok(new global::app.type.item.text.@this(rendered));
+                : action.Context.Ok(new global::app.type.item.text.@this(rendered,
+                    action.Context.App.type.list[typeof(global::app.type.item.text.@this)]));
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             // Fluid wraps what the template's code threw (a TargetInvocationException): a program's error
             // inside the template — an unknown goal, a failed include — is the render's answer, whole.
             for (var inner = ex; inner != null; inner = inner.InnerException)
-                if (inner is AppException carried) return action.Context.Error(carried.Error);
+                if (inner is AppException exception) return action.Context.Error(exception.Error);
 
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
             // Its Message is the useless "Exception has been thrown by the target of an invocation" — dig to
@@ -221,10 +252,9 @@ public class Fluid : ITemplate
     {
         public async Task<object> GetAsync(object obj, string name, TemplateContext ctx)
         {
-            // Resolve through the Value door (references/computed/prose resolve), then lower a LEAF
-            // to its raw backing so Fluid sees a real bool/string/number (truthiness, comparison,
-            // `where:`); a container or host passes through as its item — the converters wrap a
-            // dict/list into a view, a host re-enters this door on its next member. A value wanted in
+            // Resolve through the Value door (references/computed/prose resolve); the value passes through as its
+            // item, which the converter makes the one Fluid value that answers for it (its text, truth, order and
+            // members its own). A value wanted in
             // its AUTHORED form is never member-accessed here — it's embedded via the `store` filter,
             // which drives the value's own Store writer (%refs% literal) instead of this resolve door.
             var member = await new global::app.data.@this("", obj, context: context).Get(name);
@@ -232,8 +262,8 @@ public class Fluid : ITemplate
             // a member that is not there is nil (`{% if a.Examples %}` over an absent file); one that is there and
             // could not be read (an I/O error, a timeout, a refused read) fails the render — never an empty value
             if (member.Error is { Status.IsNotFound: false } failed) throw new AppException(failed);
-            // A span stays the plang value: Fluid has no span of its own and would read it as a 1970 date.
-            return (resolved is global::app.type.item.@this value ? (value.Backing is TimeSpan ? value : value.Backing) : resolved)!;
+            // the plang value whole: it answers for itself in the template (Item, below)
+            return resolved!;
         }
 
         // The value door is async (a path stat, a computed render). Templates render via
@@ -245,29 +275,37 @@ public class Fluid : ITemplate
     }
 
     /// <summary>
-    /// A plang container as a template sees it — any item that is not a leaf, read through the item's own
-    /// doors: a member or an index through its <c>Get</c> (a file reference narrows to its content there, a
-    /// json host descends by its kind), its children through its <c>EnumerateItems</c>. It reaches Fluid in
-    /// liquid's own two shapes, as the item says it holds its children (<see cref="global::app.type.item.@this.IsSequence"/>):
-    /// by position, an array — so <c>join</c>, <c>sort</c>, <c>map</c>, <c>where</c> act on it; by name, a hash —
-    /// a <c>{% for %}</c> yields <c>[key, value]</c> pairs (<c>{% for c in decider.common %}{{ c[0] }}</c>). A leaf
-    /// reached is handed to Fluid as its raw backing, so truthiness, comparison and <c>where:</c> see a real
-    /// string or number.
+    /// A plang value as a template sees it — any item, answering each question Liquid asks through its own doors:
+    /// how it shows, its Output written as text in the render's culture (<c>30s</c>, <c>7,47</c> in is-IS), never a
+    /// ToString; whether it is true, its own truthiness; how it equals and orders, its own <c>Compare</c>; a member or
+    /// an index through its <c>Get</c> (a file reference narrows to its content there, a json host descends by its
+    /// kind); its children through its <c>EnumerateItems</c>. A value that holds its children by position reaches
+    /// Fluid as liquid's array (<see cref="global::app.type.item.@this.IsSequence"/>) — so <c>join</c>, <c>sort</c>,
+    /// <c>map</c>, <c>where</c> act on it; any other iterates as <c>[key, value]</c> pairs
+    /// (<c>{% for c in decider.common %}{{ c[0] }}</c>).
     /// </summary>
-    private sealed class Item(global::app.type.item.@this item, global::app.actor.context.@this context) : ObjectValueBase(item)
+    private sealed class Item(global::app.type.item.@this item, global::app.actor.context.@this context, TemplateOptions options,
+            global::app.type.item.culture.@this culture)
+        : ObjectValueBase(item)
     {
-        /// <summary><paramref name="container"/> in the liquid shape it holds its children in.</summary>
-        internal static FluidValue Liquid(global::app.type.item.@this container, global::app.actor.context.@this context,
-            TemplateOptions options)
-            => container.IsSequence
-                ? new ArrayValue(container.EnumerateItems(context).Select(pair => Lowered(pair.value.Peek(), options)).ToList())
-                : new Item(container, context);
+        /// <summary><paramref name="value"/> in the liquid shape it holds its children in, its numbers shown in
+        /// <paramref name="culture"/> (the render's, read once before it starts: liquid asks for text synchronously).</summary>
+        internal static FluidValue Liquid(global::app.type.item.@this value, global::app.actor.context.@this context,
+            TemplateOptions options, global::app.type.item.culture.@this culture)
+            => value.IsSequence
+                ? new ArrayValue(value.EnumerateItems(context).Select(pair => FluidValue.Create(pair.value.Peek(), options)).ToList())
+                : new Item(value, context, options, culture);
+
+        /// <summary>What liquid takes the value for when it compares (<c>where:</c>, <c>==</c>, <c>size</c>): a leaf
+        /// what its raw form is to liquid (a text a string, a number a number), anything else an object.</summary>
+        public override FluidValues Type
+            => item.IsLeaf ? FluidValue.Create(item.Backing, options).Type : FluidValues.Object;
 
         public override async ValueTask<FluidValue> GetValueAsync(string name, TemplateContext ctx)
-            => Lowered(await Read(await item.Get(Parent, name)), ctx.Options);
+            => FluidValue.Create(await Read(await item.Get(Parent, name)), ctx.Options);
 
         public override async ValueTask<FluidValue> GetIndexAsync(FluidValue index, TemplateContext ctx)
-            => Lowered(await Read(await item.Get(Parent, index.ToStringValue(), isIndex: index.Type == FluidValues.Number)), ctx.Options);
+            => FluidValue.Create(await Read(await item.Get(Parent, index.ToStringValue(), isIndex: index.Type == FluidValues.Number)), ctx.Options);
 
         // a child that is not there is nil; one that is there and could not be read fails the render
         private async ValueTask<global::app.type.item.@this?> Read(global::app.data.@this child)
@@ -280,15 +318,72 @@ public class Fluid : ITemplate
         // A hash iterates as [key, value] pairs.
         public override IEnumerable<FluidValue> Enumerate(TemplateContext ctx)
             => item.EnumerateItems(context).Select(pair =>
-                (FluidValue)new ArrayValue(new[] { Lowered(pair.key.Peek(), ctx.Options), Lowered(pair.value.Peek(), ctx.Options) }));
+                (FluidValue)new ArrayValue(new[] { FluidValue.Create(pair.key.Peek(), ctx.Options), FluidValue.Create(pair.value.Peek(), ctx.Options) }));
 
-        public override string ToStringValue() => item.ToString() ?? "";
+        /// <summary>How the value shows: its Output, written as text in the render's culture. A value reaches a
+        /// template already read (its door opened), so its Output completes at once; a write that failed answers its
+        /// own error, and one still waiting on I/O is refused, never blocked on.</summary>
+        public override string ToStringValue()
+        {
+            var stream = new MemoryStream();
+            var text = Writer(stream);
+            // liquid asks for the text synchronously (ToStringValue has no async form), so the write is never awaited
+            // here: one that hasn't completed at once is refused, and keeps the stream it is still writing into
+            var output = item.Output(text);
+            if (!output.IsCompleted) throw new AppException(new global::app.error.@this(
+                "a template shows a value whose output waits on I/O — read it first", "TemplateValueUnread", 400));
+            using (stream)
+            {
+                // completed: a write that failed re-raises its own error
+                output.GetAwaiter().GetResult();
+                return System.Text.Encoding.UTF8.GetString(stream.ToArray());
+            }
+        }
+
+        public override async ValueTask WriteToAsync(TextWriter writer, System.Text.Encodings.Web.TextEncoder encoder,
+            System.Globalization.CultureInfo cultureInfo)
+        {
+            using var stream = new MemoryStream();
+            var text = Writer(stream);
+            await item.Output(text);
+            writer.Write(encoder.Encode(System.Text.Encoding.UTF8.GetString(stream.ToArray())));
+        }
+
+        // plang's text writer over the stream, its numbers in the render's culture
+        private global::app.type.item.text.Writer Writer(Stream into)
+            => new(into, System.Text.Encoding.UTF8, culture, global::app.View.Out, context);
+
+        /// <summary>Whether the value is true — its own truthiness (0, "", false and null are not).</summary>
+        public override bool ToBooleanValue() => item.IsTruthy();
+
+        /// <summary>The value as a number, for liquid's arithmetic and its order against a number — the number made
+        /// from it by number's own door; a value with no number in it is 0.</summary>
+        public override decimal ToNumberValue()
+            => global::app.type.item.number.@this.Create(item) is { } number ? number.Clr<decimal>() : 0m;
+
+        /// <summary>Equal by the value's own Compare: a plang value against another, a liquid literal made the
+        /// value the render's context makes of it.</summary>
+        public override bool Equals(FluidValue other)
+        {
+            var that = other is Item plang ? plang.Held
+                : other.IsNil() ? context.Null().Peek()
+                : global::app.type.item.@this.Create(other.ToObjectValue(), context);
+            var compared = item.Compare(that, context);
+            // completed: a comparison that failed re-raises its own error; one still waiting on I/O is refused
+            if (!compared.IsCompleted) throw new AppException(new global::app.error.@this(
+                "a template compares a value whose comparison waits on I/O — read it first", "TemplateValueUnread", 400));
+            return compared.GetAwaiter().GetResult() == global::app.data.Comparison.Equal;
+        }
+
+        /// <summary>The value as liquid's own sort, uniq and compare take it — Fluid is the third-party boundary: a
+        /// leaf its raw backing (a string, a number), anything else the value itself.</summary>
+        public override object ToObjectValue() => item.IsLeaf ? item.Backing! : item;
+
+        // The plang value this answers for — whole, for a filter that writes it through plang's own format.
+        internal global::app.type.item.@this Held => item;
 
         // The item navigated from — its own Data, with the render's context.
         private global::app.data.@this Parent => new("", item, context: context);
-
-        private static FluidValue Lowered(object? value, TemplateOptions options)
-            => FluidValue.Create(value is global::app.type.item.@this reached ? (reached.Backing is TimeSpan ? reached : reached.Backing) : value, options);
     }
 
     /// <summary>
@@ -341,9 +436,9 @@ public class Fluid : ITemplate
         if (string.IsNullOrEmpty(goalName))
             throw new global::app.error.AppException("callGoal requires a goal name", "MissingGoalName", 400);
 
-        var found = await app.goal.list.Find(goalName);
-        if (!found.Success) throw new global::app.error.AppException(found.Error!);
-        if (found.Peek() is not global::app.goal.@this goal)
+        var data = await app.goal.list.Find(goalName);
+        if (!data.Success) throw new global::app.error.AppException(data.Error!);
+        if (data.Peek() is not global::app.goal.@this goal)
             throw new global::app.error.GoalNotFoundException(goalName);
 
         var result = await goal.Start(plangContext);

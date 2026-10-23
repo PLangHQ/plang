@@ -14,10 +14,12 @@ public class PlangTypesCut2_ImageTwoChannelsTests
 
     private sealed class CaptureWriter : global::app.type.format.IWriter
     {
-        public string Format { get; }
+        public global::app.type.kind.@this Kind { get; }
         public string LastMethod { get; private set; } = "";
         public object? Last { get; private set; }
-        public CaptureWriter(string format) { Format = format; }
+        public CaptureWriter(global::app.type.kind.@this kind, global::app.actor.context.@this context) { Kind = kind; Context = context; }
+        public global::app.View View => global::app.View.Out;
+        public global::app.actor.context.@this Context { get; }
         public void Null() { LastMethod = "Null"; }
         public void Bool(bool v) { }
         public void Int(int v) { }
@@ -31,14 +33,12 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         public void Guid(System.Guid v) { }
         public void Enum(System.Enum v) { }
         public void Decimal(decimal v) { }
-        public void Bytes(byte[] v) { LastMethod = "Bytes"; Last = v; }
+        public void Bytes(byte[] v, global::app.type.kind.@this kind) { LastMethod = "Bytes"; Last = v; }
         public void BeginArray(int c) { }
         public void BeginObject() { LastMethod = "BeginObject"; }
         public void Name(string n) { LastMethod = "Name"; Last = n; }
         public void EndObject() { LastMethod = "EndObject"; }
         public void EndArray() { }
-        public void BeginRecord(global::app.data.@this r) { }
-        public void EndRecord() { }
         public void Value(object? n) { }
     }
 
@@ -47,10 +47,11 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.actor.list.User.Context);
-        var img = new image(PngBytes, p!, app.actor.list.User.Context);
+        var img = app.actor.list.User.Context.Image(p!, PngBytes);
 
         using var ms = new System.IO.MemoryStream();
-        img.Write(new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US")!));
+        var text = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US", app.type.list[typeof(global::app.type.item.culture.@this)])!, global::app.View.Out, app.actor.list.System.Context);
+        await img.Output(text);
         await Assert.That(System.Text.Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo($"[{PngBytes.Length} bytes]");
     }
 
@@ -58,13 +59,13 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2j-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        var img = new image(PngBytes, "image/png");
+        var img = app.actor.list.User.Context.Image(PngBytes, "image/png");
 
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
-            w.Value(img);
+            var w = new global::app.type.item.kind.json.Writer(utf, global::app.View.Out, app.actor.list.System.Context);
+            await img.Output(w);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json).IsEqualTo("\"" + System.Convert.ToBase64String(PngBytes) + "\"");
@@ -75,11 +76,13 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2s-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/x.png", app.actor.list.User.Context);
-        var img = new image(PngBytes, p!, app.actor.list.User.Context);
+        var img = app.actor.list.User.Context.Image(p!, PngBytes);
         var beforeBytes = img.Bytes;
 
-        img.Write(new CaptureWriter("text"));
-        img.Write(new CaptureWriter("json"));
+        var text = new CaptureWriter(app.type.list["text"].kind, app.actor.list.System.Context);
+        await img.Output(text);
+        var json = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
+        await img.Output(json);
 
         // Bytes is the same reference — no copy, no re-decode.
         await Assert.That(ReferenceEquals(img.Bytes, beforeBytes)).IsTrue();
@@ -89,14 +92,16 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2i-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        var img = new image(PngBytes, "image/png");
+        var img = app.actor.list.User.Context.Image(PngBytes, "image/png");
         var data = new global::app.data.@this("photo", img,
             new global::app.type.@this("image"), context: app.actor.list.User.Context);
 
         await Assert.That(data.Type?.Name).IsEqualTo("image");
-        img.Write(new CaptureWriter("text"));
+        var text = new CaptureWriter(app.type.list["text"].kind, app.actor.list.System.Context);
+        await img.Output(text);
         await Assert.That(data.Type?.Name).IsEqualTo("image");
-        img.Write(new CaptureWriter("json"));
+        var json = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
+        await img.Output(json);
         await Assert.That(data.Type?.Name).IsEqualTo("image");
     }
 }

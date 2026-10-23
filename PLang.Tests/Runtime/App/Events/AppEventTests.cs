@@ -7,20 +7,20 @@ namespace PLang.Tests.App.Events;
 public class AppEventTests
 {
     private static async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
-        => await new global::app.type.item.variable.parser.@this(text).Variable.Single().Start(ctx);
+        => await new global::app.type.item.variable.parser.@this(text, ctx.App.type.list).Variable.Single().Start(ctx);
 
     [Test] public async Task InsideABoundCall_IsTheFramesData()
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        var goal = new global::app.goal.@this { Name = "Checkout",
+        var goal = new global::app.goal.@this(app.type.list) { Name = "Checkout",
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
-        var fired = app.goal.on.start;
+        var fired = app.goal.type.on.start;
         // as the binding scopes it: the event, what it fired for, the result so far — on the frame it fired in
         var running = new global::app.data.@this("!event", fired, context: ctx);
         running.Properties.Set("item", goal);
-        running.Properties.Set("result", new global::app.type.item.text.@this("so far"));
-        await using var frame = ctx.call.Push(goal);
+        running.Properties.Set("result", ctx.Text("so far"));
+        await using var frame = ctx.call.Push(goal, await ctx.call.Setting());
         frame.Event = running;
 
         var read = await Read("%!app.event%", ctx);

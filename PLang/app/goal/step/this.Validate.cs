@@ -13,6 +13,9 @@ public sealed partial class @this
     public async System.Threading.Tasks.Task<global::app.error.@this?> Validate(
         global::app.actor.context.@this context)
     {
+        // A step the build could not fix has no actions and says why (Error): that is its verdict. It is saved so
+        // — the goal that holds it does not start — rather than the whole goal refused at save.
+        if (Error != null) return null;
         var invalid = await Code.Validate(context);
         if (invalid == null) return null;
         var causes = new List<global::app.error.@this> { invalid };
@@ -22,13 +25,19 @@ public sealed partial class @this
     }
 
     // A quoted literal ("…", or '…' when not inside a word, so `don't` is not one); a number that stands
-    // alone. These, and a %variable% (the parser's), are plang's own markers — no human language is read.
-    private static readonly System.Text.RegularExpressions.Regex Literal = new(@"""([^""]*)""|(?<!\w)'([^']*)'(?!\w)");
-    private static readonly System.Text.RegularExpressions.Regex Number = new(@"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])");
-    private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""");
+    // alone. These, and a %variable% (the parser's), are plang's own markers — no human language is read. A step's
+    // words are its author's: each read is bounded — linear where the pattern has no lookaround, else timed.
+    private static readonly System.TimeSpan Timeout = System.TimeSpan.FromSeconds(1);
+    private static readonly System.Text.RegularExpressions.Regex Literal = new(@"""([^""]*)""|(?<!\w)'([^']*)'(?!\w)",
+        System.Text.RegularExpressions.RegexOptions.None, Timeout);
+    private static readonly System.Text.RegularExpressions.Regex Number = new(@"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])",
+        System.Text.RegularExpressions.RegexOptions.None, Timeout);
+    private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""",
+        System.Text.RegularExpressions.RegexOptions.NonBacktracking);
     // A path a step writes bare: a word starting `/`, `./` or `../` (`pack /photos to /backup/photos.tar.gz`) — never
     // inside a word (`and/or`) or a url (`http://`).
-    private static readonly System.Text.RegularExpressions.Regex BarePath = new(@"(?<![\w/.:%~])\.{0,2}/[\w.\-/]+");
+    private static readonly System.Text.RegularExpressions.Regex BarePath = new(@"(?<![\w/.:%~])\.{0,2}/[\w.\-/]+",
+        System.Text.RegularExpressions.RegexOptions.None, Timeout);
 
     /// <summary>What the step's words hold that its code doesn't: a %variable%, a quoted literal — and what the
     /// code writes that the words don't: a variable, a text. (A number is <see cref="Unwritten"/>'s: words can
@@ -36,23 +45,29 @@ public sealed partial class @this
     /// doesn't count.</summary>
     public async System.Threading.Tasks.Task<List<string>> Cover(global::app.actor.context.@this context)
     {
-        var writer = new global::app.goal.step.action.formal.Writer();
-        await Code.Output(writer, global::app.View.Store, context);
-        var written = writer.ToString();
+        var writer = new global::app.goal.step.action.formal.Writer(context);
+        await Code.Output(writer);
+        var answer = writer.ToString();
         var problems = new List<string>();
         // a variable is the same one whatever its case, as the variable list compares names
         var comparer = global::app.type.item.variable.list.@this.Comparer;
-        var said = new global::app.type.item.variable.parser.@this(Text).Variable.Select(x => x.Text).Distinct(comparer).ToList();
-        var answered = new global::app.type.item.variable.parser.@this(written).Variable.Select(x => x.Text).Distinct(comparer).ToList();
+        var said = new global::app.type.item.variable.parser.@this(Text, context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
+        var answered = new global::app.type.item.variable.parser.@this(answer,context.App.type.list).Variable.Select(x => x.Text).Distinct(comparer).ToList();
+        // each told as the step writes it, to be copied exactly — beside the answer's own when it wrote one the step's
+        // variables say was meant to be this one
+        var step = new global::app.type.item.variable.parser.@this(Text, context.App.type.list);
         foreach (var v in said)
-            if (!answered.Contains(v, comparer)) problems.Add($"step {Index}: {v} is in the step but not in your answer");
+            if (!answered.Contains(v, comparer))
+                problems.Add(answered.Where(a => !said.Contains(a, comparer)).FirstOrDefault(a => comparer.Equals(step.Nearest(a), v)) is { } near
+                    ? $"step {Index}: {v} is in the step but not in your answer: the step writes `{v}`; your answer has `{near}` — copy it exactly"
+                    : $"step {Index}: {v} is in the step but not in your answer: copy it exactly");
         // and the other way: a variable the answer names that the step's words don't is invented — a
         // system variable (%!data%, %!error%) excepted
         foreach (var v in answered)
             if (!v.StartsWith("%!") && !said.Contains(v, comparer)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
         // a %!…% the answer names that names nothing — no binding, shortcut, app member or module (%!photo.png%) —
         // reads nothing at run
-        foreach (var v in new global::app.type.item.variable.parser.@this(written).Variable.DistinctBy(x => x.Text))
+        foreach (var v in new global::app.type.item.variable.parser.@this(answer,context.App.type.list).Variable.DistinctBy(x => x.Text))
             if (!await v.Code.Root.Names(context))
                 problems.Add($"step {Index}: {v.Text} names nothing plang has — a %!…% reads one of its own: %!data% (the last answer), a shortcut (%!goal%, %!step%, %!error%), %!app…%, or a module's (%!llm.setting.cache%)");
         // a quoted literal is held by one of the answer's values — each asked, as it answers for itself (a separator
@@ -64,19 +79,20 @@ public sealed partial class @this
             if (l.Length > 0 && !await Held(l))
                 problems.Add(l.Contains('\\') && await Held(l.Replace("\\", "\\\\"))
                     ? $"step {Index}: \"{l}\" is in the step, and your answer doubles its backslashes — write each escape as the step does"
-                    : $"step {Index}: \"{l}\" is in the step but not in your answer");
+                    : $"step {Index}: \"{l}\" is in the step but not in your answer: copy it exactly");
         // a path the step writes bare is one of its markers as a quoted literal is: held by one of the answer's values
         foreach (var p in BarePath.Matches(Quoted.Replace(Text, "")).Select(m => m.Value.TrimEnd('.')).Distinct())
             if (p.Length > 1 && !await Held(p))
-                problems.Add($"step {Index}: {p} is in the step but not in your answer");
+                problems.Add($"step {Index}: {p} is in the step but not in your answer: copy it exactly");
         // a number the step writes as digits is one of its markers: an answer without it dropped what the step
         // says (`if %n% is 0` answered with no Right). Present when the digits stand in the answer on their own,
         // not inside a larger number — a duration's PT5S holds the step's 5 — or held by one of the answer's values as it
         // answers for itself (`sleep 1000 ms` answered 1s: the duration is 1000 milliseconds).
         foreach (var n in Number.Matches(Quoted.Replace(Text, "")).Select(m => m.Value).Distinct())
-            if (!System.Text.RegularExpressions.Regex.IsMatch(written, $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(n)}(?![\d.]|\.\d)")
+            if (!System.Text.RegularExpressions.Regex.IsMatch(answer,$@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(n)}(?![\d.]|\.\d)",
+                    System.Text.RegularExpressions.RegexOptions.None, Timeout)
                 && !await Counted((global::app.type.item.number.@this)double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
-                problems.Add($"step {Index}: {n} is in the step but not in your answer");
+                problems.Add($"step {Index}: {n} is in the step but not in your answer: copy it exactly");
         // and a text the answer writes that the step's words don't hold is invented (channel="X" on a
         // step that names no X) — a choice's option, a number and a dict's keys are not texts. The step's
         // own quoted literals are read as it MEANS them, not as raw text: a double-quoted literal decoded
@@ -111,12 +127,17 @@ public sealed partial class @this
     /// <summary>The numbers the code writes that the step's words don't write as digits, each with the action and
     /// property writing it — a value the words may give in any language ("retry once"), or an invented one. Only
     /// digits are read: whether the words give it is the decider's to say (<see cref="unwritten.@this"/>).</summary>
-    public async System.Threading.Tasks.Task<List<unwritten.@this>> Unwritten(global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task<List<unwritten.@this>> Unwritten(global::app.actor.context.@this context,
+        string? answer = null)
     {
         var said = Number.Matches(Text).Select(m => double.Parse(m.Value, System.Globalization.CultureInfo.InvariantCulture)).ToHashSet();
-        var found = new List<unwritten.@this>();
+        // only a number the answer's own text writes is the answer's: a member its type filled by default (a record's
+        // other fields) is no number it wrote
+        var answered = answer == null ? null
+            : Number.Matches(Quoted.Replace(answer, "")).Select(m => double.Parse(m.Value, System.Globalization.CultureInfo.InvariantCulture)).ToHashSet();
+        var numbers = new List<unwritten.@this>();
         await Walk(Code.Items());
-        return found.Distinct().ToList();
+        return numbers.Distinct().ToList();
 
         async System.Threading.Tasks.Task Walk(IEnumerable<global::app.goal.step.action.@this> actions)
         {
@@ -125,13 +146,14 @@ public sealed partial class @this
                 foreach (var p in a.Property)
                 {
                     if (p.Value is null || p.Value is global::app.goal.step.action.@this or global::app.goal.step.action.list.@this) continue;
-                    var writer = new global::app.goal.step.action.formal.Writer();
-                    await p.Value.Output(writer, global::app.View.Store, context);
+                    var writer = new global::app.goal.step.action.formal.Writer(context);
+                    await p.Value.Output(writer);
                     foreach (var n in Number.Matches(Quoted.Replace(writer.ToString(), "")).Select(m => m.Value))
-                        if (!said.Contains(double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
-                            found.Add(new unwritten.@this(Index, $"{a.Module.Name}.{a.Name}", p.Name, n, Text));
+                        if (double.Parse(n, System.Globalization.CultureInfo.InvariantCulture) is var number
+                            && !said.Contains(number) && (answered == null || answered.Contains(number)))
+                            numbers.Add(new unwritten.@this(Index, $"{a.Module.Name}.{a.Name}", p.Name, n, Text));
                 }
-                await Walk(a.Held);
+                await Walk(a.Action);
                 foreach (var child in a.Child.Items()) await Walk(child.Code.Items());
             }
         }
@@ -147,7 +169,7 @@ public sealed partial class @this
         var values = new List<global::app.type.item.@this>();
         foreach (var a in actions)
         {
-            values.AddRange(Values(a.Held, context));
+            values.AddRange(Values(a.Action, context));
             foreach (var p in a.Property.Concat(a.Default).Concat(a.Unfrozen(context)))
                 if (p.Value is not (null or global::app.goal.step.action.@this or global::app.goal.step.action.list.@this))
                     values.Add(p.Value);
@@ -165,12 +187,12 @@ public sealed partial class @this
         var texts = new List<string>();
         foreach (var a in actions)
         {
-            texts.AddRange(await Texts(a.Held, context));
+            texts.AddRange(await Texts(a.Action, context));
             foreach (var p in a.Property)
             {
                 if (p.Type?.Name != "text" || p.Value is null) continue;
-                var writer = new global::app.goal.step.action.formal.Writer();
-                await p.Value.Output(writer, global::app.View.Store, context);
+                var writer = new global::app.goal.step.action.formal.Writer(context);
+                await p.Value.Output(writer);
                 if (await Meant(writer.ToString(), context) is { } s) texts.Add(s);
             }
             foreach (var child in a.Child.Items()) texts.AddRange(await Texts(child.Code.Items(), context));
@@ -184,7 +206,7 @@ public sealed partial class @this
     {
         if (!quoted.StartsWith('"')) return null;
         var read = await context.App.type.list.Kind("item", "json").Decode(System.Text.Encoding.UTF8.GetBytes(quoted), context);
-        // Reading the literal as the text it means is a USE (805): the typed ask opens the json source and
+        // Reading the literal as the text it means is a USE: the typed ask opens the json source and
         // parses it to its text ("BuilderChannel"). The untyped .Value() rests (the courier door), so it would
         // hand back the source, not the text. A literal that isn't one answers a failure there.
         return await read.Value<global::app.type.item.text.@this>() is { } text && read.Success ? text.ToString() : null;

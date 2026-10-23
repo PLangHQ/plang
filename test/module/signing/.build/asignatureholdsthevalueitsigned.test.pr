@@ -1,0 +1,328 @@
+{
+  "name": "Start",
+  "comment": "A signature holds the value as it was when signed: the variable it was signed from can change\nafterwards, and the signature still verifies. Verify rehashes what the signature holds, so a\nsignature that followed %data% would fail here on the changed message.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %data% = { \"message\": \"signed\" }",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"message":"signed"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "sign %data%, write to %signed%",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "signing",
+          "name": "sign",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%signed%",
+              "variable": [
+                {
+                  "text": "%signed%",
+                  "code": [
+                    {
+                      "variable": "signed"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 3 uses variable.set, which the decider was not sure of (0.88)"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \"message\": \"changed after signing\" }",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"message":"changed after signing"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "verify %signed%, write to %ok%",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "signing",
+          "name": "verify",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%signed%",
+              "variable": [
+                {
+                  "text": "%signed%",
+                  "code": [
+                    {
+                      "variable": "signed"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%ok%",
+              "variable": [
+                {
+                  "text": "%ok%",
+                  "code": [
+                    {
+                      "variable": "ok"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 5 uses variable.set, which the decider was not sure of (0.86)"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %ok% is true, \"the signature verifies after its source variable changed\"",
+      "line": {
+        "number": 9,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%ok%",
+              "variable": [
+                {
+                  "text": "%ok%",
+                  "code": [
+                    {
+                      "variable": "ok"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the signature verifies after its source variable changed"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "ASignatureHoldsTheValueItSigned.test.goal",
+  "hash": "2e4aad590c955898a8e6eea1fcb38eff42383f3c65cc86326c0463f4892e04e3"
+}

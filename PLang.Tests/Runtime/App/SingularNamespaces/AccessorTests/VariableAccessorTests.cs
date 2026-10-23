@@ -9,7 +9,7 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 public class VariableAccessorTests
 {
     private static async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
-        => await new global::app.type.item.variable.parser.@this(text).Variable.Single().Start(ctx);
+        => await new global::app.type.item.variable.parser.@this(text, ctx.App.type.list).Variable.Single().Start(ctx);
 
     [Test] public async Task AppVariableList_IsTheAskersMemory()
     {
@@ -71,7 +71,7 @@ public class VariableAccessorTests
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "outer");
-        await using (ctx.call.Push([new global::app.data.@this("place", "here", context: ctx)]))
+        await using (ctx.call.Push([new global::app.data.@this("place", "here", context: ctx)], await ctx.call.Setting()))
         {
             var names = ctx.Variable.list.Items().Select(v => v.Name).ToList();
             await Assert.That(names.IndexOf("place")).IsEqualTo(0);

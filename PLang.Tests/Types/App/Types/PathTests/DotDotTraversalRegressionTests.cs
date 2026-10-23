@@ -21,9 +21,10 @@ public class DotDotTraversalRegressionTests
     private sealed class CannedChannel : global::app.channel.@this
     {
         private readonly string _answer;
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        private readonly global::app.actor.context.@this _ctx;
+        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(action.Context.Ok(_answer));
     }
 
@@ -44,7 +45,7 @@ public class DotDotTraversalRegressionTests
         // Pre-canonicalization, this would be stored verbatim. Post-fix the
         // ctor resolves the .. so _absolutePath is the truthful target.
         var raw = System.IO.Path.Combine(root, "subdir", "..", "leaf.txt");
-        var p = new FilePath(raw);
+        var p = context.File(raw);
         await Assert.That(p.Absolute).DoesNotContain("..");
         await Assert.That(p.Absolute).EndsWith("leaf.txt");
     }
@@ -55,12 +56,12 @@ public class DotDotTraversalRegressionTests
         var (app, context, root) = MakeApp();
         // Stage a goal whose source is inside root, so
         // its Folder is <root>/subdir/.
-        var goal = new Goal
+        var goal = new Goal(app.type.list)
         {
             Name = "Probe",
             Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context)
         };
-        await using var inGoal = context.call.Push(goal);
+        await using var inGoal = context.call.Push(goal, await context.call.Setting());
 
         // The attack shape: a relative rawPath with enough .. to climb past
         // root. file.Resolve does Path.Combine(runtimeDir, raw) — pre-fix the
@@ -90,13 +91,13 @@ public class DotDotTraversalRegressionTests
         try
         {
             // Channel that denies any AuthGate prompt.
-            app.actor.list.User.Channel.Register(new CannedChannel("n"));
+            app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
 
-                await using var inGoal = context.call.Push(new Goal
+                await using var inGoal = context.call.Push(new Goal(app.type.list)
             {
                 Name = "Probe",
                 Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context)
-            });
+            }, await context.call.Setting());
 
             var relative = "../../" + System.IO.Path.GetFileName(secretPath);
             var p = (FilePath)Path.Resolve(relative, context);

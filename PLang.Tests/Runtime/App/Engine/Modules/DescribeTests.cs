@@ -24,7 +24,7 @@ public record FakeDataPathAction : global::app.module.ICodeGenerated
 {
     public global::app.data.@this<global::app.type.item.path.@this> Path { get; init; }
 
-    public Task<Data> Start() => Task.FromResult(Data.Ok());
+    public Task<Data> Start() => Task.FromResult(Path.Context.Ok());
 
-    Task<Data> global::app.module.ICodeGenerated.Start() => Task.FromResult(Data.Ok());
+    Task<Data> global::app.module.ICodeGenerated.Start() => Task.FromResult(Path.Context.Ok());
 }

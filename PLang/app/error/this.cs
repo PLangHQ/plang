@@ -22,14 +22,15 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     global::app.type.item.ICurrent<Error>, global::app.type.item.ILoad<Error>,
     global::app.type.item.IList<Error, global::app.error.list.@this>
 {
-    /// <summary>Every error, whichever its class, is of the type <c>error</c>.</summary>
+    /// <summary>Every error, whichever its class, is of the type <c>error</c>. Its makers have no app (an owner
+    /// throws, a handler builds it), so it holds a type built from the class.</summary>
     protected internal override global::app.type.@this Type => new(typeof(Error));
 
     /// <summary>The error in play for the asker (<c>%!app.error.current%</c>) — its call stack's, not yet handled.</summary>
     public static Error? Current(global::app.actor.context.@this context) => context.call.Error;
 
     /// <summary>The app holds no errors of its own: every error is an asker's.</summary>
-    public static global::app.error.list.@this List(global::app.@this app) => new();
+    public static global::app.error.list.@this List(global::app.@this app) => new(app.type.list[typeof(global::app.error.list.@this)]);
 
     /// <summary>The errors the asker sees (<c>%!app.error.list%</c>) — every error on its call stack, handled or not.</summary>
     public static global::app.error.list.@this? Of(global::app.actor.context.@this context) => context.call.Audit;
@@ -51,22 +52,34 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     }
 
     public string Id { get; }
+    [global::app.LlmBuilder]
     public string Message { get; }
+    [global::app.LlmBuilder]
     public string Key { get; }
     /// <summary>The outcome's code and its reason — <c>%!error.status%</c>, <c>%!error.status.code%</c>.</summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.status.@this Status { get; }
     /// <summary>How the programmer fixes it. Born with the error, or attached when a handler re-raises
     /// it (<c>- throw %!error%, fix suggestion %fix%</c>) — the same error, now with its fix.</summary>
+    [global::app.LlmBuilder]
     public string? FixSuggestion { get; internal set; }
+    [global::app.LlmBuilder]
     public string? HelpfulLinks { get; init; }
+    [global::app.LlmBuilder]
     public DateTime CreatedUtc { get; }
-    public Exception? Exception { get; init; }
+    /// <summary>The C# exception behind the error, when one is: C#'s alone — plang reads it as <see cref="Trace"/>.</summary>
+    internal Exception? Exception { get; init; }
+    /// <summary>The C# exception behind the error as text — its C# type, its message and where it was thrown
+    /// (<c>%!error.trace%</c>); null when no exception is behind it.</summary>
+    [global::app.LlmBuilder]
+    public string? Trace => Exception is { } ex ? $"{ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace}" : null;
     /// <summary>
     /// Arbitrary structured context about the failure. Providers attach things
     /// like raw LLM responses, HTTP status bodies, parse positions, etc. Exposed
     /// to PLang goals via %!error.Details.KEY% so error handlers can report
     /// rich context without the provider having to extend the error class.
     /// </summary>
+    [global::app.LlmBuilder]
     public Dictionary<string, object?>? Details { get; set; }
     /// <summary>
     /// Snapshot of the parameters as they arrived at the failing handler — the .pr
@@ -74,6 +87,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// call frame (call.Start) whenever a handler returns an error. Lets you
     /// see "this is what the handler saw" without re-running with a debug flag.
     /// </summary>
+    [global::app.LlmBuilder]
     public List<ParamSnapshot>? Params { get; set; }
 
     /// <summary>
@@ -85,33 +99,28 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <see cref="Message"/> (the human line) and <see cref="Details"/> (provider
     /// diagnostic context).
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.data.@this<global::app.type.item.list.@this>? Data { get; init; }
 
     /// <summary>The errors that CAUSED this one — empty when nothing did. "file.read is not valid"
     /// holds the missing parameters that made it so; an error raised while handling another holds
     /// that one. Never null, so a reader never guards before walking it. <c>init</c> so a producer
     /// can hand the causes in whole: <c>new ActionError(…) { Action = this, list = causes }</c>.</summary>
+    [global::app.LlmBuilder]
     public List<Error> list { get; init; } = new();
 
-    /// <summary>An error writes its own flat form (<see cref="Write"/>) in every view.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
-
-    /// <summary>The error renders itself — its flat wire shape: what it is (id, message, key, status, when, its
-    /// fix and links) and the errors that caused it, each writing itself. What kind of error it is, its key says.
-    /// The live back-references that can't round-trip (Exception, Step, Goal, CallFrames) are dropped — the
-    /// snapshot's CallStack section carries the chain. Its reader (<c>error/serializer/Reader</c>) reads it back.</summary>
-    public override void Write(global::app.type.format.IWriter writer)
+    /// <summary>The error writes itself, in every view — its flat wire shape: what it is (id, message, key, status,
+    /// when, its fix and links) and the errors that caused it, each written through the writer's kind. What kind of
+    /// error it is, its key says. The live back-references that can't round-trip (Exception, Step, Goal, CallFrames)
+    /// are dropped — the snapshot's CallStack section carries the chain. Its reader (<c>error/serializer/Reader</c>)
+    /// reads it back.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("id");          writer.String(Id);
         writer.Name("message");     writer.String(Message);
         writer.Name("key");         writer.String(Key);
-        writer.Name("status");      Status.Write(writer);
+        writer.Name("status");      await Status.Output(writer);
         writer.Name("createdUtc");  writer.DateTime(CreatedUtc);
         if (FixSuggestion != null) { writer.Name("fixSuggestion"); writer.String(FixSuggestion); }
         if (HelpfulLinks != null)  { writer.Name("helpfulLinks");  writer.String(HelpfulLinks); }
@@ -120,8 +129,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         {
             writer.Name("list");
             writer.BeginArray(list.Count);
-            foreach (var c in list)
-                ((global::app.type.item.@this)c).Write(writer); // each error is an item — it writes itself
+            foreach (var c in list) await c.Output(writer);
             writer.EndArray();
         }
         writer.EndObject();
@@ -143,14 +151,15 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// reading twice returns the same Data. An error with no context was not raised inside a run:
     /// there is nothing to resume, so it has no callback — a <c>NoCallback</c> error, not a throw.
     /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore, global::app.LlmBuilder]
     public global::app.data.@this<global::app.snapshot.@this> Callback
     {
         get
         {
             if (_callback != null) return _callback;
+            // an error not raised inside a run has no context for its answer to be born with
             if (Context == null)
-                return global::app.data.@this<global::app.snapshot.@this>.FromError(new Error(
+                throw new global::app.error.AppException(new Error(
                     $"error '{Key}' was not raised inside a run, so it has no callback to resume.", "NoCallback", 400));
             var snap = Context.App.Snapshot(this, Context);
             _callback = Context.Ok<global::app.snapshot.@this>(snap);
@@ -159,12 +168,16 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         }
     }
     public Action? Action { get; set; }
+    [global::app.LlmBuilder]
     public Step? Step { get; set; }
+    [global::app.LlmBuilder]
     public Goal? Goal { get; set; }
+    [global::app.LlmBuilder]
     public IReadOnlyList<Call> CallFrames { get; set; } = Array.Empty<Call>();
     /// <summary>The variables as they were when the error happened — each variable's Data whole,
     /// keyed by name (<c>%!error.Variables.foo%</c>). Captured by the frame that records the error, when the
     /// error keeps them (<see cref="Keeps"/>); null otherwise (variables can hold secrets).</summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.dict.@this? Variables { get; set; }
 
     /// <summary>True when this error is that nobody could answer an ask (a closed input) — a consent asked of no one
@@ -260,7 +273,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// </summary>
     public static Error FromException(Exception ex)
     {
-        if (ex is AppException carried) return carried.Error;
+        if (ex is AppException exception) return exception.Error;
         return new ServiceError($"{ex.GetType().Name}: {ex.Message}", "ServiceError", 500) { Exception = ex };
     }
 

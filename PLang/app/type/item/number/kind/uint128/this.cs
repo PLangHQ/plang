@@ -4,7 +4,7 @@ namespace app.type.item.number.kind.uint128;
 /// reach UInt128, so it owns its arms (throws precise); rides the wire as its invariant string.</summary>
 public sealed class @this : global::app.type.item.number.kind.@this
 {
-    public @this() : base("uint128") { }
+    public @this(global::app.type.@this owner) : base("uint128", owner) { }
 
     public override global::app.type.item.number.@this Create(global::app.type.item.@this value)
         => value.Clr<object>() switch
@@ -15,7 +15,6 @@ public sealed class @this : global::app.type.item.number.kind.@this
             var o => throw new System.FormatException($"'{o}' cannot be uint128."),
         };
 
-    public override void Write(global::app.type.item.number.@this v, global::app.type.format.IWriter w) => w.String(v.ToString());
     public override global::app.type.item.@this Read<TReader>(ref TReader r)
         => (global::app.type.item.number.@this)System.UInt128.Parse(r.String(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
 }

@@ -1,25 +1,43 @@
 namespace app.module.debug.setting;
 
 /// <summary>
-/// What <c>--debug</c> shows — <c>%!debug%</c>; <c>--debug={…}</c> is this run's values for it.
+/// What <c>--debug</c> shows — <c>%!debug%</c>; <c>--debug.setting.…</c> is this run's values for it (and alone
+/// switches debug on).
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
-    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
+    /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
-    /// <summary>Filter to a specific goal name. Null = all goals.</summary>
+    /// <summary>The goal debug attaches at — it and every goal it calls, until it returns (<c>prefix*</c> for the goals a
+    /// prefix starts). Null or <c>*</c> = every goal.</summary>
     [Out, Store] public global::app.type.item.text.@this? Goal { get; set; }
 
-    /// <summary>Filter to a specific step index. Null = all steps.</summary>
+    /// <summary>Whether the goal named <paramref name="name"/> is one <see cref="Goal"/> names: every goal when it names
+    /// none (or <c>*</c>), the goals a <c>prefix*</c> starts, or the one named (case aside). No goal (a step composed in
+    /// C#) is only one when every goal is.</summary>
+    internal bool Matches(string? name)
+    {
+        if (Goal?.ToString() is not { Length: > 0 } pattern || pattern == "*") return true;
+        if (name == null) return false;
+        return pattern.EndsWith('*')
+            ? name.StartsWith(pattern[..^1], System.StringComparison.OrdinalIgnoreCase)
+            : string.Equals(name, pattern, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>The step debug attaches at instead, in each goal named: that step and what it calls. Null = the goal's
+    /// whole run.</summary>
     [Out, Store] public global::app.type.item.number.@this? Step { get; set; }
 
     /// <summary>The variables to watch, by name. A watched variable prints at every step and logs each time
-    /// it is created, changed or deleted. <c>--debug={"variables":["trace","goal"]}</c></summary>
-    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables { get; set; } = new();
+    /// it is created, changed or deleted. <c>--debug.setting.variables=["trace","goal"]</c></summary>
+    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables { get; set; }
 
     /// <summary>How long a line runs before it is cut (<c>length.max</c>, default 500).</summary>
-    [Out, Store] public length.@this Length { get; set; } = new();
+    [Out, Store] public length.@this Length { get; set; }
 
     /// <summary>Regex string to filter debug output lines.</summary>
     [Out, Store] public global::app.type.item.text.@this? Grep { get; set; }
@@ -31,6 +49,6 @@ public sealed class @this : global::app.type.item.setting.module.@this
     [Out, Store] public global::app.type.item.@bool.@this Verbose { get; set; } = false;
 
     /// <summary>Granular LLM tracing — each sub-flag dumps one part of the API exchange.
-    /// <c>--debug={"llm":{"system":true,"user":true,"response":true,"schema":true}}</c></summary>
+    /// <c>--debug.setting.llm={"system":true,"user":true,"response":true,"schema":true}</c></summary>
     [Out] public llm.@this? Llm { get; set; }
 }

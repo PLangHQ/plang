@@ -1,0 +1,9 @@
+/ A signature holds the value as it was when signed: the variable it was signed from can change
+/ afterwards, and the signature still verifies. Verify rehashes what the signature holds, so a
+/ signature that followed %data% would fail here on the changed message.
+Start
+- set %data% = { "message": "signed" }
+- sign %data%, write to %signed%
+- set %data% = { "message": "changed after signing" }
+- verify %signed%, write to %ok%
+- assert %ok% is true, "the signature verifies after its source variable changed"

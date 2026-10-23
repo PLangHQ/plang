@@ -9,11 +9,16 @@ namespace app.type.item.datetime;
 public sealed partial class @this
 {
     public static @this? Resolve(string raw, global::app.actor.context.@this context)
+        => Parse(raw, context.App.type.list[typeof(@this)]);
+
+    /// <summary>The datetime <paramref name="raw"/> spells, born holding <paramref name="type"/>; null when it spells
+    /// none.</summary>
+    internal static @this? Parse(string raw, global::app.type.@this type)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
         return System.DateTimeOffset.TryParse(raw,
             System.Globalization.CultureInfo.InvariantCulture,
             System.Globalization.DateTimeStyles.RoundtripKind, out var v)
-            ? new @this(v) : null;
+            ? new @this(v, type) : null;
     }
 }

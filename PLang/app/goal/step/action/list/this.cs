@@ -13,15 +13,17 @@ namespace app.goal.step.action.list;
 /// the coverage-key <see cref="IndexOf"/> (items are responsible for themselves — Rule 5). Twin of
 /// <see cref="app.goal.step.list.@this"/>.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<Action>, global::app.type.item.ICreate<@this>
+// formal — the actions written as calls — is a format of list (a list of actions is what its reader makes), so the
+// kind is {list, formal}; its encode and decode are this class's: decoding formal makes an action list
+[global::app.Attributes.Format(global::app.goal.step.action.formal.Writer.Token, Text = true)]
+public sealed class @this : global::app.type.item.list.bare.@this<Action>, global::app.type.item.ICreate<@this>
 {
     // Two ways to be born: EMPTY (callers Add each action in — the reader, Nest), or ADOPT a list
     // value's rows (the value→slot materialization, set %step.action% = %json%).
-    public @this() : base(new List<object?>()) { }
-    public @this(global::app.type.item.list.@this source) : base(source) { }
+    public @this(global::app.type.@this type) : base(new List<object?>(), type) { }
+    public @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
 
     /// <summary>Clone/render keep this concrete node type, context-free.</summary>
-    protected override global::app.type.item.list.@this Empty() => new @this();
 
     /// <summary>Starts the chain: setup / non-condition actions dispatch in order; a condition evaluates,
     /// and if truthy starts its <c>Child</c> branch and stops (the rest of the chain — elseif/else — is
@@ -114,13 +116,17 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
     private global::app.error.@this? Chain()
     {
         global::app.goal.step.action.@this? condition = null;   // the last condition in this list
+        global::app.goal.step.action.@this? anchor = null;      // the step action what follows belongs to — a clause's
         global::app.error.@this? missing = null;                 // a branch with no body — reported last
         for (int i = 0; i < Count; i++)
         {
             var action = this[i];
+            // what the actions so far belong to: a clause belongs to the step action before it
+            var before = anchor;
+            var belongs = action.Belongs(anchor);
+            anchor = action.Anchor(anchor);
             if (action.IsBranch)
             {
-                var before = i > 0 ? this[i - 1] : null;
                 if (before is not { IsCondition: true } || string.Equals(before.Name, "else", System.StringComparison.OrdinalIgnoreCase))
                     return Broken(action, $"an {action.Name} must be in the same step as its if.", "ElseWithoutIf");
             }
@@ -139,7 +145,9 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
                 continue;
             }
 
-            if (condition != null)
+            // what belongs to the action before it (a clause: the condition's own error) chains; a step action stands on its
+            // own, so after a condition it is a body beside it
+            if (condition != null && !belongs)
                 return Broken(action,
                     $"`{action.Module}.{action.Name}` is after the {condition.Name} — a branch's body goes in its child.",
                     "BodyBesideCondition");
@@ -183,24 +191,12 @@ public sealed class @this : global::app.type.item.list.@this<Action>, global::ap
             string.Join("; ", causes.Select(c => c.Message)), "BuildFailed", 400) { list = causes };
     }
 
-    /// <summary>Writes itself to the wire as the bare <c>.pr</c> action array — each element writes its
-    /// own action shape (NOT the base list's self-describing Data-envelope value face). The holder just
-    /// says <c>Action.Output(...)</c>; the node is the iterator of itself, like <see cref="Start"/>.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    /// <summary>A step's actions in formal: one line, each action's own call, <c>a; b</c>.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.goal.step.action.formal.Writer writer)
     {
-        // In formal a step's actions are one line: `a; b`.
-        if (writer is global::app.goal.step.action.formal.Writer formal)
-        {
-            formal.BeginActions();
-            for (int i = 0; i < Count; i++) await this[i].Output(writer, mode, context);
-            formal.EndActions();
-            return;
-        }
-        writer.BeginArray((int)Count);
-        for (int i = 0; i < Count; i++) await this[i].Output(writer, mode, context);
-        writer.EndArray();
+        writer.BeginActions();
+        for (int i = 0; i < Count; i++) await this[i].Output(writer);
+        writer.EndActions();
     }
 
     /// <summary>The actions after <paramref name="a"/> in this chain — what a loop that leads its step runs

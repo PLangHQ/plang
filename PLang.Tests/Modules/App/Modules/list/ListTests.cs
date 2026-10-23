@@ -29,7 +29,7 @@ public class ListTests : System.IAsyncDisposable
     {
         var (context, memory) = CreateContext();
 
-        var action = new Add(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "first", context: context)};
+        var action = new Add(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "first", context: context)};
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -45,7 +45,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Add(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "c", context: context)};
+        var action = new Add(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "c", context: context)};
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -60,7 +60,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "c" });
 
-        var action = new Add(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context), At = (global::app.type.item.number.@this)1 };
+        var action = new Add(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "b", context: context), At = (global::app.type.item.number.@this)1 };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -75,14 +75,14 @@ public class ListTests : System.IAsyncDisposable
         // list INSTANCE (the entry mints its own Data pointing at it, nothing
         // copied) — in-place mutation of either side shows through both names.
         var (context, memory) = CreateContext();
-        var aList = new global::app.type.item.list.@this();
+        var aList = new global::app.type.item.list.@this(context.App.type.list["list"]);
         aList.Add(new global::app.data.@this("", 10L, context: context)); aList.Add(new global::app.data.@this("", 20L, context: context));
-        var bList = new global::app.type.item.list.@this();
+        var bList = new global::app.type.item.list.@this(context.App.type.list["list"]);
         bList.Add(new global::app.data.@this("", 50L, context: context)); bList.Add(new global::app.data.@this("", 60L, context: context));
         memory.Set("a", aList);
         memory.Set("b", bList);
 
-        var action = new Add(context) { ListName = new app.type.item.variable.@this("a"), Value = await memory.Get("b") };
+        var action = new Add(context) { ListName = new app.type.item.variable.@this("a", context.App.type.list), Value = await memory.Get("b") };
         await (await action.Start()).IsSuccess();
 
         var a = (await memory.GetValue("a")) as global::app.type.item.list.@this;
@@ -107,7 +107,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Remove(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context)};
+        var action = new Remove(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "b", context: context)};
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -121,7 +121,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Remove(context) { ListName = new app.type.item.variable.@this("myList"), At = (global::app.type.item.number.@this)0 };
+        var action = new Remove(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), At = (global::app.type.item.number.@this)0 };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -137,7 +137,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Get(context) { ListName = new app.type.item.variable.@this("myList"), Index = (global::app.type.item.number.@this)1 };
+        var action = new Get(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = (global::app.type.item.number.@this)1 };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -150,7 +150,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a" });
 
-        var action = new Get(context) { ListName = new app.type.item.variable.@this("myList"), Index = (global::app.type.item.number.@this)5 };
+        var action = new Get(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = (global::app.type.item.number.@this)5 };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -164,7 +164,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a" });
 
-        var action = new Get(context) { ListName = new app.type.item.variable.@this("myList"), Index = global::app.data.@this<global::app.type.item.number.@this>.Uninitialized("index") };
+        var action = new Get(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = global::app.data.@this<global::app.type.item.number.@this>.Uninitialized("index", context) };
         var result = await action.Start();
 
         // the index's own answer — it never resolved to a number
@@ -178,7 +178,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("word", "abc");
 
-        var result = await new Count(context) { ListName = new app.type.item.variable.@this("word") }.Start();
+        var result = await new Count(context) { ListName = new app.type.item.variable.@this("word", context.App.type.list) }.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotA");
@@ -193,7 +193,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Count(context) { ListName = new app.type.item.variable.@this("myList") };
+        var action = new Count(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list) };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -208,7 +208,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Contains(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "a", context: context)};
+        var action = new Contains(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "a", context: context)};
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -221,7 +221,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Contains(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "z", context: context)};
+        var action = new Contains(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "z", context: context)};
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
@@ -235,7 +235,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "x", "y", "z" });
 
-        var action = new First(context) { ListName = new app.type.item.variable.@this("myList") };
+        var action = new First(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list) };
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("x");
@@ -247,7 +247,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "x", "y", "z" });
 
-        var action = new Last(context) { ListName = new app.type.item.variable.@this("myList") };
+        var action = new Last(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list) };
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("z");
@@ -261,7 +261,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new IndexOf(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context)};
+        var action = new IndexOf(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Value = new global::app.data.@this("", "b", context: context)};
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("1");
@@ -293,7 +293,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Join(context) { ListName = new app.type.item.variable.@this("myList"), Separator = new global::app.type.item.separator.@this("-") };
+        var action = new Join(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Separator = new global::app.type.item.separator.@this("-", context.App.type.list[typeof(global::app.type.item.separator.@this)]) };
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("a-b-c");
@@ -306,7 +306,7 @@ public class ListTests : System.IAsyncDisposable
     {
         var (context, _) = CreateContext();
 
-        var action = new Split(context) { Value = (global::app.type.item.text.@this)"a,b,c", Separator = new global::app.type.item.separator.@this(",") };
+        var action = new Split(context) { Value = (global::app.type.item.text.@this)"a,b,c", Separator = new global::app.type.item.separator.@this(",", context.App.type.list[typeof(global::app.type.item.separator.@this)]) };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -322,7 +322,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { 1, 2, 3 });
 
-        var action = new Reverse(context) { ListName = new app.type.item.variable.@this("myList") };
+        var action = new Reverse(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list) };
         var result = await action.Start();
 
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
@@ -376,7 +376,7 @@ public class ListTests : System.IAsyncDisposable
             new Dictionary<string, object?> { ["level"] = "high" }
         });
 
-        var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
+        var action = new Any(context) { ListName = new app.type.item.variable.@this("items", context.App.type.list),
             Key = (global::app.type.item.text.@this)"level",
             Operator = (global::app.type.item.choice.@this<global::app.data.Operator>)new global::app.data.Operator("=="),
             Value = new global::app.data.@this("", "high", context: context)
@@ -424,7 +424,7 @@ public class ListTests : System.IAsyncDisposable
         });
 
         var kept = await WhereOf(context, "mixed", "age", "==", 30L);
-        var none = await new Any(context) { ListName = new app.type.item.variable.@this("mixed"),
+        var none = await new Any(context) { ListName = new app.type.item.variable.@this("mixed", context.App.type.list),
             Key = (global::app.type.item.text.@this)"age", Operator = Op("=="),
             Value = new global::app.data.@this("", 99L, context: context) }.Start();
 
@@ -472,7 +472,7 @@ public class ListTests : System.IAsyncDisposable
             await Assert.That(result.Error.Message).Contains("agee");
             await Assert.That(result.Error.Message).Contains("name, age");
         }
-        var any = await new Any(context) { ListName = new app.type.item.variable.@this("users"),
+        var any = await new Any(context) { ListName = new app.type.item.variable.@this("users", context.App.type.list),
             Key = (global::app.type.item.text.@this)"agee", Operator = Op("=="),
             Value = new global::app.data.@this("", 30L, context: context) }.Start();
         await any.IsFailure();
@@ -572,7 +572,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a" });
 
-        var result = await new Remove(context) { ListName = new app.type.item.variable.@this("myList"),
+        var result = await new Remove(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list),
             Value = new global::app.data.@this("", null, context: context), At = (global::app.type.item.number.@this)5 }.Start();
 
         await result.IsFailure();
@@ -594,7 +594,7 @@ public class ListTests : System.IAsyncDisposable
             new Dictionary<string, object?> { ["level"] = "medium" }
         });
 
-        var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
+        var action = new Any(context) { ListName = new app.type.item.variable.@this("items", context.App.type.list),
             Key = (global::app.type.item.text.@this)"level",
             Operator = (global::app.type.item.choice.@this<global::app.data.Operator>)new global::app.data.Operator("=="),
             Value = new global::app.data.@this("", "high", context: context)
@@ -611,7 +611,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("items", new List<object?>());
 
-        var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
+        var action = new Any(context) { ListName = new app.type.item.variable.@this("items", context.App.type.list),
             Key = (global::app.type.item.text.@this)"level",
             Operator = (global::app.type.item.choice.@this<global::app.data.Operator>)new global::app.data.Operator("=="),
             Value = new global::app.data.@this("", "high", context: context)
@@ -632,7 +632,7 @@ public class ListTests : System.IAsyncDisposable
             new Dictionary<string, object?> { ["status"] = "inactive" }
         });
 
-        var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
+        var action = new Any(context) { ListName = new app.type.item.variable.@this("items", context.App.type.list),
             Key = (global::app.type.item.text.@this)"status",
             Operator = (global::app.type.item.choice.@this<global::app.data.Operator>)new global::app.data.Operator("!="),
             Value = new global::app.data.@this("", "active", context: context)
@@ -720,7 +720,7 @@ public class ListTests : System.IAsyncDisposable
         var nested = new List<object?> { 1, new List<object?> { 2, 3 }, new List<object?> { 4, new List<object?> { 5 } } };
         memory.Set("myList", nested);
 
-        var action = new Flatten(context) { ListName = new app.type.item.variable.@this("myList") };
+        var action = new Flatten(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list) };
         var result = await action.Start();
 
         var listResult = (await result.Value()) as global::app.type.item.list.@this;

@@ -4,36 +4,39 @@ namespace app.type.format;
 /// Format-encoder protocol: what a value writes itself through.
 ///
 /// <para>Each value writes itself through its own <c>Output</c>, calling the
-/// writer's primitives, arrays and records; a C# value (a primitive, a byte[],
-/// a collection) goes through <see cref="Value"/>. The writer decides how each
+/// writer's primitives, arrays and records; a C# primitive (or a byte[]) goes
+/// through <see cref="Value"/>. The writer decides how each
 /// looks in its target format. JSON (<see cref="json.Writer"/>) is the first impl;
 /// protobuf / MsgPack / CBOR ship later as siblings without touching any
 /// domain type.</para>
 ///
 /// <para>The surface is deliberately minimal: leaf primitives, an array
 /// bracket (count optional — JSON ignores, protobuf may use), and a Data
-/// record bracket (the canonical <c>{name, type, value, properties, signature}</c>
-/// envelope, which only the writer knows how to lay out per format).</para>
+/// record (<see cref="BeginRecord"/>): every Data tells the writer what it is, and
+/// the writer decides how much of it to show.</para>
 /// </summary>
 public interface IWriter
 {
     /// <summary>
-    /// Short format token — <c>"json"</c>, <c>"plang"</c>, <c>"text"</c>,
-    /// <c>"protobuf"</c>, … A value's own <c>Write</c> branches on this when it
-    /// renders differently per format (e.g. image: base64 vs text label).
-    /// Each <see cref="IWriter"/> impl returns its own constant token — a format, never a mime.
+    /// The kind this writer writes — its output kind (item's <c>json</c>, wire's <c>plang</c>, text's own format,
+    /// list's <c>formal</c>): the app's own kind object, never a name. What a value looks like in it is the kind's
+    /// to say, not the value's.
     /// </summary>
-    string Format { get; }
+    global::app.type.kind.@this Kind { get; }
 
-    /// <summary>
-    /// Whether this format carries the Data self-describing layer: <c>@schema</c> +
-    /// <c>type</c> around every value (the <c>application/plang</c> wire), so values
-    /// round-trip fully typed. <c>application/json</c> and <c>text</c> are bare — the
-    /// value alone, type inferred. <see cref="app.data.@this.Output"/> gates the
-    /// envelope on this; the item's own value output is identical either way.
-    /// Default false; the plang writer overrides true.
-    /// </summary>
-    bool EmitsSchema => false;
+    /// <summary>What this write shows — chosen where the write starts (a <c>.pr</c> is Store, a response Out, a dump
+    /// Debug), held for the whole write. A value asks it nothing directly: its members show by their tags, and a value
+    /// that holds variables is kept or used by it.</summary>
+    global::app.View View { get; }
+
+    /// <summary>Who asks for this write — the asker every value written reads with (its rows, its renders). Never
+    /// null: a write no one asks for is the app's system actor's.</summary>
+    global::app.actor.context.@this Context { get; }
+
+    /// <summary><paramref name="value"/> written into this writer: the writer hands it back to the value's own write for
+    /// the writer's own class. A writer whose format some value looks different in (text, formal) answers with its
+    /// typed self; any other writer gets the value's own write.</summary>
+    System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value) => value.Write(this);
 
     void Null();
     void Bool(bool value);
@@ -48,34 +51,16 @@ public interface IWriter
     void Guid(System.Guid value);
     void Enum(System.Enum value);
     void Decimal(decimal value);
-    void Bytes(byte[] value);
 
     /// <summary>
-    /// Emit content already valid in the target format, verbatim — a source value's
-    /// undecoded raw form, passed through without re-encoding. JSON emits it unquoted
-    /// (<c>WriteRawValue</c>) so a raw json object/number rides inline; text writes the
-    /// string as-is. The caller (a <c>source</c> leaf) decides when its raw is format-ready.
-    /// Default falls back to a quoted string for writers that have no verbatim concept.
+    /// Bytes of <paramref name="kind"/> — what they are (an image's format, a text, plain bytes). The writer decides
+    /// how they look (json base64 or the text they spell, text their size or their text).
     /// </summary>
-    void Raw(string value) => String(value);
+    void Bytes(byte[] value, global::app.type.kind.@this kind);
 
-    /// <summary>The same verbatim emit for content held as its UTF-8 bytes. Default falls back to bytes for
-    /// writers that have no verbatim concept.</summary>
-    void Raw(byte[] value) => Bytes(value);
-
-    /// <summary>Characters nobody should see (a key, a password). Shown, they are <c>****</c>; a writer of plang's own
-    /// store keeps them whole.</summary>
-    void Sensitive(string characters) => String("****");
-
-    /// <summary>
-    /// Characters that are content of a format — a text of kind <paramref name="kind"/> (json, md, …). A writer the
-    /// kind owns takes them as a token of its own format, as they are; any other writes them as text.
-    /// </summary>
-    void Content(string value, global::app.type.kind.@this kind)
-    {
-        if (kind.Owns(this)) Raw(value);
-        else String(value);
-    }
+    /// <summary>Characters nobody should see (a key, a password), as the writer's view shows them: <c>****</c>, and whole
+    /// in plang's own store.</summary>
+    void Sensitive(string characters) => String(View.Sensitive(characters));
 
     /// <summary>A variable, named as itself — <paramref name="name"/> without its % signs. Default: the
     /// text <c>%name%</c> as a string; a writer with a bare variable form (formal) writes that.</summary>
@@ -102,7 +87,7 @@ public interface IWriter
     /// the layout: between <see cref="BeginObject"/> and <see cref="EndObject"/>
     /// it calls <see cref="Name"/> then a leaf method (or <see cref="Value"/> for
     /// the nested <c>value</c> slot) per field. Distinct from
-    /// <see cref="BeginRecord"/>, which is the fixed Data envelope.
+    /// <see cref="BeginRecord"/>, a Data telling the writer what it is.
     /// </summary>
     void BeginObject();
 
@@ -112,18 +97,19 @@ public interface IWriter
     void EndObject();
 
     /// <summary>
-    /// Begin a Data record bracket. The writer emits the canonical
-    /// <c>{name, type, value, properties, signature}</c> envelope shape for
-    /// its format and accepts the payload from subsequent calls. Implementations
-    /// own the layout; the caller only invokes value-emission methods between
-    /// <see cref="BeginRecord"/> and <see cref="EndRecord"/>.
+    /// A Data begins: it tells the writer what it is (its name, type, properties), its value written next through
+    /// the door. The writer decides how much of it to show — plang's writer its record (<c>@schema</c> when it is a
+    /// <paramref name="layer"/>, the name in the Store view, the type); a bare format nothing (only the value).
     /// </summary>
-    void BeginRecord(app.data.@this record);
-    void EndRecord();
+    System.Threading.Tasks.ValueTask BeginRecord(app.data.@this record, bool layer) => default;
+
+    /// <summary>The Data's value is written: what the writer shows after it (plang's writer the stored variables and
+    /// the properties), and the record closes. A bare format writes nothing.</summary>
+    System.Threading.Tasks.ValueTask EndRecord(app.data.@this record) => default;
 
     /// <summary>
-    /// Write a C# value in the current slot: a primitive, a byte[], a Data as
-    /// its record, a collection as an array; a plang value writes itself.
+    /// Write a C# primitive (or a byte[], as plain bytes) in the current slot; a plang
+    /// value, a Data and a collection each write themselves.
     /// </summary>
     void Value(object? normalized);
 }

@@ -23,13 +23,13 @@ public partial class @this : global::app.type.item.note.IAbout
 
     /// <summary>What this action reaches outside the process — <c>network</c>, <c>llm</c>. The
     /// handler declares it with <c>[RequiresCapability]</c>; test discovery unions these into a
-    /// test's auto-tags so a run can skip them (<c>--test={"exclude":["network"]}</c>). It is a
+    /// test's auto-tags so a run can skip them (<c>--test.setting.exclude=["network"]</c>). It is a
     /// DECLARATION, not a gate: nothing consults it before Run. Empty when the action declares
     /// nothing, so callers never null-check.</summary>
     [JsonIgnore]
     public IEnumerable<global::app.type.item.text.@this> Requirement
         => Handler?.GetCustomAttribute<global::app.Attributes.RequiresCapabilityAttribute>()
-               ?.Capabilities.Select(c => new global::app.type.item.text.@this(c))
+               ?.Capabilities.Select(c => new global::app.type.item.text.@this(c, _module!.App.type.list[typeof(global::app.type.item.text.@this)]))
            ?? Enumerable.Empty<global::app.type.item.text.@this>();
 
     /// <summary>This action is a question — its answer is the verdict an if tests (<c>file.exists</c>,
@@ -42,7 +42,7 @@ public partial class @this : global::app.type.item.note.IAbout
     [JsonIgnore]
     public IEnumerable<global::app.type.item.variable.@this> Bound
         => Property.Where(p => p.Type.IsName && p.Default?.ToString() is { Length: > 0 })
-            .Select(p => new global::app.type.item.variable.@this(p.Default!.ToString()!));
+            .Select(p => new global::app.type.item.variable.@this(p.Default!.ToString()!, App!.type.list));
 
     /// <summary>The property this action reads and answers a new value of, changing nothing (<c>list.query</c>'s
     /// <c>List</c>) — where a step with no destination writes the answer; null when the action has none.</summary>
@@ -55,8 +55,8 @@ public partial class @this : global::app.type.item.note.IAbout
     [JsonIgnore]
     internal string? Goal
         => Handler?.GetProperties().FirstOrDefault(p => p.PropertyType == typeof(global::app.data.@this<global::app.goal.@this>)
-                || p.IsDefined(typeof(global::app.Attributes.GoalAttribute))) is { } held
-            ? this[held.Name]?.Value?.ToString()?.Trim('"')
+                || p.IsDefined(typeof(global::app.Attributes.GoalAttribute))) is { } property
+            ? this[property.Name]?.Value?.ToString()?.Trim('"')
             : null;
 
     private global::app.type.@this? _return;
@@ -67,7 +67,7 @@ public partial class @this : global::app.type.item.note.IAbout
     /// undefined T (bare <c>Task&lt;Data&gt;</c> or <c>Data&lt;object&gt;</c>) is <c>item</c> — the
     /// unconstrained plang type, C#'s <c>object</c>. Null only when <c>Run</c> isn't Data-shaped
     /// at all, which no real action is.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.@this? Return
     {
         get
@@ -102,12 +102,13 @@ public partial class @this : global::app.type.item.note.IAbout
     private global::app.type.item.file.@this? _guide;
 
     /// <summary>The action's description — {Name}.description.md.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.item.file.@this Description => _description ??= new(Module.Folder.Combine($"{Name}.description.md"), App!.actor.list.System.Context!);
 
     /// <summary>The action's notes, read line by line — {Name}.notes.md; no lines when the action has none.</summary>
-    [JsonIgnore]
-    public global::app.type.item.note.@this Note => _note ??= new(this, new(Module.Folder.Combine($"{Name}.notes.md"), App!.actor.list.System.Context!));
+    [JsonIgnore, LlmBuilder]
+    public global::app.type.item.note.@this Note => _note ??= new(this, new(Module.Folder.Combine($"{Name}.notes.md"), App!.actor.list.System.Context!),
+        App!.type.list[typeof(global::app.type.item.note.@this)]);
 
     // What its notes are about: the action, its properties the parts each line names
     string global::app.type.item.note.IAbout.Noted => $"{Module.Name}.{Name}";
@@ -116,11 +117,11 @@ public partial class @this : global::app.type.item.note.IAbout
     bool global::app.type.item.note.IAbout.Names(string name) => this[name] is not null;
 
     /// <summary>The action's examples — {Name}.examples.md.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.item.file.@this Examples => _examples ??= new(Module.Folder.Combine($"{Name}.examples.md"), App!.actor.list.System.Context!);
 
     /// <summary>The action's guide — {Name}.guide.md: prose for a learner, shown on the module's page after the
     /// action's Returns line and never read by the builder; falsy when the action has none.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.item.file.@this Guide => _guide ??= new(Module.Folder.Combine($"{Name}.guide.md"), App!.actor.list.System.Context!);
 }

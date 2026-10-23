@@ -137,7 +137,7 @@ public class AppTests
         await Assert.That(_app.Id).IsEqualTo("id-7");
         await Assert.That(_app.Created.Value).IsEqualTo(new DateTimeOffset(2026, 1, 2, 3, 4, 5, TimeSpan.Zero));
         await Assert.That(_app.Environment(_app.actor.list.System.Context).ToString()).IsEqualTo(before);
-        await Assert.That(_app.AbsolutePath).IsNotEqualTo("/elsewhere");
+        await Assert.That(_app.filesystem.root.Absolute).IsNotEqualTo("/elsewhere");
     }
 
     [Test]

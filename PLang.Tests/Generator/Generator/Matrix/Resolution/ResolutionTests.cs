@@ -223,7 +223,7 @@ public class ReResolveAcrossCallsTests
         var sharedData = PLang.Tests.Shared.Make.Built(app.actor.list.User.Context, "value", "%x%");
 
         app.actor.list.User.Context.Variable.Set("x", "v1");
-        var action1 = new PrAction
+        var action1 = new PrAction(app.type.list)
         {
             Module = app.Module("matrix.resolution"),
             Name = "reresolveacrosscalls",
@@ -237,7 +237,7 @@ public class ReResolveAcrossCallsTests
         await Assert.That(sharedData.Peek()?.ToString()).IsEqualTo("%x%");
 
         app.actor.list.User.Context.Variable.Set("x", "v2");
-        var action2 = new PrAction
+        var action2 = new PrAction(app.type.list)
         {
             Module = app.Module("matrix.resolution"),
             Name = "reresolveacrosscalls",
@@ -283,7 +283,7 @@ public class ConcurrentHandlersTests
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(async () =>
         {
-            var action = new PrAction
+            var action = new PrAction(app.type.list)
             {
                 Module = app.Module("matrix.resolution"),
                 Name = "concurrenthandlers",

@@ -10,7 +10,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("clipboard", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("clipboard", kind), ctx.Context]);
         reader.BeginObject();
         global::app.type.item.@this? content = null;
         while (reader.NextName(out var member))

@@ -13,7 +13,7 @@ public static class CollectionTestExtensions
     public static global::app.data.@this<global::app.type.item.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw, global::app.actor.context.@this context)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        var l = new global::app.type.item.list.@this<T>();
+        var l = new global::app.type.item.list.@this<T>(context.App.type.list[typeof(global::app.type.item.list.@this<T>)]);
         foreach (var i in raw)
             l.Add(i is global::app.data.@this d ? d : new global::app.data.@this("", i, context: context));
         return new("", l, context: context);
@@ -21,7 +21,7 @@ public static class CollectionTestExtensions
 
     public static global::app.data.@this<global::app.type.item.dict.@this> ToDictData(this System.Collections.IDictionary raw, global::app.actor.context.@this context)
     {
-        var d = new global::app.type.item.dict.@this();
+        var d = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
         foreach (System.Collections.DictionaryEntry e in raw)
             d.Set(e.Key.ToString()!, e.Value);
         return new("", d, context: context);

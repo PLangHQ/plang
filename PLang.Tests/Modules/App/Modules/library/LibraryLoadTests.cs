@@ -26,7 +26,7 @@ public class ModuleAddTests
         await using var app = new global::app.@this("/app").Testing();
         var context = app.actor.list.User.Context;
 
-        var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("nonexistent_mylib.dll", context)),
+        var add = new Add(context) { Path = context.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve("nonexistent_mylib.dll", context)),
             Namespace = null
         };
 
@@ -43,7 +43,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = context.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
@@ -62,7 +62,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = context.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
@@ -80,7 +80,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = context.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = (global::app.type.item.text.@this)"Some.Completely.Wrong.Namespace"
             };
 
@@ -98,7 +98,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = context.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
@@ -115,7 +115,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = context.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = null
             };
 
@@ -133,7 +133,7 @@ public class ModuleAddTests
         var (context, app, assemblyPath) = CreateContextWithAssembly();
         await using (app)
         {
-            var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
+            var add = new Add(context) { Path = context.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve(assemblyPath, context)),
                 Namespace = (global::app.type.item.text.@this)"app.module"
             };
 
@@ -141,7 +141,7 @@ public class ModuleAddTests
             await result.IsSuccess();
 
             // Actions registered via Discover should be resolvable
-            var (action, error) = (new PrAction { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
+            var (action, error) = (new PrAction(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
             await Assert.That(action).IsNotNull();
             await Assert.That(error).IsNull();
         }

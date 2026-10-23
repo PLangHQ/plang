@@ -26,8 +26,8 @@ public class StartTests
     // A step of goal "Main" holding `set %x% = one`, born holding its step.
     private (global::app.goal.@this Goal, global::app.goal.step.@this Step, global::app.goal.step.action.@this Set) Program()
     {
-        var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", _app.actor.list.User.Context) };
-        var step = new global::app.goal.step.@this { Goal = goal, Index = 0, Text = "set %x% = one" };
+        var goal = new global::app.goal.@this(_app.type.list) { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", _app.actor.list.User.Context) };
+        var step = new global::app.goal.step.@this(_app.type.list) { Goal = goal, Index = 0, Text = "set %x% = one" };
         goal.Step.Add(step);
         var set = Make.Action(_app.actor.list.User.Context, "variable", "set", Make.Param(_app.actor.list.User.Context, "Name", "x", "variable"), ("Value", "one"));
         set.Module = _app.Module("variable");   // this app's program: its module and catalog action are this app's
@@ -70,7 +70,7 @@ public class StartTests
     {
         var (_, step, _) = Program();
         // an action on this app's own module: the shared app's module is bound on by the other tests here
-        var set = new global::app.goal.step.action.@this { Module = _app.Module("variable"), Name = "set" };
+        var set = new global::app.goal.step.action.@this(_app.type.list) { Module = _app.Module("variable"), Name = "set" };
         var context = _app.actor.list.User.Context;
         var result = context.Ok();
         // once first: the JIT and the statics

@@ -26,9 +26,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("step", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("step", kind), ctx.Context]);
 
-        var step = new global::app.goal.step.@this { Goal = _goal };   // shell first — children hold it
+        var step = new global::app.goal.step.@this(ctx.Context.App.type.list) { Goal = _goal };   // shell first — children hold it
         var action = new global::app.goal.step.action.serializer.Reader(step);
 
         reader.BeginObject();
@@ -79,9 +79,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                                 default: throw new global::app.error.PrFormatOutdatedException($"warning key '{field}' isn't in this .pr format", ctx.Origin);
                             }
                         reader.EndObject();
-                        step.Warning.Add(new global::app.warning.@this { Key = key, Message = message });
+                        step.Warning.Add(new global::app.warning.@this(ctx.Context.App.type.list) { Key = key, Message = message });
                     }
                     reader.EndArray();
+                    break;
+                // a step the build could not fix: its error, read by the error's own reader
+                case "error":
+                    step.Error = new global::app.error.serializer.Reader().Read(ref reader, null, ctx) as global::app.error.@this;
                     break;
                 // Every key the step writes is read above; an unknown one means another builder wrote it.
                 default: throw new global::app.error.PrFormatOutdatedException($"step key '{name}' isn't in this .pr format", ctx.Origin);

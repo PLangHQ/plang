@@ -11,7 +11,7 @@ public class StringNullableTests
         await using var app = new global::app.@this("/app").Testing();
         var result = await MatrixRunner.RunAsync<StringNullable>(app);
         await result.Data.IsSuccess();
-        await Assert.That((await result.Data.Value()) is null || ReferenceEquals((await result.Data.Value()), global::app.type.item.@null.@this.Instance)).IsTrue();
+        await Assert.That((await result.Data.Value()) is null || (await result.Data.Value()) is global::app.type.item.@null.@this).IsTrue();
     }
 
     [Test]
@@ -30,7 +30,7 @@ public class StringNullableTests
         await using var app = new global::app.@this("/app").Testing();
         var result = await MatrixRunner.RunAsync<StringNullable>(app,
             parameters: new[] { ("tag", (object?)null) });
-        await Assert.That((await result.Data.Value()) is null || ReferenceEquals((await result.Data.Value()), global::app.type.item.@null.@this.Instance)).IsTrue();
+        await Assert.That((await result.Data.Value()) is null || (await result.Data.Value()) is global::app.type.item.@null.@this).IsTrue();
     }
 }
 
@@ -41,7 +41,7 @@ public class IntNullableTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var result = await MatrixRunner.RunAsync<IntNullable>(app);
-        await Assert.That((await result.Data.Value()) is null || ReferenceEquals((await result.Data.Value()), global::app.type.item.@null.@this.Instance)).IsTrue();
+        await Assert.That((await result.Data.Value()) is null || (await result.Data.Value()) is global::app.type.item.@null.@this).IsTrue();
     }
 
     [Test]

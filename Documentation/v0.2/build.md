@@ -3,7 +3,7 @@
 PLang transforms `.goal` files (natural language) into `.pr` files (JSON) using an LLM.
 Build mode is activated via `plang build` or `--build`.
 
-All build options are passed as JSON via `--build={...}`. The properties map to the
+All build options are passed as JSON via `--build.setting={...}`. The properties map to the
 `build` settings class (`build.setting`: `cache`, `files`).
 
 > **How the builder works internally** (the Decide → Properties → match pipeline, the
@@ -23,16 +23,16 @@ All build options are passed as JSON via `--build={...}`. The properties map to 
 plang build
 
 # Build a specific file
-plang build '--build={"files":"myfile.goal"}'
+plang build '--build.setting={"files":"myfile.goal"}'
 
 # Build multiple files (built in the order given)
-plang build '--build={"files":["file1.goal","file2.goal"]}'
+plang build '--build.setting={"files":["file1.goal","file2.goal"]}'
 
 # Build without the LLM cache (forces fresh LLM calls)
-plang build '--build={"cache":"skip"}'
+plang build '--build.setting={"cache":"skip"}'
 
 # Combine options
-plang build '--build={"files":"myfile.goal","cache":"skip"}'
+plang build '--build.setting={"files":"myfile.goal","cache":"skip"}'
 ```
 
 `plang build` scopes to the current working directory, so `cd` into the project (or the
@@ -75,10 +75,10 @@ saved `code` stands and the LLM never sees it (decided before any LLM call).
 
 ```bash
 # Build one file, watch a builder variable
-plang build '--build={"files":"myfile.goal","cache":"skip"}' '--debug={"variables":["answer","goal"]}'
+plang build '--build.setting={"files":"myfile.goal","cache":"skip"}' '--debug.setting={"variables":["answer","goal"]}'
 
 # See the exact LLM system/user messages and raw response
-plang build '--build={"cache":"skip"}' '--debug={"llm":{"system":true,"user":true,"response":true},"length":{"max":50000}}'
+plang build '--build.setting={"cache":"skip"}' '--debug.setting={"llm":{"system":true,"user":true,"response":true},"length":{"max":50000}}'
 ```
 
 The `llm` debug object's flags (`system`, `user`, `response`, `schema`) each emit their own
@@ -93,7 +93,7 @@ runbook pins the failure to the decider, the writer, or the rendered prompt befo
 touch anything: [`debugging.code.md`](../../os/system/builder/debugging.code.md).
 
 The short version: capture what the LLM actually received and returned with
-`--debug={"llm":{"system":true,"user":true,"response":true}}` (the LLM blocks fire for
+`--debug.setting={"llm":{"system":true,"user":true,"response":true}}` (the LLM blocks fire for
 every request, so each stage's system/user/response is shown). If your newly added action is missing from the rendered catalog entirely,
 the problem is catalog discovery, not the model — common causes:
 

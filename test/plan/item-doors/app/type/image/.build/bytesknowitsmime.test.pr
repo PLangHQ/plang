@@ -1,0 +1,214 @@
+{
+  "name": "BytesKnowItsMime",
+  "comment": "Stage 1 (decision 867): a type is born whole — the registered type hands itself to the\nvalue. An image read from bytes carries the REGISTERED image.kind.png (from its\n`[Format(\"png\", \"image/png\", Compressible = false)]` attribute); its mime is the kind's\nmime, not the image's own `_mime` copy. Red on runtime2: today `type.@this(...)` at\n`type/this.cs:149` makes a fresh `kind.@this(\"png\")` from the name alone — a bare kind\nwhose `_mime` field defaults to `[]`, so `%img!type.kind.mime[0]%` reads null. Fixture\nphoto.png committed alongside (copied from test/app/type/kind/strict/).",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %img% = \"photo.png\" as image/png",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%img%",
+              "variable": [
+                {
+                  "text": "%img%",
+                  "code": [
+                    {
+                      "variable": "img"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "photo.png"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {"name":"image","kind":"png"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %img!type.name% equals \"image\"",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "image"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%img!type.name%",
+              "variable": [
+                {
+                  "text": "%img!type.name%",
+                  "code": [
+                    {
+                      "variable": "img"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %img!type.kind.name% equals \"png\"",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "png"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%img!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%img!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "img"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %img!type.kind.mime[0]% equals \"image/png\"",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "image/png"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%img!type.kind.mime[0]%",
+              "variable": [
+                {
+                  "text": "%img!type.kind.mime[0]%",
+                  "code": [
+                    {
+                      "variable": "img"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "mime"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "BytesKnowItsMime.test.goal",
+  "hash": "9f9a58e83e8817479206b093b78fb0e14029ab4ee396eecdbf518f031e52c489"
+}

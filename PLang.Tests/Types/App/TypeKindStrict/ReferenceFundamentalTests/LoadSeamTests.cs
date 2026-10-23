@@ -41,9 +41,9 @@ public class LoadSeamTests
 
     private image PathBackedPng(string name)
     {
-        System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.AbsolutePath, name), Png1x1);
-        return new image(global::app.type.item.path.@this.Resolve(
-            System.IO.Path.Combine(_app.AbsolutePath, name), _app.actor.list.User.Context), _app.actor.list.User.Context);
+        System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.filesystem.root.Absolute, name), Png1x1);
+        return _app.actor.list.User.Context.Image(global::app.type.item.path.@this.Resolve(
+            System.IO.Path.Combine(_app.filesystem.root.Absolute, name), _app.actor.list.User.Context));
     }
 
     [Test] public async Task Value_MaterializesPathBackedImage_SyncBytesThenReal()
@@ -89,7 +89,7 @@ public class LoadSeamTests
 
     [Test] public async Task Birth_StrictKind_BytesInHand_MismatchDeclines_MatchIsBorn()
     {
-        var bytes = new global::app.type.item.binary.@this(Png1x1);
+        var bytes = new global::app.type.item.binary.@this(Png1x1, _app.type.list[typeof(global::app.type.item.binary.@this)]);
         var asGif = _app.type.list[new global::app.type.@this("image", "gif", true), Ctx];
         var asPng = _app.type.list[new global::app.type.@this("image", "png", true), Ctx];
 
@@ -105,7 +105,7 @@ public class LoadSeamTests
     [Test] public async Task Value_NoLazyContent_IsNoOp()
     {
         // A bytes-backed image and a scalar graph carry nothing lazy — materializing succeeds.
-        var bytesBacked = Data.Ok(new image(Png1x1, "image/png"));
+        var bytesBacked = Ctx.Ok(Ctx.Image(Png1x1, "image/png"));
         await bytesBacked.Value();
         await bytesBacked.IsSuccess();
 

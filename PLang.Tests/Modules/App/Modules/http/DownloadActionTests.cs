@@ -115,10 +115,10 @@ public class DownloadActionTests
         {
             Url = (global::app.type.item.text.@this)"https://example.com/layer",
             Unsigned = (global::app.type.item.@bool.@this)true,
-            Path = to == null ? null : global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(to, Ctx)),
+            Path = to == null ? null : Ctx.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve(to, Ctx)),
             Hash = hash == null ? null : global::app.data.@this<global::app.module.crypto.type.hash.@this>.From(new global::app.data.@this("Hash", hash, context: Ctx)),
-            MaxDownloadSize = new global::app.type.item.size.@this(max ?? 100 * 1024 * 1024, Ctx),
-            OnProgress = progress ? global::PLang.Tests.Shared.Make.Call(Ctx, "Progressed") : null,
+            MaxDownloadSize = global::app.type.item.size.@this.Create(max ?? 100 * 1024 * 1024, Ctx),
+            OnProgress = progress ? new global::app.data.@this<global::app.goal.step.action.@this>("", global::PLang.Tests.Shared.Make.Call(Ctx, "Progressed"), context: Ctx) : null,
         };
         await action.Attach(null, Ctx);
         return await action.Start();
@@ -290,12 +290,12 @@ public class DownloadActionTests
     [Test]
     public async Task Received_PrintsInTheSizeSettingsStandard()
     {
-        await (await new global::app.type.item.variable.parser.@this("%!app.type.size.setting.standard%").Variable.Single()
-            .Set(Ctx.Ok(new global::app.type.item.text.@this("si")), Ctx)).IsSuccess();
+        await (await new global::app.type.item.variable.parser.@this("%!app.type.size.setting.standard%", _app.type.list).Variable.Single()
+            .Set(Ctx.Ok(Ctx.Text("si")), Ctx)).IsSuccess();
 
         await Download(new byte[3000], null, null, progress: true);
-        var received = await new global::app.type.item.variable.parser.@this("%progress.received%").Variable.Single().Start(Ctx);
+        var received = await new global::app.type.item.variable.parser.@this("%progress.received%", Ctx.App.type.list).Variable.Single().Start(Ctx);
 
-        await Assert.That((await received.Value())?.ToString()).IsEqualTo("3 kB");
+        await Assert.That(await ((global::app.type.item.size.@this)(await received.Value())!).Text(Ctx)).IsEqualTo("3 kB");
     }
 }

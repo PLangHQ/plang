@@ -12,7 +12,7 @@ public class GoalCallTests
     {
         _app = new global::app.@this("/app").Testing();
         // Register a stub goal that call.cs can find
-        _app.goal.list.Add(new global::app.goal.@this
+        _app.goal.list.Add(new global::app.goal.@this(_app.type.list)
         {
             Name = "TestGoal",
             Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", _app.actor.list.User.Context)
@@ -22,7 +22,7 @@ public class GoalCallTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    private static global::app.type.item.text.@this Text(string s) => new(s);
+    private static global::app.type.item.text.@this Text(string s) => (global::app.type.item.text.@this)s;
 
     // A goal named as a call names it: its name, selected when the call starts.
     private global::app.data.@this<global::app.goal.@this> Named(string s)
@@ -66,7 +66,7 @@ public class GoalCallTests
         {
             Name = Named(await Seer("myParam")),
             Parameter = new global::app.type.item.list.@this(
-                new List<Data> { new Data("myParam", "myValue", context: _app.actor.list.User.Context) })
+                new List<Data> { new Data("myParam", "myValue", context: _app.actor.list.User.Context) }, _app.type.list["list"])
         };
         var result = await action.Start();
 
@@ -87,7 +87,7 @@ public class GoalCallTests
         var ctx = _app.actor.list.User.Context;
         var tool = Make.Tool(ctx, "TestGoal", parameter: new List<Data> { new Data("units", "metric", context: ctx) });
 
-        await using (ctx.call.Push(new[] { new Data("units", "imperial", context: ctx) }, tool))
+        await using (ctx.call.Push(new[] { new Data("units", "imperial", context: ctx) }, await ctx.call.Setting(), tool))
         {
             await tool.Start(ctx);
             await Assert.That(await ValueOf("units")).IsEqualTo("imperial");
@@ -100,7 +100,7 @@ public class GoalCallTests
         var ctx = _app.actor.list.User.Context;
         var tool = Make.Tool(ctx, await Seer("units"), parameter: new List<Data> { new Data("units", "metric", context: ctx) });
 
-        await using (ctx.call.Push(System.Array.Empty<Data>(), tool))
+        await using (ctx.call.Push(System.Array.Empty<Data>(), await ctx.call.Setting(), tool))
         {
             await tool.Start(ctx);
             await Assert.That(await ValueOf("seen")).IsEqualTo("metric");
@@ -115,7 +115,7 @@ public class GoalCallTests
 
         async Task<string?> Invoke(string city)
         {
-            await using (ctx.call.Push(new[] { new Data("city", city, context: ctx) }, tool))
+            await using (ctx.call.Push(new[] { new Data("city", city, context: ctx) }, await ctx.call.Setting(), tool))
             {
                 await Task.Yield();
                 await tool.Start(ctx);
@@ -160,7 +160,7 @@ public class GoalCallTests
         var ctx = _app.actor.list.User.Context;
         var other = Make.Call(ctx, "TestGoal");
 
-        await using (ctx.call.Push(new[] { new Data("a", "nine", context: ctx) }, other))
+        await using (ctx.call.Push(new[] { new Data("a", "nine", context: ctx) }, await ctx.call.Setting(), other))
         {
             await Make.Call(ctx, await Seer("a"), ("a", "one")).Start(ctx);
             await Assert.That(await ValueOf("seen")).IsEqualTo("one");

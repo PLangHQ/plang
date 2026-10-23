@@ -69,14 +69,14 @@ public class VariableResolveTest : System.IAsyncDisposable
 
         await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
-            Name = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("response")),
+            Name = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("response", context.App.type.list), context: context),
             Value = app.actor.list.User.Context.Ok("hello"),
         }, context).Start(context);
 
         await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("",
-                global::app.type.item.variable.@this.Resolve("%response!cost%", context)),
+                global::app.type.item.variable.@this.Resolve("%response!cost%", context), context: context),
             Value = app.actor.list.User.Context.Ok(100),
         }, context).Start(context);
 
@@ -95,7 +95,7 @@ public class VariableResolveTest : System.IAsyncDisposable
         var result = await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("",
-                global::app.type.item.variable.@this.Resolve("%response!cost%", context)),
+                global::app.type.item.variable.@this.Resolve("%response!cost%", context), context: context),
             Value = app.actor.list.User.Context.Ok(100),
         }, context).Start(context);
 

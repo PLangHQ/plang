@@ -7,7 +7,9 @@ namespace app.module.archive.type.archive.kind.bundle;
 /// A bundle — a folder held in one archive (<c>tar</c>, <c>tar.gz</c>, <c>zip</c>, <c>oci.layer</c>). Each format reads
 /// and writes its own entries; what an entry may do to the folder it unpacks into is decided here, once, for every
 /// format. Nothing in it lands outside that folder: a name with <c>..</c> stays inside, a link in the folder is followed
-/// as the folder's own (an absolute one from the folder, never the host's root), a file written over a link replaces
+/// as the folder's own (an absolute one from the folder, never the host's root), a link unpacked is written as the folder
+/// reads it — relative from where it is to where it leads inside (<c>bin/sh → /bin/busybox</c> lands as
+/// <c>busybox</c>), so the OS reads it inside for every step after the unpack — a file written over a link replaces
 /// the link, a hard link is a copy of a file inside or nothing, nothing is written over the folder itself. Devices and
 /// fifos are never made; a setuid or setgid bit is dropped and the owner always keeps read and write. The whole unpack
 /// writes at most its cap. Every read and write goes through the folder's gated verbs.
@@ -17,7 +19,7 @@ public abstract class @this : kind.@this
     // the mode a packed entry is given: a folder anyone may enter, a file its owner may write
     private const System.IO.UnixFileMode Folder = (System.IO.UnixFileMode)0b111_101_101, File_ = (System.IO.UnixFileMode)0b110_100_100;
 
-    protected @this(string name) : base(name) { }
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     /// <summary>The entries <paramref name="from"/> holds, in order; each entry's content is read before the next is
     /// asked for.</summary>
@@ -35,7 +37,7 @@ public abstract class @this : kind.@this
         global::app.actor.context.@this context)
     {
         var folder = await self.As<global::app.type.item.path.@this>().Value() as File;
-        if (folder == null || !context.FileSystem.IsFolder(folder))
+        if (folder == null || !context.Filesystem.IsFolder(folder))
             return (context.Error(new global::app.error.ServiceError(
                 $"a {Name} packs a folder, and %{self.Name}% is none", "PackNeedsFolder", 400)), null);
         var listed = await folder.List((global::app.type.item.text.@this)"*", (global::app.type.item.@bool.@this)true, context);
@@ -43,7 +45,7 @@ public abstract class @this : kind.@this
         try
         {
             await Write(into, Walk(folder, (await listed.Value())!.Items(), context), level, context.CancellationToken);
-            return (context.Ok(), new held.@this("folder", folder.Name.ToString()));
+            return (context.Ok(), new held.@this(context.App.type.list[typeof(held.@this)], "folder", folder.Name.ToString()));
         }
         catch (global::app.error.AppException refused)
         {
@@ -56,14 +58,14 @@ public abstract class @this : kind.@this
     private async IAsyncEnumerable<entry.@this> Walk(File folder, IEnumerable<global::app.type.item.path.@this> children,
         global::app.actor.context.@this context)
     {
-        var root = folder.Absolute.TrimEnd('/') + "/";
         foreach (var child in children)
         {
-            if (child is not File at || !at.Absolute.StartsWith(root, StringComparison.Ordinal)) continue;
-            var name = at.Absolute[root.Length..];
-            if (context.FileSystem.Link(at) is { } target)
+            if (child is not File at || !at.IsUnder(folder).Value) continue;
+            // its name from the folder, / between its parts, as a bundle writes it
+            var name = global::app.Utils.PathHelper.GetRelativePath(folder.Absolute, at.Absolute).Replace('\\', '/');
+            if (context.Filesystem.Link(at) is { } target)
                 yield return new entry.@this(name, Kind.Link, File_, target);
-            else if (context.FileSystem.IsFolder(at))
+            else if (context.Filesystem.IsFolder(at))
                 yield return new entry.@this(name, Kind.Folder, Folder);
             else
             {
@@ -84,9 +86,11 @@ public abstract class @this : kind.@this
         if (into == null)
             return context.Error(new global::app.error.ServiceError(
                 $"a {Name} unpacks into a folder: say where (unpack … into /folder)", "UnpackNeedsFolder", 400));
-        var made = await into.Mkdir(context);
-        if (!made.Success) return made;
+        var folder = await into.Mkdir(context);
+        if (!folder.Success) return folder;
         var cap = new cap.@this(max);
+        // the links it makes, by name — read again once all is unpacked, as a later entry can change where one leads
+        var links = new List<string>();
         try
         {
             await foreach (var entry in Entries(from, context.CancellationToken))
@@ -94,7 +98,9 @@ public abstract class @this : kind.@this
                 if (entry.Name.Length == 0) continue;
                 var landed = await Land(entry, into, cap, context);
                 if (!landed.Success) return landed;
+                if (entry.Kind == Kind.Link) links.Add(entry.Name);
             }
+            if (await Leaving(into, links, context) is { } leaving) return leaving;
             return context.Ok<global::app.type.item.path.@this>(into);
         }
         catch (global::app.error.AppException refused)
@@ -107,6 +113,28 @@ public abstract class @this : kind.@this
         }
     }
 
+    // Each link the unpack made, read the OS's way in the folder's final state: the first that leads outside the folder
+    // is removed, and is the unpack's refusal, naming it. A link replaced since (a file, a folder) is none to read.
+    private async Task<global::app.data.@this?> Leaving(File into, IEnumerable<string> names, global::app.actor.context.@this context)
+    {
+        var filesystem = context.Filesystem;
+        if (into.Landing(filesystem, last: true) is not { } inside) return null;
+        foreach (var name in names.Distinct())
+        {
+            var (at, _) = await Under(into, name, context);
+            if (at == null || filesystem.Link(at) == null) continue;
+            // a loop leads nowhere: the OS refuses it too
+            if (at.Landing(filesystem, last: true) is not { } lands || lands.IsUnder(inside).Value)
+                continue;
+            // a delete refused or failed is the answer: the link is still there, so it was never removed
+            var removed = await at.Delete(context);
+            if (!removed.Success) return removed;
+            return context.Error(new global::app.error.ServiceError(
+                $"the link {name} unpacked into {into.Raw} leads outside it, to {lands.Absolute} — it was removed", "LinkLeaves", 400));
+        }
+        return null;
+    }
+
     /// <summary>One entry, landed where it belongs inside <paramref name="into"/>. A format whose entries mean more
     /// (a layer's whiteouts) answers them first.</summary>
     protected virtual async Task<global::app.data.@this> Land(entry.@this entry, File into, cap.@this cap,
@@ -117,21 +145,22 @@ public abstract class @this : kind.@this
         switch (entry.Kind)
         {
             case Kind.Folder:
-                if (context.FileSystem.Link(at) != null) await at.Delete(context);
+                if (context.Filesystem.Link(at) != null && await at.Delete(context) is { Success: false } unlinked) return unlinked;
                 var folder = await at.Mkdir(context);
                 return folder.Success ? await at.Mode(entry.Mode, context) : folder;
             case Kind.File:
-                await Clear(at, context);
-                var written = entry.Content == null ? await at.WriteBytes([], context) : await at.Write(cap.Over(entry.Content), context);
-                return written.Success ? await at.Mode(entry.Mode, context) : written;
+                if (await Clear(at, context) is { } kept) return kept;
+                var file = entry.Content == null ? await at.WriteBytes([], context) : await at.Write(cap.Over(entry.Content), context);
+                return file.Success ? await at.Mode(entry.Mode, context) : file;
             case Kind.Link:
-                return await at.Link(entry.Target ?? "", context);
+                // written as the folder reads it, so the OS reads it inside for every step after the unpack
+                return await into.Link(at, entry.Target ?? "", context);
             case Kind.HardLink:
                 // a copy of the file it names inside the folder — a hard link needs link(2); a copy is the same bytes
                 var (target, unfollowed) = await into.Follow(entry.Target ?? "", last: true, context);
                 if (target == null) return unfollowed!;
-                await Clear(at, context);
-                if (!context.FileSystem.IsFile(target)) return context.Ok();
+                if (await Clear(at, context) is { } stays) return stays;
+                if (!context.Filesystem.IsFile(target)) return context.Ok();
                 return await target.CopyTo(at, (global::app.type.item.@bool.@this)true, (global::app.type.item.@bool.@this)false, context);
             default:
                 // devices, fifos and the rest: never made by someone unpacking as themselves

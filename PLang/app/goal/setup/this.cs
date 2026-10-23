@@ -46,7 +46,7 @@ public sealed class @this
         {
             // Exists routes through AuthGate(Read) — in-root setup probes
             // fast-pass via IsInRoot. Out-of-root would prompt, but setup paths
-            // are derived from App.AbsolutePath so this is always in-root.
+            // are derived from the app's root so this is always in-root.
             var exists = await file.Exists(context);
             if (!exists.Success) return exists;
             if ((await exists.Value())?.Value != true) continue;
@@ -123,7 +123,7 @@ public sealed class @this
     /// </summary>
     public async Task<data.@this> Record(Step step, app.@this app, global::app.error.@this? error = null)
     {
-        if (string.IsNullOrEmpty(step.Hash)) return data.@this.Ok();
+        if (string.IsNullOrEmpty(step.Hash)) return app.actor.list.System.Context.Ok();
 
         var metadata = new Dictionary<string, object?>
         {

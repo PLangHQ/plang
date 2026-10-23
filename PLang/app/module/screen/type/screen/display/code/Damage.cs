@@ -16,7 +16,7 @@ internal static class Damage
     /// the host shows there isn't exact).</summary>
     internal static List<(Rect Rect, int At)> Find(Rect r, Span<byte> composed, Span<byte> screen, int width, bool all)
     {
-        var found = new List<(Rect, int)>();
+        var runs = new List<(Rect, int)>();
         var row = r.Width * 4;
         int start = -1, last = -1, left = 0, right = 0;
         for (var y = r.Y; y < r.Bottom; y++)
@@ -30,7 +30,7 @@ internal static class Damage
                 var same = line.CommonPrefixLength(shown);
                 if (same == row)
                 {
-                    if (start >= 0 && y - last > Gap) { found.Add(Pack(r, composed, start, last, left, right)); start = -1; }
+                    if (start >= 0 && y - last > Gap) { runs.Add(Pack(r, composed, start, last, left, right)); start = -1; }
                     continue;
                 }
                 from = same / 4;
@@ -41,8 +41,8 @@ internal static class Damage
             else (left, right) = (Math.Min(left, from), Math.Max(right, to));
             last = y;
         }
-        if (start >= 0) found.Add(Pack(r, composed, start, last, left, right));
-        return found;
+        if (start >= 0) runs.Add(Pack(r, composed, start, last, left, right));
+        return runs;
     }
 
     // the run's columns, packed in place from its first row: a packed row never starts after the row it comes from

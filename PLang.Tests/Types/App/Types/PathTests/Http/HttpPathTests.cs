@@ -23,9 +23,10 @@ public class HttpPathTests
     private static async Task Grant(global::app.@this app, global::app.actor.context.@this context, string url)
     {
         var perm = new global::app.type.item.permission.@this(
-            "User", new HttpPath(url).Absolute,
+            "User", context.Url(url).Absolute,
             global::app.type.item.permission.@this.AllVerbs,
-            global::app.type.item.permission.Match.exact);
+            global::app.type.item.permission.Match.exact,
+            app.type.list[typeof(global::app.type.item.permission.@this)]);
         await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", perm, context: context), persist: true);
     }
 
@@ -35,9 +36,9 @@ public class HttpPathTests
         var (app, context) = MakeApp();
         var url = server.NewResourceUrl();
         await Grant(app, context, url);
-        await new HttpPath(url).WriteText("the body", context);
+        await context.Url(url).WriteText("the body", context);
 
-        var result = await new HttpPath(url).Touch(context);
+        var result = await context.Url(url).Touch(context);
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("the body");
     }
@@ -49,7 +50,7 @@ public class HttpPathTests
         var url = server.NewResourceUrl();   // never written → 404
         await Grant(app, context, url);
 
-        var result = await new HttpPath(url).Touch(context);
+        var result = await context.Url(url).Touch(context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
         await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(404);
@@ -62,10 +63,10 @@ public class HttpPathTests
         var url = server.NewResourceUrl();
         await Grant(app, context, url);
 
-        var write = await new HttpPath(url).WriteText("posted body", context);
+        var write = await context.Url(url).WriteText("posted body", context);
         await write.IsSuccess();
 
-        var read = await new HttpPath(url).Touch(context);
+        var read = await context.Url(url).Touch(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("posted body");
     }
 
@@ -76,7 +77,7 @@ public class HttpPathTests
         var url = server.MapGetOnly();
         await Grant(app, context, url);
 
-        var result = await new HttpPath(url).WriteText("nope", context);
+        var result = await context.Url(url).WriteText("nope", context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("MethodNotAllowed");
         await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(405);
@@ -88,12 +89,12 @@ public class HttpPathTests
         var (app, context) = MakeApp();
         var url = server.NewResourceUrl();
         await Grant(app, context, url);
-        await new HttpPath(url).WriteText("to delete", context);
+        await context.Url(url).WriteText("to delete", context);
 
-        var del = await new HttpPath(url).Delete(context);
+        var del = await context.Url(url).Delete(context);
         await del.IsSuccess();
 
-        var read = await new HttpPath(url).Touch(context);
+        var read = await context.Url(url).Touch(context);
         await read.IsFailure();
         await Assert.That(read.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
@@ -104,9 +105,9 @@ public class HttpPathTests
         var (app, context) = MakeApp();
         var url = server.NewResourceUrl();
         await Grant(app, context, url);
-        await new HttpPath(url).WriteText("12345", context);
+        await context.Url(url).WriteText("12345", context);
 
-        var stat = await new HttpPath(url).Stat(context);
+        var stat = await context.Url(url).Stat(context);
         await stat.IsSuccess();
         var info = (global::app.type.item.path.@this.StatInfo)(await stat.Value())!;
         await Assert.That(info.Exists).IsTrue();
@@ -124,10 +125,10 @@ public class HttpPathTests
         var absent = server.NewResourceUrl();
         await Grant(app, context, present);
         await Grant(app, context, absent);
-        await new HttpPath(present).WriteText("here", context);
+        await context.Url(present).WriteText("here", context);
 
-        await Assert.That(await new HttpPath(present).AsBooleanAsync(context)).IsTrue();
-        await Assert.That(await new HttpPath(absent).AsBooleanAsync(context)).IsFalse();
+        await Assert.That(await context.Url(present).AsBooleanAsync(context)).IsTrue();
+        await Assert.That(await context.Url(absent).AsBooleanAsync(context)).IsFalse();
     }
 
     [Test] public async Task Exists_2xx_True_4xx_False()
@@ -138,13 +139,13 @@ public class HttpPathTests
         var absent = server.NewResourceUrl();
         await Grant(app, context, present);
         await Grant(app, context, absent);
-        await new HttpPath(present).WriteText("here", context);
+        await context.Url(present).WriteText("here", context);
 
-        var existsPresent = await new HttpPath(present).Exists(context);
+        var existsPresent = await context.Url(present).Exists(context);
         await existsPresent.IsSuccess();
         await Assert.That((await existsPresent.Value())).IsEqualTo(true);
 
-        var existsAbsent = await new HttpPath(absent).Exists(context);
+        var existsAbsent = await context.Url(absent).Exists(context);
         await existsAbsent.IsSuccess();
         await Assert.That((await existsAbsent.Value())).IsEqualTo(false);
     }
@@ -156,7 +157,7 @@ public class HttpPathTests
         var url = server.NewResourceUrl();
         await Grant(app, context, url);
 
-        await new HttpPath(url).Touch(context);
+        await context.Url(url).Touch(context);
 
         var captured = server.Requests.FirstOrDefault(r => r.Method == "GET");
         await Assert.That(captured).IsNotNull();
@@ -172,7 +173,7 @@ public class HttpPathTests
         server.MapStatus(u, 401);
         await Grant(app, context, u);
 
-        var result = await new HttpPath(u).Touch(context);
+        var result = await context.Url(u).Touch(context);
         await result.IsFailure();
         await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(401);
     }
@@ -188,7 +189,7 @@ public class HttpPathTests
         var url = $"http://127.0.0.1:{deadPort}/nothing";
         await Grant(app, context, url);
 
-        var result = await new HttpPath(url).Touch(context);
+        var result = await context.Url(url).Touch(context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NetworkError");
     }
@@ -199,9 +200,9 @@ public class HttpPathTests
         var (app, context) = MakeApp();
         var url = server.NewResourceUrl();
         await Grant(app, context, url);
-        await new HttpPath(url).WriteText("body", context);
+        await context.Url(url).WriteText("body", context);
 
-        var path = new HttpPath(url);
+        var path = context.Url(url);
         await path.Touch(context);
         await path.Touch(context);
 
@@ -215,12 +216,12 @@ public class HttpPathTests
         var (app, context) = MakeApp();
         var url = server.NewResourceUrl();
         await Grant(app, context, url);
-        await new HttpPath(url).WriteText("shared", context);
+        await context.Url(url).WriteText("shared", context);
 
         // Many instances issuing requests concurrently — a per-instance client
         // would exhaust sockets; a shared static client pools connections.
         var tasks = Enumerable.Range(0, 50)
-            .Select(_ => new HttpPath(url).Touch(context));
+            .Select(_ => context.Url(url).Touch(context));
         var results = await Task.WhenAll(tasks);
         await Assert.That(results.All(r => r.Success)).IsTrue();
     }

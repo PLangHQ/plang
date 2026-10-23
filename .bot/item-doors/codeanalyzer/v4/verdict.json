@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "A1, A2, A8, A10, A12, A13, A14, A15 fixed at the root; open: A7 (actor.Equals is reference equality), A3/A4/A6 one thing each, A9/A11 leftovers, new: Executor mode test parses a Data name, A13 reflection tri-state." }

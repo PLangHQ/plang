@@ -42,7 +42,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "text"
+              "value": {"name":"text","kind":"md"}
             }
           ],
           "default": [
@@ -152,7 +152,6 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/app/type/kind/strict/SetAsTextSlashMarkdownNormalises.test.goal",
-  "prPath": "/app/type/kind/strict/.build/setastextslashmarkdownnormalises.test.pr",
+  "file": "SetAsTextSlashMarkdownNormalises.test.goal",
   "hash": "01cecdff525fcfcf551b11da57396e74807f9a6d4552723fb9001d26deb634ee"
 }

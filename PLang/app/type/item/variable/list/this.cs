@@ -57,13 +57,21 @@ public partial class @this
     {
         Context = context;
         // System variables are born WITH context — a computed lifts its factory result
-        // through the registry, so it must hold a context at birth (not stamped after).
-        // Built with the actors, before the app's types exist: each type carries its class itself.
-        var datetime = new app.type.@this("datetime", typeof(app.type.item.datetime.@this));
+        // through the registry, so it must hold a context at birth (not stamped after) — each
+        // holding the app's type for what it is (the app's types exist before its actors).
+        var datetime = context.App.type.list[typeof(app.type.item.datetime.@this)];
         _variables["Now"] = new data.DynamicData("Now", asker => asker.Ok(DateTimeOffset.Now), context, datetime);
         _variables["NowUtc"] = new data.DynamicData("NowUtc", asker => asker.Ok(DateTimeOffset.UtcNow), context, datetime);
         _variables["GUID"] = new data.DynamicData("GUID", asker => asker.Ok(Guid.NewGuid()), context,
-            new app.type.@this("guid", typeof(app.type.item.guid.@this)));
+            context.App.type.list[typeof(app.type.item.guid.@this)]);
+        // %MyIdentity% — the app's own identity; %Identity% — who the asking actor acts for: its identity's public key
+        // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read from the asker's
+        // actor, so a setDefault or rename is reflected, and born with the memory — not set — so an actor born at any
+        // time has them at once and nothing bound to a variable's set runs for them.
+        // a step holds an identity without its private key
+        _variables["MyIdentity"] = new data.DynamicData("MyIdentity", asker => asker.Ok(asker.Actor.DefaultIdentity?.Public()), context);
+        _variables["Identity"] = new data.DynamicData("Identity",
+            asker => asker.Ok((asker.Actor.Identity ?? asker.Actor.DefaultIdentity)?.PublicKey), context);
     }
 
     /// <summary>
@@ -91,7 +99,7 @@ public partial class @this
         // reassignments. Storing the marker verbatim would go stale (!data rebinds every action) and a
         // self-assign (`set %a% = %a%`) would cycle on the value door. The reference resolves with the
         // context of the Data that carries it (a goal-call argument `place=%city%` reads the CALLER's
-        // memory, whichever store it lands in). What binds is renamed to `name` — a variable holding a
+        // memory, whichever store it lands in). What binds takes the name `name` — a variable holding a
         // failure binds that failure; a reference to nothing (settled to no value) leaves `name` unset,
         // keeping nothing of the reference, so setting the missing one later doesn't reach it.
         if (value is data.@this reference && reference.HasVariable)
@@ -100,8 +108,8 @@ public partial class @this
             value = bound.IsInitialized ? bound.Copy(name) : _context.NotFound(name);
         }
         // what the value becomes where the name's value was (a task keeps the task written before it)
-        if (value is data.@this written)
-            value = await written.Replace(async () => (await Get(name)).Peek());
+        if (value is data.@this carrier)
+            value = await carrier.Replace(async () => (await Get(name)).Peek());
 
         // The name is a variable's root; a write deeper in is the variable's own (variable.Set).
 
@@ -177,13 +185,13 @@ public partial class @this
             return (rebound, true, prevValue);
         }
 
-        var fresh = new data.@this(name, value, context: _context);
-        _variables[name] = fresh;
-        return (fresh, true, null);
+        var binding = new data.@this(name, value, context: _context);
+        _variables[name] = binding;
+        return (binding, true, null);
     }
 
     // The variable type's events — once the app has it: the actors' stores are born before the app's types.
-    private global::app.@event.on.@this? Events => _context.App.variable?.on;
+    private global::app.@event.on.@this? Events => _context.App.variable?.type.on;
 
     // What is bound before `name` changes to `value`: null to go on — nothing bound, or nothing refused — else a
     // failure or a Handled answer, which is the write's answer. The variable is made only when something is bound.
@@ -205,7 +213,7 @@ public partial class @this
     }
 
     // The variable named `name`, as its events are handed it.
-    private global::app.type.item.variable.@this Named(string name) => new parser.@this($"%{name}%").Variable.Single();
+    private global::app.type.item.variable.@this Named(string name) => new parser.@this($"%{name}%", _context.App.type.list).Variable.Single();
 
     /// <summary>What <paramref name="name"/> holds — or, when it holds nothing, the value
     /// <paramref name="value"/> gives birth to, stored under it in one step: runs asking at once all answer
@@ -218,14 +226,14 @@ public partial class @this
         if (existing.IsInitialized) return existing;
         var born = await value();
         if (!born.Success || born.Handled) return born;
-        var made = born.Peek();
+        var item = born.Peek();
         if (_context.call.Current?.Keeper(name) != null)
-            return await Set(name, made);
+            return await Set(name, item);
 
-        if (await Before(Events?.set, name, made) is { } refused) return refused;
+        if (await Before(Events?.set, name, item) is { } refused) return refused;
         data.@this? stored = null;
-        var held = _variables.GetOrAdd(name, _ => stored = new data.@this(name, made, context: _context));
-        return ReferenceEquals(held, stored) ? await After(name, null, held) : held;
+        var binding = _variables.GetOrAdd(name, _ => stored = new data.@this(name, item, context: _context));
+        return ReferenceEquals(binding, stored) ? await After(name, null, binding) : binding;
     }
 
     /// <summary>What <paramref name="name"/> holds, as this run's own to change in place: held where a write to it lands
@@ -242,10 +250,10 @@ public partial class @this
         if (!read.Success || !read.IsInitialized || read.Peek() is not { } value) return read;
         var copy = value.Copy();
         if (ReferenceEquals(copy, value)) return read;
-        var own = new data.@this(name, copy, context: _context);
-        if (keeper == null) return _variables.GetOrAdd(name, own);
-        keeper.Set(name, own);
-        return own;
+        var binding = new data.@this(name, copy, context: _context);
+        if (keeper == null) return _variables.GetOrAdd(name, binding);
+        keeper.Set(name, binding);
+        return binding;
     }
 
     /// <summary>Stores <paramref name="value"/> under <paramref name="name"/> only if the name still
@@ -261,9 +269,9 @@ public partial class @this
         // the frame a write lands in reads what it holds outward — a frame with memory of its own (a task's run) reading
         // its caller's — and the write lands in it: the caller's stays as it was
         var frame = _context.call.Current?.Keeper(name);
-        if (frame != null ? !(frame.TryGet(name, out var held) && ReferenceEquals(held, expected))
-                          : !_variables.TryGetValue(name, out held) || !ReferenceEquals(held, expected))
-            return held ?? expected;
+        if (frame != null ? !(frame.TryGet(name, out var binding) && ReferenceEquals(binding, expected))
+                          : !_variables.TryGetValue(name, out binding) || !ReferenceEquals(binding, expected))
+            return binding ?? expected;
 
         // Rebind — the same rebind Set does.
         var rebound = new data.@this(name, value, context: _context);
@@ -345,8 +353,8 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Remove(string name)
     {
-        if (!_variables.TryGetValue(name, out var held)) return _context.NotFound(name);
-        if (await Before(Events?.remove, name, held) is { } refused) return refused;
+        if (!_variables.TryGetValue(name, out var binding)) return _context.NotFound(name);
+        if (await Before(Events?.remove, name, binding) is { } refused) return refused;
         if (!_variables.TryRemove(name, out var removed)) return _context.NotFound(name);
         return Events?.remove is { after.Count: > 0 } remove ? await remove.After(Named(name), removed, _context) : removed;
     }
@@ -376,13 +384,14 @@ public partial class @this
             var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys)
                 .Where(n => !n.StartsWith('!'))
                 .Distinct(StringComparer.OrdinalIgnoreCase);
-            var held = new global::app.type.item.list.@this<global::app.type.item.variable.@this>();
+            var variables = new global::app.type.item.list.@this<global::app.type.item.variable.@this>(
+                _context.App.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.variable.@this>)]);
             foreach (var name in names)
                 // a name the parser doesn't read back whole (stored by C#, not written in plang) isn't
                 // one a program can name
-                if (new parser.@this(name).Whole is { } variable)
-                    held.Add(variable);
-            return held;
+                if (new parser.@this(name, _context.App.type.list).Whole is { } variable)
+                    variables.Add(variable);
+            return variables;
         }
     }
 
@@ -481,7 +490,7 @@ public partial class @this
     /// <summary>
     /// Captures user-visible variables for failure diagnostics (e.g. assertion errors).
     /// Excludes:
-    ///  - infrastructure vars (!-prefixed, e.g. !app, !fileSystem)
+    ///  - infrastructure vars (!-prefixed, e.g. !app, !filesystem)
     ///  - dynamic system vars (Now, NowUtc, GUID) — always-fresh, no diagnostic value
     /// Each variable rides whole — its Data (name, type, value), held by reference — keyed by its
     /// name, so <c>%!error.Variables.foo%</c> navigates to it. Called when an error happens (assert,
@@ -490,7 +499,7 @@ public partial class @this
     /// </summary>
     public global::app.type.item.dict.@this Snapshot()
     {
-        var vars = new global::app.type.item.dict.@this();
+        var vars = new global::app.type.item.dict.@this(_context.App.type.list[typeof(global::app.type.item.dict.@this)]);
         foreach (var kvp in _variables)
         {
             if (kvp.Key.StartsWith("!")) continue;

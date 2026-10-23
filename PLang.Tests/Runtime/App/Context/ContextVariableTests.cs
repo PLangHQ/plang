@@ -40,7 +40,7 @@ public class ContextVariableTests
     public async Task ContextVar_Call_ReturnsTheContextsCalls()
     {
         var context = _app.actor.list.User.Context;
-        var read = await new global::app.type.item.variable.parser.@this("%!call%").Variable.Single().Start(context);
+        var read = await new global::app.type.item.variable.parser.@this("%!call%", context.App.type.list).Variable.Single().Start(context);
 
         await Assert.That(read.Peek()).IsSameReferenceAs(context.call);
     }
@@ -137,7 +137,7 @@ public class ContextVariableTests
     public async Task ContextVar_AppProperty_AccessibleViaDotNotation()
     {
         var vars = _app.actor.list.User.Context.Variable;
-        var data = await new global::app.type.item.variable.@this("!app.Name").Start(vars.Context);
+        var data = await new global::app.type.item.variable.@this("!app.Name", vars.Context.App.type.list).Start(vars.Context);
 
         await Assert.That(data).IsNotNull();
         await Assert.That((await data!.Value())?.ToString()).IsEqualTo("test");

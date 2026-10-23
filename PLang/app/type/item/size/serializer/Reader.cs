@@ -14,11 +14,16 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("size", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("size", kind), ctx.Context]);
         var text = reader.Peek() == global::app.type.format.TokenKind.Number ? reader.Number().ToString() ?? "" : reader.String();
-        var named = string.IsNullOrEmpty(kind) ? null
-            : ctx.Context.App.type.list["size"].kind[kind!] as global::app.type.item.size.kind.@this;
-        return (named?.Parse(text, ctx.Context) ?? global::app.type.item.size.@this.Resolve(text, ctx.Context))
+        // the standard the wire names makes it, from its own form only; with none named, the one whose form it is
+        if (!string.IsNullOrEmpty(kind) && ctx.Context.App.type.list["size"].kind[kind!] is not null)
+        {
+            var carrier = new global::app.data.@this("", context: ctx.Context);
+            return ctx.Context.App.type.list[new global::app.type.@this("size", kind), ctx.Context].Make(text, carrier)
+                ?? throw new System.FormatException(carrier.Error?.Message ?? $"'{text}' is not a size in {kind}.");
+        }
+        return global::app.type.item.size.@this.Resolve(text, ctx.Context)
             ?? throw new System.FormatException(
                 $"'{text}' is not a size — write a number and its unit: IEC (500 KiB) or SI (100 MB).");
     }

@@ -11,7 +11,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Shape => "object";
 
     /// <summary>How much of a download has come — null on an upload.</summary>
-    [Out] public global::app.type.item.size.@this? Received { get; }
+    [Out, LlmBuilder] public global::app.type.item.size.@this? Received { get; }
 
     /// <summary>How much of an upload has gone — null on a download.</summary>
     [Out] public global::app.type.item.size.@this? Sent { get; }
@@ -25,18 +25,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary><paramref name="moved"/> bytes of <paramref name="total"/>, received or <paramref name="sent"/>, written in
     /// the asker's size standard.</summary>
     public @this(long moved, long? total, bool sent, global::app.actor.context.@this context)
+        : base(context.App.type.list[typeof(@this)])
     {
-        var size = new global::app.type.item.size.@this(moved, context);
+        var size = global::app.type.item.size.@this.Create(moved, context);
         if (sent) Sent = size;
         else Received = size;
-        Total = total is { } all ? new global::app.type.item.size.@this(all, context) : null;
+        Total = total is { } all ? global::app.type.item.size.@this.Create(all, context) : null;
         Percent = total is > 0 ? (global::app.type.item.number.@this)decimal.Round(moved * 100m / total.Value, 1) : null;
     }
 
     public override bool IsLeaf => false;
 
     /// <summary>A progress is reported by a transfer, never made from a value.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this progress) return progress;
         data.Fail(new global::app.error.@this("a progress is reported by a download or an upload, never made from a value",

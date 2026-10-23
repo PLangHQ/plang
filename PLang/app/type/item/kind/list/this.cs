@@ -3,18 +3,16 @@ namespace app.type.item.kind.list;
 /// <summary>
 /// The list kind — a raw CLR <see cref="System.Collections.IList"/> host (a POCO's
 /// <c>List&lt;Step&gt;</c>, <c>List&lt;action&gt;</c>, …). Owns index-descend (<c>goal.Step[0]</c>),
-/// element-enumeration (foreach), and array-Output. Claims <see cref="System.Collections.IList"/>
+/// element-enumeration (foreach). Claims <see cref="System.Collections.IList"/>
 /// by assignable match, so any concrete list resolves here (exact ClrForm wins first, so
 /// <c>JsonElement</c> stays json).
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.type.item.@this>
 {
-    public @this() : base("list") { }
+    public @this(global::app.type.@this owner) : base("list", owner) { }
 
-    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out (814).
+    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out.
     protected override bool? OwnInternal => true;
-
-    protected internal override string Owner => "item";
 
     // Claims IEnumerable (not just IList) so ANY sequence — HashSet, a LINQ enumerable — resolves
     // here and enumerates, instead of falling to the * kind and reflecting its C# properties. The
@@ -44,11 +42,12 @@ public sealed class @this : global::app.type.kind.@this
         if (!isIndex) return ctx.App.type.list["item"].kind["*"]!.Set(host, key, isIndex, value, ctx);
         var n = Length(host);
         if (!int.TryParse(key, out var i) || i < 0 || i >= n)
-            throw new System.NotSupportedException(
-                $"cannot set [{key}] on a sequence of {n} — index out of range or not numeric");
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"cannot set [{key}] on a sequence of {n} — index out of range or not numeric", "CannotSetChild", 400));
         if (host is System.Collections.IList il) il[i] = value;
         else Indexer(host).SetValue(host, value, new object[] { i });
-        return new(new global::app.type.clr.@this(host, ctx));
+        // the sequence answers as the plang list it is
+        return new(global::app.type.item.@this.Create(host, ctx));
     }
 
     // Positional access over any sequence host — a non-generic IList (array, List<T>) is direct;
@@ -73,16 +72,6 @@ public sealed class @this : global::app.type.kind.@this
 
     /// <summary>A CLR collection holds its children by position.</summary>
     public override bool IsSequence(object host) => true;
-
-    // A collection writes as an array of self-writes — each element through its own kind.
-    public override async global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? ctx)
-    {
-        writer.BeginArray(-1);
-        foreach (var el in (System.Collections.IEnumerable)obj) if (el != null) await WriteReflected(writer, el, mode, ctx!);
-        writer.EndArray();
-    }
 
     // The OUTBOUND convert: list knows how to build itself FROM a json source (a clr(json) array →
     // native list), reusing the universal DOM narrower (item.serializer.json.Parse) — mirrors the

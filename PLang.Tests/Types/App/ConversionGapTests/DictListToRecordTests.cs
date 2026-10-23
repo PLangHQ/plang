@@ -17,16 +17,16 @@ public class DictListToRecordTests : System.IAsyncDisposable
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
-    private static Dict D(params (string Key, object? Value)[] entries)
+    private Dict D(params (string Key, object? Value)[] entries)
     {
-        var d = new Dict();
+        var d = Ctx.Dict();
         foreach (var (k, v) in entries) d.Set(k, v);
         return d;
     }
 
     private PlangList L(params global::app.type.item.@this[] items)
     {
-        var l = new PlangList();
+        var l = new PlangList(app.type.list["list"]);
         foreach (var i in items) l.Add(i);
         return l;
     }

@@ -34,7 +34,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// continue that names no response, declines with why — or from the response it continues
     /// (<c>Conversation=%answer%</c>). Whether that is an llm answer is known only when the query reads it, so the query
     /// says so then.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
         if (raw is @this conversation) return conversation;
         if (raw is not global::app.type.item.dict.@this dict) return new @this(data);
@@ -59,14 +59,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Writes itself as its dict: what it continues as it holds it — the reference as written
     /// (<c>{"continue": "%answer%"}</c>), or the response already bound — never opening it at the writer.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         if (Continue != null)
         {
             writer.Name("continue");
-            await Continue.Peek().Output(writer, mode, context);
+            await Continue.Peek().Output(writer);
         }
         writer.EndObject();
     }

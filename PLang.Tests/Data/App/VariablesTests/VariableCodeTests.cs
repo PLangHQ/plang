@@ -17,12 +17,12 @@ public class VariableCodeTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    private static Variable One(string text) => new Parser(text).Read(0)!;
+    private Variable One(string text) => new Parser(text, _app.type.list).Read(0)!;
 
     private static string[] Hops(Variable v) => v.Code.Items().Select(h => $"{h.Kind}:{h.Text}").ToArray();
 
-    private static global::app.type.item.list.@this List(params string[] values)
-        => new(values.Select(v => (global::app.type.item.@this)new global::app.type.item.text.@this(v)));
+    private global::app.type.item.list.@this List(params string[] values)
+        => new(values.Select(v => (global::app.type.item.@this)Context.Text(v)), _app.type.list["list"]);
 
     // ---- a write through a node that holds nothing ----
 
@@ -64,7 +64,7 @@ public class VariableCodeTests
     [Test]
     public async Task Parser_FindsEachReferenceInATemplate()
     {
-        var found = new Parser("hi %name%, from %user.address[idx].city% (%order!cost%)").Variable;
+        var found = new Parser("hi %name%, from %user.address[idx].city% (%order!cost%)", _app.type.list).Variable;
 
         await Assert.That(found.Select(v => v.Text).ToArray())
             .IsEquivalentTo(new[] { "%name%", "%user.address[idx].city%", "%order!cost%" });
@@ -101,7 +101,7 @@ public class VariableCodeTests
     [Test]
     public async Task Parser_AMethodsValues_MayHoldSpacesAndPercent()
     {
-        var found = new Parser("%name.replace(\"-\", \" \")% and %x.replace(\"%\", \"\")%").Variable;
+        var found = new Parser("%name.replace(\"-\", \" \")% and %x.replace(\"%\", \"\")%", _app.type.list).Variable;
 
         await Assert.That(found.Select(v => v.Text).ToArray())
             .IsEquivalentTo(new[] { "%name.replace(\"-\", \" \")%", "%x.replace(\"%\", \"\")%" });
@@ -121,16 +121,16 @@ public class VariableCodeTests
     [Test]
     public async Task Parser_APercentThatOpensNothing_IsText()
     {
-        await Assert.That(new Parser("50% of %total%").Variable.Select(v => v.Text).ToArray())
+        await Assert.That(new Parser("50% of %total%", _app.type.list).Variable.Select(v => v.Text).ToArray())
             .IsEquivalentTo(new[] { "%total%" });
-        await Assert.That(new Parser("100% and 5%").Variable.Count).IsEqualTo(0);
-        await Assert.That(new Parser("%% or %x").Variable.Count).IsEqualTo(0);
+        await Assert.That(new Parser("100% and 5%", _app.type.list).Variable.Count).IsEqualTo(0);
+        await Assert.That(new Parser("%% or %x", _app.type.list).Variable.Count).IsEqualTo(0);
     }
 
     [Test]
     public async Task Parser_AReferenceThatDoesntParse_IsAnError()
     {
-        var parser = new Parser("hi %x!!y% there");
+        var parser = new Parser("hi %x!!y% there", _app.type.list);
 
         await Assert.That(parser.Variable.Count).IsEqualTo(0);
         await Assert.That(parser.Error.Count).IsEqualTo(1);
@@ -140,7 +140,7 @@ public class VariableCodeTests
     [Test]
     public async Task Parser_ReadsTheReferenceAtAPosition()
     {
-        var v = new Parser("Name=%x.y% rest").Read(5);
+        var v = new Parser("Name=%x.y% rest", _app.type.list).Read(5);
 
         await Assert.That(v!.Text).IsEqualTo("%x.y%");
     }

@@ -8,14 +8,12 @@ namespace app.module.signing;
 [Action("verify", Cacheable = false)]
 public partial class verify : IContext
 {
-    /// <summary>The signed data to verify.</summary>
+    /// <summary>The signed data to verify — as it is: a failed result signed with its error is verified like any Data.</summary>
+    [Whole]
     public partial data.@this? Data { get; init; }
 
     /// <summary>Required contracts for verification.</summary>
     public partial data.@this<global::app.type.item.list.@this>? Contracts { get; init; }
-
-    /// <summary>Expected headers to match against signed headers.</summary>
-    public partial data.@this<global::app.type.item.dict.@this>? Header { get; init; }
 
     [Code]
     public partial ISigning Signer { get; }

@@ -60,7 +60,7 @@ internal sealed class Sandbox
     /// <summary>The hold for <paramref name="program"/> under <paramref name="permissions"/> — each one the caller's to
     /// grant, each an exact path with the verbs it gives; or why not. A permission that is no good is refused as such
     /// first, whatever the kernel can do; then a kernel that can't hold a program refuses; only then is the caller asked.</summary>
-    internal static async Task<(Sandbox? held, data.@this? refused)> Of(IEnumerable<data.@this> permissions, FilePath program,
+    internal static async Task<(Sandbox? sandbox, data.@this? refused)> Of(IEnumerable<data.@this> permissions, FilePath program,
         actor.context.@this context)
     {
         var caller = context.Actor?.Name ?? "";

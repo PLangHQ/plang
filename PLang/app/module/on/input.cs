@@ -16,8 +16,8 @@ public partial class OnInput : IContext
 
     public async Task<data.@this> Start()
     {
-        var held = await Action.Value();
-        if (held == null)
+        var action = await Action.Value();
+        if (action == null)
             return Context.Error(new global::app.error.ActionError("on input needs a goal to call", "MissingInput", 400));
         if (Context.Actor.Channel.Get(global::app.channel.list.@this.Input) is not global::app.channel.type.stream.@this input)
             return Context.Error(new global::app.error.ActionError("This app's input is not a stream; nothing to listen to.", "NotSupported", 400));
@@ -27,7 +27,7 @@ public partial class OnInput : IContext
         while (await reader.ReadLineAsync() is { } line)
         {
             lines++;
-            await code.Gate.Call(held, new data.@this("!data", line, Context.App.type.list["text"], context: Context), Context);
+            await code.Gate.Call(action, new data.@this("!data", line, Context.App.type.list["text"], context: Context), Context);
         }
         return Context.Ok<global::app.type.item.number.@this>(lines);
     }

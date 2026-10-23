@@ -14,9 +14,9 @@ public class ImageValueTests : System.IAsyncDisposable
 
     private static readonly byte[] PngHeader = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
-    [Test] public async Task Image_FromBytesAndMime_StoresBoth()
+    [Test] public async Task Image_FromBytesWithKind_MimeComesFromTheKind()
     {
-        var img = new image(PngHeader, "image/png");
+        var img = app.actor.list.User.Context.Image(PngHeader, "png");
         await Assert.That(img.Bytes).IsEqualTo(PngHeader);
         await Assert.That(img.Mime).IsEqualTo("image/png");
     }
@@ -32,7 +32,7 @@ public class ImageValueTests : System.IAsyncDisposable
 
     [Test] public async Task Image_Base64Constructed_PathIsNull()
     {
-        var img = new image(PngHeader, "image/png");
+        var img = app.actor.list.User.Context.Image(PngHeader, "image/png");
         await Assert.That(img.Path).IsNull();
     }
 
@@ -40,9 +40,9 @@ public class ImageValueTests : System.IAsyncDisposable
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-img-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        var raw = System.IO.Path.Combine(app.AbsolutePath, "photo.png");
+        var raw = System.IO.Path.Combine(app.filesystem.root.Absolute, "photo.png");
         var p = global::app.type.item.path.@this.Resolve(raw, app.actor.list.User.Context);
-        var img = new image(PngHeader, p, app.actor.list.User.Context);
+        var img = app.actor.list.User.Context.Image(p, PngHeader);
         await Assert.That(img.Path).IsNotNull();
         await Assert.That(img.Path!.Raw).IsEqualTo(p.Raw);
     }
@@ -52,31 +52,31 @@ public class ImageValueTests : System.IAsyncDisposable
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-img-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("photo.jpeg", app.actor.list.User.Context);
-        var img = new image(p, app.actor.list.User.Context);
+        var img = app.actor.list.User.Context.Image(p);
         await Assert.That(img.Mime).IsEqualTo("image/jpeg");
-        await Assert.That(global::app.data.@this.Ok(img).Type.kind.Name).IsEqualTo("jpg");
+        await Assert.That(app.actor.list.User.Context.Ok(img).Type.kind.Name).IsEqualTo("jpg");
     }
 
     [Test] public async Task Image_FromSniffedJpegBytes_KindIsCanonicalJpg()
     {
-        var img = image.FromBytes(new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 })!;
-        await Assert.That(global::app.data.@this.Ok(img).Type.kind.Name).IsEqualTo("jpg");
+        var img = image.FromBytes(new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 }, app.actor.list.User.Context)!;
+        await Assert.That(app.actor.list.User.Context.Ok(img).Type.kind.Name).IsEqualTo("jpg");
     }
 
     [Test] public async Task Image_WidthHeight_LazyEvaluation()
     {
         // Width/Height computed on first access via SixLabors.ImageSharp.
         // Empty/garbage bytes degrade to (0, 0) without throwing.
-        var img = new image(System.Array.Empty<byte>(), "image/png");
+        var img = app.actor.list.User.Context.Image(System.Array.Empty<byte>(), "image/png");
         await Assert.That(img.Width).IsEqualTo(0);
         await Assert.That(img.Height).IsEqualTo(0);
     }
 
     [Test] public async Task Image_IBooleanResolvable_NonEmptyBytes_Truthy()
-        => await Assert.That(await new image(PngHeader, "image/png").AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
+        => await Assert.That(await app.actor.list.User.Context.Image(PngHeader, "image/png").AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
 
     [Test] public async Task Image_IBooleanResolvable_EmptyBytes_Falsy()
-        => await Assert.That(await new image(System.Array.Empty<byte>(), "image/png").AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
+        => await Assert.That(await app.actor.list.User.Context.Image(System.Array.Empty<byte>(), "image/png").AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
 
     [Test] public async Task Image_PlangTypeAttribute_Registered()
     {

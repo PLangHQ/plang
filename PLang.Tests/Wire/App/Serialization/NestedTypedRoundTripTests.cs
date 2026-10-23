@@ -13,9 +13,9 @@ public class NestedTypedRoundTripTests
     {
         var app = new global::app.@this("/nest").Testing();
         var ctx = app.actor.list.User.Context;
-        var steps = new global::app.type.item.list.@this()
-            .Add(new global::app.data.@this("", new global::app.type.item.dict.@this().Set("index", 1L), context: ctx));
-        var plan = new global::app.type.item.dict.@this()
+        var steps = new global::app.type.item.list.@this(app.type.list["list"])
+            .Add(new global::app.data.@this("", ctx.Dict().Set("index", 1L), context: ctx));
+        var plan = ctx.Dict()
             .Set("description", "a plan")
             .Set("steps", steps);
 

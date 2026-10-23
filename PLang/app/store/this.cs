@@ -10,16 +10,21 @@ namespace app.store;
 [global::app.Attributes.PlangType("store")]
 public abstract class @this : global::app.type.item.@this, System.IDisposable
 {
+    /// <summary>The stores' folder, by its name in the app's root: the app's store and the settings' live in it. It
+    /// holds an identity's private key, so it is no actor's but the system's (its standing grant); a file verb of any
+    /// other actor is refused there, never asked.</summary>
+    internal const string Folder = ".data";
+
     /// <summary>The kind of store — where its tables are kept (sqlite).</summary>
     protected abstract string Kind { get; }
 
-    /// <summary>A store's type: <c>store</c>, its kind the kind of store.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this), Kind);
+    /// <summary>A store born holding <paramref name="type"/>: the app's <c>store</c>, its kind the kind of store.</summary>
+    protected @this(global::app.type.@this type) : base(type) { }
 
     /// <summary>A store is written as what it is, its kind — never its tables.</summary>
     public override bool IsLeaf => true;
 
-    public override void Write(global::app.type.format.IWriter writer) => writer.String(Kind);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer) { writer.String(Kind); return default; }
 
     public override string ToString() => Kind;
 
@@ -35,7 +40,7 @@ public abstract class @this : global::app.type.item.@this, System.IDisposable
     public abstract Task<data.@this<T>> Get<T>(string table, string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 
     /// <summary>Every value in a table, each forced to its plang item type <typeparamref name="T"/>:
-    /// Data with a list of <c>Data&lt;T&gt;</c>.</summary>
+    /// Data with a list of <c>Data&lt;T&gt;</c>, each named by the key it was set under.</summary>
     public abstract Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 
     /// <summary>Stores a Data by table and key, the table made if it isn't there. The full Data

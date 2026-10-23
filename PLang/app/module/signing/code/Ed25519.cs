@@ -21,15 +21,24 @@ public class Ed25519 : ISigning
 
     public virtual async Task<data.@this> SignAsync(sign action)
     {
-        // Get identity
-        var identityResult = await new global::app.goal.step.action.@this(new identity.Get(action.Context), action.Context).Start(action.Context);
+        // The app's identity, its key whole, from its owner (the identity setting) — never through identity.get, which
+        // hands a step the identity without its key
+        var (provider, missing) = action.Context.App.Code.Get<global::app.module.identity.code.IIdentity>();
+        if (provider == null) return action.Context.Error(missing!);
+        var identityResult = await provider.GetOrCreateDefaultAsync(new identity.Get(action.Context));
         if (!identityResult.Success) return identityResult;
         var identity = (Identity)(await identityResult.Value())!;
 
-        // The digest of the inner data as it crosses the wire, in the view it is written in — what binds the value
-        // into the signed bytes — by the kind of hash the signing setting names.
+        // The data as the view it is signed in takes it, settled once — plang's own store as written, anything that
+        // crosses a copy of what it names — and the signature hashes and holds that one Data: the variable changing
+        // afterwards changes nothing it holds.
         var view = action.StoreView != null && (await action.StoreView.Value())?.Value == true ? global::app.View.Store : global::app.View.Out;
-        var hash = await action.Data!.Digest(view, action.Context.Setting.Of<global::app.module.signing.setting.@this>().Hash.Value, action.Context);
+        global::app.data.@this data;
+        try { data = await action.Data!.Settle(view); }
+        catch (global::app.error.AppException exception) { return action.Context.Error(exception.Error); }
+        // The digest of the inner data as it crosses the wire, in that view — what binds the value into the signed
+        // bytes — by the kind of hash the signing setting names.
+        var hash = await data.Digest(view, (await action.Context.Setting.Get<global::app.module.signing.setting.@this>()).Hash.Value, action.Context);
 
         var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
         var nonce = (await (await action.Context.Variable.Get("GUID")).Clr<Guid>(default)).ToString();
@@ -39,21 +48,25 @@ public class Ed25519 : ISigning
 
         // Build the unsigned signature wrapping the data, compute its signing bytes,
         // sign with the identity's private key, stamp the signature in.
+        var datetime = action.Context.App.type.list[typeof(global::app.type.item.datetime.@this)];
+        var text = action.Context.App.type.list[typeof(global::app.type.item.text.@this)];
         var unsigned = new global::app.type.item.signature.@this(
-            value: action.Data!,
-            algorithm: new global::app.type.item.text.@this(Name),
-            nonce: new global::app.type.item.text.@this(nonce),
-            created: new global::app.type.item.datetime.@this(now),
-            identity: new global::app.type.item.text.@this(identity.PublicKey),
+            type: action.Context.App.type.list[new global::app.type.@this("signature", Name), action.Context],
+            value: data,
+            algorithm: new global::app.type.item.text.@this(Name, text),
+            nonce: new global::app.type.item.text.@this(nonce, text),
+            created: new global::app.type.item.datetime.@this(now, datetime),
+            identity: new global::app.type.item.text.@this(identity.PublicKey, text),
             hash: hash,
-            signature: new global::app.type.item.binary.@this(Array.Empty<byte>()),
-            expires: expires is { } e ? new global::app.type.item.datetime.@this(e) : null,
+            signature: new global::app.type.item.binary.@this(Array.Empty<byte>(), action.Context.App.type.list[typeof(global::app.type.item.binary.@this)]),
+            expires: expires is { } e ? new global::app.type.item.datetime.@this(e, datetime) : null,
             contracts: contracts);
 
         try
         {
-            var signed = unsigned.Signed(Sign(unsigned, new global::app.type.item.text.@this(identity.PrivateKey)));
-            return action.Context.Ok(signed);
+            // the Data it hashed, holding its layer — what a read off the wire answers too
+            var signed = unsigned.Signed(Sign(unsigned, new global::app.type.item.text.@this(identity.PrivateKey, text)));
+            return data.Copy(signed);
         }
         catch (Exception ex)
         {
@@ -63,25 +76,19 @@ public class Ed25519 : ISigning
 
     public virtual async Task<data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action)
     {
-        if (action.Data?.Peek() is not global::app.type.item.signature.@this signature)
+        // what the step gives, as it is now: a %variable% is the signed Data it holds, holding its layer
+        var bearer = action.Data == null ? null : await action.Data.Follow(action.Context);
+        if (bearer?.Signature is not { } signature)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data has no signature", "NoSignature", 400));
 
         var app = action.Context.App;
 
         // 1. Expiry — the signature answers it: what its signer signed, or, read live, its window after it was made.
-        if (await signature.Expired(action.Context))
+        if ((await signature.Expired(action.Context)).Value)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError(
                 $"Signature has expired (at {signature.Expires!.Value:O})", "Expired", 400));
 
-        // 2. Nonce replay — a signature read live presents its nonce once. One read from plang's own store
-        // re-presents the same nonce on every read, which isn't replay. Only a look here: the nonce is
-        // recorded once the hash and signature pass (step 6), so an unverified wire never uses one up.
-        var nonceCacheKey = $"nonce:{signature.Nonce}";
-        var live = signature.Origin.Value == global::app.type.item.signature.Origin.Live;
-        if (live && await app.Cache.GetAsync(nonceCacheKey) != null)
-            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
-
-        // 3. Contract matching — Contracts may be an unset/absent slot (the
+        // 2. Contract matching — Contracts may be an unset/absent slot (the
         // boundary-verify path never sets it), so guard the resolved value too.
         var contractsList = action.Contracts == null ? null : await action.Contracts.Value();
         var expectedContracts = contractsList == null ? null
@@ -90,7 +97,7 @@ public class Ed25519 : ISigning
         if (!ContractsMatch(System.Linq.Enumerable.ToList(signature.ContractStrings()), expectedContracts))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
-        // 4. Data hash verification — rehash the inner value, compare to the
+        // 3. Data hash verification — rehash the Data that holds the signature, as it is now, compare to the
         // signed digest (which carries its own algorithm).
         var storedHash = signature.Hash;
         if (storedHash.Bytes.Length == 0)
@@ -103,10 +110,10 @@ public class Ed25519 : ISigning
         // is a property-bag carrying every [Store] field; hashing it in Out view (a subset) would diverge from the
         // sign-time Store hash.
         var view = signature.Origin.Value == global::app.type.item.signature.Origin.Stored ? global::app.View.Store : global::app.View.Out;
-        if (!(await signature.Value.Digest(view, kind, action.Context)).DigestEquals(storedHash))
+        if (!(await signature.Over(bearer).Value.Digest(view, kind, action.Context)).DigestEquals(storedHash))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
-        // 5. Signature verification — over the signature's canonical signing bytes.
+        // 4. Signature verification — over the signature's canonical signing bytes.
         if (signature.Signature.Value.Length == 0)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Missing signature", "SignatureInvalid", 400));
 
@@ -121,15 +128,19 @@ public class Ed25519 : ISigning
             return action.Context.Error<global::app.type.item.@bool.@this>(ActionError.FromException(ex, "SignatureInvalid", 400));
         }
 
-        // 6. The verified live wire records its nonce until the signature expires — atomically, so of two
-        // concurrent reads of one wire only the first verifies. After it expires, the expiry refuses it.
-        if (live)
-        {
-            var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(DateTimeOffset.UtcNow);
-            var remembered = (long)Math.Max(1, (signature.Expires!.Value - now).TotalMilliseconds);
-            if (!await app.Cache.TryAddAsync(nonceCacheKey, action.Context.Ok(true), new CacheSettings { DurationMs = remembered }))
-                return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
-        }
+        // 5. Nonce replay — a replay is a wire arriving twice. A signature read live presents its nonce once, for the
+        // arrival its read birthed: the first verify that passes the hash and signature records it until the
+        // signature expires — atomically, so of two reads of one wire only the first arrives — and every copy of that
+        // arrival shares the answer. One read from plang's own store re-presents the same nonce on every read, which
+        // isn't replay. After it expires, the expiry refuses it.
+        if (signature.Origin.Value == global::app.type.item.signature.Origin.Live
+            && !await signature.Present(async () =>
+            {
+                var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(DateTimeOffset.UtcNow);
+                var remembered = (long)Math.Max(1, (signature.Expires!.Value - now).TotalMilliseconds);
+                return await app.Cache.TryAddAsync($"nonce:{signature.Nonce}", action.Context.Ok(true), new CacheSettings { DurationMs = remembered });
+            }))
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
         return action.Context.Ok<global::app.type.item.@bool.@this>(true);
     }
 
@@ -182,7 +193,7 @@ public class Ed25519 : ISigning
         var privateKeyBytes = Convert.FromBase64String(privateKey.ToString());
         using var key = Key.Import(algorithm, privateKeyBytes, KeyBlobFormat.RawPrivateKey,
             new KeyCreationParameters { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
-        return new global::app.type.item.binary.@this(algorithm.Sign(key, unsigned.ToSigningBytes()));
+        return new global::app.type.item.binary.@this(algorithm.Sign(key, unsigned.ToSigningBytes()), unsigned.Signature.Type);
     }
 
     public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
@@ -192,6 +203,6 @@ public class Ed25519 : ISigning
         var publicKeyBytes = System.Buffers.Text.Base64Url.DecodeFromChars(
             signature.Identity.ToString().Replace('+', '-').Replace('/', '_').TrimEnd('='));
         var nsecPublicKey = NSec.Cryptography.PublicKey.Import(algorithm, publicKeyBytes, KeyBlobFormat.RawPublicKey);
-        return new global::app.type.item.@bool.@this(algorithm.Verify(nsecPublicKey, signature.ToSigningBytes(), signature.Signature.Value));
+        return algorithm.Verify(nsecPublicKey, signature.ToSigningBytes(), signature.Signature.Value);
     }
 }

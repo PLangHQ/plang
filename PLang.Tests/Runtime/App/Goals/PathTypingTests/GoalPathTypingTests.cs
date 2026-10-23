@@ -29,7 +29,7 @@ public class GoalPathTypingTests
     {
         var (app, _) = MakeApp();
         var context = app.actor.list.User.Context;
-        var goal = new Goal
+        var goal = new Goal(app.type.list)
         {
             Name = "Test",
             Path = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", context)
@@ -45,7 +45,7 @@ public class GoalPathTypingTests
         var context = app.actor.list.User.Context;
         // Construct with both Path and a JSON-shaped prPath init — the init {}
         // swallows the value and the getter recomputes from Path.
-        var goal = new Goal
+        var goal = new Goal(app.type.list)
         {
             Name = "Test",
             Path = global::app.type.item.path.@this.Resolve("/Start.goal", context),
@@ -59,7 +59,7 @@ public class GoalPathTypingTests
     {
         var (app, root) = MakeApp();
         var context = app.actor.list.User.Context;
-        var goal = new Goal { Name = "Test", Path = global::app.type.item.path.@this.Resolve("/Cache/test.goal", context) };
+        var goal = new Goal(app.type.list) { Name = "Test", Path = global::app.type.item.path.@this.Resolve("/Cache/test.goal", context) };
         var dir = goal.Folder;
         await Assert.That(dir).IsNotNull();
         await Assert.That(dir!.Relative(context).Raw.Replace('\\', '/').TrimEnd('/')).IsEqualTo("/Cache");
@@ -69,7 +69,7 @@ public class GoalPathTypingTests
     {
         var (app, _) = MakeApp();
         var context = app.actor.list.User.Context;
-        var goal = new Goal
+        var goal = new Goal(app.type.list)
         {
             Name = "Test",
             Path = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", context)
@@ -88,7 +88,7 @@ public class GoalPathTypingTests
     {
         var (app1, _) = MakeApp();
         var ctx1 = app1.actor.list.User.Context;
-        var goal = new Goal
+        var goal = new Goal(app1.type.list)
         {
             Name = "Test",
             Path = global::app.type.item.path.@this.Resolve("/Start.goal", ctx1)
@@ -100,14 +100,14 @@ public class GoalPathTypingTests
         await Assert.That(loaded).IsNotNull();
         await Assert.That(loaded!.Path).IsNotNull();
         await Assert.That(loaded.Path!.Relative(ctx2).Raw).IsEqualTo("/Start.goal");
-        await Assert.That(loaded.Path!.Absolute).StartsWith(app2.AbsolutePath);
+        await Assert.That(loaded.Path!.Absolute).StartsWith(app2.filesystem.root.Absolute);
     }
 
     [Test] public async Task Goal_JsonRoundTrip_ResolvesPathUnderReaderRoot()
     {
         var (app, _) = MakeApp();
         var context = app.actor.list.User.Context;
-        var goal = new Goal
+        var goal = new Goal(app.type.list)
         {
             Name = "Test",
             Path = global::app.type.item.path.@this.Resolve("/Start.goal", context)

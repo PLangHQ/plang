@@ -21,7 +21,7 @@ public static class SerializerSyncTestExtensions
     public static global::app.type.@this Stamp(this global::app.type.list.@this types, string mime, global::app.actor.context.@this ctx)
     {
         var format = types.Mime(mime);
-        return types[new global::app.type.@this(format.Owner ?? "binary", format.IsEmpty ? null : format.Name), ctx];
+        return types[new global::app.type.@this(format.Owner?.Name ?? "binary", format.IsEmpty ? null : format.Name), ctx];
     }
 
     public static global::app.data.@this<global::app.type.item.text.@this> Serialize(this global::app.type.kind.@this format,
@@ -43,14 +43,18 @@ public static class SerializerSyncTestExtensions
     public static global::app.data.@this<T> Deserialize<T>(this global::app.type.kind.@this format, string str, global::app.actor.context.@this ctx)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        if (string.IsNullOrEmpty(str)) return global::app.data.@this<T>.Ok(default!);
+        if (string.IsNullOrEmpty(str)) return global::app.data.@this<T>.From(ctx.Null());
         var read = DeserializeFrom(format, str, ctx, global::app.View.Out);
         return read.Success ? read.As<T>() : global::app.data.@this<T>.From(read);
     }
 
-    /// <summary>A bare item written in goal's format — a <c>.pr</c>'s text (Store face by default).</summary>
+    /// <summary>A bare item written in goal's format — a <c>.pr</c>'s text, in the format's own view (Store).</summary>
+    public static System.Threading.Tasks.Task<string> Pr(this global::app.actor.context.@this ctx, global::app.type.item.@this item)
+        => ctx.Pr(item, ctx.App.type.list["goal"].kind.View);
+
+    /// <summary>A bare item written in goal's format, in <paramref name="view"/>.</summary>
     public static async System.Threading.Tasks.Task<string> Pr(this global::app.actor.context.@this ctx,
-        global::app.type.item.@this item, global::app.View view = global::app.View.Store)
+        global::app.type.item.@this item, global::app.View view)
     {
         using var ms = new MemoryStream();
         var r = await ctx.App.type.list["goal"].kind.Encode(ms, ctx.Ok(item), ctx, view);
@@ -58,18 +62,29 @@ public static class SerializerSyncTestExtensions
         return Encoding.UTF8.GetString(ms.ToArray());
     }
 
+    /// <summary>A format's decode over a stream, in the format's own view.</summary>
+    public static System.Threading.Tasks.Task<global::app.data.@this> Decode(this global::app.type.kind.@this format,
+        Stream stream, global::app.actor.context.@this ctx)
+        => format.Decode(stream, ctx, format.View);
+
     /// <summary>A format's decode over a stream — the bytes read off it, then the kind's one decode door.</summary>
     public static async System.Threading.Tasks.Task<global::app.data.@this> Decode(this global::app.type.kind.@this format,
-        Stream stream, global::app.actor.context.@this ctx, global::app.View view = global::app.View.Out)
+        Stream stream, global::app.actor.context.@this ctx, global::app.View view)
     {
         using var ms = new MemoryStream();
         await stream.CopyToAsync(ms);
-        return await format.Decode(ms.ToArray(), ctx, view: view);
+        return await format.Decode(ms.ToArray(), ctx, view);
     }
+
+    /// <summary>A format's decode over a stream, read as <typeparamref name="T"/>, in the format's own view.</summary>
+    public static System.Threading.Tasks.Task<global::app.data.@this<T>> Decode<T>(this global::app.type.kind.@this format,
+        Stream stream, global::app.actor.context.@this ctx)
+        where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+        => format.Decode<T>(stream, ctx, format.View);
 
     /// <summary>A format's decode over a stream, read as <typeparamref name="T"/>.</summary>
     public static async System.Threading.Tasks.Task<global::app.data.@this<T>> Decode<T>(this global::app.type.kind.@this format,
-        Stream stream, global::app.actor.context.@this ctx, global::app.View view = global::app.View.Out)
+        Stream stream, global::app.actor.context.@this ctx, global::app.View view)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         var read = await format.Decode(stream, ctx, view);
@@ -82,14 +97,14 @@ public static class SerializerSyncTestExtensions
         using var ms = new MemoryStream();
         var r = format.Encode(ms, d, ctx, view).GetAwaiter().GetResult();
         return r.Error != null
-            ? global::app.data.@this<global::app.type.item.text.@this>.FromError(r.Error)
-            : global::app.data.@this<global::app.type.item.text.@this>.Ok(Encoding.UTF8.GetString(ms.ToArray()));
+            ? global::app.data.@this<global::app.type.item.text.@this>.FromError(r.Error, ctx)
+            : ctx.Ok<global::app.type.item.text.@this>(Encoding.UTF8.GetString(ms.ToArray()));
     }
 
     private static global::app.data.@this DeserializeFrom(global::app.type.kind.@this format, string str,
         global::app.actor.context.@this ctx, global::app.View view)
     {
-        if (string.IsNullOrEmpty(str)) return global::app.data.@this.Ok(null);
+        if (string.IsNullOrEmpty(str)) return ctx.Null();
         return format.Decode(Encoding.UTF8.GetBytes(str), ctx, view: view).GetAwaiter().GetResult();
     }
 }

@@ -12,7 +12,7 @@ public class DataGenericTests : System.IAsyncDisposable
     [Test]
     public async Task Ok_StoresTypedValue()
     {
-        var data = global::app.data.@this<global::app.type.item.text.@this>.Ok("hello");
+        var data = _app.actor.list.User.Context.Ok<global::app.type.item.text.@this>("hello");
 
         await Assert.That((await data.Value())!.Clr<string>()!).IsEqualTo("hello");
         await data.IsSuccess();
@@ -31,7 +31,7 @@ public class DataGenericTests : System.IAsyncDisposable
     [Test]
     public async Task Value_ReturnsTypedValue()
     {
-        var data = global::app.data.@this<global::app.type.item.text.@this>.Ok("world");
+        var data = _app.actor.list.User.Context.Ok<global::app.type.item.text.@this>("world");
 
         string? typed = (await data.Value())?.Clr<string>();
 
@@ -54,7 +54,7 @@ public class DataGenericTests : System.IAsyncDisposable
     public async Task Fail_CreatesErrorResult()
     {
         var error = new ServiceError("something failed", "TestError", 500);
-        var data = global::app.data.@this<global::app.type.item.text.@this>.FromError(error);
+        var data = global::app.data.@this<global::app.type.item.text.@this>.FromError(error, _app.actor.list.User.Context);
 
         await data.IsFailure();
         await Assert.That(data.Error).IsNotNull();
@@ -64,7 +64,7 @@ public class DataGenericTests : System.IAsyncDisposable
     [Test]
     public async Task IsAssignableToData()
     {
-        global::app.data.@this<global::app.type.item.text.@this> typed = global::app.data.@this<global::app.type.item.text.@this>.Ok("test");
+        global::app.data.@this<global::app.type.item.text.@this> typed = _app.actor.list.User.Context.Ok<global::app.type.item.text.@this>("test");
         Data untyped = typed;
 
         await untyped.IsSuccess();
@@ -74,7 +74,7 @@ public class DataGenericTests : System.IAsyncDisposable
     [Test]
     public async Task TaskOfData_WorksWithGeneric()
     {
-        Task<Data> task = Task.FromResult<Data>(global::app.data.@this<global::app.type.item.number.@this>.Ok(99));
+        Task<Data> task = Task.FromResult<Data>(_app.actor.list.User.Context.Ok<global::app.type.item.number.@this>(99));
         var result = await task;
 
         await result.IsSuccess();

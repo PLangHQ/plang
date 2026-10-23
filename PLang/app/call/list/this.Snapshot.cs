@@ -207,11 +207,11 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             // one PrPath (the file), so a PrPath lookup picks the wrong goal; the
             // hash check below then catches any residual mismatch. PrPath is the
             // fallback for snapshots captured before names were carried.
-            var held = context.App.goal.list.Items().Where(g => !g.IsSetup).ToList();
+            var goals = context.App.goal.list.Items().Where(g => !g.IsSetup).ToList();
             var liveGoal = (!string.IsNullOrEmpty(goalName)
-                               ? held.LastOrDefault(g => string.Equals(g.Name, goalName, StringComparison.OrdinalIgnoreCase))
+                               ? goals.LastOrDefault(g => string.Equals(g.Name, goalName, StringComparison.OrdinalIgnoreCase))
                                : null)
-                           ?? held.FirstOrDefault(g => string.Equals(g.PrPath?.ToString()?.Replace('\\', '/').TrimStart('/'),
+                           ?? goals.FirstOrDefault(g => string.Equals(g.PrPath?.ToString()?.Replace('\\', '/').TrimStart('/'),
                                   goalPrPath.Replace('\\', '/').TrimStart('/'), StringComparison.OrdinalIgnoreCase));
             if (liveGoal == null)
                 throw new CallbackGoalNotFound(string.IsNullOrEmpty(goalName) ? goalPrPath : goalName);

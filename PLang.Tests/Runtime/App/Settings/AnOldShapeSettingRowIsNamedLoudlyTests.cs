@@ -36,12 +36,12 @@ public class AnOldShapeSettingRowIsNamedLoudlyTests
         await using var app = new global::app.@this(_dir);
         await app.actor.list.User.Setting.Load();
 
-        var thrown = Assert.Throws<global::app.error.AppException>(
-            () => _ = app.actor.list.User.Setting["llm.setting"]);
+        var read = await app.actor.list.User.Setting.Get("llm.setting");
 
         // The read of an old-shape row surfaces SettingsUnreadable, names the row's key
         // (user!llm.setting), and spells out the by-hand fix.
-        var err = thrown!.Error;
+        await read.IsFailure();
+        var err = read.Error!;
         await Assert.That(err.Key).IsEqualTo("SettingsUnreadable");
         await Assert.That(err.Message).Contains("llm.setting");
         await Assert.That(err.Message).Contains("older shape");

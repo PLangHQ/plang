@@ -6,6 +6,6 @@ namespace app.type.kind.list;
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<global::app.type.@this>
 {
-    public @this(System.Collections.Generic.IEnumerable<global::app.type.@this> types)
-        : base(types.Select(t => (global::app.type.item.@this)t)) { }
+    public @this(System.Collections.Generic.IEnumerable<global::app.type.@this> types, global::app.type.@this type)
+        : base(types.Select(t => (global::app.type.item.@this)t), type) { }
 }

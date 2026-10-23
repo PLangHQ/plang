@@ -13,7 +13,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Shape => "object";
 
     /// <summary>The code — <c>%!error.status.code%</c>.</summary>
-    [Out, Store] public global::app.type.item.number.@this Code { get; }
+    [Out, Store, LlmBuilder] public global::app.type.item.number.@this Code { get; }
 
     /// <summary>The reason, in words — the code's standard one unless whoever answered gave its own (an http
     /// server's reason phrase).</summary>
@@ -61,9 +61,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>A status is made from its code, or from a dict of its members (<c>{code: 404}</c> — a text left out
     /// is the code's standard reason); anything else declines with why.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
-        if (Create(raw) is { } made) return made;
+        if (Create(raw) is { } status) return status;
         if (raw is global::app.type.item.dict.@this dict)
         {
             global::app.type.item.number.@this? code = null;
@@ -88,24 +88,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Writes itself as its code when its text is the code's standard reason (it says nothing more —
     /// <c>404</c>), else as its dict (<c>{code, text}</c>, a server's own reason).</summary>
-    public override void Write(global::app.type.format.IWriter writer)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         if (Text.ToString() == Microsoft.AspNetCore.WebUtilities.ReasonPhrases.GetReasonPhrase(Code.ToInt32()))
         {
-            Code.Write(writer);
+            await Code.Output(writer);
             return;
         }
         writer.BeginObject();
-        writer.Name("code"); Code.Write(writer);
-        writer.Name("text"); Text.Write(writer);
+        writer.Name("code"); await Code.Output(writer);
+        writer.Name("text"); await Text.Output(writer);
         writer.EndObject();
-    }
-
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
     public override bool Equals(object? obj) => obj is @this other && Code.Equals(other.Code);

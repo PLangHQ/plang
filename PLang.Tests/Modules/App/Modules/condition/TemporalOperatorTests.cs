@@ -21,10 +21,10 @@ public class TemporalOperatorTests : System.IAsyncDisposable
     private bool IsTrue(global::app.data.@this<global::app.type.item.@bool.@this> r) => r.Success && (r.Peek() as global::app.type.item.@bool.@this)?.Value == true;
     private bool IsFalse(global::app.data.@this<global::app.type.item.@bool.@this> r) => r.Success && (r.Peek() as global::app.type.item.@bool.@this)?.Value == false;
 
-    private global::app.type.item.datetime.@this Dt(string iso) => new(System.DateTimeOffset.Parse(iso));
-    private global::app.type.item.date.@this Date(string iso) => new(System.DateOnly.Parse(iso));
-    private global::app.type.item.time.@this Time(string iso) => new(System.TimeOnly.Parse(iso));
-    private global::app.type.item.duration.@this Dur(System.TimeSpan ts) => new(ts);
+    private global::app.type.item.datetime.@this Dt(string iso) => new(System.DateTimeOffset.Parse(iso), app.type.list[typeof(global::app.type.item.datetime.@this)]);
+    private global::app.type.item.date.@this Date(string iso) => new(System.DateOnly.Parse(iso), app.type.list[typeof(global::app.type.item.date.@this)]);
+    private global::app.type.item.time.@this Time(string iso) => new(System.TimeOnly.Parse(iso), app.type.list[typeof(global::app.type.item.time.@this)]);
+    private global::app.type.item.duration.@this Dur(System.TimeSpan ts) => app.actor.list.User.Context.Duration(ts);
 
     [Test] public async Task Datetime_LessThan() => await Assert.That(IsTrue(await Eval(Dt("2024-01-01T00:00:00Z"), "<", Dt("2024-06-01T00:00:00Z")))).IsTrue();
     [Test] public async Task Datetime_GreaterThan() => await Assert.That(IsTrue(await Eval(Dt("2024-06-01T00:00:00Z"), ">", Dt("2024-01-01T00:00:00Z")))).IsTrue();

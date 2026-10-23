@@ -12,7 +12,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("separator", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("separator", kind), ctx.Context]);
         var text = reader.String();
         return global::app.type.item.separator.@this.Create(text, null, new global::app.data.@this("", context: ctx.Context))!;
     }

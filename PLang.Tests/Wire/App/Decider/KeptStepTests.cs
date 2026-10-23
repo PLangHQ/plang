@@ -23,11 +23,11 @@ public class KeptStepTests
         => global::app.goal.@this.Parse(text, global::app.type.item.path.@this.Resolve("/Start.goal", context), context)!;
 
     // Each step's code as build.match gives it — its line read through formal.
-    private static void Built(global::app.goal.@this goal, global::app.actor.context.@this context, params string[] lines)
+    private static async Task Built(global::app.goal.@this goal, global::app.actor.context.@this context, params string[] lines)
     {
         for (int i = 0; i < lines.Length; i++)
         {
-            var read = new global::app.goal.step.action.formal.Reader(goal.Step[i], context.App.module.list).Read(lines[i], context);
+            var read = await new global::app.goal.step.action.formal.Reader(goal.Step[i], context.App.module.list).Read(lines[i], context);
             goal.Step[i].Code = (global::app.goal.step.action.list.@this)read.Peek()!;
         }
     }
@@ -54,7 +54,7 @@ public class KeptStepTests
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
-        Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
+        await Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
         var before = await Pr(first, os);
 
         var second = Parse(Second, context);
@@ -96,7 +96,7 @@ public class KeptStepTests
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
-        Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
+        await Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
         var pr = System.Text.Json.Nodes.JsonNode.Parse(await Pr(first, os))!;
         var property = pr["step"]![0]!["code"]![0]!["property"]!.AsArray();
         var wait = property[0]!.DeepClone();
@@ -108,7 +108,7 @@ public class KeptStepTests
         await second.Reopen(context);
 
         await Assert.That(second.Step[0].IsCached).IsFalse();
-        await Assert.That(second.Step[0].Warning.Single().Message).Contains("'Wait' is not a property of this action");
+        await Assert.That(second.Step[0].Warning.Items().Single().Message).Contains("'Wait' is not a property of this action");
         await Assert.That(second.Step[1].IsCached).IsTrue();
     }
 
@@ -122,7 +122,7 @@ public class KeptStepTests
         const string split = "Start\n- split \"a\" into lines, write to %parts%\n";
 
         var first = Parse(split, context);
-        Built(first, context, "list.split(Value=\"a\"); variable.set(Name=%parts%, Value=%!data%)");
+        await Built(first, context, "list.split(Value=\"a\"); variable.set(Name=%parts%, Value=%!data%)");
         var pr = System.Text.Json.Nodes.JsonNode.Parse(await Pr(first, os))!;
         var action = pr["step"]![0]!["code"]![0]!.AsObject();
         if (action["default"] is not System.Text.Json.Nodes.JsonArray frozen) action["default"] = frozen = [];
@@ -134,7 +134,7 @@ public class KeptStepTests
         await second.Reopen(context);
 
         await Assert.That(second.Step[0].IsCached).IsFalse();
-        await Assert.That(second.Step[0].Warning.Single().Message).Contains("was built when Empty was a bool");
+        await Assert.That(second.Step[0].Warning.Items().Single().Message).Contains("was built when Empty was a bool");
         await Assert.That(second.IsCached).IsFalse();
     }
 
@@ -147,7 +147,7 @@ public class KeptStepTests
         const string read = "Start\n- read note.txt, write to %note%\n";
 
         var first = Parse(read, context);
-        Built(first, context, "file.read(Path=\"note.txt\"); variable.set(Name=%note%, Value=%!data%)");
+        await Built(first, context, "file.read(Path=\"note.txt\"); variable.set(Name=%note%, Value=%!data%)");
         var pr = System.Text.Json.Nodes.JsonNode.Parse(await Pr(first, os))!;
         var rows = pr["step"]![0]!["code"]![0]!["property"]!.AsArray();
         foreach (var old in rows.Where(r => (string?)r!["name"] == "Template").ToList()) rows.Remove(old);
@@ -158,7 +158,7 @@ public class KeptStepTests
         await second.Reopen(context);
 
         await Assert.That(second.Step[0].IsCached).IsFalse();
-        await Assert.That(second.Step[0].Warning.Single().Message).Contains("file.read was built when Template was a bool");
+        await Assert.That(second.Step[0].Warning.Items().Single().Message).Contains("file.read was built when Template was a bool");
     }
 
     [Test]
@@ -168,7 +168,7 @@ public class KeptStepTests
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
-        Built(first, context, "output.write()", "output.write(Data=\"b\")", "output.write(Data=\"c\")");   // step 0 misses its Data
+        await Built(first, context, "output.write()","output.write(Data=\"b\")", "output.write(Data=\"c\")");   // step 0 misses its Data
         var second = Parse(First, context);
         second.Merge(await RealGoalLoad.Read(os, await Pr(first, os)));
 
@@ -176,7 +176,7 @@ public class KeptStepTests
 
         await Assert.That(second.Step[0].Code.Count).IsEqualTo(0);
         await Assert.That(second.Step[0].IsCached).IsFalse();
-        await Assert.That(second.Step[0].Warning.Single().Key).IsEqualTo("Reopened");
+        await Assert.That(second.Step[0].Warning.Items().Single().Key).IsEqualTo("Reopened");
         await Assert.That(second.Step[1].IsCached).IsTrue();
         await Assert.That(second.IsCached).IsFalse();
     }
@@ -189,7 +189,7 @@ public class KeptStepTests
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
-        Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
+        await Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
         var second = Parse(First, context);
         second.Merge(await RealGoalLoad.Read(os, await Pr(first, os)));
         await second.Reopen(context);
@@ -197,11 +197,11 @@ public class KeptStepTests
         await Assert.That(second.IsCached).IsTrue();
         await Assert.That(second.Cache!.Hash).IsEqualTo(second.Hash);
         await context.Variable.Set("goal", second);
-        await Assert.That((await (await new global::app.type.item.variable.@this("goal.IsCached").Start(context)).Value())?.ToString()).IsEqualTo("true");
-        await Assert.That((await (await new global::app.type.item.variable.@this("goal.Step.IsCached").Start(context)).Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await (await new global::app.type.item.variable.@this("goal.IsCached", context.App.type.list).Start(context)).Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await (await new global::app.type.item.variable.@this("goal.Step.IsCached", context.App.type.list).Start(context)).Value())?.ToString()).IsEqualTo("true");
 
         // the build's guard: `if %goal.IsCached%` — a bare if, Left's own truth
-        var guard = new global::app.module.condition.If(context) { Left = await new global::app.type.item.variable.@this("goal.IsCached").Start(context) };
+        var guard = new global::app.module.condition.If(context) { Left = await new global::app.type.item.variable.@this("goal.IsCached", context.App.type.list).Start(context) };
         var answer = await new global::app.module.condition.code.Default().Evaluate(guard);
         await Assert.That((await answer.Value())?.ToString()).IsEqualTo("true");
     }
@@ -214,7 +214,7 @@ public class KeptStepTests
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
-        Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
+        await Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
         var second = Parse("Start\n- write out \"a\"\n- write out \"c\"\n", context);
         second.Merge(await RealGoalLoad.Read(os, await Pr(first, os)));
         await second.Reopen(context);
@@ -231,7 +231,7 @@ public class KeptStepTests
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
-        Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
+        await Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
         var second = Parse(Second, context);
         second.Merge(await RealGoalLoad.Read(os, await Pr(first, os)));
         await second.Reopen(context);

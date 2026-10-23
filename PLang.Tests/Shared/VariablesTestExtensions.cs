@@ -18,7 +18,7 @@ public static class VariablesTestExtensions
     {
         // The door, not Materialize — a reference (file/url) yields its raw content. A name may be a
         // path (`Now.Ticks`): its root is read from this store, the rest walked from there.
-        var root = new global::app.type.item.variable.@this(name).Code.Root.Name;
+        var root = new global::app.type.item.variable.@this(name, vars.Context.App.type.list).Code.Root.Name;
         var held = await vars.Get(root);
         if (name.Length > root.Length) held = await held.Get(name[root.Length..]);
         var v = await held.Value();

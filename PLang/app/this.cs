@@ -18,8 +18,30 @@ namespace app;
 /// </summary>
 public sealed partial class @this : global::app.type.item.@this, IAsyncDisposable, global::app.type.item.setting.ISetting<global::app.setting.@this>
 {
-    /// <summary>A structure — written through the reflection kind, its [Out]/[Debug] members.</summary>
+    /// <summary>A structure — it writes what it holds (<see cref="Output"/>).</summary>
     public override bool IsLeaf => false;
+
+    // True while this app is writing itself: met again inside its own write (the asker's memory holds the app), it is
+    // written by its name.
+    private readonly System.Threading.AsyncLocal<bool> _writing = new();
+
+    /// <summary>
+    /// The app writes what it holds, as its tags say: on the wire ([Out]) its goals, types, actors, errors, tests,
+    /// shortcuts, modules, store and parent, and its identity (id, created, updated, version); at rest ([Store]) its
+    /// identity; in a dump also the asker's memory (<c>variable</c>, [Debug]). Met again inside its own write it is a
+    /// back-reference, written by its name. The C# plumbing carries no tag and is never written.
+    /// </summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    {
+        if (_writing.Value)
+        {
+            await (await Name(writer.Context)).Output(writer);
+            return;
+        }
+        _writing.Value = true;
+        try { await base.Write(writer); }
+        finally { _writing.Value = false; }
+    }
 
     // what a program adds to the app (%!app.home%) — kept for the app's life, and in its snapshot
     private readonly global::app.type.item.kept.list.@this _kept = new();
@@ -36,7 +58,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
     /// </summary>
-    [global::app.Store]
+    [global::app.Store, global::app.Out]
     public string Id { get; internal set; }
 
     /// <summary>
@@ -44,8 +66,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// folder's name — <c>%!app.name%</c> answers as its asker.
     /// </summary>
     [global::app.LlmBuilder]
-    public global::app.type.item.text.@this Name(global::app.actor.context.@this context)
-        => context.Setting.Of<global::app.setting.@this>().Name ?? _folder;
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.text.@this> Name(global::app.actor.context.@this context)
+        => (await context.Setting.Get<global::app.setting.@this>()).Name ?? _folder;
 
     // The app's folder's name — what the app goes by until a setting names it.
     private readonly string _folder;
@@ -54,45 +76,28 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// When the app was first created — its identity's, else this run's start (an app with no identity yet is
     /// being created now).
     /// </summary>
-    [global::app.Store]
+    [global::app.Store, global::app.Out, global::app.LlmBuilder]
     public global::app.type.item.datetime.@this Created { get; internal set; }
 
     /// <summary>
     /// When the app's identity last changed — read from app.pr, else this run's start (an identity created now).
     /// </summary>
-    [global::app.Store]
+    [global::app.Store, global::app.Out, global::app.LlmBuilder]
     public global::app.type.item.datetime.@this Updated { get; internal set; }
 
     /// <summary>
     /// Version of the builder used.
     /// </summary>
-    [global::app.Store]
+    [global::app.Store, global::app.Out]
     public string? Version { get; internal set; }
-
-    /// <summary>
-    /// The OS absolute path of the application (e.g. C:\myapp or /home/user/app).
-    /// </summary>
-    public string AbsolutePath { get; }
-
-    /// <summary>
-    /// The computed <c>os/</c> folder next to the executable. App-level constant
-    /// (not file-scheme-specific): the path base's <c>Authorize</c> and
-    /// <c>FilePath.ValidatePath</c> both anchor system goals against it, so it
-    /// belongs on <c>app</c> rather than on a concrete path subclass.
-    /// </summary>
-    // The os/ root anchor. Pure name math against AppContext.BaseDirectory;
-    // path.Resolve can't be used because App is still constructing and has
-    // no Context yet, so this routes through PathHelper directly.
-    public string OsAbsolutePath =>
-        PathHelper.GetFullPath(PathHelper.Combine(AppContext.BaseDirectory, "os"));
 
     /// <summary>
     /// The environment the app runs in ("production", "development") as <paramref name="context"/>'s settings
     /// have it (<c>%!app.setting.environment%</c>) — <c>%!app.environment%</c> answers as its asker.
     /// </summary>
     [global::app.LlmBuilder]
-    public global::app.type.item.text.@this Environment(global::app.actor.context.@this context)
-        => context.Setting.Of<global::app.setting.@this>().Environment;
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.text.@this> Environment(global::app.actor.context.@this context)
+        => (await context.Setting.Get<global::app.setting.@this>()).Environment;
 
     /// <summary>The calls of <paramref name="context"/> — <c>%!app.call%</c> answers as its asker.</summary>
     [global::app.LlmBuilder]
@@ -117,12 +122,15 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// When the app was started.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.type.item.datetime.@this StartedAt { get; }
 
     /// <summary>
     /// How long the app has been running.
     /// </summary>
-    public global::app.type.item.duration.@this Uptime => new(DateTimeOffset.UtcNow - StartedAt.Value);
+    [global::app.LlmBuilder]
+    public global::app.type.item.duration.@this Uptime
+        => global::app.type.item.duration.@this.Create(DateTimeOffset.UtcNow - StartedAt.Value, actor.list.System.Context)!;
 
     /// <summary>
     /// Cancellation token for graceful shutdown — a handle, never written with the app.
@@ -134,6 +142,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// The app's module — <c>%!app.module%</c>: an empty module whose <c>list</c> is every module the app loads,
     /// registering their actions; <c>Get(name)</c> is one module as a result.
     /// </summary>
+    [global::app.LlmBuilder, global::app.Out]
     public global::app.module.@this module { get; }
 
     /// <summary>
@@ -143,18 +152,21 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public AppCode Code { get; }
 
     /// <summary>
-    /// The type named <c>goal</c> — <c>%!app.goal%</c>: its <c>list</c> is the goals read so far (and the
+    /// The app's goals — <c>%!app.goal%</c>, the running one: its <c>list</c> is the goals read so far (and the
     /// reading: every goal through <c>All()</c>, the goal a call names through <c>Find</c>),
-    /// <c>Get(address)</c> is one goal as a result, <c>current</c> the running one.
+    /// <c>Get(address)</c> is one goal as a result, <c>current</c> the running one, <c>type</c> the goal type.
     /// </summary>
-    public global::app.type.current.@this<Goal, global::app.goal.list.@this> goal { get; }
+    [global::app.LlmBuilder, global::app.Out]
+    public global::app.type.node.current.@this<Goal, global::app.goal.list.@this> goal { get; }
 
     /// <summary>
-    /// The disk — what a file path's verbs reach once their gate has passed. A context reads and writes
-    /// through its own (<c>context.FileSystem</c>): this one, or the overlay a build checks its goals over.
+    /// The disk — what a file path's verbs reach once their gate has passed, and the app's folders as paths:
+    /// <c>%!app.filesystem.root%</c> (what <c>/</c> is) and <c>%!app.filesystem.os%</c> (the runtime's os folder). A
+    /// context reads and writes through its own (<c>context.Filesystem</c>): this one, or the overlay a build checks
+    /// its goals over.
     /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.type.item.path.file.filesystem.@this FileSystem { get; } = new();
+    [global::app.LlmBuilder, System.Text.Json.Serialization.JsonIgnore]
+    public global::app.type.item.path.file.filesystem.@this filesystem { get; }
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -164,9 +176,12 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// The app's store — <c>.data/data.sqlite</c> (in memory while testing, under this app's id). One per
     /// app — actors share it; its owners keep their tables (<c>settings</c>, setup's steps, the LLM cache, …).
-    /// Born with the app and opened at its first verb, so an app that never touches it pays for no SQLite file.
+    /// Opened by the default store provider at its first use, so an app that never touches it pays for no file, and a
+    /// provider loaded before then is the one it keeps.
     /// </summary>
-    public global::app.store.@this store { get; }
+    [global::app.LlmBuilder, global::app.Out]
+    public global::app.store.@this store => _store.Value;
+    private readonly Lazy<global::app.store.@this> _store;
 
     /// <summary>
     /// Debug mode controller. null = off; non-null = on (born under --debug).
@@ -175,36 +190,40 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public Debug? Debug { get; set; }
 
     /// <summary>
-    /// The type named <c>test</c> — <c>%!app.test%</c>: its <c>list</c> is the run's tests (with the run's
-    /// setting, report and session), <c>Get(address)</c> is one test as a result, <c>current</c> the test the
-    /// asker is running. The app is testing while the list's session is open.
+    /// The app's tests — <c>%!app.test%</c>, the one the asker is running: its <c>list</c> is the run's tests (with
+    /// the run's setting, report and session), <c>Get(address)</c> is one test as a result, <c>current</c> the test
+    /// the asker is running. The app is testing while the list's session is open.
     /// </summary>
-    public global::app.type.current.@this<global::app.test.@this, global::app.test.list.@this> test { get; }
+    [global::app.LlmBuilder, global::app.Out]
+    public global::app.type.node.current.@this<global::app.test.@this, global::app.test.list.@this> test { get; }
 
     /// <summary>
-    /// The type named <c>error</c> — <c>%!app.error%</c>: <c>current</c> is the error in play (the asker's call
+    /// The app's errors — <c>%!app.error%</c>, the one in play: <c>current</c> is the error in play (the asker's call
     /// stack's, not yet handled), <c>list</c> every error on the asker's call stack, handled or not.
     /// </summary>
-    public global::app.type.current.@this<global::app.error.@this, global::app.error.list.@this> error { get; }
+    [global::app.LlmBuilder, global::app.Out]
+    public global::app.type.node.current.@this<global::app.error.@this, global::app.error.list.@this> error { get; }
 
     /// <summary>
-    /// The type named <c>variable</c> — <c>%!app.variable%</c>: its <c>list</c> is the asker's memory
-    /// (navigation's context), <c>.user</c> one variable in it. C# has no asker here: it uses
-    /// <c>context.Variable</c>, and <c>app.variable.list</c> says so.
+    /// The app's variables — <c>%!app.variable%</c>, the asker's memory (navigation's context): <c>.user</c> one
+    /// variable in it. C# has no asker here: it uses <c>context.Variable</c>, and <c>app.variable.list</c> says so.
     /// </summary>
-    public global::app.type.@this<global::app.type.item.variable.@this, global::app.type.item.list.@this<global::app.type.item.variable.@this>> variable { get; }
+    [global::app.LlmBuilder, global::app.DebugAttribute]
+    public global::app.type.node.@this<global::app.type.item.variable.@this, global::app.type.item.list.@this<global::app.type.item.variable.@this>> variable{ get; }
 
     /// <summary>
-    /// The type named <c>shortcut</c> — <c>%!app.shortcut%</c>: its <c>list</c> is the app's shortcuts, each a
-    /// goal under a <c>shortcut/</c> folder named by its file, read once at the first ask. <c>%!goal%</c> reads
-    /// the shortcut named <c>goal</c> when there is one, before the app's member of that name.
+    /// The app's shortcuts — <c>%!app.shortcut%</c>: its <c>list</c> is the app's shortcuts, each a goal under a
+    /// <c>shortcut/</c> folder named by its file, read once at the first ask. <c>%!goal%</c> reads the shortcut named
+    /// <c>goal</c> when there is one, before the app's member of that name.
     /// </summary>
-    public global::app.type.@this<global::app.shortcut.@this, global::app.shortcut.list.@this> shortcut { get; }
+    [global::app.Out]
+    public global::app.type.node.@this<global::app.shortcut.@this, global::app.shortcut.list.@this> shortcut { get; }
 
     /// <summary>
     /// Build mode controller. null = off; non-null = on (born under --build).
     /// When present, actors use in-memory datasources.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.module.build.@this? Build { get; set; }
 
     /// <summary>What this App is doing — derived from what it holds: building when it has a Build,
@@ -216,21 +235,24 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
          : global::app.Mode.Run;
 
     /// <summary>
-    /// The type named <c>type</c> — <c>%!app.type%</c>: its <c>list</c> is the app's types (the
-    /// lookups by name, C# class, identity, MIME and extension, and the kinds), <c>Get(name)</c> is
-    /// one type as a result. A file format is a kind of the type that reads it.
+    /// The type system — <c>%!app.type%</c>: its <c>list</c> is the app's types (the lookups by name, C# class,
+    /// identity, MIME and extension, and the kinds), <c>Get(name)</c> is one type as a result. A file format is a
+    /// kind of the type that reads it.
     /// </summary>
-    public global::app.type.root.@this type { get; }
+    [global::app.LlmBuilder, global::app.Out]
+    public global::app.type.node.root.@this type { get; }
 
     /// <summary>The app that started this plang — <c>%!app.parent%</c>: its goals are called like this app's
     /// (<c>call goal Claude in %!app.parent%</c>), and run there.</summary>
-    public global::app.parent.@this parent { get; } = new();
+    [global::app.LlmBuilder, global::app.Out]
+    public global::app.parent.@this parent { get; }
 
     /// <summary>
-    /// The type named <c>actor</c> — <c>%!app.actor%</c>: its <c>list</c> is the app's two actors, System
-    /// and User; <c>Get(name)</c> is one as a result, <c>current</c> the one the asker acts as.
+    /// The app's actors — <c>%!app.actor%</c>, the one the asker acts as: its <c>list</c> is the app's two actors,
+    /// System and User; <c>Get(name)</c> is one as a result, <c>current</c> the one the asker acts as.
     /// </summary>
-    public global::app.type.current.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
+    [global::app.LlmBuilder, global::app.Out]
+    public global::app.type.node.current.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
 
     // The types a step and an action start through, and a channel writes, reads and asks through — the type
     // list's own entries, held because every start and every channel write reaches their events and a walk of
@@ -241,8 +263,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
     /// <summary>
     /// Flat per-call Service collection. Each Service is one outbound call's I/O
-    /// scope (channels, identity, parent ref). Stage 7: replaces runtime1's
-    /// Service-as-actor model.
+    /// scope (channels, identity, parent ref) — a service is not an actor.
     /// </summary>
     public global::app.service.list.@this Services => _services ??= new global::app.service.list.@this(this);
 
@@ -270,23 +291,23 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         var trimmed = absolutePath.TrimEnd('/', '\\');
         var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
         _folder = lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
-        AbsolutePath = absolutePath;
-        StartedAt = new(DateTimeOffset.UtcNow);
+        // the app's disk, holding the app's folder as what / is
+        filesystem = new(absolutePath);
+
+        // The types come first: every value is born holding its type from this list, the actors' contexts too.
+        type = new(this);
+        parent = new(type.list[typeof(global::app.parent.@this)]);
+
+        StartedAt = new(DateTimeOffset.UtcNow, type.list[typeof(global::app.type.item.datetime.@this)]);
         Created = StartedAt;
         Updated = StartedAt;
 
-        // Context is fundamental — it is born before almost everything else. The
-        // system & user actors (each owning a long-lived context) are constructed
-        // first so Type, Code, and the rest can be handed the context they birth
-        // values from. System is the cancellation root; User links to its token.
-        // The actor/context ctor touches App only lazily (Settings/Code via deferred
-        // lambdas) and uses pure-static type seeds, so nothing here needs Type/Code yet.
+        // The system & user actors, each owning a long-lived context. System is the cancellation root; User links
+        // to its token.
         actor = new(this);
 
         // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
-        type = new(this);
-        type.list.Replace(type);   // %!app.type% and the list's entry named type are one object
         Code = new AppCode(actor.list.System.Context);
         module = new(this);
         goal = new(this);
@@ -294,12 +315,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         error = new(this);
         variable = new(this);
         shortcut = new(this);
-        // each concept's type is the list's entry of its name, as app.type is — %!app.goal% and the type goal
-        // are one object
-        type.list.Replace(goal);
-        type.list.Replace(test);
-        type.list.Replace(error);
-        type.list.Replace(variable);
         step = type.list["step"];
         action = type.list["action"];
         channel = type.list["channel"];
@@ -307,24 +322,29 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         Code.RegisterDefaults();
         // path's schemes, each a kind of path that builds its own path subclass. (The types' own
         // scan finds the kind classes and choice's closed sets.)
-        type.list.Add(new global::app.type.item.path.scheme.@this("file", (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
-        type.list.Add(new global::app.type.item.path.scheme.@this("http", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-        type.list.Add(new global::app.type.item.path.scheme.@this("https", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+        var path = type.list[typeof(global::app.type.item.path.@this)];
+        type.list.Add(new global::app.type.item.path.scheme.@this("file", path, (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
+        type.list.Add(new global::app.type.item.path.scheme.@this("http", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+        type.list.Add(new global::app.type.item.path.scheme.@this("https", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
         // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
         // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),
         // else its file.
         // an environment given at construction is this run's value of the app's setting
         if (environment != null)
         {
-            var own = new global::app.setting.@this().Path;
-            _ = actor.list.System.Setting.Set(own + ".environment",
-                new data.@this("environment", new global::app.type.item.text.@this(environment), context: actor.list.System.Context));
+            var setting = actor.list.System.Setting;
+            _ = setting.Set(setting.Address(typeof(global::app.setting.@this), "environment"),
+                new global::app.type.item.text.@this(environment, type.list[typeof(global::app.type.item.text.@this)]));
         }
 
-        store = new global::app.store.sqlite.@this(
-            global::app.type.item.path.@this.Resolve("/.data/data.sqlite", actor.list.System.Context),
-            () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
-            actor.list.System.Context);
+        _store = new(() =>
+        {
+            var (provider, error) = Code.Get<global::app.store.code.IStore>();
+            if (provider == null) throw new global::app.error.AppException(error!);
+            return provider.Open(global::app.type.item.path.@this.Resolve("/" + global::app.store.@this.Folder + "/data.sqlite", actor.list.System.Context),
+                () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
+                actor.list.System.Context);
+        });
 
         // Auto-wire console channels for ad-hoc App constructions (sub-process
         // test fixtures, embedded scenarios, C# tests, the `plang --test` child
@@ -370,22 +390,19 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     public static void WireConsoleChannels(global::app.actor.@this actor, bool interactiveInput)
     {
-        // The console writes and reads in the format in play (%!app.type.format%): text for a person at a
-        // terminal, plang's own for a program that runs this plang (--format=application/plang).
+        // The console writes and reads in the channel setting's format (%!app.channel.setting.format%): text for a
+        // person at a terminal, plang's own for a program that runs this plang (--channel.setting.format=plang).
         if (!actor.Channel.Contains(global::app.channel.list.@this.Output))
-            actor.Channel.Register(new global::app.channel.type.stream.@this(
-                global::app.channel.list.@this.Output, Console.OpenStandardOutput(),
-                global::app.channel.ChannelDirection.Output, ownsStream: false) { Framed = true, InPlay = true });
+            actor.Channel.Register(new global::app.channel.type.console.@this(
+                global::app.channel.list.@this.Output, Console.OpenStandardOutput(), global::app.channel.ChannelDirection.Output));
         if (!actor.Channel.Contains(global::app.channel.list.@this.Error))
-            actor.Channel.Register(new global::app.channel.type.stream.@this(
-                global::app.channel.list.@this.Error, Console.OpenStandardError(),
-                global::app.channel.ChannelDirection.Output, ownsStream: false) { Framed = true, InPlay = true });
+            actor.Channel.Register(new global::app.channel.type.console.@this(
+                global::app.channel.list.@this.Error, Console.OpenStandardError(), global::app.channel.ChannelDirection.Output));
         if (!actor.Channel.Contains(global::app.channel.list.@this.Input))
             actor.Channel.Register(interactiveInput
                 // The one terminal owner (CLI) reads real stdin.
-                ? new global::app.channel.type.stream.@this(
-                    global::app.channel.list.@this.Input, Console.OpenStandardInput(),
-                    global::app.channel.ChannelDirection.Input, ownsStream: false) { InPlay = true }
+                ? new global::app.channel.type.console.@this(
+                    global::app.channel.list.@this.Input, Console.OpenStandardInput(), global::app.channel.ChannelDirection.Input)
                 // Non-interactive: an empty in-memory stream — reads as instant
                 // EOF (ChannelEof), so a prompt with no registered answerer fails
                 // fast instead of blocking on the shared process stdin.
@@ -426,11 +443,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         try
         {
             var decoded = await context.App.type.list.Mime("application/json").Decode(raw, context, "app.pr");
-            // app.pr rests as an {item, json} source (805); reading the identity is a USE, so it opens through
+            // app.pr rests as an {item, json} source; reading the identity is a USE, so it opens through
             // the use door — json parses the bytes into the dict the app's [Store] face reads back from.
             if (await decoded.Open() is not global::app.type.item.dict.@this identity || !decoded.Success)
                 return Unreadable(decoded.Error?.Message ?? "not a json object");
-            new global::app.type.item.kind.reflection.@this().Read(identity, this, context);
+            ((global::app.type.item.kind.reflection.@this)type.list["item"].kind["*"]!).Read(identity, this, context);
             _stored = true;
             return context.Ok();
         }
@@ -458,8 +475,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // App says where; the file writes it — .pr is a program file, so its format writes the host's [Store]
         // face. No hard-coded field list (add a [Store] prop → it persists).
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", actor.list.System.Context!);
-        var written = await prPath.Save(actor.list.System.Context!.Ok(new global::app.type.clr.@this<global::app.@this>(this, actor.list.System.Context!)), actor.list.System.Context!);
-        if (!written.Success) return written;
+        var path = await prPath.Save(actor.list.System.Context!.Ok(new global::app.type.clr.@this<global::app.@this>(this, actor.list.System.Context!)), actor.list.System.Context!);
+        if (!path.Success) return path;
         _stored = true;
         return actor.list.System.Context!.Ok(this);
     }
@@ -501,7 +518,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         }
 
         data.@this shown;
-        await using (context.call.Push(new[] { new data.@this("error", error, context: context) }))
+        await using (context.call.Push(new[] { new data.@this("error", error, context: context) }, await context.call.Setting()))
             shown = await show.Start(context);
         if (shown.Success) failed.Properties.Set("shown", true);
         else await (Debug?.Write($"error show: /system/error/Show failed — {shown.Error}") ?? Task.CompletedTask);
@@ -575,7 +592,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         await Code.DisposeAsync();
         await KeepAlive.DisposeAsync();
-        // The store lets its database go; one that never opened holds nothing.
-        store.Dispose();
+        // The store lets its database go; one never asked for holds nothing.
+        if (_store.IsValueCreated) _store.Value.Dispose();
     }
 }

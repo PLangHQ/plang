@@ -123,13 +123,13 @@ internal sealed class Yuv : IDisposable
 /// </summary>
 internal sealed class Lender
 {
-    private readonly System.Collections.Concurrent.ConcurrentBag<byte[]> kept = new();
+    private readonly System.Collections.Concurrent.ConcurrentBag<byte[]> buffers = new();
     private const int Keeps = 12;
 
     /// <summary>A buffer of exactly <paramref name="length"/> bytes: one given back, or new.</summary>
     internal byte[] Lend(int length)
     {
-        while (kept.TryTake(out var b))
+        while (buffers.TryTake(out var b))
             if (b.Length == length) return b;   // one of another size: let go
         return new byte[length];
     }
@@ -137,7 +137,7 @@ internal sealed class Lender
     /// <summary>A buffer back, kept for the next picture (up to a few).</summary>
     internal void Back(byte[] buffer)
     {
-        if (kept.Count < Keeps) kept.Add(buffer);
+        if (buffers.Count < Keeps) buffers.Add(buffer);
     }
 }
 

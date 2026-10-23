@@ -8,15 +8,15 @@ public partial class @this
 {
     /// <summary>The actions this action's properties hold — a callback (<c>action</c>), a recovery
     /// (<c>list&lt;action&gt;</c>) — in property order. Program, walked like the branch body.</summary>
-    internal System.Collections.Generic.IEnumerable<@this> Held
+    internal System.Collections.Generic.IEnumerable<@this> Action
     {
         get
         {
             foreach (var property in Property)
                 switch (property.Value)
                 {
-                    case @this held: yield return held; break;
-                    case list.@this actions: foreach (var held in actions.Items()) yield return held; break;
+                    case @this action: yield return action; break;
+                    case list.@this actions: foreach (var action in actions.Items()) yield return action; break;
                 }
         }
     }
@@ -36,10 +36,10 @@ public partial class @this
         var (handler, bindError) = await Bind(context);
         if (bindError != null)
             causes.Add(bindError);
-        else if (handler is global::app.module.IClass own)
+        else if (handler is global::app.module.IClass @class)
         {
             // Each literal must be a value its slot can take — the build names the fix to the LLM.
-            var declined = await own.Parse();
+            var declined = await @class.Parse();
             foreach (var decline in declined)
                 causes.Add(new global::app.error.@this(
                     $"{decline.Message} Leave it out if the step does not name it — never emit \"\" as a placeholder.",
@@ -47,19 +47,19 @@ public partial class @this
             // The handler judges and finishes only values its slots could take.
             if (declined.Count == 0)
             {
-                if (await own.Validate() is { } complaint)
+                if (await @class.Validate() is { } complaint)
                     causes.Add(complaint);
                 else
                 {
-                    var built = await own.Build();
-                    if (!built.Success) causes.Add(built.Error ?? new global::app.error.@this("Build() failed", "BuildFailed", 400));
-                    else await context.Variable.Set("!buildData", built);
+                    var data = await @class.Build() ?? context.Ok();
+                    if (!data.Success) causes.Add(data.Error ?? new global::app.error.@this("Build() failed", "BuildFailed", 400));
+                    else await context.Variable.Set("!buildData", data);
                 }
             }
         }
 
-        foreach (var held in Held)
-            if (await held.Build(context) is { } heldFailed) causes.Add(heldFailed);
+        foreach (var action in Action)
+            if (await action.Build(context) is { } cause) causes.Add(cause);
         for (int i = 0; i < Child.Count; i++)
             if (await Child[i].Code.Build(context) is { } branch) causes.Add(branch);
 
@@ -78,7 +78,7 @@ public partial class @this
     public async System.Threading.Tasks.Task Warn(global::app.error.@this problem, global::app.actor.context.@this context)
     {
         if (context.Actor.Channel.Get("builder") is { } builder)
-            await builder.WriteAsync(context.Ok(new global::app.type.item.dict.@this()
+            await builder.WriteAsync(context.Ok(new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)])
                 .Set("action", $"{Module}.{Name}")
                 .Set("key", problem.Key)
                 .Set("message", problem.Message)));
@@ -92,7 +92,7 @@ public partial class @this
     public void Freeze(global::app.actor.context.@this context)
     {
         foreach (var row in Unfrozen(context).ToList()) Default.Add(row);
-        foreach (var held in Held) held.Freeze(context);
+        foreach (var action in Action) action.Freeze(context);
         for (int i = 0; i < Child.Count; i++)
             foreach (var action in Child[i].Code.Items()) action.Freeze(context);
     }
@@ -103,13 +103,13 @@ public partial class @this
     internal IEnumerable<global::app.type.property.@this> Unfrozen(global::app.actor.context.@this context)
     {
         if (Module[Name] is not { } catalog) yield break;
-        foreach (var declared in catalog.Property)
-            if (declared.Default != null && this[declared.Name] == null && Default[declared.Name] == null)
+        foreach (var property in catalog.Property)
+            if (property.Default != null && this[property.Name] == null && Default[property.Name] == null)
                 yield return new global::app.type.property.@this
                 {
-                    Name = declared.Name.ToLowerInvariant(),
-                    Type = declared.Type,
-                    Value = declared.Type.Make(declared.Default, context),
+                    Name = property.Name.ToLowerInvariant(),
+                    Type = property.Type,
+                    Value = property.Type.Make(property.Default, context),
                 };
     }
 
@@ -122,13 +122,13 @@ public partial class @this
     /// a value equal to its default (the same behaviour either way) — here and in every action this one
     /// holds: its properties' actions, its branch body. A condition's operand keeps its null: <c>Right=null</c>
     /// compares with null.</summary>
-    public void Reduce()
+    public async System.Threading.Tasks.ValueTask Reduce(global::app.actor.context.@this context)
     {
         if (Module[Name] is { } catalog)
-            Property.Reduce(catalog.Property, string.Equals(Module.Name, "condition", StringComparison.OrdinalIgnoreCase)
-                ? new HashSet<string> { "Left", "Right" } : new HashSet<string>());
-        foreach (var held in Held) held.Reduce();
+            await Property.Reduce(catalog.Property, string.Equals(Module.Name, "condition", StringComparison.OrdinalIgnoreCase)
+                ? new HashSet<string> { "Left", "Right" } : new HashSet<string>(), context);
+        foreach (var action in Action) await action.Reduce(context);
         for (int i = 0; i < Child.Count; i++)
-            foreach (var action in Child[i].Code.Items()) action.Reduce();
+            foreach (var action in Child[i].Code.Items()) await action.Reduce(context);
     }
 }

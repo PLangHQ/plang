@@ -38,7 +38,7 @@ public static class MatrixRunner
         EnsureRegistered<TAction>(app);
 
         var (module, actionName) = ModuleAndAction<TAction>();
-        var action = new PrAction
+        var action = new PrAction(app.type.list)
         {
             Module = app.Module(module),
             Name = actionName,
@@ -56,7 +56,7 @@ public static class MatrixRunner
         if (variables != null)
         {
             foreach (var kv in variables)
-                context.Variable.Set(kv.Key, kv.Value);
+                await context.Variable.Set(kv.Key, kv.Value);
         }
 
         var data = await action.Start(context);
@@ -78,7 +78,7 @@ public static class MatrixRunner
         where TAction : class, ICodeGenerated, new()
     {
         var (module, actionName) = ModuleAndAction<TAction>();
-        var action = new PrAction
+        var action = new PrAction(app.type.list)
         {
             Module = app.Module(module),
             Name = actionName,
@@ -96,7 +96,7 @@ public static class MatrixRunner
         if (variables != null)
         {
             foreach (var kv in variables)
-                context.Variable.Set(kv.Key, kv.Value);
+                await context.Variable.Set(kv.Key, kv.Value);
         }
 
         var shell = new TAction();

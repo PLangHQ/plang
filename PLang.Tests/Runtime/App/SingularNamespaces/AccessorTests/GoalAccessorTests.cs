@@ -10,7 +10,7 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 public class GoalAccessorTests
 {
     private static global::app.goal.@this Goal(PLangEngine app, string name)
-        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.actor.list.User.Context) };
+        => new(app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.actor.list.User.Context) };
 
     [Test] public async Task AppGoal_GetByAddress_ReturnsTheGoal()
     {
@@ -18,7 +18,7 @@ public class GoalAccessorTests
         var goal = Goal(app, "AlphaGoal");
         app.goal.list.Add(goal);
 
-        var found = await app.goal.Get("/AlphaGoal");
+        var found = await app.goal.Get("/AlphaGoal", app.actor.list.User.Context);
 
         await found.IsSuccess();
         await Assert.That((await found.Value())!.Name).IsEqualTo("AlphaGoal");
@@ -32,11 +32,11 @@ public class GoalAccessorTests
         app.goal.list.Add(Goal(app, "Show"));
         var context = app.actor.list.User.Context;
 
-        var goal = await new global::app.type.item.variable.parser.@this("%!app.goal[\"/show\"]%").Variable.Single().Start(context);
+        var goal = await new global::app.type.item.variable.parser.@this("%!app.goal[\"/show\"]%", context.App.type.list).Variable.Single().Start(context);
         await goal.IsSuccess();
         await Assert.That((await goal.Value() as global::app.goal.@this)!.Name).IsEqualTo("Show");
 
-        var module = await new global::app.type.item.variable.parser.@this("%!app.module[\"file\"]%").Variable.Single().Start(context);
+        var module = await new global::app.type.item.variable.parser.@this("%!app.module[\"file\"]%", context.App.type.list).Variable.Single().Start(context);
         await module.IsSuccess();
         await Assert.That((await module.Value() as global::app.module.@this)!.Name).IsEqualTo("file");
     }
@@ -45,7 +45,7 @@ public class GoalAccessorTests
     {
         await using var app = new global::app.@this("/test").Testing();
 
-        var found = await app.goal.Get("/nope");
+        var found = await app.goal.Get("/nope", app.actor.list.User.Context);
 
         await found.IsFailure();
         await Assert.That(found.Error!.Key).IsEqualTo("NotFound");
@@ -57,7 +57,7 @@ public class GoalAccessorTests
         app.goal.list.Add(Goal(app, "Public"));
         app.goal.list.Add(Goal(app, "Setup"));
 
-        var appOnly = new global::app.type.item.dict.@this();
+        var appOnly = app.actor.list.User.Context.Dict();
         appOnly.Set("os", false);
         var all = (global::app.type.item.list.@this<global::app.goal.@this>)await app.goal.list.All(app.actor.list.System.Context!, appOnly);
 
@@ -69,7 +69,7 @@ public class GoalAccessorTests
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var goal = Goal(app, "Running");
-        await using var running = context.call.Push(goal);
+        await using var running = context.call.Push(goal, await context.call.Setting());
 
         var current = app.goal.current(context);
 

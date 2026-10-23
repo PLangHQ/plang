@@ -1,0 +1,119 @@
+{
+  "name": "AppTypeIsTheTypeSystem",
+  "comment": "item-doors 61/63: %!app.type% written alone is the type system: every type with its full facts (a name, its words, its\ndescription, its kinds), a structured value its writer lays out. Red before: it wrote only the list of type names.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %system% = \"system: %!app.type%\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%system%",
+              "variable": [
+                {
+                  "text": "%system%",
+                  "code": [
+                    {
+                      "variable": "system"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "system: %!app.type%",
+              "variable": [
+                {
+                  "text": "%!app.type%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.contains(Value=\"description\", Container=%system%, Message=\"the type system carries each type's facts, not only its name\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "description"
+            },
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%system%",
+              "variable": [
+                {
+                  "text": "%system%",
+                  "code": [
+                    {
+                      "variable": "system"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the type system carries each type's facts, not only its name"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "AppTypeIsTheTypeSystem.test.goal",
+  "hash": "141e53d531398ee74d31304ecb59123f33e52befe199b2d85df61d85c977618f"
+}

@@ -89,6 +89,44 @@ number) has its code set back to empty — reopened — and the step-fixer retri
 collected messages, which are phrased as instructions. A step with no refusal takes its code: its
 warnings are attached and its defaults frozen, and it is written to the `.pr`.
 
+**After the retry, a step still refused is written broken.** Each read of the answer sets every
+step's `Error` (`Step.Error`, `app/goal/step/list/this.cs` `Read`): a step that is refused holds an
+error whose `list` is the gate messages that refuse it; a step that built (or kept its code from an
+earlier read) holds none. When the step-fixer's retry is refused too, the builder does not drop the
+goal: `BuildGoal/Start.goal` catches the escaping `StepsRefused` (`LeaveBroken`), and the goal is
+saved with its steps — the ones that built keep their code, the refused ones have no code and their
+`error`. So **the `.pr` is always the latest build** and it says which step is broken and why. The
+step writes it as `error` beside `warning` through the error's own `Write` (`{id, message, key, status, createdUtc, fixSuggestion?, list?}`),
+and the `.pr` reader reads it back through the error's own reader — no second hand-built shape. The step's error
+names the step (`step N ("…") is broken`); each reason that refuses it is a cause in its `list`, said once.
+
+- **A goal with a broken step does not start.** `goal.Start` (`app/goal/this.cs`) answers `GoalBroken`
+  (400) before its call frame and before anything bound to its start — nothing ran. Its message names
+  the goal's path and the broken steps' indexes, and its `FixSuggestion` says "fix the words and build
+  again"; each broken step's own error rides **whole** as a cause (`Error.list`), carrying its text and,
+  one level down, its reasons. `plang --test` fails a test goal the same way. The error pages
+  (`os/system/error/400.txt`, `500.txt`) print an error's causes two levels deep, each with its goal's
+  path when it has one, so the screen reads goal → step → reason.
+- **Saving is not refused for it.** `step.Validate` has no verdict on a step that holds an `Error` — its
+  `Error` is the verdict — so `build.goalsSave` writes the goal. A step with no code **and** no error is
+  still refused: that is an unbuilt step, not a broken one.
+- **The next build retries it.** A step with no code is not cached (`IsCached` needs code), so a broken
+  step is read again even when its words did not change.
+- **The build ends failed, naming each goal.** `LeaveBroken` collects each such goal's `StepsRefused`
+  error whole (it carries its goal, set where `step/list` raises it) and `Build.goal` ends by throwing
+  one `StepsBroken` error with `error.throw`'s `Cause` set to them — the thrown error holds them as its
+  causes, never rebuilt from their messages. The exit code is 1. Any other build failure still ends the
+  goal as before and keeps its old `.pr` — the `.pr` is replaced only when the build reached the goal.
+- **A broken step with steps indented under it is not a second mistake.** It has no code, so no gate to
+  fold its block into; `build.fold` leaves it as it is and keeps the steps under it, which stay in the
+  goal with their code.
+
+A builder goal is matched to its earlier build **by step position** (`goal.Merge`, `PriorText`), and a
+cached step whose saved code no longer validates against today's catalogue is reopened and rebuilt
+(`goal.Reopen`). So when you edit a builder goal that the builder rebuilds from itself (`Build.goal`,
+`BuildGoal/Start.goal`), never insert a step among the others — every one after it builds again — and
+write a changed step in formal so its rebuild does not depend on the model.
+
 ## The teaching-edit rule
 
 The decider and the learner pages are both pinned to the catalog, so **editing teaching changes

@@ -30,10 +30,10 @@ public class FileHandlerTests : IDisposable
         System.IO.Path.Combine(_tempDir, relativePath);
 
     private global::app.data.@this<PLangPath> MakePath(string relativePath) =>
-        new("", new PLangFilePath(TempPath(relativePath)) {}, context: _app.actor.list.User.Context);
+        new("", _app.actor.list.User.Context.File(TempPath(relativePath)), context: _app.actor.list.User.Context);
 
     private global::app.data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
-        new("", new PLangFilePath(absolutePath) {}, context: _app.actor.list.User.Context);
+        new("", _app.actor.list.User.Context.File(absolutePath), context: _app.actor.list.User.Context);
 
     // --- Save ---
 
@@ -120,7 +120,7 @@ public class FileHandlerTests : IDisposable
         var ctx = _app.actor.list.User.Context;
         var asText = new global::app.data.@this("type", _app.type.list["text"], context: ctx).As<global::app.type.@this>();
         var varPath = new global::app.data.@this("Path",
-            new global::app.type.item.text.@this("%somefile%", new global::app.type.item.template.kind.plang.@this()),
+            new global::app.type.item.text.@this("%somefile%", _app.type.list[new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()), ctx]),
             context: ctx).As<global::app.type.item.path.@this>();
         await Assert.That(varPath.HasVariable).IsTrue();
         var build = await new Read(ctx) { Path = varPath, Type = asText }.Build();
@@ -140,7 +140,7 @@ public class FileHandlerTests : IDisposable
         var before = await new Read(_app.actor.list.User.Context) { Path = MakePath("before.abcdata") }.Start();
 
         _app.type.list.Add(new global::app.type.kind.@this(
-            new global::app.Attributes.FormatAttribute("abc", "application/abcdata", ".abc", ".abcdata"), "binary"));
+            new global::app.Attributes.FormatAttribute("abc", "application/abcdata", ".abc", ".abcdata"), _app.type.list["binary"]));
         System.IO.File.WriteAllText(TempPath("after.abcdata"), "x");
         var after = await new Read(_app.actor.list.User.Context) { Path = MakePath("after.abcdata") }.Start();
 
@@ -559,7 +559,7 @@ public class FileHandlerTests : IDisposable
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(await fileObj!.AsBooleanAsync(_app.actor.list.User.Context)).IsTrue();
 
-        var existsData = await new global::app.type.item.variable.@this("fileResult.Exists").Start(context);
+        var existsData = await new global::app.type.item.variable.@this("fileResult.Exists", context.App.type.list).Start(context);
         await Assert.That(existsData).IsNotNull();
         await Assert.That((await existsData!.Value())?.ToString()).IsEqualTo("true");
 
@@ -590,7 +590,7 @@ public class FileHandlerTests : IDisposable
 
         await goalResult.IsSuccess();
 
-        var existsData = await new global::app.type.item.variable.@this("fileResult.Exists").Start(context);
+        var existsData = await new global::app.type.item.variable.@this("fileResult.Exists", context.App.type.list).Start(context);
         await Assert.That(existsData).IsNotNull();
         await Assert.That((await existsData!.Value())?.ToString()).IsEqualTo("false");
 

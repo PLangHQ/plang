@@ -57,12 +57,12 @@ Supporting goals (fixtures, helpers) can live in the same file or sibling files;
 
 ```
 plang --test                              # Run all tests under the current directory
-plang --test={"parallel":1}               # Serial execution (default is ProcessorCount)
-plang --test={"timeout":5}                # 5-second per-test timeout (default 30)
-plang --test={"include":["http","fast"]}  # Only tests tagged http OR fast
-plang --test={"exclude":["network"]}      # Skip anything tagged network
-plang --test={"format":"junit"}           # Write junit.xml instead of results.json
-plang --test={"verbose":true}             # Stream per-test stdout live
+plang --test.setting={"parallel":1}               # Serial execution (default is ProcessorCount)
+plang --test.setting={"timeout":5}                # 5-second per-test timeout (default 30)
+plang --test.setting={"include":["http","fast"]}  # Only tests tagged http OR fast
+plang --test.setting={"exclude":["network"]}      # Skip anything tagged network
+plang --test.setting={"format":"junit"}           # Write junit.xml instead of results.json
+plang --test.setting={"verbose":true}             # Stream per-test stdout live
 ```
 
 The config dictionary can carry any combination:
@@ -126,7 +126,7 @@ The per-test timeout is a linked `CancellationTokenSource`. When it fires:
 - The run is recorded as `TestStatus.Timeout`.
 - The parent runner is **not** cancelled; only the offending test dies.
 
-The default budget is 30 seconds. Tune with `--test={"timeout":N}` run-wide, or pass `timeout` as a direct parameter on `test.run` inside a meta-test.
+The default budget is 30 seconds. Tune with `--test.setting={"timeout":N}` run-wide, or pass `timeout` as a direct parameter on `test.run` inside a meta-test.
 
 ## Failure output
 
@@ -325,19 +325,19 @@ These are tracked as low-severity security findings on this branch and do not bl
 ### Filter a large suite to fast tests
 
 ```
-plang --test={"include":["fast"],"parallel":8,"timeout":10}
+plang --test.setting={"include":["fast"],"parallel":8,"timeout":10}
 ```
 
 ### Run without network-dependent tests
 
 ```
-plang --test={"exclude":["network","llm"]}
+plang --test.setting={"exclude":["network","llm"]}
 ```
 
 ### Emit JUnit for CI
 
 ```
-plang --test={"format":"junit"}
+plang --test.setting={"format":"junit"}
 ```
 
 ### Meta-test the runner itself

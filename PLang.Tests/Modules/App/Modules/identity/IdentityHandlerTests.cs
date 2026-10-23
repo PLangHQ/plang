@@ -16,7 +16,7 @@ public class IdentityHandlerTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_identity_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).TestSigning();
+        _app = new global::app.@this(_tempDir).TestSigning().Consenting();
     }
 
     [After(Test)]
@@ -42,7 +42,7 @@ public class IdentityHandlerTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_id_row_" + Guid.NewGuid().ToString("N")[..8]);
         string key;
-        await using (var first = new global::app.@this(root))
+        await using (var first = new global::app.@this(root).Consenting())
         {
             var ctx = first.actor.list.System.Context;
             var create = new Create(ctx) { Name = (global::app.type.item.text.@this)"keeper", Default = (global::app.type.item.@bool.@this)true };
@@ -52,7 +52,7 @@ public class IdentityHandlerTests
             key = ((Identity)(await made.Value())!).PublicKey;
         }
 
-        await using var next = new global::app.@this(root);
+        await using var next = new global::app.@this(root).Consenting();
         var user = next.actor.list.User.Context;
         var get = new Get(user);
         await get.Attach(null, user);
@@ -61,7 +61,7 @@ public class IdentityHandlerTests
         await Assert.That(((Identity)(await got.Value())!).PublicKey).IsEqualTo(key);
 
         await next.actor.list.User.Setting.Load();
-        await Assert.That(next.actor.list.User.Setting.Of<global::app.module.identity.setting.@this>().Identity.CountRaw).IsEqualTo(0);
+        await Assert.That((await next.actor.list.User.Setting.Get<global::app.module.identity.setting.@this>()).Identity.CountRaw).IsEqualTo(0);
     }
 
     // --- create ---
@@ -72,14 +72,20 @@ public class IdentityHandlerTests
         // This test validates the ACTUAL ed25519 keypair (32-byte base64), so it needs the
         // real signing provider — not the class fixture's test-signing. Own real app, own key.
         await using var realApp = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang_id_real_" + Guid.NewGuid().ToString("N")[..8]));
+            System.IO.Path.GetTempPath(), "plang_id_real_" + Guid.NewGuid().ToString("N")[..8])).Consenting();
         var realCtx = realApp.actor.list.System.Context;
         var handler = new Create(realCtx) { Name = (global::app.type.item.text.@this)"test", Default = (global::app.type.item.@bool.@this)true };
         await handler.Attach(null, realCtx);
         var result = await handler.Start();
         await result.IsSuccess();
+        // create hands the step the identity without its key; the key pair is read through export, its one door
+        await Assert.That(((await result.Value()) as Identity)!.PrivateKey).IsEqualTo("");
+        var export = new Export(realCtx) { Name = (global::app.type.item.text.@this)"test" };
+        await export.Attach(null, realCtx);
+        var exported = await export.Start();
+        await exported.IsSuccess();
 
-        var identity = (await result.Value()) as Identity;
+        var identity = (await exported.Value()) as Identity;
         await Assert.That(identity).IsNotNull();
         await Assert.That(identity!.PublicKey).IsNotNull();
         await Assert.That(identity.PrivateKey).IsNotNull();
@@ -642,13 +648,21 @@ public class IdentityHandlerTests
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 
+    // The private key the identity's owner holds — its row in the system's identity setting.
+    private async Task<string> StoredKey(string name)
+    {
+        foreach (var row in (await _app.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity.Items(Ctx))
+            if ((await row.Value()) is Identity identity && identity.Name == name) return identity.PrivateKey;
+        return "";
+    }
+
     [Test]
     public async Task Export_ReturnsFullIdentity()
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"exportme", Default = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, Ctx);
-        var createResult = await create.Start();
-        var expectedKey = ((await createResult.Value()) as Identity)!.PrivateKey;
+        await (await create.Start()).IsSuccess();
+        var expectedKey = await StoredKey("exportme");
 
         var handler = new Export(Ctx) { Name = (global::app.type.item.text.@this)"exportme" };
         await handler.Attach(null, Ctx);
@@ -664,8 +678,8 @@ public class IdentityHandlerTests
     {
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"mydefault", Default = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, Ctx);
-        var createResult = await create.Start();
-        var expectedKey = ((await createResult.Value()) as Identity)!.PrivateKey;
+        await (await create.Start()).IsSuccess();
+        var expectedKey = await StoredKey("mydefault");
 
         var handler = new Export(Ctx) { Name = null };
         await handler.Attach(null, Ctx);

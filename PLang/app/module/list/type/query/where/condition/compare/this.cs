@@ -39,13 +39,12 @@ public sealed class @this : condition.@this
         return await rows.Where(_field, _op, value, context);
     }
 
-    internal override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this context)
+    internal override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("field"); writer.String(_field.ToString());
         writer.Name("op"); writer.String(_op.Value);
-        writer.Name("value"); await _value.Output(writer, mode, context);
+        writer.Name("value"); await _value.Output(writer);
         writer.EndObject();
     }
 }

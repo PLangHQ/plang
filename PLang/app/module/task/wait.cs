@@ -28,7 +28,7 @@ public partial class Wait : IContext
                 if (!result.Success) return result;
                 results.Add(result);
             }
-            return Context.Ok(new global::app.type.item.list.@this(results));
+            return Context.Ok(new global::app.type.item.list.@this(results, Context.App.type.list["list"]));
         });
     }
 }

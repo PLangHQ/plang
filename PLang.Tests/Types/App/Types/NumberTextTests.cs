@@ -21,22 +21,25 @@ public class NumberTextTests
 
     private async Task Culture(string name)
     {
-        var set = await _app.actor.list.User.Setting.Set("app.setting.culture", Ctx.Ok(name));
+        var set = _app.actor.list.User.Setting.Set("app.setting.culture", Ctx.Ok(name));
         await set.IsSuccess();
     }
 
     private async Task<string> Text(number value)
     {
         using var ms = new System.IO.MemoryStream();
-        await global::app.type.item.text.@this.Encode(ms, Ctx.Ok(value), Ctx, null, null, default);
+        await global::app.type.item.text.@this.Encode(ms, Ctx.Ok(value), Ctx, global::app.View.Out, null, default);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
-    private static string Json(number value)
+    private async Task<string> Json(number value)
     {
         using var ms = new System.IO.MemoryStream();
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
-            value.Write(new global::app.type.item.kind.json.Writer(utf8, emitsSchema: false));
+        {
+            var writer = new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, _app.actor.list.System.Context);
+            await value.Output(writer);
+        }
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
@@ -55,7 +58,7 @@ public class NumberTextTests
 
     [Test]
     public async Task AProduct_AsJson_IsWhole()
-        => await Assert.That(Json(Product)).IsEqualTo("7.470000000000001");
+        => await Assert.That(await Json(Product)).IsEqualTo("7.470000000000001");
 
     [Test]
     public async Task AnIcelandicCulture_WritesItsSeparator()

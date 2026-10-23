@@ -36,7 +36,7 @@ namespace app.type.item.text;
 [global::app.Attributes.Format("llm", Text = true)]
 [global::app.Attributes.Format("template", Text = true)]
 [global::app.Attributes.Format("liquid", Text = true)]
-// text's subclasses are its kinds (decision 783/788): a separator is a {text, kind: separator} — a text
+// text's subclasses are its kinds: a separator is a {text, kind: separator} — a text
 // value with its own named values. Unsealed so such a value-subclass kind can derive from it.
 [global::app.Attributes.Kinds]
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
@@ -47,7 +47,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// writer between; any other value writes itself as text (a leaf bare, a container as its json content).
     /// </summary>
     public static async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
     {
         var characters = encoding ?? System.Text.Encoding.UTF8;
@@ -60,7 +60,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             await stream.WriteAsync(characters.GetBytes(text.ToString()), ct);
         else
             await data.Output(new global::app.type.item.text.Writer(stream, characters,
-                context.Setting.Of<global::app.setting.@this>().Culture), view ?? global::app.View.Out, context);
+                (await context.Setting.Get<global::app.setting.@this>()).Culture, view, context));
         await stream.FlushAsync(ct);
         return context.Ok();
     }
@@ -80,34 +80,23 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <inheritdoc/>
     public override IReadOnlyList<global::app.type.item.variable.@this> Variable => _variable;
 
-    /// <summary>The value's kind — the file-extension vocabulary (md, csv, …).
-    /// An ordinary typed property stamped at creation, never after.</summary>
-    public string? Kind { get; init; }
-
-    // The text's type, made once, when it is first asked for (a text's kind and template are stamped at creation, so
-    // it never changes after). A text writes itself by asking its type's kind, so it holds its type, never
-    // rebuilding it on every read.
-    private global::app.type.@this? _type;
-
-    protected internal override global::app.type.@this Type
-        => _type ??= new("text", typeof(@this), Kind, template: Template);
 
     /// <summary>
     /// THE PURE CORE — "text, make yourself from this value, or decline." A <c>text</c> passes
     /// through; a scalar stringifies invariantly. A structured value (dict/list) renders its own
     /// canonical text through ITS output, not here — <c>text</c> knows nothing of those types.
-    /// An opaque domain object has no honest textual form → <c>null</c> (decline). Shared by the
-    /// ICreate courier and comparison.
+    /// An opaque domain object has no honest textual form → <c>null</c> (decline). Born holding
+    /// <paramref name="type"/>. Shared by the ICreate courier and comparison.
     /// </summary>
-    public static @this? Create(object? raw)
+    public static @this? Create(object? raw, global::app.type.@this type)
     {
         if (raw is @this self) return self;
         // An item of another type unwraps to its clr (a read); a raw CLR value is already its clr.
         object? clr = raw is global::app.type.item.@this it ? it.Clr<object>() : raw;
         return clr switch
         {
-            string s => (@this)s,
-            System.IConvertible c => (@this)(System.Convert.ToString(c, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty),
+            string s => new(s, type),
+            System.IConvertible c => new(System.Convert.ToString(c, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty, type),
             _ => null,
         };
     }
@@ -115,9 +104,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The ICreate courier face — delegates to the pure core; a value with no textual form
     /// declines with the reason on <paramref name="data"/>. text's kind is a hint (extension), not a
     /// construction switch, so the core needs no kind.</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
-        if (Create(value) is { } built) return built;
+        // a text is held as it is when it already is the declared type, else born again holding it
+        if (value is @this self) return type is null || self.Is(type) ? self : new @this(self, type);
+        if (Create(value, type ?? data.Context.App.type.list[typeof(@this)]) is { } text) return text;
         data.Fail(new global::app.error.@this(
             $"Cannot bind a {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to text — it has no textual form.", "TypeConversionFailed", 400));
         return null;
@@ -125,7 +116,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>A stamped template's answer depends on outside state (%refs%
     /// can change between uses) — never kept. Plain text caches as always.</summary>
-    public override bool Cacheable => Template == null;
+    public override bool Cacheable => Type.Template == null;
 
     /// <summary>
     /// THE door — ready means ready: a stamped template fills its holes
@@ -138,7 +129,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
-        if (Template == null) return this;
+        if (Type.Template == null) return this;
         var context = data.Context;
         if (context?.Variable == null) return this;
         if (IsVariable)
@@ -149,12 +140,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 data.Fail(new global::app.error.@this(
                     $"%{_variable[0].Name}% is not set — nothing to answer for {_value}.",
                     "VariableNotFound", 404));
-                return Absent;
+                return data.Empty;
             }
             return await resolved.Value();
         }
-        return new @this(await Rendered(context));
+        return new @this(await Rendered(context), Type.Family);
     }
+
 
     // The template rendered: one pass in order — each literal written as it is, each variable written
     // in place through its value's own door (its Output into a text writer: a wire materializes to
@@ -164,19 +156,19 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         using var ms = new System.IO.MemoryStream();
         var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8,
-            context.Setting.Of<global::app.setting.@this>().Culture);
+            (await context.Setting.Get<global::app.setting.@this>()).Culture, global::app.View.Out, context);
         int pos = 0;
         for (int at = _value.IndexOf('%'); at >= 0; at = _value.IndexOf('%', at + 1))
         {
-            var found = At(at);
-            if (found == null) continue;
+            var variable = At(at);
+            if (variable == null) continue;
             w.String(_value[pos..at]);
-            pos = at + found.Text.Length;
-            var bound = await found.Start(context);
+            pos = at + variable.Text.Length;
+            var bound = await variable.Start(context);
             if (!bound.IsInitialized)
             {
-                if (found.Code.Root.Name.StartsWith('!')) { w.String(found.Text); at = pos - 1; continue; }
-                throw await Unreachable(found, context);
+                if (variable.Code.Root.Name.StartsWith('!')) { w.String(variable.Text); at = pos - 1; continue; }
+                throw await Unreachable(variable, context);
             }
             // The crash net for this render's door (Start + Output, not the variable's Value door, which has its
             // own): a value reached again while it is being written into a template would recurse until the
@@ -188,9 +180,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 System.Collections.Generic.ReferenceEqualityComparer.Instance);
             var value = bound.Peek();
             if (outer.Contains(value))
-                throw new global::app.error.AppException($"variable resolve cycle: {found.Text} holds a template that renders {found.Text}", "VarResolveCycle", 400);
+                throw new global::app.error.AppException($"variable resolve cycle: {variable.Text} holds a template that renders {variable.Text}", "VarResolveCycle", 400);
             rendering.Value = outer.Add(value);
-            try { await bound.Output(w, global::app.View.Out, context); }
+            try { await bound.Output(w); }
             finally { rendering.Value = outer; }
             at = pos - 1;
         }
@@ -225,39 +217,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>
-    /// The text writes ITSELF (OBP: the value is responsible for its own render), so
-    /// <c>data.Output</c> never pre-materialises through <c>Value</c>. Plain content and the
-    /// Store view write the raw form verbatim (a <c>.pr</c> keeps the authored <c>%ref%</c>). A
-    /// whole-match <c>%ref%</c> is a reference — the bound value writes itself. A partial template
-    /// renders to its string form (a template becomes ONE value — its literals+refs can't ride as
-    /// interleaved tokens into a json/plang writer) and writes that. Either way the text hands the writer its
-    /// characters with the kind they are in; the writer decides how they look.
+    /// The text writes ITSELF, as written: its characters (a template's <c>%ref%</c> as the step gave it). Whether a
+    /// template is kept as written or used (resolved, rendered) is the writer's view's to decide, where its Data is
+    /// written; using it is its <see cref="Value"/>.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        if (Template == null || mode == global::app.View.Store || context?.Variable == null)
-        {
-            writer.Content(_value, Format(context));
-            return;
-        }
-        if (IsVariable)
-        {
-            var resolved = await Get(context);
-            if (resolved is { IsInitialized: true }) { await resolved.Output(writer, mode, context); return; }
-            throw new global::app.error.VariableNotFoundException(resolved!.Name);   // the lookup already carries the name
-        }
-        writer.Content(await Rendered(context), Format(context));
+        writer.String(_value);
+        return default;
     }
 
-    // The kind these characters are in, as the types hold it — one of text's own (md) or one text coins for another
-    // type's format (json); with no context to ask, the kind by its name alone.
-    private global::app.type.kind.@this Format(global::app.actor.context.@this? context)
-        => context?.App.type.list.Kind(Type, context) ?? Type.kind;
-
-    /// <summary>A text holds what a step quoted by its own characters, whatever kind they are in: a json text
-    /// <c>{"size": 10}</c> holds the step's <c>{"size": 10}</c>, never only the escaped form a writer would give it.</summary>
+    /// <summary>A text holds what a step quoted by its own characters: a text <c>{"size": 10}</c> holds the step's
+    /// <c>{"size": 10}</c>, never only the escaped form a writer would give it.</summary>
     internal override System.Threading.Tasks.ValueTask<bool> Holds(string quoted, global::app.actor.context.@this context)
         => System.Threading.Tasks.ValueTask.FromResult(_value.Contains(quoted));
 
@@ -267,33 +238,36 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (it resolves to the named binding, not renders). A partial template
     /// (<c>"hello %name%"</c>) is content — it renders, so it is NOT a variable.</summary>
     public override bool IsVariable
-        => Template != null && _variable is [var only] && only.Text == _value;
+        => Type.Template != null && _variable is [var only] && only.Text == _value;
 
     /// <inheritdoc/>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
         => IsVariable ? await _variable[0].Start(ctx) : null;
 
-    public override void Write(global::app.type.format.IWriter w) => w.String(_value);
-
-    // What the characters stand for, as their kind opens them (a text of kind json: the json value) — opened at the
-    // first navigation, not before, and kept; the text stays the text it is. Only what opened is kept: it holds no
+    // What the characters stand for, as their kind opens them, when it opens any — opened at the first navigation,
+    // not before, and kept; the text stays the text it is. Only what opened is kept: it holds no
     // context, so every asker navigates it with their own.
     private global::app.type.item.@this? _opened;
+
+    // The kind these characters are in, as the types hold it — one of text's own (md); a name text holds no kind of is
+    // that name alone, with no owner. With no context to ask, the kind by its name alone.
+    private global::app.type.kind.@this Format(global::app.actor.context.@this? context)
+        => context?.App.type.list.Kind(Type, context) ?? Type.kind;
 
     // The characters opened by their kind, for this asker: what was kept, else opened now (and kept when it opened);
     // a failed Data when they don't read as their kind says; null when the kind opens nothing.
     private global::app.data.@this? Opened(global::app.actor.context.@this? context)
     {
-        if (_opened is { } kept) return new global::app.data.@this("", kept, context: context);
+        if (_opened is { } item) return new global::app.data.@this("", item, context: context);
         var opened = Format(context).Open(_value, context!);
         if (opened is { Success: true }) _opened = opened.Peek();
         return opened;
     }
 
     /// <summary>
-    /// A text navigates as its kind opens its characters: a text of kind json (<c>%x.a%</c>) is walked as the json
-    /// its characters are, parsed only then, and stays text; characters that don't read as json answer why
-    /// (MaterializeFailed). A text whose kind opens nothing has no by-key structure — navigating it
+    /// A text navigates as its kind opens its characters: walked as what they open to, parsed only then, and it stays
+    /// text; characters that don't read as their kind answer why (MaterializeFailed). A text whose kind opens nothing
+    /// (none of text's own does; json content is item's json) has no by-key structure — navigating it
     /// (<c>%x.port%</c>) is an authoring error. Method calls (<c>%x.grep("..")%</c>) are text's own methods, not
     /// this, so they are unaffected.
     /// </summary>
@@ -301,8 +275,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         global::app.data.@this parent, string key)
         => Get(parent, key, isIndex: false);
 
-    /// <summary>A text iterates as its kind opens its characters — a text of kind json holding an array yields its
-    /// elements; any other text is one value, yielded once, never its characters. Characters that don't read as their
+    /// <summary>A text iterates as its kind opens its characters — an array they open to yields its elements; any other
+    /// text is one value, yielded once, never its characters. Characters that don't read as their
     /// kind stop the loop with why.</summary>
     public override System.Collections.Generic.IEnumerable<(global::app.data.@this key, global::app.data.@this value)>
         EnumerateItems(global::app.actor.context.@this? context)
@@ -326,60 +300,50 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return System.Threading.Tasks.ValueTask.FromResult(err);
     }
 
-    public @this(string value) { _value = value ?? string.Empty; }
-
-    /// <summary>The empty text — what a text holds before anything is in it (type.Empty).</summary>
-    internal @this() : this(string.Empty) { }
-
     /// <summary>
-    /// Construction with a template mode. <paramref name="template"/> is the
-    /// authored-content mode the reader carries — <c>"plang"</c> when the bytes are
-    /// developer-authored (a goal/<c>.pr</c>), null for runtime-ingest. Text decides
-    /// for itself whether there is actually a template to stamp: only a value holding a
-    /// variable keeps the mode, so a plain string never reports as a variable reference.
-    /// Resolution stays lazy — nothing renders until the door (<see cref="Value"/>). The
-    /// trust is the mode, not the content: a structural text (a dict key, a type name) or a
-    /// runtime-ingest value is born with a null mode and prints literally.
-    /// <para><paramref name="variable"/> is what the <c>.pr</c> row says its value holds (the
-    /// ones written in this text are taken); without it — a template born at build or at run —
-    /// the text is parsed.</para>
+    /// Born holding <paramref name="type"/> — the app's, handed in by its maker: the row's type (<c>text&lt;md&gt;</c>, a
+    /// template text) or plain <c>text</c>. The build decided template-ness and the .pr carries it on the type; the
+    /// run never re-parses on load.
+    /// <para><paramref name="variable"/> is the row's own variable list (from the <c>.pr</c>); the text keeps the
+    /// ones its content holds, matched by name. A template made without a .pr list (built, or at run) parses its
+    /// content for them, as before. A non-template text holds none.</para>
     /// </summary>
-    public @this(string value, global::app.type.item.template.kind.@this? template, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+    public @this(string value, global::app.type.@this type, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+        : base(type)
     {
         _value = value ?? string.Empty;
-        // Container inner slots (list/dict entries) have no per-slot .pr flag; the authored
-        // read mode + a variable in the content marks them. Flagging literal slots would change
-        // their canonicalization/signing.
-        if (template == null || !_value.Contains('%')) return;
-        var held = variable?.Where(v => _value.Contains(v.Text, System.StringComparison.Ordinal)).ToList()
-                   ?? (IReadOnlyList<global::app.type.item.variable.@this>)new global::app.type.item.variable.parser.@this(_value).Variable;
-        if (held.Count == 0) return;
-        _variable = held.DistinctBy(v => v.Text).ToList();
-        Template = template;
+        _variable = Type.Template == null ? []
+            : variable is { } rows ? rows.Where(v => _value.Contains(v.Text, System.StringComparison.Ordinal)).DistinctBy(v => v.Text).ToList()
+            : new global::app.type.item.variable.parser.@this(_value, Type.Types ?? throw new System.InvalidOperationException(
+                "a text template is born holding the app's type — a bare one holds no types to read its variables with")).Variable;
     }
 
-    // A re-kinded copy: the same content and variables, the declared kind stamped.
-    private @this(@this source, string? kind)
+    /// <summary>The empty text — what a text holds before anything is in it (type.Empty hands its type).</summary>
+    internal @this(global::app.type.@this type) : this(string.Empty, type) { }
+
+    // The string → text operator's birth: no app to ask, so it holds a type built from the class.
+    private @this(string value) : this(value, new global::app.type.@this("text", typeof(@this))) { }
+
+    // The same content and variables, born holding the declared type.
+    private @this(@this source, global::app.type.@this type) : base(type)
     {
         _value = source._value;
         _variable = source._variable;
-        Template = source.Template;
-        Kind = kind;
     }
 
     /// <summary>
     /// Construction from a raw form — a string is the value as-is; binary bytes
     /// off I/O decode as UTF-8. Text is only ever born from a string, so this is
     /// the one place bytes become that string (a reader handed raw stream bytes
-    /// reaches the text here). <paramref name="template"/> and <paramref name="variable"/> as above.
+    /// reaches the text here). <paramref name="type"/> and <paramref name="variable"/> as above.
     /// </summary>
-    public @this(object raw, global::app.type.item.template.kind.@this? template = null, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+    public @this(object raw, global::app.type.@this type, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
         : this(raw switch
         {
             byte[] b => System.Text.Encoding.UTF8.GetString(b),
             string s => s,
             _ => raw?.ToString() ?? string.Empty,
-        }, template, variable)
+        }, type, variable)
     { }
 
     // INBOUND only — the entry lift (`.Ok("x")` constructs). The outbound
@@ -425,19 +389,19 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     // ---- Methods a variable reaches: %name.toupper()%, %text.replace("-", " ")% ----
 
-    [LlmBuilder] public @this ToUpper() => new(_value.ToUpperInvariant());
-    [LlmBuilder] public @this ToLower() => new(_value.ToLowerInvariant());
-    [LlmBuilder] public @this Trim() => new(_value.Trim());
+    [LlmBuilder] public @this ToUpper() => new(_value.ToUpperInvariant(), Type.Family);
+    [LlmBuilder] public @this ToLower() => new(_value.ToLowerInvariant(), Type.Family);
+    [LlmBuilder] public @this Trim() => new(_value.Trim(), Type.Family);
 
     /// <summary>Every <paramref name="old"/> replaced by <paramref name="new"/>.</summary>
-    [LlmBuilder] public @this Replace(@this old, @this @new) => new(_value.Replace(old._value, @new._value));
+    [LlmBuilder] public @this Replace(@this old, @this @new) => new(_value.Replace(old._value, @new._value), Type.Family);
 
     /// <summary>At most <paramref name="max"/> characters, "..." marking a cut; 0 is no limit.</summary>
     [LlmBuilder]
     public @this MaxLength(global::app.type.item.number.@this max)
     {
         var limit = max.Clr<int>();
-        return limit <= 0 || _value.Length <= limit ? this : new(_value[..limit] + "...");
+        return limit <= 0 || _value.Length <= limit ? this : new(_value[..limit] + "...", Type.Family);
     }
 
     /// <summary>The lines matching <paramref name="pattern"/> — each <c>line number: line</c> — with <paramref name="lines"/>
@@ -447,12 +411,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.list.@this<@this>>> Grep(@this pattern,
         global::app.actor.context.@this context, global::app.type.item.number.@this? lines = null)
     {
-        var found = (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
+        var matches = (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
             .Grep(new global::app.data.@this("", this, context: context), pattern._value, lines?.Clr<int>() ?? 0);
-        if (!found.Success) return global::app.data.@this<global::app.type.item.list.@this<@this>>.From(found);
-        var text = (await found.Value())?.ToString() ?? "";
+        if (!matches.Success) return global::app.data.@this<global::app.type.item.list.@this<@this>>.From(matches);
+        var text = (await matches.Value())?.ToString() ?? "";
         return context.Ok(new global::app.type.item.list.@this<@this>(
-            text.Length == 0 ? [] : [.. text.Split('\n').Select(line => (@this)line.TrimEnd('\r'))]));
+            text.Length == 0 ? [] : [.. text.Split('\n').Select(line => (global::app.type.item.@this)new @this(line.TrimEnd('\r'), Type.Family))],
+            context.App.type.list[typeof(global::app.type.item.list.@this<@this>)]));
     }
 
     /// <summary>How many lines match <paramref name="pattern"/>.</summary>
@@ -471,10 +436,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public override async System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)
         => Contains((await needle.Value())?.ToString());
 
-    /// <summary>A re-kinded copy — same content, the declared kind stamped
-    /// (values immutable, never restamped in place).</summary>
-    public override global::app.type.item.@this Kinded(string? kind) => new @this(this, kind);
-
     /// <summary>text's raw string face — its characters.</summary>
     public override string? RawText => _value;
 
@@ -490,9 +451,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public int IndexOf(string other) =>
         _value.IndexOf(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
 
-    public @this Substring(int start, int length) => new(_value.Substring(start, length));
+    public @this Substring(int start, int length) => new(_value.Substring(start, length), Type.Family);
     public @this Replace(string oldValue, string newValue) =>
-        new(_value.Replace(oldValue ?? string.Empty, newValue ?? string.Empty));
+        new(_value.Replace(oldValue ?? string.Empty, newValue ?? string.Empty), Type.Family);
 
     // ---- Truthiness (item) ----
 
@@ -513,7 +474,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// </summary>
     protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
-        var b = other as @this ?? Create(other);
+        var b = other as @this ?? Create(other, context.App.type.list[typeof(@this)]);
         if (b is null) return new(global::app.data.Comparison.Incomparable);
         var c = string.Compare(_value, b._value, System.StringComparison.OrdinalIgnoreCase);
         return new(c < 0 ? global::app.data.Comparison.Less

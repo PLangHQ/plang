@@ -54,7 +54,7 @@ public class MissingVariableNameTests
             ("list", "any") => "Key=\"x\", Operator=\"==\"",
             _ => "",
         };
-        var act = context.Action($"{module}.{action}({extras})");
+        var act = await context.Action($"{module}.{action}({extras})");
 
         var result = await act.Start(context);
 

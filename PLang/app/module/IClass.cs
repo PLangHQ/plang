@@ -4,12 +4,13 @@ namespace app.module;
 /// The action-handler interface. Every action handler implements IClass via the
 /// source generator. Build() is an optional compile-time hook the builder calls
 /// during validate (see builder.validate); a handler that doesn't override it
-/// contributes nothing (default impl returns Data.Ok()). Build() lets a handler
+/// contributes nothing (the default answers null). Build() lets a handler
 /// inspect its own arguments at compile time.
 ///
 /// Build() returns:
-///   - Data.Ok(value)  — the build goes on; what it answers is %!buildData%.
-///   - Data.Fail(err)  — validate aggregates and fails the build.
+///   - Context.Ok(value) — the build goes on; what it answers is %!buildData%.
+///   - Data.Fail(err)    — validate aggregates and fails the build.
+///   - null              — nothing to say; %!buildData% is an empty success.
 ///
 /// Handlers also implement ICodeGenerated (the source-gen contract for Resolve /
 /// Attach / Execute); IClass is the broader role. To invoke Build(), resolve a
@@ -17,8 +18,8 @@ namespace app.module;
 /// </summary>
 public interface IClass
 {
-    System.Threading.Tasks.Task<data.@this> Build()
-        => System.Threading.Tasks.Task.FromResult(data.@this.Ok());
+    System.Threading.Tasks.Task<data.@this?> Build()
+        => System.Threading.Tasks.Task.FromResult<data.@this?>(null);
 
     /// <summary>Build-time judgement of the handler's own properties — the parameter COMBINATIONS
     /// only the handler knows are legal. Runs on the bound handler (typed views, unresolved);

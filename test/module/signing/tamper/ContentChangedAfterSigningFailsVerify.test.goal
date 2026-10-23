@@ -1,0 +1,11 @@
+/ A signed value is the Data it signed, holding its signature: changing its content after
+/ signing fails verify as a hash mismatch, not as any other refusal.
+Start
+- set %data% = { "message": "as signed" }
+- sign %data%, write to %signed%
+- set %signed.message% = "changed after signing"
+- verify %signed%, on error call HandleTampered
+- assert %errorKey% equals "DataHashMismatch", "content changed after signing should fail verification"
+
+HandleTampered
+- set %errorKey% = %!error.Key%

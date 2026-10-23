@@ -22,11 +22,48 @@ public class FileChannelTests
         const string json = "{ \"port\":  8080,\n  \"hosts\": [\"a\", \"b\"] }";
         File.WriteAllText(Path.Combine(dir, "a.json"), json);
 
-        var read = await new PLangFilePath(Path.Combine(dir, "a.json")).Read(context);
-        var saved = await new PLangFilePath(Path.Combine(dir, "b.json")).Save(read, context);
+        var read = await context.File(Path.Combine(dir, "a.json")).Read(context);
+        var saved = await context.File(Path.Combine(dir, "b.json")).Save(read, context);
 
         await saved.IsSuccess();
         await Assert.That(File.ReadAllText(Path.Combine(dir, "b.json"))).IsEqualTo(json);
+    }
+
+    // Bytes land as they are, whatever the file's name says: a program wanting base64 makes a base64 value.
+    [Test]
+    [Arguments("x.json")]
+    [Arguments("x.txt")]
+    [Arguments("x.md")]
+    [Arguments("x.png")]
+    [Arguments("x.mp4")]
+    [Arguments("x.xyz")]
+    public async Task SavingBytes_LandsThemAsTheyAre_WhateverTheName(string name)
+    {
+        var (app, context, dir) = MakeApp();
+        await using var _ = app;
+        byte[] bytes = [0x00, 0x01, 0x41, 0x42, 0xFF];
+
+        var saved = await context.File(Path.Combine(dir, name))
+            .Save(context.Ok(new global::app.type.item.binary.@this(bytes, app.type.list[typeof(global::app.type.item.binary.@this)])), context);
+
+        await saved.IsSuccess();
+        await Assert.That(File.ReadAllBytes(Path.Combine(dir, name))).IsEquivalentTo(bytes);
+    }
+
+    // A typed value goes through the file's format, a read file too: a read .md saved to x.json is a json string of
+    // its text, never its bytes as they are.
+    [Test]
+    public async Task SavingAReadMarkdownFile_ToJson_IsAJsonStringOfItsText()
+    {
+        var (app, context, dir) = MakeApp();
+        await using var _ = app;
+        File.WriteAllText(Path.Combine(dir, "report.md"), "# Report\nall good");
+
+        var read = await context.File(Path.Combine(dir, "report.md")).Read(context);
+        var saved = await context.File(Path.Combine(dir, "copy.json")).Save(read, context);
+
+        await saved.IsSuccess();
+        await Assert.That(File.ReadAllText(Path.Combine(dir, "copy.json"))).IsEqualTo("\"# Report\\nall good\"");
     }
 
     // A 1x1 PNG, the image a binding on image create answers.
@@ -48,7 +85,7 @@ public class FileChannelTests
         var (app, context, dir) = MakeApp();
         await using var _ = app;
 
-        var saved = await new PLangFilePath(Path.Combine(dir, "x.png")).Save(ADict(context), context);
+        var saved = await context.File(Path.Combine(dir, "x.png")).Save(ADict(context), context);
 
         await saved.IsFailure();
         await Assert.That(saved.Error!.Message).Contains("not an image");
@@ -62,12 +99,12 @@ public class FileChannelTests
         await using var _ = app;
         app.type.list["image"].Own().Bind("create", global::app.@event.When.before, (_, _, ctx) =>
         {
-            global::app.data.@this made = ctx.Ok(new global::app.type.item.image.@this(Png1x1, "image/png"));
+            global::app.data.@this made = ctx.Ok(context.Image(Png1x1, "image/png"));
             made.Handled = true;
             return Task.FromResult(made);
         }, app.actor.list.User, global::app.@event.binding.Scope.actor);
 
-        var saved = await new PLangFilePath(Path.Combine(dir, "x.png")).Save(ADict(context), context);
+        var saved = await context.File(Path.Combine(dir, "x.png")).Save(ADict(context), context);
 
         await saved.IsSuccess();
         await Assert.That(File.ReadAllBytes(Path.Combine(dir, "x.png"))).IsEquivalentTo(Png1x1);
@@ -82,7 +119,7 @@ public class FileChannelTests
         var (app, context, dir) = MakeApp();
         await using var _ = app;
 
-        var saved = await new PLangFilePath(Path.Combine(dir, name)).Save(context.Ok("hello"), context);
+        var saved = await context.File(Path.Combine(dir, name)).Save(context.Ok("hello"), context);
 
         await saved.IsSuccess();
         await Assert.That(File.ReadAllText(Path.Combine(dir, name))).IsEqualTo("hello");
@@ -94,7 +131,7 @@ public class FileChannelTests
         var (app, context, dir) = MakeApp();
         await using var _ = app;
 
-        var saved = await new PLangFilePath(Path.Combine(dir, "note.txt")).Save(context.Ok("hello"), context);
+        var saved = await context.File(Path.Combine(dir, "note.txt")).Save(context.Ok("hello"), context);
 
         await saved.IsSuccess();
         await Assert.That(File.ReadAllText(Path.Combine(dir, "note.txt"))).IsEqualTo("hello");

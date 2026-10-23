@@ -76,7 +76,7 @@ public class ActionNoteTests
 
         var warning = (await Read()).Warning;
 
-        await Assert.That(warning.Select(w => w.Message)).IsEquivalentTo(new[]
+        await Assert.That(warning!.Items().Select(w => w.Message)).IsEquivalentTo(new[]
         {
             "file.list: the notes line 'Patern' names no property",
             "file.list: the property 'Pattern' has no notes line",
@@ -90,7 +90,7 @@ public class ActionNoteTests
         var notes = await Read();
 
         await Assert.That(notes.Line.Count).IsEqualTo(0);
-        await Assert.That(notes.Warning.Select(w => w.Key)).IsEquivalentTo(new[] { "PropertyWithoutNote", "PropertyWithoutNote", "PropertyWithoutNote" });
+        await Assert.That(notes.Warning!.Items().Select(w => w.Key)).IsEquivalentTo(new[] { "PropertyWithoutNote", "PropertyWithoutNote", "PropertyWithoutNote" });
     }
 
     // A goal reaches the warnings by navigating — `%action.Note.Warning%` — never through the notes' door first.

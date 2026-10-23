@@ -31,15 +31,18 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     IChoice
     where T : notnull
 {
-    // The closed set this choice draws from — its name (the kind) and its options. Per closed
-    // type (a static on a generic is per-T): the reader and Parse have no context to ask the
-    // registry, and the set is T's own fact. A named-set class resolves a name via ctor(string).
-    private static readonly set.@this _set = set.@this.For(typeof(T))
-        ?? throw new System.InvalidOperationException($"choice<{typeof(T).Name}>: {typeof(T).FullName} is not a closed set.");
-
     public T Value { get; }
 
-    public @this(T value) { Value = value; }
+    /// <summary>The option <paramref name="value"/>, born holding <paramref name="type"/> — the app's
+    /// <c>{choice, &lt;set&gt;}</c>, handed in by its maker.</summary>
+    public @this(T value, global::app.type.@this type) : base(type) { Value = value; }
+
+    // The T → choice operator's birth: it has no app to ask, so it holds {choice, <set>} built from the set's name
+    // (its T's own [PlangType]; a T with no name is a bare choice type).
+    private @this(T value)
+        : base(new global::app.type.@this(typeof(@this<T>),
+            (System.Attribute.GetCustomAttribute(typeof(T), typeof(global::app.Attributes.PlangTypeAttribute), inherit: false)
+                as global::app.Attributes.PlangTypeAttribute)?.Name)) { Value = value; }
 
     public static implicit operator T(@this<T> c) => c.Value;
     // T → choice (so `.Ok(HttpMethod.GET)` and a `[Default(HttpMethod.GET)]` cast construct).
@@ -53,12 +56,10 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     public override string ToString() => Value.ToString() ?? "";
     public override bool IsTruthy() => true;
     public override bool IsLeaf => true;
-    public override void Write(global::app.type.format.IWriter w) => w.String(ToString());
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.String(ToString()); return default; }
 
     string IChoice.Symbol => ToString();
 
-    /// <summary>A choice names itself by its set: <c>{choice, kind: operator}</c>.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this<T>), _set.Name);
 
     /// <summary>The one symbol→choice resolution home — the wire form is the option's SYMBOL
     /// (an enum member's name, a named-set registry key like "=="). Shared by the ICreate core
@@ -68,42 +69,49 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     /// NUMBER also appears on disk: every .pr built before this field became a choice carries the
     /// enum's ordinal, and 790 of them still do. <see cref="Parse"/> accepts an ordinal in its
     /// text form, so both land in one place — the type that owns the wire form.</summary>
-    public static @this<T> Read<TReader>(ref TReader reader)
+    public static @this<T> Read<TReader>(ref TReader reader, global::app.type.@this type)
         where TReader : global::app.type.format.IReader, allows ref struct
         => Parse(reader.Peek() == global::app.type.format.TokenKind.Number
             ? reader.Number().ToString() ?? ""
-            : reader.String());
+            : reader.String(), type);
 
-    public static @this<T> Parse(string symbol)
+    /// <summary>The option <paramref name="symbol"/> names, born holding <paramref name="type"/>. THROWS
+    /// FormatException naming the options when it names none.</summary>
+    public static @this<T> Parse(string symbol, global::app.type.@this type)
     {
-        // the set answers the member its symbol names — an enum's, a family's kind, a named set's
-        try { return new((T)_set.Member(symbol)); }
+        // the set — the type's kind, the app's {choice, <set>} — answers the member its symbol names: an enum's, a
+        // family's kind, a named set's
+        var set = type.kind as set.@this
+            ?? throw new System.InvalidOperationException($"choice<{typeof(T).Name}> is parsed against {type.Name}, which is no closed set.");
+        try { return new((T)set.Member(symbol), type); }
         catch (System.ArgumentException ex)
         {
             throw new System.FormatException(
-                $"'{symbol}' is not a {_set.Name} option. Valid: {string.Join(", ", _set.Values)}", ex);
+                $"'{symbol}' is not a {set.Name} option. Valid: {string.Join(", ", set.Values ?? [])}", ex);
         }
     }
 
     /// <summary>THE PURE CORE — pass-through; a raw member wraps; a string face parses
-    /// (malformed throws per the error policy); anything else declines.</summary>
-    public static @this<T>? Create(object? raw)
+    /// (malformed throws per the error policy), each born holding <paramref name="type"/>; anything else declines.</summary>
+    public static @this<T>? Create(object? raw, global::app.type.@this type)
     {
         if (raw is @this<T> self) return self;
-        if (raw is T member) return new(member);
+        if (raw is T member) return new(member, type);
         var symbol = raw as string ?? (raw as global::app.type.item.@this)?.RawText;
-        return symbol is null ? null : Parse(symbol);
+        return symbol is null ? null : Parse(symbol, type);
     }
 
     /// <summary>The courier — converts Parse's throw to data.Fail with the option list;
-    /// declines fail typed.</summary>
-    public static @this<T>? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    /// declines fail typed. A value is born holding the declared type, else the app's for its set.</summary>
+    public static @this<T>? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
-        try { if (Create(raw) is { } made) return made; }
+        if (raw is @this<T> self) return self;
+        type ??= data.Context.App.type.list[typeof(@this<T>)];
+        try { if (Create(raw, type) is { } choice) return choice; }
         catch (System.FormatException ex)
         {
             data.Fail(new global::app.error.@this(ex.Message, "ChoiceInvalid", 400)
-                { FixSuggestion = $"Valid options: {string.Join(", ", _set.Values)}" });
+                { FixSuggestion = $"Valid options: {string.Join(", ", type.Values ?? [])}" });
             return null;
         }
         data.Fail(new global::app.error.@this(

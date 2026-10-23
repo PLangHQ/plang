@@ -63,8 +63,10 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     private readonly Uri _uri;
 
-    public @this(string raw)
-        : base(raw)
+    /// <summary>The url <paramref name="raw"/>, born holding <paramref name="type"/> — the app's
+    /// <c>{path, http}</c> or <c>{path, https}</c>, as its scheme is.</summary>
+    public @this(string raw, global::app.type.@this type)
+        : base(raw, type)
     {
         if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))
             throw new ArgumentException($"Not a valid http(s) URL: '{raw}'", nameof(raw));
@@ -90,8 +92,13 @@ public sealed partial class @this : global::app.type.item.path.@this
     {
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
-        return new @this(rawPath) { Raw = rawPath };
+        return new @this(rawPath, Typed(rawPath, context)) { Raw = rawPath };
     }
+
+    // The app's type for a url — {path, http} or {path, https}, as its scheme is.
+    private static global::app.type.@this Typed(string url, actor.context.@this context)
+        => context.App.type.list[new global::app.type.@this("path",
+            global::app.type.item.path.scheme.@this.ParseScheme(url).ToLowerInvariant()), context];
 
     [Out, Store] public override string Scheme => _uri.Scheme.ToLowerInvariant();
 
@@ -106,11 +113,11 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// strip <c>?token=…</c> before sharing the URL elsewhere gets the same
     /// signal here. Suppressed when there is no query string.
     /// </summary>
-    protected override string AuthorizationHint(global::app.type.item.permission.Verb verb, global::app.actor.context.@this context)
-    {
-        if (string.IsNullOrEmpty(_uri.Query) || _uri.Query == "?") return "";
-        return "(note: answering 'a' saves the full URL — query string included — to your local permission store)";
-    }
+    // A url with a query string says that "always" keeps it whole.
+    protected override string Question(global::app.type.item.permission.Verb verb, global::app.type.item.path.@this place,
+        global::app.actor.context.@this context)
+        => string.IsNullOrEmpty(_uri.Query) || _uri.Query == "?" ? base.Question(verb, place, context)
+            : $"Allow {context.Actor.Name} to {verb} {Absolute}? (note: answering 'a' saves the full URL — query string included — to your local permission store) (y/n/a)";
 
     /// <summary>
     /// Canonical-form URL — two HttpPaths addressing the same logical resource
@@ -135,7 +142,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             // renders as `xn--pple-43d.com` and the user sees that something
             // is off. Same canonical form lands in the persisted grant key,
             // so cache hits also use punycode and a homograph variant doesn't
-            // silently match a previously-trusted ASCII host. (security v2 S4.a)
+            // silently match a previously-trusted ASCII host.
             var host = _uri.IdnHost.ToLowerInvariant();
 
             // Rule 2: strip default port.
@@ -263,7 +270,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             return context.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(
                 Exists: true,
                 IsFile: true,
-                Size: resp.Content.Headers.ContentLength is { } length ? new global::app.type.item.size.@this(length, context) : null,
+                Size: resp.Content.Headers.ContentLength is { } length ? global::app.type.item.size.@this.Create(length, context) : null,
                 Modified: resp.Content.Headers.LastModified?.UtcDateTime));
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
@@ -378,7 +385,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             // The response Content-Type rides as a Property so the url door can stamp
             // by it (Content-Type rules over the URL extension); empty when the server
             // sent none.
-            var bytesData = context.Ok((object)new global::app.type.item.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
+            var bytesData = context.Ok((object)new global::app.type.item.binary.@this(await resp.Content.ReadAsByteArrayAsync(), context.App.type.list[typeof(global::app.type.item.binary.@this)]));
             bytesData.Properties.Set("contentType", resp.Content.Headers.ContentType?.MediaType ?? "");
             return bytesData;
         }
@@ -432,7 +439,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             nextContent = rebuilt;
         }
 
-        var nextPath = new @this(target.ToString());
+        var nextPath = new @this(target.ToString(), Typed(target.ToString(), context));
 
         // The consent prompt for the new host. AuthGate returns null on grant.
         if (await nextPath.AuthGate(verb, context) is { } denial) return denial;
@@ -462,8 +469,8 @@ public sealed partial class @this : global::app.type.item.path.@this
         if (!signResult.Success) return signResult.Error!;
         // The header carries the signed Data as plang writes it on the wire.
         using var wire = new System.IO.MemoryStream();
-        var written = await context.App.type.list.Mime("application/plang").Encode(wire, signResult, context, global::app.View.Out);
-        if (!written.Success) return written.Error!;
+        var answer = await context.App.type.list.Mime("application/plang").Encode(wire, signResult, context, global::app.View.Out);
+        if (!answer.Success) return answer.Error!;
         request.Headers.TryAddWithoutValidation("X-Signature", System.Text.Encoding.UTF8.GetString(wire.ToArray()));
         return null;
     }

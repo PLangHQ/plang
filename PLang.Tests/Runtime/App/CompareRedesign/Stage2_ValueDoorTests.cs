@@ -19,7 +19,7 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
     // A raw-backed Data (source form pending) straight off the file channel.
     private static async Task<Data> RawBackedJson(global::app.@this app, string root)
     {
-        var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "cfg.json"));
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "cfg.json"));
         await (await p.WriteText("{\"port\":8080}", app.actor.list.User.Context)).IsSuccess();
         return await p.Decoded(app.actor.list.User.Context);
     }
@@ -113,7 +113,7 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
         // A %ref% value rides as a typed `text` (never a bare System.String); the
         // authored seam stamps the %hole% as a template (Template="plang"), which
         // is what marks it a variable reference.
-        var d = new Data("slot", new global::app.type.item.text.@this("%x%", new global::app.type.item.template.kind.plang.@this()), context: _app.actor.list.User.Context);
+        var d = new Data("slot", new global::app.type.item.text.@this("%x%", _app.type.list[new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()), _app.actor.list.User.Context]), context: _app.actor.list.User.Context);
         await Assert.That(d.Peek() is global::app.type.item.text.@this).IsTrue();
         await Assert.That(d.IsVariable).IsTrue();
     }

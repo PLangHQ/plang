@@ -11,7 +11,7 @@ public class SigningHashKindTests
     {
         var root = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_hashkind_" + Guid.NewGuid().ToString("N"))).FullName;
         var app = new global::app.@this(root);
-        app.test.list.Open();
+        await app.test.list.Open();
         app.TestIdentity();
         await Task.CompletedTask;
         return (app, root);
@@ -31,8 +31,8 @@ public class SigningHashKindTests
         try
         {
             var ctx = app.actor.list.User.Context;
-            await (await new global::app.type.item.variable.parser.@this("%!signing.setting.hash%").Variable.Single()
-                .Set(ctx.Ok(new global::app.type.item.text.@this("sha256")), ctx)).IsSuccess();
+            await (await new global::app.type.item.variable.parser.@this("%!signing.setting.hash%", ctx.App.type.list).Variable.Single()
+                .Set(ctx.Ok(ctx.Text("sha256")), ctx)).IsSuccess();
 
             var wire = await Written(app, ctx, "signed with sha256");
             var back = await app.type.list["wire"].kind["plang"]!.Decode(wire, ctx);
@@ -69,7 +69,7 @@ public class SigningHashKindTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var hashed = await ctx.Action("crypto.hash(Data=\"hello\", Algorithm=\"sha256\")").Start(ctx);
+        var hashed = await (await ctx.Action("crypto.hash(Data=\"hello\", Algorithm=\"sha256\")")).Start(ctx);
         await hashed.IsSuccess();
 
         var verify = new global::app.module.crypto.Verify(ctx) { Data = ctx.Ok("hello"), Hash = hashed };

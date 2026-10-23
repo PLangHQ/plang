@@ -1,0 +1,8 @@
+/ item-doors 62/63: a goal's type is the plain goal type, not the app's node. %!app.goal.type.name% is goal, and a goal's
+/ %g!type% written is the goal type's face (goal). Red before: Replace swapped the type list's own goal entry for the app's
+/ node, so asking a goal what type it is answered the node (the dump of every goal), not goal.
+GoalIsOfTypeGoal
+- assert.equals(Expected="goal", Actual=%!app.goal.type.name%, Message="the running goal is of type goal")
+- set %g% = %!app.goal["GoalIsOfTypeGoal"]%
+- set %shown% = "type: %g!type%"
+- assert.equals(Expected="type: goal", Actual=%shown%, Message="a goal's type, written, is goal")

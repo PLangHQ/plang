@@ -1,0 +1,699 @@
+{
+  "branch": "item-doors",
+  "sessions": [
+    {
+      "id": "7e8796cb-5ab8-42c5-93f7-b60ae409ca01",
+      "bot": "coder",
+      "timestamp_start": "2026-10-17T22:03:03Z",
+      "timestamp_end": null,
+      "intent": "Stage 1: a value is born whole — the base item holds its registered type, set at construction, forwarded by every subtype; the INTO-plang implicit operators go; Create(raw) takes the type; the re-resolves, text floor, :754, source.cs:240, action-slot checks, list doors, bare-type makers, image _mime and name-sniffing all collapse.",
+      "before": {
+        "assumptions": "Ingi approved fork (a): every value is born with its type from the app's list (the app always exists). The 28 subtype Type overrides rebuild the type per read; source.cs:115 floors text's IsText by Name; three re-resolves (type.Get:886, Out:63, Setting:900) patch the bare type at navigation.",
+        "risk": "Big-bang: base item ctor becomes required (type.@this), so every subtype ctor and every construction site must supply the type at birth. Removing ~28 INTO-plang implicit operators surfaces a large caller wall (number especially). Must land as one coherent change with the 6 reds green, guards green, no new reds vs runtime2."
+      },
+      "plan": ".bot/item-doors/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/item-doors/coder/v1/plan.md",
+            ".bot/item-doors/coder/v1/baseline-tests.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote stage-1 plan and captured baseline (3 stage-1 reds: ImageFromBytes_Kind_CarriesItsRegisteredMime, PlainText_Kind_IsText_WithoutNameFloor, AFreshTypeByNameCarriesNoFacts; 6 Wire + TheActorNamed pre-existing). Mapped all 28 subtypes (ctors/Type overrides/kind sources/self-construction) and the scattered sites (3 re-resolves, floor, :754, :240, image _mime, name-sniffs, 4 action-slot checks, bare-type makers, list doors) via two Explore agents."
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/item/this.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Surfaced the hinge to the architect: context-free births (bool.True singleton, sniffed image FromBytes, text.ToUpper, number arithmetic) have no app, yet the 3 reds demand whole kind facts + by-name ClrType. Proposed a static assembly-scan facts cache ([Format]/[PlangType] metadata) backing the kind/by-name ctor — matches Ingi's 'facts from class declarations' and 876 'by-name ctor becomes the list's own'. Flagged as a new static (no-static-without-consent) + locked-core (type system). Holding the 28-file big-bang on the answer."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/bool/this.cs",
+            "PLang/app/type/item/null/this.cs",
+            "PLang/app/type/item/given/this.cs",
+            "PLang/app/type/item/culture/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Architect ruled (decision 880): NO static — every birth reaches the app's type via its maker (type.Make hands the registered type), from the value it came from (this.Type), or a passed context; the by-name test is the test-designer's to reroute. Enumerated the four static value singletons that can't hold an app's type and delivered the list with uses to the architect (REPLY asked for the singletons list first): bool.True/False (7 uses, mostly [Out,Store] setting field-defaults), null.Instance (the typeless-null citizen, ~18 uses — proposed exempt), given.Instance (1 use), culture.Machine (1 use). Holding the base-ctor big-bang until the architect rules how these four get their type."
+        },
+        {
+          "paths": [
+            "PLang/app/type/kind/empty/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/item/image/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 1 (facts fix, static-free): the type entity, when built from a CLR class, reads its class's [Format] into its kind (KindOfClass via reflection — the empty kind now carries its _format, a named kind is a kind.format<T>). empty kind ctor takes an optional format. image's Type override passes the kind NAME so the type builds it from [Format]. Both Types reds green (PlainText_Kind_IsText_WithoutNameFloor, ImageFromBytes_Kind_CarriesItsRegisteredMime); Types suite 32/0, no regressions. This is the foundation born-whole builds each value's _type on."
+        },
+        {
+          "paths": [
+            ".bot/item-doors/coder/v1/born-whole-map.md",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/item/this.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Wrote the born-whole execution map (per-subtype forwarding type, operator-removal list, singleton handling, collapses). Surfaced two locked-core forks the briefing didn't cover and the architect ruled both: (1) meta-type recursion — Ingi: one self-typed root in the app's list (ctor sets _type=this), type+kind forward it via : base(root), no Type override. (2) the scope hinge now open — a value's type entity holds the per-app root (needs context), but the two green Types reds + internal helpers construct values context-free; asked whether origin-births route through context (option a, values always from the list/Make/context, the 2 Types tests reroute like the by-name one) vs keep context-free value ctors (option b). Holding the base-ctor big-bang on that answer."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/number/this.cs",
+            "PLang/app/type/kind/this.cs",
+            "PLang/app/type/this.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Integrated architect/test-designer commits (decision 886; 2 Types tests + ActionSlot rerouted through app.type.list). Verified: reds 1&2 GREEN via the facts fix through the app's Create door (thread-safe). Red 3 (AKindedSlot) needs a targeted element-kind ClrType fix. Found and surfaced a hard COLLISION with concrete evidence: the required base ctor + per-app root (884) + no-static (882) collides with the type system's ~15 STATIC kind singletons — number's precision kinds (number/this.cs:57-71, `static readonly kind.@this @int = new kind.@int.@this()`) and other static kinds across ~50 kind classes. kind.@this : type.@this : item.@this, so every kind would have to hold the per-app root, but a static can't. Full swing = ~100+ files atomic + ~15 static-kind rulings (every number op would need the app for its precision kind). Offered 3 paths to the architect: (A) full per-app-kinds swing, (B) ship observable reds-green (facts fix + element fix + no-base-ctor collapses), (C) lighter born-whole (only value types born-whole; type/kind keep static bootstrap). Reverted the base-ctor change to keep the tree green (facts-fix-only). Holding for the ruling."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/this.cs",
+            "PLang/app/type/item/image/this.cs",
+            "PLang/app/type/item/image/this.Parse.cs",
+            "PLang/app/type/item/image/serializer/Default.cs",
+            "PLang/app/type/item/image/serializer/Reader.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/item/list/kind/element/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Ingi ruled (A) in 3 green steps (887/888): number ops are derived births (kind from the operand's own type, app-owned) so only origin births need the app. STEP 1 groundwork pushed: (1) base item got the born-whole foundation — a `_type` field, `@this(type.@this type)` ctor, a temporary parameterless stand-in, and `Type => _type ?? rebuild` (non-breaking: a value not yet moved falls back to the old rebuild). (2) image fix as briefed: Sniff returns only the kind name; the image's Mime is asked of its type's kind; `_mime` and the hard-coded mime pairs removed; serializers pass only the kind. (3) red 3: `ClrType` made virtual, `list<action>`'s element kind overrides it to carry the registered action's ClrType. All three C# reds green (reds 1&2 via the pushed facts fix; red 3 via the element fix). Surface re-pinned under 887/888 (image ctor + item's new ctor). Test fixes: ImageFormatTests, ImageValueTests to the new 2-arg image ctor. NOT yet done: the per-ctor `: base(type)` moves for the value types (the 'values hold the type' headline) — asked the architect whether to do them in step 1 or at step 3's required-ctor move. Flake flagged to architect/tester: ImageFromBytes + the text/image tests share `new app.@this(\"/app\")` and race under TUnit parallelism (pass in isolation)."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/guid/this.cs",
+            "PLang/app/type/item/number/this.cs",
+            "PLang/app/type/item/base64/this.cs",
+            "PLang/app/type/item/image/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Step 1 value-type moves (Ingi's go: move every value type to : base(type), delete each Type override). Pattern: a ctor forwards the type to base; Make hands the registered type, a legacy/operator build self-builds the same type. Learnings: (a) Activator matches ctors by exact arg count — no optional param for Activator-constructed types (choice); (b) born-whole makes Type/kind EAGER, which can trigger a static init or throw the old lazy Type avoided (choice<nameless-enum> — fixed by reading the set name from T's [PlangType] directly, not the throwing _set). PUSHED + GREEN, 22 value types born-whole (commits 8da3f0faf, fb0c7f778, 738a1c913, 026f9945e): guid, date, time, datetime, tag, bool, culture, note, note.line, number, duration, choice, source, prose, computed, base64, binary, image, path, file, url, null. path takes its scheme as a ctor arg; null holds its declared type or the null type. Surface re-pinned each push."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/setting/this.cs",
+            "PLang/app/actor/setting/this.cs",
+            "PLang/app/Executor.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Settings born-whole, no exception (891, Ingi): every settings class (~23) gets `public X(type.@this type) : base(type) {}`; the base setting ctors carry the type; the reflection sites (actor/setting, item/setting, Executor.Flag) pass it from the app's list (Activator.CreateInstance(clr, app.type.list[clr])); the discovery gate checks for the (type) ctor; ISetting/IConcept/Of<T>/Listed<T> drop their new() constraint; owned-setting field-defaults and `new X()` callers/tests pass the type. Pushed b5b03185e, 43 files, all green (Modules/Data/Generator/Runtime 0; Types 1 = ImageFromBytes parallel flake; Wire 6 baseline). OPEN QUESTION to architect: text/dict/list/separator flag template only when a container inner slot's content holds a variable (literal slots stay plain so signing/canonicalization don't change) — a content-decided, post-construction fact the born-at-ctor type can't capture. Proposed: the reader decides template-ness from content and hands the value a type carrying the template only when a var is held. Holding on that before reshaping text/dict/list (touches signing). Remaining: text, dict, list, separator, list<T> (element kind), content (file/url lazy base, GetType-like)."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/input/modifier/this.cs",
+            "PLang/app/type/item/input/modifier/list/this.cs",
+            "PLang/app/type/item/input/mouse/this.cs",
+            "PLang/app/type/item/input/key/this.cs",
+            "PLang/app/type/item/dict/key/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 41: modifier class + modifier.list replace the enum; mouse/key hold Modifier from birth; Bits renamed Code (Ingi); key's VK naming stays on the key (43); dict.key, modifier, modifier.list internal so the decider pin is back. Pushed 4c6b7cde8."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/guid",
+            "PLang/app/type/item/date",
+            "PLang/app/type/item/time",
+            "PLang/app/type/item/tag",
+            "PLang/app/type/item/culture",
+            "PLang/app/type/item/prose",
+            "PLang/app/type/item/note",
+            "PLang/app/type/item/datetime",
+            "PLang/app/type/item/input"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 33 step 4: required ctor per type; makers hand the app's type; readers ask the context's list; the Windows window gets the type list at birth. Interims flagged: culture.Machine, call frame StartedAt/CompletedAt, input numbers via number.Create(x)!. Pushed 1c1833878, e5c21d879, 71ed14eac, 89e76eb90, 48712efa2."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/datetime/this.cs",
+            "PLang/app/type/item/duration/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 42/47: parts and units are one-context [LlmBuilder] members answering data<T>.From(context.Ok(raw)) — the existing typed door; no helper, no cast; %now.year% unchanged."
+        },
+        {
+          "paths": [
+            ".bot/item-doors/coder/summary.md",
+            ".bot/item-doors/coder/v2/plan.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Measured 42's scope by marking the 22 into-plang operators [Obsolete(error)] (reverted): 1,726 production lines, 1,330 error status codes (906 generator-emitted). Blocked list sent to the architect: kinded types, status, bool, typeless null (Ingi)."
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/item/text/this.cs",
+            "PLang/app/type/item/base64",
+            "PLang/app/type/item/binary"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 49: Kinded removed; a kindless leaf declared a kind is made through the type's Make (its courier re-births a value of its class holding the declared type); base64 and binary born with the app's type."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/data/this.Result.cs",
+            "PLang.Generators/Emission",
+            "PLang/app/type/item/null/this.cs",
+            "PLang.Tests"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 52: every Data born with its context (a birth guard found the sites); Instance/Absent gone; FromError/NotFound/Uninitialized/Null take the context; the emitter hands __ctx/context/Context; the C# Get doors take the asker's context; the app's null is one value per type (an empty value whose Copy is itself is kept). ~110 test files moved by two Haiku passes, checked per class."
+        },
+        {
+          "paths": [
+            "PLang/app/call",
+            "PLang/app/actor/context/this.cs",
+            "PLang/app/type/item/duration",
+            "PLang/app/type/kind/this.cs",
+            "PLang/app/module/ui/code/Fluid.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 51/56/57: the call stack is handed the app's datetime and {duration, short}; duration born (TimeSpan, type) and written by its type's kind (kind.Write, Ingi's locked addition); duration.Text and its ToString go — a duration shown as text is its Output (Fluid's span converter writes it through a text writer)."
+        },
+        {
+          "paths": [
+            "PLang/app/module/ui/code/Fluid.cs",
+            "PLang/app/type/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 60/61: one Fluid value over any plang item (Output, IsTruthy, Compare; ordering operators registered); the span-only converter goes. A type written alone in the Out view is its face."
+        },
+        {
+          "paths": [
+            "PLang/app/type/node",
+            "PLang/app/type/list/Registry.cs",
+            "PLang/app/this.cs",
+            "PLang/app/goal/list/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/error/this.cs",
+            "os/system/error"
+          ],
+          "type": "move",
+          "category": "code",
+          "confidence": "high",
+          "context": "item-doors 62-64 (group 8): the app's nodes move to app/type/node as items of the internal type node; Replace goes; events through the plain type; the goal offer goes (64); the type `type` is made by its list holding it. Trace sent first; the Offers gap (no app reachable) went to the architect, answered by 64. error.Exception made internal, plang reads %!error.trace% (Show_A500, 60's red)."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/image",
+            "PLang/app/type/item/choice",
+            "PLang/app/type/item/bool",
+            "PLang/app/type/item/source.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang.Tests/Shared"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Type order: image, choice, bool born holding the app's type (operator births stay class-built until 50); ImageFromBytes (a known red) green; an unnamed enum is a bare choice. Dict !key on an unread dict: source.Fact opens (Fact async). Test makers moved to ctx.Image/ctx.Choice/ctx.Bool by Haiku passes, checked by build and sweep."
+        },
+        {
+          "paths": [
+            "PLang/app/type/kind",
+            "PLang/app/type/list/Registry.cs",
+            "PLang/app/type/item/choice/set",
+            "PLang/app/type/item/setting/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Kinds item (79/81/82, 925787b46): every kind is a kind<T> born holding its owner entry (its Family); choice sets read off the type they are handed; setting defaults by [Default]; no-context doors class-built, marked with 50; surface re-pinned citing 79."
+        },
+        {
+          "paths": [
+            "PLang/app/this.cs",
+            "PLang/app/module/debug/this.cs",
+            "PLang/app/type/item/image/this.cs",
+            "PLang/app/module/variable/set.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Standalone fixes, each proved on a clean worktree: --debug core dump (dcd7eb293), image keeps its declared type (b0cf849dc, b8813dd03), kind+strict builds (aa8bb032f, 87), path-backed image reads nothing at the set (3956a8e09, 90)."
+        },
+        {
+          "paths": [
+            "PLang/app/type/list/Registry.cs",
+            "dev.sh"
+          ],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Ingi: fix B (290aad619, Enlist scans once; small gain; an app's birth ~150 ms is ~90% of suite CPU, Ingi chose to live with it) and dev.sh's tested snapshot taken at the sweep's start (6f4d0572d), checked with a real mid-sweep edit."
+        },
+        {
+          "paths": [
+            "PLang/app/this.cs",
+            "PLang.Tests/Runtime/App/AppNodesTests.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "medium",
+          "context": "89 (the app writes itself) in progress, uncommitted: the Out view is refused for actor and parent (NoWireContract); held for Ingi through the architect."
+        }
+      ],
+      "after": null
+    },
+    {
+      "id": "6b1f3c2e-8a4d-4e7b-9c21-5d0e7f3a9b14",
+      "bot": "tester",
+      "timestamp_start": "2026-10-20T01:44:00Z",
+      "timestamp_end": "2026-10-20T05:30:00Z",
+      "intent": "Measure why the C# tests are slow (app birth cost, TUnit parallelism, app changes), weigh designs with Ingi, then build the ones he chose",
+      "before": {
+        "assumptions": "a birth is ~150 ms, dominated by Registry.Enlist (coder's numbers)",
+        "risk": "timings distorted by the other bots' load"
+      },
+      "plan": ".bot/item-doors/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/list/Registry.cs",
+            "PLang/app/this.cs",
+            "PLang/app/module/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "temporary stopwatch instrumentation to split a birth; reverted, never committed"
+        },
+        {
+          "paths": [
+            ".bot/item-doors/tester/test-speed.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "birth split by part, TUnit parallelism per mode with load, app changes per kind, design table"
+        },
+        {
+          "paths": [
+            "PLang/app/Attributes/ChoiceAttribute.cs",
+            "PLang/app/type/list/Registry.cs",
+            "PLang.Generators/Diagnostics/Plng005.cs",
+            "PLang.Tests/Wire/App/Surface/surface_golden.txt"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "e92111cc4: [Choice] on the 29 set classes; Enlist reads the marked classes, the property walk gone; PLNG005 at build; surface re-pinned (101)"
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/list/Registry.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "dd899b865: a type's facts answer themselves on first ask (108's shape); one pass of entries. First attempt (a Lazy<bool> bundle) rejected by Ingi as not OBP and rolled back"
+        },
+        {
+          "paths": [
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/list/Registry.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "328799fb1: types by class through an index; 81159279d: the guard keeps the name and class indexes as snapshots, a clash is a lookup"
+        },
+        {
+          "paths": [
+            "PLang/app/module/this.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "(4) module actions on first ask dropped (~2 ms after the index, would hold actions twice; decision 118); subclass kinds on first ask not built (0.6 of 3.6 ms)"
+        }
+      ],
+      "after": {
+        "status": "4 commits pushed; (3) formats and the shared code facts (§6) wait on Ingi",
+        "health": "sweep green except 6 Wire snapshot/resume tests that fail on the tip too",
+        "notes": "birth 90-113 → 28-30 ms median; 15.5 → 5.1 MB per birth; Types suite 39 → 14.6 s wall (quiet machine); serial CPU per test 94 → 33 ms"
+      }
+    },
+    {
+      "id": "9bf7e27b-62d9-424c-b954-4265a26b1d24",
+      "bot": "coder",
+      "timestamp_start": "2026-10-20T00:00:00Z",
+      "timestamp_end": "2026-10-20T12:00:00Z",
+      "intent": "Stage 2 (a), (d), (e): every Write becomes Output with members through the door; the byte door; json Value keeps primitives.",
+      "before": {
+        "assumptions": "107/122 ruled the shape; c1 pairs in place.",
+        "risk": "Async ripple from the door into sync callers (formal reader); missed direct member writes."
+      },
+      "plan": ".bot/item-doors/coder/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/item",
+            "PLang/app/goal/step/action/formal",
+            "PLang/app/type/item/variable"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "(a) be8191375: Write folded into Output; formal reader async; tests via Haiku agent."
+        },
+        {
+          "paths": [
+            "PLang/app/type/format",
+            "PLang/app/type/item/kind/json",
+            "PLang/app/type/item/text"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "(d) ba28490c2 Bytes(byte[], kind); (e) fc0118d94 IEnumerable arm gone."
+        },
+        {
+          "paths": [
+            "PLang/app",
+            "PLang/app/goal",
+            "PLang/app/type/node"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "a89b3f12f: ~20 item members (a) missed now through the door; correction reported to the architect."
+        }
+      ],
+      "after": {
+        "status": "stage 2 done except (c2), waiting on Ingi (Written).",
+        "health": "C# green but six known snapshot reds; plang 277/11 same set.",
+        "notes": "SettingCacheTests.ReadsBesideWrites flaky under load."
+      }
+    },
+    {
+      "id": "56a22f2c-24e4-4e9d-9cf8-324344770d72",
+      "bot": "coder",
+      "timestamp_start": "2026-10-20T12:00:00Z",
+      "timestamp_end": "2026-10-20T23:00:00Z",
+      "intent": "145 family 2 (runtime structure born holding its type); stage 6 traced and shaped; #1b list rows and dict made at read, nothing written back.",
+      "before": {
+        "assumptions": "145 ruled the families; stage 6 per the plan record test/plan/item-doors/start.md.",
+        "risk": "Locked surfaces (channel base, type naming); hot-path cost of read-on-use settings; lost writes once rows are no longer kept."
+      },
+      "plan": ".bot/item-doors/coder/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/actor",
+            "PLang/app/call",
+            "PLang/app/channel/list",
+            "PLang/app/task",
+            "PLang/app/module/this.cs",
+            "PLang/app/shortcut",
+            "PLang/app/parent",
+            "PLang/app/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "21aabdef7: family 2 born with its type; call.list takes the type list. Channel types held (locked base ctor)."
+        },
+        {
+          "paths": [
+            ".bot/item-doors/coder/v5/plan.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "8cb7d7a6f: stage 6 trace; six decisions; 149 ruled 1, 4, 6; 2, 3, 5 to Ingi."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/list/this.cs",
+            "PLang/app/type/item/list/this.Generic.cs",
+            "PLang.Tests/Types/App/Types/TypedListElementTests.cs",
+            "PLang.Tests/Modules/App/Modules/variable/SetTypeInferenceTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "#1b: 0af5a0aef one Element door, 49fd9084e exit gone, 8a9e1e1da _hasWrapped gone, d2415292e row-write check."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/dict/this.cs",
+            "PLang.Tests/Types/App/Types/DictReadTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "152: dbda75ff3 Put names by Copy(key), 588b0102e Map(target) with comparer, 13925ec3e flag gone."
+        }
+      ],
+      "after": {
+        "status": "family 2, #1b and dict done; #6 waits on Ingi's 3.",
+        "health": "C# green except Wire's six known snapshot reds; plang 277 pass, the same 11 reds, 12 stale.",
+        "notes": "Open: channel types (Ingi), family 1 (Ingi), x's binding named 'value' via Make.Action (asked)."
+      }
+    },
+    {
+      "id": "d9328458-c759-4b58-804a-e85d82818a4e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-20T11:55:36Z",
+      "timestamp_end": "2026-10-20T11:59:57Z",
+      "intent": "Audit item-doors' production diff (base 1adfb9555..b91e019b5) for OBP shape, stage by stage, with why-chains (decision 160).",
+      "before": {
+        "assumptions": "The architect's log is claims to check, not truth; read only.",
+        "risk": "84 commits and ~380 files; the shape is spread across the door, the pairs, the wire and born-whole."
+      },
+      "plan": ".bot/item-doors/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/kind/pair/list/this.cs",
+            "PLang.Generators/Diagnostics/Plng006.cs",
+            "PLang/app/type/item/wire/this.cs",
+            "PLang/app/type/item/this.cs",
+            "PLang/app/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Audit of the production diff by stage, each finding traced to its cause. Read only. Three helper agents covered born-whole, members/tokens/fixes and the pair-site count; key claims spot-checked."
+        }
+      ],
+      "after": {
+        "status": "audit written: .bot/item-doors/codeanalyzer/audit.md",
+        "health": "keep the branch; fix at the root in stages 1, 2 pairs, 2 wire, 5 and two patches",
+        "notes": "verdict fail"
+      }
+    },
+    {
+      "id": "6ffb5e98-2b0d-47d3-ae3e-269e79dd4992",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-20T18:11:49Z",
+      "intent": "Independent OBP re-check of the door reshape (decision 184)",
+      "before": {
+        "assumptions": "Claims 167-183 are unverified until read in code",
+        "risk": "Large diff (172 files); mechanical conversions may hide forks"
+      },
+      "plan": ".bot/item-doors/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/View.cs",
+            "PLang/app/type/item/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/kind/this.cs",
+            "PLang/app/goal/step/action/formal/writer.cs",
+            "PLang/app/type/item/size/this.cs",
+            "PLang/app/type/item/duration/this.cs",
+            "PLang/app/type/item/wire/template.cs",
+            "PLang/app/type/item/wire/kind/plang/writer.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read-only OBP re-check of the door reshape 6ff57ceb4^..12fa4b1bd. Claims 167-183 checked in code; eight fix-at-root findings, four holds; new names listed. Auditor's report not read."
+        }
+      ],
+      "timestamp_end": "2026-10-20T18:17:16Z",
+      "after": {
+        "status": "report written: .bot/item-doors/codeanalyzer/v2/report.md",
+        "health": "shape holds; fix at the root: view asked from template/plang writer, kept-or-used in four holders, Own hook, kind undo, size/duration standards, tag predicate, CLR-number switch, view default",
+        "notes": "verdict fail; no build or test run by me"
+      }
+    },
+    {
+      "id": "789ad9ac-cb1a-4bd4-96a4-70d418ef4dec",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-21T22:08:45Z",
+      "intent": "OBP scan of the whole item-doors diff before merge (decision 269)",
+      "before": {
+        "assumptions": "base 1adfb9555..origin/item-doors, 431 files; code since b96c60765 weighs most",
+        "risk": "size: reading by hunks misses surrounding shape"
+      },
+      "plan": ".bot/item-doors/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/item-doors/codeanalyzer/v3/report.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "OBP scan of the item-doors diff against its base (431 files) by three region readers and spot checks; ranked findings, v2 status, names. Read only."
+        }
+      ],
+      "timestamp_end": "2026-10-21T22:14:17Z",
+      "after": {
+        "status": "report written: .bot/item-doors/codeanalyzer/v3/report.md",
+        "health": "fail: root fixes needed (kept-or-used, view by constant, throwaway Data, name words)",
+        "notes": "no build or tests run; some reader line numbers not re-grepped"
+      }
+    },
+    {
+      "id": "ad95c1da-7544-4906-8c2d-3c90ea877df7",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-22T00:15:19Z",
+      "intent": "Re-check the coder's fixes for v3 section A (A1-A4, A6-A15)",
+      "before": {
+        "assumptions": "commits 46f7965b5..HEAD; B/C/D not re-raised",
+        "risk": "renames across 223 files can hide a fix that moved a smell"
+      },
+      "plan": ".bot/item-doors/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/item-doors/codeanalyzer/v4/report.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Re-check of v3 section A over 46f7965b5..HEAD by two readers plus a direct check of A7. Eight fixed, four open for one thing, two partly. Read only."
+        }
+      ],
+      "timestamp_end": "2026-10-22T00:18:07Z",
+      "after": {
+        "status": "report written: .bot/item-doors/codeanalyzer/v4/report.md",
+        "health": "fail, short list",
+        "notes": "no build/tests; A9 renames across ~100 files not read hunk by hunk"
+      }
+    },
+    {
+      "id": "ec1f8989-693b-417c-ab08-276092655b4e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-22T01:08:58Z",
+      "intent": "Last pass on the v4 short list (items 1-6) over a2bf26adc..HEAD",
+      "before": {
+        "assumptions": "decision 294 and B/C/D not re-raised",
+        "risk": "app/start is new code"
+      },
+      "plan": ".bot/item-doors/codeanalyzer/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/item-doors/codeanalyzer/v5/report.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the whole 36-file diff; re-grepped HEAD for leftovers. Items 1-4 fixed, 5 as triaged, 6 fixed; three small open items in app/start and program."
+        }
+      ],
+      "timestamp_end": "2026-10-22T01:08:58Z",
+      "after": {
+        "status": "report written: .bot/item-doors/codeanalyzer/v5/report.md",
+        "health": "fail, short list of three",
+        "notes": "no build/tests run"
+      }
+    },
+    {
+      "id": "d0c5-item-doors-docs-v6",
+      "bot": "docs",
+      "timestamp_start": "2026-10-23T09:00:00Z",
+      "intent": "Docs pass before the item-doors merge into runtime2: eight brief items, CLAUDE.md proposals, N18 stale names.",
+      "before": {
+        "assumptions": "Decisions 300-320 and the code are the source of truth; docs state what is.",
+        "risk": "Gate and signing rules described wrongly; a teaching .md edit would trigger re-pins."
+      },
+      "plan": ".bot/item-doors/docs/v6/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/filesystem-permission.md",
+            "Documentation/v0.2/callbacks.md",
+            "Documentation/v0.2/wire-serialization.md",
+            "Documentation/v0.2/io-channels.md",
+            "Documentation/v0.2/bans.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Brief items 1-5 and 8, written against the gate and signature code."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md",
+            "Documentation/v0.2/debug.md",
+            "Documentation/v0.2/cli-changes.md",
+            "Documentation/v0.2/scripts/check-app-tree.sh",
+            "os.targets"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "N18 stale names; cli-changes.md added (same class)."
+        },
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Proposals 1,3,4,5,6 applied, 2 rejected as withdrawn; N18 lines."
+        }
+      ],
+      "timestamp_end": "2026-10-23T10:30:00Z",
+      "after": {
+        "status": "pass",
+        "health": "docs only; no teaching md, no production C#, no .pr",
+        "notes": "Open: CHANGELOG home; app-tree drift; Data.Merge on file-module-guide."
+      }
+    }
+  ]
+}

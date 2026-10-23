@@ -26,10 +26,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     [LlmBuilder, Out] public global::app.type.item.number.@this Id => Number;
 
     /// <summary>The page it shows.</summary>
-    [LlmBuilder, Out] public global::app.type.item.text.@this Url => new(Address);
+    [LlmBuilder, Out] public global::app.type.item.text.@this Url => Address;
 
     /// <summary>Its title.</summary>
-    [LlmBuilder, Out] public global::app.type.item.text.@this Title => new(Named);
+    [LlmBuilder, Out] public global::app.type.item.text.@this Title => Named;
 
     internal long Number { get; private set; } = -1;
     /// <summary>DevTools' id for its page, once shown.</summary>
@@ -96,7 +96,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal async Task<Data> Post(Data message, Context context)
     {
         using var text = new MemoryStream();
-        await global::app.type.item.text.@this.Encode(text, message, context, null, null, CancellationToken.None);
+        await global::app.type.item.text.@this.Encode(text, message, context, global::app.View.Out, null, CancellationToken.None);
         await (await Page()).Post(System.Text.Encoding.UTF8.GetString(text.ToArray()));
         return context.Ok();
     }
@@ -109,7 +109,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             var png = await (await Page()).Screenshot();
             return png.Length == 0
                 ? context.Error(new global::app.error.ActionError("The page gave no picture.", "NoScreenshot", 500))
-                : context.Ok<global::app.type.item.image.@this>(new global::app.type.item.image.@this(Convert.FromBase64String(png), "image/png"));
+                : context.Ok<global::app.type.item.image.@this>(new global::app.type.item.image.@this(Convert.FromBase64String(png),
+                    context.App.type.list[new global::app.type.@this("image", "png"), context]));
         }
         catch (Exception ex) when (ex is TimeoutException or IOException or FormatException)
         {
@@ -135,7 +136,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         // the arguments as one object: a dict writes itself as json. They leave for the page here, so each is opened
         // to what it holds (a file reference to its content), as a channel does
-        var arguments = new global::app.type.item.dict.@this();
+        var arguments = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]);
         if (parameter != null && await parameter.Value() is global::app.type.item.list.@this list)
             foreach (var argument in list.Items(context))
                 if (argument.Peek() is { IsNull: false })
@@ -143,15 +144,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                     var named = await argument.Follow(context);
                     arguments.Set(new Data(argument.Name, await named.Value(), context: context));
                 }
-        using var written = new MemoryStream();
-        await global::app.type.item.text.@this.Encode(written, new Data("arguments", arguments, context: context), context, null, null, CancellationToken.None);
+        using var stream = new MemoryStream();
+        await global::app.type.item.text.@this.Encode(stream, new Data("arguments", arguments, context: context), context, global::app.View.Out, null, CancellationToken.None);
         var goal = JsonValue.Create(name).ToJsonString();
         JsonElement reply;
         try
         {
             reply = await (await Page()).Evaluate(
                 $"(async()=>{{const goal=window[{goal}];if(typeof goal!=='function')throw new Error('The page has no goal '+{goal});" +
-                $"return await goal({System.Text.Encoding.UTF8.GetString(written.ToArray())});}})()", TimeSpan.FromMinutes(10));
+                $"return await goal({System.Text.Encoding.UTF8.GetString(stream.ToArray())});}})()", TimeSpan.FromMinutes(10));
         }
         catch (Exception ex) when (ex is TimeoutException or IOException)
         {

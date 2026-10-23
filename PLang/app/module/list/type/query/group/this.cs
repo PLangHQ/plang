@@ -12,12 +12,15 @@ public sealed class @this : query.@this
 {
     private readonly global::app.type.item.text.@this _field;
 
-    private @this(global::app.type.item.text.@this field) => _field = field;
+    private @this(global::app.type.item.text.@this field, global::app.type.@this type) : base(type) => _field = field;
 
-    /// <summary>The query's <paramref name="group"/>: the field to group by; none named is why on <c>data</c>.</summary>
+    /// <summary>The query's <paramref name="group"/>: the field to group by; none named is why on <c>data</c>. Born
+    /// holding the app's <c>{query, group}</c>.</summary>
     internal static @this? Create(Data group, Data data, global::app.actor.context.@this context)
     {
-        if (group.Peek()?.ToString() is { Length: > 0 } field) return new(field);
+        var types = context.App.type.list;
+        if (group.Peek()?.ToString() is { Length: > 0 } field)
+            return new(new global::app.type.item.text.@this(field, types[typeof(global::app.type.item.text.@this)]), types[typeof(@this)]);
         data.Fail(new global::app.error.@this("names the field to group by — group: \"name\"", "QueryInvalid", 400));
         return null;
     }
@@ -31,8 +34,7 @@ public sealed class @this : query.@this
             items => rest.Count == 0 ? System.Threading.Tasks.Task.FromResult<Data>(context.Ok(items))
                 : rest[0].Apply(items, rest.Skip(1).ToList(), context), context);
 
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.String(_field.ToString());
         return System.Threading.Tasks.ValueTask.CompletedTask;

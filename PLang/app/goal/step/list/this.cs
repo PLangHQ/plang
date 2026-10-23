@@ -11,15 +11,14 @@ namespace app.goal.step.list;
 /// context — <see cref="Start"/> takes the ASK's. Owns its sequence-run (Rule 5 — the collection owns its
 /// iteration). Twin of <see cref="app.goal.step.action.list.@this"/>.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<Step>
+public sealed class @this : global::app.type.item.list.bare.@this<Step>
 {
     // Two ways to be born: EMPTY (callers Add each step in — the reader, the parser, the fold), or
     // ADOPT a list value's rows (the value→slot materialization when a reader produced a generic list).
-    public @this() : base(new List<object?>()) { }
-    public @this(global::app.type.item.list.@this source) : base(source) { }
+    public @this(global::app.type.@this type) : base(new List<object?>(), type) { }
+    public @this(global::app.type.item.list.@this source, global::app.type.@this type) : base(source, type) { }
 
     /// <summary>Clone/render keep this concrete node type, context-free.</summary>
-    protected override global::app.type.item.list.@this Empty() => new @this();
 
     /// <summary>Starts the steps in sequence. A return / exit propagates up (ShouldExit folds Returned).
     /// No indent skip-state — a fired control-flow action starts its own Child, so nesting is structural.
@@ -58,7 +57,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     /// step's indent). Empty when nothing is indented under it.</summary>
     public @this Body(int index)
     {
-        var body = new @this();
+        var body = new @this(Type);
         if (index < 0 || index >= CountRaw) return body;
         var indent = this[index].Line.Indent;
         for (int j = index + 1; j < CountRaw && this[j].Line.Indent > indent; j++) body.Add(this[j]);
@@ -106,8 +105,12 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             else if (!lines.TryAdd(i, line)) whole.Add($"step [{i}] is answered twice");
         }
 
-        var refused = new SortedDictionary<int, List<string>>();
-        void Refuse(int i, string why) { if (!refused.TryGetValue(i, out var p)) refused[i] = p = new(); p.Add(why); }
+        // each step's causes, whole: an error that refused it keeps its own key; a reason this read gives keys its check
+        var refused = new SortedDictionary<int, List<global::app.error.@this>>();
+        void Refuse(int i, global::app.error.@this cause) { if (!refused.TryGetValue(i, out var p)) refused[i] = p = new(); p.Add(cause); }
+        // how a cause reads in the retry: under its step, with the reasons it holds
+        string Said(int i, global::app.error.@this cause) => $"step {i} (\"{this[i].Text}\") — {cause.Message}"
+            + (cause.list is { Count: > 0 } inner ? $": {string.Join("; ", inner.Select(c => c.FixSuggestion ?? c.Message))}" : "");
         string? key = null;
         // numbers the words don't write as digits, still to be confirmed by the decider
         var unconfirmed = new List<global::app.goal.step.unwritten.@this>();
@@ -127,25 +130,33 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             }
             // a step written in formal is its own line: read as written, whatever the answer says
             string? line = step.IsFormal ? step.Text : null;
-            if (line == null && !lines.TryGetValue(i, out line)) { Refuse(i, $"step {i} (\"{step.Text}\") has no entry"); continue; }
-            var formal = new global::app.goal.step.action.formal.Reader(step, modules).Read(line, context);
+            if (line == null && !lines.TryGetValue(i, out line)) { Refuse(i, new global::app.error.@this("has no entry", "StepUnanswered", 400)); continue; }
+            global::app.data.@this formal;
+            // a value that refuses itself while it is read (a query that names no part) is this step's refusal; the
+            // read goes on to the other steps
+            try { formal = await new global::app.goal.step.action.formal.Reader(step, modules).Read(line, context); }
+            catch (global::app.error.AppException refusal)
+            {
+                Refuse(i, new global::app.error.@this($"does not read, in: [{i}] {line.Trim()}", "StepUnread", 400) { list = [refusal.Error] });
+                continue;
+            }
             if (!formal.Success && step.IsFormal)
             {
-                Refuse(i, $"step {i} is written in formal and does not read: {formal.Error!.FixSuggestion ?? formal.Error.Message}");
+                Refuse(i, new global::app.error.@this("is written in formal and does not read", "FormalUnread", 400) { list = [formal.Error!] });
                 continue;
             }
             if (!formal.Success)
             {
-                Refuse(i, $"step {i} does not parse: {formal.Error!.FixSuggestion ?? formal.Error.Message} — in: [{i}] {line.Trim()}");
+                Refuse(i, new global::app.error.@this($"does not parse, in: [{i}] {line.Trim()}", "StepUnread", 400) { list = [formal.Error!] });
                 var named = Named.Matches(line).Select(m => (m.Groups[1].Value, m.Groups[2].Value))
                     .Where(a => modules.Items().Any(m => string.Equals(m.Name, a.Item1, System.StringComparison.OrdinalIgnoreCase)
                         && m[a.Item2] != null))
                     .Select(a => $"{a.Item1}.{a.Item2}");
-                foreach (var why in step.Pick.Unlisted(named)) Refuse(i, why);
+                foreach (var why in step.Pick.Unlisted(named)) Refuse(i, new global::app.error.@this(why, "ActionUnlisted", 400));
                 continue;
             }
             var actions = (global::app.goal.step.action.list.@this)formal.Peek()!;
-            foreach (var action in actions.Items()) action.Reduce();
+            foreach (var action in actions.Items()) await action.Reduce(context);
             read[i] = actions;
         }
 
@@ -157,18 +168,38 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         // variables are its own: the checks read none of the builder's (its goals, its answers), and the settings
         // come through the parent.
         using var check = new actor.context.@this(context.App, context.Actor, parent: context,
-            fileSystem: context.App.Build?.Files ?? throw new System.InvalidOperationException("A goal's steps are read in a build: the app has no Build."));
+            filesystem: context.App.Build?.Files ?? throw new System.InvalidOperationException("A goal's steps are read in a build: the app has no Build."));
         // The steps are checked inside their goal's frame, as they will run: what a step names relative to its
         // goal (a file 'note.txt') is found where the goal is, not where the builder's own goal is. Each context
         // has its own calls, so the frame is pushed in each the checks run in.
-        var goal = CountRaw > 0 ? this[0].Goal : null;
-        await using var frame = goal != null ? context.call.Push(goal) : null;
-        await using var checking = goal != null ? check.call.Push(goal) : null;
-        await using var scoping = goal != null ? scratch.call.Push(goal) : null;
-        for (int i = 0; i < CountRaw; i++)
+        if (CountRaw > 0) await Steps(this[0].Goal);
+
+        // The steps checked inside their goal's frame, in each context the checks run in — pushed here, where the
+        // checks run, so each frame is current for them and ends with them.
+        async System.Threading.Tasks.Task Steps(global::app.goal.@this goal)
         {
-            var step = this[i];
-            if (!read.TryGetValue(i, out var actions)) { await step.Scope(scratch); continue; }
+            await using (context.call.Push(goal, await context.call.Setting()))
+            await using (check.call.Push(goal, await check.call.Setting()))
+            await using (scratch.call.Push(goal, await scratch.call.Setting()))
+                for (int i = 0; i < CountRaw; i++)
+                {
+                    var step = this[i];
+                    if (!read.TryGetValue(i, out var actions)) { await step.Scope(scratch); continue; }
+                    try { await Check(i, step, actions); }
+                    catch (global::app.error.AppException refusal)
+                    {
+                        // a value that refuses itself while its step is checked is this step's refusal; the step opens
+                        // again and the check goes on to the other steps
+                        Refuse(i, new global::app.error.@this($"does not read, in: [{i}] {step.Text}", "StepUnread", 400) { list = [refusal.Error] });
+                        step.Code = new global::app.goal.step.action.list.@this(step.Code.Type);
+                    }
+                }
+        }
+
+        // One read step checked: its body, its code's own verdict, what its words hold, its numbers, its build, its
+        // picks and its scope — each problem refused under its index; the step takes its code or opens again.
+        async System.Threading.Tasks.Task Check(int i, global::app.goal.step.@this step, global::app.goal.step.action.list.@this actions)
+        {
             // A step with steps indented under it gets its body from that layout (build.fold places it):
             // a body written over it that holds only what the indented steps do is a copy, dropped; one
             // that holds anything else is invented.
@@ -180,9 +211,9 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 {
                     var inside = action.Child.Items().SelectMany(c => c.Code.Own).ToList();
                     var spare = below.ToList();
-                    if (inside.All(spare.Remove)) action.Child = new @this();
-                    else Refuse(i, $"step {i}'s body is the steps indented under it ({string.Join(", ", body.Items().Select(b => b.Index))}); " +
-                                   $"the builder places them — write step {i} without {{ }} and each indented step on its own line");
+                    if (inside.All(spare.Remove)) action.Child = new @this(action.Child.Type);
+                    else Refuse(i, new global::app.error.@this($"step {i}'s body is the steps indented under it ({string.Join(", ", body.Items().Select(b => b.Index))}); " +
+                                   $"the builder places them — write step {i} without {{ }} and each indented step on its own line", "BodyIndented", 400));
                 }
             }
             step.Code = actions;
@@ -190,27 +221,27 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             if (invalid != null)
             {
                 key ??= invalid.Key == "ElseWithoutIf" ? invalid.Key : null;
-                foreach (var cause in invalid.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
+                foreach (var cause in invalid.list) Refuse(i, cause);
             }
             // the answer holds what the step's words say — checked on the answer as written, before the
             // handlers' Build may change it
-            foreach (var uncovered in await step.Cover(check)) Refuse(i, $"step {i} (\"{step.Text}\") — {uncovered}");
+            foreach (var uncovered in await step.Cover(check)) Refuse(i, new global::app.error.@this(uncovered, "NotCovered", 400));
             // a number the words don't write as digits: confirmed by the decider, or asked
             var asked = false;
-            foreach (var number in await step.Unwritten(check))
+            foreach (var number in await step.Unwritten(check, step.IsFormal ? step.Text : lines.GetValueOrDefault(i)))
             {
                 if (confirmed == null) { unconfirmed.Add(number); asked = true; }
-                else if (!await number.Given(confirmed, check)) Refuse(i, $"step {i} (\"{step.Text}\") — {number.Message}");
+                else if (!await number.Given(confirmed, check)) Refuse(i, new global::app.error.@this(number.Message, "UnwrittenNumber", 400));
             }
             // only code that judged itself sound is built
             if (invalid == null && await actions.Build(check) is { } failed)
-                foreach (var cause in failed.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
+                foreach (var cause in failed.list) Refuse(i, cause);
             // a step written in formal was asked of no decider: there are no picks to agree with
             var (disagree, warnings) = step.IsFormal
-                ? (new List<string>(), new List<global::app.warning.@this>()) : step.Pick.Agree(actions);
-            foreach (var why in disagree) Refuse(i, why);
-            foreach (var declined in await step.Scope(scratch)) Refuse(i, $"step {i} (\"{step.Text}\") — {declined.Message}");
-            if (refused.ContainsKey(i) || asked) step.Code = new global::app.goal.step.action.list.@this();   // open again
+                ? (new List<string>(), new List<global::app.warning.@this>()) : await step.Pick.Agree(actions, context);
+            foreach (var why in disagree) Refuse(i, new global::app.error.@this(why, "PickDisagrees", 400));
+            foreach (var declined in await step.Scope(scratch)) Refuse(i, declined);
+            if (refused.ContainsKey(i) || asked) step.Code = new global::app.goal.step.action.list.@this(step.Code.Type);   // open again
             else
             {
                 // the step takes its code: with its warnings, and its defaults frozen
@@ -219,9 +250,21 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             }
         }
 
+        // each step now says why it is refused, or that it is not: a step that stays refused after the retry is
+        // written into the .pr broken, with its reasons, and its goal does not start. A step that built (or kept its
+        // code from an earlier read) holds none.
+        // It names the step; the reasons are its causes, each said once.
+        for (int i = 0; i < CountRaw; i++)
+            this[i].Error = refused.TryGetValue(i, out var why)
+                ? new global::app.error.@this($"step {i} (\"{this[i].Text}\") is broken", "StepBroken", 400)
+                    { list = why }
+                : null;
+
         if (whole.Count == 0 && refused.Count == 0 && unconfirmed.Count == 0) return null;
-        // the only problems are numbers to confirm: the decider is asked (the builder's ConfirmNumbers)
-        if (whole.Count == 0 && refused.Count == 0)
+        // numbers to confirm are asked of the decider first (the builder's ConfirmNumbers), whatever else is wrong: a
+        // number it confirms is no problem, so nothing is refused before it answers — the confirmed read refuses only
+        // what is really wrong, and a step whose number is confirmed keeps its answer
+        if (unconfirmed.Count > 0)
             return new global::app.error.@this(
                 $"{unconfirmed.Count} number(s) the steps don't write as digits: {string.Join("; ", unconfirmed.Select(n => $"step {n.Step} {n.Action}.{n.Property}={n.Value}"))}",
                 "UnwrittenNumber", 400)
@@ -232,11 +275,11 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                     ["steps"] = string.Join(", ", unconfirmed.Select(n => n.Step).Distinct()),
                 },
             };
-        // among other problems, an unconfirmed number is refused with them
-        foreach (var number in unconfirmed) Refuse(number.Step, $"step {number.Step} (\"{number.Text}\") — {number.Message}");
-        var problems = whole.Concat(refused.Values.SelectMany(p => p)).ToList();
+        var problems = whole.Concat(refused.SelectMany(p => p.Value.Select(cause => Said(p.Key, cause)))).ToList();
         return new global::app.error.@this(string.Join("; ", problems), key ?? "StepsRefused", 400)
         {
+            // the goal whose steps these are: a build that ends on it names the goal by its path
+            Goal = CountRaw > 0 ? this[0].Goal : null,
             Details = new() { ["steps"] = string.Join(", ", refused.Keys) },
         };
     }
@@ -253,15 +296,4 @@ public sealed class @this : global::app.type.item.list.@this<Step>
     // The walk's own store: a System-actor context with no parent — a fresh variable store nothing
     // watches and nothing inherits into, so what the walk binds never reaches the builder's variables.
     private actor.context.@this Scratch(actor.context.@this context) => new(context.App, context.App.actor.list.System);
-
-    /// <summary>Writes itself to the wire as the bare step array — each element writes its own step
-    /// shape (NOT the base's Data-envelope value face). Holders say <c>Step.Output(...)</c>.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-    {
-        writer.BeginArray((int)Count);
-        for (int i = 0; i < Count; i++) await this[i].Output(writer, mode, context);
-        writer.EndArray();
-    }
 }

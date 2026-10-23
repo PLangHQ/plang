@@ -1,0 +1,163 @@
+{
+  "name": "TextKindIsText",
+  "comment": "Stage 1 (decision 867): text's face without the name floor. `source.cs:115` today reads\n`_type.kind.IsText || _type.Name is \"text\"` — the Name fallback is only there because\na kind built inline from a name (`type/this.cs:149`) answers `IsText=false` even for a\ntext's own kind. When the type is born whole, the registered md kind carries\n`Text = true` (its mime `text/markdown` begins with `text/`), so `kind.istext` alone\nanswers; the Name floor can go. Red on runtime2: today the fresh `kind.@this(\"md\")`\nhas `_text = false`, so `%x!type.kind.istext%` reads false (expected true).",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = \"a\" as text/md",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "a"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {"name":"text","kind":"md"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %x!type.kind.name% equals \"md\"",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "md"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%x!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %x!type.kind.istext% equals true",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!type.kind.istext%",
+              "variable": [
+                {
+                  "text": "%x!type.kind.istext%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "istext"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "TextKindIsText.test.goal",
+  "hash": "018474cd3c6a11bb0f4a3ceb98af2f4d5f5b98f771098131ccf2a1000ef27db5"
+}

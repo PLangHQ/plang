@@ -18,7 +18,7 @@ using hash = global::app.module.crypto.type.hash.@this;
 ///   "signature":"&lt;b64&gt;", "value":{ "@schema":"data", … } }
 /// </code>
 ///
-/// <para>OBP: the layer owns its <b>wire shape</b> (<see cref="Write"/> renders
+/// <para>OBP: the layer owns its <b>wire shape</b> (<see cref="Output"/> renders
 /// the object via the <see cref="IWriter"/> object surface, each field rendering
 /// ITSELF — Rule 9; the writer never type-switches on it). The cryptographic
 /// <b>operation</b> (hash, sign, verify) is owned by the signing module, reached
@@ -69,25 +69,37 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             if (Origin.Value != global::app.type.item.signature.Origin.Live || _window is not { } window) return _expires;
             var live = Created.Value + (System.TimeSpan)window;
-            return _expires is { } signed && signed.Value <= live ? signed : new datetime(live);
+            return _expires is { } signed && signed.Value <= live ? signed : new datetime(live, Created.Type);
         }
     }
 
     /// <summary>Whether the signature is past its <see cref="Expires"/> by the clock <paramref name="context"/>
-    /// reads — <c>%x!signature.expired%</c>.</summary>
-    public async System.Threading.Tasks.ValueTask<bool> Expired(global::app.actor.context.@this context)
+    /// reads — <c>%x!signature.expired%</c>, read as its asker's.</summary>
+    [global::app.LlmBuilder]
+    public async System.Threading.Tasks.ValueTask<global::app.type.item.@bool.@this> Expired(global::app.actor.context.@this context)
     {
-        if (Expires is not { } expires) return false;
+        var type = context.App.type.list[typeof(global::app.type.item.@bool.@this)];
+        if (Expires is not { } expires) return new(false, type);
         var now = await (await context.Variable.Get("NowUtc")).Clr<System.DateTimeOffset>(System.DateTimeOffset.UtcNow);
-        return now > expires.Value;
+        return new(now > expires.Value, type);
     }
 
-    /// <summary>One step down: <c>expired</c> asks the clock (<see cref="Expired"/>); every other member as any
-    /// item answers it.</summary>
+    /// <summary>One step down: <c>identity</c> names the signer only of a Data this signature verifies — the Data it is
+    /// read off (its bearer) is verified first, and a verify that fails is the answer, never the name; every other
+    /// member as any item answers it.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-        => string.Equals(key, "expired", System.StringComparison.OrdinalIgnoreCase) && parent.Context is { } context
-            ? new global::app.data.@this(key, await Expired(context), parent: parent)
-            : await base.Get(parent, key);
+    {
+        if (string.Equals(key, nameof(Identity), System.StringComparison.OrdinalIgnoreCase))
+        {
+            if (parent.Parent is not { } bearer)
+                return parent.Context.Error(new global::app.error.@this(
+                    "a signature's identity is read off the Data it signs (%x!signature.identity%)", "SignatureInvalid", 400));
+            var verified = await new global::app.goal.step.action.@this(
+                new global::app.module.signing.verify(parent.Context) { Data = bearer }, parent.Context).Start(parent.Context);
+            if (!verified.Success) return verified;
+        }
+        return await base.Get(parent, key);
+    }
 
     /// <summary>The signing identity (public-key name).</summary>
     public text Identity { get; }
@@ -102,7 +114,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The signature bytes over the digest (renders base64).</summary>
     public binary Signature { get; }
 
+    /// <summary>A signature over <paramref name="value"/>, born holding <paramref name="type"/> — the app's
+    /// <c>{signature, &lt;algorithm&gt;}</c>.</summary>
     public @this(
+        global::app.type.@this type,
         global::app.data.@this value,
         text algorithm,
         text nonce,
@@ -114,7 +129,28 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         global::app.type.item.list.@this? contracts = null,
         global::app.type.item.signature.Origin origin = global::app.type.item.signature.Origin.Signed,
         global::app.type.item.duration.@this? window = null)
+        : this(type, value, algorithm, nonce, created, identity, hash, signature, expires, contracts, origin, window, new Arrival())
     {
+    }
+
+    // Born holding the arrival it is a copy of — every Copy shares the one its first layer was born with.
+    private @this(
+        global::app.type.@this type,
+        global::app.data.@this value,
+        text algorithm,
+        text nonce,
+        datetime created,
+        text identity,
+        hash hash,
+        binary signature,
+        datetime? expires,
+        global::app.type.item.list.@this? contracts,
+        global::app.type.item.signature.Origin origin,
+        global::app.type.item.duration.@this? window,
+        Arrival arrival)
+        : base(type)
+    {
+        _arrival = arrival;
         // a signature read live is good only for its window: without one it would never end, and verify could not
         // say how long its nonce is remembered
         if (origin == global::app.type.item.signature.Origin.Live && window == null)
@@ -123,12 +159,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 "LiveSignatureNeedsWindow", 500));
         Origin = origin;
         Value = value;
-        Algorithm = algorithm ?? new text("ed25519");
-        Nonce = nonce ?? new text("");
+        Algorithm = algorithm;
+        Nonce = nonce;
         Created = created;
-        Identity = identity ?? new text("");
+        Identity = identity;
         Hash = hash;
-        Signature = signature ?? new binary(System.Array.Empty<byte>());
+        Signature = signature;
         _expires = expires;
         Contracts = contracts;
         _window = window;
@@ -137,11 +173,39 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>A copy of this layer with the signature bytes filled in — used by
     /// the signing module after it signs <see cref="ToSigningBytes"/> (the layer is
     /// immutable; build the unsigned form, sign, then stamp the bytes).</summary>
-    public @this Signed(binary signature)
-        => new(Value, Algorithm, Nonce, Created, Identity, Hash, signature, _expires, Contracts, Origin.Value, _window);
+    public @this Signed(binary signature) => Copy(signature: signature);
 
-    protected internal override global::app.type.@this Type
-        => new("signature", typeof(@this), Algorithm.ToString());
+    /// <summary>This layer over <paramref name="bearer"/> — the Data that holds it, as it is now. What verify re-hashes and
+    /// what a write sends, so a bearer changed after signing is one the signature doesn't cover.</summary>
+    internal @this Over(global::app.data.@this bearer) => Copy(value: bearer);
+
+    // This layer again, with the value it signs or its signature bytes in place of its own — every other member as it is.
+    private @this Copy(global::app.data.@this? value = null, binary? signature = null)
+        => new(Type, value ?? Value, Algorithm, Nonce, Created, Identity, Hash, signature ?? Signature, _expires, Contracts, Origin.Value, _window, _arrival);
+
+    // The read this layer arrived by, shared by every copy of it: whether its nonce was presented, and the answer.
+    private readonly Arrival _arrival;
+
+    /// <summary>This arrival's nonce, presented once: the first caller runs <paramref name="add"/> (the atomic add of the
+    /// nonce, true when it was not there); every later or concurrent caller — on this layer or any copy of it — awaits
+    /// that same answer. A replayed arrival is a replay on every verify; one presented first, never one.</summary>
+    internal System.Threading.Tasks.Task<bool> Present(System.Func<System.Threading.Tasks.Task<bool>> add) => _arrival.Present(add);
+
+    // One read off the wire: its nonce's answer, settled once.
+    private sealed class Arrival
+    {
+        private System.Threading.Tasks.Task<bool>? _presented;
+
+        internal async System.Threading.Tasks.Task<bool> Present(System.Func<System.Threading.Tasks.Task<bool>> add)
+        {
+            var mine = new System.Threading.Tasks.TaskCompletionSource<bool>(System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously);
+            if (System.Threading.Interlocked.CompareExchange(ref _presented, mine.Task, null) is { } first) return await first;
+            // an add that throws is every caller's answer, so none waits on it forever
+            try { mine.SetResult(await add()); }
+            catch (System.Exception ex) { mine.SetException(ex); }
+            return await mine.Task;
+        }
+    }
 
     /// <summary>Structural — the inner value is a nested record, not a leaf.</summary>
     public override bool IsLeaf => false;
@@ -153,8 +217,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target)
         => target.IsAssignableFrom(typeof(global::app.data.@this)) ? Value : ClrConvert(Value, target);
 
-    public override string ToString() => $"signature({Algorithm}) over {Identity}";
-
     /// <summary>
     /// Renders the flat <c>{@schema:"signature", …fields…, value:&lt;inner&gt;}</c>
     /// layer object. The layer owns this layout; every leaf field renders ITSELF via
@@ -163,22 +225,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// through <see cref="global::app.data.@this.Output"/> so the inner Data writes
     /// itself as a layer-level <c>@schema:"data"</c> record.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        IWriter w, global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(IWriter w)
     {
         w.BeginObject();
         w.Name(global::app.data.@this.WireSchema); w.String(WireSchemaSignature);
         // `type` = the algorithm within this layer — uniform with every layer
         // ({@schema:archive, type:gzip}, {@schema:encryption, type:aes-…}).
-        w.Name("type"); Algorithm.Write(w);
-        w.Name("nonce"); Nonce.Write(w);
-        w.Name("created"); Created.Write(w);
-        if (_expires is { } exp) { w.Name("expires"); exp.Write(w); }
-        w.Name("identity"); Identity.Write(w);
+        w.Name("type"); await Algorithm.Output(w);
+        w.Name("nonce"); await Nonce.Output(w);
+        w.Name("created"); await Created.Output(w);
+        if (_expires is { } exp) { w.Name("expires"); await exp.Output(w); }
+        w.Name("identity"); await Identity.Output(w);
         // Contracts are bare strings on the wire (and in ToSigningBytes), not
         // data records — emit the strings directly.
         if (Contracts is not null)
         {
+            // bare strings, as signed: the list's own write gives each a Data record ({type, value}), not this slot's shape
             w.Name("contracts");
             w.BeginArray(-1);
             foreach (var c in ContractStrings()) w.String(c);
@@ -190,41 +252,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         w.Name("type"); w.String(Hash.Algorithm?.Name ?? "");
         w.Name("value"); w.String(Hash.ToBase64());
         w.EndObject();
-        w.Name("signature"); Signature.Write(w);
+        w.Name("signature"); await Signature.Output(w);
         // The inner Data is a full layer-level payload (its own @schema:data).
-        w.Name("value"); await Value.Output(w, mode, context, layer: true);
-        w.EndObject();
-    }
-
-    /// <summary>
-    /// Sync layer render for the STJ <see cref="global::app.data.Wire"/> write paths
-    /// (Serialize/Store/.pr) that cannot await <see cref="Output"/>. Same layout; the
-    /// inner <c>value</c> rides via the sync tree-walk. Retired once every write path
-    /// is on <see cref="Output"/> (then this and IWriter.Value both go).
-    /// </summary>
-    public override void Write(IWriter w)
-    {
-        w.BeginObject();
-        w.Name(global::app.data.@this.WireSchema); w.String(WireSchemaSignature);
-        w.Name("type"); Algorithm.Write(w);
-        w.Name("nonce"); Nonce.Write(w);
-        w.Name("created"); Created.Write(w);
-        if (_expires is { } exp) { w.Name("expires"); exp.Write(w); }
-        w.Name("identity"); Identity.Write(w);
-        if (Contracts is not null)
-        {
-            w.Name("contracts");
-            w.BeginArray(-1);
-            foreach (var c in ContractStrings()) w.String(c);
-            w.EndArray();
-        }
-        w.Name("hash");
-        w.BeginObject();
-        w.Name("type"); w.String(Hash.Algorithm?.Name ?? "");
-        w.Name("value"); w.String(Hash.ToBase64());
-        w.EndObject();
-        w.Name("signature"); Signature.Write(w);
-        w.Name("value"); w.Value(Value);
+        w.Name("value"); await Value.Output(w, layer: true);
         w.EndObject();
     }
 

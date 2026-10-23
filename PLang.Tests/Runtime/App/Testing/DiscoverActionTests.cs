@@ -97,7 +97,7 @@ public class DiscoverActionTests
         // The build pass stamps the goal's build-birth facts (test.tag → goal.Tag), building each step inside
         // the goal's frame, as the build's step check does.
         var buildContext = _app.actor.list.User.Context;
-        await using (buildContext.call.Push(goal))
+        await using (buildContext.call.Push(goal, await buildContext.call.Setting()))
             foreach (var step in goal.Step.Items())
                 await step.Code.Build(buildContext);
 
@@ -118,11 +118,11 @@ public class DiscoverActionTests
 
     private async Task<List<global::app.test.@this>> Discover(string path = ".", bool recursive = true)
     {
-        var action = new global::app.module.test.discover(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+        var action = new global::app.module.test.discover(_app.actor.list.User.Context) { Path = _app.actor.list.User.Context.Ok<global::app.type.item.path.@this>(
                 global::app.type.item.path.@this.Resolve(path, _app.actor.list.User.Context)),
-            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
+            Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal", context: _app.actor.list.User.Context),
             Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.type.item.path.subfolder>>("Subfolder",
-                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(recursive ? global::app.type.item.path.subfolder.include : global::app.type.item.path.subfolder.skip))
+                _app.actor.list.User.Context.Choice(recursive ? global::app.type.item.path.subfolder.include : global::app.type.item.path.subfolder.skip), context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
         return result.GetValue<List<global::app.test.@this>>() ?? new List<global::app.test.@this>();
@@ -170,6 +170,34 @@ public class DiscoverActionTests
     }
 
     // A .goal with no matching .pr in .build/ → global::app.test.Status.Stale with reason "no .pr".
+    // A fresh hash says only that the words didn't change: a .pr whose saved code no longer holds against today's
+    // catalogue (a type that is no type any more, a frozen default no action takes) is Stale, saying why.
+    [Test]
+    public async Task Discover_APrWhoseCodeNoLongerHolds_IsStaleWithItsReason()
+    {
+        await CreateTestFile("Old.test.goal", "Start", new[] { "set %x% as json" },
+            new[] { ("variable", "set", new (string, object?)[] { ("Name", "x"), ("Value", "{}"), ("Type", "json") }) });
+
+        var test = (await Discover()).Single();
+
+        await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Stale);
+        await Assert.That(test.StatusReason?.ToString()).StartsWith("rebuild needed: ");
+        await Assert.That(test.StatusReason?.ToString()).Contains("json");
+    }
+
+    // A root that is a test file is that one test (`plang --test sub/Bar.test.goal`).
+    [Test]
+    public async Task Discover_ATestFileAsTheRoot_IsThatOneTest()
+    {
+        await CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" });
+        await CreateTestFile("sub/Bar.test.goal", "Start", new[] { "set %x% = 2" });
+
+        var files = await Discover("sub/Bar.test.goal");
+
+        await Assert.That(files.Count).IsEqualTo(1);
+        await Assert.That(files[0].Goal.Path!.ToString()).EndsWith("Bar.test.goal");
+    }
+
     [Test]
     public async Task Discover_NoPrFile_MarksStaleWithReasonNoPr()
     {
@@ -214,9 +242,9 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("http"), _app.actor.list.User.Context).IsTrue();
-        await file.Tags.Contains(new global::app.type.item.tag.@this("fast"), _app.actor.list.User.Context).IsTrue();
-        await file.Tags.Contains(new global::app.type.item.tag.@this("slow"), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("http", _app.type.list[typeof(global::app.type.item.tag.@this)]), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("fast", _app.type.list[typeof(global::app.type.item.tag.@this)]), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("slow", _app.type.list[typeof(global::app.type.item.tag.@this)]), _app.actor.list.User.Context).IsTrue();
     }
 
     // For each action in the .pr, resolves the handler class (via App.Modules.
@@ -235,7 +263,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("network"), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("network", _app.type.list[typeof(global::app.type.item.tag.@this)]), _app.actor.list.User.Context).IsTrue();
     }
 
     // Sub-goal reached via static goal.call: its actions' capabilities propagate up
@@ -245,18 +273,18 @@ public class DiscoverActionTests
     public async Task Discover_AutoTags_TraverseSubGoals_UnionsAcrossCallChain()
     {
         // Register a Helper goal in the App (not a separate .test.goal) that uses http.
-        var helper = new Goal
+        var helper = new Goal(_app.type.list)
         {
             Name = "Helper",
             Path = global::app.type.item.path.@this.Resolve("/Helper.goal", _app.actor.list.User.Context),
-            Step = new GoalSteps
+            Step = new GoalSteps(_app.type.list)
             {
-                new Step
+                new Step(_app.type.list)
                 {
                     Index = 0, Text = "http get",
-                    Code = new StepActions
+                    Code = new StepActions(_app.type.list)
                     {
-                        new PrAction
+                        new PrAction(_app.type.list)
                         {
                             Module = _app.actor.list.User.Context.App.Module("http"), Name = "request",
                             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Url", "https://example.com", context: _app.actor.list.User.Context) })
@@ -280,7 +308,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("network"), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("network", _app.type.list[typeof(global::app.type.item.tag.@this)]), _app.actor.list.User.Context).IsTrue();
     }
 
     // Config.Include=["fast"]: tests without the "fast" tag are returned as
@@ -289,7 +317,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_IncludeFilter_NonMatchingTests_MarkedSkipped()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "fast" } });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "fast" } }, _app.actor.list.System.Context);
         await CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" });  // no tags
 
         var files = await Discover();
@@ -303,7 +331,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_ExcludeFilter_MatchingTests_MarkedSkipped()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } }, _app.actor.list.System.Context);
         await CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]
@@ -324,8 +352,8 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_IncludeAndExclude_ExcludeAppliedAfterInclude()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "http" } });
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "http" } }, _app.actor.list.System.Context);
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } }, _app.actor.list.System.Context);
         await CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'http', 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]

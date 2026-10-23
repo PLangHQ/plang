@@ -6,13 +6,21 @@
       "index": 0,
       "text": "set %x% = '{\"size\": 10, \"name\": \"box\"}', type=json",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
           "module": "variable",
           "name": "set",
           "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"size\": 10, \"name\": \"box\"}"
+            },
             {
               "name": "Name",
               "type": {
@@ -31,18 +39,11 @@
               ]
             },
             {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "{\"size\": 10, \"name\": \"box\"}"
-            },
-            {
               "name": "Type",
               "type": {
                 "name": "type"
               },
-              "value": "json"
+              "value": {"name":"item","kind":"json"}
             }
           ],
           "default": [
@@ -61,13 +62,21 @@
       "index": 1,
       "text": "set %x!size% = 28",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
           "module": "variable",
           "name": "set",
           "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 28
+            },
             {
               "name": "Name",
               "type": {
@@ -87,13 +96,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "number"
-              },
-              "value": 28
             }
           ],
           "default": [
@@ -112,7 +114,8 @@
       "index": 2,
       "text": "assert %x.size% equals 10",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -121,6 +124,13 @@
           "property": [
             {
               "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 10
+            },
+            {
+              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -139,13 +149,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "number"
-              },
-              "value": 10
             }
           ]
         }
@@ -155,7 +158,8 @@
       "index": 3,
       "text": "assert %x!size% equals 28",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -164,6 +168,13 @@
           "property": [
             {
               "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 28
+            },
+            {
+              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -182,13 +193,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "number"
-              },
-              "value": 28
             }
           ]
         }
@@ -198,7 +202,8 @@
       "index": 4,
       "text": "assert %x.name% equals \"box\"",
       "line": {
-        "number": 8
+        "number": 8,
+        "indent": 0
       },
       "code": [
         {
@@ -207,6 +212,13 @@
           "property": [
             {
               "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "box"
+            },
+            {
+              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -225,22 +237,13 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "text"
-              },
-              "value": "box"
             }
           ]
         }
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/app/data/Plane_DataKeyVsProperty.test.goal",
-  "prPath": "/app/data/.build/plane_datakeyvsproperty.test.pr",
+  "file": "Plane_DataKeyVsProperty.test.goal",
   "hash": "4da4b9070e58eba653e5352eea215475c22e459ec986b86173a6a755b360c50c"
 }

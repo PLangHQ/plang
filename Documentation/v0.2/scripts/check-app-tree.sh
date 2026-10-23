@@ -75,10 +75,7 @@ mapfile -t app_props < <(
     | sed -E 's/.*\s([A-Z][A-Za-z0-9_]*)\s*(\{|=>).*/\1/' \
     | sort -u
 )
-# Names that are deliberately not surfaced in the one-screen doc.
-app_skip_regex='^(OsAbsolutePath)$'
 for p in "${app_props[@]}"; do
-  [[ "$p" =~ $app_skip_regex ]] && continue
   in_doc "$p" || note "app.@this property '$p' not mentioned in app-tree.md"
 done
 

@@ -25,13 +25,15 @@ public sealed class signature : ISchemaReader
         // Stream the layer's fields off the reader (no FromWire/DOM). The inner `value` IS a
         // Data — it reads through the data reader (recurse), so the verify re-hashes the same
         // reconstruction the writer produced.
-        global::app.type.item.text.@this algorithm = new("ed25519"), nonce = new(""), identity = new("");
+        var text = context.App.type.list[typeof(global::app.type.item.text.@this)];
+        global::app.type.item.text.@this algorithm = new("ed25519", text), nonce = new("", text), identity = new("", text);
         System.DateTimeOffset created = default;
         System.DateTimeOffset? expires = null;
         // the hash's kind is what the layer says — none said, the signature is refused below, never a kind guessed
         string? hashAlgo = null;
         byte[] hashValue = System.Array.Empty<byte>();
-        global::app.type.item.binary.@this sig = new(System.Array.Empty<byte>());
+        var binary = context.App.type.list[typeof(global::app.type.item.binary.@this)];
+        global::app.type.item.binary.@this sig = new(System.Array.Empty<byte>(), binary);
         global::app.type.item.list.@this? contracts = null;
         // The inner data is born with the read's context (the data reader does the same) — the
         // verify re-hashes it through the wire, which needs the actor context.
@@ -43,19 +45,19 @@ public sealed class signature : ISchemaReader
             switch (key.ToLowerInvariant())
             {
                 case "@schema": reader.Skip(); break;
-                case "type": algorithm = new(reader.String()); break;
-                case "nonce": nonce = new(reader.String()); break;
+                case "type": algorithm = new(reader.String(), text); break;
+                case "nonce": nonce = new(reader.String(), text); break;
                 case "created": created = reader.DateTimeOffset(); break;
                 case "expires": expires = reader.Null() ? null : reader.DateTimeOffset(); break;
-                case "identity": identity = new(reader.String()); break;
+                case "identity": identity = new(reader.String(), text); break;
                 case "contracts":
                 {
                     reader.BeginArray();
                     var items = new System.Collections.Generic.List<Data>();
                     while (reader.NextElement())
-                        items.Add(Data.Ok(new global::app.type.item.text.@this(reader.String())));
+                        items.Add(context.Ok(new global::app.type.item.text.@this(reader.String(), text)));
                     reader.EndArray();
-                    contracts = new global::app.type.item.list.@this(items);
+                    contracts = new global::app.type.item.list.@this(items, context.App.type.list["list"]);
                     break;
                 }
                 case "hash":
@@ -70,7 +72,7 @@ public sealed class signature : ISchemaReader
                     reader.EndObject();
                     break;
                 }
-                case "signature": sig = new(global::app.type.item.signature.@this.SafeBase64(reader.String())); break;
+                case "signature": sig = new(global::app.type.item.signature.@this.SafeBase64(reader.String()), binary); break;
                 case "value": inner = new global::app.data.reader.@this().Read(ref reader, ctx); break;
                 default: reader.Skip(); break;
             }
@@ -82,23 +84,24 @@ public sealed class signature : ISchemaReader
         if (string.IsNullOrEmpty(hashAlgo))
             throw new global::app.error.DeclinedException(new global::app.error.@this(
                 "a signature's hash names no kind (its hash.type) — it can't be checked", "SignatureInvalid", 400));
-        global::app.module.crypto.type.hash.kind.@this hashKind;
-        try { hashKind = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse(hashAlgo).Value; }
-        catch (System.FormatException unknown)
-        {
+        // the hash type names its own kind
+        if (context.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind[hashAlgo]
+            is not global::app.module.crypto.type.hash.kind.@this hashKind)
             throw new global::app.error.DeclinedException(new global::app.error.@this(
-                $"a signature's hash is of a kind there is none of: {unknown.Message}", "SignatureInvalid", 400));
-        }
+                $"a signature's hash is of a kind there is none of: '{hashAlgo}'", "SignatureInvalid", 400));
 
         // A signature read live off the wire is good for the signing setting's window after it was made; one read
         // from plang's own store keeps only what its signer signed, and covers the value's stored form.
         var stored = ctx.View == global::app.View.Store;
+        var datetime = context.App.type.list[typeof(global::app.type.item.datetime.@this)];
         var layer = new global::app.type.item.signature.@this(
-            inner, algorithm, nonce, new global::app.type.item.datetime.@this(created), identity,
-            new global::app.module.crypto.type.hash.@this(hashValue, hashKind), sig,
-            expires is { } ex ? new global::app.type.item.datetime.@this(ex) : null, contracts,
+            context.App.type.list[new global::app.type.@this("signature", algorithm.ToString()), context],
+            inner, algorithm, nonce, new global::app.type.item.datetime.@this(created, datetime), identity,
+            new global::app.module.crypto.type.hash.@this(hashValue, hashKind,
+                context.App.type.list[new global::app.type.@this("hash", hashKind.Name), context]), sig,
+            expires is { } ex ? new global::app.type.item.datetime.@this(ex, datetime) : null, contracts,
             stored ? global::app.type.item.signature.Origin.Stored : global::app.type.item.signature.Origin.Live,
-            stored ? null : context.Setting.Of<global::app.module.signing.setting.@this>().Expiry);
+            stored ? null : ctx.Window);
 
         // The OUTER read verifies the signature; a NESTED reconstruction (ctx.Verify == false) peels
         // without verifying — the inner Data is already covered by the outer signature, and an inner
@@ -113,7 +116,7 @@ public sealed class signature : ISchemaReader
         // fresh error when the verify fails, so this Data never escapes unverified.
         if (ctx.DeferVerify) return peeled;
 
-        var verifyAction = new global::app.module.signing.verify(context) { Data = context.Ok(layer) };
+        var verifyAction = new global::app.module.signing.verify(context) { Data = peeled };
         var verifyResult = new global::app.goal.step.action.@this(verifyAction, context)
             .Start(context)
             .GetAwaiter().GetResult();

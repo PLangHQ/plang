@@ -16,10 +16,8 @@ namespace app.type.item.number;
 /// (a <c>long</c>) rather than wrapping. <c>double ⊕ decimal</c> requires an
 /// explicit precision choice (see <see cref="Precision"/>).</para>
 ///
-/// <para>Storage is a single boxed CLR numeric (<see cref="BoxedValue"/>);
-/// boxing was already the baseline since <c>Data.Value</c> is <c>object</c>.
-/// The old <c>_i/_d/_f</c> tagged union and the <c>float→double</c> collapse
-/// are gone.</para>
+/// <para>Storage is a single boxed CLR numeric (<see cref="BoxedValue"/>) — no
+/// tagged union, and a float stays a float.</para>
 /// </summary>
 [global::app.Attributes.PlangType("number")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, System.IEquatable<@this>, System.IComparable<@this>, System.IComparable, System.IConvertible
@@ -27,51 +25,80 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // The exact boxed CLR numeric — the single source of truth.
     private readonly object _value;
 
-    /// <summary>The storage kind — CARRIED, set at birth by whoever mints (an implicit operator,
-    /// <see cref="Parse"/>, the climb, the courier); never derived. Context-free stateless behavior;
-    /// the value owns its kind, so <c>Write</c>/arithmetic never look it up.</summary>
-    public kind.@this Kind { get; }
+    /// <summary>The storage kind — its type's kind (<c>{number, int}</c>'s <c>int</c>): stateless behavior the value
+    /// asks, so <c>Write</c>/arithmetic never look it up.</summary>
+    // One narrowing, kept for the kind's arithmetic (precision, the climb) — it goes with the kinds item, where
+    // number's kinds become the app's registered kinds.
+    public kind.@this Kind => (kind.@this)Type.kind;
 
-    private @this(object value, kind.@this kind) { _value = value; Kind = kind; }
+    // The operator's birth (the 15 CLR lifts, Parse with no type in hand, a kind's Create/Read, a result whose kind
+    // climbed): no app to ask, so it holds {number, <kind>} built from the class, carrying the kind.
+    private @this(object value, kind.@this kind)
+        : base(new global::app.type.@this("number", typeof(@this)) { kind = kind }) => _value = value;
 
-    /// <summary>The empty number, 0 — what a number holds before anything is in it (type.Empty).</summary>
+    /// <summary>The number <paramref name="source"/> is, born holding <paramref name="type"/> — the app's
+    /// <c>{number, &lt;its kind&gt;}</c>, handed in by its maker (the courier, a reader, a derived result).</summary>
+    internal @this(global::app.type.@this type, @this source) : base(type) => _value = source._value;
+
+    /// <summary>The empty number, 0 as a long — what a number holds before anything is in it (type.Empty). Its kind is
+    /// long, which the plain number type type.Empty holds is not, so it is born as the operator births one.</summary>
     internal @this() : this(0L, @long) { }
 
     /// <summary>The exact boxed CLR numeric value (int, uint, BigInteger, Half, decimal, …).</summary>
     public object BoxedValue => _value;
     public override bool IsLeaf => true;
-    public override void Write(global::app.type.format.IWriter w) => Kind.Write(this, w);
-
-    /// <summary>A number's entity: the exact boxed CLR numeric as the mate, the kind name as kind.</summary>
-    protected internal override global::app.type.@this Type
-        => new("number", typeof(@this), Kind.Name);
+    /// <summary>A number writes its value through the writer's number primitives, as the C# number it is held as: the
+    /// small widths as an int, the wide ones as a long while they fit, a half as a double; one no primitive holds
+    /// (past a long, a 128-bit or big integer) as its digits. The writer decides how each looks.</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w)
+    {
+        switch (_value)
+        {
+            case int n: w.Int(n); break;
+            case long n: w.Long(n); break;
+            case float n: w.Float(n); break;
+            case double n: w.Double(n); break;
+            case decimal n: w.Decimal(n); break;
+            case byte n: w.Int(n); break;
+            case sbyte n: w.Int(n); break;
+            case short n: w.Int(n); break;
+            case ushort n: w.Int(n); break;
+            case uint n: w.Long(n); break;
+            case ulong n when n <= long.MaxValue: w.Long((long)n); break;
+            case System.Half n: w.Double((double)n); break;
+            default: w.String(System.Convert.ToString(_value, System.Globalization.CultureInfo.InvariantCulture)!); break;
+        }
+        return default;
+    }
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
 
     /// <summary>Catalog shape — number's wire form is a string-shaped scalar.</summary>
     public static string Shape => "string";
 
-    // ── the 15 kind singletons — private immutable data (the sanctioned clause). Verbatim-lowercase
+    // ── the 15 kind singletons — the operator births' kinds only (a CLR lift has no app; every number born with an
+    //    app holds its app's registered kind). Verbatim-lowercase
     //    names (@int, @long, …) = the kind tokens; PascalCase would shadow the CLR type names
-    //    (Int128.MinValue, BigInteger.Pow) used across number/Ladder. ──
-    private static readonly kind.@this @sbyte = new kind.@sbyte.@this();
-    private static readonly kind.@this @byte = new kind.@byte.@this();
-    private static readonly kind.@this @short = new kind.@short.@this();
-    private static readonly kind.@this @ushort = new kind.@ushort.@this();
-    private static readonly kind.@this @int = new kind.@int.@this();
-    private static readonly kind.@this @uint = new kind.@uint.@this();
-    private static readonly kind.@this @long = new kind.@long.@this();
-    private static readonly kind.@this @ulong = new kind.@ulong.@this();
-    private static readonly kind.@this int128 = new kind.int128.@this();
-    private static readonly kind.@this uint128 = new kind.uint128.@this();
-    private static readonly kind.@this half = new kind.half.@this();
-    private static readonly kind.@this @float = new kind.@float.@this();
-    private static readonly kind.@this @double = new kind.@double.@this();
-    private static readonly kind.@this @decimal = new kind.@decimal.@this();
-    private static readonly kind.@this biginteger = new kind.biginteger.@this();
+    //    (Int128.MinValue, BigInteger.Pow) used across number/Ladder. Each a kind of the one class-built number type. ──
+    private static readonly global::app.type.@this family = new("number", typeof(@this));
+    private static readonly kind.@this @sbyte = new kind.@sbyte.@this(family);
+    private static readonly kind.@this @byte = new kind.@byte.@this(family);
+    private static readonly kind.@this @short = new kind.@short.@this(family);
+    private static readonly kind.@this @ushort = new kind.@ushort.@this(family);
+    private static readonly kind.@this @int = new kind.@int.@this(family);
+    private static readonly kind.@this @uint = new kind.@uint.@this(family);
+    private static readonly kind.@this @long = new kind.@long.@this(family);
+    private static readonly kind.@this @ulong = new kind.@ulong.@this(family);
+    private static readonly kind.@this int128 = new kind.int128.@this(family);
+    private static readonly kind.@this uint128 = new kind.uint128.@this(family);
+    private static readonly kind.@this half = new kind.half.@this(family);
+    private static readonly kind.@this @float = new kind.@float.@this(family);
+    private static readonly kind.@this @double = new kind.@double.@this(family);
+    private static readonly kind.@this @decimal = new kind.@decimal.@this(family);
+    private static readonly kind.@this biginteger = new kind.biginteger.@this(family);
 
-    /// <summary>The 15 kind singletons by name — the declared-kind lookup (a sanctioned private data
-    /// table); also the advertised vocabulary via <c>Kinds.Keys</c>.</summary>
+    /// <summary>The 15 kind singletons by name — what an operator-born number (no app) names its kinds by; a number
+    /// with an app asks its family.</summary>
     internal static readonly System.Collections.Generic.IReadOnlyDictionary<string, kind.@this> Kinds =
         new System.Collections.Generic.Dictionary<string, kind.@this>(System.StringComparer.OrdinalIgnoreCase)
         {
@@ -123,15 +150,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // ── THE COURIER — the declared kind lives here. With no declared kind it is the pure core; with
     //    one, the kind builds it (from the typed ask's item) and the courier owns the error channel
     //    (a thrown reason → data.Fail, PRESERVED, never swallowed). ──
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
-        var named = (declared ?? data.Type).kind is { IsEmpty: false } k ? k.Name : null;
+        var asked = (type ?? data.Type).kind;
+        var named = asked is { IsEmpty: false } k ? k.Name : null;
         // Pass-through — a number already of the declared kind (or with none declared) rides out as it is.
         if (raw is @this same && (named is null || string.Equals(same.Kind.Name, named, System.StringComparison.OrdinalIgnoreCase)))
             return same;
         if (named is not null)
         {
-            if (!Kinds.TryGetValue(named, out var kind))
+            // the kind declared is the app's (its type's own kind), else the app's number entry names it
+            if ((asked as kind.@this ?? data.Context?.App.type.list[typeof(@this)].kind[named] as kind.@this) is not { } kind)
             {
                 data.Fail(new global::app.error.@this($"Unknown number kind '{named}'.", "UnknownKind", 400));
                 return null;
@@ -151,7 +180,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                     $"Cannot convert {raw?.GetType().Name} to number.", "NumberConversionFailed", 400));
                 return null;
             }
-            try { return kind.Create(value); }
+            try { return Retype(kind.Create(value)); }
             // a value the kind can't hold (a fraction as an integer kind, NaN) says why under its own key
             catch (global::app.error.AppException e)
             {
@@ -164,11 +193,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 return null;
             }
         }
-        if (Create(raw) is { } n) return n;
+        if (Create(raw) is { } n) return ReferenceEquals(n, raw) ? n : Retype(n);
         data.Fail(new global::app.error.@this(
             $"Cannot convert {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} to number.",
             "NumberConversionFailed", 400));
         return null;
+
+        // gives a number made here the app's {number, <its kind>}, as the binding's asker names the app (a binding with
+        // no context, the operator's, keeps the operator's birth)
+        @this Retype(@this number) => data.Context is { } context
+            ? new(context.App.type.list[new global::app.type.@this("number", number.Kind.Name), context], number)
+            : number;
     }
 
     /// <summary>The CLR exit door — number hands its own boxed backing; the

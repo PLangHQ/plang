@@ -114,7 +114,7 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task TextLength_ReturnsNumber_NotInt()
     {
-        var t = new global::app.type.item.text.@this("héllo");
+        global::app.type.item.text.@this t = (global::app.type.item.text.@this)"héllo";
         object length = t.Length;
         await Assert.That(length).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(length.ToString()).IsEqualTo("5");
@@ -125,10 +125,10 @@ public class Stage7_SurfaceGateTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var d = new global::app.type.item.dict.@this();
+        var d = ctx.Dict();
         d.Set(new Data("name", "a", context: ctx));
         d.Set(new Data("age", 30L, context: ctx));
-        object keys = d.Keys;
+        object keys = d.Key(ctx).list(ctx);
         await Assert.That(keys).IsTypeOf<global::app.type.item.list.@this<global::app.type.item.text.@this>>();
         var names = ((global::app.type.item.list.@this<global::app.type.item.text.@this>)keys)
             .Items(ctx).Select(k => k.Peek()).ToList();
@@ -140,13 +140,13 @@ public class Stage7_SurfaceGateTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var l = new global::app.type.item.list.@this();
+        var l = new global::app.type.item.list.@this(app.type.list["list"]);
         l.Add(new Data("", 1, context: ctx));
         l.Add(new Data("", 2, context: ctx));
         object count = l.Count;
         await Assert.That(count).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(count.ToString()).IsEqualTo("2");
-        object dictCount = new global::app.type.item.dict.@this().Count;
+        object dictCount = ctx.Dict().Count;
         await Assert.That(dictCount).IsTypeOf<global::app.type.item.number.@this>();
     }
 
@@ -161,7 +161,7 @@ public class Stage7_SurfaceGateTests
         File.WriteAllText(tmp, "12345");
         try
         {
-            var fp = new global::app.type.item.path.file.@this(tmp);
+            var fp = context.File(tmp);
             object? size = await (await fp.Size(context)).Value();
             await Assert.That(size).IsTypeOf<global::app.type.item.size.@this>();
             await Assert.That(size!.ToString()).IsEqualTo("5 B");

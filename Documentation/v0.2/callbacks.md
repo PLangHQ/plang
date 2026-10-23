@@ -82,13 +82,28 @@ Three consequences fall out for callbacks:
 2. Any Data through any channel auto-seals on egress. The verify-path code that previously gated on `data.Signature == null` still sees `null` only on Data that has never been written.
 3. Canonicalization for `crypto.Hash` was switched to the same options bag the wire converter uses (`plang.@this.OutboundOptions`). Hash bytes ≡ wire bytes minus the outer `Signature` field. Tampering with `name`, `type`, `value`, `properties`, or any nested-Data signature invalidates the outer signature.
 
+## A signed value that arrives
+
+A replay is the same wire arriving twice. The read that brings a signed value in off a transport births its signature layer, and that read is one **arrival**. The layer belongs to the arrival, so the nonce is presented once for it, by whatever verifies it first (`signature.Present`):
+
+1. The hash and the signature are checked first. A tampered wire fails there and presents nothing, so it does not burn the nonce: the genuine wire still arrives after it.
+2. The nonce is presented last, with one atomic add-if-absent (`nonce:<nonce>` in the cache, kept until the signature expires). A concurrent verify of the same arrival awaits that one answer; it is not a second presentation.
+
+What follows from that:
+
+- **The value the read produced verifies, and names its signer (`%x!signature.identity%`), as many times as it is read, its copies too.** Every copy of the layer shares the arrival's one answer.
+- **The same bytes arriving again is a new arrival.** Its nonce is already there, so it answers `NonceReplay` (400).
+- **`identity` is named only once verify has passed** on the bearer. A bearer changed after signing answers `DataHashMismatch`.
+- **A signature read from plang's own store is not an arrival.** It has origin `stored`, no window, and re-presents its nonce on every read, which is not a replay (see `filesystem-permission.md`, "Grant verification").
+- A layer is built by the wire reader (an arrival) or by `sign`; nothing else builds one directly.
+
 ## The `application/plang` mimetype
 
 `application/plang` is the single wire serializer for the full Data shape. The historical `application/plang+data` mimetype was merged into it on `data-serialize-cleanup` — the `+data` variant and the `PlangDataSerializer` class no longer exist.
 
 - The serializer (`app/channels/serializers/serializer/plang/this.cs`) composes the `Json` engine with `Wire` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers; no `JsonSerializer.X` calls live in the serializer itself.
 - `Wire` emits the five-field wire shape `{name, type, value, properties, signature}` (the `properties` field is omitted when empty; `signature` when null), signing each Data sign-if-missing as it walks. The value slot is built via `data.Normalize(View) → IWriter` so domain types ride as `[Out]`-tagged property bags instead of bespoke JSON converters — see `Documentation/Runtime2/data-spec.md` §17.
-- **Read** does **not** auto-verify. The reconstructed Data has its signature populated-but-unverified; consumers (`callback.run`) call `signing.verify` explicitly.
+- **Read** of a signed payload verifies the signature layer on a transport read and fails closed without an actor context (`wire-serialization.md`, "`Wire.Read` auto-verifies"). The value it returns carries its arrival, so a later `signing.verify` on it (as `callback.run` does) is not a second presentation of the nonce.
 
 JSON wire shape (the wire format is the coder's call — could become CBOR or length-prefixed binary later without breaking the contract):
 

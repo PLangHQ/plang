@@ -39,6 +39,7 @@ public sealed class @this : global::app.store.@this
     /// the store opens (null: the file). Nothing is opened here — the first verb opens it.
     /// </summary>
     public @this(global::app.type.item.path.@this? file, System.Func<string?> memory, actor.context.@this context)
+        : base(context.App.type.list[new global::app.type.@this("store", "sqlite"), context])
     {
         _file = file;
         _memory = memory;
@@ -79,8 +80,9 @@ public sealed class @this : global::app.store.@this
         // fail the open — sqlite never sees them.
         var auth = await _file.Authorize(global::app.type.item.permission.Verb.write, Context);
         if (!auth.Success) throw new global::app.error.AppException(auth.Error!);
-        if (_file.Parent is { } parent)
-            await parent.Mkdir(Context);
+        // a folder that can't be made is the open's answer, as a refused file is — never a database that then can't open
+        if (_file.Parent is { } parent && await parent.Mkdir(Context) is { Success: false } made)
+            throw new global::app.error.AppException(made.Error!);
 
         var connectionString = new SqliteConnectionStringBuilder
         {
@@ -148,15 +150,16 @@ public sealed class @this : global::app.store.@this
 
             // Read all rows first (the reader is sync), then deserialize each — keeps the
             // connection lifetime tight and the await off the open reader.
-            var raws = new List<string>();
+            var raws = new List<(string Key, string Data)>();
             using (var reader = cmd.ExecuteReader())
                 while (reader.Read())
-                    if (!reader.IsDBNull(1)) raws.Add(reader.GetString(1));
-            var list = new global::app.type.item.list.@this();
-            foreach (var raw in raws)
+                    if (!reader.IsDBNull(1)) raws.Add((reader.GetString(0), reader.GetString(1)));
+            // each row answered under its key — the key it was set under, whatever the Data's own name
+            var list = new global::app.type.item.list.@this(Context.App.type.list["list"]);
+            foreach (var (key, raw) in raws)
             {
                 var loaded = await Hydrate<T>(raw);
-                if (loaded.Success && !loaded.Peek().IsNull) list.Add(loaded);
+                if (loaded.Success && !loaded.Peek().IsNull) list.Add(loaded.Copy(key));
             }
             return Context.Ok<global::app.type.item.list.@this>(list);
         }
@@ -256,7 +259,7 @@ public sealed class @this : global::app.store.@this
             using var cmd = connection.CreateCommand();
             cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;";
 
-            var tables = new global::app.type.item.list.@this();
+            var tables = new global::app.type.item.list.@this(Context.App.type.list["list"]);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
                 tables.Add(new data.@this("", reader.GetString(0), context: Context));

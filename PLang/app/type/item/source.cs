@@ -19,11 +19,10 @@ public class source : @this
     // The declaration, WHOLE — the source IS this type, unparsed. Born with it at Create,
     // never shredded into Name/Kind/Strict/Template scalars and reassembled (Mint answers it
     // directly). Name/Kind/Strict/Template all read off this one object.
-    private protected readonly global::app.type.@this _type;
 
     // The format the raw bytes are in — the raw's own fact, not the declaration's. When a value is re-declared
     // (a dict slot given an unread json: {item, json} → {dict}, kind dropped), the format rides here so the
-    // declared type can still make itself from what the format parses (decision 818/758). Null when the raw
+    // declared type can still make itself from what the format parses. Null when the raw
     // carries no format of its own.
     private readonly global::app.type.kind.@this? _format;
 
@@ -60,9 +59,9 @@ public class source : @this
     /// (<paramref name="origin"/>) only the program's own, anything else none.</summary>
     public source(object value, global::app.type.@this type, IReadOnlyList<global::app.type.item.variable.@this>? variable = null,
         global::app.type.item.path.@this? origin = null, bool built = false, global::app.type.kind.@this? format = null)
+        : base(type ?? throw new System.ArgumentNullException(nameof(type)))
     {
         _value = value ?? throw new System.ArgumentNullException(nameof(value));
-        _type = type ?? throw new System.ArgumentNullException(nameof(type));
         _format = format;
         _origin = origin;
         IsBuilt = built;
@@ -71,15 +70,16 @@ public class source : @this
         if (type.Template == null) return;
         // the variables written in it are read off its text face (a byte raw declared text is its UTF-8)
         var raw = Peek() as string;
-        IReadOnlyList<global::app.type.item.variable.@this> written()
-            => raw != null ? new global::app.type.item.variable.parser.@this(raw).Variable : [];
+        IReadOnlyList<global::app.type.item.variable.@this> all()
+            => raw != null ? new global::app.type.item.variable.parser.@this(raw, type.Types ?? throw new System.InvalidOperationException(
+                   $"a {type.Name} template is born holding the app's type — a bare one holds no types to read its variables with")).Variable : [];
         // THE door for content from outside: what a template holds, by whose bytes these are. Decided ONCE,
         // here — a variable not held is never resolved; it stays as written everywhere downstream.
-        IEnumerable<global::app.type.item.variable.@this> held =
-            built ? variable ?? written()                           // the build's own .pr: every variable its row lists
-            : origin != null ? written().Where(v => v.IsOwn)        // a file or url read with load vars: the program's own only
+        IEnumerable<global::app.type.item.variable.@this> variables =
+            built ? variable ?? all()                               // the build's own .pr: every variable its row lists
+            : origin != null ? all().Where(v => v.IsProgram)          // a file or url read with load vars: the program's own only
             : [];                                                   // anything else (a peer's value, the store): none
-        _variable = held.DistinctBy(v => v.Text).ToList();
+        _variable = variables.DistinctBy(v => v.Text).ToList();
         // A full-match %ref% on ANY declared type is a reference to a binding — resolved at
         // .Value(), never parsed through the type reader.
         IsVariable = _variable is [var only] && only.Text == raw;
@@ -94,9 +94,6 @@ public class source : @this
     /// <summary>The raw byte face, when the source carries bytes (not text) — symmetric with RawText.</summary>
     public override byte[]? RawBytes => _value as byte[];
 
-    /// <summary>The declared judgement, verbatim — the source IS the declared type, unparsed.
-    /// Held whole since birth; answered directly, not reassembled from scalars.</summary>
-    protected internal override global::app.type.@this Type => _type;
 
     /// <summary>
     /// In memory now = the raw source form. A byte raw whose kind is characters (<see
@@ -112,7 +109,7 @@ public class source : @this
         // Text content decodes to its text face: a text-kinded raw (json — its kind answers IsText), or a
         // plain text whose own kind hasn't loaded its format yet (the empty kind reads IsText false until then,
         // so the type name is the floor that keeps a plain text's bytes decoding).
-        if (_value is byte[] b && (_type.kind.IsText || _type.Name.ToLowerInvariant() is "text"))
+        if (_value is byte[] b && (Type.kind.IsText || Type.Name.ToLowerInvariant() is "text"))
         {
             try { return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(b); }
             catch (System.Text.DecoderFallbackException) { return b; }
@@ -163,14 +160,8 @@ public class source : @this
         // The value loads with the context of the Data that asks — never the source's own: a
         // source in a program property is read by every run, and each run's Data carries its
         // own actor (its variables, its permissions).
-        var asking = data.Context;
-        if (asking is null)
-        {
-            data.Fail(new global::app.error.@this(
-                $"'{data.Name}' has no context to load with — a value is read through a Data born with its run's context.",
-                "NoContextToLoad", 500));
-            return Absent;
-        }
+        var asking = data.Context ?? throw new System.InvalidOperationException(
+            $"'{data.Name}' has no context to load with — a value is read through a Data born with its run's context.");
 
         // A full-match %ref% names a binding — hand back what it holds through its OWN door,
         // never parse the name through the declared type's reader (a `list` reader on the string
@@ -186,7 +177,7 @@ public class source : @this
             {
                 data.Fail(new global::app.error.@this(
                     $"{_value} is not set — nothing to answer for it.", "VariableNotFound", 404));
-                return Absent;
+                return data.Empty;
             }
             return await resolved.Value();
         }
@@ -196,11 +187,11 @@ public class source : @this
             // A partial template is a text's to render, as Output hands it to one: the text fills the
             // variables this source holds, and this type makes itself from the text it renders to (a path
             // from its text, as from any text). What a variable held is filled once, never read as a template.
-            if (Text is { } template)
+            if (Text(asking) is { } template)
             {
-                var made = _type.Make(await template.Value(data), asking);
-                made.history.Add(this);
-                return await made.Value(data);
+                var value = Type.Make(await template.Value(data), asking);
+                value.history.Add(this);
+                return await value.Value(data);
             }
 
             // Kind-first materialization (most-specific owner): a kind that owns its own decode
@@ -208,10 +199,10 @@ public class source : @this
             // the REAL subclass via the one selection door; a decline (null) falls to the type
             // reader below (png→image, csv→table, …). Covers both entrances — a content source and
             // an inherited wire both parse here. A bad parse rides the catch → MaterializeFailed.
-            if (_type.kind is { IsEmpty: false } kind
-                && await asking.App.type.list.Kind(_type, asking).Load(_value, asking) is { } loaded)
+            if (Type.kind is { IsEmpty: false } kind
+                && await asking.App.type.list.Kind(Type, asking).Load(_value, asking) is { } loaded)
             {
-                // A kind that RESTS answers its materialize with an unread source (json, ruling 6): the courier
+                // A kind that RESTS answers its materialize with an unread source (json): the courier
                 // keeps it unread — this source answers itself, parsed only at a use (navigation / enumeration /
                 // is / a typed ask). Any other kind resolves its value now.
                 if (loaded.Peek() is global::app.type.item.source) return this;
@@ -220,27 +211,31 @@ public class source : @this
                 return decoded;
             }
             // A value re-declared away from its format keeps what format its bytes are in (a dict slot given
-            // an unread json — {item, json} re-declared {dict}, decision 818/758): the format parses the raw,
+            // an unread json — {item, json} re-declared {dict}): the format parses the raw,
             // and the declared type makes itself from what it parses (a dict from the parsed object). Only when
             // the declaration itself named no kind — a kinded declaration parses through its own kind above.
-            if (_type.kind.IsEmpty && _format is { } encoded && encoded.Parse(_value, asking) is { } parsed)
+            if (Type.kind.IsEmpty && _format is { } encoded && encoded.Parse(_value, asking) is { } parsed)
             {
-                var made = _type.Make(parsed, asking);
-                made.history.Add(this);
-                return await made.Value(data);
+                var value = Type.Make(parsed, asking);
+                value.history.Add(this);
+                return await value.Value(data);
             }
             var item = Read(asking);
             if (ReferenceEquals(item, this)) return this;
             // Container round-trip guard: a value DECLARED a container (dict/list) that
             // materialized to a non-container leaf is a round-trip loss (a json object that
             // came back an opaque scalar) — fail LOUD here, at the point of loss, not three
-            // hops later as a null navigation. Rides the catch below → MaterializeFailed,
-            // named to the binding. (The apex object/item is excluded — a scalar CAN be
-            // declared object; only genuine containers must stay containers.)
-            if (_type.Name.ToLowerInvariant() is "dict" or "list"
+            // hops later as a null navigation: MaterializeFailed, named to the binding. (The apex
+            // object/item is excluded — a scalar CAN be declared object; only genuine containers
+            // must stay containers.)
+            if (Type.Name is "dict" or "list"
                 && item is not (global::app.type.item.dict.@this or global::app.type.item.list.@this or global::app.type.clr.@this))
-                throw new System.InvalidOperationException(
-                    $"a '{_type.Name}' value materialized to a non-container ({item.GetType().Name}) — round-trip loss");
+            {
+                data.Fail(new global::app.error.@this(
+                    $"failed to read %{data.Name}% as {Type.Name}: it materialized to a non-container ({item.GetType().Name}) — round-trip loss",
+                    "MaterializeFailed", 400));
+                return data.Empty;
+            }
             item.history.Add(this);
             // Resolve the materialized item — a template (text/dict/list) renders against live
             // variables; a plain leaf/container answers itself. The source layer is transparent:
@@ -251,12 +246,12 @@ public class source : @this
         catch (global::app.error.DeclinedException declined)
         {
             data.Fail(declined.Error);
-            return Absent;
+            return data.Empty;
         }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException or System.NotSupportedException)
         {
             data.Fail(Unread(ex, data));
-            return Absent;
+            return data.Empty;
         }
     }
 
@@ -274,25 +269,28 @@ public class source : @this
             ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
             : "";
         return new global::app.error.@this(
-            $"failed to read %{data.Name}% as {_type.Name}{(_type.kind.IsEmpty ? "" : $"/{_type.kind.Name}")}: {ex.Message}{where}",
+            $"failed to read %{data.Name}% as {Type.Name}{(Type.kind.IsEmpty ? "" : $"/{Type.kind.Name}")}: {ex.Message}{where}",
             "MaterializeFailed", 400) { Exception = ex };
     }
 
     /// <summary>
     /// A resting kind (json) answered its own <see cref="Value"/> unread — a courier keeps it so. A USE
     /// opens it: the raw parses through the kind, once (navigation / enumeration), and the holding Data
-    /// narrows to the parsed dict/list (decision 787). Null when there is no kind to open through (an empty
+    /// narrows to the parsed dict/list. Null when there is no kind to open through (an empty
     /// kind, or one the list doesn't carry): nothing to parse, the value is used as it is. A bad parse throws
     /// — the caller answers it through <see cref="Unread"/>.
     /// </summary>
-    internal global::app.type.item.@this? Parse(global::app.actor.context.@this ctx)
-        => _type.kind.IsEmpty ? null : ctx.App.type.list.Kind(_type, ctx)?.Parse(_value, ctx);
+    internal virtual global::app.type.item.@this? Parse(global::app.actor.context.@this ctx)
+        => Type.kind.IsEmpty ? null : ctx.App.type.list.Kind(Type, ctx)?.Parse(_value, ctx);
 
     /// <summary>The text a partial template is, off its text face (a byte raw declared text is its UTF-8) —
     /// the one renderer fills it. Null for a plain source and a whole <c>%ref%</c> (a reference, resolved
-    /// through the variable's own door); a wire's slice is no text (it overrides).</summary>
-    private protected virtual global::app.type.item.text.@this? Text
-        => HasVariable && !IsVariable && Peek() is string template ? new(template, _type.Template, _variable) : null;
+    /// through the variable's own door); a wire's slice is no text (it overrides). Born holding the app's template
+    /// text type, as <paramref name="context"/>'s types hold it.</summary>
+    private protected virtual global::app.type.item.text.@this? Text(actor.context.@this context)
+        => HasVariable && !IsVariable && Peek() is string template
+            ? new(template, context.App.type.list[new global::app.type.@this("text", template: Type.Template), context], _variable)
+            : null;
 
     /// <summary>The type reads its own raw form — the declaration is the whole selector. One
     /// token over the raw via <see cref="global::app.type.format.value.Reader"/>; the
@@ -302,11 +300,11 @@ public class source : @this
     /// binding-named failure story.)</summary>
     private protected virtual global::app.type.item.@this Read(actor.context.@this context)
     {
-        var kind = _type.kind.IsEmpty ? null : _type.kind.Name;
-        var typeReader = context.App.type.list.Reader.Reader(_type.Name, kind, context);
+        var kind = Type.kind.IsEmpty ? null : Type.kind.Name;
+        var typeReader = context.App.type.list.Reader.Reader(Type.Name, kind, context);
         var reader = new global::app.type.format.value.Reader(_value);
         return typeReader.Read(ref reader, kind,
-            new global::app.type.reader.ReadContext(context, _type.Template, Variable: _variable, Origin: _origin, IsBuilt: IsBuilt));
+            new global::app.type.reader.ReadContext(context, Type.Template, Variable: _variable, Origin: _origin, IsBuilt: IsBuilt));
     }
 
     /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the
@@ -316,7 +314,7 @@ public class source : @this
     internal virtual source Declared(global::app.type.@this type)
         // The raw's format is the raw's own fact — the kind object the raw was decoded by — so it rides the
         // re-declaration: a {item, json} re-declared a dict keeps json, and is asked to Parse directly.
-        => new source(_value, type, _variable, _origin, IsBuilt, _format);
+        => type.kind.Make(_value, type, _origin, _variable, IsBuilt, _format);
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),
@@ -330,11 +328,20 @@ public class source : @this
         global::app.data.@this parent, string key)
     {
         // Navigation is a USE: a resting source (json) opens here — parsed once through its kind, the Data
-        // narrowing to the parsed dict/list (decision 787) — then the parsed value is navigated. A bad parse
+        // narrowing to the parsed dict/list — then the parsed value is navigated. A bad parse
         // fails parent (MaterializeFailed), surfaced here, never a throw to the courier.
         var materialized = await parent.Open();
         if (!parent.Success) return parent;
         return await materialized.Get(parent, key);
+    }
+
+    /// <summary>A fact read with <c>!</c> is a use, as navigation is: a resting source opens, the Data narrowing to
+    /// what it parses to, and that value answers its own facts (a dict's <c>!key</c>).</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Fact(string key, global::app.data.@this parent)
+    {
+        var opened = await parent.Open();
+        if (!parent.Success || opened is source) return null;
+        return await opened.Fact(key, parent);
     }
 
     public override bool IsTruthy() => _value switch
@@ -347,67 +354,23 @@ public class source : @this
     public override bool IsLeaf => true;
 
     /// <summary>
-    /// A content source's raw is ALWAYS its own content — a <c>string</c> (text, a template's
-    /// authored <c>%ref%</c>, a path, a scalar's text) or a <c>byte[]</c> blob; never a
-    /// structured value (a dict/list is held native, a still-encoded slice is a
-    /// <see cref="wire.@this"/>). So the content writes itself directly: into a writer of its declared
-    /// kind's own format (json content into json) verbatim, otherwise bytes as bytes and a string
-    /// quoted. No materialize-on-write — there is nothing structured here to render, and a
-    /// mime-named type (<c>text/plain</c>, <c>binary</c>) has no (type, kind) reader to parse
-    /// through. (A <see cref="wire.@this"/> overrides this to write its slice verbatim.)
+    /// A source writes itself as written — its raw content directly, a <c>string</c> or a <c>byte[]</c>, never a
+    /// structured value: bytes as bytes of its declared kind, characters as characters. No materialize-on-write.
+    /// Whether a template source is kept as written or used is the writer's view's, where its Data is written. (A
+    /// <see cref="wire.@this"/> and json content paste their characters into json their own way.)
     /// </summary>
-    public override void Write(global::app.type.format.IWriter w)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        // Content whose declared kind is the writer's own format is already a token of it — relayed
-        // verbatim, whether held as its text or its bytes (the writer validates it).
-        if (_type.kind.Owns(w))
-        {
-            if (_value is byte[] token) w.Raw(token);
-            else w.Raw(_value.ToString() ?? "");
-            return;
-        }
-        if (_value is byte[] b) { w.Bytes(b); return; }
+        // The raw is content of its declared kind, as bytes or as characters: the writer decides how it looks.
+        if (_value is byte[] b) { writer.Bytes(b, Type.kind); return; }
         // A whole %ref% in a slot not typed text is the variable itself (`Value: item = %!data%`); inside a
         // text it stays the text it is (`"Total: %x%"`).
-        if (_type.Template != null && IsVariable && !_type.Is("text"))
+        if (Type.Template != null && IsVariable && !Type.Is("text"))
         {
-            _variable[0].Write(w);
+            await _variable[0].Output(writer);
             return;
         }
-        w.String(_value.ToString() ?? "");
-    }
-
-    /// <summary>
-    /// A template source renders when it is written out, as a template text does: a whole
-    /// <c>%ref%</c> writes the bound value itself, a partial template writes its rendered text. A
-    /// plain source, and every source in the Store view (a <c>.pr</c> keeps the authored <c>%ref%</c>),
-    /// relays its raw form verbatim.
-    /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-    {
-        if (_type.Template == null || mode == global::app.View.Store || context?.Variable == null || _value is not string template)
-        {
-            Write(writer);
-            return;
-        }
-        if (IsVariable)
-        {
-            // the bound value itself, in the value's place — never the binding's Data around it, which would read
-            // back as a value of its own (a dict of type and value)
-            var resolved = await Get(context);
-            if (resolved is { IsInitialized: true })
-            {
-                var bound = await resolved.Value();
-                if (!resolved.Success) throw new global::app.error.AppException(resolved.Error!);
-                await bound.Output(writer, mode, context);
-                return;
-            }
-            throw new global::app.error.VariableNotFoundException(resolved?.Name ?? template.Trim('%'));
-        }
-        // a partial template is a text's to render: hand over to one
-        await new global::app.type.item.text.@this(template, _type.Template, _variable).Output(writer, mode, context);
+        writer.String((string)_value);
     }
 
 

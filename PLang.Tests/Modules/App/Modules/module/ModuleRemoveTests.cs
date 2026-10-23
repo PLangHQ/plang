@@ -24,13 +24,13 @@ public class ModuleRemoveTests
     public async Task Remove_ExistingModule_Succeeds()
     {
         // "variable" is a built-in module
-        await Assert.That((await _app.module.Get("variable")).Success).IsTrue();
+        await Assert.That((await _app.module.Get("variable", _app.actor.list.User.Context)).Success).IsTrue();
 
         var action = new Remove(_app.actor.list.User.Context) { Name = (global::app.type.item.text.@this)"variable" };
         var result = await action.Start();
 
         await result.IsSuccess();
-        await Assert.That((await _app.module.Get("variable")).Success).IsFalse();
+        await Assert.That((await _app.module.Get("variable", _app.actor.list.User.Context)).Success).IsFalse();
     }
 
     [Test]
@@ -53,7 +53,7 @@ public class ModuleRemoveTests
         var action = new Remove(_app.actor.list.User.Context) { Name = (global::app.type.item.text.@this)"variable" };
         await action.Start();
 
-        var (resolved, error) = (new PrAction { Module = held, Name = "set" }).Instance(_app.actor.list.User.Context);
+        var (resolved, error) = (new PrAction(_app.type.list) { Module = held, Name = "set" }).Instance(_app.actor.list.User.Context);
         await Assert.That(resolved).IsNull();
         await Assert.That(error).IsNotNull();
     }

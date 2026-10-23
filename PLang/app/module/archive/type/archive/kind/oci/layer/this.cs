@@ -12,7 +12,7 @@ public sealed class @this : tar.@this
 {
     private const string Whiteout = ".wh.", Opaque = ".wh..wh..opq";
 
-    public @this() : base("oci.layer") { }
+    public @this(global::app.type.@this owner) : base("oci.layer", owner) { }
 
     /// <summary>A layer has no suffix of its own: it is named (<c>as oci.layer</c>).</summary>
     public override string? Suffix => null;
@@ -32,16 +32,15 @@ public sealed class @this : tar.@this
         if (folder == null) return refused!;
         if (entry.Leaf == Opaque)
         {
-            if (!context.FileSystem.IsFolder(folder)) return context.Ok();
+            if (!context.Filesystem.IsFolder(folder)) return context.Ok();
             var listed = await folder.List(context);
             if (!listed.Success) return listed;
             foreach (var child in (await listed.Value())!.Items())
-                if (child is File gone) await Clear(gone, context);
+                if (child is File gone && await Clear(gone, context) is { } kept) return kept;
             return context.Ok();
         }
         var (removed, unfollowed) = await Under(folder, entry.Leaf[Whiteout.Length..], context);
         if (removed == null) return unfollowed ?? context.Ok();
-        await Clear(removed, context);
-        return context.Ok();
+        return await Clear(removed, context) ?? context.Ok();
     }
 }

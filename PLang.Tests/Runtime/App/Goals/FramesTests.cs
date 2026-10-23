@@ -69,14 +69,14 @@ public class FramesTests
     [Test]
     public async Task AStepsAfterBinding_ReadsItsTimeOffItsFrame()
     {
-        await _app.actor.list.System.Setting.Set(new global::app.call.setting.@this().Path + ".timing", _app.actor.list.System.Context.Ok(true));
+        _app.actor.list.System.Setting.Set(new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Path + ".timing", _app.actor.list.System.Context.Ok(true));
         var (caller, _) = await CallerAndCallee();
 
         var took = new List<TimeSpan?>();
         _app.type.list["step"].Own().Bind("start", global::app.@event.When.after, (item, _, c) =>
         {
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
-                took.Add(c.call.Current?.Duration);
+                took.Add(c.call.Current?.Duration(c)?.Value);
             return Task.FromResult(c.Ok());
         }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
@@ -94,9 +94,9 @@ public class FramesTests
         var stack = _app.actor.list.User.Context.call;
         var step = caller.Step[0];
 
-        await using var goalFrame = stack.Push(caller);
-        await using var stepFrame = stack.Push(step);
-        await using var actionFrame = stack.Push(step.Code[0]);
+        await using var goalFrame = stack.Push(caller, await stack.Setting());
+        await using var stepFrame = stack.Push(step, await stack.Setting());
+        await using var actionFrame = stack.Push(step.Code[0], await stack.Setting());
 
         await Assert.That(goalFrame.ToString()).IsEqualTo("Caller in /Caller.goal");
         await Assert.That(stepFrame.ToString()).IsEqualTo("Caller (step 1) in /Caller.goal");

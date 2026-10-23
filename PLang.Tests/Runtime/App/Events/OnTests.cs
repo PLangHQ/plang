@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Events;
 // before/after bindings start in the order added, for their actor (or the app), for the items their filter takes.
 public class OnTests
 {
-    private static global::app.type.item.dict.@this Item() => new();
+    private static global::app.type.item.dict.@this Item(global::app.actor.context.@this ctx) => ctx.Dict();
 
     // A handler that records it ran and answers ok.
     private static System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, Task<global::app.data.@this>> Record(List<string> ran, string name)
@@ -20,7 +20,8 @@ public class OnTests
 
     [Test] public async Task AnUnboundItem_HasTheSharedEmptyOn_WhoseEventsAreClosed()
     {
-        var item = Item();
+        await using var app = new global::app.@this("/test").Testing();
+        var item = Item(app.actor.list.User.Context);
         await Assert.That(ReferenceEquals(item.on, On.Empty)).IsTrue();
         await Assert.That(item.on["start"]!.before.Count).IsEqualTo(0);
         await Assert.That(item.on["nosuchevent"]).IsNull();
@@ -29,7 +30,7 @@ public class OnTests
     [Test] public async Task TheFirstBinding_GivesTheItemItsOwnOn_AndEmptyNeverChanges()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var item = Item();
+        var item = Item(app.actor.list.User.Context);
         var ran = new List<string>();
 
         var own = item.Own();
@@ -39,14 +40,14 @@ public class OnTests
         await Assert.That(ReferenceEquals(item.Own(), own)).IsTrue();
         await Assert.That(item.on["start"]!.before.Count).IsEqualTo(1);
         await Assert.That(On.Empty["start"]!.before.Count).IsEqualTo(0);
-        await Assert.That(Item().on["start"]!.before.Count).IsEqualTo(0);
+        await Assert.That(Item(app.actor.list.User.Context).on["start"]!.before.Count).IsEqualTo(0);
     }
 
     [Test] public async Task Start_RunsInTheOrderAdded_AndAnswersTheResultAsItStands()
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var item = Item();
+        var item = Item(app.actor.list.User.Context);
         var ran = new List<string>();
         var own = item.Own();
         own.Bind("start", When.before, Record(ran, "first"), app.actor.list.User, Scope.actor);
@@ -63,7 +64,7 @@ public class OnTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var result = app.actor.list.User.Context.Ok("kept");
-        var answered = await Item().on["start"]!.after.Start(Item(), result, app.actor.list.User.Context);
+        var answered = await Item(app.actor.list.User.Context).on["start"]!.after.Start(Item(app.actor.list.User.Context), result, app.actor.list.User.Context);
         await Assert.That(ReferenceEquals(answered, result)).IsTrue();
     }
 
@@ -71,7 +72,7 @@ public class OnTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var item = Item();
+        var item = Item(app.actor.list.User.Context);
         var ran = new List<string>();
         var own = item.Own();
         own.Bind("start", When.before, Fail("Refused"), app.actor.list.User, Scope.actor);
@@ -88,7 +89,7 @@ public class OnTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var item = Item();
+        var item = Item(app.actor.list.User.Context);
         var ran = new List<string>();
         var own = item.Own();
         own.Bind("start", When.before, (_, _, ctx) =>
@@ -110,7 +111,7 @@ public class OnTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var item = Item();
+        var item = Item(app.actor.list.User.Context);
         global::app.data.@this? seen = null;
         var own = item.Own();
         own.Bind("start", When.after, Fail("Broke"), app.actor.list.User, Scope.actor);
@@ -128,7 +129,7 @@ public class OnTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var item = Item();
+        var item = Item(app.actor.list.User.Context);
         var ran = new List<string>();
         var own = item.Own();
         own.Bind("start", When.after, (_, _, ctx) =>
@@ -150,7 +151,7 @@ public class OnTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var item = Item();
+        var item = Item(app.actor.list.User.Context);
         var calls = 0;
         item.Own().Bind("start", When.before, (_, _, ctx) =>
         {
@@ -167,7 +168,7 @@ public class OnTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var item = Item();
+        var item = Item(app.actor.list.User.Context);
         var times = 0;
         item.Own().Bind("start", When.before, async (fired, result, ctx) =>
         {
@@ -183,7 +184,7 @@ public class OnTests
     [Test] public async Task AnActorsBinding_FiresOnlyForThatActor_AnAppsForEvery()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var item = Item();
+        var item = Item(app.actor.list.User.Context);
         var ran = new List<string>();
         var own = item.Own();
         own.Bind("set", When.after, Record(ran, "user's"), app.actor.list.User, Scope.actor);
@@ -201,13 +202,13 @@ public class OnTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var type = Item();
-        var wanted = Item();
+        var type = Item(app.actor.list.User.Context);
+        var wanted = Item(app.actor.list.User.Context);
         var ran = new List<string>();
         type.Own().Bind("create", When.after, Record(ran, "fired"), app.actor.list.User, Scope.actor,
             (fired, _) => ReferenceEquals(fired, wanted));
 
-        await type.on["create"]!.after.Start(Item(), context.Ok(), context);
+        await type.on["create"]!.after.Start(Item(app.actor.list.User.Context), context.Ok(), context);
         await Assert.That(ran).IsEmpty();
         await type.on["create"]!.after.Start(wanted, context.Ok(), context);
         await Assert.That(ran).IsEquivalentTo(new[] { "fired" });
@@ -217,7 +218,7 @@ public class OnTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var item = Item();
+        var item = Item(app.actor.list.User.Context);
         var ran = new List<string>();
         var binding = item.Own().Bind("start", When.after, Record(ran, "fired"), app.actor.list.User, Scope.actor);
 
@@ -231,7 +232,7 @@ public class OnTests
     [Test] public async Task AClone_IsANewValue_WithNothingBound()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var item = Item();
+        var item = Item(app.actor.list.User.Context);
         item.Set("a", false, 1, app.actor.list.User.Context);
         item.Own().Bind("start", When.after, Record(new List<string>(), "x"), app.actor.list.User, Scope.actor);
 
@@ -246,9 +247,9 @@ public class OnTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var plain = new global::app.type.item.dict.@this();
+        var plain = context.Dict();
         plain.Set("a", false, 1, context);
-        var bound = new global::app.type.item.dict.@this();
+        var bound = context.Dict();
         bound.Set("a", false, 1, context);
         bound.Own().Bind("start", When.after, Record(new List<string>(), "x"), app.actor.list.User, Scope.actor);
 

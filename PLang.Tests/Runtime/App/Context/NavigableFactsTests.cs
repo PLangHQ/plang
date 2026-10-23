@@ -22,6 +22,11 @@ public class NavigableFactsTests
         "app.type.item.list.this.First",
         "app.type.item.list.this.Last",
         "app.type.item.list.this.Random",
+        // a dict's keys, born per ask from its key names: nothing kept, the dict untouched
+        "app.type.item.dict.key.this.list",
+        "app.type.item.input.modifier.list.this.list",
+        // a signature past its expiry by the asker's clock: the clock read, nothing changed
+        "app.type.item.signature.this.Expired",
         // the same location written from the asker's root
         "app.type.item.path.this.Relative",
         "app.type.item.path.file.this.Relative",
@@ -38,6 +43,24 @@ public class NavigableFactsTests
         "app.type.item.path.file.this.Exists",
         "app.type.item.path.http.this.Exists",
         "app.type.item.path.file.this.Size",
+        // a datetime's parts and a duration's units: made per ask by the asker's types, the value untouched
+        "app.type.item.datetime.this.Year",
+        "app.type.item.datetime.this.Month",
+        "app.type.item.datetime.this.Day",
+        "app.type.item.datetime.this.Hour",
+        "app.type.item.datetime.this.Minute",
+        "app.type.item.datetime.this.Second",
+        "app.type.item.datetime.this.Millisecond",
+        "app.type.item.datetime.this.Ticks",
+        "app.type.item.datetime.this.Weekday",
+        "app.type.item.datetime.this.Date",
+        "app.type.item.datetime.this.Time",
+        "app.type.item.datetime.this.Offset",
+        "app.type.item.duration.this.Days",
+        "app.type.item.duration.this.Hours",
+        "app.type.item.duration.this.Minutes",
+        "app.type.item.duration.this.Seconds",
+        "app.type.item.duration.this.Milliseconds",
     };
 
     [Test] public async Task EveryNavigableMethod_IsAFactReadForIt()

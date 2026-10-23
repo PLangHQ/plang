@@ -30,10 +30,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The run's tests.</summary>
     public static list.@this List(global::app.@this app) => new(app);
 
-    public @this()
+    /// <summary>A test, born holding its type and its tag and timing lists from <paramref name="types"/>, the app's
+    /// type list (read at birth, never kept).</summary>
+    public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
     {
-        Tags = new global::app.type.item.list.@this<global::app.type.item.tag.@this>();
-        Timings = new global::app.type.item.list.@this<global::app.test.timing.@this>();
+        Tags = new global::app.type.item.list.@this<global::app.type.item.tag.@this>(
+            types[typeof(global::app.type.item.list.@this<global::app.type.item.tag.@this>)]);
+        Timings = new global::app.type.item.list.@this<global::app.test.timing.@this>(
+            types[typeof(global::app.type.item.list.@this<global::app.test.timing.@this>)]);
     }
 
     /// <summary>
@@ -46,21 +50,22 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         var reach = new List<global::app.goal.@this> { goal };
         reach.AddRange(await goal.Callee(context));
-        var test = new @this { Goal = goal, Reach = reach };
+        var test = new @this(context.App.type.list) { Goal = goal, Reach = reach };
 
         test.Tags.Add(goal.Tag);
+        var tag = context.App.type.list[typeof(global::app.type.item.tag.@this)];
         foreach (var reached in reach)
             foreach (var step in reached.Step.Items())
                 foreach (var action in step.Code.Items())
                     foreach (var required in action.Requirement)
-                        if (global::app.type.item.tag.@this.Create(required) is { } tag) test.Tags.Add(tag);
+                        if (global::app.type.item.tag.@this.Create(required, tag) is { } capability) test.Tags.Add(capability);
 
-        if (goal.Tag.Has(new global::app.type.item.tag.@this("skip")))
+        if (goal.Tag.Has(new global::app.type.item.tag.@this("skip", tag)))
         {
             test.Status = Status.Skipped;
             test.StatusReason = "tagged 'skip'";
         }
-        else if (context.Setting.Of<setting.@this>().Exclusion(test, context) is { } reason)
+        else if ((await context.Setting.Get<setting.@this>()).Exclusion(test, context) is { } reason)
         {
             test.Status = Status.Skipped;
             test.StatusReason = reason;
@@ -81,7 +86,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public required global::app.goal.@this Goal { get; init; }
 
     /// <summary>The test's goal, by name — the report's reference to it.</summary>
-    [Out] public string Name => Goal.Name;
+    [Out, LlmBuilder] public string Name => Goal.Name;
 
     /// <summary>The test's goal file.</summary>
     [Out] public global::app.type.item.path.@this? Path => Goal.Path;
@@ -92,14 +97,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Lifecycle status: Ready/Stale/Skipped after discovery,
     /// Pass/Fail/Timeout after execution. A closed set — stays a C# enum, rides
     /// the wire as its name (like <c>Goal.Visibility</c>).</summary>
-    [Out] public Status Status { get; set; } = Status.Ready;
+    [Out, LlmBuilder] public Status Status { get; set; } = Status.Ready;
 
     /// <summary>Human-readable reason for a non-Ready discovery status (e.g., "no .pr", "rebuild needed").</summary>
-    [Out] public global::app.type.item.text.@this? StatusReason { get; set; }
+    [Out, LlmBuilder] public global::app.type.item.text.@this? StatusReason { get; set; }
 
     /// <summary>The test's tags: the goal's own (test.tag) ∪ the capabilities its reached
     /// actions require. Set by <see cref="app.test.list.@this.Create"/>.</summary>
-    [Out] public global::app.type.item.list.@this<global::app.type.item.tag.@this> Tags { get; }
+    [Out, LlmBuilder] public global::app.type.item.list.@this<global::app.type.item.tag.@this> Tags { get; }
 
     // --- Execution (empty until the test runs) ---
 
@@ -107,7 +112,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [Out] public global::app.type.item.duration.@this Duration { get; private set; } = System.TimeSpan.Zero;
 
     /// <summary>Error captured on fail/error. Carries AssertionError.Variables on assertion failures.</summary>
-    [Out] public global::app.error.@this? Error { get; private set; }
+    [Out, LlmBuilder] public global::app.error.@this? Error { get; private set; }
 
     /// <summary>Text produced via the output channel during execution. Rendered on failure
     /// when verbose is off. Named Stdout (not Output) — Output is the wire-write method.</summary>
@@ -126,20 +131,20 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// </summary>
     public async System.Threading.Tasks.Task Start(global::app.@this app, global::app.actor.context.@this context)
     {
-        var own = app.actor.list.User.Context;
+        var user = app.actor.list.User.Context;
         Begin();
-        global::app.@event.binding.@this[] watching = [app.test.list.Report.Coverage.Watch(own), .. await Time(own)];
+        global::app.@event.binding.@this[] watching = [app.test.list.Report.Coverage.Watch(user), .. await Time(user)];
 
-        System.TimeSpan timeout = context.Setting.Of<global::app.test.setting.@this>().Timeout;
+        System.TimeSpan timeout = (await context.Setting.Get<global::app.test.setting.@this>()).Timeout;
         using var cts = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
         cts.CancelAfter(timeout <= System.TimeSpan.Zero ? System.Threading.Timeout.InfiniteTimeSpan : timeout);
-        own.PushCancellation(cts);
+        user.PushCancellation(cts);
         var timedOut = () => cts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested;
         try
         {
             var loaded = await app.goal.Load(Goal.Path!.ToString());
             var result = loaded.Success
-                ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(own)
+                ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(user)
                 : loaded;
             if (timedOut()) Complete(Status.Timeout);
             else Complete(result);
@@ -154,7 +159,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         }
         finally
         {
-            own.PopCancellation();
+            user.PopCancellation();
             Stdout = app.test.list.Session?.Text;
             foreach (var binding in watching) binding.Remove();
         }
@@ -166,8 +171,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private async System.Threading.Tasks.Task<global::app.@event.binding.@this[]> Time(global::app.actor.context.@this context)
     {
         var system = context.App.actor.list.System;
-        var call = new global::app.call.setting.@this().Path;
-        await system.Setting.Set(call + ".timing", system.Context.Ok(true));
+        system.Setting.Set(system.Setting.Address(typeof(global::app.call.setting.@this), "timing"), true);
 
         var entry = Goal.Path?.ToString();
         bool Own(global::app.goal.step.@this step) => string.Equals(step.Goal.Path?.ToString(), entry, System.StringComparison.Ordinal);
@@ -175,7 +179,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         [
             context.App.type.list["step"].Own().Bind("start", global::app.@event.When.after, (item, _, ctx) =>
             {
-                if (item is global::app.goal.step.@this step && Own(step) && ctx.call.Current?.Duration is { } elapsed)
+                if (item is global::app.goal.step.@this step && Own(step) && ctx.call.Current?.Duration(ctx) is { } elapsed)
                     Timings.Add(new global::app.test.timing.@this { Step = step, Elapsed = elapsed });
                 return System.Threading.Tasks.Task.FromResult(ctx.Ok());
             }, context.Actor, global::app.@event.binding.Scope.actor),
@@ -194,10 +198,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         sb.AppendLine("    FAIL: " + Goal.Path);
         if (Error is AssertionError assert)
         {
-            var expected = await global::app.type.item.@this.Create(assert.Expected, context).Debug(context);
-            var actual = await global::app.type.item.@this.Create(assert.Actual, context).Debug(context);
-            sb.AppendLine($"      Expected: {expected}");
-            sb.AppendLine($"      Actual:   {actual}");
+            // as the assertion showed them in the test's own context — never filled again in this, the runner's
+            sb.AppendLine($"      Expected: {assert.Expected}");
+            sb.AppendLine($"      Actual:   {assert.Actual}");
             if (assert.Variables is { CountRaw: > 0 } variables)
             {
                 sb.AppendLine("      Variables:");
@@ -222,13 +225,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     private static readonly System.Text.RegularExpressions.Regex Ansi =
         new(@"\x1B\[[0-?]*[ -/]*[@-~]", System.Text.RegularExpressions.RegexOptions.Compiled);
-
-    /// <summary>Self-write: a test is a structural item — its tagged [Out] fields ride the
-    /// wire (the report serializes it), no hand-mapped shape.</summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => OutputTagged(writer, mode, context);
 
     // --- Execution transitions ---
 

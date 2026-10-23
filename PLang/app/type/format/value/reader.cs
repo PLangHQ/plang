@@ -22,7 +22,6 @@ public struct Reader : IReader
 
     public Reader(object value) => _value = value;
 
-    public string Format => "value";
 
     public TokenKind Peek() => _value switch
     {

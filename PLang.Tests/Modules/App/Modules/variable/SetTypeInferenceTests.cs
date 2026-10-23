@@ -98,11 +98,10 @@ public class SetTypeInferenceTests
     }
 
     // A CLR list is aliased as the new list's backing — no JSON walk, no copy. The
-    // value door answers the native list.@this; the CLR exit door hands the SAME
-    // List<object?> instance back as long as the list was only read (every slot
-    // still raw).
+    // value door answers the native list.@this; the CLR exit door hands back a C# list
+    // of its own, each row lowered as it is read.
     [Test]
-    public async Task Set_ListValue_AliasesSourceInstance()
+    public async Task Set_ListValue_LowersToAListOfItsOwn()
     {
         var context = _app.actor.list.User.Context;
         var src = new List<object?> { "a", "b" };
@@ -112,8 +111,105 @@ public class SetTypeInferenceTests
         var stored = await context.Variable.Get("list");
         var lst = (await stored.Value()) as global::app.type.item.list.@this;
         await Assert.That(lst).IsNotNull();
-        // The CLR exit door returns the aliased backing itself — same ref, O(1).
-        await Assert.That(ReferenceEquals(lst!.Clr<List<object?>>(), src)).IsTrue();
+        var lowered = lst!.Clr<List<object?>>()!;
+        await Assert.That(ReferenceEquals(lowered, src)).IsFalse();
+        await Assert.That(lowered).IsEquivalentTo(src);
+    }
+
+    // A row is made at its read and nothing is written back, so a write through a row that was read
+    // (`set %rows[0].name% = "x"`) must still reach the list: the next read sees it.
+    [Test]
+    public async Task Set_ThroughARowThatWasRead_ReachesTheList()
+    {
+        var context = _app.actor.list.User.Context;
+        var rows = new List<object?> { new Dictionary<string, object?> { ["name"] = "a" } };
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%rows%", "variable"), ("value", rows)).Start(context)).IsSuccess();
+        var row = new global::app.type.item.variable.parser.@this("%rows[0].name%", _app.type.list).Variable[0];
+        await Assert.That((await (await row.Start(context)).Value())?.ToString()).IsEqualTo("a");
+
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%rows[0].name%", "variable"), ("value", "x")).Start(context)).IsSuccess();
+
+        await Assert.That((await (await row.Start(context)).Value())?.ToString()).IsEqualTo("x");
+    }
+
+    // A write through a read row reaches the list whatever C# container the row came in: one plang can't share (a
+    // Dictionary<string, string>, a string[]) is made into its plang value at the read, and the write must still land.
+    [Test]
+    public async Task Set_ThroughARowOfAStringDictionary_ReachesTheList()
+        => await WrittenThrough(new List<object?> { new Dictionary<string, string> { ["name"] = "a" } }, "%rows[0].name%");
+
+    [Test]
+    public async Task Set_ThroughARowOfAStringArray_ReachesTheList()
+        => await WrittenThrough(new List<object?> { new[] { "a", "b" } }, "%rows[0][0]%");
+
+    [Test]
+    public async Task Set_ThroughADictEntryOfAStringDictionary_ReachesTheDict()
+        => await WrittenThrough(new Dictionary<string, object?> { ["headers"] = new Dictionary<string, string> { ["name"] = "a" } }, "%rows.headers.name%");
+
+    [Test]
+    public async Task Set_ThroughARowOfARow_ReachesTheList()
+        => await WrittenThrough(new List<object?> { new List<Dictionary<string, string>> { new() { ["name"] = "a" } } }, "%rows[0][0].name%");
+
+    [Test]
+    public async Task Set_ThroughADictEntryUnderAListRow_ReachesTheList()
+        => await WrittenThrough(new List<object?> { new Dictionary<string, Dictionary<string, string>> { ["headers"] = new() { ["name"] = "a" } } }, "%rows[0].headers.name%");
+
+    private async Task WrittenThrough(object rows, string path)
+    {
+        var context = _app.actor.list.User.Context;
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%rows%", "variable"), ("value", rows)).Start(context)).IsSuccess();
+        var row = new global::app.type.item.variable.parser.@this(path, _app.type.list).Variable[0];
+        await Assert.That((await (await row.Start(context)).Value())?.ToString()).IsEqualTo("a");
+
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", path, "variable"), ("value", "x")).Start(context)).IsSuccess();
+
+        await Assert.That((await (await row.Start(context)).Value())?.ToString()).IsEqualTo("x");
+    }
+
+    // A set binds the value under the variable's name: the action's own Value parameter (named "Value", as a .pr row
+    // names it) is never what the variable is called — with or without `as`.
+    [Test]
+    public async Task Set_BindsUnderTheVariablesName()
+    {
+        var context = _app.actor.list.User.Context;
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("Value", "v")).Start(context)).IsSuccess();
+
+        await Assert.That((await context.Variable.Get("x")).Name).IsEqualTo("x");
+    }
+
+    [Test]
+    public async Task Set_As_BindsUnderTheVariablesName()
+    {
+        var context = _app.actor.list.User.Context;
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%y%", "variable"), ("Value", "42"),
+            ("Type", _app.type.list["number"])).Start(context)).IsSuccess();
+
+        await Assert.That((await context.Variable.Get("y")).Name).IsEqualTo("y");
+    }
+
+    // A dict entry written from another variable (`set %d.a% = %x%`) is held under its key; reading it never renames
+    // x's own binding.
+    [Test]
+    public async Task Set_DictEntryFromAVariable_LeavesThatVariablesNameAlone()
+    {
+        var context = _app.actor.list.User.Context;
+        Task<global::app.data.@this> Set(string name, object? value) => global::PLang.Tests.Shared.Make.Action(context,
+            "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", name, "variable"), ("value", value)).Start(context);
+        await (await Set("%x%", "v")).IsSuccess();
+        var named = (await context.Variable.Get("x")).Name;
+        await (await Set("%d%", new Dictionary<string, object?>())).IsSuccess();
+        await (await Set("%d.a%", "%x%")).IsSuccess();
+
+        var a = await new global::app.type.item.variable.parser.@this("%d.a%", _app.type.list).Variable[0].Start(context);
+        await Assert.That((await a.Value())?.ToString()).IsEqualTo("v");
+
+        await Assert.That((await context.Variable.Get("x")).Name).IsEqualTo(named);
     }
 
     // No copy at set: a later in-place edit of the SOURCE list is visible through
@@ -138,7 +234,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         var src = new List<object?> { "a", "b", "c" };
-        var lst = new global::app.type.item.list.@this(src);
+        var lst = new global::app.type.item.list.@this(src, context.App.type.list["list"]);
 
         lst.SetAt(2, new Data("", 9L, context: context));
 
@@ -146,10 +242,10 @@ public class SetTypeInferenceTests
         await Assert.That((await lst.At(2, _app.actor.list.User.Context)!.Value())).IsTypeOf<global::app.type.item.number.@this>();
     }
 
-    // A Dictionary<string,object?> is aliased the same way — the CLR exit door
-    // returns the same instance after a pure read.
+    // A Dictionary<string,object?> is aliased the same way; the CLR exit door hands back a
+    // C# dictionary of its own, its entries as they were read.
     [Test]
-    public async Task Set_DictValue_AliasesSourceInstance()
+    public async Task Set_DictValue_LowersToADictOfItsOwn()
     {
         var context = _app.actor.list.User.Context;
         var src = new Dictionary<string, object?> { ["k"] = "v" };
@@ -159,9 +255,10 @@ public class SetTypeInferenceTests
         var stored = await context.Variable.Get("d");
         var d = (await stored.Value()) as global::app.type.item.dict.@this;
         await Assert.That(d).IsNotNull();
-        // A read of a key must not knock the dict off the same-ref fast path.
         await Assert.That((await d!.Get("k", _app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("v");
-        await Assert.That(ReferenceEquals(d.Clr<Dictionary<string, object?>>(), src)).IsTrue();
+        var lowered = d.Clr<Dictionary<string, object?>>()!;
+        await Assert.That(ReferenceEquals(lowered, src)).IsFalse();
+        await Assert.That(lowered["k"]).IsEqualTo("v");
     }
 
     [Test]
@@ -216,7 +313,7 @@ public class SetTypeInferenceTests
     public async Task Set_ListAlias_InPlaceAddVisibleThroughBothNames()
     {
         var context = _app.actor.list.User.Context;
-        var x = new global::app.type.item.list.@this();
+        var x = new global::app.type.item.list.@this(context.App.type.list["list"]);
         x.Add(new Data("", 1L, context: context)); x.Add(new Data("", 2L, context: context));
         context.Variable.Set("x", x);
 

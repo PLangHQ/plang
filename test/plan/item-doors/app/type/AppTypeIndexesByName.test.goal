@@ -1,0 +1,5 @@
+/ item-doors 63: %!app.type["text"]% is the text type: the type system's root node indexes by name. A guard: green before and
+/ after (the lookup answered the same through the old root), it must stay green through the node moving to app/type/node.
+AppTypeIndexesByName
+- set %t% = %!app.type["text"]%
+- assert.equals(Expected="text", Actual=%t.name%, Message="a type picked by name is that type")

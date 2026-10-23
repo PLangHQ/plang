@@ -1,18 +1,19 @@
 namespace app.type.item.duration;
 
 /// <summary>
-/// String → duration. Each standard a duration is written in is a kind of it (<c>kind/short</c> 30s,
-/// <c>kind/iso</c> PT30S, <c>kind/dotnet</c> 00:00:30) and reads its own form; the forms don't overlap, so the
-/// text names its kind and the duration is born with it.
+/// String → duration. Each standard a duration is written in is a kind of it and a class of its own
+/// (<c>short</c> 30s, <c>iso</c> PT30S, <c>dotnet</c> 00:00:30), each reading its own form; the forms don't overlap,
+/// so the text names its standard and the duration is born that one. The standards asked are the app's own kinds of
+/// duration a text is written in (never a span, which has no form of its own), each through its own type's make.
 /// </summary>
-public sealed partial class @this
+public abstract partial class @this
 {
     public static @this? Resolve(string raw, global::app.actor.context.@this context)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
         raw = raw.Trim();
-        foreach (kind.@this standard in new kind.@this[] { new kind.@short.@this(), new kind.iso.@this(), new kind.dotnet.@this() })
-            if (standard.Span(raw) is { } span) return new @this(span, standard);
+        foreach (var type in context.App.type.list["duration"].kind.list(context).Items().Where(type => !type.Internal))
+            if (type.Make(raw, new global::app.data.@this("", context: context)) is @this span) return span;
         return null;
     }
 }

@@ -366,4 +366,8 @@ todo, auditor O1) will close it uniformly.
 
 These are C# properties on `datetime.@this`, so PLang's dot-navigation (`%Now.Date%`, `%Now.TimeOfDay%`, `%Now.Ticks%`) reaches them through the normal `Data.GetChild()` path. Each returns a born-typed Data wrapping the corresponding PLang type — `%Now.Date%` is a `date`, `%Now.TimeOfDay%` is a `time`, `%Now.Offset%` is a `duration`. Scalar members (`.Ticks`, `.Millisecond`, `.DayOfYear`, `.DayOfWeek`) return a `number`.
 
+## A value becomes text only through Output
+
+A value has one door for how it looks: `Output`, through a writer. There is no `Text` member and no `ToString()` for display. A duration shown as text is the duration written by a text writer, and its kind writes it (`30s` short, `PT5M` iso: `kind.Write(value, writer)`). The debugger writes values through `Output` in its Debug view, never through `ToString()`. A C# `ToString()` on a value is for nothing plang shows (item-doors 57, Ingi: "we want to avoid any ToString, debugger should also be using Output"). Text made from a value (`%d as text%`) is that value's `Output` through a text writer, not its CLR form.
+
 **`Data.Clr<T>(fallback)`.** Added in this branch as an async companion to `item.Clr<T>()`. Used by system-variable reads and handlers that need a typed CLR value out of a `Data` without crashing on absent entries: `await data.Clr<int>(0)` returns `0` if the slot is null/absent, or the extracted CLR `int` otherwise. The sync `item.Clr<T>()` / `item.Clr(Type)` family (base throws, each type hands its backing through `ClrConvert`) remains the leaf door; `Data.Clr<T>(fallback)` is a convenience wrapper that peeks the underlying item and falls back to the provided default.

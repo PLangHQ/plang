@@ -108,7 +108,7 @@ public class OutsideTextTests
     {
         var (app, root, ctx) = await NewApp();
         await using var _ = app;
-        var count = (await (await new global::app.type.item.variable.@this("!app.type.list.count").Start(ctx)).Value()).ToString();
+        var count = (await (await new global::app.type.item.variable.@this("!app.type.list.count", ctx.App.type.list).Start(ctx)).Value()).ToString();
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "G", "/g.goal",
             Make.Step("save", Make.Action(ctx, "file", "save",
                 Make.Param(ctx, "Path", "/.build/traces/" + AppVariable + "/manifest.json", new global::app.type.@this("path", template: new global::app.type.item.template.kind.plang.@this()))))));

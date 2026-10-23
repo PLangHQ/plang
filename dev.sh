@@ -261,6 +261,10 @@ case "${1:-build}" in
         echo "→ run $p: $((SECONDS - started))s"
       done
     else
+      # what this sweep builds and tests, taken before the build: an edit made while it runs is not in it, so the
+      # next sweep sees that edit as a change
+      # (`|| true`: a tree with no C# change lists no files, which grep answers with 1 — not a failure)
+      tested=$(snapshot || true)
       build_all
       # a sweep: only what changed since the last complete one (--force runs every suite again)
       if [ "${2:-}" != "--force" ] && [ -f "$SWEEP" ]; then
@@ -280,7 +284,7 @@ case "${1:-build}" in
       done
       rc=0; run_all_suites Debug "$suites" || rc=$?
       # only a complete sweep is the next one's reference (a suite cut off or crashed is run again)
-      [ "$SWEEP_COMPLETE" = 1 ] && snapshot > "$SWEEP"
+      [ "$SWEEP_COMPLETE" = 1 ] && echo "$tested" > "$SWEEP"
       exit $rc
     fi
     ;;

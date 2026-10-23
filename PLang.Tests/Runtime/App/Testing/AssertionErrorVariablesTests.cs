@@ -29,7 +29,7 @@ public class AssertionErrorVariablesTests
         _app = new global::app.@this("/test").Testing();
     }
 
-    private Data D(object? value) => value == null ? new Data("") : _app.actor.list.User.Context.Ok(value);
+    private Data D(object? value) => value == null ? new Data("", context: _app.actor.list.User.Context) : _app.actor.list.User.Context.Ok(value);
 
     // New AssertionError has Variables == null. Only handlers populate it; unrelated error
     // construction paths leave it null.
@@ -39,7 +39,7 @@ public class AssertionErrorVariablesTests
         var err = new AssertionError("expected x, got y");
         await Assert.That(err.Variables).IsNull();
 
-        var err2 = new AssertionError("Expected: 42, Actual: 99", 42, 99, "msg");
+        var err2 = new AssertionError("Expected: 42, Actual: 99", "42", "99", "msg");
         await Assert.That(err2.Variables).IsNull();
     }
 
@@ -48,7 +48,7 @@ public class AssertionErrorVariablesTests
     [Test]
     public async Task AssertionError_Variables_PropertyRoundtrip()
     {
-        var err = new AssertionError("Expected: 1, Actual: 2", 1, 2, null);
+        var err = new AssertionError("Expected: 1, Actual: 2", "1", "2", null);
         await _app.actor.list.User.Context.Variable.Set("x", 1);
         var captured = _app.actor.list.User.Context.Variable.Snapshot();
         err.Variables = captured;
@@ -82,11 +82,11 @@ public class AssertionErrorVariablesTests
     {
         var context = _app.actor.list.User.Context;
         context.Variable.Set("secret", "s3cr3t");
-        await using var frame = context.call.Push(global::PLang.Tests.App.CallStackTests.CallStackTestHelpers.MakeAction(context, "Goal"));
+        await using var frame = context.call.Push(global::PLang.Tests.App.CallStackTests.CallStackTestHelpers.MakeAction(context, "Goal"), await context.call.Setting());
 
         var plain = new global::app.error.@this("boom", "Boom", 500);
         frame.Record(plain, context);
-        var assertion = new AssertionError("Expected: 1, Actual: 2", 1, 2, null);
+        var assertion = new AssertionError("Expected: 1, Actual: 2", "1", "2", null);
         frame.Record(assertion, context);
 
         await Assert.That(plain.Variables).IsNull();

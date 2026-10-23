@@ -34,7 +34,7 @@ public class AppStartTests
     }
 
     private static async Task<global::app.data.@this> Read(string variable, global::app.actor.context.@this context)
-        => await new global::app.type.item.variable.parser.@this(variable).Variable.Single().Start(context);
+        => await new global::app.type.item.variable.parser.@this(variable, context.App.type.list).Variable.Single().Start(context);
 
     [Test] public async Task TheApp_IsAnItem_AndNavigatesAsItDid()
     {

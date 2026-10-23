@@ -25,6 +25,10 @@ public sealed class FormatAttribute : System.Attribute
     /// text format that arrives as another (<c>application/xml</c>) or has none (<c>ini</c>) says so.</summary>
     public bool Text { get; set; }
 
+    /// <summary>Whether content of this format is what plang keeps (a <c>.pr</c>): written and read in the Store view
+    /// when no one says another. Every other format crosses to others, in the Out view.</summary>
+    public bool Store { get; set; }
+
     public FormatAttribute(string name, string? mime = null, params string[] extension)
     {
         Name = name;

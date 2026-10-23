@@ -6,12 +6,15 @@ namespace app.module.llm.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
-    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
+    /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
     /// <summary>Whether an answer kept from before is used — used, unless a step or this setting skips it.</summary>
     [Out, Store] public global::app.type.item.choice.@this<global::app.module.cache.type.cache> Cache { get; set; }
-        = new(global::app.module.cache.type.cache.use);
+        = global::app.module.cache.type.cache.use;
 
     /// <summary>The key a query is sent with — <c>%!llm.setting.key%</c>; when none is saved, the
     /// <c>OPENAI_API_KEY</c> environment variable's. Never shown.</summary>
@@ -36,8 +39,8 @@ public sealed class @this : global::app.type.item.setting.module.@this
                 + (asked.Error is { } why ? $" ({why.Message})" : ""),
                 "MissingLlmKey", 401));
         Key = secret.Characters;
-        var saved = await context.Setting.Save(this);
-        return saved.Success ? context.Ok(Key) : context.Error<global::app.type.item.text.@this>(saved.Error!);
+        var row = await context.Setting.Save(this);
+        return row.Success ? context.Ok(Key) : context.Error<global::app.type.item.text.@this>(row.Error!);
     }
 
     /// <summary>Where a query is sent — when none is saved, the <c>OPENAI_API_ENDPOINT</c> environment variable's,

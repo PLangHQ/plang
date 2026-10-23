@@ -145,7 +145,7 @@ public class SharedProgramTests
     {
         const int n = 500;
         await _app.actor.list.User.Context.Variable.Set("x", "user");
-        if (listExists) await _app.actor.list.User.Context.Variable.Set("l", new global::app.type.item.list.@this());
+        if (listExists) await _app.actor.list.User.Context.Variable.Set("l", new global::app.type.item.list.@this(_app.type.list["list"]));
         var goal = await ReadFromPr("Start", global::PLang.Tests.Shared.Make.Step("add x",
             global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "list", "add", ("ListName", Var("ListName", "l")), ("Value", "%x%"))));
 
@@ -170,7 +170,8 @@ public class SharedProgramTests
             Actor: _app.actor.list.User.Name,
             Path: file,
             Verbs: new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read },
-            Match: global::app.type.item.permission.Match.exact);
+            Match: global::app.type.item.permission.Match.exact,
+            _app.type.list[typeof(global::app.type.item.permission.@this)]);
         await _app.actor.list.User.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: _app.actor.list.User.Context), persist: false);
         // Out of the app root: the root and the file both sit under the temp folder.
         var read = await ActionFromPr("file", "read", ("Path", "../" + System.IO.Path.GetFileName(dir) + "/data.txt"));

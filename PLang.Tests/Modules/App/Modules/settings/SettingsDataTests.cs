@@ -31,8 +31,8 @@ public class SettingsDataTests
     }
 
     // The setting as the actor's settings hold it now — llm's own class.
-    private global::app.module.llm.setting.@this Llm(global::app.actor.context.@this ctx)
-        => ctx.Setting.Of<global::app.module.llm.setting.@this>();
+    private async Task<global::app.module.llm.setting.@this> Llm(global::app.actor.context.@this ctx)
+        => (await ctx.Setting.Get<global::app.module.llm.setting.@this>());
 
     private static global::app.data.@this<global::app.type.item.setting.@this> Given(
         global::app.type.item.setting.@this setting, global::app.actor.context.@this ctx)
@@ -42,38 +42,43 @@ public class SettingsDataTests
     public async Task Save_StoresTheSettingWhole_AsTheActorsRow()
     {
         var ctx = _app.actor.list.System.Context;
-        var llm = Llm(ctx);
-        llm.Cache = new(global::app.module.cache.type.cache.skip);
+        var llm = await Llm(ctx);
+        llm.Cache = ctx.Choice(global::app.module.cache.type.cache.skip);
 
         var result = await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start();
         await result.IsSuccess();
         // no value rides out — a setting may hold secrets
         await Assert.That(result.Peek() is null or global::app.type.item.@null.@this).IsTrue();
-        await Assert.That(Llm(ctx).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.skip);
+        await Assert.That((await Llm(ctx)).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.skip);
     }
 
     [Test]
     public async Task Remove_GoesBackToTheDefaults()
     {
         var ctx = _app.actor.list.System.Context;
-        var llm = Llm(ctx);
-        llm.Cache = new(global::app.module.cache.type.cache.skip);
+        var llm = await Llm(ctx);
+        llm.Cache = ctx.Choice(global::app.module.cache.type.cache.skip);
         await (await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start()).IsSuccess();
 
-        var result = await new global::app.module.setting.Remove(ctx) { Setting = Given(Llm(ctx), ctx) }.Start();
+        var result = await new global::app.module.setting.Remove(ctx) { Setting = Given(await Llm(ctx), ctx) }.Start();
         await result.IsSuccess();
-        await Assert.That(Llm(ctx).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.use);
+        await Assert.That((await Llm(ctx)).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.use);
     }
 
+    // A module's settings with no class of their own save this run's values at their address, as a dict row; an
+    // action of it reads the option from that row once this run's value is gone.
     [Test]
-    public async Task Save_ANodeThatIsNoClass_IsRefused()
+    public async Task Save_ANodeThatIsNoClass_KeepsItsValuesAsTheRow()
     {
         var ctx = _app.actor.list.System.Context;
-        var node = new global::app.type.item.setting.module.@this("http");
+        var node = new global::app.type.item.setting.module.@this("http", ctx.App.type.list[typeof(global::app.type.item.setting.module.@this)]);
+        ctx.Setting.Set("http.setting.timeout", ctx.Ok(42L));
 
-        var result = await new global::app.module.setting.Save(ctx) { Setting = Given(node, ctx) }.Start();
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("NotASettingClass");
+        await (await new global::app.module.setting.Save(ctx) { Setting = Given(node, ctx) }.Start()).IsSuccess();
+        ctx.Setting.Set("http.setting.timeout", null);
+
+        var read = await ctx.Setting.Get(ctx.App.Module("http")["request"]!, "timeout");
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -98,8 +103,8 @@ public class SettingsDataTests
         await using (var onDisk = new global::app.@this(_tempDir).TestSigning())
         {
             var ctx = onDisk.actor.list.System.Context;
-            var llm = Llm(ctx);
-            llm.Cache = new(global::app.module.cache.type.cache.skip);
+            var llm = await Llm(ctx);
+            llm.Cache = ctx.Choice(global::app.module.cache.type.cache.skip);
             await (await onDisk.actor.list.System.Setting.Save(llm)).IsSuccess();
 
             await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(_tempDir, ".data", "setting", "data.sqlite"))).IsTrue();
@@ -108,7 +113,7 @@ public class SettingsDataTests
         }
 
         await using var again = new global::app.@this(_tempDir).TestSigning();
-        var read = await new global::app.type.item.variable.@this("!llm.setting.cache").Start(again.actor.list.System.Context);
+        var read = await new global::app.type.item.variable.@this("!llm.setting.cache", again.type.list).Start(again.actor.list.System.Context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("skip");
     }
 

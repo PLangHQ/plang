@@ -22,55 +22,45 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
 {
     public static string Shape => "object";
 
-    // the host's clock when it happened ("t"): echoed with the picture that answers it, so the time from a click to
-    // its picture can be measured. Absent on input that needs no answer timed.
-    private readonly long? _stamp;
-
-    private protected @this(long? stamp) => _stamp = stamp;
+    /// <summary>Born holding the app's <paramref name="type"/> for its variant; its stamp a number from birth.</summary>
+    private protected @this(global::app.type.@this type, long? stamp) : base(type)
+        => Stamp = stamp is { } t ? global::app.type.item.number.@this.Create(t) : null;
 
     public override bool IsLeaf => false;
 
-    /// <summary>The host's clock when it happened, when it carries one.</summary>
-    [Out] public global::app.type.item.number.@this? Stamp => _stamp is { } t ? (global::app.type.item.number.@this)t : null;
+    /// <summary>The host's clock when it happened ("t"), when it carries one: echoed with the picture that answers it, so
+    /// the time from a click to its picture can be measured. Absent on input that needs no answer timed.</summary>
+    [Out] public global::app.type.item.number.@this? Stamp { get; }
 
     /// <summary>Hands itself to what takes input: the stamp first (the answer's picture echoes it), then the variant
     /// to the target's own door for it.</summary>
     public void Apply(ITarget target)
     {
-        if (_stamp is { } t) target.Stamped(t);
+        if (Stamp is { } t) target.Stamped(t.Clr<long>());
         Applied(target);
     }
 
     private protected abstract void Applied(ITarget target);
 
-    /// <summary>The modifier keys in <paramref name="held"/> (the wire's bits), by name.</summary>
-    private protected static global::app.type.item.list.@this<global::app.type.item.choice.@this<Modifier>> Named(int held)
-        => new(Enum.GetValues<Modifier>().Where(m => (held & (int)m) != 0)
-            .Select(m => (global::app.type.item.@this)new global::app.type.item.choice.@this<Modifier>(m)));
-
     /// <summary>Its members, then the stamp, inside the object the variant opens.</summary>
-    private protected void WriteStamp(global::app.type.format.IWriter writer)
+    private protected async System.Threading.Tasks.ValueTask WriteStamp(global::app.type.format.IWriter writer)
     {
-        if (_stamp is not { } t) return;
+        if (Stamp is not { } t) return;
         writer.Name("t");
-        writer.Long(t);
+        await t.Output(writer);
     }
 
     /// <summary>An input passes; anything else declines — an input is made by what saw it happen (a screen), or read
     /// back from its line.</summary>
     public static @this? Create(object? raw) => raw as @this;
 
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
         if (raw is @this input) return input;
         data.Fail(new global::app.error.@this("an input is made by a screen (a mouse, a key, typed text, back/forward/reload), or read from its line", "InputInvalid", 400));
         return null;
     }
 }
-
-/// <summary>A modifier key held — the wire's bits, as DevTools counts them.</summary>
-[Flags, global::app.Attributes.PlangType("modifier")]
-public enum Modifier { alt = 1, ctrl = 2, meta = 4, shift = 8 }
 
 /// <summary>What takes input — a display, a window: one door per variant, each handed the variant whole, to read what it
 /// needs of it.</summary>

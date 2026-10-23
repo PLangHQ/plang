@@ -27,7 +27,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A variable is set and removed through the variable type's events, then its own.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, global::app.actor.context.@this context) => depth switch
     {
-        0 => context.App.variable,
+        0 => context.App.variable.type,
         1 => this,
         _ => null,
     };
@@ -42,7 +42,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The hops that reach what the variable names, the root first.</summary>
     public code.@this Code { get; }
 
-    internal @this(string text, code.@this code)
+    internal @this(string text, code.@this code, global::app.type.@this type) : base(type)
     {
         Text = text;
         Code = code;
@@ -55,7 +55,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>One of the program's own variables: no <c>!</c> name and no binding on the way, its index and
     /// method values own too (<c>%user.items[i].name.replace("a", "b")%</c>). Content read from outside holds
     /// only these.</summary>
-    internal bool IsOwn => Code.IsOwn;
+    internal bool IsProgram => Code.IsProgram;
 
     /// <summary>A value reached by members only — <c>%x%</c>, <c>%user.name%</c>.</summary>
     internal bool IsMembers => !Code.Root.Name.StartsWith('!')
@@ -90,6 +90,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>The text between the % signs (<c>user.name</c>, <c>!data</c>) — the form the variable
     /// store takes while callers still hand it names.</summary>
+    [global::app.LlmBuilder]
     public string Name => Text.Length >= 2 ? Text[1..^1] : Text;
 
     /// <summary>Runs the code: what the variable holds.</summary>
@@ -111,9 +112,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // it is), so a variable used as a list is its content; a failure or an ask is left as it is.
     private async System.Threading.Tasks.ValueTask<global::app.data.@this> Held(actor.context.@this context)
     {
-        var held = await Start(context);
-        if (held.Success && !held.Exits) await held.Value();
-        return held;
+        var data = await Start(context);
+        if (data.Success && !data.Exits) await data.Value();
+        return data;
     }
 
     /// <summary>What the variable holds, as a <typeparamref name="TAs"/>, handed to <paramref name="then"/> —
@@ -133,13 +134,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         // changed in place, so what the root holds must be this context's own (a task's copy of its caller's)
         if (!Code.Root.Name.StartsWith('!')) await context.Variable.Own(Code.Root.Name);
-        var held = await Held(context);
-        return await held.Use<TAs>(async value =>
+        var data = await Held(context);
+        return await data.Use<TAs>(async value =>
         {
             var changed = await then(value);
             if (!changed.Success || changed.Exits) return changed;
-            var kept = await Replace(held, value, context);
-            return kept.Success && !kept.Handled ? changed : kept;
+            var answer = await Replace(data, value, context);
+            return answer.Success && !answer.Handled ? changed : answer;
         });
     }
 
@@ -181,7 +182,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// NAMES a thing — it is born from its text at the wire boundary, never converted from a value.
     /// Anything but a variable is a decline.
     /// </summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this v) return v;
         data.Fail(new global::app.error.@this(
@@ -202,7 +203,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var raw = value as string
             ?? (value as global::app.type.item.@this)?.Clr<string>()
             ?? value?.ToString() ?? "";
-        var parser = new parser.@this(raw);
+        var parser = new parser.@this(raw, context.App.type.list);
         return parser.Whole is { } born ? context.Ok(born) : context.Error(parser.Error[0]);
     }
 
@@ -213,17 +214,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static @this Resolve(string raw, actor.context.@this context, IReadOnlyList<@this>? given = null)
     {
         // a row's list holds it already — as written (%x%) or as its bare name (x)
-        if (given?.FirstOrDefault(v => v.Text == raw || v.Name == raw) is { } held) return held;
-        var parser = new parser.@this(raw);
+        if (given?.FirstOrDefault(v => v.Text == raw || v.Name == raw) is { } variable) return variable;
+        var parser = new parser.@this(raw, context.App.type.list);
         return parser.Whole ?? throw new global::app.error.AppException(parser.Error[0].Message, "InvalidVariable", 400);
     }
 
     /// <summary>A variable born from its text, for direct C# composition (tests, App.Run):
-    /// <c>new variable("myList")</c> names <c>%myList%</c>.</summary>
-    public @this(string name) : this(new parser.@this(name).Whole
+    /// <c>new variable("myList", types)</c> names <c>%myList%</c>, born holding <paramref name="types"/>' variable.</summary>
+    public @this(string name, global::app.type.list.@this types) : this(new parser.@this(name, types).Whole
                                      ?? throw new System.ArgumentException($"'{name}' is not a variable name.", nameof(name))) { }
 
-    private @this(@this born) : this(born.Text, born.Code) { }
+    private @this(@this variable) : this(variable.Text, variable.Code, variable.Type) { }
 
     public override string ToString() => Name;
 
@@ -248,8 +249,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         if (!string.Equals(key, "type", System.StringComparison.OrdinalIgnoreCase))
             return await base.Get(parent, key);
-        var held = await Start(parent.Context);
-        return held.IsInitialized ? new global::app.data.@this(key, held.Type, parent: parent) : held;
+        var data = await Start(parent.Context);
+        return data.IsInitialized ? new global::app.data.@this(key, data.Type, parent: parent) : data;
     }
 
     /// <summary>A reference renders itself FRESH every read — like a computed, never memoized onto
@@ -259,5 +260,5 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override bool Cacheable => false;
 
     /// <summary>A variable writes itself as the variable it names; the writer shows it.</summary>
-    public override void Write(global::app.type.format.IWriter w) => w.Variable(Name);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.Variable(Name); return default; }
 }

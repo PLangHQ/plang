@@ -1,0 +1,11 @@
+/ Stage 1 (decision 867): text's face without the name floor. `source.cs:115` today reads
+/ `_type.kind.IsText || _type.Name is "text"` — the Name fallback is only there because
+/ a kind built inline from a name (`type/this.cs:149`) answers `IsText=false` even for a
+/ text's own kind. When the type is born whole, the registered md kind carries
+/ `Text = true` (its mime `text/markdown` begins with `text/`), so `kind.istext` alone
+/ answers; the Name floor can go. Red on runtime2: today the fresh `kind.@this("md")`
+/ has `_text = false`, so `%x!type.kind.istext%` reads false (expected true).
+TextKindIsText
+- set %x% = "a" as text/md
+- assert %x!type.kind.name% equals "md"
+- assert %x!type.kind.istext% equals true

@@ -10,21 +10,21 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task ParallelBranches_DoNotPollute_EachOthersCurrent()
     {
-        var stack = new Calls(TestCalls.Settings());
-        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
+        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"), await stack.Setting());
 
         var branchACurrent = (object?)null;
         var branchBCurrent = (object?)null;
 
         async Task BranchA()
         {
-            await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+            await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
             await Task.Yield();
             branchACurrent = stack.Current;
         }
         async Task BranchB()
         {
-            await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
+            await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"), await stack.Setting());
             await Task.Yield();
             branchBCurrent = stack.Current;
         }
@@ -40,14 +40,14 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task ParallelBranches_ShareSameCaller()
     {
-        var stack = new Calls(TestCalls.Settings());
-        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
+        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"), await stack.Setting());
 
         var aCaller = (object?)null;
         var bCaller = (object?)null;
 
-        async Task BranchA() { await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A")); aCaller = a.Caller; await Task.Yield(); }
-        async Task BranchB() { await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B")); bCaller = b.Caller; await Task.Yield(); }
+        async Task BranchA() { await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting()); aCaller = a.Caller; await Task.Yield(); }
+        async Task BranchB() { await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"), await stack.Setting()); bCaller = b.Caller; await Task.Yield(); }
 
         await Task.WhenAll(BranchA(), BranchB());
 
@@ -58,11 +58,11 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task ParallelBranches_BothAppearInOuterChildren_HistoryOn()
     {
-        var stack = new Calls(TestCalls.Settings(new Dictionary<string, object?> { ["history"] = true }));
-        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
+        var stack = TestCalls.Stack(app, TestCalls.Settings(new Dictionary<string, object?> { ["history"] = true }));
+        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"), await stack.Setting());
 
-        async Task BranchA() { await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A")); await Task.Yield(); }
-        async Task BranchB() { await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B")); await Task.Yield(); }
+        async Task BranchA() { await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting()); await Task.Yield(); }
+        async Task BranchB() { await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"), await stack.Setting()); await Task.Yield(); }
 
         await Task.WhenAll(BranchA(), BranchB());
 
@@ -72,12 +72,12 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task AsyncLocal_RestoresOnDispose_InNestedAwait()
     {
-        var stack = new Calls(TestCalls.Settings());
-        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
+        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"), await stack.Setting());
 
         async Task NestedScope()
         {
-            await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "Inner"));
+            await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "Inner"), await stack.Setting());
             await Task.Yield();
         }
 
@@ -88,8 +88,8 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task AsyncLocal_FlowsIntoTaskRun()
     {
-        var stack = new Calls(TestCalls.Settings());
-        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
+        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"), await stack.Setting());
 
         var seen = await Task.Run(() => stack.Current);
         await Assert.That(seen).IsEqualTo(outer);
@@ -98,7 +98,7 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task FreshAsyncContext_HasNullCurrent()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
         await Task.Yield();
         await Assert.That(stack.Current).IsNull();
     }

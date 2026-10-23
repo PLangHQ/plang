@@ -45,7 +45,7 @@ public class LibrariesTests : System.IAsyncDisposable
         await using var modulesHost = new global::app.@this("/app").Testing();
         modulesHost.module.Register("test", "do", typeof(MockHandler));
 
-        await Assert.That((await modulesHost.module.Get("test")).Success).IsTrue();
+        await Assert.That((await modulesHost.module.Get("test", modulesHost.actor.list.User.Context)).Success).IsTrue();
     }
 
     [Test]
@@ -53,7 +53,7 @@ public class LibrariesTests : System.IAsyncDisposable
     {
         await using var modulesHost = new global::app.@this("/app").Testing();
 
-        await Assert.That((await modulesHost.module.Get("nonexistent_xyz_123")).Success).IsFalse();
+        await Assert.That((await modulesHost.module.Get("nonexistent_xyz_123", modulesHost.actor.list.User.Context)).Success).IsFalse();
     }
 
     [Test]
@@ -139,7 +139,7 @@ public class LibrariesTests : System.IAsyncDisposable
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        var (action, error) = (new PrAction { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
+        var (action, error) = (new PrAction(engine.type.list) { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
 
         await Assert.That(action).IsNotNull();
         await Assert.That(error).IsNull();
@@ -151,7 +151,7 @@ public class LibrariesTests : System.IAsyncDisposable
         await using var engine = new global::app.@this("/app").Testing();
         engine.module.Register("custom", "run", typeof(MockCodeGenHandler));
 
-        var (result, error) = (new PrAction { Module = engine.Module("custom"), Name = "run" }).Instance(app.actor.list.User.Context);
+        var (result, error) = (new PrAction(engine.type.list) { Module = engine.Module("custom"), Name = "run" }).Instance(app.actor.list.User.Context);
 
         await Assert.That(result).IsTypeOf<MockCodeGenHandler>();
         await Assert.That(error).IsNull();
@@ -163,7 +163,7 @@ public class LibrariesTests : System.IAsyncDisposable
         await using var engine = new global::app.@this("/app").Testing();
         engine.module.Register("legacy", "do", typeof(MockHandler));
 
-        var (action, error) = (new PrAction { Module = engine.Module("legacy"), Name = "do" }).Instance(app.actor.list.User.Context);
+        var (action, error) = (new PrAction(engine.type.list) { Module = engine.Module("legacy"), Name = "do" }).Instance(app.actor.list.User.Context);
 
         await Assert.That(action).IsNull();
         await Assert.That(error).IsNotNull();
@@ -175,7 +175,7 @@ public class LibrariesTests : System.IAsyncDisposable
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        var (action, error) = (new PrAction { Module = engine.Module("variable"), Name = "nope" }).Instance(app.actor.list.User.Context);
+        var (action, error) = (new PrAction(engine.type.list) { Module = engine.Module("variable"), Name = "nope" }).Instance(app.actor.list.User.Context);
 
         await Assert.That(action).IsNull();
         await Assert.That(error).IsNotNull();
@@ -189,7 +189,7 @@ public class LibrariesTests : System.IAsyncDisposable
         engine.module.Register("custom", "run", typeof(MockHandler));
         engine.module.Register("custom", "run", typeof(MockCodeGenHandler));
 
-        var (result, error) = (new PrAction { Module = engine.Module("custom"), Name = "run" }).Instance(app.actor.list.User.Context);
+        var (result, error) = (new PrAction(engine.type.list) { Module = engine.Module("custom"), Name = "run" }).Instance(app.actor.list.User.Context);
 
         await Assert.That(error).IsNull();
         await Assert.That(result).IsTypeOf<MockCodeGenHandler>();
@@ -201,8 +201,8 @@ public class LibrariesTests : System.IAsyncDisposable
         await using var engine = new global::app.@this("/app").Testing();
 
         // variable.set is type-registered (discovered via [Action] attribute)
-        var (action1, _) = (new PrAction { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
-        var (action2, _) = (new PrAction { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
+        var (action1, _) = (new PrAction(engine.type.list) { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
+        var (action2, _) = (new PrAction(engine.type.list) { Module = engine.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
 
         // Per-call instantiation — different instances each time
         await Assert.That(action1).IsNotNull();
@@ -330,7 +330,7 @@ public class LibrariesTests : System.IAsyncDisposable
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Context.Ok());
     }
 
     /// <summary>
@@ -347,7 +347,7 @@ public class LibrariesTests : System.IAsyncDisposable
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
         public Task<global::app.error.@this?> Attach(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
         { Action = action; Initialize(context.App!, context); return Task.FromResult<global::app.error.@this?>(null); }
-        public Task<Data> Start() => Task.FromResult(Data.Ok());
+        public Task<Data> Start() => Task.FromResult(Context.Ok());
     }
 
     #endregion

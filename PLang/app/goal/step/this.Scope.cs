@@ -9,7 +9,7 @@ public sealed partial class @this
     /// <summary>The variables the step's words name that the build knows the type of where the step
     /// reads them — known before one of its actions runs (a variable the step only writes is not read
     /// by it). Left by the walk; empty until then. Build-time only.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.property.list.@this Typed => _typed;
 
     private List<global::app.type.item.setting.@this> _setting = [];
@@ -17,13 +17,13 @@ public sealed partial class @this
     /// <c>%!app.test.setting.parallel%</c> → test's), a fresh value each, in the order written — what the
     /// builder teaches the step's options from (its <c>Path</c> and its <c>Rows</c>). Left by the walk;
     /// empty until then. Build-time only.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public IReadOnlyList<global::app.type.item.setting.@this> Setting => _setting;
 
     private bool _hasKey;
     /// <summary>The step's words read one of the app's by its key (<c>%!app.goal["/show"]%</c>) — the builder then
     /// teaches that form. Left by the walk; false until then. Build-time only.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public bool HasKey => _hasKey;
 
     /// <summary>This step at the build's walk: its code — or, while it has none, the code its certain
@@ -32,11 +32,11 @@ public sealed partial class @this
     /// store says is the wrong type.</summary>
     public async Task<List<global::app.error.@this>> Scope(global::app.actor.context.@this scratch)
     {
-        var variables = new global::app.type.item.variable.parser.@this(Text).Variable;
+        var variables = new global::app.type.item.variable.parser.@this(Text, scratch.App.type.list).Variable;
         // each %!…% names the settings class its longest path is — a fresh value of it (its defaults),
         // resolved through actor/setting's path index (the value holds its Path and its Rows)
         _setting = variables
-            .Select(v => v.Paths.Select(path => scratch.Setting.Fresh(path)).OfType<global::app.type.item.setting.@this>().LastOrDefault())
+            .Select(v => v.Paths.Select(path => scratch.Setting.Default(path)).OfType<global::app.type.item.setting.@this>().LastOrDefault())
             .OfType<global::app.type.item.setting.@this>().DistinctBy(s => s.Path).ToList();
         _hasKey = variables.Any(v => v.IsKeyed);
         // the bare names the step's words write: %name% — not a setting (%!x%), not a way in (%x.y%)

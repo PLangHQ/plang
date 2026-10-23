@@ -123,7 +123,7 @@ public class ActionPropertyPrTests
         {
             Name = "Message",
             Type = new global::app.type.@this("list", typeof(global::app.type.item.list.@this), "oldmessage"),
-            Value = new global::app.type.item.list.@this(),
+            Value = new global::app.type.item.list.@this(context.App.type.list["list"]),
         });
 
         var verdict = await action.Validate(context);

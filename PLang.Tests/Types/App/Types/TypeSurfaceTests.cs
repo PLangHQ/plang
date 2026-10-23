@@ -9,7 +9,7 @@ public class TypeSurfaceTests : System.IAsyncDisposable
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
-    private async Task<global::app.data.@this> Read(string path) => await new global::app.type.item.variable.@this(path).Start(Ctx);
+    private async Task<global::app.data.@this> Read(string path) => await new global::app.type.item.variable.@this(path, _app.type.list).Start(Ctx);
 
     [Test] public async Task APath_IsReadByNameStemParentAndMime()
     {
@@ -24,7 +24,7 @@ public class TypeSurfaceTests : System.IAsyncDisposable
 
     [Test] public async Task ADatetime_ItsPartsAreNumbers_ItsWeekdayANamedText()
     {
-        await Ctx.Variable.Set("dt", new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 10, 3, 9, 30, 0, System.TimeSpan.Zero)));
+        await Ctx.Variable.Set("dt", new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 10, 3, 9, 30, 0, System.TimeSpan.Zero), _app.type.list[typeof(global::app.type.item.datetime.@this)]));
 
         await Assert.That((await Read("dt.year")).Peek() is global::app.type.item.number.@this).IsTrue();
         await Assert.That((await Read("dt.weekday")).Peek().ToString()).IsEqualTo("Saturday");
@@ -33,7 +33,7 @@ public class TypeSurfaceTests : System.IAsyncDisposable
 
     [Test] public async Task ADuration_IsTheWholeSpanInEachUnit()
     {
-        await Ctx.Variable.Set("elapsed", new global::app.type.item.duration.@this(System.TimeSpan.FromSeconds(90)));
+        await Ctx.Variable.Set("elapsed", Ctx.Duration(System.TimeSpan.FromSeconds(90)));
 
         await Assert.That((await Read("elapsed.seconds")).Peek().ToString()).IsEqualTo("90");
         await Assert.That((await Read("elapsed.minutes")).Peek().ToString()).IsEqualTo("1.5");

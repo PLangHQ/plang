@@ -13,9 +13,9 @@ public class CallSnapshotTests : System.IAsyncDisposable
         string module = "test", string actionName = "test")
     {
         var app = new global::app.@this("/test").Testing();
-        var goal = new Goal { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", app.actor.list.User.Context) };
-        var step = new Step { Index = 0, Text = stepText, Goal = goal };
-        var action = new ActionEntity { Module = app.actor.list.User.Context.App.Module(module), Name = actionName, Step = step };
+        var goal = new Goal(app.type.list) { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", app.actor.list.User.Context) };
+        var step = new Step(app.type.list) { Index = 0, Text = stepText, Goal = goal };
+        var action = new ActionEntity(app.type.list) { Module = app.actor.list.User.Context.App.Module(module), Name = actionName, Step = step };
         step.Code.Add(action);
         goal.Step.Add(step);
         app.goal.list.Add(goal);
@@ -27,7 +27,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (app, action) = BuildLiveAction("StubGoal");
         var stack = app.actor.list.User.Context.call;
-        await using var call = stack.Push(action);
+        await using var call = stack.Push(action, await stack.Setting());
 
         var snap = new Snapshot(app.actor.list.User.Context);
         call.Capture(snap);
@@ -46,7 +46,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (app, action) = BuildLiveAction("G", "a step");
         var user = app.actor.list.User.Context;
-        await using var call = app.actor.list.User.Context.call.Push(action);
+        await using var call = app.actor.list.User.Context.call.Push(action, await app.actor.list.User.Context.call.Setting());
         var snap = new Snapshot(user);
         call.Capture(snap);
 
@@ -64,7 +64,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     {
         var (app, action) = BuildLiveAction("PosGoal");
         var stack = app.actor.list.User.Context.call;
-        await using var call = stack.Push(action);
+        await using var call = stack.Push(action, await stack.Setting());
 
         var snap = new Snapshot(app.actor.list.User.Context);
         call.Capture(snap);
@@ -77,19 +77,19 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Restore_ResolvesGoalStubAgainstLiveRegistry()
     {
         var (src, action) = BuildLiveAction("ResolveGoal");
-        await using (var call = src.actor.list.User.Context.call.Push(action))
+        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
             // Build a fresh app with the *same* goal registered.
             var dst = new global::app.@this("/dst").Testing();
-            var dstGoal = new Goal
+            var dstGoal = new Goal(dst.type.list)
             {
                 Name = "ResolveGoal",
                 Path = global::app.type.item.path.@this.Resolve("/ResolveGoal.goal", app.actor.list.User.Context)
             };
-            var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
+            var dstStep = new Step(dst.type.list) { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
+            var dstAction = new ActionEntity(dst.type.list) { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
@@ -107,7 +107,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Restore_HardErrors_OnGoalNotFound()
     {
         var (src, action) = BuildLiveAction("DisappearingGoal");
-        await using (var call = src.actor.list.User.Context.call.Push(action))
+        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
             // Restore on a fresh App that never had this goal registered.
@@ -125,15 +125,15 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Restore_HardErrors_OnHashMismatch_RaisesCallbackGoalHashMismatch()
     {
         var (src, action) = BuildLiveAction("HashGoal", "original step text");
-        await using (var call = src.actor.list.User.Context.call.Push(action))
+        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
             // Fresh App with the same path but different hash (different step prose).
             var dst = new global::app.@this("/dst").Testing();
-            var dstGoal = new Goal { Name = "HashGoal", Path = global::app.type.item.path.@this.Resolve("/HashGoal.goal", app.actor.list.User.Context) };
-            var dstStep = new Step { Index = 0, Text = "DIFFERENT step text", Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
+            var dstGoal = new Goal(dst.type.list) { Name = "HashGoal", Path = global::app.type.item.path.@this.Resolve("/HashGoal.goal", app.actor.list.User.Context) };
+            var dstStep = new Step(dst.type.list) { Index = 0, Text = "DIFFERENT step text", Goal = dstGoal };
+            var dstAction = new ActionEntity(dst.type.list) { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
@@ -154,14 +154,14 @@ public class CallSnapshotTests : System.IAsyncDisposable
         // Same step text (so the goal hash matches) compiled to a different action: the position now
         // points at another action, which only the captured module/name can tell.
         var (src, action) = BuildLiveAction("RecompiledGoal", "same step text");
-        await using (var call = src.actor.list.User.Context.call.Push(action))
+        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
             var dst = new global::app.@this("/dst").Testing();
-            var dstGoal = new Goal { Name = "RecompiledGoal", Path = global::app.type.item.path.@this.Resolve("/RecompiledGoal.goal", app.actor.list.User.Context) };
-            var dstStep = new Step { Index = 0, Text = "same step text", Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set", Step = dstStep };
+            var dstGoal = new Goal(dst.type.list) { Name = "RecompiledGoal", Path = global::app.type.item.path.@this.Resolve("/RecompiledGoal.goal", app.actor.list.User.Context) };
+            var dstStep = new Step(dst.type.list) { Index = 0, Text = "same step text", Goal = dstGoal };
+            var dstAction = new ActionEntity(dst.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set", Step = dstStep };
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
@@ -180,14 +180,14 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Restore_DoesNotMutateLiveGoal()
     {
         var (src, action) = BuildLiveAction("PureGoal");
-        await using (var call = src.actor.list.User.Context.call.Push(action))
+        await using (var call = src.actor.list.User.Context.call.Push(action, await src.actor.list.User.Context.call.Setting()))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
             var dst = new global::app.@this("/dst").Testing();
-            var dstGoal = new Goal { Name = "PureGoal", Path = global::app.type.item.path.@this.Resolve("/PureGoal.goal", app.actor.list.User.Context) };
-            var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
+            var dstGoal = new Goal(dst.type.list) { Name = "PureGoal", Path = global::app.type.item.path.@this.Resolve("/PureGoal.goal", app.actor.list.User.Context) };
+            var dstStep = new Step(dst.type.list) { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
+            var dstAction = new ActionEntity(dst.type.list) { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
@@ -221,8 +221,8 @@ public class CallSnapshotTests : System.IAsyncDisposable
     public async Task Call_Capture_OmitsTimingTier_AndInFlightNetworkState()
     {
         var (app, action) = BuildLiveAction("DropGoal");
-        app.actor.list.User.Context.call.Setting.Timing = true;
-        await using var call = app.actor.list.User.Context.call.Push(action);
+        (await app.actor.list.User.Context.call.Setting()).Timing = true;
+        await using var call = app.actor.list.User.Context.call.Push(action, await app.actor.list.User.Context.call.Setting());
 
         var snap = new Snapshot(app.actor.list.User.Context);
         call.Capture(snap);

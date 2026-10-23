@@ -5,13 +5,13 @@ Start
 / A cached goal — the source its .pr was built from, every step and sub-goal cached — isn't built:
 / its cache stands.
 - if %goal.IsCached%, return %goal.Cache%
-- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "goalHeader"}, {goal: %goal%}])
 - set %buildStart% = %Now.Ticks%
 - set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": "%goal.Name%", "subGoals": [], "durationMs": 0}
-- call Compile, on error call HandleBuildFailure
+- goal.call(Name="Compile"); on.error(Key="StepsRefused", Recovery=[goal.call(Name="LeaveBroken")]); on.error(Recovery=[goal.call(Name="HandleBuildFailure")])
 
 - set %parentGoal% = %goal%
-- foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%
+- loop.foreach(Collection=%parentGoal.Child%); goal.call(Name="BuildSubGoal", Parameter=[{subGoal: %item%}])
 - set %goal% = %parentGoal%
 
 - math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
@@ -21,7 +21,7 @@ Start
 - save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
 - add %goal.Name% to %traceGoals%
 / Re-parent indented sub-steps into the preceding condition's gate-action Child (recurses sub-goals). Post-compile, pre-save.
-- build.fold Goal=%goal%, on error call HandleBuildFailure
+- build.fold(Goal=%goal%); on.error(Recovery=[goal.call(Name="HandleBuildFailure")])
 - build.goalsSave Goal=%goal%
 
 
@@ -34,19 +34,19 @@ Compile
 - if %goal.Step.IsCached%, return
 / Steps each cached or written in formal need no answer: the formal ones read their own text.
 - condition.if(Left=%goal.Step.IsAnswered%) { build.match(Goal=%goal%, Answer=""); goal.return() }
-- call Decide
-- call Properties
-- build.match(Goal=%goal%, Answer=%answer%); on.error(Key="UnwrittenNumber", Recovery=[goal.call(Name="ConfirmNumbers")]); on.error(Key="ElseWithoutIf", Recovery=[goal.call(Name="SourceError")]); on.error(Recovery=[goal.call(Name="FixSteps")])
+- goal.call(Name="/system/builder/BuildGoal/Decide")
+- goal.call(Name="/system/builder/BuildGoal/Properties")
+- build.match(Goal=%goal%, Answer=%answer%); on.error(Recovery=[goal.call(Name="ConfirmNumbers")], Key="UnwrittenNumber"); on.error(Key="ElseWithoutIf", Recovery=[goal.call(Name="SourceError")]); on.error(Recovery=[goal.call(Name="FixSteps")])
 
 
 / The answer was refused for some steps — each refusal names its step and every problem at once.
 / Continue the conversation with them; only those steps are answered again, and the others keep the
 / code they took. The answer is read again here, so numbers it leaves to confirm are confirmed too.
 FixSteps
-- call /system/builder/EmitBuildEvent kind="properties-rejected", errorMessage=%!error.Message%
+- goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "properties-rejected"}, {errorMessage: %!error.Message%}])
 - set %fixMessages% = [{"Role":"user", "Content":"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal."}]
-- llm.query(Message=%fixMessages%, Model="gpt-5.4-nano", Cache=%!build.setting.cache%, Conversation={continue: %answer%}); variable.set(Name=%answer%, Value=%!data%)
-- build.match(Goal=%goal%, Answer=%answer%); on.error(Key="UnwrittenNumber", Recovery=[goal.call(Name="ConfirmNumbers")])
+- llm.query(Message=%fixMessages%, Model="gpt-6-luna", Temperature=1, Cache=%!build.setting.cache%, Conversation={continue: %answer%}); variable.set(Name=%answer%, Value=%!data%)
+- build.match(Goal=%goal%, Answer=%answer%); on.error(Recovery=[goal.call(Name="ConfirmNumbers")], Key="UnwrittenNumber")
 
 
 / The answer's code writes numbers its steps don't write as digits ("retry once" → 1). Whether the words
@@ -57,19 +57,19 @@ ConfirmNumbers
 - render template "/system/builder/llm/templates/confirm.state.template", write to %confirmState%
 - render template "/system/builder/llm/templates/confirm.template", write to %confirmQuestions%
 - llm.decider State=%confirmState%, Question=%confirmQuestions%, write to %confirmed%
-- build.match Goal=%goal%, Answer=%answer%, Confirmed=%confirmed%
+- build.match(Goal=%goal%, Answer=%answer%, Confirmed=%confirmed%); on.error(Recovery=[goal.call(Name="FixSteps")])
 
 
 / Sub-goal recursion — the same three stages, attached to the parent trace.
 BuildSubGoal
 - set %goal% = %subGoal%
-- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "subGoalHeader"}, {goal: %goal%}])
 - set %subgoalStart% = %Now.Ticks%
-- call Compile, on error call HandleBuildFailure
+- goal.call(Name="Compile"); on.error(Key="StepsRefused", Recovery=[goal.call(Name="LeaveBroken")]); on.error(Recovery=[goal.call(Name="HandleBuildFailure")])
 - add {goal: "%goal.Name%"} to %trace.subGoals%
 - math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
 - math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
-- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
+- goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "subGoalDone"}, {goal: %goal%}, {subgoalMs: %subgoalMs%}])
 
 
 / The programmer's plang is wrong, not the LLM's answer, so nothing is retried. The LLM writes the
@@ -84,7 +84,13 @@ SourceError
 
 / Capture error onto trace, save, rethrow. No null-pass inference.
 HandleBuildFailure
-- call /system/builder/EmitBuildEvent kind="goalError", goal=%goal%, errorMessage=%!error.Message%, fix=%!error.FixSuggestion%
+- goal.call(Name="/system/builder/EmitBuildEvent", Parameter=[{kind: "goalError"}, {goal: %goal%}, {errorMessage: %!error.Message%}, {fix: %!error.FixSuggestion%}])
 - set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "%goal.Name%"}
 - save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
 - throw %!error%
+
+/ Steps still refused after the retry: each holds why (its Error), and the goal is saved with them broken — its
+/ .pr writes them, and the goal will not start. The build goes on to the goal's other steps and other goals, and
+/ ends failed (Build) holding this refusal whole as a cause. Nothing is thrown here: the steps that built keep their code.
+LeaveBroken
+- list.add(ListName=%brokenGoals%, Value=%!error%)

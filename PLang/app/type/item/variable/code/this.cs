@@ -5,51 +5,25 @@ namespace app.type.item.variable.code;
 /// answered and does its one step. Program structure — born with no context, shared by every run;
 /// <see cref="Start"/> and <see cref="Set"/> take the asker's.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<Hop>
+public sealed class @this : global::app.type.item.list.bare.@this<Hop>
 {
-    internal @this(System.Collections.Generic.IEnumerable<Hop> hops) : base(hops) { }
-
-    protected override global::app.type.item.list.@this Empty() => new @this([]);
-
-    /// <summary>Its <c>.pr</c> form: the hops in order, each under its kind.</summary>
-    public override void Write(global::app.type.format.IWriter writer)
-    {
-        var hops = Items().ToList();
-        writer.BeginArray(hops.Count);
-        foreach (var hop in hops) hop.Write(writer);
-        writer.EndArray();
-    }
-
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
+    /// <summary>The code <paramref name="first"/> starts: it and every step after it. Its <c>.pr</c> form is the hops
+    /// in order, each under its kind.</summary>
+    internal @this(Hop first, global::app.type.@this type) : base(first.Chain, type) { }
 
     /// <summary>The root: the name the value lives under in memory.</summary>
     public Variable Root => (Variable)this[0];
 
     /// <summary>Whether every hop stays among the program's own variables.</summary>
-    internal bool IsOwn => Items().All(hop => hop.IsOwn);
+    internal bool IsProgram => Items().All(hop => hop.IsProgram);
 
     /// <summary>Runs every hop: what the variable holds — or, for a path read from a value
     /// (<see cref="parser.@this.Path"/>, no root), what <paramref name="from"/> holds there.</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(global::app.actor.context.@this context,
+    public System.Threading.Tasks.ValueTask<global::app.data.@this> Start(global::app.actor.context.@this context,
         global::app.data.@this? from = null)
-    {
-        var current = from;
-        var at = 0;
-        foreach (var hop in Items())
-        {
-            // the step right after the root steps on the variable's own binding
-            current = await hop.Start(current, context, own: at++ == 1 && from == null);
-            if (!current.IsInitialized || !current.Success) return current;
-        }
-        return current!;
-    }
+        => this[0].Read(from, context);
 
-    /// <summary>Runs every hop but the last to reach the parent, and the last writes itself: a member
+    /// <summary>The root writes, and each step hands the write on to the next, the last writing itself: a member
     /// sets that member, an index that key, a <c>!</c> name the binding's Properties, a bare root
     /// rebinds the variable. A root that holds nothing becomes an empty dict when a member or key is
     /// written into it; a <c>!</c> name written straight on the root needs the variable to exist. A node on
@@ -58,8 +32,7 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
     /// it): a template renders here, a reference writes what it names, a name it can't read fails the write.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(object? value, global::app.actor.context.@this context)
     {
-        var hops = Items().ToList();
-        if (hops.Count == 1) return await Root.Set(null, value, context);
+        if (CountRaw == 1) return await Root.Set(null, value, context);
 
         if (value is global::app.data.@this given && given.HasVariable)
         {
@@ -68,26 +41,14 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
             value = settled;
         }
         // what the value becomes where the variable's value was (a task keeps the task written before it)
-        if (value is global::app.data.@this written)
-            value = await written.Replace(async () => (await Start(context)).Peek());
+        if (value is global::app.data.@this carrier)
+            value = await carrier.Replace(async () => (await Start(context)).Peek());
 
         // the write lands inside what the root holds, so the root must be this context's own (a task's copy of its
         // caller's)
         if (!Root.Name.StartsWith('!')) await context.Variable.Own(Root.Name);
 
-        var parent = hops is [_, Property { IsBinding: true }]
-            ? await Root.Start(null, context)
-            : await Root.Ensure(context);
-        for (int i = 1; i < hops.Count - 1; i++)
-        {
-            parent = await hops[i].Start(parent, context);
-            if (!parent.Success) return parent;
-            if (!parent.IsInitialized)
-                return context.Error(new global::app.error.@this(
-                    $"%{string.Concat(hops.Take(i + 1).Select(h => h.Text))}% holds nothing, so %{string.Concat(hops.Select(h => h.Text))}% has nowhere to be written",
-                    "VariableNotFound", 404));
-        }
-        return await hops[^1].Set(parent, value, context, own: hops.Count == 2);
+        return await Root.Write(null, value, context);
     }
 
     /// <summary>What the variable holds — or, when it holds nothing, the value <paramref name="value"/> gives birth
@@ -97,12 +58,12 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
         System.Func<System.Threading.Tasks.ValueTask<global::app.data.@this>> value, global::app.actor.context.@this context)
     {
         if (CountRaw == 1) return await context.Variable.Ensure(Root.Name, value);
-        var held = await Start(context);
-        if (held.IsInitialized) return held;
+        var data = await Start(context);
+        if (data.IsInitialized) return data;
         var born = await value();
         if (!born.Success || born.Handled) return born;
-        var written = await Set(born.Peek(), context);
-        return written.Success ? await Start(context) : written;
+        var answer = await Set(born.Peek(), context);
+        return answer.Success ? await Start(context) : answer;
     }
 
     /// <summary>Writes <paramref name="value"/> only if the variable still holds <paramref name="expected"/> — a

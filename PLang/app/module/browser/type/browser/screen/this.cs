@@ -132,7 +132,7 @@ public sealed class @this : browser.@this
     private async Task Codecs(string[] codecs, global::app.actor.context.@this context)
     {
         if (codecs.Length == 0) return;
-        var hook = await new FilePath(_os.Absolute + "/system/browser/video.js").Read(context);
+        var hook = await new FilePath(_os.Absolute + "/system/browser/video.js", _os.Type).Read(context);
         if (!hook.Success || (await hook.Value())?.ToString() is not { Length: > 0 } source)
         {
             // said, never quietly: the videos stay Chromium's (pixels) and nothing else would tell why
@@ -147,9 +147,9 @@ public sealed class @this : browser.@this
 
     /// <summary>The page at <paramref name="address"/> is one of plang's own: a file under the app's folder or the
     /// os folder.</summary>
-    internal bool Own(string address)
+    internal bool IsPlang(string address)
         => Uri.TryCreate(address, UriKind.Absolute, out var url) && url.IsFile
-           && new FilePath(url.LocalPath) is var page && (page.IsUnder(_app).Value || page.IsUnder(_os).Value);
+           && new FilePath(url.LocalPath, _app.Type) is var page && (page.IsUnder(_app).Value || page.IsUnder(_os).Value);
 
     /// <summary>The address as a person reads it: one of plang's own pages as its plang path (<c>/Desktop/notes.txt</c>
     /// in the app, <c>/system/…</c> for the system's) — never <c>file://</c>; a website as it is.</summary>
@@ -169,8 +169,7 @@ public sealed class @this : browser.@this
         var (program, failed) = await Started("Screen", context);
         if (program == null) return global::app.data.@this<browser.@this>.From(failed!);
         var cdp = new cdp.@this(program.pipe!);
-        var browser = new @this(url, display, program, cdp,
-            new FilePath(context.App.AbsolutePath), new FilePath(context.App.OsAbsolutePath),
+        var browser = new @this(url, display, program, cdp, context.App.filesystem.root, context.App.filesystem.os,
             error => context.Actor.Channel.Report(context.Error(error)));
         // Chromium stopping by itself is said, with what it said last — never a black screen without a word
         browser.Watched();
@@ -178,7 +177,7 @@ public sealed class @this : browser.@this
             browser.Message = said => global::app.module.on.code.Gate.Call(onMessage, Payload(said, context), context);
         // OnMessage asks to hear the page, but only plang's own pages may talk: say so, rather than a page
         // that waits for plang() forever
-        if (onMessage != null && !browser.Own(url))
+        if (onMessage != null && !browser.IsPlang(url))
             await context.Actor.Channel.Report(context.Error(new global::app.error.ActionError(
                 $"browser.start: {url} is not one of plang's own pages (under the app's or the os folder), so it gets no plang() and OnMessage never hears it",
                 "PageNotOwn", 400)));
@@ -219,8 +218,8 @@ public sealed class @this : browser.@this
     {
         if (await Readable(url, context) is { } refused) return refused;
         var before = (await Cdp.Pages()).Select(p => p.target).ToHashSet();
-        var found = await context.App.goal.list.Find("/system/browser/Window", context.call.Goal);
-        if (!found.Success || await found.Value() is not { } goal) return found;
+        var data = await context.App.goal.list.Find("/system/browser/Window", context.call.Goal);
+        if (!data.Success || await data.Value() is not { } goal) return data;
         var ran = await goal.Start(context, []);
         if (!ran.Success) return ran;
         // the new blank window: a page DevTools lists now that it didn't before

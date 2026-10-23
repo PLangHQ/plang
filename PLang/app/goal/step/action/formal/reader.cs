@@ -35,7 +35,7 @@ public sealed class Reader
     private readonly global::app.type.item.list.@this<global::app.module.@this> _modules;
 
     /// <summary>Born with the step it reads for and the modules its actions are picked from
-    /// (<c>app.module.list</c>); the read stays synchronous.</summary>
+    /// (<c>app.module.list</c>).</summary>
     public Reader(global::app.goal.step.@this step, global::app.type.item.list.@this<global::app.module.@this> modules)
     {
         _step = step;
@@ -43,15 +43,15 @@ public sealed class Reader
     }
 
     /// <summary>The step's actions read from <paramref name="text"/> — Ok(action.list), or the error.</summary>
-    public global::app.data.@this Read(string text, global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task<global::app.data.@this> Read(string text, global::app.actor.context.@this context)
     {
         try
         {
             var cursor = new Cursor(text, _step, context, _step.Index, _modules);
             cursor.Space();
             if (cursor.AtEnd) cursor.Fail("a step holds at least one action");
-            var list = new global::app.goal.step.action.list.@this();
-            foreach (var action in cursor.Actions(null)) list.Add(action);
+            var list = new global::app.goal.step.action.list.@this(context.App.type.list[typeof(global::app.goal.step.action.list.@this)]);
+            foreach (var action in await cursor.Actions(null)) list.Add(action);
             return context.Ok(list);
         }
         catch (Invalid invalid)
@@ -109,6 +109,22 @@ public sealed class Reader
             throw new Invalid($"line {line}, column {column}: {reason}", reason);
         }
 
+        // A %variable% the answer doesn't close, quoted beside the step's own: the step's variable it starts as (the
+        // longest start they share), else every variable the step writes — so the retry copies the step's text.
+        private string Unclosed()
+        {
+            var end = _text.IndexOfAny([',', ')', ' ', '\n'], _pos + 1);
+            var text = end < 0 ? _text[_pos..] : _text[_pos..end];
+            var step = new global::app.type.item.variable.parser.@this(_step.Text, _context.App.type.list);
+            var said = step.Variable.Select(v => v.Text).Distinct().ToList();
+            var meant = step.Nearest(text);
+            return meant != null
+                ? $"a %variable% is not closed: the step writes `{meant}`; your answer has `{text}` — copy it exactly"
+                : said.Count > 0
+                    ? $"a %variable% is not closed: your answer has `{text}`; the step writes {string.Join(", ", said.Select(s => $"`{s}`"))} — copy them exactly"
+                    : $"a %variable% is not closed: your answer has `{text}`";
+        }
+
         public void Space()
         {
             while (_pos < _text.Length && char.IsWhiteSpace(_text[_pos])) _pos++;
@@ -153,10 +169,10 @@ public sealed class Reader
 
         /// <summary>action { ";" action } — up to <paramref name="closing"/> or the end. A clause is a clause of
         /// the action before it in the same list, and follows it there.</summary>
-        public List<global::app.goal.step.action.@this> Actions(string? closing)
+        public async System.Threading.Tasks.Task<List<global::app.goal.step.action.@this>> Actions(string? closing)
         {
             var actions = new List<global::app.goal.step.action.@this>();
-            Attach(actions, Action());
+            Attach(actions, await Action());
             while (!(closing != null ? Peek(closing) : AtEnd))
             {
                 if (!Peek(";"))
@@ -166,7 +182,7 @@ public sealed class Reader
                     Fail(closing != null ? $"expected `;` or `{closing}`" : "expected `;` or the end of the step");
                 }
                 Take(";");
-                Attach(actions, Action());
+                Attach(actions, await Action());
             }
             return actions;
         }
@@ -175,7 +191,7 @@ public sealed class Reader
         {
             // each action names the step action it belongs to; one that belongs to none is a clause with no action
             var before = actions.Aggregate((global::app.goal.step.action.@this?)null, (anchor, a) => a.Anchor(anchor));
-            if (read.Action.Anchor(before) == null)
+            if (before == null && read.Action.Belongs(before))
                 Fail($"{read.Action.Module.Name}.{read.Action.Name} is a clause of the action before it; step {_index} has none — write the step's main action first, then this clause", read.At);
             actions.Add(read.Action);
         }
@@ -185,7 +201,7 @@ public sealed class Reader
             => _modules.Items().FirstOrDefault(m => string.Equals(m.Name, name, System.StringComparison.OrdinalIgnoreCase));
 
         // action = module "." name "(" rows ")" [ "{" actions "}" ] — the action, and where it starts
-        private (global::app.goal.step.action.@this Action, int At) Action()
+        private async System.Threading.Tasks.Task<(global::app.goal.step.action.@this Action, int At)> Action()
         {
             Space();
             var start = _pos;
@@ -207,8 +223,8 @@ public sealed class Reader
                 var at = _pos;
                 var prop = Ident();
                 if (!given.Add(prop)) Fail($"`{prop}` is given twice", at);
-                var declared = catalog.Property[prop];
-                if (declared == null)
+                var property = catalog.Property[prop];
+                if (property == null)
                 {
                     var have = catalog.Property.Select(p => p.Name).ToList();
                     // another action the decider offered for this step that has the property is likely the one meant
@@ -218,19 +234,19 @@ public sealed class Reader
                         + (takes != null ? $"; `{takes}` takes `{prop}`" : ""), at);
                 }
                 // a list of actions (on.error's Recovery) is program: each action read here, holding this step
-                if (declared!.Type.Name == "list" && declared.Type.kind.Name == "action")
+                if (property!.Type.Name == "list" && property.Type.kind.Name == "action")
                 {
-                    WrittenType(prop, "list<action>");
+                    Annotation(prop, "list<action>");
                     Take("=");
-                    var written = Value(null);
-                    if (written.Items == null || written.Items.Count == 0 || written.Items.Any(i => i.Action == null))
+                    var literal = await Value();
+                    if (literal.Items == null || literal.Items.Count == 0 || literal.Items.Any(i => i.Action == null))
                         Fail($"`{prop}` is a list of actions: [goal.call(Name=\"X\")]", at);
-                    var actions = new global::app.goal.step.action.list.@this();
-                    foreach (var r in written.Items!) actions.Add(r.Action!);
-                    action.Property.Add(new global::app.type.property.@this { Name = prop, Type = declared.Type, Value = actions });
+                    var actions = new global::app.goal.step.action.list.@this(_context.App.type.list[typeof(global::app.goal.step.action.list.@this)]);
+                    foreach (var r in literal.Items!) actions.Add(r.Action!);
+                    action.Property.Add(new global::app.type.property.@this { Name = prop, Type = property.Type, Value = actions });
                     continue;
                 }
-                var (row, frozen) = Row(prop, declared!);
+                var (row, frozen) = await Row(prop, property!);
                 (frozen ? action.Default : action.Property).Add(row);
             }
             Take(")");
@@ -247,15 +263,15 @@ public sealed class Reader
                     // an empty body reads: it breaks a rule, not the syntax — the chain check refuses it,
                     // with the step's other problems, saying where the body goes for that step
                     Take("}");
-                    action.Child.Add(new global::app.goal.step.@this { Goal = _step.Goal, Line = _step.Line });
+                    action.Child.Add(new global::app.goal.step.@this(_context.App.type.list) { Goal = _step.Goal, Line = _step.Line });
                     return (action, start);
                 }
                 var bodyStart = _pos;
                 // a condition's body is a child step of this step's goal, its actions born holding it —
                 // written on this step's line
-                var child = new global::app.goal.step.@this { Goal = _step.Goal, Line = _step.Line };
+                var child = new global::app.goal.step.@this(_context.App.type.list) { Goal = _step.Goal, Line = _step.Line };
                 var body = new Cursor(_text, child, _context, _index, _modules) { _pos = _pos };
-                var bodyActions = body.Actions("}");
+                var bodyActions = await body.Actions("}");
                 _pos = body._pos;
                 child.Text = _text[bodyStart.._pos].Trim();
                 Take("}");
@@ -265,33 +281,33 @@ public sealed class Reader
             return (action, start);
         }
 
-        // An optional `: type` after a row's name. Against a declared type it must be that type.
-        private string? WrittenType(string prop, string? declared)
+        // An optional `: type` after a row's name. Against the slot's type it must be that type.
+        private string? Annotation(string prop, string? slot)
         {
             if (!Peek(":")) return null;
             Take(":");
             Space();
             var at = _pos;
-            var written = Match(@"\w+(?:<\w+>)?");
-            if (written == null) Fail("expected a type after `:`");
-            _pos += written!.Length;
-            if (declared != null && declared != "item" && written != declared) Fail($"`{prop}` is {declared}, not {written}", at);
-            return written;
+            var type = Match(@"\w+(?:<\w+>)?");
+            if (type == null) Fail("expected a type after `:`");
+            _pos += type!.Length;
+            if (slot != null && slot != "item" && type != slot) Fail($"`{prop}` is {slot}, not {type}", at);
+            return type;
         }
 
         private static string Face(global::app.type.@this type)
             => type.kind.IsEmpty ? type.Name : $"{type.Name}<{type.kind.Name}>";
 
-        private (global::app.type.property.@this Row, bool Frozen) Row(string prop, global::app.type.property.@this declared)
+        private async System.Threading.Tasks.Task<(global::app.type.property.@this Row, bool Frozen)> Row(string prop, global::app.type.property.@this property)
         {
-            var declaredFace = Face(declared.Type);
-            var written = WrittenType(prop, declaredFace);
+            var slot = Face(property.Type);
+            var annotation = Annotation(prop, slot);
             Space();
             // the starting line's slot copied as it stands — the name alone (or with its type): still to fill, not a value
             if (Peek(",") || Peek(")"))
                 Fail($"`{prop}` is a property still to fill: write {prop}=value, the value the step gives");
             var frozen = Peek("?=");
-            var options = declared.Type.Values;
+            var options = property.Type.Values;
             // a choice's symbol option may stand bare right after its `=`: Operator=== is Operator="=="
             var afterEquals = new System.Text.RegularExpressions.Regex(@"\G[=!<>]+").Match(_text, System.Math.Min(_pos + (frozen ? 2 : 1), _text.Length)).Value;
             if (Peek("==") && !(options is { Count: > 0 } && options.Contains(afterEquals)))
@@ -314,13 +330,13 @@ public sealed class Reader
                 _pos += word.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(word), System.Text.Json.JsonValueKind.String);
             }
-            else if (declared.Type.Name == "text" && Match(@"[A-Za-z_]\w*(?![\w.(%])") is { } text && text is not ("true" or "false" or "null"))
+            else if (property.Type.Name == "text" && Match(@"[A-Za-z_]\w*(?![\w.(%])") is { } text && text is not ("true" or "false" or "null"))
             {
                 // a single unquoted word in a text property is that text
                 _pos += text.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(text), System.Text.Json.JsonValueKind.String);
             }
-            else if (declared.Type.Name == "duration" && Match(@"-?(?:P[0-9A-Za-z.]+|\d+(?:\.\d+)?(?:ms|s|m|h|d))(?![\w.(%])") is { } span
+            else if (property.Type.Name == "duration" && Match(@"-?(?:P[0-9A-Za-z.]+|\d+(?:\.\d+)?(?:ms|s|m|h|d))(?![\w.(%])") is { } span
                      && global::app.type.item.duration.@this.Resolve(span, _context) != null)
             {
                 // a duration reads its own literal bare, as a choice reads its option: After=5s is After="5s",
@@ -328,42 +344,45 @@ public sealed class Reader
                 _pos += span.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(span), System.Text.Json.JsonValueKind.String);
             }
-            else value = Value(Face(declared.Type));
+            else value = await Value();
 
             var raw = value.Json != null && value.Kind == System.Text.Json.JsonValueKind.String
                 ? System.Text.Json.JsonSerializer.Deserialize<string>(value.Json) : null;
             // a variable is the run's to check: what it holds is known only then, as for every typed slot
             if (options is { Count: > 0 } && !value.IsVariable && (raw == null || !options.Contains(raw)))
                 Fail($"`{prop}` is one of {string.Join(", ", options)}; `{raw ?? value.Json}` is not", at);
-            if (declared.Type.Name == "variable")
+            if (property.Type.Name == "variable")
             {
                 // a variable slot given the bare name ("path") names the same variable as %path%
                 if (raw != null && !raw.StartsWith('%')
-                    && new global::app.type.item.variable.parser.@this(raw).Whole is not null)
+                    && new global::app.type.item.variable.parser.@this(raw, _context.App.type.list).Whole is not null)
                     value = Scalar(System.Text.Json.JsonSerializer.Serialize($"%{raw}%"), System.Text.Json.JsonValueKind.String, variable: true);
                 else if (!value.IsVariable)
                     Fail($"`{prop}` names a variable: write it with its % signs", at);
             }
 
             // an action slot holds an action as written (or a variable holding one) — a name alone is not one
-            if (declared.Type.Name == "action" && value.Action == null && !value.IsVariable)
+            if (property.Type.Name == "action" && value.Action == null && !value.IsVariable)
                 Fail($"`{prop}` takes an action: write the action itself, {prop}=goal.call(Name=\"…\")", at);
 
             // the type: the declared one; in an open slot the written one, else the literal's own
-            var face = declaredFace != "item" ? declaredFace : written ?? LiteralType(value);
+            var face = slot != "item" ? slot : annotation ?? LiteralType(value);
             var type = _context.App.type.list[new global::app.type.@this(TypeName(face), TypeKind(face)), _context];
             global::app.type.item.@this born;
+            // a slot whose elements are records ([Records]: goal.call's Parameter) reads each a record, its name, its type
+            // and its value (a %x% value born a template on its own): never rendered as one list, which would drop
+            // their names. Any other slot is what the step wrote: a list of objects stays a list of objects
+            var holdsRecords = property.Member?.IsDefined(typeof(global::app.Attributes.RecordsAttribute), inherit: false) == true;
             if (value.Action != null) born = value.Action;
-            // argument rows are named rows, each value its own (a %x% row value is born a template on
-            // its own): the rows are never rendered as one list, which would drop their names
-            else if (declared.Type.Name == "list" && value.Entries != null) born = Born(type, Arguments(value), marks: false);
-            else if (value.Entries != null && value.Entries.Any(e => e.Type != null))
-            { Fail($"`{prop}` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments", at); return default; }
+            else if (holdsRecords && value.Items is { } records && records.All(r => r.Entries is [_]))
+                born = Born(type, await Arguments(records), marks: false);
+            else if (holdsRecords && !value.IsVariable)
+            { Fail($"`{prop}` takes a list of arguments, each a record: {prop}=[{{name: type = value}}, {{other: type = %x%}}]", at); return default; }
             else born = Born(type, Json(value));
             // a value born a template (it holds %variables%) is declared one in the .pr too, so it renders
             // again when the .pr is read
-            var declaredType = born.Type is { Template: not null } templated ? templated : type;
-            return (new global::app.type.property.@this { Name = prop, Type = declaredType, Value = born }, frozen);
+            return (new global::app.type.property.@this
+                { Name = prop, Type = born.Type is { Template: not null } templated ? templated : type, Value = born }, frozen);
         }
 
         // Each value born through the type's own door — the one a .pr row's value reads through.
@@ -388,8 +407,8 @@ public sealed class Reader
         // The variables a value written as json holds: those in each of its texts, as written.
         private List<global::app.type.item.variable.@this> Variables(string json)
         {
-            var found = new List<global::app.type.item.variable.@this>();
-            if (!json.Contains('%')) return found;
+            var variables = new List<global::app.type.item.variable.@this>();
+            if (!json.Contains('%')) return variables;
             using var doc = System.Text.Json.JsonDocument.Parse(json);
             var open = new Stack<System.Text.Json.JsonElement>([doc.RootElement]);
             while (open.TryPop(out var element))
@@ -397,7 +416,7 @@ public sealed class Reader
                 switch (element.ValueKind)
                 {
                     case System.Text.Json.JsonValueKind.String:
-                        found.AddRange(new global::app.type.item.variable.parser.@this(element.GetString()!).Variable);
+                        variables.AddRange(new global::app.type.item.variable.parser.@this(element.GetString()!, _context.App.type.list).Variable);
                         break;
                     case System.Text.Json.JsonValueKind.Object:
                         foreach (var p in element.EnumerateObject().Reverse()) open.Push(p.Value);
@@ -407,7 +426,7 @@ public sealed class Reader
                         break;
                 }
             }
-            return found;
+            return variables;
         }
 
         private static string LiteralType(Literal v)
@@ -425,33 +444,35 @@ public sealed class Reader
             };
         }
 
-        // A dict handed to a list property is its argument rows, each typed like a property: the written
+        // A list of records handed to a list property is its arguments, each typed like a property: the written
         // type, else the literal's own.
         // Each argument is its own row; one the programmer wrote with a %variable% is marked a template
         // on its row, as a top-level row is (Born) — the mark is born here, at build.
-        private string Arguments(Literal v)
+        private async System.Threading.Tasks.Task<string> Arguments(List<Literal> records)
         {
-            var rows = v.Entries!.Select(e =>
+            var rows = new List<string>();
+            foreach (var e in records.Select(r => r.Entries![0]))
             {
                 var json = Json(e.Value);
                 var variables = Variables(json).DistinctBy(x => x.Text).ToList();
-                return "{\"name\":" + System.Text.Json.JsonSerializer.Serialize(e.Key)
+                rows.Add("{\"name\":" + System.Text.Json.JsonSerializer.Serialize(e.Key)
                     + ",\"type\":{\"name\":" + System.Text.Json.JsonSerializer.Serialize(TypeName(e.Type ?? LiteralType(e.Value)))
                     + (TypeKind(e.Type ?? LiteralType(e.Value)) is { } k ? ",\"kind\":" + System.Text.Json.JsonSerializer.Serialize(k) : "")
                     + (variables.Count > 0 ? ",\"template\":\"plang\"" : "")
                     + "},\"value\":" + json
-                    + (variables.Count > 0 ? ",\"variable\":" + Json(variables) : "")
-                    + "}";
-            });
+                    + (variables.Count > 0 ? ",\"variable\":" + await Json(variables) : "")
+                    + "}");
+            }
             return "[" + string.Join(",", rows) + "]";
         }
 
         // A row's variable list as the .pr writes it.
-        private string Json(IReadOnlyList<global::app.type.item.variable.@this> variables)
+        private async System.Threading.Tasks.Task<string> Json(IReadOnlyList<global::app.type.item.variable.@this> variables)
         {
             using var ms = new System.IO.MemoryStream();
             using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
-                new global::app.type.item.variable.serializer.Entry().Write(new global::app.type.item.kind.json.Writer(utf8), variables);
+                await new global::app.type.item.variable.serializer.Entry().Write(
+                    new global::app.type.item.kind.json.Writer(utf8, global::app.View.Store, _context), variables);
             return Encoding.UTF8.GetString(ms.ToArray());
         }
 
@@ -462,18 +483,26 @@ public sealed class Reader
         {
             if (v.Json != null) return v.Json;
             if (v.Items != null) return "[" + string.Join(",", v.Items.Select(Json)) + "]";
+            // an object's entries keep their type: a typed one is the row a dict writes for it, its type and its value
             if (v.Entries != null)
-                return "{" + string.Join(",", v.Entries.Select(e => System.Text.Json.JsonSerializer.Serialize(e.Key) + ":" + Json(e.Value))) + "}";
+                return "{" + string.Join(",", v.Entries.Select(e => System.Text.Json.JsonSerializer.Serialize(e.Key) + ":"
+                    + (e.Type is { } type ? Typed(type, e.Value) : Json(e.Value)))) + "}";
             Fail("an action can't be a value here");
             return "";
         }
+
+        // a value with the type it was written with, as a dict's typed entry reads back
+        private string Typed(string face, Literal value)
+            => "{\"type\":{\"name\":" + System.Text.Json.JsonSerializer.Serialize(TypeName(face))
+               + (TypeKind(face) is { } kind ? ",\"kind\":" + System.Text.Json.JsonSerializer.Serialize(kind) : "")
+               + "},\"value\":" + Json(value) + "}";
 
         private static Literal Scalar(string json, System.Text.Json.JsonValueKind kind, bool variable = false)
             => new() { Json = json, Kind = kind, IsVariable = variable };
 
         // ---------------------------------------------------------------- values
 
-        private Literal Value(string? declared)
+        private async System.Threading.Tasks.Task<Literal> Value()
         {
             Space();
             if (_pos >= _text.Length) Fail("expected a value");
@@ -487,25 +516,20 @@ public sealed class Reader
             }
             if (c == '%')
             {
-                var v = new global::app.type.item.variable.parser.@this(_text).Read(_pos);
-                if (v == null) Fail(_text.AsSpan(_pos).StartsWith("%?") ? "a `?` is still there: fill it with the value the step gives" : "a %variable% is not closed");
+                var v = new global::app.type.item.variable.parser.@this(_text, _context.App.type.list).Read(_pos);
+                if (v == null) Fail(_text.AsSpan(_pos).StartsWith("%?") ? "a `?` is still there: fill it with the value the step gives" : Unclosed());
                 _pos += v!.Text.Length;
                 return Scalar(System.Text.Json.JsonSerializer.Serialize(v.Text), System.Text.Json.JsonValueKind.String, variable: true);
             }
             if (c == '[')
             {
-                // argument rows written as a list — only where the slot takes rows (a list of nothing in
-                // particular, goal.call's Parameter); in a list of a kind (llm.query's list<message>) or an open
-                // slot, `[{Role: "user", …}]` is a list of dicts
-                if (declared == "list" && Match(@"\[\s*(\{\s*)?[A-Za-z_]\w*\s*[=:]") != null)
-                    Fail("arguments are written as one dict: Parameter={name: \"value\", other: %x%}");
                 _pos++;
                 var items = new List<Literal>();
                 while (!Peek("]"))
                 {
                     if (AtEnd) Fail("a list is not closed: expected `]`");
                     if (items.Count > 0) Take(",");
-                    items.Add(Value(null));
+                    items.Add(await Value());
                 }
                 Take("]");
                 return new Literal { Items = items };
@@ -522,7 +546,7 @@ public sealed class Reader
                     string key;
                     if (_pos < _text.Length && _text[_pos] == '"')
                     {
-                        var k = Value(null);
+                        var k = await Value();
                         key = System.Text.Json.JsonSerializer.Deserialize<string>(k.Json!)!;
                     }
                     else key = Key();
@@ -536,7 +560,7 @@ public sealed class Reader
                         type = typed.Groups[1].Value;
                         _pos += typed.Length;
                     }
-                    entries.Add((key, type, Value(null)));
+                    entries.Add((key, type, await Value()));
                 }
                 Take("}");
                 return new Literal { Entries = entries };
@@ -551,9 +575,9 @@ public sealed class Reader
             if (AtAction())
             {
                 // an action held as a value stands alone: a modifier there has no action before it
-                var held = new List<global::app.goal.step.action.@this>();
-                Attach(held, Action());
-                return new Literal { Action = held[0] };
+                var actions = new List<global::app.goal.step.action.@this>();
+                Attach(actions, await Action());
+                return new Literal { Action = actions[0] };
             }
             if (Match(@"[A-Za-z_/][\w./-]*") is { } bare) Fail($"a text must be in quotes: write \"{bare}\", not {bare}");
             if (_text[_pos] == '?') Fail("a `?` is still there: fill it with the value the step gives");

@@ -1,0 +1,6 @@
+/ item-doors 39: a plural plang reaches is a singular node. A dict's key, read alone, is its first key; `.list` is
+/ every key, in the order they were set. Red before: a dict had no `!key` fact (only `!keys`, a list), so `%person!key%` was not set.
+KeyIsTheFirstKey
+- set %person% = {"name": "Ada", "age": 36}
+- assert %person!key% equals "name"
+- assert %person!key.list% equals ["name", "age"]

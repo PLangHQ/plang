@@ -10,26 +10,26 @@ public sealed class Index : Hop
     /// <summary>The key: a number, a text, or a variable.</summary>
     public global::app.type.item.@this Key { get; }
 
-    internal Index(string text, global::app.type.item.@this key) : base(text) => Key = key;
+    internal Index(string text, global::app.type.item.@this key, Hop? next, global::app.type.@this type) : base(text, next, type) => Key = key;
 
     public override string Kind => "index";
 
     /// <summary>A literal key holds no variable; a variable key is own when it is.</summary>
-    internal override bool IsOwn => Key.Variable.All(v => v.IsOwn);
+    internal override bool IsProgram => Key.Variable.All(v => v.IsProgram);
 
     /// <summary><c>{"number": 0}</c>, <c>{"text": "k"}</c>, or <c>{"variable": [the key]}</c>.</summary>
-    protected override void Piece(global::app.type.format.IWriter writer)
+    protected override async System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         if (Key is variable.@this named)
         {
             writer.Name("variable");
-            new variable.serializer.Entry().Write(writer, [named]);
+            await new variable.serializer.Entry().Write(writer, [named]);
         }
         else
         {
             writer.Name(Key.Type.Name);
-            Key.Write(writer);
+            await Key.Output(writer);
         }
         writer.EndObject();
     }
@@ -41,6 +41,15 @@ public sealed class Index : Hop
         var key = await Resolve(context);
         if (!key.Success) return key;
         return await previous.Peek().Get(previous, (await key.Value()).ToString()!, isIndex: true);
+    }
+
+    /// <summary>Its slot is the parent's child at the key, kept by the parent for the write.</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Slot(
+        global::app.data.@this parent, global::app.actor.context.@this context)
+    {
+        var key = await Resolve(context);
+        if (!key.Success) return key;
+        return await parent.Peek().Child(parent, (await key.Value()).ToString()!, isIndex: true);
     }
 
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
@@ -57,8 +66,8 @@ public sealed class Index : Hop
     private async System.Threading.Tasks.ValueTask<global::app.data.@this> Resolve(global::app.actor.context.@this context)
     {
         if (Key is not variable.@this named) return context.Ok(Key);
-        var held = await named.Start(context);
-        if (held.IsInitialized && held.Peek() is not global::app.type.item.@null.@this) return held;
+        var key = await named.Start(context);
+        if (key.IsInitialized && key.Peek() is not global::app.type.item.@null.@this) return key;
 
         var root = named.Code.Root;
         var rootData = await context.Variable.Get(root.Name);

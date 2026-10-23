@@ -5,7 +5,10 @@ namespace app.module.signing.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
-    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
+    /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
     /// <summary>How long a signature read live off the wire is good after it was made — its expiry, unless what
@@ -14,6 +17,6 @@ public sealed class @this : global::app.type.item.setting.module.@this
 
     /// <summary>The kind of hash a signature binds its value with — <c>%!signing.setting.hash%</c>; keccak256. A
     /// signature carries its own, so one is checked with the kind it was made with, whatever this says now.</summary>
-    [Out, Store] public global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this> Hash { get; set; }
-        = new global::app.module.crypto.type.hash.kind.keccak256.@this();
+    [Out, Store, global::app.module.Default("keccak256")]
+    public global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this> Hash { get; set; } = null!;
 }

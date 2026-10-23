@@ -16,10 +16,11 @@ public class HttpStaticFileDenialTests
     private sealed class CannedChannel : global::app.channel.@this
     {
         private readonly string _answer;
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
+        private readonly global::app.actor.context.@this _ctx;
+        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(_ctx.Ok(_answer));
     }
 
     private static PLangEngine NewApp(out string root)
@@ -33,7 +34,7 @@ public class HttpStaticFileDenialTests
     [Test] public async Task StaticFile_RequestWithDotDotTraversal_DeniedByAuthGate()
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.txt");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
@@ -58,7 +59,7 @@ public class HttpStaticFileDenialTests
     [Test] public async Task StaticFile_RequestForInRootFile_ServedSilently()
     {
         var app = NewApp(out var root);
-        var ch = new CannedChannel("UNEXPECTED");
+        var ch = new CannedChannel("UNEXPECTED", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "public.txt");
         System.IO.File.WriteAllText(file, "hello");

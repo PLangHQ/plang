@@ -13,7 +13,7 @@ public class CodeValueTests : System.IAsyncDisposable
 
     [Test] public async Task Code_FromSourceAndLanguage_StoresBoth()
     {
-        var c = new code("Console.WriteLine();", "csharp");
+        var c = new code("Console.WriteLine();", "csharp", app.type.list[typeof(code)]);
         await Assert.That(c.Source).IsEqualTo("Console.WriteLine();");
         await Assert.That(c.Language).IsEqualTo("csharp");
     }
@@ -30,10 +30,10 @@ public class CodeValueTests : System.IAsyncDisposable
     }
 
     [Test] public async Task Code_IBooleanResolvable_NonEmptySource_Truthy()
-        => await Assert.That(await new code("x", "text").AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
+        => await Assert.That(await new code("x", "text", app.type.list[typeof(code)]).AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
 
     [Test] public async Task Code_IBooleanResolvable_EmptySource_Falsy()
-        => await Assert.That(await new code("", "text").AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
+        => await Assert.That(await new code("", "text", app.type.list[typeof(code)]).AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
 
     [Test] public async Task Code_PlangTypeAttribute_Registered()
     {

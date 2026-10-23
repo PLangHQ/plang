@@ -36,17 +36,36 @@ public class ComposedActionsAreObservableTests
         await Assert.That(seen).Contains("http.request");
     }
 
-    // The consent door asks through output.ask as an action: on.ask fires for it as for any ask.
-    [Test] public async Task TheConsentDoorsAsk_IsSeenByABindingOnOutputAsk()
+    // The consent door asks the actor's own input — its channel's on.ask fires there — never as an output.ask action:
+    // a binding on output.ask (which could answer in the actor's place) never sees it.
+    [Test] public async Task TheConsentDoorsAsk_GoesToTheActorsInput_NotThroughOutputAsk()
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var seen = new List<string>();
         Watch(app, "output", "ask", seen);
-        var request = global::app.type.item.permission.@this.Request(ctx.Actor!.Name, "/elsewhere", global::app.type.item.permission.Verb.write);
+        var input = new Asked(ctx);
+        app.actor.list.User.Channel.Register(input);
+        var request = global::app.type.item.permission.@this.Request(ctx.Actor!, "/elsewhere", global::app.type.item.permission.Verb.write);
 
         _ = await ctx.Actor.Permission.Ask("Allow? (y/n/a)", request, ctx, _ => Task.FromResult(ctx.Ok()));
 
-        await Assert.That(seen).Contains("output.ask");
+        await Assert.That(input.Count).IsEqualTo(1);
+        await Assert.That(seen).DoesNotContain("output.ask");
+    }
+
+    // An input that answers no, counting the asks.
+    private sealed class Asked : global::app.channel.@this
+    {
+        private readonly global::app.actor.context.@this _ctx;
+        public int Count { get; private set; }
+        public Asked(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
+        {
+            Count++;
+            return Task.FromResult(action.Context.Ok("n"));
+        }
     }
 }

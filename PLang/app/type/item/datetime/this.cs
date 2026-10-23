@@ -21,32 +21,32 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
-    public override void Write(global::app.type.format.IWriter w) => w.DateTimeOffset(Value);
-    protected internal override global::app.type.@this Type => new(typeof(@this));
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.DateTimeOffset(Value); return default; }
 
-    public @this(System.DateTimeOffset value) { Value = value; }
+    public @this(System.DateTimeOffset value, global::app.type.@this type) : base(type) { Value = value; }
 
     /// <summary>THE PURE CORE — a <c>datetime</c> passes through; a DateTimeOffset/DateTime or an
-    /// ISO-8601 string parses (via <see cref="Resolve"/>, whose context is unused); anything else
+    /// ISO-8601 string parses (<see cref="Parse"/>), each born holding <paramref name="type"/>; anything else
     /// declines (<c>null</c>). Shared by the ICreate courier and comparison coercion.</summary>
-    public static @this? Create(object? raw)
+    public static @this? Create(object? raw, global::app.type.@this type)
     {
         if (raw is @this self) return self;
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
         return value switch
         {
-            System.DateTimeOffset dto => new @this(dto),
-            System.DateTime dt => new @this(new System.DateTimeOffset(dt)),
-            string s => Resolve(s, null!),
+            System.DateTimeOffset dto => new @this(dto, type),
+            System.DateTime dt => new @this(new System.DateTimeOffset(dt), type),
+            string s => Parse(s, type),
             _ => null,
         };
     }
 
     /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
     /// on <paramref name="data"/> (a bad ISO string vs a wrong type).</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
-        if (Create(value) is { } built) return built;
+        if (value is @this self) return self;
+        if (type is not null && Create(value, type) is { } datetime) return datetime;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as datetime — expected ISO-8601 (e.g. 2024-03-15T10:30:00+00:00).", "DateTimeParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to datetime.", "DateTimeConversionFailed", 400));
@@ -54,26 +54,39 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>Accepts a CLR <see cref="System.DateTime"/> — stored as an offset.</summary>
-    public @this(System.DateTime value) { Value = new System.DateTimeOffset(value); }
+    public @this(System.DateTime value, global::app.type.@this type) : this(new System.DateTimeOffset(value), type) { }
 
     // ---- Parts: each a plang value (%now.year%, %now.weekday%) ----
-    [LlmBuilder] public global::app.type.item.number.@this Year => Value.Year;
-    [LlmBuilder] public global::app.type.item.number.@this Month => Value.Month;
-    [LlmBuilder] public global::app.type.item.number.@this Day => Value.Day;
-    [LlmBuilder] public global::app.type.item.number.@this Hour => Value.Hour;
-    [LlmBuilder] public global::app.type.item.number.@this Minute => Value.Minute;
-    [LlmBuilder] public global::app.type.item.number.@this Second => Value.Second;
-    [LlmBuilder] public global::app.type.item.number.@this Millisecond => Value.Millisecond;
-    [LlmBuilder] public global::app.type.item.number.@this Ticks => Value.Ticks;
+    // each part is the carrier the asker's context births, its value made by the app's type for it
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Year(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.Year));
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Month(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.Month));
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Day(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.Day));
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Hour(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.Hour));
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Minute(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.Minute));
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Second(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.Second));
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Millisecond(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.Millisecond));
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.number.@this> Ticks(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.number.@this>.From(context.Ok(Value.Ticks));
 
     /// <summary>The day of the week by its name (<c>Monday</c>).</summary>
-    [LlmBuilder] public global::app.type.item.text.@this Weekday => Value.DayOfWeek.ToString();
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.text.@this> Weekday(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.text.@this>.From(context.Ok(Value.DayOfWeek.ToString()));
 
     // Compound parts carry their own plang type: the calendar day is a `date`, the
     // wall-clock time a `time`, the zone offset a `duration`.
-    [LlmBuilder] public global::app.type.item.date.@this Date => new(System.DateOnly.FromDateTime(Value.Date));
-    [LlmBuilder] public global::app.type.item.time.@this Time => new(System.TimeOnly.FromTimeSpan(Value.TimeOfDay));
-    [LlmBuilder] public global::app.type.item.duration.@this Offset => new(Value.Offset);
+    [LlmBuilder] public global::app.type.item.date.@this Date(global::app.actor.context.@this context)
+        => new(System.DateOnly.FromDateTime(Value.Date), context.App.type.list[typeof(global::app.type.item.date.@this)]);
+    [LlmBuilder] public global::app.type.item.time.@this Time(global::app.actor.context.@this context)
+        => new(System.TimeOnly.FromTimeSpan(Value.TimeOfDay), context.App.type.list[typeof(global::app.type.item.time.@this)]);
+    [LlmBuilder] public global::app.data.@this<global::app.type.item.duration.@this> Offset(global::app.actor.context.@this context)
+        => global::app.data.@this<global::app.type.item.duration.@this>.From(context.Ok(Value.Offset));
 
     /// <summary>Bare ISO round-trip form — the serializer renders this.</summary>
     public override string ToString() =>
@@ -88,7 +101,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the pure <c>Create</c> core (ISO text → datetime). Non-coercible → Incomparable.</summary>
     protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
-        var b = other as @this ?? Create(other);
+        var b = other as @this ?? Create(other, Type);
         if (b is null) return new(global::app.data.Comparison.Incomparable);
         var c = Value.ToUniversalTime().CompareTo(b.Value.ToUniversalTime());
         return new(c < 0 ? global::app.data.Comparison.Less

@@ -24,7 +24,7 @@ public class Phase0Proof : System.IAsyncDisposable
     {
         // INPUT: create a Data result from an error
         var error = new Error("File not found", "NotFound", 404);
-        var result = Data.FromError(error);
+        var result = Data.FromError(error, app.actor.list.User.Context);
 
         // OUTPUT: Data has error, is not successful
         await result.IsFailure();
@@ -49,7 +49,7 @@ public class Phase0Proof : System.IAsyncDisposable
     public async Task Phase01_GenericDataFromError()
     {
         // INPUT: generic global::app.data.@this<T>.FromError
-        var result = global::app.data.@this<global::app.type.item.text.@this>.FromError(new Error("oops"));
+        var result = global::app.data.@this<global::app.type.item.text.@this>.FromError(new Error("oops"), app.actor.list.User.Context);
 
         // OUTPUT: typed error result
         await result.IsFailure();
@@ -75,7 +75,7 @@ public class Phase0Proof : System.IAsyncDisposable
     {
         // INPUT: Data.Ok with a native list — the list names its own type
         var ctx = app.actor.list.User.Context;
-        var listValue = new global::app.type.item.list.@this();
+        var listValue = new global::app.type.item.list.@this(app.type.list["list"]);
         foreach (var n in new[] { 1, 2, 3 }) listValue.Add(new Data("", n, context: ctx));
         var result = ctx.Ok(listValue);
 

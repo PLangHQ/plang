@@ -52,9 +52,9 @@ public class TypeMemberTests
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("x", new global::app.data.@this("x", "a\nb\nc", context: ctx));
 
-        var plain = await new global::app.type.item.variable.parser.@this("%x.grep(\"b\")%").Variable.Single().Start(ctx);
-        var around = await new global::app.type.item.variable.parser.@this("%x.grep(\"b\", 1)%").Variable.Single().Start(ctx);
-        var count = await new global::app.type.item.variable.parser.@this("%x.grepCount(\"b\")%").Variable.Single().Start(ctx);
+        var plain = await new global::app.type.item.variable.parser.@this("%x.grep(\"b\")%", ctx.App.type.list).Variable.Single().Start(ctx);
+        var around = await new global::app.type.item.variable.parser.@this("%x.grep(\"b\", 1)%", ctx.App.type.list).Variable.Single().Start(ctx);
+        var count = await new global::app.type.item.variable.parser.@this("%x.grepCount(\"b\")%", ctx.App.type.list).Variable.Single().Start(ctx);
 
         await plain.IsSuccess();
         var lines = (global::app.type.item.list.@this<global::app.type.item.text.@this>)(await plain.Value())!;

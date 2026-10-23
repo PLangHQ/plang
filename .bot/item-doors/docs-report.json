@@ -1,0 +1,38 @@
+{
+  "reviewer": "docs",
+  "branch": "item-doors",
+  "timestamp": "2026-10-23T10:00:00Z",
+  "reviewed_version": "v6",
+  "summary": "The docs pass before the item-doors merge into runtime2. All eight brief items are written against the code and decisions 300-320: what a prompt guards, the app folder's .data/, how the gate judges a link, a signed value that arrives, the bin-to-a-tty line, the N18 stale names, the CLAUDE.md proposals, and the good_to_know rules. Documentation, CLAUDE.md, one script and one build-file comment only: no production C#, no .pr, no os/system teaching markdown (so no re-pin).",
+  "stats": { "gaps_found": 9, "gaps_filled": 9, "docs_updated": 12, "docs_created": 0 },
+  "changes": [
+    { "id": 1, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/filesystem-permission.md", "description": "What the prompts guard (the User actor, not the app's own code; consent from the actor's input only); .data/ line; Where a verb is judged (Location/Spot, move source read+delete, grant on the place, trailing separator, folder-link delete, file as a tree of one, ask once check all, anchors landed once, unpack links, LinkLoop); Authorize flow and file map brought to the code." },
+    { "id": 2, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/callbacks.md", "description": "A signed value that arrives: nonce presented once per arrival after hash and signature; verifies and names its signer any number of times, copies too; same bytes again is NonceReplay; stored read is not an arrival. The line saying Read does not verify corrected." },
+    { "id": 3, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/wire-serialization.md", "description": "The read's verify step points at the one nonce presentation per arrival." },
+    { "id": 4, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/io-channels.md", "description": "One line on %!app.channel.setting.format% and bin to a tty (H)." },
+    { "id": 5, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/bans.md", "description": "Anchors are paths (N18); Own settings and identity keys section; three limits rows." },
+    { "id": 6, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/app-tree.md", "description": "N18: AbsolutePath/OsDirectory line removed; filesystem line." },
+    { "id": 7, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/debug.md", "description": "N18: the working flag forms; --callstack -> --call.setting." },
+    { "id": 8, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/cli-changes.md", "description": "Same stale class as N18, not on the brief's list: the flag rule stated as it is; refused forms replaced." },
+    { "id": 9, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/scripts/check-app-tree.sh", "description": "N18: dead OsAbsolutePath skip removed." },
+    { "id": 10, "type": "consistency", "action": "updated", "file": "os.targets", "description": "N18: comment names app.filesystem.os." },
+    { "id": 11, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Index: four topic docs and eight section lines for the rules from decisions 300-319." },
+    { "id": 12, "type": "consistency", "action": "updated", "file": "CLAUDE.md", "description": "Proposals 1, 3, 4, 5, 6 applied; N18's anchors line and Debugging section." },
+    { "id": 13, "type": "changelog", "action": "created", "file": ".bot/item-doors/docs/v6/result.md", "description": "CHANGELOG entry for the user-visible changes, and the file-by-file table." }
+  ],
+  "findings": [
+    { "id": 1, "severity": "minor", "category": "stale-doc", "file": "Documentation/v0.2/app-tree.md", "issue": "check-app-tree.sh reports pre-existing drift unrelated to this branch: ten modules with no line (archive, browser, build, on, screen, setting, snapshot, task, terminal, window), app.@this IsLeaf, actor.@this Setting and Task, data partial this.Diff.cs.", "resolution": "flagged-for-coder", "detail": "app-tree.md is a hand-curated one-screen map; refreshing it is its own pass. The N18 names it carried are fixed." },
+    { "id": 2, "severity": "minor", "category": "stale-doc", "file": "Documentation/v0.2/filesystem-permission.md", "issue": "The sections not on the brief (Concepts tree, Find, Known follow-ups) still describe older shapes (PermissionRecord paths, SettingsStore.GetAll, Path.cs line numbers).", "resolution": "flagged-for-coder", "detail": "Only what the brief and the changed code covered was rewritten; the rest needs its own read against the code." },
+    { "id": 3, "severity": "minor", "category": "inconsistency", "file": "CLAUDE.md", "issue": "CLAUDE.md line 22 still lists Data.Merge(); no such member exists. Fixed on docs/file-module-guide (Ingi's yes), not on this branch.", "resolution": "flagged-for-coder", "detail": "Left so the two branches do not collide; applies when docs/file-module-guide merges." }
+  ],
+  "claude_md_proposals": [
+    { "from_bot": "architect", "target": "CLAUDE.md (creative name smell)", "decision": "applied", "reason": "A rule every bot meets on every diff; added to the Shape smells with the attribution trimmed." },
+    { "from_bot": "architect", "target": "CLAUDE.md (One door for writing)", "decision": "rejected", "reason": "Withdrawn by the architect's next entry; it would teach a shape (pairs, the door, PLNG006) that no longer exists." },
+    { "from_bot": "architect", "target": "CLAUDE.md (A value always writes itself)", "decision": "applied", "reason": "Replaces the old writing bullet. Checked against item/this.cs:849-919, View, IWriter.Context. The still-valid sentence that content is opened by the sending layer is kept." },
+    { "from_bot": "architect", "target": "CLAUDE.md (plang's nodes are lowercase)", "decision": "applied", "reason": "Narrowed to what it guards; checked: members read ignoring case (item/this.cs:272). The 'Nodes lowercase, verbs PascalCase' sentence adjusted so the two do not contradict." },
+    { "from_bot": "coder", "target": "CLAUDE.md (Debugging)", "decision": "applied", "reason": "The removed --debug={...} form is refused (ExecutorTests.cs:300-307); merged with N18's Debugging line." },
+    { "from_bot": "coder", "target": "CLAUDE.md (No System.IO, IContent)", "decision": "applied", "reason": "IContent no longer exists; content.Content(context) and item.Plain checked in source." },
+    { "from_bot": "auditor", "target": "CLAUDE.md lines 11 and 27 (N18)", "decision": "applied", "reason": "The anchors are app.filesystem.root and app.filesystem.os (314b)." }
+  ],
+  "character_proposals": []
+}

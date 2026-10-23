@@ -15,7 +15,7 @@ public class GoalsTests : System.IAsyncDisposable
 
     // a goal at path — a setup goal is one by its place (/setup/) or its name (Setup)
     private Goal Named(string name, string path, string? comment = null)
-        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve(path, app.actor.list.User.Context), Comment = comment };
+        => new(app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve(path, app.actor.list.User.Context), Comment = comment };
 
     private static string TempApp()
     {
@@ -67,7 +67,7 @@ public class GoalsTests : System.IAsyncDisposable
     [Test]
     public async Task Add_ThrowsWhenNoPrPath()
     {
-        await Assert.That(() => Goals().Add(new Goal { Name = "TestGoal" })).ThrowsException();
+        await Assert.That(() => Goals().Add(new Goal(app.type.list) { Name = "TestGoal" })).ThrowsException();
     }
 
     [Test]
@@ -186,7 +186,7 @@ public class GoalsTests : System.IAsyncDisposable
     public async Task Load_RefusesAHeldSetupGoal()
     {
         // rooted where Named's paths resolve, so the held goal's .pr is the one loaded
-        await using var app = new global::app.@this(this.app.AbsolutePath).Testing();
+        await using var app = new global::app.@this(this.app.filesystem.root.Absolute).Testing();
         app.goal.list.Add(Named("SetupDb", "/setup/SetupDb.goal"));
 
         var result = await app.goal.Load("/setup/SetupDb.goal");
@@ -236,11 +236,11 @@ public class GoalsTests : System.IAsyncDisposable
             var goal = Named("Helper", "/a/Helper.goal");
             engine.goal.list.Add(goal);
 
-            var found = await engine.goal.Get("/a/helper");
+            var found = await engine.goal.Get("/a/helper", engine.actor.list.User.Context);
 
             await found.IsSuccess();
             await Assert.That(await found.Value()).IsEqualTo(goal);
-            await Assert.That((await engine.goal.Get("/no/such")).Error!.Key).IsEqualTo("NotFound");
+            await Assert.That((await engine.goal.Get("/no/such", engine.actor.list.User.Context)).Error!.Key).IsEqualTo("NotFound");
         }
         finally { System.IO.Directory.Delete(dir, true); }
     }
@@ -261,16 +261,16 @@ public class GoalsTests : System.IAsyncDisposable
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".bot", "Old.goal"), "Old\n");
             var context = engine.actor.list.User.Context;
 
-            var appOnly = new global::app.type.item.dict.@this();
+            var appOnly = context.Dict();
             appOnly.Set("os", false);
             var every = await engine.goal.list.All(context, appOnly);
             await Assert.That(((global::app.type.item.list.@this<Goal>)every).Items().Select(g => g.Name).ToList())
                 .IsEquivalentTo(new[] { "Start" });
 
-            var both = new global::app.type.item.dict.@this();
+            var both = context.Dict();
             both.Set("os", false);
             both.Set("visibility", new global::app.type.item.list.@this(new global::app.type.item.@this[]
-                { new global::app.type.item.text.@this("public"), new global::app.type.item.text.@this("private") }));
+                { context.Text("public"), context.Text("private") }, engine.type.list["list"]));
             var all = await engine.goal.list.All(context, both);
             await Assert.That(((global::app.type.item.list.@this<Goal>)all).Items().Select(g => g.Name).ToList())
                 .IsEquivalentTo(new[] { "Start", "Show" });
@@ -286,7 +286,7 @@ public class GoalsTests : System.IAsyncDisposable
     public async Task AllWord_OnAList_IsEveryItem_EvenOnAnEmptyList()
     {
         var context = app.actor.list.User.Context;
-        var empty = new global::app.data.@this("l", new global::app.type.item.list.@this(), context: context);
+        var empty = new global::app.data.@this("l", new global::app.type.item.list.@this(app.type.list["list"]), context: context);
 
         var all = await empty.Get("all");
 

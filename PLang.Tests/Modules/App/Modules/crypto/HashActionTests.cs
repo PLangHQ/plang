@@ -207,7 +207,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_NullInput_ReturnsError()
     {
-        var action = new PrAction
+        var action = new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("crypto"), Name = "hash",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", null, context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })
@@ -272,7 +272,7 @@ public class HashActionTests
         var hashResult = await hashAction.Start();
         var base64 = ((hash)(await hashResult.Value())!).ToBase64();
 
-        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(base64), Algorithm = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse("keccak256") };
+        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(base64), Algorithm = Ctx.Choice<global::app.module.crypto.type.hash.kind.@this>("keccak256") };
         await verifyAction.Attach(null, Ctx);
         var result = await verifyAction.Start();
 
@@ -289,7 +289,7 @@ public class HashActionTests
         var hashBytes = ((hash)(await hashResult.Value())!).Bytes.ToArray();
         hashBytes[0] ^= 0xFF; // flip first byte
         var wrongHash = Convert.ToBase64String(hashBytes);
-        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(wrongHash), Algorithm = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse("keccak256") };
+        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(wrongHash), Algorithm = Ctx.Choice<global::app.module.crypto.type.hash.kind.@this>("keccak256") };
         await verifyAction.Attach(null, Ctx);
         var result = await verifyAction.Start();
 
@@ -300,7 +300,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_CorruptedHashString_ReturnsError()
     {
-        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok("not-a-valid-base64!!!"), Algorithm = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse("keccak256") };
+        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok("not-a-valid-base64!!!"), Algorithm = Ctx.Choice<global::app.module.crypto.type.hash.kind.@this>("keccak256") };
         await verifyAction.Attach(null, Ctx);
         var result = await verifyAction.Start();
 
@@ -312,7 +312,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_NullHash_ReturnsError()
     {
-        var action = new PrAction
+        var action = new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("crypto"), Name = "verify",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", "hello", context: Ctx), new Data("hash", null, context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })
@@ -329,7 +329,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_NullInput_ReturnsError()
     {
-        var action = new PrAction
+        var action = new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("crypto"), Name = "verify",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", null, context: Ctx), new Data("hash", "abc123", context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })
@@ -348,7 +348,7 @@ public class HashActionTests
         _app.Code.Register<ICrypto>(new FailingCryptoProvider());
         _app.Code.SetDefault<ICrypto>("failing");
 
-        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("test"), Hash = Ctx.Ok(Convert.ToBase64String(new byte[32])), Algorithm = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse("keccak256") };
+        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("test"), Hash = Ctx.Ok(Convert.ToBase64String(new byte[32])), Algorithm = Ctx.Choice<global::app.module.crypto.type.hash.kind.@this>("keccak256") };
         await verifyAction.Attach(null, Ctx);
         var result = await verifyAction.Start();
 
@@ -364,5 +364,5 @@ public class HashActionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.module.crypto.type.hash.@this>.FromError(new ActionError("Provider failure", "ProviderError", 500)));         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.FromError(new ActionError("Provider failure", "ProviderError", 500)));     }
+        public System.Threading.Tasks.Task<global::app.data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.module.crypto.type.hash.@this>.FromError(new ActionError("Provider failure", "ProviderError", 500), action.Context));         public System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.@bool.@this>> Verify(Verify action) => System.Threading.Tasks.Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.FromError(new ActionError("Provider failure", "ProviderError", 500), action.Context));     }
 }

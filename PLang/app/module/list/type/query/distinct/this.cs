@@ -9,12 +9,13 @@ public sealed class @this : query.@this
 {
     private readonly global::app.type.item.@bool.@this _on;
 
-    private @this(global::app.type.item.@bool.@this on) => _on = on;
+    private @this(global::app.type.item.@bool.@this on, global::app.type.@this type) : base(type) => _on = on;
 
     /// <summary>The query's <paramref name="distinct"/>: whether repeats are dropped — a bool, as bool reads one;
-    /// what doesn't read as a bool is why on <c>data</c>.</summary>
+    /// what doesn't read as a bool is why on <c>data</c>. Born holding the app's <c>{query, distinct}</c>.</summary>
     internal static @this? Create(Data distinct, Data data, global::app.actor.context.@this context)
-        => global::app.type.item.@bool.@this.Create(distinct.Peek(), null, data) is { } on ? new(on) : null;
+        => global::app.type.item.@bool.@this.Create(distinct.Peek(), null, data) is { } on
+            ? new(on, context.App.type.list[typeof(@this)]) : null;
 
     internal override int Rank => 2;
 
@@ -22,10 +23,6 @@ public sealed class @this : query.@this
         global::app.actor.context.@this context)
         => await Next(_on.Value ? await rows.Unique(context) : context.Ok(rows), rest, context);
 
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-    {
-        _on.Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => _on.Output(writer);
 }

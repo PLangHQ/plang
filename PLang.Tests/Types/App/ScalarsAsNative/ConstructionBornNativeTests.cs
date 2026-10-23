@@ -19,11 +19,11 @@ public class ConstructionBornNativeTests : System.IAsyncDisposable
     private readonly global::app.@this app = new global::app.@this("/app").Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private static object? Unwrap(string json)
+    private object? Unwrap(string json)
     {
         using var doc = JsonDocument.Parse(json);
         // A Data built from a JsonElement runs it through UnwrapJsonElement.
-        return new Data("x", doc.RootElement.Clone()).Peek();
+        return new Data("x", doc.RootElement.Clone(), context: app.actor.list.User.Context).Peek();
     }
 
     [Test]
@@ -73,7 +73,7 @@ public class ConstructionBornNativeTests : System.IAsyncDisposable
         var dict = (global::app.type.item.dict.@this)leaf!;
         var z = dict.Get("z", app.actor.list.User.Context);
         await Assert.That(z).IsNotNull();
-        await Assert.That(ReferenceEquals((z!.Peek()), NullV.Instance)).IsTrue();
+        await Assert.That(z!.Peek() is NullV).IsTrue();
     }
 
     [Test]

@@ -96,9 +96,9 @@ internal sealed class Mft : IDecoder
     internal static bool Here(string codec)
     {
         if (Format(codec) is not { } format || !Start()) return false;
-        var found = Find(format);
-        if (found == IntPtr.Zero) return false;
-        Let(found);
+        var decoder = Find(format);
+        if (decoder == IntPtr.Zero) return false;
+        Let(decoder);
         return true;
     }
 
@@ -115,10 +115,10 @@ internal sealed class Mft : IDecoder
             Check(CoCreateInstance(H264Decoder, IntPtr.Zero, 1, TransformInterface, out transform), "no H.264 decoder");
         else
         {
-            var found = Find(format);
-            if (found == IntPtr.Zero) throw new InvalidOperationException($"Windows has no decoder for {codec}");
-            try { Check(Fn<Activate>(found, ActivateObject)(found, TransformInterface, out transform), $"{codec} decoder"); }
-            finally { Let(found); }
+            var decoder = Find(format);
+            if (decoder == IntPtr.Zero) throw new InvalidOperationException($"Windows has no decoder for {codec}");
+            try { Check(Fn<Activate>(decoder, ActivateObject)(decoder, TransformInterface, out transform), $"{codec} decoder"); }
+            finally { Let(decoder); }
         }
 
         try

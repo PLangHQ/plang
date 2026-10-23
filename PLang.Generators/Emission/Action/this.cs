@@ -414,14 +414,14 @@ public static class @this
                 async System.Threading.Tasks.Task<global::app.data.@this> global::app.module.ICodeGenerated.Start()
                 {
                     // what exists only at run — the channel — is found now
-                    if (await __Live() is { } __missing) return global::app.data.@this.FromError(__missing);
+                    if (await __Live() is { } __missing) return global::app.data.@this.FromError(__missing, Context);
                     try { return await Start(); }
                     // a program's error that travelled as an exception is the action's answer, whole
-                    catch (global::app.error.AppException ex) { return global::app.data.@this.FromError(ex.Error); }
+                    catch (global::app.error.AppException ex) { return global::app.data.@this.FromError(ex.Error, Context); }
                     // an exception plang didn't raise — the frame the failure is recorded on says which action
                     catch (System.Exception ex) when (ex is not (System.OperationCanceledException or System.OutOfMemoryException or System.StackOverflowException))
                     {
-                        return global::app.data.@this.FromError(global::app.error.@this.FromException(ex));
+                        return global::app.data.@this.FromError(global::app.error.@this.FromException(ex), Context);
                     }
                 }
 
@@ -437,17 +437,17 @@ public static class @this
                 // default (__Default, action.Default's) separately, so a setting can sit between them.
                 private static global::app.data.@this __Copy(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
-                    => (action?[name] ?? action?.Default[name])?.Data(context) ?? global::app.data.@this.NotFound(name);
+                    => (action?[name] ?? action?.Default[name])?.Data(context) ?? global::app.data.@this.NotFound(name, context);
 
                 private static global::app.data.@this<T> __View<T>(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
                     where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-                    => action?[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name).As<T>();
+                    => action?[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name, context).As<T>();
 
                 private static global::app.data.@this<T> __Default<T>(
                     global::app.goal.step.action.@this? action, string name, global::app.actor.context.@this context)
                     where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-                    => action?.Default[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name).As<T>();
+                    => action?.Default[name]?.Data(context).As<T>() ?? global::app.data.@this.NotFound(name, context).As<T>();
 
                 // Wraps a resolution error with the action's module.action context so the
                 // reader can locate the failing call site. The raw error from Data<T>.As<T>

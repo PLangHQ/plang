@@ -55,7 +55,7 @@ public class PathSerializerMigrationTests
     private static string? KindVia(global::app.@this app, string typeName, object? raw)
     {
         var ctx = app.actor.list.User.Context;
-        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: ctx);
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(new global::app.type.@this(typeName)), context: ctx);
         var built = ctx.App.type.list[typeName].Make(raw, carrier);
         // A decline says why — the carrier holds the reason.
         return built?.Type.kind is { IsEmpty: false } kind ? kind.Name : $"<no value: {carrier.Error?.Key}: {carrier.Error?.Message}>";
@@ -95,8 +95,8 @@ public class PathSerializerMigrationTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
-            w.Value(p);
+            var w = new global::app.type.item.kind.json.Writer(utf, global::app.View.Out, app.actor.list.System.Context);
+            await p.Output(w);
         }
         var fromRenderer = System.Text.Encoding.UTF8.GetString(ms.ToArray());
 

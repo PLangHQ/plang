@@ -18,7 +18,7 @@ public class ListCopyOnWriteTests : System.IAsyncDisposable
 
     [Test] public async Task AReadAfterAWrite_SeesIt()
     {
-        var list = new global::app.type.item.list.@this();
+        var list = new global::app.type.item.list.@this(app.type.list["list"]);
         list.Add((global::app.type.item.text.@this)"a");
         await Assert.That(await Texts(list)).IsEquivalentTo(new[] { "a" });
         list.Add((global::app.type.item.text.@this)"b");
@@ -29,7 +29,7 @@ public class ListCopyOnWriteTests : System.IAsyncDisposable
 
     [Test] public async Task AWalkUnderWay_KeepsTheRowsItStartedWith()
     {
-        var list = new global::app.type.item.list.@this();
+        var list = new global::app.type.item.list.@this(app.type.list["list"]);
         list.Add((global::app.type.item.text.@this)"a");
         list.Add((global::app.type.item.text.@this)"b");
         var seen = new List<string>();

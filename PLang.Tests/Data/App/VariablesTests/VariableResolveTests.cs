@@ -81,7 +81,7 @@ public class VariableResolveTests
     [Test]
     public async Task ImplicitConversion_ToString_ReturnsName()
     {
-        @this v = new @this("x");
+        @this v = new @this("x", _app.type.list);
 
         string s = v;
 
@@ -91,7 +91,7 @@ public class VariableResolveTests
     [Test]
     public async Task ToString_ReturnsName_ForInterpolationFriendliness()
     {
-        var v = new @this("listName");
+        var v = new @this("listName", _app.type.list);
 
         var formatted = $"Variable '{v}' was missing";
 

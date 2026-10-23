@@ -48,6 +48,16 @@ public abstract partial class @this
         return null;
     }
 
+    /// <summary>The same guard on the place the door acts on (<see cref="Spot"/> for an unlink); one that lands nowhere
+    /// the gate can tell (null) is refused.</summary>
+    private protected async Task<data.@this?> AuthGate(Verb verb, @this? place, actor.context.@this context)
+    {
+        var auth = place == null ? context.Error(Loop) : await Authorize(verb, place, context);
+        if (auth.Exits) return auth;
+        if (!auth.Success) return auth;
+        return null;
+    }
+
     // --- Abstract verb surface ---
     //
     // The option-bearing verbs (Delete/List/CopyTo/MoveTo/Save) live here, on

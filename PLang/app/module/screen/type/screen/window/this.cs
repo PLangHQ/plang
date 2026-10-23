@@ -29,7 +29,7 @@ public sealed class @this : screen.@this
         var events = System.Threading.Channels.Channel.CreateUnbounded<global::app.type.item.@this>();
         var errors = System.Threading.Channels.Channel.CreateUnbounded<byte[]>();
         Text closedLine = "{\"closed\":true}";
-        var window = new Native(title, width, height,
+        var window = new Native(title, width, height, context.App.type.list,
             onEvent: e => events.Writer.TryWrite(e),
             onClosed: () => { events.Writer.TryWrite(closedLine); errors.Writer.TryComplete(); },
             onError: json => errors.Writer.TryWrite(json));
@@ -46,7 +46,7 @@ public sealed class @this : screen.@this
     // written by the json writer, one per line; kept across starts.
     internal static async Task Kept(System.Threading.Channels.ChannelReader<byte[]> errors, global::app.actor.context.@this context)
     {
-        var file = global::app.type.item.path.file.@this.Resolve(PathHelper.Combine(context.App.AbsolutePath, "errors.jsonl"), context);
+        var file = global::app.type.item.path.file.@this.Resolve("/errors.jsonl", context);
         var json = context.App.type.list.Mime("application/json");
         await foreach (var sent in errors.ReadAllAsync())
         {
@@ -55,14 +55,14 @@ public sealed class @this : screen.@this
             var said = await json.Decode(sent, context, "error");
             var error = await said.Get("error");
             var where = await said.Get("where");
-            var record = new global::app.type.item.dict.@this()
+            var record = new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)])
                 .Set("at", (Text)DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture))
                 .Set("where", where.Success ? await where.Value() : null)
                 .Set("error", error.Success && await error.Value() is { IsNull: false } what ? what : (Text)System.Text.Encoding.UTF8.GetString(sent));
             var value = new global::app.data.@this("error", record, context: context);
-            using var written = new MemoryStream();
-            if (!(await json.Encode(written, value, context)).Success) continue;
-            var line = System.Text.Encoding.UTF8.GetString(written.ToArray()) + "\n";
+            using var stream = new MemoryStream();
+            if (!(await json.Encode(stream, value, context)).Success) continue;
+            var line = System.Text.Encoding.UTF8.GetString(stream.ToArray()) + "\n";
             await (await (await file.Exists(context)).ToBooleanAsync() ? file.Append(line, context) : file.WriteText(line, context));
         }
     }
@@ -73,9 +73,9 @@ public sealed class @this : screen.@this
         global::app.goal.step.action.@this? onInput, global::app.goal.step.action.@this? onClose, global::app.actor.context.@this context)
     {
         // watched from outside (the os bot); started anew now and then, so it stays small
-        var stats = PathHelper.Combine(context.App.AbsolutePath, "stats.jsonl");
+        const string stats = "/stats.jsonl";
         // what PlangOS's browser says of its media players (Chromium's media log), kept beside: what a video did when it stopped
-        var media = PathHelper.Combine(context.App.AbsolutePath, "media.jsonl");
+        const string media = "/media.jsonl";
         var recorded = 0;
         var heard = 0;
         await foreach (var e in events.ReadAllAsync())

@@ -19,8 +19,9 @@ public partial class Tag : IContext
         if (Context.call.Current?.Goal is not { } goal) return Context.Ok();
         if (await Tags.Value() is not { } tags) return Context.Ok();
 
+        var type = Context.App.type.list[typeof(global::app.type.item.tag.@this)];
         foreach (var row in tags.Items(Context))
-            if (global::app.type.item.tag.@this.Create(await row.Value()) is { } tag && !goal.Tag.Has(tag))
+            if (global::app.type.item.tag.@this.Create(await row.Value(), type) is { } tag && !goal.Tag.Has(tag))
                 goal.Tag.Add(tag);
         return Context.Ok();
     }

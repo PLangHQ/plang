@@ -11,23 +11,14 @@ namespace app.type.item;
 public sealed class computed : @this
 {
     private readonly System.Func<actor.context.@this, @this?> _factory;
-    private readonly string? _declared;
-    private readonly string? _declaredKind;
 
-    /// <summary>A value found at each read by <paramref name="factory"/>, handed the asker's context.</summary>
-    public computed(System.Func<actor.context.@this, @this?> factory,
-        string? declaredTypeName = null, string? declaredKind = null)
+    /// <summary>A value found at each read by <paramref name="factory"/>, handed the asker's context; born holding
+    /// <paramref name="type"/> — the app's type it is declared as, else the app's <c>item</c> (it may be anything).</summary>
+    public computed(System.Func<actor.context.@this, @this?> factory, global::app.type.@this type)
+        : base(type)
     {
         _factory = factory ?? throw new System.ArgumentNullException(nameof(factory));
-        _declared = declaredTypeName;
-        _declaredKind = declaredKind;
     }
-
-    /// <summary>The declared answer type when the cell advertises one
-    /// (%Now% is a datetime); "item" when undeclared — the computation's
-    /// answer carries its own truth at each use.</summary>
-    protected internal override global::app.type.@this Type
-        => _declared == null ? new(typeof(@this), _declaredKind) : new(_declared, _declaredKind);
 
     public override bool Cacheable => false;
 
@@ -49,10 +40,8 @@ public sealed class computed : @this
         => await Compute(parent.Context).Get(parent, key);
 
     /// <summary>Writes the current answer, lifted with the writer's context.</summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => Compute(context ?? throw Contextless()).Output(writer, mode, context);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => Compute(writer.Context).Output(writer);
 
     /// <summary>"In memory now" for a computed IS the current computation, which needs the
     /// asker's context to lift — its holder answers it (<c>DynamicData.Peek</c>).</summary>

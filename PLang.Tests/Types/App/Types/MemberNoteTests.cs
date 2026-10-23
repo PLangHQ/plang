@@ -54,7 +54,7 @@ public class MemberNoteTests
         await Assert.That(notes.Line.Select(line => line.Name?.ToString())).IsEquivalentTo(new[] { "replace", "old", "new", "Returns" });
         await Assert.That(notes.Line[0].Say?.ToString()).IsEqualTo("%text.replace(\"old\", \"new\")%");
         await Assert.That(notes.Returns?.Prose.ToString()).IsEqualTo("the text with every match replaced.");
-        await Assert.That(notes.Warning.Count).IsEqualTo(0);
+        await Assert.That(notes.Warning!.CountRaw).IsEqualTo(0);
     }
 
     // a member read as it is (a property) has no arguments: its own line and Returns, nothing owed
@@ -66,7 +66,7 @@ public class MemberNoteTests
         var notes = await Read("length");
 
         await Assert.That(notes.Line.Count).IsEqualTo(2);
-        await Assert.That(notes.Warning.Count).IsEqualTo(0);
+        await Assert.That(notes.Warning!.CountRaw).IsEqualTo(0);
     }
 
     // plang reads names case-insensitively: a line `Old` names the argument old
@@ -77,7 +77,7 @@ public class MemberNoteTests
 
         var notes = await Read("replace");
 
-        await Assert.That(notes.Warning.Count).IsEqualTo(0);
+        await Assert.That(notes.Warning!.CountRaw).IsEqualTo(0);
     }
 
     // a line naming none of its arguments, and an argument no line names, are what don't agree
@@ -88,8 +88,8 @@ public class MemberNoteTests
 
         var notes = await Read("replace");
 
-        await Assert.That(notes.Warning.Select(w => w.Key)).IsEquivalentTo(new[] { "NoteWithoutArgument", "ArgumentWithoutNote" });
-        await Assert.That(notes.Warning.Select(w => w.Message)).Contains("text.replace: the notes line 'colour' names no argument");
-        await Assert.That(notes.Warning.Select(w => w.Message)).Contains("text.replace: the argument 'new' has no notes line");
+        await Assert.That(notes.Warning!.Items().Select(w => w.Key)).IsEquivalentTo(new[] { "NoteWithoutArgument", "ArgumentWithoutNote" });
+        await Assert.That(notes.Warning!.Items().Select(w => w.Message)).Contains("text.replace: the notes line 'colour' names no argument");
+        await Assert.That(notes.Warning!.Items().Select(w => w.Message)).Contains("text.replace: the argument 'new' has no notes line");
     }
 }

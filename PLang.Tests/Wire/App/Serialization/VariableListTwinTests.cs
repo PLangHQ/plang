@@ -8,6 +8,8 @@ namespace PLang.Tests.App.Serialization;
 // AcceptTheFixture.
 public class VariableListTwinTests
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+
     private const string Pinned = "PLang.Tests/Wire/App/Serialization/formal_golden.json";
 
     [Test]
@@ -19,7 +21,7 @@ public class VariableListTwinTests
             foreach (var row in Rows(JsonNode.Parse(entry.GetProperty("pr").GetRawText())))
             {
                 rows++;
-                var expected = Expected(row);
+                var expected = await Expected(row);
                 var written = row["variable"]?.ToJsonString();
                 if (expected != written)
                     differ.Add($"{entry.GetProperty("goal").GetString()}[{entry.GetProperty("index").GetInt32()}] {row["name"]}: pinned {written ?? "(none)"}, C# {expected ?? "(none)"}");
@@ -37,7 +39,7 @@ public class VariableListTwinTests
         foreach (var entry in pinned)
             foreach (var row in Rows(entry!["pr"]).ToList())
             {
-                if (Expected(row) is { } list) row["variable"] = JsonNode.Parse(list);
+                if (await Expected(row) is { } list) row["variable"] = JsonNode.Parse(list);
                 else row.Remove("variable");
             }
         Fixture.Write(Pinned, pinned);
@@ -79,19 +81,18 @@ public class VariableListTwinTests
         foreach (var kv in obj) foreach (var r in Rows(kv.Value)) yield return r;
     }
 
-    private static string? Expected(JsonObject row)
+    private async Task<string?> Expected(JsonObject row)
     {
         var type = (JsonObject)row["type"]!;
         var holds = type["template"] != null || type["name"]?.GetValue<string>() == "variable";
         if (!holds) return null;
         var found = new List<global::app.type.item.variable.@this>();
-        Strings(row["value"], s => found.AddRange(new global::app.type.item.variable.parser.@this(s).Variable));
+        Strings(row["value"], s => found.AddRange(new global::app.type.item.variable.parser.@this(s, app.type.list).Variable));
         if (found.Count == 0) return null;
         using var ms = new System.IO.MemoryStream();
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms,
                    new System.Text.Json.JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
-            new global::app.type.item.variable.serializer.Entry().Write(
-                new global::app.type.item.kind.json.Writer(utf8), found.DistinctBy(v => v.Text).ToList());
+            await new global::app.type.item.variable.serializer.Entry().Write(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, app.actor.list.System.Context), found.DistinctBy(v => v.Text).ToList());
         return JsonNode.Parse(ms.ToArray())!.ToJsonString();
     }
 

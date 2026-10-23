@@ -23,7 +23,7 @@ public class StringPlainTests
         // Direct ExecuteAsync — read the property twice through the handler instance.
         await using var app = new global::app.@this("/app").Testing();
         var handler = new StringPlain(app.actor.list.User.Context);
-        var action = new PrAction
+        var action = new PrAction(app.type.list)
         {
             Module = app.Module("matrix.plain"),
             Name = "stringplain",
@@ -127,7 +127,7 @@ public class PathPlainTests
     public async Task PathPlain_PathValue_FastPath()
     {
         await using var app = new global::app.@this("/app").Testing();
-        var path = new global::app.type.item.path.file.@this("/already-a-path.txt");
+        var path = app.actor.list.User.Context.File("/already-a-path.txt");
         var result = await MatrixRunner.RunAsync<PathPlain>(app,
             parameters: new[] { ("file", (object?)path) });
         var typed = result.Data as global::app.data.@this<global::app.type.item.path.@this>;

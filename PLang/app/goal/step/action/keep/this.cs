@@ -10,7 +10,7 @@ namespace app.goal.step.action.keep;
 public class @this : global::app.goal.step.action.@this
 {
     /// <summary>A keep IS a distinct plang type (the role is the type): its wire shape is action's.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this));
+    public @this(global::app.type.list.@this types) : base(types, types[typeof(@this)]) { }
 
     /// <summary>A keep holds its step's answer when it keeps what the actions before it produce (<c>Value=%!data%</c>,
     /// a <c>write to</c>); one with a value of its own (<c>set %seen% = %item%</c>) does not.</summary>
@@ -22,12 +22,11 @@ public class @this : global::app.goal.step.action.@this
     /// <summary>A keep of its step's answer belongs to the action whose value it keeps, so what follows it — a clause
     /// (<c>math.add(…); variable.set(Value=%!data%); on.error(…)</c>) — belongs there too: the clause binds to the action
     /// that fails, wherever the keep was written. A keep of a value of its own is a step action itself.</summary>
-    internal override global::app.goal.step.action.@this? Anchor(global::app.goal.step.action.@this? before)
-        => IsAnswer && before != null ? before : this;
+    internal override bool Belongs(global::app.goal.step.action.@this? before) => IsAnswer && before != null;
 
     /// <summary>A program action of this keep's kind, in <paramref name="step"/>.</summary>
     internal override global::app.goal.step.action.@this Program(global::app.goal.step.@this? step)
-        => new @this { Module = Module, Name = Name, Step = step, Synthetic = false };
+        => new @this(Module.App.type.list) { Module = Module, Name = Name, Step = step, Synthetic = false };
 
     /// <summary>A keep takes its place once the line knows whether a value is produced: after the producers,
     /// keeping their value, or where it stands.</summary>

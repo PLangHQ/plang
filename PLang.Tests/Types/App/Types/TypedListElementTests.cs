@@ -1,10 +1,10 @@
 namespace PLang.Tests.App.Types;
 
 /// <summary>
-/// A typed list (<c>list&lt;path&gt;</c>) holds its elements as they came in and knows its kind; an element is born its
-/// element type's value at its own first read — by index or by walking — and kept in its slot, so it is born once. Its
-/// count births nothing, and an element that makes no path fails where it is read. Nothing fires for an element: the
-/// list's birth is the event, its elements are part of it.
+/// A typed list (<c>list&lt;path&gt;</c>) holds its rows as they came in and knows its kind; a row is made its element
+/// type's value at each read — by index or by walking — and nothing is written back, so a list read and saved untouched
+/// is unchanged. Its count makes nothing, and a row that makes no path fails where it is read. Nothing fires for an
+/// element: the list's birth is the event, its elements are part of it. Lowered to C#, a list is a C# list of its own.
 /// </summary>
 public class TypedListElementTests
 {
@@ -36,18 +36,19 @@ public class TypedListElementTests
     }
 
     [Test]
-    public async Task ASecondRead_IsTheSameElement()
+    public async Task ASecondRead_MakesThePathAgain()
     {
         var files = await Files("a.txt", "b.txt");
 
         var once = await (await files.Get("0")).Value();
         var again = await (await files.Get("0")).Value();
 
-        await Assert.That(again).IsSameReferenceAs(once);
+        await Assert.That(again).IsAssignableTo<path>();
+        await Assert.That(again).IsNotSameReferenceAs(once);
     }
 
     [Test]
-    public async Task WalkingTheList_BirthsEachElement_AndKeepsIt()
+    public async Task WalkingTheList_MakesEachElement_AndWritesNothingBack()
     {
         var files = await Files("a.txt", "b.txt");
         var list = List(await files.Value());
@@ -55,7 +56,20 @@ public class TypedListElementTests
         var walked = list.Items(Ctx).Select(e => e.Peek()).ToList();
 
         await Assert.That(walked.All(e => e is path)).IsTrue();
-        await Assert.That((await (await files.Get("1")).Value())).IsSameReferenceAs(walked[1]);
+        await Assert.That(list.Slots().All(slot => slot is string)).IsTrue();
+    }
+
+    [Test]
+    public async Task AListReadAndSavedUntouched_IsUnchanged()
+    {
+        var files = await Files("a.txt", "b.txt");
+        var list = List(await files.Value());
+        await files.Get("0");
+
+        using var stream = new System.IO.MemoryStream();
+        await (await Ctx.App.type.list.Mime("application/json").Encode(stream, files, Ctx)).IsSuccess();
+
+        await Assert.That(list.Slots().All(slot => slot is string)).IsTrue();
     }
 
     [Test]
@@ -78,5 +92,18 @@ public class TypedListElementTests
         var bad = await files.Get("1");
 
         await bad.IsFailure();
+    }
+
+    [Test]
+    public async Task LoweredToCSharp_IsAListOfItsOwn()
+    {
+        var rows = new List<object?> { "a", "b" };
+        var list = List(await (await Ctx.App.type.list["list"].Create(rows, Ctx)).Value());
+
+        var lowered = list.Clr<List<object?>>()!;
+        lowered.Add("c");
+
+        await Assert.That(lowered).IsNotSameReferenceAs(rows);
+        await Assert.That(list.CountRaw).IsEqualTo(2);
     }
 }

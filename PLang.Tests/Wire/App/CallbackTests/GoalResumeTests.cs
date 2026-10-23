@@ -20,10 +20,10 @@ public class GoalResumeTests
 
     // The goal comes first — a step is born knowing it, so it cannot be built loose
     // and grafted on afterwards.
-    private static Step SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
+    private static async Task<Step> SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
     {
-        var action = context.Action($"variable.set(Name=%{varName}%, Value={System.Text.Json.JsonSerializer.Serialize(value)})");
-        var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
+        var action = await context.Action($"variable.set(Name=%{varName}%, Value={System.Text.Json.JsonSerializer.Serialize(value)})");
+        var step = new Step(context.App.type.list) { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action = action.In(step);
         step.Code.Add(action);
         goal.Step.Add(step);
@@ -31,16 +31,16 @@ public class GoalResumeTests
     }
 
     private static Goal Build(global::app.actor.context.@this context, string name) =>
-        new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", context) };
+        new Goal(context.App.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", context) };
 
     [Test]
     public async Task StepRunFrom_Zero_RunsAllActions()
     {
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var actionA = context.Action("variable.set(Name=%a%, Value=\"A\")");
-        var actionB = context.Action("variable.set(Name=%b%, Value=\"B\")");
-        var step = new Step { Index = 0, Text = "multi" };
+        var actionA = await context.Action("variable.set(Name=%a%, Value=\"A\")");
+        var actionB = await context.Action("variable.set(Name=%b%, Value=\"B\")");
+        var step = new Step(context.App.type.list) { Index = 0, Text = "multi" };
         actionA = actionA.In(step); actionB = actionB.In(step);
         step.Code.Add(actionA); step.Code.Add(actionB);
 
@@ -55,9 +55,9 @@ public class GoalResumeTests
     {
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var actionA = context.Action("variable.set(Name=%a%, Value=\"A\")");
-        var actionB = context.Action("variable.set(Name=%b%, Value=\"B\")");
-        var step = new Step { Index = 0, Text = "multi" };
+        var actionA = await context.Action("variable.set(Name=%a%, Value=\"A\")");
+        var actionB = await context.Action("variable.set(Name=%b%, Value=\"B\")");
+        var step = new Step(context.App.type.list) { Index = 0, Text = "multi" };
         actionA = actionA.In(step); actionB = actionB.In(step);
         step.Code.Add(actionA); step.Code.Add(actionB);
 
@@ -73,9 +73,9 @@ public class GoalResumeTests
         var app = NewApp();
         var context = app.actor.list.User.Context;
         var goal = Build(context, "G");
-        SetStep(context, goal, 0, "s0", "skip");
-        SetStep(context, goal, 1, "s1", "from-here");
-        SetStep(context, goal, 2, "s2", "and-after");
+        await SetStep(context, goal, 0, "s0", "skip");
+        await SetStep(context, goal, 1, "s1", "from-here");
+        await SetStep(context, goal, 2, "s2", "and-after");
 
         var result = await goal.Resume(context, stepIdx: 1, actionIdx: 0);
         await result.IsSuccess();
@@ -95,7 +95,7 @@ public class GoalResumeTests
         // The integration test in 2a.8 (StatelessCrossGoalResumes) pins the
         // end-to-end behavior.
         var app = NewApp();
-        var data = new global::app.data.@this<Ask>("", new Ask { Waiting = true }, context: app.actor.list.User.Context);
+        var data = new global::app.data.@this<Ask>("", new Ask(app.actor.list.User.Context.App.type.list[typeof(global::app.module.output.Ask)]) { Waiting = true }, context: app.actor.list.User.Context);
         await Assert.That(data.ShouldExit()).IsTrue();
     }
 
@@ -109,8 +109,8 @@ public class GoalResumeTests
         var app = NewApp();
         var context = app.actor.list.User.Context;
         var goal = Build(context, "G");
-        SetStep(context, goal, 0, "first", "should-not-run");
-        SetStep(context, goal, 1, "second", "runs");
+        await SetStep(context, goal, 0, "first", "should-not-run");
+        await SetStep(context, goal, 1, "second", "runs");
 
         await goal.Resume(context, stepIdx: 1, actionIdx: 0);
         await Assert.That((await context.Variable.Get("first")).IsInitialized).IsFalse();

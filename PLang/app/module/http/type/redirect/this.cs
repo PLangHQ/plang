@@ -33,7 +33,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override bool IsLeaf => false;
     /// <summary>A redirect is made from a dict of its members — any left out keeps its default; a member that is
     /// no member of a redirect, or a value it can't take, declines with why.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
         if (raw is @this redirect) return redirect;
         if (raw is not global::app.type.item.dict.@this dict)
@@ -41,9 +41,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             data.Fail(new global::app.error.@this("a redirect is {follow, max}", "RedirectInvalid", 400));
             return null;
         }
-        var fresh = new @this();
-        global::app.type.item.@bool.@this follow = fresh.Follow;
-        global::app.type.item.number.@this max = fresh.Max;
+        var @default = new @this();
+        global::app.type.item.@bool.@this follow = @default.Follow;
+        global::app.type.item.number.@this max = @default.Max;
         foreach (var entry in dict.Entries(data.Context!))
             switch (entry.Name.ToLowerInvariant())
             {
@@ -58,14 +58,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>Writes itself as its dict.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("follow"); writer.Bool(Follow.Value);
-        writer.Name("max"); Max.Write(writer);
+        writer.Name("max"); await Max.Output(writer);
         writer.EndObject();
-        return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
     public override bool Equals(object? obj) => obj is @this other && Follow.Value == other.Follow.Value && Max.Equals(other.Max);

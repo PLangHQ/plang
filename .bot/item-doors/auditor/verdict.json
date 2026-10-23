@@ -1,0 +1,6 @@
+{
+  "status": "pass",
+  "summary": "Re-check at 351fae93e: X1–X3 are closed at the root and re-proven by my probes at the tip. X1: a file's transfer is a one-entry tree asked of the same Refusal. X2: each door names the place it acts on (Location for an open, Spot for an unlink or rename), and the archive answers its deletes. X3: the nonce belongs to the arrival, shared by every copy of its layer, so an arrived value verifies and names its signer while the same bytes decoded twice are NonceReplay. Nothing the diffs introduced needs fixing; C# and plang match the baseline.",
+  "next_bot": "docs",
+  "next_scope": "Docs pass for item-doors (316): N18's stale names (CLAUDE.md:11,27 and its --debug={…} example by proposal; bans.md, app-tree.md, filesystem-permission.md, debug.md, check-app-tree.sh, os.targets), 315d's wording on what consent guards, and the identity.export teaching (N1: the step does not get the key as text today). N1–N17 and R3/198 stay next-branch (.bot/item-doors/auditor/final.md)."
+}

@@ -24,18 +24,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     private global::app.type.item.list.@this<global::app.type.item.path.@this>? _list;
 
-    public @this(global::app.type.item.path.@this path)
+    /// <summary>The directory at <paramref name="path"/>, born holding <paramref name="type"/> — the app's directory.</summary>
+    public @this(global::app.type.item.path.@this path, global::app.type.@this type) : base(type)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
         // Born from a path — its type in this value's history, so `is path` answers from the chain.
         history.Add(path);
     }
 
-    /// <summary>A directory is made from its path; anything else declines.</summary>
-    public static @this? Create(object? raw) => raw switch
+    /// <summary>A directory is made from its path, born holding the app's type; anything else declines.</summary>
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw switch
     {
         @this self => self,
-        global::app.type.item.path.@this path => new @this(path),
+        global::app.type.item.path.@this path => new @this(path, data.Context!.App.type.list[typeof(@this)]),
         _ => null,
     };
 
@@ -69,7 +70,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var listed = await List(data.Context!);
         if (listed.Success) return this;
         data.Fail(listed.Error!);
-        return Absent;
+        return data.Empty;
     }
 
     /// <summary>The item membership hook — routes to the listing rule below.</summary>
@@ -96,13 +97,20 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     public override string ToString() => Path.ToString();
 
-    /// <summary>A directory writes its own form (<see cref="Write"/>) in every view; it never lists while it
-    /// writes.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    /// <summary>A directory writes itself, in every view, as a flat listing of its children's locations — never their
+    /// contents; an unlisted directory writes its location. It never lists while it writes.</summary>
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        var listed = Listed;
+        if (listed == null) { writer.String(ToString()); return; }
+        writer.BeginArray(listed.CountRaw);
+        foreach (var slot in listed.Slots())
+        {
+            var entry = slot is global::app.data.@this d ? d.Peek() : slot;
+            if (entry is global::app.type.item.path.@this p) await p.Output(writer);
+            else writer.String(entry?.ToString() ?? "");
+        }
+        writer.EndArray();
     }
 
     /// <summary>Opened to be written out: the directory lists its children (as the writer, past the path's auth
@@ -113,22 +121,4 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return listed.Success ? null : listed.Error;
     }
 
-    /// <summary>
-    /// The directory renders itself as a FLAT LISTING of its children's
-    /// locations, never their contents. An unlisted directory renders its
-    /// location (the reference face).
-    /// </summary>
-    public override void Write(global::app.type.format.IWriter writer)
-    {
-        var listed = Listed;
-        if (listed == null) { writer.String(ToString()); return; }
-        writer.BeginArray(listed.CountRaw);
-        foreach (var slot in listed.Slots())
-        {
-            var entry = slot is global::app.data.@this d ? d.Peek() : slot;
-            if (entry is global::app.type.item.path.@this p) p.Write(writer);
-            else writer.String(entry?.ToString() ?? "");
-        }
-        writer.EndArray();
-    }
 }

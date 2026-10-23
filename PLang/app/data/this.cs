@@ -24,14 +24,17 @@ public partial class @this
 {
     // THE value — the typed instance. It IS the value; Data never looks inside
     // it, never asks what type it holds, has no special cases for any type.
-    // NEVER C# null: absence is a typed citizen (`absent` for NotFound/
-    // Uninitialized, null.@this for present-null), so no consumer ever
-    // null-checks the value slot. Everything the old shape kept beside the
-    // value (raw source form, descriptor, lazy factory) lives ON the instance:
+    // NEVER C# null: an empty slot holds the app's null (null.@this), so no
+    // consumer ever null-checks the value slot. What a value needs beside
+    // itself (raw source form, descriptor, lazy factory) lives ON the instance:
     // a file holds its own bytes, a source its declared {type, kind}, a
     // computed its factory.
-    private protected global::app.type.item.@this _item = global::app.type.item.@null.@this.Instance;
-    private protected actor.context.@this _context = null!;
+    private protected global::app.type.item.@this _item;
+    private protected actor.context.@this _context;
+
+    /// <summary>What a Data holds when nothing is in it — its app's null, as its context's types make it; what a
+    /// value's door answers for this Data when it fails (the error rides this Data).</summary>
+    internal global::app.type.item.@this Empty => _context.App.type.list["null"].Empty(_context);
 
     /// <summary>
     /// Wire marker. Every Data written to the application/plang wire carries
@@ -55,7 +58,7 @@ public partial class @this
     [JsonIgnore]
     public actor.context.@this Context
     {
-        // Born-with-context: _context is set at construction on every birth (Stage 3).
+        // Born-with-context: _context is set at construction on every birth.
         // No fallback to the item's context — a null here is a bug to fix at the caller,
         // not a state to paper over. Items hold no context, so nothing is pushed down.
         get => _context;
@@ -101,13 +104,13 @@ public partial class @this
     /// full-match <c>%ref%</c> source.
     /// </summary>
     [JsonIgnore]
-    public bool IsVariable => _item?.IsVariable ?? false;
+    public bool IsVariable => _item.IsVariable;
 
     /// <summary>The Data this value is: a reference (<see cref="IsVariable"/>, <c>%!data%</c>) answers the Data it
     /// names — the lazy name-hop, the reference carrier resolving its own name — and any other value answers
     /// itself. The value door is never opened, so a pending read stays unread.</summary>
     public async System.Threading.Tasks.ValueTask<@this> Follow(actor.context.@this ctx)
-        => IsVariable && _item != null && await _item.Get(ctx) is { } named ? named : this;
+        => IsVariable && await _item.Get(ctx) is { } named ? named : this;
 
     /// <summary>The Data this is, as it is here and now, read with this Data's own context where it stands —
     /// carrying this Data's own name and its result flags (Returned, ReturnDepth, Handled), never another's.
@@ -121,11 +124,18 @@ public partial class @this
     /// <item>A value that holds variables (<c>"%name%: %price% kr"</c>, a dict or list holding them) renders here:
     /// the one place a value door is opened, since a template renders by opening the values it names. A name it
     /// can't read fails the render, and that failure is the answer.</item>
+    /// <item>A signed Data answers itself: it holds what was signed, as its view took it, and reading it again would make
+    /// it something the signature doesn't cover.</item>
     /// <item>A failure, and any other Data, answers itself.</item>
     /// </list></summary>
+    /// <summary>This Data settled for <paramref name="view"/> — the view decides: plang's own store keeps it as written; a
+    /// view that crosses (Out) or dumps (Debug) uses it, a reference a copy of the Data it names, a name that reads
+    /// nothing the error. What a signature hashes and holds, as one.</summary>
+    public System.Threading.Tasks.ValueTask<@this> Settle(View view) => view.Settle(this);
+
     public virtual async System.Threading.Tasks.ValueTask<@this> Settle()
     {
-        if (!HasVariable || _error != null) return this;
+        if (!HasVariable || _error != null || Signature != null) return this;
         @this answer;
         if (!IsVariable) answer = await Rendered();
         else if (await Follow(Context) is { IsInitialized: true } named) answer = named.Copy(Name, named._context);
@@ -146,12 +156,12 @@ public partial class @this
         try
         {
             var rendered = await asked.Value();
-            if (asked.Success) return new @this(Name, rendered, context: _context) { Properties = Properties.Clone() };
+            if (asked.Success) return new @this(Name, rendered, context: _context) { Attachment = Attachment.Copy() };
             why = asked.Error!;
         }
         // a partial template throws for a name it can't read; here that is this value's answer, on the Data
         catch (global::app.error.VariableNotFoundException missing) { why = missing.Error; }
-        var failed = new @this(Name, global::app.type.item.@null.@this.Instance, context: _context);
+        var failed = new @this(Name, Empty, context: _context);
         failed.Fail(why);
         return failed;
     }
@@ -176,10 +186,10 @@ public partial class @this
 
     /// <summary>Is this value (now or in its narrow history) the given type? Asks the value's own
     /// type history.</summary>
-    public bool Is(type other) => _item?.Is(other) ?? false;
+    public bool Is(type other) => _item.Is(other);
 
     /// <summary>Is this value the type or the kind <paramref name="name"/> names — the value's own answer.</summary>
-    public bool Is(string name, global::app.type.list.@this types) => _item?.Is(name, types) ?? false;
+    public bool Is(string name, global::app.type.list.@this types) => _item.Is(name, types);
 
     [JsonIgnore]
     public DateTime Created { get; }
@@ -202,7 +212,21 @@ public partial class @this
     [JsonIgnore]
     [LlmIgnore]
     [Out, Store]
-    public virtual Properties Properties { get; set; } = new();
+    public virtual Properties Properties { get => Attachment.Properties; set => Attachment.Properties = value; }
+
+    /// <summary>The members a program added to this variable's value that the value can't hold itself
+    /// (<c>set %name.lang% = "is"</c> on a text) — read with a dot after the value's own members, never with
+    /// <c>!</c>, which reads <see cref="Properties"/>. They ride with the value: across the wire and in the store.</summary>
+    [JsonIgnore]
+    [LlmIgnore]
+    [Out, Store]
+    internal global::app.type.item.kept.list.@this Kept { get => Attachment.Kept; set => Attachment.Kept = value; }
+
+    /// <summary>What this variable's value carries — its properties and its added members, together: a face of this
+    /// variable shares it, a copy takes a copy of it.</summary>
+    [JsonIgnore]
+    [LlmIgnore]
+    internal virtual attachment Attachment { get; set; } = new();
 
 
     [JsonConstructor]
@@ -210,7 +234,9 @@ public partial class @this
         actor.context.@this? context = null)
     {
         Name = name;
-        _context = context ?? parent?._context!;
+        // A Data is born with its context — handed, or its parent's; one born without is plang's own bug, at its maker.
+        _context = context ?? parent?._context
+            ?? throw new System.InvalidOperationException("a Data is born with its context — its maker hands one (or its parent's)");
         // A bare Data may not become a value — it would ride a Clr carrier and reflect
         // recursively on the wire ({name,value,{name,value,…}}). Same rule as SetValueDirect;
         // this catches the Data<object> double-wrap footgun (the implicit operator @this<object>(T)
@@ -233,12 +259,12 @@ public partial class @this
         if (type is { IsNull: false } && !type.Polymorphic)
             // A declared type that doesn't know its class is born through the types with this
             // Data's context, so it does.
-            _item = (type.ClrType == null && _context != null ? _context.App.type.list[type, _context] : type).Make(parsed, _context);
-        // A value that needs no lift is context-free — the null citizen (every sentinel:
-        // NotFound/Uninitialized/`new Data(name)`) and an already-native item pass through
-        // without consulting the registry. Only a raw value to lift reaches the collection.
+            _item = (type.ClrType == null ? _context.App.type.list[type, _context] : type).Make(parsed, _context);
+        // Nothing in it (every sentinel: NotFound/Uninitialized/`new Data(name)`) holds the app's null; an
+        // already-native item passes through without consulting the registry. Only a raw value to lift reaches
+        // the collection.
         else if (parsed is null)
-            _item = global::app.type.item.@null.@this.Instance;
+            _item = Empty;
         else if (parsed is global::app.type.item.@this it)
             _item = it;
         else
@@ -261,13 +287,26 @@ public partial class @this
         actor.context.@this? context = null)
     {
         Name = name;
-        _item = instance ?? global::app.type.item.@null.@this.Instance;
+        _context = context ?? parent?._context
+            ?? throw new System.InvalidOperationException("a Data is born with its context — its maker hands one (or its parent's)");
+        _item = instance ?? Empty;
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
         Created = System.DateTime.UtcNow;
         Updated = Created;
-        _context = context ?? parent?._context!;
+    }
+
+    /// <summary>A value through the C# implicit conversion, held with no context: the one Data born without one.</summary>
+    private protected @this(global::app.type.item.@this instance)
+    {
+        Name = "";
+        _context = null!;
+        _item = instance;
+        Path = BuildPath(null, Name);
+        IsInitialized = true;
+        Created = System.DateTime.UtcNow;
+        Updated = Created;
     }
 
     /// <summary>
@@ -276,9 +315,9 @@ public partial class @this
     /// an LLM-emitted shape; a kind hook refines an authored literal). Same
     /// rules as the entry lift's judgement fold (<see cref="type.Judge"/>).
     /// </summary>
-    internal void Declare(type declared, global::app.actor.context.@this? ctx = null)
+    internal void Declare(type type, global::app.actor.context.@this? ctx = null)
     {
-        if (declared is not { IsNull: false } || declared.Polymorphic) return;
+        if (type is not { IsNull: false } || type.Polymorphic) return;
         // The after-the-fact stamp routes through the SAME door as the ctor: the type
         // builds from the current (already-built) value — a value already of the type
         // holds (re-kind if needed), a different built type re-types, a %ref%/variable
@@ -286,7 +325,7 @@ public partial class @this
         // A program-structure Data (an action's param, read context-free) carries no context of
         // its own — the ASK supplies it (the build normalization is the ask). Context travels with
         // the ask: prefer the Data's own, else the caller's.
-        _item = declared.Make(_item, _context ?? ctx);
+        _item = type.Make(_item, _context ?? ctx);
     }
 
     /// <summary>
@@ -313,7 +352,7 @@ public partial class @this
     /// <summary>
     /// A USE opens the value — the door a navigation, an enumeration or a typed ask reaches instead of
     /// <see cref="Value"/>. A resting source (an unread <c>{item, json}</c>) parses once through its kind
-    /// and this Data narrows to the parsed list/dict (decision 787), the source riding as history (so it
+    /// and this Data narrows to the parsed list/dict, the source riding as history (so it
     /// parses once, never again). A value that is not a resting source answers exactly as <see cref="Value"/>
     /// does — nothing narrows. A bad parse answers <c>MaterializeFailed</c> on this Data (never a throw to a
     /// courier); the use sees <see cref="Success"/> false and surfaces it. A courier never calls this — it
@@ -327,7 +366,7 @@ public partial class @this
         {
             if (rest.Parse(_context) is not { } parsed) return value;
             parsed.history.Add(rest);               // the source rides the parsed value's history
-            if (rest.Cacheable) _item = parsed;     // narrow (787) — the next use reads the parsed value
+            if (rest.Cacheable) _item = parsed;     // narrow — the next use reads the parsed value
             return parsed;
         }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException or System.NotSupportedException)
@@ -370,7 +409,7 @@ public partial class @this
     /// final-form value). ToString, Equals and debug views read here; they
     /// never load. A consumer that needs raw CLR is a .NET edge → Clr.
     /// </summary>
-    public virtual global::app.type.item.@this Peek() => _item ?? global::app.type.item.@null.@this.Instance;
+    public virtual global::app.type.item.@this Peek() => _item;
 
     /// <summary>This optional carrier as the step gave it: null when it wasn't given (absent), else what it
     /// is — a reference (<c>%file%</c>) the Data it names, unread (<see cref="Follow"/>); any other value
@@ -406,9 +445,9 @@ public partial class @this
     public virtual async System.Threading.Tasks.ValueTask<@this> Replace(
         System.Func<System.Threading.Tasks.ValueTask<global::app.type.item.@this?>> previous)
     {
-        if (Peek() is not { } held) return this;
-        var became = await held.Replace(previous);
-        return ReferenceEquals(became, held) ? this : new @this(Name, became, context: Context);
+        if (Peek() is not { } item) return this;
+        var became = await item.Replace(previous);
+        return ReferenceEquals(became, item) ? this : new @this(Name, became, context: Context);
     }
 
     /// <summary>What this carrier holds, handed to <paramref name="then"/> as a <typeparamref name="TAs"/> —
@@ -420,10 +459,10 @@ public partial class @this
         if (!Success || Exits) return this;
         var carrier = await Follow(Context);
         if (!carrier.Success || carrier.Exits) return carrier;
-        if (carrier.Peek() is not TAs held)
+        if (carrier.Peek() is not TAs value)
             return Context.Error(new global::app.error.@this(
                 $"'{Name}' is a {carrier.Type.Name}, not a {(global::app.type.item.@this.NameOf(typeof(TAs)))}", "NotA", 400));
-        return await then(held);
+        return await then(value);
     }
 
     /// <summary>True when this Data is source-backed (holds an undecoded form held verbatim).</summary>
@@ -458,7 +497,7 @@ public partial class @this
                 "A bare Data may not be stored as a value (SetValueDirect) — it would ride a clr carrier "
                 + "and reflect recursively on the wire. Pass the inner value, not the Data wrapper.\n"
                 + System.Environment.StackTrace);
-        _item = value is null ? null
+        _item = value is null ? Empty
             : value as global::app.type.item.@this
             ?? new Clr(value, _context);
         Updated = System.DateTime.UtcNow;
@@ -474,7 +513,6 @@ public partial class @this
         {
             // Pure forward — the instance owns its identity and mints the entity itself. The
             // facts come from its full type when someone navigates in with a context.
-            if (_item == null) return type.Null;
             return _item.Type;
         }
     }
@@ -484,7 +522,7 @@ public partial class @this
     /// owner). Stays null for types without a kind.
     /// </summary>
     [JsonIgnore]
-    public string? Kind => _item?.Type.kind is { IsEmpty: false } kind ? kind.Name : null;
+    public string? Kind => _item.Type.kind is { IsEmpty: false } kind ? kind.Name : null;
 
     /// <summary>
     /// Enumerates as (key, value) Data pairs. Data owns the knowledge of how to iterate:
@@ -496,10 +534,10 @@ public partial class @this
         // A value-slot %var% names a binding, not content: what it names is enumerated (Follow — the value
         // door stays shut, so a real list/dict is walked in place), and this carrier stays as it is. A name
         // that holds nothing enumerates the carrier itself.
-        var held = await Follow(_context);
-        var walked = held.IsInitialized ? held : this;
+        var value = await Follow(_context);
+        var walked = value.IsInitialized ? value : this;
         // Content not yet read (a {item, kind: json} holding its raw) is parsed first: the read yields the
-        // real list/dict and the value narrows to it (decision 787), so foreach walks its elements — not the
+        // real list/dict and the value narrows to it, so foreach walks its elements — not the
         // one unread source. A value already walkable (the list/dict a %var% names) keeps its door shut.
         if (walked._item is global::app.type.item.source)
             return (await walked.Open()).EnumerateItems(_context);
@@ -512,19 +550,13 @@ public partial class @this
     /// (<see cref="ToBooleanAsync"/>); there is no third question.</summary>
     public bool HasValue => Peek() is not global::app.type.item.@null.@this;
 
-    // The null *value* — a present null carrying the null.@this singleton, so
-    // IsInitialized is true (distinct from NotFound/Uninitialized, which leave a
-    // null `data` reference with IsInitialized false). The singleton hosts null's
-    // behavior (always falsy, null==null) so `is null` value-switches dissolve.
-    public static @this Null(string name = "") => new(name, app.type.item.@null.@this.Instance);
-    public static @this NotFound(string name = "", actor.context.@this? context = null)
-    {
-        var d = new @this(name, context: context);
-        d._item = global::app.type.item.@null.@this.Instance;
-        d.IsInitialized = false;
-        return d;
-    }
-    public static @this Uninitialized(string name) => NotFound(name);
+    // The null *value* — a present null holding its app's null, so IsInitialized is true (distinct from
+    // NotFound/Uninitialized, which hold it with IsInitialized false). The null hosts null's behavior (always
+    // falsy, null==null) so `is null` value-switches dissolve.
+    public static @this Null(string name, actor.context.@this context) => new(name, context: context);
+    public static @this NotFound(string name, actor.context.@this context)
+        => new(name, context: context) { IsInitialized = false };
+    public static @this Uninitialized(string name, actor.context.@this context) => NotFound(name, context);
 
     /// <summary>
     /// THE typed ask — "I need a T." One branchless line: the door makes the
@@ -550,7 +582,7 @@ public partial class @this
         // a read that failed has said why — nothing is made from it
         if (!Success) return null;
         // A value already a T is held as it is. A value MADE into T from an unread source opens that source
-        // first — a typed ask is a USE, so json parses it once and the Data narrows (805/787) — then T builds
+        // first — a typed ask is a USE, so json parses it once and the Data narrows — then T builds
         // from what it opened. "Already T, or made into T", not which T it is.
         if (value is not T && value is global::app.type.item.source)
         {
@@ -565,7 +597,10 @@ public partial class @this
             Fail(chosen.Error!);
             return null;
         }
-        return value.Refuses(new global::app.type.@this(typeof(T)), this) ? null : T.Create(value, null, this);
+        // T is made by the app's type for it: this Data's asker names the app (a Data the C# operator made has no
+        // asker, so its refusal check holds a type built from T)
+        var type = Context?.App.type.list[typeof(T)];
+        return value.Refuses(type ?? new global::app.type.@this(typeof(T)), this) ? null : T.Create(value, type, this);
     }
 
     /// <summary>
@@ -582,9 +617,9 @@ public partial class @this
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties,
+            Attachment = Attachment,
         };
-        clone._item = answer ?? global::app.type.item.@this.Absent;
+        clone._item = answer ?? Empty;
         // A declined ask lands its reason on this binding (asking.Fail) and
         // answers null — carry that failure onto the typed view the caller holds.
         if (answer == null && _error != null)
@@ -613,8 +648,10 @@ public partial class @this
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties,
+            Attachment = Attachment,
             IsInitialized = IsInitialized,
+            // the same binding: the signature it arrived in is the face's too
+            Signature = Signature,
         };
         view._item = _item;
         if (_error != null) view.Fail(_error);
@@ -668,7 +705,7 @@ public partial class @this
         var value = await named.Value();
         if (ReferenceEquals(named, this) || named.Success) return value;
         Fail(named.Error!);
-        return global::app.type.item.@this.Absent;
+        return Empty;
     }
 
     /// <summary>
@@ -700,7 +737,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties.Clone(),
+            Attachment = Attachment.Copy(),
             Signature = signature ?? Signature,
         };
     }
@@ -717,7 +754,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties.Clone()
+            Attachment = Attachment.Copy(),
         };
     }
 
@@ -787,7 +824,8 @@ public class @this<T> : @this
         actor.context.@this? context = null)
         : base(name, value, type, parent, context) { }
 
-    public static @this<T> Ok(T value, type? type = null) => new("", value, type);
+    // A value through the C# implicit conversion, held with no context.
+    private @this(T value) : base(value) { }
 
     /// <summary>Settles as a <typeparamref name="T"/> slot: what the reference names, made into a
     /// <typeparamref name="T"/> — a typed slot is the action's promise, and an action answering its slot answers
@@ -807,11 +845,13 @@ public class @this<T> : @this
         }
         return From(settled);
     }
-    public new static @this<T> FromError(global::app.error.@this error) => new() { Error = error };
+    public new static @this<T> FromError(global::app.error.@this error, actor.context.@this context)
+        => new("", context: context) { Error = error };
 
     /// <summary>Typed absent slot — non-null Data, <c>IsInitialized == false</c>. The
     /// optional-param null model: the reference is never null, only the value is.</summary>
-    public new static @this<T> Uninitialized(string name) => new(name) { IsInitialized = false };
+    public new static @this<T> Uninitialized(string name, actor.context.@this context)
+        => new(name, context: context) { IsInitialized = false };
 
     /// <summary>Typed <see cref="@this.Value(object?)"/> — resolved value, or
     /// <paramref name="fallback"/> when null (absent or present-null).</summary>
@@ -892,7 +932,7 @@ public class @this<T> : @this
         copy.Handled = source.Handled;
         copy.Returned = source.Returned;
         copy.ReturnDepth = source.ReturnDepth;
-        copy.Properties = source.Properties;
+        copy.Attachment = source.Attachment;
         copy.Snapshot = source.Snapshot;
         return copy;
     }
@@ -905,7 +945,10 @@ public class @this<T> : @this
     /// method declared Task&lt;Data&lt;object&gt;&gt; must use the explicit factory
     /// (`data.@this&lt;object&gt;.Ok(...)`) — never `return innerData;`.
     /// </summary>
-    public static implicit operator @this<T>(T value) => new("", value);
+    public static implicit operator @this<T>(T value) => value is null
+        ? throw new System.InvalidOperationException(
+            $"a null {typeof(T).Name} through the implicit conversion has no app to be the null of — make it through a context")
+        : new(value);
 }
 
 /// <summary>
@@ -921,30 +964,30 @@ public class DynamicData : @this
     // time it asks.
     private readonly global::app.type.item.computed _cell;
 
-    // The Data this stands for, found per read with the asker's context.
-    private readonly Func<actor.context.@this, @this?> _found;
+    // Finds the Data this stands for, per read, with the asker's context.
+    private readonly Func<actor.context.@this, @this?> _find;
 
     /// <summary>A Data <paramref name="found"/> at each read. <paramref name="declared"/> labels what it is
     /// before it is read (<c>%Now%</c> is a datetime).</summary>
     public DynamicData(string name, Func<actor.context.@this, @this?> found, actor.context.@this context, type? declared = null)
         : this(name, new global::app.type.item.computed(asker => found(asker)?.Peek(),
-            declared?.IsNull == false ? declared.Name : null, declared?.kind is { IsEmpty: false } kind ? kind.Name : null),
+            declared?.IsNull == false ? context.App.type.list[declared, context] : context.App.type.list["item"]),
             found, context)
     {
     }
 
-    private DynamicData(string name, global::app.type.item.computed cell, Func<actor.context.@this, @this?> found,
+    private DynamicData(string name, global::app.type.item.computed cell, Func<actor.context.@this, @this?> find,
         actor.context.@this context)
         : base(name, cell, context: context)
     {
         _cell = cell;
-        _found = found;
+        _find = find;
     }
 
-    public override Properties Properties
+    internal override attachment Attachment
     {
-        get => _found(Context)?.Properties ?? base.Properties;
-        set => base.Properties = value;
+        get => _find(Context)?.Attachment ?? base.Attachment;
+        set => base.Attachment = value;
     }
 
     /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
@@ -961,7 +1004,7 @@ public class DynamicData : @this
         global::app.type.item.signature.@this? signature = null)
     {
         var ctx = context ?? Context;
-        return new @this(name, _cell.Compute(ctx), context: ctx) { Properties = Properties.Clone() };
+        return new @this(name, _cell.Compute(ctx), context: ctx) { Attachment = Attachment.Copy() };
     }
 }
 

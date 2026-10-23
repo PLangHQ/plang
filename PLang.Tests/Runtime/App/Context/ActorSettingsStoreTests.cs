@@ -54,13 +54,13 @@ public class ActorSettingsStoreTests
         // with identical DataSource names, so the App.Id scoping is load-bearing.
         await using (var engine = new global::app.@this(_testDir).TestSigning())
         {
-            engine.test.list.Open();
+            await engine.test.list.Open();
             await engine.store.Set("LlmCache", "testkey", engine.actor.list.User.Context.Ok("cached_response"));
         }
 
         await using (var engine2 = new global::app.@this(_testDir).TestSigning())
         {
-            engine2.test.list.Open();
+            await engine2.test.list.Open();
             var result = await engine2.store.Get<global::app.type.item.@this>("LlmCache", "testkey");
             // A missing key yields an empty value (the plang null/absent citizen),
             // never C# null — assert emptiness the plang way, not TUnit IsNull.
@@ -75,12 +75,12 @@ public class ActorSettingsStoreTests
         // The store persists the Store view (incl. [Sensitive] PrivateKey) and hands
         // back a Data<Identity> face; the typed lift (.Value()) reconstructs the item.
         await using var engine = new global::app.@this(_testDir).TestSigning();
-        engine.test.list.Open();
+        await engine.test.list.Open();
 
-        var original = new global::app.module.identity.Identity("work")
+        var original = new global::app.module.identity.Identity("work", engine.type.list[typeof(global::app.module.identity.Identity)])
             { PublicKey = "pub-abc", PrivateKey = "priv-xyz", IsDefault = true };
         await engine.store.Set("identity", "work",
-            new Data("work", original));
+            new Data("work", original, context: engine.actor.list.User.Context));
 
         var data   = await engine.store.Get<global::app.module.identity.Identity>("identity", "work");
         var loaded = await data.Value();

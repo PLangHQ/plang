@@ -782,7 +782,7 @@ type by a plang goal (`docs/Types.goal`), exactly as `docs/Modules.goal` +
 `docs/templates/module.template` write the module pages. The goal saves to
 `/system/type/<type>/start.md`, which lands in the os tree by decision 522 (a new
 `/system/…` file falls through to `os/system/` when `docs/` has no such folder). Build with
-`plang build '--build={"files":"Types.goal","cache":"skip"}'` from `docs/`.
+`plang build '--build.setting={"files":"Types.goal","cache":"skip"}'` from `docs/`.
 
 A C# `TypePageTests` (TUnit, mirroring `ModulePageTests`) renders the template in-memory
 over the catalog and diffs byte-exact against the `### Golden output — text` block.

@@ -11,7 +11,7 @@ global using CacheSettings = app.goal.step.CacheSettings;
 global using Channel = app.channel.@this;
 global using ChannelDirection = app.channel.ChannelDirection;
 
-// Path types (formerly FileSystem)
+// Path types
 // Lowercase aliases — match the PLang concept names, and (unlike PascalCase
 // `Path`) do not collide with System.IO.Path. Inside `namespace app.type`
 // the bare name `path` is ambiguous with the child namespace `app.type.item.path`;
@@ -29,14 +29,12 @@ global using Clr = app.type.clr.@this;
 
 // Type system
 global using AppTypes = app.type.list.@this;
-// The type entity (moved to app.type.@this in Stage 4) was historically reached as `app.type.@this`.
-// Callers that wrote `app.type.@this.X` keep working via this alias. Stage 3b/5 may sweep the call
-// sites to bare `type` (collides with the contextual keyword sites, so opting for the qualified form).
+// The type entity is reached qualified, `app.type.@this`: a bare `type` collides with the contextual keyword sites.
 
-// Code subsystem (the runtime escape-hatch — was Providers)
+// Code subsystem (the runtime escape-hatch)
 global using AppCode = app.module.code.@this;
 
-// Variables (was MemoryStack)
+// Variables
 global using Variables = app.type.item.variable.list.@this;
 
 // Snapshot subsystem

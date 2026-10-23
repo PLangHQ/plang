@@ -12,11 +12,12 @@ public sealed class @this : query.@this
 {
     private readonly condition.@this _condition;
 
-    private @this(condition.@this condition) => _condition = condition;
+    private @this(condition.@this condition, global::app.type.@this type) : base(type) => _condition = condition;
 
-    /// <summary>The query's <paramref name="where"/>: its condition; one that doesn't read is why on <c>data</c>.</summary>
+    /// <summary>The query's <paramref name="where"/>: its condition; one that doesn't read is why on <c>data</c>. Born
+    /// holding the app's <c>{query, where}</c>.</summary>
     internal static @this? Create(Data where, Data data, global::app.actor.context.@this context)
-        => condition.@this.Create(where, data, context) is { } kept ? new(kept) : null;
+        => condition.@this.Create(where, data, context) is { } predicate ? new(predicate, context.App.type.list[typeof(@this)]) : null;
 
     internal override int Rank => 0;
 
@@ -24,7 +25,6 @@ public sealed class @this : query.@this
         global::app.actor.context.@this context)
         => await Next(await _condition.Keep(rows, context), rest, context);
 
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => _condition.Output(writer, mode, context!);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => _condition.Output(writer);
 }

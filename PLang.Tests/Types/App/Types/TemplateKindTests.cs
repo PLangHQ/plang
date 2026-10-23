@@ -64,7 +64,7 @@ public class TemplateKindTests
         await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         var ctx = app.actor.list.User.Context;
 
-        var name = ctx.Action("variable.set(Name=%a%, Value=\"A\")").Property["Name"]!.Value;
+        var name = (await ctx.Action("variable.set(Name=%a%, Value=\"A\")")).Property["Name"]!.Value;
 
         await Assert.That(name is global::app.type.item.variable.@this { Name: "a" }).IsTrue();
     }

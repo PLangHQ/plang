@@ -7,9 +7,23 @@ namespace app.module.identity.setting;
 [global::app.type.item.setting.Own]
 public sealed class @this : global::app.type.item.setting.module.@this
 {
-    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
+    /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
     /// <summary>Each identity, its keys with it; the one marked default signs for the actor.</summary>
-    [Out, Store] public global::app.type.item.list.@this<global::app.module.identity.Identity> Identity { get; set; } = new();
+    [Out, Store] public global::app.type.item.list.@this<global::app.module.identity.Identity> Identity { get; set; }
+
+    /// <summary>The identities' row is the app's when one of the identities it holds signed it — the first is signed by
+    /// the key it brings, so it can't ask the app's identities, which it is.</summary>
+    internal override async System.Threading.Tasks.ValueTask<bool> IsOwn(global::app.type.item.signature.@this signature,
+        global::app.actor.context.@this context)
+    {
+        foreach (var each in Identity.Items(context))
+            if (await each.Value<global::app.module.identity.Identity>() is { } identity
+                && string.Equals(identity.PublicKey, signature.Identity.ToString(), System.StringComparison.Ordinal)) return true;
+        return false;
+    }
 }

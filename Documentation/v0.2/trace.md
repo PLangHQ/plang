@@ -69,7 +69,7 @@ it:
 Each per-goal `<goal>.json` holds `{id, timestamp, goal, subGoals, durationMs}`
 (plus a `buildError` block when that goal failed) — identity and timing, **not**
 the LLM exchange. To see what the LLM received or returned, use
-`--debug={"llm":{...}}` (see [debug.md](debug.md)), not the trace.
+`--debug.setting={"llm":{...}}` (see [debug.md](debug.md)), not the trace.
 
 The folder layout makes it cheap to delete one build's traces (`rm -rf
 .build/traces/{trace.id}/`) and groups everything from one execution together.
@@ -83,7 +83,7 @@ Trace files are written by the builder PLang **regardless of whether
 If you need a runtime diagnostic id (correlating logs to a build), use
 `%!trace.id%` — it is the trace-folder name, so the trace files all line up
 under one id. For what the LLM actually saw or returned, use
-`--debug={"llm":{...}}` (see [debug.md](debug.md)).
+`--debug.setting={"llm":{...}}` (see [debug.md](debug.md)).
 
 ## Extension
 

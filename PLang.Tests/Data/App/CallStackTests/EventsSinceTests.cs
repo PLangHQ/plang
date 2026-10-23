@@ -7,9 +7,9 @@ public class EventsSinceTests
     private static (global::app.@this app, ActionEntity action) BuildLive(string name)
     {
         var app = new global::app.@this("/test").Testing();
-        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.actor.list.User.Context) };
-        var step = new Step { Index = 0, Text = "step", Goal = goal };
-        var action = new ActionEntity { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = step };
+        var goal = new Goal(app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.actor.list.User.Context) };
+        var step = new Step(app.type.list) { Index = 0, Text = "step", Goal = goal };
+        var action = new ActionEntity(app.type.list) { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = step };
         step.Code.Add(action); goal.Step.Add(step);
         app.goal.list.Add(goal);
         return (app, action);
@@ -22,9 +22,9 @@ public class EventsSinceTests
         var stack = app.actor.list.User.Context.call;
         var vars = app.actor.list.User.Context.Variable;
         stack.Variables = vars;
-        stack.Setting.Diff = new() { Enabled = true };
+        app.actor.list.User.Context.Setting.Set("app.call.setting.diff.enabled", true);
 
-        await using var call = stack.Push(action, vars);
+        await using var call = stack.Push(action, await stack.Setting(), vars);
 
         var t = DateTimeOffset.UtcNow;
         await Task.Delay(5);
@@ -42,8 +42,8 @@ public class EventsSinceTests
     {
         var (app, action) = BuildLive("EvtB");
         var stack = app.actor.list.User.Context.call;
-        stack.Setting.Diff = new() { Enabled = true };
-        await using var call = stack.Push(action, app.actor.list.User.Context.Variable);
+        app.actor.list.User.Context.Setting.Set("app.call.setting.diff.enabled", true);
+        await using var call = stack.Push(action, await stack.Setting(), app.actor.list.User.Context.Variable);
 
         var future = DateTimeOffset.UtcNow.AddSeconds(10);
         var events = stack.EventsSince(future);

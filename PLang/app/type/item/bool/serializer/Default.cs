@@ -14,8 +14,9 @@ public static class Default
         {
             null => null,
             global::app.type.item.@bool.@this b => b,
-            bool b => new global::app.type.item.@bool.@this(b),
-            string s when bool.TryParse(s, out var parsed) => new global::app.type.item.@bool.@this(parsed),
+            bool b => new global::app.type.item.@bool.@this(b, ctx.Context.App.type.list[typeof(global::app.type.item.@bool.@this)]),
+            string s when bool.TryParse(s, out var parsed)
+                => new global::app.type.item.@bool.@this(parsed, ctx.Context.App.type.list[typeof(global::app.type.item.@bool.@this)]),
             _ => null,
         };
 }

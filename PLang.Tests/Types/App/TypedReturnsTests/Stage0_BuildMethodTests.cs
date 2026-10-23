@@ -34,16 +34,16 @@ public class Stage0_BuildMethodTests
 
     private PrAction Make(string module, string actionName,
         params (string name, object? value)[] parameters)
-        => new PrAction
+        => new PrAction(_app.type.list)
         {
             Module = _app.Module(module),
             Name = actionName,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.actor.list.User.Context)).ToList())
         };
 
-    private static StepActions ActionsOf(params PrAction[] actions)
+    private StepActions ActionsOf(params PrAction[] actions)
     {
-        var s = new StepActions();
+        var s = new StepActions(_app.type.list);
         foreach (var a in actions) s.Add(a);
         return s;
     }
@@ -51,7 +51,7 @@ public class Stage0_BuildMethodTests
     // The chain finishes itself (action.list.Build); an empty list means nothing failed.
     private async Task<List<string>> Build(StepActions actions)
     {
-        var chain = new global::app.goal.step.action.list.@this();
+        var chain = new global::app.goal.step.action.list.@this(_app.type.list[typeof(global::app.goal.step.action.list.@this)]);
         foreach (var a in actions) chain.Add(a);
         return await chain.Build(_app.actor.list.User.Context) is { } failed ? new() { failed.Message } : new();
     }
@@ -67,14 +67,12 @@ public class Stage0_BuildMethodTests
         await Assert.That(method.GetParameters().Length).IsEqualTo(0);
     }
 
-    // A handler without a Build override gets the IClass default impl — Ok() with null Value.
+    // A handler without a Build override gets the IClass default — nothing to say (null); the build stores an empty success.
     [Test]
-    public async Task IClass_BuildDefaultImpl_ReturnsDataOkNoValue()
+    public async Task IClass_BuildDefaultImpl_AnswersNothing()
     {
         var handler = (IClass)new NoopBuild(_app.actor.list.User.Context);
-        var result = await handler.Build();
-        await result.IsSuccess();
-        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
+        await Assert.That(await handler.Build()).IsNull();
     }
 
     // RunBuildPass walks actions left-to-right; the per-action log records call order.

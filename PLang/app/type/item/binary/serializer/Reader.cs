@@ -15,7 +15,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("binary", kind);
-        return new global::app.type.item.binary.@this(reader.Bytes()) { Kind = kind };
+        var type = ctx.Context.App.type.list[new global::app.type.@this("binary", kind), ctx.Context];
+        if (reader.Null()) return new global::app.type.item.@null.@this(type);
+        return new global::app.type.item.binary.@this(reader.Bytes(), type);
     }
 }

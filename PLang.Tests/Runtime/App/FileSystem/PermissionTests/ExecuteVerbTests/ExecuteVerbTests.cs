@@ -26,9 +26,10 @@ public class ExecuteVerbTests
         private readonly string _answer;
         private readonly System.Collections.Generic.List<string> _prompts = new();
         public System.Collections.Generic.IReadOnlyList<string> Prompts => _prompts;
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        private readonly global::app.actor.context.@this _ctx;
+        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             _prompts.Add((action.Question.Peek()?.ToString()) ?? "");
@@ -38,9 +39,10 @@ public class ExecuteVerbTests
 
     private sealed class StatelessChannel : global::app.channel.type.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        private readonly global::app.actor.context.@this _ctx;
+        public StatelessChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
     }
 
     [Test] public async Task ExecuteVerb_ExistsInVerbTaxonomy()
@@ -61,14 +63,14 @@ public class ExecuteVerbTests
     [Test] public async Task ExecuteVerb_PromptCopy_DistinguishesFromRead()
     {
         var app = NewApp(out _);
-        var canned = new CannedChannel("n");
+        var canned = new CannedChannel("n", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(canned);
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(outOfRoot);
         var dllPath = System.IO.Path.Combine(outOfRoot, "stub.dll");
         System.IO.File.WriteAllText(dllPath, "not-a-real-dll");
-        var p = new FilePath(dllPath);
+        var p = app.actor.list.User.Context.File(dllPath);
         await p.LoadAssemblyAsync(app.actor.list.User.Context);
         await Assert.That(canned.Prompts.Count).IsGreaterThanOrEqualTo(1);
         await Assert.That(canned.Prompts[0]).Contains("execute");
@@ -77,14 +79,15 @@ public class ExecuteVerbTests
     [Test] public async Task ReadGrant_DoesNotAllowExecute()
     {
         var app = NewApp(out var root);
-        var p = new FilePath(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "lib.dll"));
         // Grant Read only.
         var permission = new global::app.type.item.permission.@this(
             Actor: app.actor.list.User.Name,
             Path: p.Absolute,
             Verbs: new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read },
-            Match: global::app.type.item.permission.Match.exact);
+            Match: global::app.type.item.permission.Match.exact,
+            app.type.list[typeof(global::app.type.item.permission.@this)]);
         var grantData = new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: app.actor.list.User.Context);
         await app.actor.list.User.Permission.Add(grantData, persist: true);
         // Execute should NOT be covered.
@@ -95,7 +98,7 @@ public class ExecuteVerbTests
     [Test] public async Task LoadAssemblyAsync_InRoot_ReturnsLoadedAssembly_NoPrompt()
     {
         var app = NewApp(out var root);
-        var canned = new CannedChannel("UNEXPECTED");
+        var canned = new CannedChannel("UNEXPECTED", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(canned);
         // Pre-stage: an actually-loadable DLL inside the App root. We use this
         // very test assembly — it lives somewhere on disk and copying it here
@@ -103,7 +106,7 @@ public class ExecuteVerbTests
         var srcAssembly = typeof(ExecuteVerbTests).Assembly.Location;
         var copyAt = System.IO.Path.Combine(root, "test.dll");
         System.IO.File.Copy(srcAssembly, copyAt, overwrite: true);
-        var p = new FilePath(copyAt);
+        var p = app.actor.list.User.Context.File(copyAt);
         var result = await p.LoadAssemblyAsync(app.actor.list.User.Context);
         await result.IsSuccess();
         await Assert.That(canned.Prompts.Count).IsEqualTo(0);
@@ -112,12 +115,12 @@ public class ExecuteVerbTests
     [Test] public async Task LoadAssemblyAsync_OutOfRoot_StatelessChannel_ReturnsAsk()
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new StatelessChannel());
+        app.actor.list.User.Channel.Register(new StatelessChannel(app.actor.list.User.Context));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "stub.dll");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllText(outOfRoot, "stub");
-        var p = new FilePath(outOfRoot);
+        var p = app.actor.list.User.Context.File(outOfRoot);
         var result = await p.LoadAssemblyAsync(app.actor.list.User.Context);
         // Stateless channels surface "ask" as a Data type signal, not a stored grant.
         await Assert.That(result.Type?.Name == "ask" || !result.Success).IsTrue();
@@ -126,12 +129,12 @@ public class ExecuteVerbTests
     [Test] public async Task LoadAssemblyAsync_OutOfRoot_DeniedAnswer_DoesNotLoadAssembly()
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "stub.dll");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllText(outOfRoot, "stub");
-        var p = new FilePath(outOfRoot);
+        var p = app.actor.list.User.Context.File(outOfRoot);
         var result = await p.LoadAssemblyAsync(app.actor.list.User.Context);
         await result.IsFailure();
         // The fail must be a permission decision — not file-not-found or a

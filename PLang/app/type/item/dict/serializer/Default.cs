@@ -13,7 +13,7 @@ public static class Default
 {
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
     {
-        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("dict", kind), context: ctx.Context);
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("dict", kind), ctx.Context]), context: ctx.Context);
         return global::app.type.item.dict.@this.Create(raw, carrier.Type, carrier);
     }
 }

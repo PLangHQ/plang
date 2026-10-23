@@ -1,91 +1,13 @@
 {
   "name": "Start",
-  "comment": "Test: verify with wrong contracts fails",
+  "comment": "Test: verify with wrong contracts fails — as a contract mismatch, not as any other refusal",
   "step": [
     {
       "index": 0,
-      "text": "archive identity 'testSigner', force, on error ignore",
-      "line": {
-        "number": 3
-      },
-      "code": [
-        {
-          "module": "identity",
-          "name": "archive",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "text"
-              },
-              "value": "testSigner"
-            },
-            {
-              "name": "Force",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
-            }
-          ]
-        },
-        {
-          "module": "on",
-          "name": "error",
-          "property": [
-            {
-              "name": "Ignore",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
-            }
-          ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 0 uses identity.archive, which the decider was not sure of (0.94)"
-        }
-      ]
-    },
-    {
-      "index": 1,
-      "text": "create identity testSigner",
-      "line": {
-        "number": 4
-      },
-      "code": [
-        {
-          "module": "identity",
-          "name": "create",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "text"
-              },
-              "value": "testSigner"
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 2,
       "text": "set %data% = { \"payload\": \"test\" }",
       "line": {
-        "number": 5
+        "number": 3,
+        "indent": 0
       },
       "code": [
         {
@@ -114,7 +36,7 @@
               "type": {
                 "name": "dict"
               },
-              "value": {"payload":"test"}
+              "value": {"k":"payload","v":"test"}
             }
           ],
           "default": [
@@ -130,10 +52,11 @@
       ]
     },
     {
-      "index": 3,
-      "text": "sign %data% with contracts ['C0']",
+      "index": 1,
+      "text": "sign %data% with contracts ['C0'], write to %signed%",
       "line": {
-        "number": 6
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -166,14 +89,65 @@
               "value": ["C0"]
             }
           ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%signed%",
+              "variable": [
+                {
+                  "text": "%signed%",
+                  "code": [
+                    {
+                      "variable": "signed"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
         }
       ]
     },
     {
-      "index": 4,
-      "text": "verify %data% with contracts ['C1'], on error call HandleContractError",
+      "index": 2,
+      "text": "verify %signed% with contracts ['C1'], on error call HandleContractError",
       "line": {
-        "number": 7
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -186,13 +160,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%data%",
+              "value": "%signed%",
               "variable": [
                 {
-                  "text": "%data%",
+                  "text": "%signed%",
                   "code": [
                     {
-                      "variable": "data"
+                      "variable": "signed"
                     }
                   ]
                 }
@@ -247,29 +221,37 @@
       ]
     },
     {
-      "index": 5,
-      "text": "assert %contractFailed% is true, \"contract mismatch should fail verification\"",
+      "index": 3,
+      "text": "assert %errorKey% equals \"ContractMismatch\", \"contract mismatch should fail verification\"",
       "line": {
-        "number": 8
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
           "module": "assert",
-          "name": "isTrue",
+          "name": "equals",
           "property": [
             {
-              "name": "Value",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "ContractMismatch"
+            },
+            {
+              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%contractFailed%",
+              "value": "%errorKey%",
               "variable": [
                 {
-                  "text": "%contractFailed%",
+                  "text": "%errorKey%",
                   "code": [
                     {
-                      "variable": "contractFailed"
+                      "variable": "errorKey"
                     }
                   ]
                 }
@@ -293,9 +275,10 @@
       "step": [
         {
           "index": 0,
-          "text": "set %contractFailed% = true",
+          "text": "set %errorKey% = %!error.Key%",
           "line": {
-            "number": 11
+            "number": 9,
+            "indent": 0
           },
           "code": [
             {
@@ -307,13 +290,13 @@
                   "type": {
                     "name": "variable"
                   },
-                  "value": "%contractFailed%",
+                  "value": "%errorKey%",
                   "variable": [
                     {
-                      "text": "%contractFailed%",
+                      "text": "%errorKey%",
                       "code": [
                         {
-                          "variable": "contractFailed"
+                          "variable": "errorKey"
                         }
                       ]
                     }
@@ -322,9 +305,23 @@
                 {
                   "name": "Value",
                   "type": {
-                    "name": "bool"
+                    "name": "item",
+                    "template": "plang"
                   },
-                  "value": true
+                  "value": "%!error.Key%",
+                  "variable": [
+                    {
+                      "text": "%!error.Key%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Key"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -340,15 +337,11 @@
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/module/signing/contractmismatch/SigningContractMismatch.test.goal",
-      "prPath": "/module/signing/contractmismatch/.build/signingcontractmismatch.test.pr",
-      "hash": "91e13d7badcd9268cde898685a779e230aadc6d14fa882d4c486d1107d66c358"
+      "hash": "c85330cf9b55d4b03cee67b2e7094c0f6112d6b8ba0e7347c20802c134715fd2"
     }
   ],
   "visibility": "Public",
-  "path": "/module/signing/contractmismatch/SigningContractMismatch.test.goal",
-  "prPath": "/module/signing/contractmismatch/.build/signingcontractmismatch.test.pr",
-  "hash": "75bf5e39453c49f494f3de419505bb5fc024e76f796a89885432379b68f6a1e2"
+  "file": "SigningContractMismatch.test.goal",
+  "hash": "0078393df2bebfcbee2fabfad97984485bbbf67d7851f92bef5a1aaf294aeb91"
 }

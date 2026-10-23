@@ -15,10 +15,9 @@ public class ErrorCallbackTests : System.IAsyncDisposable
     {
         var error = new global::app.error.@this("boom", "Boom");
 
-        var callback = error.Callback;
-
-        await Assert.That(callback.Success).IsFalse();
-        await Assert.That(callback.Error?.Key).IsEqualTo("NoCallback");
+        // an error not raised inside a run has no context for an answer to be born with: it refuses
+        var refused = await Assert.That(() => error.Callback).Throws<global::app.error.AppException>();
+        await Assert.That(refused!.Error.Key).IsEqualTo("NoCallback");
     }
 
     [Test]

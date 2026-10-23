@@ -32,11 +32,30 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>
     /// Name of the actor ("System", "Service", or "User").
     /// </summary>
+    [global::app.LlmBuilder]
     public string Name { get; }
+
+    /// <summary>The key this actor's row for the setting at <paramref name="address"/> is kept under in the settings'
+    /// store (<c>user!app.test.setting</c>).</summary>
+    internal string Row(string address) => $"{Name.ToLowerInvariant()}!{address}";
+
+    /// <summary>The setting address <paramref name="row"/> is this actor's row for; null when it is another actor's
+    /// (every key of this actor's starts as its row for no address does).</summary>
+    internal string? Address(string row)
+        => Row("") is var prefix && row.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase) ? row[prefix.Length..] : null;
+
+    /// <summary>An actor written alone, in every view, is its name — what a program reads an actor by; its context,
+    /// channels and permissions are its own, never written with it.</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+    {
+        writer.String(Name);
+        return default;
+    }
 
     /// <summary>
     /// The PLang execution context owned by this actor.
     /// </summary>
+    [global::app.LlmBuilder]
     public context.@this Context { get; }
 
     /// <summary>
@@ -54,11 +73,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// on <see cref="channel.type.goal.@this.IsExecuting"/> — the registry's <c>Get</c>
     /// treats an executing goal-channel as not-found.
     /// </summary>
+    [global::app.LlmBuilder]
     public global::app.channel.list.@this Channel => _channels;
 
     private readonly global::app.task.list.@this _tasks;
 
     /// <summary>The tasks this actor runs — the goal calls made in parallel on it, each listed while it runs.</summary>
+    [global::app.LlmBuilder]
     public global::app.task.list.@this Task => _tasks;
 
     /// <summary>
@@ -88,6 +109,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
     public @this(string name, app.@this app, CancellationToken parentToken = default, @this? fallback = null)
+        : base(app.type.list[typeof(@this)])
     {
         Name = name;
         App = app;
@@ -99,17 +121,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Permission = new permission.@this(this);
         _channels = new global::app.channel.list.@this(app, this);
         _tasks = new global::app.task.list.@this(this);
-
-        // %MyIdentity% — the app's own identity; %Identity% — who this actor acts for: its identity's public key
-        // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read, so a
-        // setDefault or rename is reflected.
-        Context.Variable.Set("MyIdentity", new data.DynamicData("MyIdentity", asker => asker.Ok(DefaultIdentity), Context));
-        Context.Variable.Set("Identity", new data.DynamicData("Identity", asker => asker.Ok((Identity ?? DefaultIdentity)?.PublicKey), Context));
+        // %MyIdentity% and %Identity% are not set here: the memory is born holding them (variable.list), computed from
+        // whoever asks, so an actor born at any time has them at once and no set — nor anything bound to one — runs.
     }
 
     /// <summary>The app's default identity — the system actor's, made on first ask. Not <see cref="Identity"/>'s
     /// fallback: the identity store reads the system's own slot while it makes the default.</summary>
-    private Identity? DefaultIdentity
+    internal Identity? DefaultIdentity
     {
         get
         {

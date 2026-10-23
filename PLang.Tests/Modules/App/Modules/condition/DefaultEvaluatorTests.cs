@@ -11,7 +11,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     private readonly global::app.@this _app = new global::app.@this("/tmp/defeval-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    private Data D(object? value) => value == null ? new Data("") : _app.actor.list.User.Context.Ok(value);
+    private Data D(object? value) => value == null ? new Data("", context: _app.actor.list.User.Context) : _app.actor.list.User.Context.Ok(value);
 
     private Task<global::app.data.@this<global::app.type.item.@bool.@this>> Eval(object? left, string op, object? right)
         => _eval.Evaluate(new Compare(_app.actor.list.User.Context) { Left = D(left), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op)), Right = D(right) });
@@ -191,7 +191,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
 
     [Test] public async Task ZeroDigits_IsExact()
     {
-        var set = await _app.actor.list.User.Setting.Set("math.setting.equal.digits", _app.actor.list.User.Context.Ok(0));
+        var set = _app.actor.list.User.Setting.Set("math.setting.equal.digits", _app.actor.list.User.Context.Ok(0));
         await set.IsSuccess();
         await Assert.That(IsFalse(await EvalIf(Sum, "==", global::app.type.item.number.@this.Parse("0.3")))).IsTrue();
     }
@@ -201,7 +201,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
         var ctx = _app.actor.list.User.Context;
         var first = global::app.type.item.number.@this.Parse("0.30000000000000004")!;
         var second = global::app.type.item.number.@this.Parse("0.3")!;
-        var list = new global::app.type.item.list.@this(new global::app.type.item.@this[] { first, second, global::app.type.item.number.@this.Parse("0.1")! });
+        var list = new global::app.type.item.list.@this(new global::app.type.item.@this[] { first, second, global::app.type.item.number.@this.Parse("0.1")! }, _app.type.list["list"]);
         var sorted = await (await list.Sort(null, false, ctx)).Value() as global::app.type.item.list.@this;
         var order = sorted!.Items(ctx).Select(d => d.Peek()).ToList();
         await Assert.That(order[1]).IsSameReferenceAs(first);
@@ -228,8 +228,8 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     [Test] public async Task Is_AFilesKind_BeforeAndAfterItIsRead()
     {
         var ctx = _app.actor.list.User.Context;
-        System.IO.Directory.CreateDirectory(_app.AbsolutePath);
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_app.AbsolutePath, "c.json"), "{\"a\":1}");
+        System.IO.Directory.CreateDirectory(_app.filesystem.root.Absolute);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_app.filesystem.root.Absolute, "c.json"), "{\"a\":1}");
         var file = new global::app.type.item.file.@this(global::app.type.item.path.@this.Resolve("/c.json", ctx), ctx);
 
         await Assert.That(IsTrue(await EvalIf(file, "is", "json"))).IsTrue();
@@ -244,14 +244,16 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     [Test] public async Task Is_AnArchivesKind()
     {
         var gzip = (global::app.module.archive.type.archive.kind.@this)_app.type.list["archive"].kind["gzip"]!;
-        var archive = new global::app.module.archive.type.archive.@this([1, 2], gzip, new global::app.module.archive.type.archive.held.@this("file"));
+        var ctx = _app.actor.list.User.Context;
+        var archive = new global::app.module.archive.type.archive.@this([1, 2], new global::app.module.archive.type.archive.held.@this(_app.type.list[typeof(global::app.module.archive.type.archive.held.@this)], "file"),
+            ctx.App.type.list[new global::app.type.@this("archive", gzip.Name), ctx]);
         await Assert.That(IsTrue(await EvalIf(archive, "is", "gzip"))).IsTrue();
     }
 
     // goal names a type and a kind of text: the type wins, so a text of kind goal is no goal
     [Test] public async Task Is_AWordThatNamesATypeAndAKind_AsksTheType()
     {
-        var goalText = new global::app.type.item.text.@this("Start\n- write out 'hi'") { Kind = "goal" };
+        var goalText = new global::app.type.item.text.@this("Start\n- write out 'hi'", new global::app.type.@this("text", typeof(global::app.type.item.text.@this), "goal"));
         await Assert.That(goalText.Is("goal", _app.type.list)).IsFalse();
         await Assert.That(IsFalse(await EvalIf(goalText, "is", "goal"))).IsTrue();
     }
@@ -268,18 +270,18 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     [Test] public async Task IfExists_PathToExistingFile_IsTrue()
     {
         // In the evaluating caller's root — the caller's actor is the one the existence probe asks for.
-        System.IO.Directory.CreateDirectory(_app.AbsolutePath);
-        var file = System.IO.Path.Combine(_app.AbsolutePath, "present-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt");
+        System.IO.Directory.CreateDirectory(_app.filesystem.root.Absolute);
+        var file = System.IO.Path.Combine(_app.filesystem.root.Absolute, "present-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt");
         System.IO.File.WriteAllText(file, "x");
-        var fp = new global::app.type.item.path.file.@this(file);
+        var fp = _app.actor.list.User.Context.File(file);
         await Assert.That(IsTrue(await EvalIf(fp, "==", true))).IsTrue();
         System.IO.File.Delete(file);
     }
 
     [Test] public async Task IfExists_PathToMissingFile_IsFalse()
     {
-        var missing = System.IO.Path.Combine(_app.AbsolutePath, "not-here.txt");
-        var fp = new global::app.type.item.path.file.@this(missing);
+        var missing = System.IO.Path.Combine(_app.filesystem.root.Absolute, "not-here.txt");
+        var fp = _app.actor.list.User.Context.File(missing);
         await Assert.That(IsFalse(await EvalIf(fp, "==", true))).IsTrue();
     }
 
@@ -293,16 +295,16 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
 
     [Test] public async Task BareIf_ExistingPath_IsTrue()
     {
-        System.IO.Directory.CreateDirectory(_app.AbsolutePath);
-        var file = System.IO.Path.Combine(_app.AbsolutePath, "present-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt");
+        System.IO.Directory.CreateDirectory(_app.filesystem.root.Absolute);
+        var file = System.IO.Path.Combine(_app.filesystem.root.Absolute, "present-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt");
         System.IO.File.WriteAllText(file, "x");
-        await Assert.That(IsTrue(await Truth(new global::app.type.item.path.file.@this(file)))).IsTrue();
+        await Assert.That(IsTrue(await Truth(_app.actor.list.User.Context.File(file)))).IsTrue();
         System.IO.File.Delete(file);
     }
 
     [Test] public async Task BareIf_MissingPath_IsFalse()
-        => await Assert.That(IsFalse(await Truth(new global::app.type.item.path.file.@this(
-            System.IO.Path.Combine(_app.AbsolutePath, "not-here.txt"))))).IsTrue();
+        => await Assert.That(IsFalse(await Truth(_app.actor.list.User.Context.File(
+            System.IO.Path.Combine(_app.filesystem.root.Absolute, "not-here.txt"))))).IsTrue();
 
     // --- Operands, judged at build ---
 

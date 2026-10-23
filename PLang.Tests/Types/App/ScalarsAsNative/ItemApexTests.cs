@@ -50,7 +50,7 @@ public class ItemApexTests : System.IAsyncDisposable
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly,
             null, new[] { typeof(object), typeof(object) }, null)).IsNull();
         // dict declares its OWN hook — equality-only (NotEqual for unequal, no order).
-        await Assert.That(await new Dict().Compare(new Dict(), app.actor.list.User.Context)).IsEqualTo(global::app.data.Comparison.Equal);
+        await Assert.That(await app.actor.list.User.Context.Dict().Compare(app.actor.list.User.Context.Dict(), app.actor.list.User.Context)).IsEqualTo(global::app.data.Comparison.Equal);
     }
 
     [Test]
@@ -58,13 +58,13 @@ public class ItemApexTests : System.IAsyncDisposable
     {
         // dict stays equality-only under `item` — equal dicts answer Equal (order 0),
         // UNEQUAL dicts answer NotEqual, which has no order: the boundary errors.
-        var d1 = new Dict(); d1.Set("a", 1);
-        var d2 = new Dict(); d2.Set("a", 2);
+        var d1 = app.actor.list.User.Context.Dict(); d1.Set("a", 1);
+        var d2 = app.actor.list.User.Context.Dict(); d2.Set("a", 2);
         var ctx = app.actor.list.User.Context;
         await Assert.That(() => CompareTestOps.OrdD(new Data("a", d1, context: ctx), new Data("b", d2, context: ctx)))
             .Throws<global::app.data.IncomparableException>();
         // list, which DOES implement IOrderableValue, still sorts (empty == empty).
-        await Assert.That(CompareTestOps.OrdD(new Data("", new PList()), new Data("", new PList()))).IsEqualTo(0);
+        await Assert.That(CompareTestOps.OrdD(new Data("", new PList(app.type.list["list"]), context: app.actor.list.User.Context), new Data("", new PList(app.type.list["list"]), context: app.actor.list.User.Context))).IsEqualTo(0);
     }
 
     [Test]
@@ -72,10 +72,10 @@ public class ItemApexTests : System.IAsyncDisposable
     {
         // A dict, a number, and an empty list treated as `item` each report their
         // truthiness through the base — the universal contract `item` *does* carry.
-        Item emptyDict = new Dict();
-        Item emptyList = new PList();
+        Item emptyDict = app.actor.list.User.Context.Dict();
+        Item emptyList = new PList(app.type.list["list"]);
         Item five = ((Number)(5));
-        var fullDict = new Dict();
+        var fullDict = app.actor.list.User.Context.Dict();
         fullDict.Set(new Data("k", "v", context: app.actor.list.User.Context));
         Item nonEmptyDict = fullDict;
 
@@ -94,8 +94,8 @@ public class ItemApexTests : System.IAsyncDisposable
         // An already-narrowed subtype (dict/list/number) inherits the no-op narrow:
         // it returns self, carrying no un-narrowed state. (The un-narrowed
         // item-kind-json blob rides on Data, not on item.@this — storage-free apex.)
-        Item dict = new Dict();
-        Item list = new PList();
+        Item dict = app.actor.list.User.Context.Dict();
+        Item list = new PList(app.type.list["list"]);
         Item num = ((Number)(1));
         await Assert.That(ReferenceEquals(dict.Narrow(), dict)).IsTrue();
         await Assert.That(ReferenceEquals(list.Narrow(), list)).IsTrue();

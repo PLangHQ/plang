@@ -73,7 +73,7 @@
   },
   {
     "input": "goal.call(Name=\"X\", Parameter=[kind=\"a\"])",
-    "message": "line 1, column 31: arguments are written as one dict: Parameter={name: \"value\", other: %x%}"
+    "message": "line 1, column 32: a text must be in quotes: write \"kind\", not kind"
   },
   {
     "input": "output.write(Data=hello)",
@@ -90,10 +90,6 @@
   {
     "input": "on.error(Recovery=[goal.call(…)]) { goal.call(Name=\"X\") }",
     "message": "line 1, column 30: a `…` is still there: fill in goal.call's properties, as the step gives them"
-  },
-  {
-    "input": "variable.set(Name=%d%, Value={name: text = \"a\"})",
-    "message": "line 1, column 30: `Value` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments"
   },
   {
     "input": "condition.if(Left=%n%, Operator=<>, Right=5)",

@@ -20,12 +20,6 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// </summary>
     [Out, Store] public abstract string Scheme { get; }
 
-    /// <summary>A path value's type is "path"; its scheme ("file", "http") is the Kind — so
-    /// every scheme variant answers <c>is path</c> by name (no CLR-inheritance lattice), and a
-    /// value that narrowed from a path (an image) carries this "path" entry in its type history.</summary>
-    protected internal override global::app.type.@this Type
-        => new global::app.type.@this("path", typeof(@this), Scheme);
-
 
     /// <summary>
     /// String comparison for "is this path under that root" checks. Linux
@@ -61,15 +55,18 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     private string? _stem;
 
     /// <summary>
-    /// Creates a Path from its location. The scheme factories resolve it with the creating
-    /// context (the running goal's folder, the root) and hand the resolved form here; nothing
-    /// of that context is kept.
+    /// Creates a Path from its location, born holding <paramref name="type"/> — the app's <c>{path, &lt;scheme&gt;}</c>,
+    /// handed in by its maker (a path made from another holds that one's). The scheme factories resolve it with the
+    /// creating context (the running goal's folder, the root) and hand the resolved form here; nothing of that
+    /// context is kept.
     /// </summary>
-    protected @this(string path)
+    protected @this(string path, global::app.type.@this type)
+        : base(type)
     {
         // Producers that resolved the path hand the resolved form here and
         // override the as-typed location via the Raw init; a verbatim
-        // construction is both at once.
+        // construction is both at once. The scheme ("file", "http") is the path's kind,
+        // so the value is born holding {path, <scheme>} — every scheme answers `is path` by name.
         _location = path ?? string.Empty;
         _absolute = _location;
     }
@@ -82,7 +79,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>The ICreate courier face — a <c>path</c> passes through; a string builds a scheme
     /// path via <see cref="Resolve"/> (uses <c>data.Context</c>); a wrong type or an unregistered
     /// scheme declines with the reason on <paramref name="data"/>.</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         if (value is @this self) return self;
         if (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is not string raw)
@@ -125,8 +122,9 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>
     /// The as-typed location. Init-setting it (the scheme factories do, with the
     /// string the user wrote) makes the verbatim form the value's identity while
-    /// the resolved form stays a cached derivation.
+    /// the resolved form stays a cached derivation. A dump shows it.
     /// </summary>
+    [global::app.Debug]
     public string Raw { get => _location; init { if (!string.IsNullOrEmpty(value)) _location = value; } }
 
     // The resolved host form — INTERNAL: the raw string is the interop inch
@@ -168,15 +166,18 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// typed query that replaces consumer-side <c>Relative.StartsWith</c>
     /// string math. Same root-comparison rule the permission gate uses.
     /// </summary>
-    public global::app.type.item.@bool.@this IsUnder(@this root)
+    public global::app.type.item.@bool.@this IsUnder(@this root) => IsUnder(root, RootComparison);
+
+    // The one containment check, by comparison: the root's rule, or case-blind where a folder is held in any case (the
+    // stores' folder, as a case-blind disk opens it).
+    private protected bool IsUnder(@this root, StringComparison comparison)
     {
         var rootAbs = root.Absolute;
         if (string.IsNullOrEmpty(rootAbs)) return false;
         var rootWithSep = rootAbs.EndsWith(PathHelper.DirectorySeparatorChar) || rootAbs.EndsWith(PathHelper.AltDirectorySeparatorChar)
             ? rootAbs
             : rootAbs + PathHelper.DirectorySeparatorChar;
-        return Absolute.StartsWith(rootWithSep, RootComparison)
-            || string.Equals(Absolute, rootAbs, RootComparison);
+        return Absolute.StartsWith(rootWithSep, comparison) || string.Equals(Absolute, rootAbs, comparison);
     }
 
     /// <summary>
@@ -208,10 +209,9 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
 
     // --- Live filesystem state ---
     //
-    // The base deliberately exposes NO sync live-state property. `Exists` and
-    // `Size` used to live here as `System.IO.File.Exists` / `FileInfo` calls —
-    // wrong for an HttpPath (always-false / throws on Windows). They moved to
-    // FilePath. The cross-scheme liveness query is the async `path.Stat()`;
+    // The base deliberately exposes NO sync live-state property: a sync `Exists`
+    // or `Size` is wrong for an HttpPath, so they are FilePath's. The
+    // cross-scheme liveness query is the async `path.Stat()`;
     // truthiness ("does it exist") is `AsBooleanAsync()`.
 
     // --- Display + wire ---
@@ -231,14 +231,11 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// The resolved <see cref="Absolute"/> stays off the wire (it leaks the install root and
     /// is gated behind Authorize).
     /// </summary>
-    public override void Write(global::app.type.format.IWriter w) => w.String(ToString());
-
-    /// <summary>A path writes its own form — its location (<see cref="Write"/>) — in every view.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    /// <summary>A path writes its own form — its location — in every view.</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        writer.String(ToString());
+        return default;
     }
 
 

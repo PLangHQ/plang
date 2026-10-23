@@ -140,9 +140,9 @@ public class TaskTests
     public async Task AParallelCallsParameter_GoesUpToTheParent_AsWhatItHolds()
     {
         string? sent = null;
-        System.IO.Directory.CreateDirectory(_app.AbsolutePath);
-        System.IO.File.WriteAllText(System.IO.Path.Combine(_app.AbsolutePath, "agent.md"), "Answer in json.");
-        System.IO.File.WriteAllText(System.IO.Path.Combine(_app.AbsolutePath, "instructions.md"), "{% if window == 0 %}be brief{% endif %}");
+        System.IO.Directory.CreateDirectory(_app.filesystem.root.Absolute);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_app.filesystem.root.Absolute, "agent.md"), "Answer in json.");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_app.filesystem.root.Absolute, "instructions.md"), "{% if window == 0 %}be brief{% endif %}");
         _app.parent.Link = json =>
         {
             sent = json;
@@ -364,7 +364,8 @@ public class TaskTests
     public async Task AnAddInATask_ToItsCallersTypedList_CopiesItAsATypedList()
     {
         await Ctx.Variable.Set("items", new global::app.type.item.list.@this<global::app.type.item.text.@this>(
-            new global::app.type.item.@this[] { new global::app.type.item.text.@this("a") }));
+            new global::app.type.item.@this[] { Ctx.Text("a") },
+            _app.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.text.@this>)]));
         await Load("Adds", Make.Step("add x", Add("items", "x")), Make.Step("return items", Return("%items%")));
 
         var waited = await (await Started("Adds")).Wait();

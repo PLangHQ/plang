@@ -22,7 +22,7 @@ public class SettingRowTests
     }
 
     private static async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
-        => await new global::app.type.item.variable.parser.@this(text).Variable.Single().Start(ctx);
+        => await new global::app.type.item.variable.parser.@this(text, ctx.App.type.list).Variable.Single().Start(ctx);
 
     private static async Task<string?> Os(global::app.actor.context.@this ctx)
         => (await (await Read("%!app.goal.list.setting.os%", ctx)).Value())?.ToString();
@@ -49,11 +49,11 @@ public class SettingRowTests
 
     // The values a saved row's typed-list option holds, as the next App reads it back.
     private static async Task<List<string>> Listed<T>(global::app.@this app, System.Func<T, global::app.type.item.list.@this> option)
-        where T : global::app.type.item.setting.@this, new()
+        where T : global::app.type.item.setting.@this
     {
         await app.actor.list.User.Setting.Load();
         var values = new List<string>();
-        foreach (var row in option(app.actor.list.User.Setting.Of<T>()).Items(app.actor.list.User.Context))
+        foreach (var row in option((await app.actor.list.User.Setting.Get<T>())).Items(app.actor.list.User.Context))
             values.Add((await row.Value())?.ToString() ?? "");
         return values;
     }
@@ -63,9 +63,11 @@ public class SettingRowTests
     {
         await using (var app = new global::app.@this(_dir))
         {
-            var setting = app.actor.list.User.Setting.Of<global::app.goal.list.setting.@this>();
+            var setting = (await app.actor.list.User.Setting.Get<global::app.goal.list.setting.@this>());
+            var ctx = app.actor.list.User.Context;
             setting.Visibility = new global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>>(
-                new global::app.type.item.choice.@this<global::app.goal.Visibility>[] { global::app.goal.Visibility.Public, global::app.goal.Visibility.Private });
+                new global::app.type.item.choice.@this<global::app.goal.Visibility>[] { ctx.Choice(global::app.goal.Visibility.Public), ctx.Choice(global::app.goal.Visibility.Private) },
+                app.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>>)]);
             await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
 
@@ -79,9 +81,10 @@ public class SettingRowTests
     {
         await using (var app = new global::app.@this(_dir))
         {
-            var setting = app.actor.list.User.Setting.Of<global::app.test.setting.@this>();
+            var setting = (await app.actor.list.User.Setting.Get<global::app.test.setting.@this>());
             setting.Include = new global::app.type.item.list.@this<global::app.type.item.text.@this>(
-                new global::app.type.item.text.@this[] { "smoke", "fast" });
+                new global::app.type.item.text.@this[] { "smoke", "fast" },
+                app.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.text.@this>)]);
             await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
 
@@ -97,14 +100,14 @@ public class SettingRowTests
     {
         await using (var app = new global::app.@this(_dir))
         {
-            var setting = app.actor.list.User.Setting.Of<global::app.setting.@this>();
-            setting.Culture = global::app.type.item.culture.@this.Create("is-IS")!;
+            var setting = (await app.actor.list.User.Setting.Get<global::app.setting.@this>());
+            setting.Culture = global::app.type.item.culture.@this.Create("is-IS", app.type.list[typeof(global::app.type.item.culture.@this)])!;
             await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
 
         await using var again = new global::app.@this(_dir);
         await again.actor.list.User.Setting.Load();
-        await Assert.That(again.actor.list.User.Setting.Of<global::app.setting.@this>().Culture.Name).IsEqualTo("is-IS");
+        await Assert.That((await again.actor.list.User.Setting.Get<global::app.setting.@this>()).Culture.Name).IsEqualTo("is-IS");
     }
 
     // The user falls back to the system's row; the user's own row wins over it.
@@ -124,7 +127,7 @@ public class SettingRowTests
     {
         await using var app = new global::app.@this(_dir).Testing();
         await Save(app.actor.list.User, os: false);
-        await app.actor.list.User.Context.Setting.Set("app.goal.list.setting.os", app.actor.list.User.Context.Ok(true));
+        app.actor.list.User.Context.Setting.Set("app.goal.list.setting.os", app.actor.list.User.Context.Ok(true));
         await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("true");
     }
 
@@ -133,7 +136,7 @@ public class SettingRowTests
     {
         await using var app = new global::app.@this(_dir).Testing();
         await Save(app.actor.list.User, os: false);
-        await (await app.actor.list.User.Setting.Remove(app.actor.list.User.Setting.Of<global::app.goal.list.setting.@this>())).IsSuccess();
+        await (await app.actor.list.User.Setting.Remove((await app.actor.list.User.Setting.Get<global::app.goal.list.setting.@this>()))).IsSuccess();
         await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("true");
     }
 
@@ -142,7 +145,7 @@ public class SettingRowTests
     {
         await using var app = new global::app.@this(_dir).Testing();
         var llm = (global::app.module.llm.setting.@this)(await Read("%!llm.setting%", app.actor.list.User.Context)).Peek()!;
-        llm.Cache = new(global::app.module.cache.type.cache.skip);
+        llm.Cache = app.actor.list.User.Context.Choice(global::app.module.cache.type.cache.skip);
         await (await app.actor.list.User.Setting.Save(llm)).IsSuccess();
 
         var seam = await app.actor.list.User.Context.Setting.Get(app.Module("llm")["query"]!, "cache");

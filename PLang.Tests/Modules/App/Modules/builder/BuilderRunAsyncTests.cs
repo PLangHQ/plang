@@ -11,7 +11,7 @@ namespace PLang.Tests.App.Modules.builder;
 /// <code>if (!File.Exists(appPrPath) &amp;&amp; !_app.Create) { … }</code>
 /// A previous version had the <c>!</c> inverted and fired the branch when
 /// <c>app.pr</c> DID exist, forcing every build of an existing app to need
-/// <c>--app={"create":true}</c>. Flipping the <c>!</c> back would silently
+/// <c>--app.setting={"create":true}</c>. Flipping the <c>!</c> back would silently
 /// bring the original bug back; nothing else in the suite covers
 /// <c>Builder.Start</c>'s bootstrap.
 ///

@@ -35,7 +35,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
 
     [Test] public async Task DataSnapshot_SettableAfterConstruction()
     {
-        var d = new global::app.data.@this<global::app.type.item.text.@this>("", "x");
+        var d = new global::app.data.@this<global::app.type.item.text.@this>("", "x", context: app.actor.list.User.Context);
         await Assert.That(d.Snapshot).IsNull();
         d.Snapshot = new global::app.snapshot.@this(app.actor.list.User.Context);
         await Assert.That(d.Snapshot).IsNotNull();
@@ -70,7 +70,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
         // invariant holds for the Ask-carrying Data shape (after the producer
         // call sites in 2a.4 wire the Snapshot capture).
         var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
-        var data = new global::app.data.@this<Ask>("", new Ask()) { Snapshot = snap };
+        var data = new global::app.data.@this<Ask>("", new Ask(app.actor.list.User.Context.App.type.list[typeof(global::app.module.output.Ask)]), context: app.actor.list.User.Context) { Snapshot = snap };
         await Assert.That(data.Snapshot).IsNotNull();
     }
 }

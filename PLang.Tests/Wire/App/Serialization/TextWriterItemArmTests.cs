@@ -15,27 +15,27 @@ public class TextWriterItemArmTests : System.IAsyncDisposable
 
     private Ctx C => app.actor.list.User.Context;
 
-    private static string Render(global::app.type.item.@this item)
+    private async Task<string> Render(global::app.type.item.@this item)
     {
         using var ms = new System.IO.MemoryStream();
-        var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US")!);
-        w.Value(item);
+        var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US", C.App.type.list[typeof(global::app.type.item.culture.@this)])!, global::app.View.Out, C);
+        await item.Output(w);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
     [Test]
     public async Task TopLevelTextItem_RendersBare_NotQuoted()
-        => await Assert.That(Render(new global::app.type.item.text.@this("hello"))).IsEqualTo("hello");
+        => await Assert.That(await Render(C.Text("hello"))).IsEqualTo("hello");
 
     [Test]
     public async Task TopLevelNumberItem_RendersBareLiteral()
-        => await Assert.That(Render((global::app.type.item.number.@this)42)).IsEqualTo("42");
+        => await Assert.That(await Render((global::app.type.item.number.@this)42)).IsEqualTo("42");
 
     [Test]
     public async Task TopLevelDictItem_RendersJson()
     {
-        var d = new global::app.type.item.dict.@this();
+        var d = C.Dict();
         d.Set("a", 1);
-        await Assert.That(Render(d)).IsEqualTo("{\"a\":1}");
+        await Assert.That(await Render(d)).IsEqualTo("{\"a\":1}");
     }
 }

@@ -1,16 +1,19 @@
 namespace app.setting;
 
 /// <summary>
-/// The app's own settings — <c>%!app.setting%</c>; <c>--app={…}</c> is this run's values for them. Its name and
+/// The app's own settings — <c>%!app.setting%</c>; <c>--app.setting.…</c> is this run's values for them. Its name and
 /// environment are settings, layered like any (the asker's, falling back to the system's); its id is the app's
 /// identity, read here but never set.
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {
-    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
+    /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
-    /// <summary>Allow creating a new app where none exists. <c>--app={"create":true}</c>.</summary>
+    /// <summary>Allow creating a new app where none exists. <c>--app.setting.create=true</c>.</summary>
     [Out, Store] public global::app.type.item.@bool.@this Create { get; set; } = global::app.type.item.@bool.@this.False;
 
     /// <summary>The app's name. Unset, the app goes by its folder's name.</summary>
@@ -21,7 +24,7 @@ public sealed class @this : global::app.type.item.setting.@this
 
     /// <summary>How numbers read as text (<c>is-IS</c>: <c>7,47</c>) — the machine's when unset. Json and the
     /// wire never use it.</summary>
-    [Out, Store] public global::app.type.item.culture.@this Culture { get; set; } = global::app.type.item.culture.@this.Machine;
+    [Out, Store] public global::app.type.item.culture.@this Culture { get; set; }
 
     /// <summary>Past its options, the app's id — its identity's, kept in <c>app.pr</c>: the store needs it before
     /// any setting row can be read, so it is read here and never set.</summary>

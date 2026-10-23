@@ -97,6 +97,22 @@ async Task Run(App app)
 
 This applies to the caller too. If a handler calls `path.Delete(recursive, ignoreIfNotFound)`, it's decomposing itself into parameters. The OBP form is `path.Delete(request)` — let the callee navigate the caller's object for what it needs. Coupling stays one-directional: if the callee needs a new property later, only the callee changes.
 
+### Jump to where the code lives
+
+A call is a path of references: `app.product.search(query)` jumps from the app to the product to `search`, and every line that searches for a product is in `search`. Each jump hands the next only the data it needs. Nothing on the way decides anything, so the code is where the last jump lands, and you always know where to look.
+
+```csharp
+// Wrong: the caller reaches in and does the search's work
+var hits = app.product.Catalog.Items.Where(p => p.Name.Contains(query.Text)).ToList();
+
+// Correct: one jump to where the code lives
+var hits = await app.product.search(query);
+```
+
+An `if` or `switch` on what something is, a null check on a reference, a loop that tells each element its place, or a lookup that sits beside the natural call is a missing reference. The decision belongs to the thing it is about, reached by one more jump.
+
+**Test**: can you name the reference this decision should jump to? Then the `if` goes.
+
 ### The name is the contract
 
 You navigate the graph by name; the name alone must tell you what you'll find.
@@ -143,6 +159,20 @@ public class CallStack
 callStack.Audit.Add(error);      // "the callstack's audit — add this one"
 callStack.Audit.Newest           // the latest error
 ```
+
+**The node answers its default; `.list` answers them all.** Read alone, a singular node is one instance, the one its owner names as the default; `.list` is every one. Each owner decides its default: a dict's key is its first key, a task the last one written, a concept the current one.
+
+```
+%dict!key%          the first key
+%dict!key.list%     every key
+%task%              the last task written to the variable
+%task.list%         every task written there
+%!app.goal.list%    every goal; %!app.goal.current% the one running
+```
+
+The shape is the same everywhere: the concept nodes (`type/this.Generic.cs`, with `current`), `module.list`, `error.list`, `history.list`, `task.list`, `channel.list`. A new collection reuses it; it never invents a second one.
+
+The rule is for what plang reaches: a member a step navigates, or a field on the wire (`[Out]`) or in the store (`[Store]`). C# working over CLR objects can stay plural: a walk for `foreach` (`list.Items`, `dict.Entries`), an assembly list, a reflection cache.
 
 And the owner never proxies it. `callStack.AddError(...)` is wrong in every world — a middleman hiding what's actually happening. When the collection needs domain operations (`Load`, `Run`), those belong on the collection type — still never on the parent.
 

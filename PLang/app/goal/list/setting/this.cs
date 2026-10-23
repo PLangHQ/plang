@@ -7,15 +7,17 @@ namespace app.goal.list.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {
-    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
+    /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
     /// <summary>The goals of <c>/system/</c> too, beside the app's own.</summary>
     [Out, Store] public global::app.type.item.@bool.@this Os { get; set; } = true;
 
-    /// <summary>Which goals: public (a file's first), private (the ones under it), or both.</summary>
+    /// <summary>Which goals: public (a file's first), private (the ones under it), or both; none named is public.</summary>
     [Out, Store] public global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>> Visibility { get; set; }
-        = new([(global::app.type.item.choice.@this<global::app.goal.Visibility>)global::app.goal.Visibility.Public]);
 
     /// <summary>The goals of one file this setting lists: its public goal, the private ones under it,
     /// or both.</summary>
@@ -29,5 +31,7 @@ public sealed class @this : global::app.type.item.setting.@this
     // Each row compared by what it names — a row given as text (the call's "private") names it as a
     // choice does; a re-tagged list converts its rows only when they are taken out.
     private bool Lists(global::app.goal.Visibility visibility)
-        => Visibility.Slots().Any(v => string.Equals(v?.ToString(), visibility.ToString(), System.StringComparison.OrdinalIgnoreCase));
+        => Visibility.CountRaw == 0
+            ? visibility == global::app.goal.Visibility.Public
+            : Visibility.Slots().Any(v => string.Equals(v?.ToString(), visibility.ToString(), System.StringComparison.OrdinalIgnoreCase));
 }

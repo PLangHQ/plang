@@ -22,15 +22,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     // the file it rests in, when it isn't held in memory
     private readonly File? _at;
-    // its format, when known — an archive at rest named by no format and no suffix is known by its first bytes
-    private readonly kind.@this? _kind;
 
-    /// <summary>An archive held in memory: <paramref name="value"/>, in <paramref name="kind"/>, holding
-    /// <paramref name="held"/>.</summary>
-    public @this(byte[] value, kind.@this kind, held.@this held)
+    /// <summary>An archive held in memory: <paramref name="value"/>, holding <paramref name="held"/>, born holding
+    /// <paramref name="type"/> — the app's <c>{archive, &lt;its format&gt;}</c>.</summary>
+    public @this(byte[] value, held.@this held, global::app.type.@this type) : base(type)
     {
         Value = value;
-        _kind = kind;
         Held = held;
     }
 
@@ -38,22 +35,25 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// the format its name ends in — the longest that fits (<c>photos.tar.gz</c> is tar.gz, not gzip); else known by
     /// its first bytes when it is read. It holds a file, named as the archive is without its suffix.</summary>
     public @this(File at, kind.@this? kind, global::app.actor.context.@this context)
+        : this(at, kind ?? (context.App.type.list["archive"].kind as global::app.type.kind.empty.@this)?.Kinds.OfType<kind.@this>()
+            .Where(k => k.Suffix is { } suffix && at.Raw.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+            .MaxBy(k => k.Suffix!.Length), context, true) { }
+
+    // the file archive in the format named or found, born holding the app's {archive, <format>}
+    private @this(File at, kind.@this? format, global::app.actor.context.@this context, bool _)
+        : base(context.App.type.list[new global::app.type.@this("archive", format?.Name), context])
     {
         _at = at;
-        _kind = kind ?? (context.App.type.list["archive"].kind as global::app.type.kind.empty.@this)?.Kinds.OfType<kind.@this>()
-            .Where(k => k.Suffix is { } suffix && at.Raw.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
-            .MaxBy(k => k.Suffix!.Length);
         var name = at.Name.ToString();
-        Held = new held.@this("file", _kind?.Suffix is { } end && name.EndsWith(end, StringComparison.OrdinalIgnoreCase) ? name[..^end.Length] : name);
+        Held = new held.@this(context.App.type.list[typeof(held.@this)], "file", format?.Suffix is { } end && name.EndsWith(end, StringComparison.OrdinalIgnoreCase) ? name[..^end.Length] : name);
     }
 
-    /// <summary>Its format, when known.</summary>
-    public kind.@this? Format => _kind;
+    /// <summary>Its format, when known — its type's kind; an archive at rest named by no format and no suffix is
+    /// known by its first bytes.</summary>
+    public kind.@this? Format => Type.kind as kind.@this;
 
     /// <summary>Where it rests, when it rests in a file.</summary>
     public File? At => _at;
-
-    protected internal override global::app.type.@this Type => new("archive", typeof(@this), _kind?.Name);
 
     public override bool IsLeaf => false;
 
@@ -68,11 +68,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>An archive passes through; a file path is an archive resting there, its format the one declared
     /// (<c>as tar.gz</c>), else the one its name ends in; a dict is what an archive wrote of itself
     /// (<c>{value, held}</c>, its format the declared kind).</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this archive) return archive;
         var formats = data.Context?.App.type.list["archive"].kind;
-        var named = declared?.kind is { IsEmpty: false } asked ? formats?[asked.Name] as kind.@this : null;
+        var named = type?.kind is { IsEmpty: false } asked ? formats?[asked.Name] as kind.@this : null;
         if (raw is global::app.type.item.file.@this { Path: File referenced }) raw = referenced;
         if (raw is global::app.type.item.text.@this written && data.Context is { } reader) raw = global::app.type.item.path.@this.Resolve(written.ToString(), reader);
         if (raw is File at && data.Context is { } asker) return new @this(at, named, asker);
@@ -87,7 +87,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                                           ?? (entry.Peek()?.ToString() is { } text ? System.Convert.FromBase64String(text) : null); break;
                     case "held": holds = held.@this.Create(entry.Peek(), null, data); break;
                 }
-            if (value != null && holds != null) return new @this(value, named, holds);
+            if (value != null && holds != null)
+                return new @this(value, holds, context.App.type.list[new global::app.type.@this("archive", named.Name), context]);
         }
         data.Fail(new global::app.error.@this(
             $"%{data.Name}% is no archive: an archive is what pack answers, or a file in a format (gzip, tar.gz, zip…)", "ArchiveInvalid", 400));

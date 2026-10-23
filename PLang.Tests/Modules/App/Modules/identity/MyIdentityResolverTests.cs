@@ -83,7 +83,7 @@ public class MyIdentityResolverTests
     public async Task MyIdentity_UpdatedAfterSetDefault()
     {
         // the real identity provider (TestIdentity answers one fixed identity for every call)
-        await using var real = new global::app.@this(System.IO.Path.Combine(_tempDir, "real")).TestSigning();
+        await using var real = new global::app.@this(System.IO.Path.Combine(_tempDir, "real")).TestSigning().Consenting();
         var _app = real;
         var context = _app.actor.list.System.Context;
 

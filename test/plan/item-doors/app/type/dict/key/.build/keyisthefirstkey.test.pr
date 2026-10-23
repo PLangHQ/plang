@@ -1,0 +1,147 @@
+{
+  "name": "KeyIsTheFirstKey",
+  "comment": "item-doors 39: a plural plang reaches is a singular node. A dict's key, read alone, is its first key; `.list` is\nevery key, in the order they were set. Red before: a dict had no `!key` fact (only `!keys`, a list), so `%person!key%` was not set.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %person% = {\"name\": \"Ada\", \"age\": 36}",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%person%",
+              "variable": [
+                {
+                  "text": "%person%",
+                  "code": [
+                    {
+                      "variable": "person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"name":"Ada","age":36}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %person!key% equals \"name\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "name"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%person!key%",
+              "variable": [
+                {
+                  "text": "%person!key%",
+                  "code": [
+                    {
+                      "variable": "person"
+                    },
+                    {
+                      "property": "!key"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %person!key.list% equals [\"name\", \"age\"]",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "list"
+              },
+              "value": ["name","age"]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%person!key.list%",
+              "variable": [
+                {
+                  "text": "%person!key.list%",
+                  "code": [
+                    {
+                      "variable": "person"
+                    },
+                    {
+                      "property": "!key"
+                    },
+                    {
+                      "property": "list"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "file": "KeyIsTheFirstKey.test.goal",
+  "hash": "f5f1d4b7e06d157fc3f05f1015156fa217e4b7ba71548959dc061ec074f25b29"
+}

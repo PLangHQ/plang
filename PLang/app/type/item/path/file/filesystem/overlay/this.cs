@@ -19,14 +19,40 @@ public sealed class @this : filesystem.@this
     private readonly HashSet<string> _folders;
     // what was deleted here: what the one under holds there is hidden; what is put here after shows
     private readonly HashSet<string> _gone;
+    // links made here, each with its target as written
+    private readonly Dictionary<string, string> _links;
 
-    public @this(filesystem.@this under)
+    /// <summary>An overlay over <paramref name="under"/>: its folders are its disk's.</summary>
+    public @this(filesystem.@this under) : base(under)
     {
         _under = under;
         var comparer = StringComparer.FromComparison(global::app.type.item.path.@this.RootComparison);
         _files = new(comparer);
         _folders = new(comparer);
         _gone = new(comparer);
+        _links = new(comparer);
+    }
+
+    /// <summary>A link made here answers its target; a file or folder made here, or what was deleted here, is none;
+    /// else what the one under holds.</summary>
+    public override string? Link(file.@this p)
+    {
+        lock (_lock)
+        {
+            if (_links.TryGetValue(p.Absolute, out var target)) return target;
+            if (_files.ContainsKey(p.Absolute) || _folders.Contains(p.Absolute) || Gone(p.Absolute)) return null;
+        }
+        return _under.Link(p);
+    }
+
+    /// <summary>A link is made here, in memory, over whatever was at <paramref name="p"/>: the disk is untouched.</summary>
+    public override void Link(file.@this p, string target)
+    {
+        lock (_lock)
+        {
+            _files.Remove(p.Absolute);
+            _links[p.Absolute] = target;
+        }
     }
 
     /// <summary>Puts a file at <paramref name="p"/> — with <paramref name="content"/>, or empty when what it
@@ -78,9 +104,9 @@ public sealed class @this : filesystem.@this
     /// <summary>A build's file is held in memory: the stream is read whole into it.</summary>
     public override async Task Write(file.@this p, System.IO.Stream content, CancellationToken ct = default)
     {
-        using var held = new System.IO.MemoryStream();
-        await content.CopyToAsync(held, ct);
-        await Write(p, held.ToArray());
+        using var stream = new System.IO.MemoryStream();
+        await content.CopyToAsync(stream, ct);
+        await Write(p, stream.ToArray());
     }
 
     public override async Task<System.IO.Stream> Open(file.@this p) => new System.IO.MemoryStream(await Read(p), writable: false);
@@ -97,6 +123,7 @@ public sealed class @this : filesystem.@this
         {
             _files.Keys.Where(k => Within(k, p.Absolute)).ToList().ForEach(k => _files.Remove(k));
             _folders.RemoveWhere(k => Within(k, p.Absolute));
+            _links.Keys.Where(k => Within(k, p.Absolute)).ToList().ForEach(k => _links.Remove(k));
             _gone.Add(p.Absolute);
         }
     }
@@ -126,7 +153,7 @@ public sealed class @this : filesystem.@this
         if (!hidden && _under.IsFolder(folder))
             foreach (var entry in _under.List(folder, pattern, recursive))
                 lock (_lock) if (!Gone(entry.Absolute)) entries.Add(entry.Absolute);
-        return entries.Select(entry => new file.@this(entry)).ToList();
+        return entries.Select(entry => new file.@this(entry, folder.Type)).ToList();
     }
 
     public override async Task Move(file.@this from, file.@this to, bool overwrite)
@@ -136,7 +163,7 @@ public sealed class @this : filesystem.@this
             if (overwrite && IsFolder(to)) Delete(to, recursive: true);
             Create(to);
             foreach (var entry in List(from, "*", recursive: true).Where(IsFile).ToList())
-                await Copy(entry, new file.@this(to.Absolute + entry.Absolute[from.Absolute.Length..]), overwrite);
+                await Copy(entry, new file.@this(to.Absolute + entry.Absolute[from.Absolute.Length..], to.Type), overwrite);
         }
         else await Copy(from, to, overwrite);
         Delete(from, recursive: true);
@@ -154,7 +181,7 @@ public sealed class @this : filesystem.@this
         lock (_lock)
         {
             if (_files.TryGetValue(p.Absolute, out var content))
-                return new StatInfo(Exists: true, IsFile: true, Size: new global::app.type.item.size.@this(content.Length, context),
+                return new StatInfo(Exists: true, IsFile: true, Size: global::app.type.item.size.@this.Create(content.Length, context),
                     Modified: DateTime.UtcNow);
             if (Holds(p.Absolute)) return new StatInfo(Exists: true, IsFile: false, Modified: DateTime.UtcNow);
             if (Gone(p.Absolute)) return new StatInfo(Exists: false);

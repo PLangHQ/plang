@@ -12,6 +12,7 @@ namespace app.type.item.variable.parser;
 public sealed class @this
 {
     private readonly string _text;
+    private readonly global::app.type.list.@this _types;
     private readonly List<global::app.error.@this> _error = [];
     private List<variable.@this>? _variable;
     private readonly System.Lazy<variable.@this?> _whole;
@@ -19,15 +20,33 @@ public sealed class @this
     // The cursor over the reference being read, and where its body ends (its closing %).
     private int _pos, _end;
 
-    public @this(string text)
+    /// <summary>A parser over <paramref name="text"/>; what it reads is born holding <paramref name="types"/>' own
+    /// types — the variable, each hop, the code they make.</summary>
+    public @this(string text, global::app.type.list.@this types)
     {
         _text = text ?? "";
+        _types = types;
         _whole = new(One);
     }
 
     /// <summary>The references the text holds, in order. One that doesn't parse is left out; the
     /// reason is in <see cref="Error"/>.</summary>
     public IReadOnlyList<variable.@this> Variable => _variable ??= Scan();
+
+    /// <summary>The one of the text's variables <paramref name="written"/> was meant to be: the one it starts most like
+    /// (case aside, as variables compare), sharing more than its marker (<c>%</c>, <c>%!</c>); null when none does —
+    /// what a build refusal quotes beside the answer's text, so the retry copies the step's.</summary>
+    internal string? Nearest(string variable)
+    {
+        var marker = variable.StartsWith("%!") ? 2 : 1;
+        int Shared(string text)
+        {
+            var n = 0;
+            while (n < text.Length && n < variable.Length && char.ToLowerInvariant(text[n]) == char.ToLowerInvariant(variable[n])) n++;
+            return n;
+        }
+        return Variable.Select(v => v.Text).Distinct().OrderByDescending(Shared).FirstOrDefault(text => Shared(text) > marker);
+    }
 
     /// <summary>Why a reference in the text doesn't parse — empty when every one does.</summary>
     public IReadOnlyList<global::app.error.@this> Error
@@ -41,28 +60,26 @@ public sealed class @this
     {
         _pos = 0;
         _end = _text.Length;
-        var hops = new List<code.Hop>();
         // A path that starts bare starts with a member, as if written after a dot.
+        System.Func<code.Hop?, code.Hop>? bare = null;
         if (_end > 0 && _text[0] is not ('.' or '!' or '['))
         {
-            if (Named(0) is not { } first) { Fail(_text, "it starts with a name"); return null; }
-            hops.Add(first);
+            bare = Named(0);
+            if (bare is null) { Fail(_text, "it starts with a name"); return null; }
         }
-        while (_pos < _end)
+        if (!Steps(out var next, out var start))
         {
-            var start = _pos;
-            var hop = _text[_pos] switch
-            {
-                '.' => Member(start),
-                '!' => Binding(start),
-                '[' => Index(start),
-                _ => null,
-            };
-            if (hop == null) { Fail(_text, $"'{_text[_pos]}' can't follow '{_text[..start]}'"); return null; }
-            hops.Add(hop);
+            Fail(_text, $"'{_text[_pos]}' can't follow '{_text[..start]}'");
+            return null;
         }
-        return new code.@this(hops);
+        var first = bare is null ? next : bare(next);
+        return first is null ? null : new code.@this(first, Code);
     }
+
+    // what the parser's reads are born holding: the app's own types
+    private global::app.type.@this Code => _types[typeof(code.@this)];
+    private global::app.type.@this List => _types[typeof(global::app.type.item.list.@this)];
+    private global::app.type.@this Hop<THop>() where THop : code.Hop => _types[typeof(THop)];
 
     /// <summary>The one variable the whole text is — written with its % signs (<c>%user.name%</c>), or a bare
     /// name (<c>user</c>, the form a name slot may carry) read as <c>%user%</c>. The one way a variable is made
@@ -74,7 +91,7 @@ public sealed class @this
     {
         if (!_text.StartsWith('%'))
         {
-            var named = new @this($"%{_text}%");
+            var named = new @this($"%{_text}%", _types);
             var whole = named.Whole;
             _error.AddRange(named.Error);
             return whole;
@@ -95,16 +112,16 @@ public sealed class @this
 
     private List<variable.@this> Scan()
     {
-        var found = new List<variable.@this>();
+        var variables = new List<variable.@this>();
         for (int i = 0; i < _text.Length; i++)
         {
             if (_text[i] != '%') continue;
             var close = Close(i);
             if (close < 0) continue;
-            if (Body(i, close) is { } v) found.Add(v);
+            if (Body(i, close) is { } v) variables.Add(v);
             i = close;
         }
-        return found;
+        return variables;
     }
 
     // The closing % of a reference opening at `at`, or -1 when none opens there.
@@ -139,29 +156,15 @@ public sealed class @this
         var text = _text[at..(close + 1)];
         _pos = at + 1;
         _end = close;
-        var hops = new List<code.Hop>();
 
         var bang = _pos < _end && _text[_pos] == '!';
         if (bang) _pos++;
         var root = Name();
         if (root.Length == 0) return Fail(text, "it starts with a name");
-        hops.Add(new code.Variable(bang ? "!" + root : root));
-
-        while (_pos < _end)
-        {
-            var start = _pos;
-            var hop = _text[_pos] switch
-            {
-                '.' => Member(start),
-                '!' => Binding(start),
-                '[' => Index(start),
-                _ => null,
-            };
-            if (hop == null)
-                return Fail(text, _pos < _end ? $"'{_text[_pos]}' can't follow '{_text[(at + 1)..start]}'" : "it ends early");
-            hops.Add(hop);
-        }
-        return new variable.@this(text, new code.@this(hops));
+        if (!Steps(out var next, out var start))
+            return Fail(text, _pos < _end ? $"'{_text[_pos]}' can't follow '{_text[(at + 1)..start]}'" : "it ends early");
+        return new variable.@this(text, new code.@this(new code.Variable(bang ? "!" + root : root, next, Hop<code.Variable>()), Code),
+            _types[typeof(variable.@this)]);
     }
 
     private variable.@this? Fail(string text, string why)
@@ -180,41 +183,75 @@ public sealed class @this
         return _text[start.._pos];
     }
 
+    // The steps from the cursor to the end, each read before the ones after it and made holding the next: false when
+    // one doesn't read (`start` where it begins, the cursor where its read stopped), true with null when none is left.
+    private bool Steps(out code.Hop? first, out int start)
+    {
+        first = null;
+        start = _pos;
+        if (_pos >= _end) return true;
+        var step = _text[_pos] switch
+        {
+            '.' => Member(start),
+            '!' => Binding(start),
+            '[' => Index(start),
+            _ => null,
+        };
+        if (step == null) return false;
+        if (!Steps(out var next, out start)) return false;
+        first = step(next);
+        return true;
+    }
+
     // .member, ."quoted key", or .method(values)
-    private code.Hop? Member(int start)
+    private System.Func<code.Hop?, code.Hop>? Member(int start)
     {
         _pos++;
         return Named(start);
     }
 
-    // What follows a member's dot: a name, a quoted key, or a method with its values.
-    private code.Hop? Named(int start)
+    // What follows a member's dot: a name, a quoted key, or a method with its values — the step made once its next is.
+    private System.Func<code.Hop?, code.Hop>? Named(int start)
     {
         if (_pos < _end && _text[_pos] is '"' or '\'')
-            return Quoted() is { } key ? new code.Property(_text[start.._pos], key) : null;
+        {
+            if (Quoted() is not { } key) return null;
+            var text = _text[start.._pos];
+            return next => new code.Property(text, key, next, Hop<code.Property>());
+        }
         var name = Name();
         if (name.Length == 0) return null;
         if (_pos < _end && _text[_pos] == '(')
-            return Values() is { } values ? new code.Method(_text[start.._pos], name, values) : null;
-        return new code.Property(_text[start.._pos], name);
+        {
+            if (Values() is not { } values) return null;
+            var text = _text[start.._pos];
+            return next => new code.Method(text, name, values, next, Hop<code.Method>());
+        }
+        {
+            var text = _text[start.._pos];
+            return next => new code.Property(text, name, next, Hop<code.Property>());
+        }
     }
 
     // !name — the binding's own plane
-    private code.Hop? Binding(int start)
+    private System.Func<code.Hop?, code.Hop>? Binding(int start)
     {
         _pos++;
         var name = Name();
-        return name.Length == 0 ? null : new code.Property(_text[start.._pos], "!" + name);
+        if (name.Length == 0) return null;
+        var text = _text[start.._pos];
+        return next => new code.Property(text, "!" + name, next, Hop<code.Property>());
     }
 
     // [0], ["k"], [idx], [%i%]
-    private code.Hop? Index(int start)
+    private System.Func<code.Hop?, code.Hop>? Index(int start)
     {
         _pos++;
         var key = Value(bare: true);
         if (key == null || _pos >= _end || _text[_pos] != ']') return null;
         _pos++;
-        return new code.Index(_text[start.._pos], key);
+        var text = _text[start.._pos];
+        return next => new code.Index(text, key, next, Hop<code.Index>());
     }
 
     // (value, value, …) — each a literal or a variable
@@ -223,14 +260,14 @@ public sealed class @this
         _pos++;
         var values = new List<global::app.type.item.@this>();
         Space();
-        if (_pos < _end && _text[_pos] == ')') { _pos++; return new(values); }
+        if (_pos < _end && _text[_pos] == ')') { _pos++; return new(values, List); }
         while (_pos < _end)
         {
             if (Value(bare: false) is not { } value) return null;
             values.Add(value);
             Space();
             if (_pos < _end && _text[_pos] == ',') { _pos++; Space(); continue; }
-            if (_pos < _end && _text[_pos] == ')') { _pos++; return new(values); }
+            if (_pos < _end && _text[_pos] == ')') { _pos++; return new(values, List); }
             return null;
         }
         return null;
@@ -242,7 +279,7 @@ public sealed class @this
     {
         if (_pos >= _end) return null;
         var c = _text[_pos];
-        if (c is '"' or '\'') return Quoted() is { } s ? new global::app.type.item.text.@this(s) : null;
+        if (c is '"' or '\'') return Quoted() is { } s ? (global::app.type.item.text.@this)s : null;
         if (char.IsDigit(c) || (c == '-' && _pos + 1 < _end && char.IsDigit(_text[_pos + 1]))) return Number();
         if (c == '%') return Nested(_pos);
         if (bare) return Bare();
@@ -258,11 +295,11 @@ public sealed class @this
     // A reference written inside this one; the cursor continues after it.
     private variable.@this? Nested(int at)
     {
-        var inner = new @this(_text);
-        var found = inner.Read(at);
+        var inner = new @this(_text, _types);
+        var variable = inner.Read(at);
         _error.AddRange(inner._error);
-        if (found != null) _pos = at + found.Text.Length;
-        return found;
+        if (variable != null) _pos = at + variable.Text.Length;
+        return variable;
     }
 
     // A bare path inside brackets: [idx], [askInfo.gui], [items[0]] — a variable.
@@ -276,10 +313,10 @@ public sealed class @this
             else if (_text[_pos] == ']') depth--;
             _pos++;
         }
-        var inner = new @this("%" + _text[start.._pos] + "%");
-        var found = inner.Read(0);
+        var inner = new @this("%" + _text[start.._pos] + "%", _types);
+        var variable = inner.Read(0);
         _error.AddRange(inner._error);
-        return found;
+        return variable;
     }
 
     private string? Quoted()
@@ -301,10 +338,10 @@ public sealed class @this
         var start = _pos;
         if (_text[_pos] == '-') _pos++;
         while (_pos < _end && (char.IsDigit(_text[_pos]) || _text[_pos] == '.')) _pos++;
-        var written = _text[start.._pos];
-        if (long.TryParse(written, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out var whole))
+        var digits = _text[start.._pos];
+        if (long.TryParse(digits, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out var whole))
             return whole;
-        if (decimal.TryParse(written, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var part))
+        if (decimal.TryParse(digits, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var part))
             return part;
         return null;
     }

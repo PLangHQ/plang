@@ -38,9 +38,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <c>App.type.list[name].Create(raw, ctx)</c> (the entity door) builds the type the caller named.
     /// ALWAYS returns a value (never null); a bare <c>Data</c> is a producer bug and throws.
     /// </summary>
-    public static @this Create(object? raw, global::app.actor.context.@this? context)
+    public static @this Create(object? raw, global::app.actor.context.@this context)
     {
-        if (raw is null) return global::app.type.item.@null.@this.Instance;
+        if (raw is null) return context.App.type.list["null"].Empty(context);
         if (raw is @this already) return already;
         if (raw is global::app.data.@this)
             throw new System.InvalidOperationException(
@@ -49,13 +49,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
         // A sequence of Data / native items narrows to a native list, preserving the instances.
         if (raw is System.Collections.Generic.IEnumerable<global::app.data.@this> dataSeq)
-            return new global::app.type.item.list.@this(dataSeq);
+            return new global::app.type.item.list.@this(dataSeq, context.App.type.list["list"]);
         if (raw is System.Collections.Generic.IEnumerable<@this> itemSeq)
-            return new global::app.type.item.list.@this(itemSeq);
+            return new global::app.type.item.list.@this(itemSeq, context.App.type.list["list"]);
         if (raw is System.Collections.Generic.List<object?> objList)
-            return new global::app.type.item.list.@this(objList);
+            return new global::app.type.item.list.@this(objList, context.App.type.list["list"]);
         if (raw is System.Collections.Generic.Dictionary<string, object?> objDict)
-            return new global::app.type.item.dict.@this(objDict);
+            return new global::app.type.item.dict.@this(objDict, context.App.type.list["dict"]);
         // A non-generic container narrows the same way its generic sibling above does — build the
         // native dict/list DIRECTLY from its entries (store raw, type on read), no STJ round-trip.
         if (raw is System.Collections.IDictionary idict)
@@ -63,7 +63,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             var d = new System.Collections.Generic.Dictionary<string, object?>();
             foreach (System.Collections.DictionaryEntry e in idict)
                 d[e.Key?.ToString() ?? ""] = e.Value;
-            return new global::app.type.item.dict.@this(d);
+            return new global::app.type.item.dict.@this(d, context.App.type.list["dict"]);
         }
         // Any remaining enumerable — an IList, an IReadOnlyList<T> (a domain X.list like warning.list),
         // an array, a HashSet<T> — narrows to a native plang list (store raw, type on read). string is
@@ -74,36 +74,35 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         {
             var l = new System.Collections.Generic.List<object?>();
             foreach (var e in seq) l.Add(e);
-            return new global::app.type.item.list.@this(l);
+            return new global::app.type.item.list.@this(l, context.App.type.list["list"]);
         }
 
         // A CLR enum IS plang's choice (a closed named set) — build choice<T> for the enum. BEFORE
         // the index ask: an enum is neither an item nor _clr-owned, so the door would answer clr.
-        if (raw is System.Enum)
-            return (@this)System.Activator.CreateInstance(
-                typeof(global::app.type.item.choice.@this<>).MakeGenericType(raw.GetType()), raw)!;
+        if (raw is System.Enum && typeof(global::app.type.item.choice.@this<>).MakeGenericType(raw.GetType()) is var choice)
+            return (@this)System.Activator.CreateInstance(choice, raw, context.App.type.list[choice])!;
 
         // The natural lift, NAVIGATED off the identity door: the owning entity drives its own cached
         // Create thunk (int → number, string → text). The door is never null — a CLR type no value
         // type owns answers the clr entity, whose Create builds the carrier — so this is the single
-        // terminal rung; the old separate Clr fallback dissolves into entity dispatch.
-        return context!.App.type.list[raw.GetType()].Make(raw, context);
+        // terminal rung, with no separate Clr fallback.
+        return context.App.type.list[raw.GetType()].Make(raw, context);
     }
 
-    /// <summary>The birth of an item with a DECLARED type (decisions 786/787): an item declared with a KIND
+    /// <summary>The birth of an item with a DECLARED type: an item declared with a KIND
     /// is made from its raw by that declaration, lazily — the raw's characters ride to the declared type's
     /// own wire-raw birth (<c>declared.Make</c>, <c>type/this.cs:378</c>): a fresh source read on first use
     /// through its kind, so <c>{item, kind: json}</c> holds its characters until used and is not text. A
     /// kindless item is the interface default (pass-through, a container deserializes itself, else declined).
     /// Only item's family comes here — a number or duration kind (decimal, iso) is its own family's birth.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         // item makes its OWN — a value already an item, its own kinds ({item, kind: json}), a container that
         // deserializes itself. A declaration whose class is ANOTHER type is not item's to make: it reaches item
         // only because that type's most-derived ICreate is item (a {table, xlsx}, whose table ships no reader),
         // and item declines so the owner's own Create or the default's CreateItemDeclined answers — never item
         // passing a stray text or re-sourcing the same bytes through as that other type.
-        if (declared is { } other && other.ClrType is { } clr && clr != typeof(@this))
+        if (type is { } other && other.ClrType is { } clr && clr != typeof(@this))
         {
             data.Fail(new global::app.error.@this(
                 $"%{data.Name}% is declared {other.Name} — item cannot make a {other.Name} from a {(raw as @this)?.Type.Name ?? raw?.GetType().Name}.",
@@ -112,7 +111,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         }
         // The lazy-kind rebirth is for item's own kinds ({item, kind: json}): its characters ride to a fresh
         // source read through the kind.
-        if (declared is { } d && !d.kind.IsEmpty && raw is @this leaf && leaf.RawText is { } chars)
+        if (type is { } d && !d.kind.IsEmpty && raw is @this leaf && leaf.RawText is { } chars)
             return d.Make(chars, data.Context);
         if (raw is @this self) return self;
         if (raw is global::app.type.item.dict.@this or global::app.type.item.list.@this
@@ -135,7 +134,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <para><b>Failure:</b> every failure is authored by the type that failed
     /// — the door catches only its OWN known failure modes (file tells IO
     /// stories, source tells parse stories), reports via
-    /// <c>data.Fail(error)</c> and answers <see cref="Absent"/>. A truly
+    /// <c>data.Fail(error)</c> and answers the Data's empty value (its app's null). A truly
     /// unexpected exception is a bug and propagates. The blessed surface of
     /// <paramref name="data"/> here is <c>Fail</c> alone.</para>
     /// </summary>
@@ -149,9 +148,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// via its <c>Create</c>. Used only relationally (who drives/coerces), never a result,
     /// never on the wire. Declared per type on the ×10 table (text 100 … list 750, guid 600,
     /// null 1000); the apex/unranked base is 0. A plugin type declares its own — no central
-    /// catalog. Read off the value's real type (both operands are their real shape by the time
-    /// <see cref="Compare"/> runs — <see cref="Value"/> parsed any source), so it never
-    /// materializes to decide.
+    /// catalog. Read off the value as it is held: an operand may still be unread (a json source answers itself
+    /// unread), and such a source ranks above every value, so it drives — it opens itself and hands the comparison
+    /// to what it stands for. Rank itself never materializes anything.
     /// </summary>
     public virtual int Rank => 0;
 
@@ -180,11 +179,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     protected virtual System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(@this other, global::app.actor.context.@this context)
         => new(ReferenceEquals(this, other) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual);
 
-    /// <summary>The value-less citizen — what a failed door answers (the error
-    /// rides the asking binding; the value slot stays never-null). The typeless
-    /// null; a declared-but-empty slot uses <c>new null.@this(type, kind)</c>.</summary>
-    public static @this Absent => global::app.type.item.@null.@this.Instance;
-
     /// <summary>
     /// What is in memory NOW — sync, no I/O, no parse, no resolve: the
     /// instance itself. (ToString, Equals, debug views; never a value read.)
@@ -197,51 +191,24 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// (<paramref name="isIndex"/> tells positional from named, the grammar's Index-vs-Member fact),
     /// a <c>clr</c> host routes to its kind. Returns the (possibly REPLACED) value — a kind may
     /// materialize an immutable host into a new one; the caller rebinds when the instance differs.
-    /// <para>The DEFAULT reflects a public CLR property off THIS value — the write-symmetric twin of
-    /// <see cref="Get"/>'s reflect-default (a domain item's <c>step.Action</c>, a scalar's backing).
-    /// The member value opens its Data door, lowers ITSELF to the property type (<c>value.Clr</c> — the
-    /// sanctioned crossing), and rides into the slot; returns THIS (mutate-in-place). Containers
-    /// (<c>dict</c>/<c>list</c>) override with key/index writes; a value with no writable property for
-    /// <paramref name="key"/> throws. The writer's <paramref name="context"/> rides along for a value
-    /// that builds its child (a foreign host, a step constructing its actions); reflection needs none.</para>
-    /// (Distinct from <see cref="Write(global::app.type.format.IWriter)"/>, which serializes.)
+    /// <para>The DEFAULT writes one of the value's own members — the ones its type lists — and the member
+    /// writes itself (read as its type, then set): Ok, or why it couldn't. A thing that lives on keeps a member
+    /// a program adds beside its own. Containers (<c>dict</c>/<c>list</c>) override with key/index writes.</para>
+    /// (Distinct from <see cref="Output"/>, which serializes.)
     /// </summary>
-    public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
+    public virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(string key, bool isIndex, object? value,
+        global::app.actor.context.@this context)
     {
-        // a name is found ignoring its case; two members it names is the error naming both (the reflection kind's one lookup)
-        var prop = global::app.type.item.kind.reflection.@this.Reflect(GetType(), key);
-        if ((prop == null || !prop.CanWrite) && Kept is { } kept && !isIndex)
+        if (!isIndex && Listed(key, context) is { } member) return await member.Write(this, value, context);
+        if (!isIndex && Kept is { } list)
         {
-            // a thing that lives on keeps a member a program adds — never in place of one of its own
-            if (prop != null || global::app.type.item.kind.reflection.@this.Method(GetType(), key) != null)
-                throw new global::app.error.AppException(new global::app.error.@this(
-                    $"{key} is {Type.Name}'s own — a program adds members beside it, never over it", "OwnMember", 400));
-            kept.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
-            return this;
+            list.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
+            return context.Ok(this);
         }
-        if (value is global::app.data.@this binding) value = await binding.Value();
-        if (prop == null || !prop.CanWrite)
-            throw new System.NotSupportedException($"%…% ({Type.Name}) cannot take a child '{key}'");
-        if (value is @this iv && !prop.PropertyType.IsInstanceOfType(value))
-        {
-            // The declared type reads ITSELF from the value's kind — the same reader a .pr uses. The
-            // entity names WHICH reader (list<action> → the "list" reader) and the element kind
-            // ("action") so a list reader loops the element's reader (goal.call rides @schema:data).
-            // A value with no format to bridge (item.Read → null) keeps the Clr path.
-            var entity = context.App.type.list[prop.PropertyType];
-            var reader = entity != null ? context.App.type.list.Reader.Typed(entity.Name, null) : null;
-            var read = reader != null ? iv.Read(reader, entity!.kind.IsEmpty ? null : entity.kind.Name, context) : null;
-            // The generic "list" reader produces a base list (its elements already read through their
-            // own reader). A typed node slot (list<action>)
-            // adopts those rows into ITS type: same rows, the declared container. No type-switch — any
-            // list<T> slot materializes the same way.
-            if (read is global::app.type.item.list.@this made && !prop.PropertyType.IsInstanceOfType(made)
-                && typeof(global::app.type.item.list.@this).IsAssignableFrom(prop.PropertyType))
-                read = (@this?)System.Activator.CreateInstance(prop.PropertyType, made);
-            value = read ?? iv.Clr(prop.PropertyType, context);
-        }
-        prop.SetValue(this, value);
-        return this;
+        // A plain value holds no member a program adds, and says so: a variable's own binding keeps it beside the value
+        // (its Kept), read with a dot and never with `!`.
+        return context.Error(new global::app.error.@this(
+            $"a {Type.Name} can't hold an added member yet ('{key}'); a dict can", "NoAddedMember", 404));
     }
 
     /// <summary>
@@ -276,48 +243,39 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
-    {
-        var member = await new global::app.type.clr.@this(this, parent.Context).Get(parent, key);
-        return member.IsInitialized ? member : await Setting(parent, key) ?? Kept?[key] ?? member;
-    }
+        => await Member(parent, key) ?? On(parent, key) ?? await Setting(parent, key) ?? Kept?[key] ?? parent.Context.NotFound(key);
+
+    // This value's events when the key is `on` — the event door, read by name though no member lists it.
+    private global::app.data.@this? On(global::app.data.@this parent, string key)
+        => string.Equals(key, "on", System.StringComparison.OrdinalIgnoreCase)
+            ? parent.Context.App.type.list.Kind(on.GetType()).Data(parent.Name, on, parent, parent.Context)
+            : null;
 
     /// <summary>The members this thing keeps beyond its own (<c>%!app.home%</c>), read after its own — a thing that
     /// lives on (the app, a call, an actor, a module, a goal, a step) keeps a list; a plain value keeps none.</summary>
     internal virtual global::app.type.item.kept.list.@this? Kept => null;
 
-    /// <summary>The member of this value's own plang surface named <paramref name="key"/> — one its class marks
-    /// <c>[LlmBuilder]</c>, the catalog's set (a list's <c>count</c>, <c>first</c>): a property's value, or what a method
-    /// that asks only for its asker answers. Null when the class marks none by that name; a value whose data reads
-    /// through by key (a list's rows, a dict's entries) asks this, never every public member it has.</summary>
+    /// <summary>The member of this value's own plang surface named <paramref name="key"/> — one its type lists (a list's
+    /// <c>count</c>, <c>first</c>), read off the value: a property's value, or what a method answers when it asks for
+    /// nothing a step must give. Null when the type lists none by that name; a value whose data reads through by key
+    /// (a list's rows, a dict's entries) asks this, never every public member it has.</summary>
     private protected async System.Threading.Tasks.ValueTask<global::app.data.@this?> Member(global::app.data.@this parent, string key)
-    {
-        var member = IdentityOf(GetType()).Members.GetOrAdd(key, static (name, type) => Marked(type, name), GetType());
-        object? answer = member switch
-        {
-            System.Reflection.PropertyInfo property => property.GetValue(this),
-            System.Reflection.MethodInfo method => method.Invoke(this,
-                method.GetParameters().Select(p => p.ParameterType == typeof(global::app.actor.context.@this) ? parent.Context : p.DefaultValue).ToArray()),
-            _ => null,
-        };
-        if (member == null) return null;
-        // a member that answers asynchronously answers what its task completes with
-        if (answer?.GetType().GetMethod("AsTask") is { } task) answer = task.Invoke(answer, null);
-        if (answer is System.Threading.Tasks.Task pending)
-        {
-            await pending;
-            answer = pending.GetType().GetProperty("Result")?.GetValue(pending);
-        }
-        return answer as global::app.data.@this ?? (answer == null ? parent.Context.NotFound(key) : new global::app.data.@this(key, answer, parent: parent));
-    }
+        => Listed(key, parent.Context) is { } member && member.Arguments?.All(argument => argument.Nullable) != false
+            ? await member.Read(this, parent)
+            : null;
 
-    // Which member of a class is its marked surface by a name — read into its identity the first time it is asked.
-    // (The reflection kind's one lookup, among the marked members: two a name matches is the error naming both.)
-    private static System.Reflection.MemberInfo? Marked(System.Type @class, string name)
-        => global::app.type.item.kind.reflection.@this.Reflect(@class, name,
-               p => System.Attribute.IsDefined(p, typeof(global::app.LlmBuilderAttribute)))
-           ?? (System.Reflection.MemberInfo?)global::app.type.item.kind.reflection.@this.Method(@class, name,
-               m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
-                   && m.GetParameters().All(p => p.ParameterType == typeof(global::app.actor.context.@this) || p.IsOptional));
+    // The member named key of what this value is — its own class's list, the one its type's offer is made of. A name is
+    // read ignoring its case, so two members it names is the error naming both, never one picked over the other.
+    private global::app.type.property.@this? Listed(string key, global::app.actor.context.@this context)
+    {
+        var named = context.App.type.list.Member(GetType())
+            .Where(member => string.Equals(member.Name, key, System.StringComparison.OrdinalIgnoreCase)).ToList();
+        if (named.Count > 1)
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"`{Type.Name}` has two members named {key}: " + string.Join(", ", named.Select(member => $"`{member.Member?.Name ?? member.Name}`")),
+                "AmbiguousMember", 400));
+        return named.FirstOrDefault();
+    }
 
     /// <summary>This owner's settings when <paramref name="key"/> is <c>setting</c> (<c>%!app.goal.list.setting%</c>);
     /// null for any other key, or an owner with none.</summary>
@@ -327,7 +285,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>This owner's settings as the asker sees them — the class it names (<see cref="setting.ISetting{T}"/>);
     /// null when it names none. An owner whose settings are not one class (a module, an action) answers its own.</summary>
     protected virtual async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
-        => await parent.Context.Setting.Of(this);
+        => await parent.Context.Setting.Get(GetType());
 
     /// <summary>The child at <paramref name="key"/>, where <paramref name="isIndex"/> tells a position
     /// (<c>[0]</c>) from a member (<c>.name</c>) — the read twin of <see cref="Set"/>. A value that
@@ -336,6 +294,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key, bool isIndex)
         => Get(parent, key);
+
+    /// <summary>The child at <paramref name="key"/> a write further in goes into — what <see cref="Get(global::app.data.@this, string, bool)"/>
+    /// answers, for a value whose children are its own. A container whose rows are made at their read keeps the row
+    /// it makes, so the write lands in the container.</summary>
+    public virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Child(
+        global::app.data.@this parent, string key, bool isIndex)
+        => Get(parent, key, isIndex);
 
     /// <summary>
     /// Iteration as <c>(key, value)</c> pairs — the value owns how it iterates,
@@ -366,10 +331,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     {
         switch (slot)
         {
-            case global::app.data.@this held:
-                var value = held.Peek();
+            case global::app.data.@this data:
+                var value = data.Peek();
                 var copy = value?.Copy();
-                return copy == null || ReferenceEquals(copy, value) ? held.Copy(held.Name) : new global::app.data.@this(held.Name, copy, context: held.Context);
+                return copy == null || ReferenceEquals(copy, value) ? data.Copy(data.Name) : new global::app.data.@this(data.Name, copy, context: data.Context);
             case @this item:
                 return item.Copy();
             case IDictionary<string, object?> raw:
@@ -413,14 +378,24 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal global::app.type.item.history.@this history => _history ??= new();
 
     /// <summary>
-    /// This value's OWN type entity — each type answers ITS way (number stamps its precision as
-    /// kind, text its extension, a source its declared judgement, dict/list name themselves). The
-    /// single owner of its identity; provenance lives on the value's <see cref="list"/> and is asked
-    /// via <see cref="Is"/>. The default is its class's type — the word the class declares, else its
-    /// namespace.
+    /// This value's OWN type entity — the type that MADE it, handed in at birth (the app's list for an
+    /// origin birth via <c>Make</c>, or forwarded from the value it came from). The single owner of its
+    /// identity; provenance lives on the value's <see cref="list"/> history and is asked via <see cref="Is"/>.
+    /// <para>Only the root type and the type list are born without one. A value whose maker does not hand its type
+    /// yet answers the rebuild; that goes once every maker hands one.</para>
     /// </summary>
+    private readonly global::app.type.@this? _type;
+
     protected internal virtual global::app.type.@this Type
-        => FamilyOf(GetType()) is { } kind ? new(NameOf(kind.Family), kind.Family, kind.Kind) : new(GetType());
+        => _type ?? (FamilyOf(GetType()) is { } kind ? new(NameOf(kind.Family), kind.Family, kind.Kind) : new(GetType()));
+
+    /// <summary>A value born holding the type that made it.</summary>
+    protected @this(global::app.type.@this type) => _type = type;
+
+    /// <summary>A value born without a type: the root type (its own type) and the type list (which answers its own
+    /// type from itself) — the two makers of types. A value born through a C# implicit conversion reaches here too,
+    /// its type rebuilt from its class.</summary>
+    protected @this() { }
 
     /// <summary>
     /// Is this value (now or in its narrow history) an <paramref name="other"/>? Asks its type
@@ -444,11 +419,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// a list is found by its characters, never by the escaped form the list writes it in.</summary>
     internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(string quoted, global::app.actor.context.@this context)
     {
-        var writer = new global::app.goal.step.action.formal.Writer();
-        await Output(writer, global::app.View.Store, context);
+        var writer = new global::app.goal.step.action.formal.Writer(context);
+        await Output(writer);
         if (writer.ToString().Contains(quoted)) return true;
         foreach (var row in Rows(context) ?? [])
-            if (await row.Value() is { } held && !ReferenceEquals(held, this) && await held.Holds(quoted, context)) return true;
+            if (await row.Value() is { } value && !ReferenceEquals(value, this) && await value.Holds(quoted, context)) return true;
         return false;
     }
 
@@ -458,12 +433,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// holds what any of them holds.</summary>
     internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(global::app.type.item.number.@this number, global::app.actor.context.@this context)
     {
-        var writer = new global::app.goal.step.action.formal.Writer();
-        await Output(writer, global::app.View.Store, context);
+        var writer = new global::app.goal.step.action.formal.Writer(context);
+        await Output(writer);
         if (System.Text.RegularExpressions.Regex.IsMatch(writer.ToString(),
                 $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(number.ToString())}(?![\d.]|\.\d)")) return true;
         foreach (var row in Rows(context) ?? [])
-            if (await row.Value() is { } held && !ReferenceEquals(held, this) && await held.Holds(number, context)) return true;
+            if (await row.Value() is { } value && !ReferenceEquals(value, this) && await value.Holds(number, context)) return true;
         return false;
     }
 
@@ -508,26 +483,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>This value's own events, given to it by its first binding — what a binding is added to.</summary>
     internal global::app.@event.on.own Own()
     {
-        if (_on is global::app.@event.on.own held) return held;
+        if (_on is global::app.@event.on.own events) return events;
         var shared = on;
-        var made = new global::app.@event.on.own(shared.Declared);
-        return System.Threading.Interlocked.CompareExchange(ref _on, made, shared) is global::app.@event.on.own won
-            ? won : made;
+        events = new global::app.@event.on.own(shared.Declared);
+        return System.Threading.Interlocked.CompareExchange(ref _on, events, shared) is global::app.@event.on.own won
+            ? won : events;
     }
-
-    /// <summary>
-    /// Language tag when this value is a builder-authored template — a value
-    /// whose text (or whose nested entries) contain live <c>%ref%</c> holes
-    /// that resolve against variables at every USE, never at set. An ordinary
-    /// init-only stamp, set at creation by the authored seams (.pr load,
-    /// action wire rebuild) — runtime INPUT is never stamped, so a user who
-    /// types <c>"%secret%"</c> gets it printed literally. The kind of template it is — <c>plang</c>, the
-    /// only one today. Null = not a template; a stamped value is
-    /// never cached by the holding Data (see <see cref="Cacheable"/> on the
-    /// types that honor the stamp).
-    /// </summary>
-    // A birth fact: the value is born a template (its reader or builder knows), never stamped after.
-    public global::app.type.item.template.kind.@this? Template { get; init; }
 
     /// <summary>The variables this value holds, each once: a template's <c>%…%</c>, a container's
     /// entries', a variable itself. Read-only, born with the value; empty when none.</summary>
@@ -544,12 +505,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// may take a final value as-is; a non-final value must be read through its
     /// door, and a carrier must never stand between the Data and it.
     /// </summary>
-    internal virtual bool IsFinal => Template == null;
+    internal virtual bool IsFinal => Type.Template == null;
 
-    // A C# class's plang identity — its namespace name, the family it is a kind of with the kind it is, when it is one,
-    // and its marked surface by member name, each name found the first time it is asked: pure facts of the class.
-    private readonly record struct Identity(string Namespace, (System.Type Family, string Kind)? Family,
-        System.Collections.Concurrent.ConcurrentDictionary<string, System.Reflection.MemberInfo?> Members);
+    // A C# class's plang identity — its namespace name, and the family it is a kind of with the kind it is, when it is
+    // one: pure facts of the class.
+    private readonly record struct Identity(string Namespace, (System.Type Family, string Kind)? Family);
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, Identity> _identities = new();
 
     private static Identity IdentityOf(System.Type t)
@@ -565,9 +525,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                 if (b.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false))
                 {
                     var called = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(ct, inherit: false)?.Name ?? space;
-                    return new(space, (b, called[(called.LastIndexOf('.') + 1)..]), new(System.StringComparer.OrdinalIgnoreCase));
+                    return new(space, (b, called[(called.LastIndexOf('.') + 1)..]));
                 }
-            return new(space, null, new(System.StringComparer.OrdinalIgnoreCase));
+            return new(space, null);
         });
 
     /// <summary>The name a class's type goes by — the word it declares (<c>[PlangType("text")]</c>), else its
@@ -628,8 +588,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual async System.Threading.Tasks.Task<global::app.data.@this?> Field(string name, global::app.actor.context.@this context)
     {
-        var held = await Get(new global::app.data.@this("", this, context: context), name);
-        return held is { IsInitialized: true, Success: true } ? held : null;
+        var field = await Get(new global::app.data.@this("", this, context: context), name);
+        return field is { IsInitialized: true, Success: true } ? field : null;
     }
 
     /// <summary>The names of this value's fields, to tell a programmer which there are — none known by default.</summary>
@@ -668,11 +628,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual bool Refuses(global::app.type.@this asked, global::app.data.@this data) => false;
 
     /// <summary>This value, given by <paramref name="carrier"/>, goes into <paramref name="into"/> at
-    /// <paramref name="at"/> (a position in it, else the end) — as one element pointing at the value's current
-    /// instance. A list goes in as its elements instead.</summary>
+    /// <paramref name="at"/> (a position in it, else the end) — as one element, a copy of the carrier pointing at the
+    /// value's current instance and keeping what the value can't hold (its signature, its properties, the members kept
+    /// beside it). A list goes in as its elements instead.</summary>
     internal virtual void Enroll(global::app.type.item.list.@this into, global::app.data.@this carrier,
         global::app.type.item.number.@this at, global::app.actor.context.@this context)
-        => into.Place(new global::app.data.@this(carrier.Name, carrier.Peek(), carrier.Type, context: context), at);
+        => into.Place(carrier.Copy(context), at);
 
     /// <summary>This value, given by <paramref name="carrier"/>, spread into <paramref name="into"/> — itself, as
     /// one element. A list spreads its elements, however deep.</summary>
@@ -716,16 +677,18 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal T? Clr<T>() => (T?)Clr(typeof(T));
 
     /// <summary>
-    /// A value that arrived in a FORMAT (a <c>clr</c> carrier holding json/md/…) reads ITSELF into
-    /// the declared type through <paramref name="reader"/> — the same reader a <c>.pr</c> uses. The
-    /// value's kind owns the format→stream bridge; the type reads its own structure (so a nested
-    /// <c>goal.call</c> param rides <c>@schema:data</c> and dispatches). <paramref name="kind"/> is the
-    /// declared type's element kind (<c>list&lt;action&gt;</c> → <c>action</c>) so a list reader loops
-    /// the element's reader. Most items carry no format to bridge and decline (null → the caller's
-    /// <c>Clr</c> path).
+    /// This value read as another type, by that type's <paramref name="reader"/> — the same reader a <c>.pr</c>
+    /// uses: the value is read as tokens (a dict an object, a list an array, a leaf its token), so a dict
+    /// handed to a record's slot is the record its own reader makes. <paramref name="kind"/> is the declared
+    /// type's element kind (<c>list&lt;action&gt;</c> → <c>action</c>), so a list reader loops the element's
+    /// reader. A value that arrived in a format (a <c>clr</c> carrier holding json) bridges its format instead.
     /// </summary>
     internal virtual object? Read(global::app.type.reader.ITypeReader reader, string? kind,
-                                  global::app.actor.context.@this context) => null;
+                                  global::app.actor.context.@this context)
+    {
+        var tokens = new global::app.type.format.item.Reader(this, context);
+        return reader.Read(ref tokens, kind, new global::app.type.reader.ReadContext(context));
+    }
 
     /// <summary>
     /// The value's raw face for templates and CLR-facing probes (kind probes, ctor matching): a LEAF
@@ -782,14 +745,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual @this Narrow() => this;
 
     /// <summary>
-    /// Applies a declared <paramref name="kind"/> to a kindless leaf, answering the
-    /// type's own way (text re-mints with the kind, binary rebuilds). The default is a
-    /// no-op — a value whose kind doesn't apply (or that already carries one) returns
-    /// self. Owns the "how do I take a kind" knowledge on the leaf, not in a caller switch.
-    /// </summary>
-    public virtual @this Kinded(string? kind) => this;
-
-    /// <summary>
     /// The raw string form this leaf carries, if any (text's characters, a source's
     /// undecoded raw) — used to spot a Variable name or an unrendered %ref% template.
     /// Default null: the leaf has no raw string face.
@@ -799,7 +754,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>
     /// The raw byte form this value carries (binary's bytes, an image's loaded bytes,
     /// text's UTF-8 content), or null when the value has no byte face — a container
-    /// serializes through a format instead. Mirror of <see cref="RawText"/>.
+    /// serializes through a format instead. Mirror of <see cref="RawText"/>. Unlike <see cref="Plain"/>, a typed
+    /// value answers too (a text, an image): it is the value's byte face, not "the value is bytes".
     /// </summary>
     public virtual byte[]? RawBytes => null;
 
@@ -812,6 +768,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// scalar type opts in here instead of being listed inside Normalize.
     /// </summary>
     public virtual bool IsLeaf => false;
+
+    /// <summary>The plain bytes this value is — a file takes them as they are, whatever its name says. Null for a typed
+    /// value (a text, a read file, a structure): the file's format writes it. Unlike <see cref="RawBytes"/> (any value's
+    /// byte face), only a value that IS bytes, nothing typed, answers.</summary>
+    public virtual byte[]? Plain => null;
 
     /// <summary>
     /// True when this value is a REFERENCE to a named binding (a bare name-slot
@@ -846,14 +807,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual async System.Threading.Tasks.Task<global::app.data.@this> Pour(System.IO.Stream into, actor.context.@this context)
     {
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(into))
-            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, emitsSchema: false),
-                global::app.View.Out, context);
+            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, context));
         return context.Ok();
     }
 
     /// <summary>A fact about the thing this value is, read with <c>!</c> (<c>%config!path%</c>) — null: a plain value
     /// has none, its members are read with a dot. A reference answers its own (a file's path, size, kind).</summary>
-    internal virtual global::app.data.@this? Fact(string key, global::app.data.@this parent) => null;
+    internal virtual System.Threading.Tasks.ValueTask<global::app.data.@this?> Fact(string key, global::app.data.@this parent)
+        => default;
 
     /// <summary>What packing this value writes into <paramref name="into"/>, and what that holds — so unpacking gives
     /// it back: a value packs as its Data whole, <paramref name="self"/>, in plang's own format (held: <c>data</c>); a
@@ -861,18 +822,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal virtual async System.Threading.Tasks.Task<(global::app.data.@this result, string held, string? name)> Pack(
         global::app.data.@this self, System.IO.Stream into, actor.context.@this context)
         => (await context.App.type.list["wire"].kind["plang"]!.Encode(into, self, context, ct: context.CancellationToken), "data", null);
-
-    /// <summary>
-    /// Write this value into the format-neutral <see cref="global::app.type.format.IWriter"/>.
-    /// A value writes WHAT it is through the writer's primitives (String, Number, Bytes, …);
-    /// the writer — the formatter — decides HOW each primitive looks in its format.
-    /// Neither asks about the other: no <c>writer.Format</c> in a value, no value type in a writer.
-    /// Only leaves are asked (Normalize routes non-leaves through their own branches);
-    /// the default throws so a missing override is loud.
-    /// </summary>
-    public virtual void Write(global::app.type.format.IWriter writer)
-        => throw new System.NotSupportedException(
-            $"{GetType().Name} has no bare wire form — it is not a leaf value.");
 
     /// <summary>
     /// This value as a diagnostic shows it — an assertion message, a test report line, a debug dump. A leaf
@@ -888,89 +837,85 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                      {
                          Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                      }))
-            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Debug, emitsSchema: false),
-                global::app.View.Debug, context);
+            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Debug, context));
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 
     /// <summary>
-    /// The item writes ITSELF to the wire — one async pass that merges flatten
-    /// (the old Normalize) and render (Write), resolving lazily as it reaches each
-    /// node. The default: a leaf emits its bare wire form via <see cref="Write"/>; a structure writes its
-    /// face for the view through the reflection kind (its tagged members; a type that declares none is
-    /// refused on the wire and named in a dump). A structure with a flat form of its own says so by
-    /// writing itself (error, path, permission, …). Containers and references override: dict/list walk +
-    /// await children, variable resolves itself, clr reflects its host. No intermediate tree, no
-    /// pre-resolve walk; <c>await</c>s happen here, between the writer's synchronous buffer writes.
+    /// The item writes ITSELF into <paramref name="writer"/>: the writer hands it back its own write for the writer's
+    /// own class (a text writer the text look, a formal writer the formal look, any other the value's own write). A
+    /// value writing a member writes <c>member.Output(writer)</c>.
     /// </summary>
-    public virtual System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-    {
-        if (!IsLeaf) return new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
+    public System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer) => writer.Write(this);
 
     /// <summary>
-    /// Reflective Output for a STRUCTURAL item — writes its tagged property bag, the View selecting
-    /// the attribute set (<see cref="global::app.type.item.kind.reflection.Tagged"/>:
-    /// <c>Out→[Out]</c>, <c>Store→[Store]</c>, <c>Debug→all</c>). Each property value writes ITSELF:
-    /// an <see cref="@this"/> via its own <see cref="Output"/>, a raw C# scalar via the writer, a
-    /// sequence as an array. The general-object wire form; leaves and special shapes
-    /// (dict/list/clr/…) override <see cref="Output"/> directly. Replaces <c>NormalizeObject</c>.
+    /// The value's own write, in every format it has no look of its own for: what it is, through the writer's
+    /// primitives (String, Number, Bytes, …); the writer decides how each looks. Every value with a form of its own (a
+    /// leaf's one token, a structure's flat shape: error, path, permission, …) overrides this. The default is a
+    /// structure's face for the writer's view: the tagged members of its <see cref="Host"/>, each under its wire name
+    /// and nulls and empty lists left out, each member's value written as the plang value it is. A type of plang's own that declares no
+    /// face for the view (a context, a callstack) is the view's to answer: the wire and the store refuse it, a dump
+    /// names it. A foreign type can't declare, so it shows all its members. Resolved lazily as it reaches each node;
+    /// <c>await</c>s happen here, between the writer's synchronous buffer writes.
     /// </summary>
-    [System.Obsolete("Superseded by the reflection (*) kind's Output — do not add new callers.")]
-    protected async System.Threading.Tasks.ValueTask OutputTagged(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal virtual async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
+        var host = Host;
+        var type = host.GetType();
+        if (type.Assembly == typeof(@this).Assembly && !writer.View.Declares(type))
+        {
+            writer.View.Undeclared(host, writer);
+            return;
+        }
         writer.BeginObject();
-        foreach (var entry in global::app.type.item.kind.reflection.Tagged.PropertiesFor(GetType(), mode))
+        foreach (var entry in global::app.type.item.kind.reflection.Tagged.PropertiesFor(type, writer.View))
         {
             if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
-            var value = entry.Property.GetValue(this);
-            if (value == null) continue;   // nulls omitted (WhenWritingNull)
+            object? value;
+            try { value = entry.Property.GetValue(host); }
+            catch (System.Exception ex)
+            {
+                await writer.View.Unread(entry, ex.InnerException ?? ex, writer);
+                continue;
+            }
+            if (value == null) continue;
+            // a member holding a Data writes it whole; any other is the plang value it is
+            if (value is global::app.data.@this data)
+            {
+                writer.Name(entry.WireName);
+                await data.Output(writer);
+                continue;
+            }
+            var member = Create(value, writer.Context);
+            // an empty list says nothing, as a null says nothing
+            if (member.IsSequence && !member.IsTruthy()) continue;
             writer.Name(entry.WireName);
-            await WriteReflected(writer, value, mode, context);
+            await member.Output(writer);
         }
         writer.EndObject();
     }
 
-    // Writes a value reflected off a property: a plang value writes itself (Output), a sequence
-    // becomes an array of self-writes, a raw C# scalar goes through the writer. This is the
-    // reflection→wire boundary — C# primitives can't write themselves, so the writer renders them.
-    private static async System.Threading.Tasks.ValueTask WriteReflected(
-        global::app.type.format.IWriter writer, object value, global::app.View mode,
-        global::app.actor.context.@this? context)
-    {
-        switch (value)
-        {
-            // A plang value writes ITSELF.
-            case @this item: await item.Output(writer, mode, context); break;
-            // A Data-typed property (action.parameters) self-writes too — async, so it routes here,
-            // NOT through writer.Value (sync, peels to the OLD Peek().Write path).
-            case global::app.data.@this d: await d.Output(writer, mode, context); break;
-            // BRIDGE: a raw C# collection (goal.steps / action.modifiers / action.parameters, until
-            // those become item.@this lists) writes as an array of self-writes. Deleted once they are items.
-            case System.Collections.IEnumerable seq when value is not (string or byte[]):
-                writer.BeginArray(-1);
-                foreach (var el in seq) if (el != null) await WriteReflected(writer, el, mode, context);
-                writer.EndArray();
-                break;
-            // A domain HOST riding an [Out] property (test.Goal) — not writer vocabulary. This is the
-            // reflection→wire boundary, so it lifts the host through the door; clr(host).Output renders
-            // its own tagged face ([Out]/[Sensitive] discipline intact). Writer-vocabulary scalars
-            // (string/int/date/…) keep the writer's rendering.
-            default:
-                if (context != null && value is not System.IConvertible
-                    && context.App.type.list[value.GetType()].ClrType == typeof(global::app.type.clr.@this))
-                {
-                    await global::app.type.item.@this.Create(value, context).Output(writer, mode, context);
-                    break;
-                }
-                writer.Value(value); break;
-        }
-    }
+    /// <summary>The object whose tagged members the general write shows: the value itself, or the C# object a carrier
+    /// holds.</summary>
+    private protected virtual object Host => this;
 
+    /// <summary>How this value looks in text, where it looks different there (a type is its word); by default its own
+    /// write.</summary>
+    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
+        => Write((global::app.type.format.IWriter)writer);
+
+    /// <summary>How this value looks in formal, where it looks different there (an action is its call); by default its
+    /// own write.</summary>
+    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.goal.step.action.formal.Writer writer)
+        => Write((global::app.type.format.IWriter)writer);
+
+    /// <summary>How this value looks in json, where it looks different there (characters that already are json are
+    /// pasted); by default its own write.</summary>
+    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.item.kind.json.Writer writer)
+        => Write((global::app.type.format.IWriter)writer);
+
+    /// <summary>How this value looks in plang's own format, where it looks different there (characters that already
+    /// are json are pasted); by default its own write.</summary>
+    protected internal virtual System.Threading.Tasks.ValueTask Write(global::app.type.item.wire.kind.plang.Writer writer)
+        => Write((global::app.type.format.IWriter)writer);
 }

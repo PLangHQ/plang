@@ -12,6 +12,9 @@ public static class Default
         => raw is string s && !string.IsNullOrEmpty(s)
             ? global::app.module.crypto.type.hash.@this.FromBase64(s,
                 string.IsNullOrEmpty(kind) ? null
-                    : global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse(kind).Value)
+                    // the hash type names its own kind
+                    : ctx.Context.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind[kind]
+                        as global::app.module.crypto.type.hash.kind.@this
+                      ?? throw new System.FormatException($"'{kind}' is no kind of hash"))
             : null;
 }

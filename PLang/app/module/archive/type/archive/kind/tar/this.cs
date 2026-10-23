@@ -6,9 +6,9 @@ namespace app.module.archive.type.archive.kind.tar;
 /// kind (<c>tar.gz</c>).</summary>
 public class @this : bundle.@this
 {
-    public @this() : this("tar") { }
+    public @this(global::app.type.@this owner) : this("tar", owner) { }
 
-    protected @this(string name) : base(name) { }
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     public override string? Suffix => ".tar";
 
@@ -37,8 +37,8 @@ public class @this : bundle.@this
     protected override async Task Write(System.IO.Stream into, IAsyncEnumerable<bundle.entry.@this> entries,
         global::app.module.archive.setting.Level level, CancellationToken ct)
     {
-        var written = Writer(into, level);
-        await using (var writer = new TarWriter(written, TarEntryFormat.Pax, leaveOpen: true))
+        var stream = Writer(into, level);
+        await using (var writer = new TarWriter(stream, TarEntryFormat.Pax, leaveOpen: true))
             await foreach (var entry in entries.WithCancellation(ct))
             {
                 var tarred = new PaxTarEntry(entry.Kind switch
@@ -51,6 +51,6 @@ public class @this : bundle.@this
                 if (entry.Kind == bundle.entry.Kind.Link) tarred.LinkName = entry.Target ?? "";
                 await writer.WriteEntryAsync(tarred, ct);
             }
-        if (!ReferenceEquals(written, into)) await written.DisposeAsync();
+        if (!ReferenceEquals(stream, into)) await stream.DisposeAsync();
     }
 }

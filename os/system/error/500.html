@@ -22,11 +22,10 @@ pre { background: #f3f4f6; padding: 12px; border-radius: 4px; overflow-x: auto; 
     </ul>
   </div>
   {{ end }}
-  {{ if error.Exception }}
+  {{ if error.Trace }}
   <div class="detail">
     <h3>Exception</h3>
-    <pre>{{ error.Exception.Message }}
-{{ error.Exception.StackTrace }}</pre>
+    <pre>{{ error.Trace }}</pre>
   </div>
   {{ end }}
 </div>

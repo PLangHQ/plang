@@ -1,13 +1,16 @@
 namespace app.test.setting;
 
 /// <summary>
-/// How a test run runs — <c>%!app.test.setting%</c>; <c>--test={…}</c> is this run's values for it. Bounds are
+/// How a test run runs — <c>%!app.test.setting%</c>; <c>--test.setting.…</c> is this run's values for it (and alone switches test on). Bounds are
 /// sentinels, not errors: a run (<c>app.test.list.Start</c>) reads a timeout ≤ 0 as none and a parallelism ≤ 0 as one per
 /// processor.
 /// </summary>
 public sealed class @this : global::app.type.item.setting.@this
 {
-    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
+    /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
     /// <summary>The actor the run's session opens on — the user, unless it says system.</summary>
@@ -24,10 +27,10 @@ public sealed class @this : global::app.type.item.setting.@this
     [Out, Store] public global::app.type.item.choice.@this<global::app.test.format.@this> Format { get; set; } = new global::app.test.format.@this("json");
 
     /// <summary>The tags a test must carry one of to run (empty = every test). Case-insensitive.</summary>
-    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Include { get; set; } = new();
+    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Include { get; set; }
 
     /// <summary>The tags that leave a test out (empty = none). Applied after include — exclude wins.</summary>
-    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Exclude { get; set; } = new();
+    [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Exclude { get; set; }
 
     /// <summary>Why these options leave <paramref name="test"/> out — a tag in <see cref="Exclude"/> (exclude
     /// wins), or no tag in a non-empty <see cref="Include"/>. Null when the run takes it. Tags compare by the
@@ -35,9 +38,10 @@ public sealed class @this : global::app.type.item.setting.@this
     public global::app.type.item.text.@this? Exclusion(global::app.test.@this test, global::app.actor.context.@this context)
     {
         var tags = test.Tags.Items().ToHashSet();
+        var type = context.App.type.list[typeof(global::app.type.item.tag.@this)];
         // Each filter row is taken out as a value (a list set from the CLI holds its raw rows).
         bool Carries(global::app.type.item.list.@this<global::app.type.item.text.@this> filter)
-            => filter.Items(context).Any(row => global::app.type.item.tag.@this.Create(row.Peek()) is { } tag && tags.Contains(tag));
+            => filter.Items(context).Any(row => global::app.type.item.tag.@this.Create(row.Peek(), type) is { } tag && tags.Contains(tag));
 
         if (Exclude.CountRaw > 0 && Carries(Exclude)) return "excluded by tag";
         if (Include.CountRaw > 0 && !Carries(Include)) return "no include match";

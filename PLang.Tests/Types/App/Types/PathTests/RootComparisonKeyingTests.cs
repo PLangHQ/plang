@@ -23,8 +23,8 @@ public class RootComparisonKeyingTests
     {
         if (System.OperatingSystem.IsWindows()) return; // skip on Windows
         var app = NewApp(out _);
-        var a = new FilePath("/tmp/foo/bar.txt");
-        var b = new FilePath("/tmp/FOO/bar.txt");
+        var a = app.actor.list.User.Context.File("/tmp/foo/bar.txt");
+        var b = app.actor.list.User.Context.File("/tmp/FOO/bar.txt");
         await Assert.That(a.Equals(b)).IsFalse();
     }
 
@@ -32,8 +32,8 @@ public class RootComparisonKeyingTests
     {
         if (!System.OperatingSystem.IsWindows()) return; // skip on Linux
         var app = NewApp(out _);
-        var a = new FilePath(@"C:\Foo\bar.txt");
-        var b = new FilePath(@"C:\foo\BAR.txt");
+        var a = app.actor.list.User.Context.File(@"C:\Foo\bar.txt");
+        var b = app.actor.list.User.Context.File(@"C:\foo\BAR.txt");
         await Assert.That(a.Equals(b)).IsTrue();
     }
 

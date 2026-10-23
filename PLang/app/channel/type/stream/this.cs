@@ -6,10 +6,10 @@ namespace app.channel.type.stream;
 /// Concrete Stream-backed channel. Wraps a <see cref="System.IO.Stream"/> for I/O.
 /// Extends <see cref="Session.@this"/> — Ask blocks reading from the stream until input arrives.
 ///
-/// Console streams (stdin/stdout/stderr) and arbitrary handed-in streams (HTTP response bodies,
-/// memory streams in tests) all use this concrete.
+/// Arbitrary handed-in streams (HTTP response bodies, a program's pipes, memory streams in tests) use this concrete;
+/// the console's standard streams are its <see cref="console.@this"/>.
 /// </summary>
-public sealed class @this : global::app.channel.type.session.@this
+public class @this : global::app.channel.type.session.@this
 {
     private readonly bool _ownsStream;
 
@@ -54,14 +54,6 @@ public sealed class @this : global::app.channel.type.session.@this
     /// newline (<c>printf out</c>). Unset, it was never a message and is dropped (a pipe's half-written message).</summary>
     [global::app.Debug] public bool KeepsLast { get; init; }
 
-    /// <summary>It writes and reads in the format in play for the writer (<c>%!app.type.format%</c>), not a format of
-    /// its own — the console: text for a person at a terminal, plang's own for a program that runs this plang.</summary>
-    [global::app.Debug] public bool InPlay { get; init; }
-
-    // the format this channel writes and reads in, for the context at hand
-    private global::app.type.kind.@this FormatFor(global::app.actor.context.@this context)
-        => InPlay ? context.App.type.FormatOf(context) : context.App.type.list.Mime(Mime.ToString());
-
     public override bool CanRead => IsOpen && Direction.Value != ChannelDirection.Output && Stream.CanRead;
     public override bool CanWrite => IsOpen && Direction.Value != ChannelDirection.Input && Stream.CanWrite;
 
@@ -80,16 +72,16 @@ public sealed class @this : global::app.channel.type.session.@this
             // last moment — the format then decides how it looks.
             var opened = await data.Peek().Open(context);
             if (opened != null) return context.Error(opened);
-            var format = FormatFor(context);
+            var format = await Format(context);
             // One message leaves whole, in order: its bytes and its frame, never interleaved with another writer's
             // (tasks writing side by side). Only the leaving is held — the value was opened above.
             await _writing.WaitAsync(ct);
             try
             {
                 var result = await format.Encode(Stream, data, context, encoding: ResolveEncoding(), ct: ct);
-                // A framed channel ends each text message with its end — and, following the format in play, each
-                // whole Data too: one per line, for the program reading it. Binary content is not framed.
-                if (result.Success && Framed && (format.IsText || InPlay))
+                // A framed channel ends each message its format writes in lines with its end — text, and plang's own
+                // (one whole Data per line, for the program reading it). Bytes are not framed.
+                if (result.Success && Framed && format.IsText)
                 {
                     await Stream.WriteAsync(ResolveEncoding().GetBytes(End), ct);
                     await Stream.FlushAsync(ct);
@@ -113,7 +105,7 @@ public sealed class @this : global::app.channel.type.session.@this
     {
         if (!CanRead)
             return global::app.data.@this.FromError(new ServiceError(
-                $"Channel '{Name}' does not support reading", "ChannelWriteOnly", 400));
+                $"Channel '{Name}' does not support reading", "ChannelWriteOnly", 400), Context!);
 
         try
         {
@@ -124,18 +116,16 @@ public sealed class @this : global::app.channel.type.session.@this
             if (Framed)
             {
                 if (await Message(ct) is not { } message)
-                    return global::app.data.@this.FromError(new ServiceError($"Channel '{Name}' has ended", "ChannelEnded", 410));
+                    return global::app.data.@this.FromError(new ServiceError($"Channel '{Name}' has ended", "ChannelEnded", 410), Context!);
                 bytes = message;
             }
             else bytes = await ReadAllBytesAsync(ct);
-            if (InPlay && Context is { } context)
-                return await FormatFor(context).Decode(bytes, context, Name, ct: ct);
             return await Read(bytes, ct);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             return global::app.data.@this.FromError(new ServiceError(
-                $"Failed to read from channel '{Name}': {ex.Message}", "ReadError") { Exception = ex });
+                $"Failed to read from channel '{Name}': {ex.Message}", "ReadError") { Exception = ex }, Context!);
         }
     }
 
@@ -153,14 +143,13 @@ public sealed class @this : global::app.channel.type.session.@this
         // input-only). Falls back to writing via self only when self is
         // bidirectional and no output channel is registered (test fixtures).
         var question = action.Question == null ? null : await action.Question.Value();
-        // In plang's own format (the format in play is not text) the ask goes out whole — a pending Ask with its
-        // question — and the answer comes back as Data: a program running this plang sees an ask, not a line.
-        var format = FormatFor(action.Context);
-        var whole = InPlay && !format.IsText;
+        // The ask goes out as itself — a pending Ask with its question — and the format shows it: in text its question,
+        // a line a person reads; in plang's own the whole Ask, which a program running this plang reads as an ask.
         if (question?.IsTruthy() == true)
         {
             var output = action.Context?.Actor?.Channel.Get(global::app.channel.list.@this.Output);
-            global::app.data.@this asked = whole ? action.Context!.Ok(new module.output.Ask { Question = question }) : action.Context!.Ok(question);
+            global::app.data.@this asked =
+                action.Context!.Ok(new module.output.Ask(action.Context.App.type.list[typeof(module.output.Ask)]) { Question = question });
             if (output != null && output.CanWrite)
             {
                 var writeRes = await output.WriteAsync(asked, ct);
@@ -188,10 +177,9 @@ public sealed class @this : global::app.channel.type.session.@this
         if (line == null)
             return action.Context.Error(new global::app.error.NoAnswer(
                 $"Channel '{Name}' has no interactive answerer (stream EOF)"));
-        // in plang's own format the answer is Data, read in that format; a line typed is text — the user's data itself
-        if (whole)
-            return await format.Decode(ResolveEncoding().GetBytes(line), action.Context, Name, ct: ct);
-        return action.Context.Ok(new global::app.type.item.text.@this(line));
+        // the answer is read as any message on this channel is, in its format: a line typed is text — the user's data
+        // itself; in plang's own it is the Data the program answered
+        return await Read(ResolveEncoding().GetBytes(line), ct);
     }
 
     // what was read past the last message's end: the start of the next one
@@ -211,10 +199,10 @@ public sealed class @this : global::app.channel.type.session.@this
             var at = _ahead.AsSpan(searched, _held - searched).IndexOf(end);
             if (at >= 0)
             {
-                var found = searched + at;
-                var length = cr != null && _ahead.AsSpan(0, found).EndsWith(cr) ? found - cr.Length : found;
+                var index = searched + at;
+                var length = cr != null && _ahead.AsSpan(0, index).EndsWith(cr) ? index - cr.Length : index;
                 var message = _ahead.AsSpan(0, length).ToArray();
-                var rest = found + end.Length;
+                var rest = index + end.Length;
                 _ahead.AsSpan(rest, _held - rest).CopyTo(_ahead);
                 _held -= rest;
                 return message;

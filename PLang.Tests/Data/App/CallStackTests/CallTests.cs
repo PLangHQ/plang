@@ -11,18 +11,18 @@ public class CallTests : System.IAsyncDisposable
     [Test]
     public async Task Call_HasUniqueId_PerInstance()
     {
-        var stack = new Calls(TestCalls.Settings());
-        await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
-        await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
+        await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
+        await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"), await stack.Setting());
         await Assert.That(a.Id).IsNotEqualTo(b.Id);
     }
 
     [Test]
     public async Task Call_Action_IsTheActionPassedToPush()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
         var action = MakeAction(app.actor.list.User.Context, "X");
-        await using var call = stack.Push(action);
+        await using var call = stack.Push(action, await stack.Setting());
         await Assert.That(ReferenceEquals(call.Action, action)).IsTrue();
         await Assert.That(ReferenceEquals(call.Step, action.Step)).IsTrue();
     }
@@ -30,43 +30,43 @@ public class CallTests : System.IAsyncDisposable
     [Test]
     public async Task Call_Caller_IsAsyncLocalCurrentAtPushTime()
     {
-        var stack = new Calls(TestCalls.Settings());
-        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
-        await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "Inner"));
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
+        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"), await stack.Setting());
+        await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "Inner"), await stack.Setting());
         await Assert.That(inner.Caller).IsEqualTo(outer);
     }
 
     [Test]
     public async Task Call_Errors_StartsEmpty()
     {
-        var stack = new Calls(TestCalls.Settings());
-        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
         await Assert.That(call.Errors.Count).IsEqualTo(0);
     }
 
     [Test]
     public async Task Call_Handled_DefaultsToFalse()
     {
-        var stack = new Calls(TestCalls.Settings());
-        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
         await Assert.That(call.Handled.Value).IsFalse();
     }
 
     [Test]
     public async Task Call_Children_AlwaysAllocated_NotNull()
     {
-        var stack = new Calls(TestCalls.Settings());
-        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
         await Assert.That(call.Children).IsNotNull();
     }
 
     [Test]
     public async Task Call_StartedAt_PopulatedWhenTimingFlagOn()
     {
-        var on = new Calls(TestCalls.Settings(new Dictionary<string, object?> { ["timing"] = true }));
-        var off = new Calls(TestCalls.Settings());
-        await using var withTiming = on.Push(MakeAction(app.actor.list.User.Context, "A"));
-        await using var noTiming = off.Push(MakeAction(app.actor.list.User.Context, "A"));
+        var on = TestCalls.Stack(app, TestCalls.Settings(new Dictionary<string, object?> { ["timing"] = true }));
+        var off = TestCalls.Stack(app, TestCalls.Settings());
+        await using var withTiming = on.Push(MakeAction(app.actor.list.User.Context, "A"), await on.Setting());
+        await using var noTiming = off.Push(MakeAction(app.actor.list.User.Context, "A"), await off.Setting());
         await Assert.That(withTiming.StartedAt).IsNotNull();
         await Assert.That(noTiming.StartedAt).IsNull();
     }
@@ -75,20 +75,20 @@ public class CallTests : System.IAsyncDisposable
     public async Task Call_Tags_StartsEmpty()
     {
         // Tags is always allocated (a lazy alloc would race the writer). No tag written → empty.
-        var stack = new Calls(TestCalls.Settings());
-        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"), await stack.Setting());
         await Assert.That(call.Tags.IsTruthy()).IsFalse();
     }
 
     [Test]
     public async Task Call_DisposeAsync_PopsItselfFromStack()
     {
-        var stack = new Calls(TestCalls.Settings());
+        var stack = TestCalls.Stack(app, TestCalls.Settings());
         var outerAction = MakeAction(app.actor.list.User.Context, "Outer");
-        await using (var outer = stack.Push(outerAction))
+        await using (var outer = stack.Push(outerAction, await stack.Setting()))
         {
             var innerAction = MakeAction(app.actor.list.User.Context, "Inner");
-            await using (var inner = stack.Push(innerAction))
+            await using (var inner = stack.Push(innerAction, await stack.Setting()))
             {
                 await Assert.That(stack.Current).IsEqualTo(inner);
             }

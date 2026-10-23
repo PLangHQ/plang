@@ -13,8 +13,8 @@ public partial class Write : IContext, IChannel
     public async Task<data.@this> Start()
         // The value writes ITSELF through the one door: Channel.WriteAsync → the serializer →
         // data.Output → its own render (a template fills its %refs% at View.Out, resolving every
-        // ref including %!infra% — an authored output value is trusted). No pre-bake to a string
-        // (ruling 7): the template reaches the channel serializer AS its value. The lone infra-skip
+        // ref including %!infra% — an authored output value is trusted). No pre-bake to a string:
+        // the template reaches the channel serializer AS its value. The lone infra-skip
         // stays at file.read, where UNTRUSTED disk content is interpolated.
         => await Channel.WriteAsync(Data ?? Context.Ok());
 }

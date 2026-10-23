@@ -11,7 +11,7 @@ public sealed partial class @this
     {
         if (raw == null) return null;
         var language = DetectLanguage(raw);
-        return new @this(raw, language);
+        return new @this(raw, language, context.App.type.list[typeof(@this)]);
     }
 
     public static string DetectLanguage(string source)

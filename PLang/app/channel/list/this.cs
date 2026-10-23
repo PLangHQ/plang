@@ -9,8 +9,8 @@ namespace app.channel.list;
 /// user-named channel). Choreography (writes, reads, serializer routing) lives on <see cref="channel.@this"/>.
 ///
 /// Standard role-channels ("output", "error", "input") are NOT auto-registered here —
-/// the entry point (PlangConsole, future PlangWeb) registers them via navigation
-/// (Stage 6). App.Run enforces the invariant that every actor that performs I/O has
+/// the entry point (PlangConsole) registers them via navigation.
+/// App.Run enforces the invariant that every actor that performs I/O has
 /// all three before user code runs.
 /// </summary>
 public sealed class @this : global::app.type.item.@this, IAsyncDisposable
@@ -47,7 +47,7 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     public static readonly string[] Defaults = [Output, Error, Input];
 
     /// <summary>The channels of <paramref name="actor"/> — or of a Service, which is no actor (null).</summary>
-    public @this(app.@this app, global::app.actor.@this? actor)
+    public @this(app.@this app, global::app.actor.@this? actor) : base(app.type.list[typeof(@this)])
     {
         _app = app;
         Actor = actor;
@@ -135,8 +135,6 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     }
 
     public bool Contains(string name) => _channels.ContainsKey(name);
-
-    // --- Stage 3 accessor surface ---
 
     /// <summary>Index by name. Throws on miss — index-miss is a hard error.</summary>
     public channel.@this this[string name]

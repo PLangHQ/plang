@@ -31,7 +31,7 @@ public class ChannelAccessorTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var channel = app.actor.list.User.Channel["output"];
-        var result = await channel.WriteAsync(new global::app.data.@this<global::app.type.item.text.@this>("", "hello"));
+        var result = await channel.WriteAsync(new global::app.data.@this<global::app.type.item.text.@this>("", "hello", context: app.actor.list.User.Context));
         await result.IsSuccess();
     }
 

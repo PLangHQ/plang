@@ -8,6 +8,12 @@ proceed.
 This doc covers the **shape** of the system. For the OBP rationale behind
 the `Verb` variant design, see `good_to_know.md` § "OBP Variant Design".
 
+## What the prompts guard
+
+A permission prompt guards what a goal does **as the User actor**: the reads, writes and deletes outside the root that the User would otherwise make unasked. It does not guard against the app's own code. An app can choose to run a goal as the System actor (`call goal X` naming it), and it can wire its own channels, an input that answers the asks included (consent is asked of the actor's input channel, so replacing that channel redirects every ask). So running an app means trusting its code; the prompts protect the user from what the User actor would do unasked, not from the app itself.
+
+Consent comes from the actor's input channel only: never from a variable (`%!ask.answer%` is the stateless-resume sentinel and answers nothing here), and not from the `on.ask` event, which fires but does not answer.
+
 ## Concepts
 
 ```
@@ -23,7 +29,7 @@ app.filesystem.permission/
 app.actor.permission/
 └── this.cs                     -- per-actor Find/Add/Revoke
 
-app.filesystem/path.Authorize.cs -- the gate (Authorize, BuildRequest, SignAndStore)
+app.type.item.path/this.Authorize.cs -- the gate (Authorize, Standing, Request, Keep)
 ```
 
 **PermissionRecord** — `(Actor, Path, Verb, Match)`. Identity is the
@@ -42,13 +48,18 @@ by per-sub-option boolean ≥. Defaulted to full capability so a hand-written
 `file.exists`, `file.list`) calls it before any I/O.
 
 ```
-1. Resolve actor from Context (must exist; otherwise InvalidOperationException).
-2. IsInRoot(path)? → Ok()                       (auto-grant for own root + OsDirectory)
-3. actor.Permission.Find(path, verb)? → Ok()    (existing grant covers)
-4. Loop:
-     output.ask "Allow {actor} to {verb} {abs}? (y/n/a)"
-     y → SignAndStore(persist:false)            → in-memory grant, no signature
-     a → SignAndStore(persist:true)             → sqlite grant, Ed25519-signed
+1. The actor is the caller's (context.Actor).
+2. Place: where the verb acts (see "Where a verb is judged"). A place the gate
+   can't tell (its links loop, or run past 40) → LinkLoop (403), for every door.
+3. Standing(verb) on the place:
+     in the root                      → Ok()   (app.filesystem.root, minus the os folder and the stores' folder)
+     actor.Permission.Find(place, verb) → Ok()  (a grant it holds covers)
+     in the stores' folder, no grant  → PermissionDenied, nobody is asked
+4. named && asked by os → Ok(), nothing stored  (a step of a goal that ships with plang, naming the path itself)
+5. Ask the actor's input:
+     "Allow {actor} to {verb} {abs}? (y/n/a)"
+     y → keep the grant on the place, in memory for the run
+     a → keep it persisted: signed as it crosses into the settings' store
      n → Fail(PermissionDenied)
      other → re-prompt with "Invalid answer '{x}'." prefix
 ```
@@ -67,16 +78,38 @@ as **two grant homes**:
 
 ## In-root short-circuit
 
-`IsInRoot()` auto-grants any path under the actor's `RootDirectory` **or**
-under `OsDirectory`. The OsDirectory exemption covers system-built-in
-goals (test, build) that live outside the actor's root — those are
-runtime-owned files, not user content.
+`IsInRoot()` auto-grants any place under `app.filesystem.root` (`%!app.filesystem.root%`, the app's folder, what `/` is) **except** two folders. The os folder (`app.filesystem.os`, `%!app.filesystem.os%`, what ships with plang: the system goals, the type and module teaching) is outside it: what an actor may do there is its standing grants, so every actor reads and runs, and only the system writes. The stores' folder is outside it too (below). A goal under the os folder that names a path itself is trusted by its origin (`named`); a path it was handed is asked as any other.
 
-The case comparison is `RootComparison` (OS-aware: `OrdinalIgnoreCase` on
-Windows/Mac, `Ordinal` on Linux). **Carry-over (auditor F-C):** two call
-sites still use `OrdinalIgnoreCase` directly (`Path.cs:125,127`,
-`PLangFileSystem.cs:254`) where `RootComparison` belongs. Non-blocking;
-tracked.
+### The stores' folder — `.data/`
+
+`<root>/.data/` holds the app's stores and each identity's key. It is the system's: the system reaches it through a standing grant, and any other actor holding no grant is refused, never asked. A move never carries a folder that holds its place, whether the stores are there yet or not.
+
+plang makes `.data/` on an app's first run. An app folder that arrives with one is used as it is, its identity and its settings included.
+
+The stores' folder is recognised case-blind, as a case-blind disk opens it (`.DATA` is `.data` there).
+
+## Where a verb is judged
+
+The gate judges a verb where the OS acts for it. The door that does the act names the place; the gate's inner `Authorize(verb, place, …)` takes it, and the question, the standing check and a yes's grant are all on that place.
+
+| Act | Place | Reads as |
+|---|---|---|
+| open: read, write, execute, list, stat | `Location` | where the OS lands for the path: each link followed, the last one too |
+| delete; a move's two ends | `Spot` | the entry itself: its folder's landing plus its own name, never followed — a link is removed or replaced, never what it leads to |
+| a copy's two ends | `Location` | the links are followed (a copy opens its source and writes through a link at its destination) |
+
+The rest follows from that:
+
+- **A move's source is asked read and delete.** A rename takes the name away (delete), and what the folder holds is reachable where it lands (read). A yes keeps one grant on that place, holding both verbs.
+- **A grant is on the place asked about, for the verbs asked there.** A delete grant on a link never answers a read or write of its target. One grant per place: a place's grant replaces the one before on it.
+- **A trailing separator names no other place.** `dl/` is the entry `dl`; the string judged is the string handed to the OS (a root keeps its separator).
+- **Deleting a folder link removes the link alone.** It never recurses into the target.
+- **A file is a tree of one.** A file copied or moved into an existing folder is judged as that one entry under the folder's landing, by the same `Refusal` a folder's tree gets, before anything is touched. A move's destination that is anything else (a file, a link, nothing) is the entry itself, replaced.
+- **A link in a tree is an entry of its own.** A copy re-creates it as written, a delete removes it, a move renames it; nothing reads through it. A recursive delete asks the gate for every entry first, then removes each alone, children first.
+- **Ask once, check all, then do.** A copy, a move or a recursive delete asks the user once at the top (the answer covers all), and asks the gate about every entry it touches, both ends, before anything is touched. An entry the gate refuses refuses the whole verb, so there is no half-copy. `list` leaves out the entries the gate refuses.
+- **The anchors are landed once.** `app.filesystem.root`, `.os` and the stores' folder are paths, each landed once and kept for the app; the one containment question is the path's own `IsUnder`.
+- **An unpacked link points inside its folder.** An archive unpack refuses a link whose target, read as the OS reads it, leaves the folder it was made in.
+- **A place that can't be told is refused.** Links that loop or run past 40 answer `LinkLoop` (403) at every door.
 
 ## Find — two-pass lookup
 
@@ -153,7 +186,8 @@ They are tracked in `coder/v6/result.md`.
 
 | What | Where |
 |---|---|
-| Authorize gate (the entry point) | `PLang/app/filesystem/path.Authorize.cs` |
+| Authorize gate (the entry point) | `PLang/app/type/item/path/this.Authorize.cs` |
+| Where a file verb acts (`Location`, `Spot`, the transfer walk) | `PLang/app/type/item/path/file/this.Operations.cs` |
 | PermissionRecord + Match | `PLang/app/filesystem/permission/this.cs` |
 | Verb (Read/Write/Delete) | `PLang/app/filesystem/permission/verb/` |
 | Per-actor Find/Add/Revoke | `PLang/app/actor/permission/this.cs` |

@@ -17,10 +17,10 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// canonicalized via <see cref="Canonicalize"/> before being stored, so
     /// every code path that produces a FilePath (Resolve, derivation verbs,
     /// scheme registry, implicit <c>string→path</c>) gets the canonical
-    /// invariant for free.
+    /// invariant for free. Born holding <paramref name="type"/>, the app's <c>{path, file}</c>.
     /// </summary>
-    public @this(string absolutePath)
-        : base(Canonicalize(absolutePath))
+    public @this(string absolutePath, global::app.type.@this type)
+        : base(Canonicalize(absolutePath), type)
     {
     }
 
@@ -38,16 +38,44 @@ public sealed partial class @this : global::app.type.item.path.@this
         // The "//x" prefix is an OS-rooted out-of-root form preserved
         // verbatim for idempotency under repeat normalization. GetFullPath
         // would collapse "//tmp/x" to "/tmp/x" and break that.
-        if (absolutePath.StartsWith("//")) return absolutePath;
+        if (absolutePath.StartsWith("//")) return Trimmed(absolutePath);
         // GetFullPath throws on inputs that can't be a real OS path
         // (ArgumentException, PathTooLongException, NotSupportedException,
         // SecurityException). Let those escape — the invariant above can't
         // hold for a string that isn't a path, and a silent fallback would
         // store a value whose textual form lies about what it points to.
-        return PathHelper.GetFullPath(absolutePath);
+        return Trimmed(PathHelper.GetFullPath(absolutePath));
+    }
+
+    // A trailing separator names no other place ("dl/" is the entry "dl"), and the OS reads one after a link as
+    // through it: dropped, so the string the gate judges is the string the OS is handed. A root keeps its own.
+    private static string Trimmed(string absolutePath)
+    {
+        var trimmed = absolutePath.TrimEnd(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar);
+        return trimmed.Length <= PathHelper.GetPathRoot(absolutePath).Length ? absolutePath : trimmed;
     }
 
     [Out, Store] public override string Scheme => "file";
+
+    // Where the OS lands for this file: each link on the way followed (the OS-rooted //x form read as /x, its ..
+    // resolved), each part as the OS holds its name (an 8.3 short part long). Links that loop or run past 40 land
+    // nowhere the gate can tell: null, never the path as written (an OS that follows more links may land elsewhere).
+    internal override global::app.type.item.path.@this? Location(global::app.type.item.path.file.filesystem.@this filesystem)
+        => Landing(filesystem, last: true) is { } landing ? filesystem.Long(landing) : null;
+
+    // The entry an unlink or a rename acts on: where the OS lands for its folder, and its own name as written — a link
+    // there is the entry, never followed. Null when its folder's links loop or run past 40.
+    internal override global::app.type.item.path.@this? Spot(global::app.type.item.path.file.filesystem.@this filesystem)
+        => Landing(filesystem, last: false) is { } entry ? filesystem.Long(entry) : null;
+
+    // A change under the os folder (write, delete) changes what ships with plang — and a goal there runs programs
+    // without asking — so the question says so; it asks, it doesn't refuse.
+    protected override string Question(global::app.type.item.permission.Verb verb, global::app.type.item.path.@this place,
+        actor.context.@this context)
+        => verb is global::app.type.item.permission.Verb.write or global::app.type.item.permission.Verb.delete
+           && place.IsUnder(context.Filesystem.os).Value
+            ? $"Allow {context.Actor.Name} to {verb} {Naming(place)}? (files under /system/ ship with plang; a goal there runs programs without asking) (y/n/a)"
+            : base.Question(verb, place, context);
 
     /// <summary>How big the file at this path is, as its asker may read it — through the gate; a size, written in the
     /// asker's standard; 0 when nothing is there.</summary>
@@ -55,7 +83,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     {
         var stat = await Stat(context);
         if (!stat.Success || stat.Exits) return data.@this<global::app.type.item.size.@this>.From(stat);
-        return context.Ok((await stat.Value())?.Size ?? new global::app.type.item.size.@this(0, context));
+        return context.Ok((await stat.Value())?.Size ?? global::app.type.item.size.@this.Create(0, context));
     }
 
     /// <summary>
@@ -72,6 +100,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         if (global::app.type.item.path.scheme.@this.ParseScheme(rawPath).Equals("file", StringComparison.OrdinalIgnoreCase)
             && Uri.TryCreate(rawPath, UriKind.Absolute, out var url) && url.IsFile)
             return new @this(Canonicalize(url.LocalPath), context);
+        var type = context.App.type.list[new global::app.type.@this("path", "file"), context];
 
         var resolved = rawPath;
 
@@ -85,7 +114,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         // a location the developer typed is shown as typed.
         var isOsLocation = PathHelper.IsPathRooted(rawPath)
             && string.Equals(Canonicalize(rawPath), absolute, RootComparison);
-        return isOsLocation ? new @this(absolute, context) : new @this(absolute) { Raw = rawPath };
+        return isOsLocation ? new @this(absolute, context) : new @this(absolute, type) { Raw = rawPath };
     }
 
     /// <summary>This file written from the root of the asker's app: <c>/data/a.json</c> under it, <c>/</c> for the root
@@ -94,24 +123,25 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// there is no root, and it is written as typed.</summary>
     public override global::app.type.item.path.@this Relative(actor.context.@this context)
     {
-        var root = context.App?.AbsolutePath;
+        var root = context.App?.filesystem.root.Absolute;
         if (root == null) return this;
         var under = root.EndsWith(PathHelper.DirectorySeparatorChar) || root.EndsWith(PathHelper.AltDirectorySeparatorChar)
             ? root : root + PathHelper.DirectorySeparatorChar;
-        var system = PathHelper.Combine(context.App!.OsAbsolutePath, "system");
-        var written = Absolute.StartsWith(under, RootComparison) ? "/" + Absolute[under.Length..].Replace('\\', '/')
+        var system = context.App!.filesystem.os.Combine("system").Absolute;
+        var raw = Absolute.StartsWith(under, RootComparison) ? "/" + Absolute[under.Length..].Replace('\\', '/')
             : string.Equals(Absolute, root, RootComparison) ? "/"
             // the system folder and everything under it: its location replaced by /system
             : (Absolute + PathHelper.DirectorySeparatorChar).StartsWith(system + PathHelper.DirectorySeparatorChar, RootComparison)
                 ? "/system" + Absolute[system.Length..].Replace('\\', '/')
             : Absolute;
-        return new @this(Absolute) { Raw = written };
+        return new @this(Absolute, Type) { Raw = raw };
     }
 
     /// <summary>An OS location, shown as a plang form under <paramref name="context"/>'s root —
     /// never the install root: "/x" under the app root, "/system/x" in the runtime's system
     /// folder, "//x" (or "c:/x") anywhere else. The context is not kept.</summary>
-    private @this(string absolute, actor.context.@this context) : this(absolute)
+    private @this(string absolute, actor.context.@this context)
+        : this(absolute, context.App.type.list[new global::app.type.@this("path", "file"), context])
     {
         var relative = Relative(context).Raw;
         if (!string.Equals(relative, Absolute, StringComparison.Ordinal)) Raw = relative;

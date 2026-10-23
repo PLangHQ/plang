@@ -16,7 +16,7 @@ public class PlangTypesCut3_CompositionNavigationTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut3a-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.actor.list.User.Context);
-        var img = new image(PngBytes, p!, app.actor.list.User.Context);
+        var img = app.actor.list.User.Context.Image(p!, PngBytes);
 
         // The Path property is typed as path.@this (composition, not a
         // string passthrough); reflection confirms the declared type.
@@ -29,14 +29,14 @@ public class PlangTypesCut3_CompositionNavigationTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut3b-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        System.IO.Directory.CreateDirectory(app.AbsolutePath);
-        var abs = System.IO.Path.Combine(app.AbsolutePath, "present.png");
+        System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
+        var abs = System.IO.Path.Combine(app.filesystem.root.Absolute, "present.png");
         System.IO.File.WriteAllBytes(abs, PngBytes);
         try
         {
             var p = global::app.type.item.path.@this.Resolve(abs, app.actor.list.User.Context) as global::app.type.item.path.file.@this;
             await Assert.That(p).IsNotNull();
-            var img = new image(PngBytes, p!, app.actor.list.User.Context);
+            var img = app.actor.list.User.Context.Image(p!, PngBytes);
             // image.Path.Exists navigates through the path facet — the file
             // exists, so Exists is true.
             await Assert.That(await (await img.Path!.Exists(app.actor.list.User.Context)).ToBooleanAsync()).IsTrue();
@@ -48,17 +48,18 @@ public class PlangTypesCut3_CompositionNavigationTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut3c-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        System.IO.Directory.CreateDirectory(app.AbsolutePath);
-        var abs = System.IO.Path.Combine(app.AbsolutePath, "missing-" + System.Guid.NewGuid().ToString("N")[..8] + ".png");
+        System.IO.Directory.CreateDirectory(app.filesystem.root.Absolute);
+        var abs = System.IO.Path.Combine(app.filesystem.root.Absolute, "missing-" + System.Guid.NewGuid().ToString("N")[..8] + ".png");
         // Don't create the file.
         var p = global::app.type.item.path.@this.Resolve(abs, app.actor.list.User.Context) as global::app.type.item.path.file.@this;
-        var img = new image(PngBytes, p!, app.actor.list.User.Context);
+        var img = app.actor.list.User.Context.Image(p!, PngBytes);
         await Assert.That(await (await img.Path!.Exists(app.actor.list.User.Context)).ToBooleanAsync()).IsFalse();
     }
 
     [Test] public async Task ImageFromBase64_PathIsNull_AndBytesThatDontDecode_HaveNoSize()
     {
-        var img = new image(PngBytes, "image/png");
+        await using var app = new global::app.@this("/test").Testing();
+        var img = app.actor.list.User.Context.Image(PngBytes, "image/png");
         await Assert.That(img.Path).IsNull();
         // The 8-byte signature isn't a full image: its size is an error, never a 0×0 image.
         await Assert.That(() => { _ = img.Width; return Task.CompletedTask; })

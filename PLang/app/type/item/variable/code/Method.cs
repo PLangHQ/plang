@@ -13,7 +13,7 @@ public sealed class Method : Hop
     /// <summary>The values handed to the method, in order: literals, or variables.</summary>
     public global::app.type.item.list.@this Parameter { get; }
 
-    internal Method(string text, string name, global::app.type.item.list.@this parameter) : base(text)
+    internal Method(string text, string name, global::app.type.item.list.@this parameter, Hop? next, global::app.type.@this type) : base(text, next, type)
     {
         Name = name;
         Parameter = parameter;
@@ -22,12 +22,12 @@ public sealed class Method : Hop
     public override string Kind => "method";
 
     /// <summary>A call on the value is own when every value handed to it is — a literal holds no variable.</summary>
-    internal override bool IsOwn => Parameter.Slots().Cast<global::app.type.item.@this>()
-        .SelectMany(value => value.Variable).All(v => v.IsOwn);
+    internal override bool IsProgram => Parameter.Slots().Cast<global::app.type.item.@this>()
+        .SelectMany(value => value.Variable).All(v => v.IsProgram);
 
     /// <summary>Its name, then its values as rows: <c>"replace", "parameter": [{"type": {"name": "text"},
     /// "value": "-"}, …]</c>; a variable's row names it, as every stored row does.</summary>
-    protected override void Piece(global::app.type.format.IWriter writer)
+    protected override async System.Threading.Tasks.ValueTask Piece(global::app.type.format.IWriter writer)
     {
         writer.String(Name);
         writer.Name("parameter");
@@ -37,13 +37,13 @@ public sealed class Method : Hop
         {
             writer.BeginObject();
             writer.Name("type");
-            value.Type.Write(writer);
+            await value.Type.Output(writer);
             writer.Name("value");
-            value.Write(writer);
+            await value.Output(writer);
             if (value.HasVariable)
             {
                 writer.Name("variable");
-                new variable.serializer.Entry().Write(writer, value.Variable);
+                await new variable.serializer.Entry().Write(writer, value.Variable);
             }
             writer.EndObject();
         }
@@ -79,9 +79,9 @@ public sealed class Method : Hop
             var item = await row.Value();
             if (!row.Success) return row;
             if (p.ParameterType.IsInstanceOfType(item)) { args.Add(item); continue; }
-            var made = context.App.type.list[p.ParameterType].Make(item, row);
-            if (made is null) return context.Error(row.Error!);
-            args.Add(made);
+            var argument = context.App.type.list[p.ParameterType].Make(item, row);
+            if (argument is null) return context.Error(row.Error!);
+            args.Add(argument);
         }
 
         var answer = method.Invoke(target, args.ToArray());

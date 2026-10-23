@@ -10,7 +10,7 @@ namespace app.goal;
 /// <summary>
 /// Visibility of a goal.
 /// </summary>
-[global::app.Attributes.PlangType("visibility")]
+[global::app.Attributes.PlangType("visibility"), global::app.Attributes.Choice]
 public enum Visibility
 {
     Private = 0,
@@ -29,32 +29,46 @@ public sealed partial class @this
     // Read-time scalars are `internal set`, not `init`: the reader constructs the goal SHELL first
     // (so its steps and sub-goals can be born holding it) and fills these as they arrive off the
     // stream. Immutable to everything outside the assembly.
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public string Name { get; internal set; } = "";
 
     /// <summary>The goal's description: the comment lines written above its name.</summary>
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public string? Comment { get; internal set; }
 
-    private global::app.goal.step.list.@this _step = new();
-    [Store, Debug, Default]
+    /// <summary>A goal, born holding its type and its step, child and tag lists from <paramref name="types"/>, the
+    /// app's type list (read at birth, never kept).</summary>
+    public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
+    {
+        _step = new(types[typeof(global::app.goal.step.list.@this)]);
+        Child = new(this, types[typeof(child.@this)]);
+        Tag = new(types[typeof(global::app.goal.tag.list.@this)]);
+        Warning = new(types);
+    }
+
+    private global::app.goal.step.list.@this _step;
+    [Store, Out, LlmBuilder, Debug, Default]
     public global::app.goal.step.list.@this Step
     {
         // A plain slot. Every step in it was born knowing this goal — the reader constructs the
         // goal shell first and hands it down, so there is nothing to repair on read.
         get => _step;
-        set => _step = value ?? new();
+        set => _step = value;
     }
 
-    private child.@this? _child;
     /// <summary>The goals written after this one in its file; each knows this goal as its parent.</summary>
-    [Store, Debug, Default]
-    public child.@this Child => _child ??= new(this);
+    [Store, Out, LlmBuilder, Debug, Default]
+    public child.@this Child { get; }
 
     /// <summary>A file's first goal is public; the goals under it are private to it.</summary>
-    [Store, LlmBuilder, Debug, Default]
+    [Store, Out, LlmBuilder, Debug, Default]
     public global::app.type.item.choice.@this<Visibility> Visibility
         => Parent == null ? global::app.goal.Visibility.Public : global::app.goal.Visibility.Private;
+
+    /// <summary>The name of the goal's .goal file: where its .pr is found is where it is. A sub-goal is in its
+    /// parent's file and names none.</summary>
+    [Store, Out]
+    public string? File => Parent == null ? Path?.Name.ToString() : null;
 
     public override string ToString()
     {
@@ -74,7 +88,7 @@ public sealed partial class @this
     internal global::app.parent.@this? Elsewhere { get; init; }
 
     /// <summary>The goal's .goal file — where its .pr is found. A sub-goal is in its parent's file.</summary>
-    [Store, Debug]
+    [Debug, LlmBuilder]
     public global::app.type.item.path.@this? Path { get => Parent?.Path ?? _path; set => _path = value; }
     private global::app.type.item.path.@this? _path;
 
@@ -92,7 +106,7 @@ public sealed partial class @this
     public static global::app.type.item.path.@this Pr(global::app.type.item.path.@this source)
         => source.Parent.Combine(".build").Combine(source.Stem.ToString().ToLowerInvariant() + ".pr");
 
-    [Store, Debug]
+    [Store, Out, Debug]
     public string? Hash
     {
         get
@@ -123,7 +137,7 @@ public sealed partial class @this
     }
     private string? _hash;
 
-    [Store, Debug]
+    [Store, Out, Debug]
     public string? BuilderVersion { get; set; }
 
     /// <summary>A setup goal — named Setup, or in the app's <c>/setup/</c>: it runs only through setup.</summary>
@@ -145,8 +159,8 @@ public sealed partial class @this
 
     /// <summary>The goal's tags — a build-birth fact stamped by <c>test.tag</c>'s Build hook (skip,
     /// user tags). A <c>list&lt;tag&gt;</c> program node; each tag owns its case-insensitive equality.</summary>
-    [Store, Debug]
-    public global::app.goal.tag.list.@this Tag { get; init; } = new();
+    [Store, Out, Debug]
+    public global::app.goal.tag.list.@this Tag { get; init; }
 
 
     /// <summary>
@@ -166,7 +180,8 @@ public sealed partial class @this
     public @this? Parent { get; set; }
 
     [Debug]
-    public global::app.warning.list.@this Warning { get; init; } = new();
+    [LlmBuilder]
+    public global::app.warning.list.@this Warning { get; init; }
 
     [Debug, Default]
     public string FullPath
@@ -279,14 +294,26 @@ public sealed partial class @this
     /// <summary>The goal as its .pr holds it — the last build of this source (goal.Merge). Null when
     /// the goal has no .pr yet.</summary>
     [JsonIgnore]
+    [global::app.LlmBuilder]
     public @this? Cache { get; private set; }
 
     /// <summary>The goal is cached: its source is the one its <see cref="Cache"/> was built from (every
     /// step as written, in order, and the same sub-goals), every step is cached (none reopened), and so
     /// is every sub-goal. A cached goal isn't built again — its cache stands.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public bool IsCached => Cache != null && Cache.Hash == Hash && Cache.Child.CountRaw == Child.CountRaw
         && Step.IsCached && Child.Items().All(g => g.IsCached);
+
+    /// <summary>The first step whose saved code no longer holds against today's catalogue — this goal's, then its
+    /// sub-goals' — or null when all hold: whether a built goal is still the one its words would build.</summary>
+    internal async Task<global::app.error.@this?> Invalid(actor.context.@this context)
+    {
+        foreach (var step in Step.Items())
+            if (await step.Validate(context) is { } invalid) return invalid;
+        foreach (var subGoal in Child.Items())
+            if (await subGoal.Invalid(context) is { } invalid) return invalid;
+        return null;
+    }
 
     /// <summary>A cached step whose saved code no longer holds against today's catalogue (an action gone
     /// or renamed, a check it now fails) is opened again — its code cleared — and rebuilt, with a
@@ -296,8 +323,8 @@ public sealed partial class @this
         foreach (var step in Step.Items().Where(s => s.IsCached).ToList())
         {
             if (await step.Validate(context) is not { } invalid) continue;
-            step.Code = new global::app.goal.step.action.list.@this();
-            step.Warning.Add(new global::app.warning.@this
+            step.Code = new global::app.goal.step.action.list.@this(step.Code.Type);
+            step.Warning.Add(new global::app.warning.@this(context.App.type.list)
             {
                 Key = "Reopened",
                 Message = $"step {step.Index}'s saved code no longer holds — rebuilt: {invalid.Message}",
@@ -318,7 +345,7 @@ public sealed partial class @this
     {
         var pr = Pr(source);
         var context = app.actor.list.System.Context;
-        var loaded = app.goal.list[pr] is { } held ? context.Ok(held) : await Read(pr, app);
+        var loaded = app.goal.list[pr] is { } goal ? context.Ok(goal) : await Read(pr, app);
         if (loaded.Success && await loaded.Value() is @this { IsSetup: true })
             return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
         return loaded;
@@ -328,7 +355,7 @@ public sealed partial class @this
     private static async Task<data.@this> Read(global::app.type.item.path.@this pr, global::app.@this app)
     {
         var context = app.actor.list.System.Context;
-        var before = app.goal.on.load.before;
+        var before = app.goal.type.on.load.before;
         if (before.Count > 0 && await before.Start(pr, context.Ok(), context) is { } answer
             && (!answer.Success || answer.Handled))
             return answer;
@@ -356,7 +383,7 @@ public sealed partial class @this
     /// <summary>A goal starts through the goal type's events, then its own.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context) => depth switch
     {
-        0 => context.App.goal,
+        0 => context.App.goal.type,
         1 => this,
         _ => null,
     };
@@ -375,12 +402,17 @@ public sealed partial class @this
         if (context.CancellationToken.IsCancellationRequested)
             return context.Error(new global::app.error.@this("Operation was cancelled", "Cancelled", 499));
 
+        // A goal holding a step the build could not fix does not start: it answers why, before its frame and before
+        // anything bound to its start, so nothing of it ran.
+        if (Broken() is { } broken) return context.Error(broken);
+
         // The goal's own frame spans its whole run — what is bound before and after it, and its steps — so the
         // goal in play is this one throughout. The frame outlives any single step, so things like `debug.tag`
         // can attach metadata to a scope later steps still read (up via Current.Caller). A goal may call
         // itself: the only limit is the depth guard, which trips at this Push.
         global::app.call.@this frame;
-        try { frame = context.call.Push(this, parameters); }
+        var setting = await context.call.Setting();
+        try { frame = context.call.Push(this, setting, parameters); }
         catch (global::app.error.CallStackOverflowException ex)
         {
             return context.Error(context.call.Overflow(ex, this, null));
@@ -390,6 +422,19 @@ public sealed partial class @this
         var answer = await on.start.Before(this, context);
         var result = answer is { Success: false } or { Handled: true } ? answer : await Enter(context);
         return await on.start.After(this, result, context);
+    }
+
+    // Why this goal cannot start: it holds steps the build could not fix. Its own message names the goal's path and
+    // the steps' indexes; each broken step's error rides whole as a cause — its text and its reasons are there.
+    // Null when every step built.
+    private global::app.error.@this? Broken()
+    {
+        var steps = Step.Items().Where(s => s.Error != null).ToList();
+        if (steps.Count == 0) return null;
+        return new global::app.error.@this(
+            $"goal '{Path}' has {steps.Count} broken step(s): {string.Join(", ", steps.Select(s => s.Index))}",
+            "GoalBroken", 400)
+        { Goal = this, list = steps.Select(s => s.Error!).ToList(), FixSuggestion = "fix the words and build again" };
     }
 
     // Starts the steps, and folds a return that ends here — or, for a goal of another app, runs it there.
@@ -405,12 +450,6 @@ public sealed partial class @this
         }
         return result;
     }
-
-    public static @this NotFound(string name) => new()
-    {
-        Name = name,
-        Comment = "Goal not found"
-    };
 
     /// <summary>
     /// Visits every action in every step (ignoring Steps' disabled-skip iterator).
@@ -429,7 +468,7 @@ public sealed partial class @this
     /// The first goal holds the Path; the rest are its sub-goals, in its file. First goal is Public, rest are Private.
     /// Inverse of ToText().
     ///
-    /// Stays <c>static</c> by Ingi's ruling: relocating this onto <c>path</c>
+    /// Stays <c>static</c>: relocating this onto <c>path</c>
     /// (<c>path.ReadAsGoal</c>) or <c>text</c> (<c>text.AsGoal</c>) would put a
     /// Goal-specific method on a general-purpose value type — too specific for
     /// that general object. A source-text → Goal factory is the sanctioned
@@ -525,14 +564,13 @@ public sealed partial class @this
             {
                 if (currentGoal == null)
                 {
-                    currentGoal = new @this
+                    currentGoal = new @this(context.App.type.list)
                     {
                         Name = "Start",
                         Path = path
                     };
                     goals.Add(currentGoal);
-                    stepNode = new global::app.goal.step.list.@this();
-                    currentGoal.Step = stepNode;
+                    stepNode = currentGoal.Step;
                     stepIndex = 0;
                 }
 
@@ -548,7 +586,7 @@ public sealed partial class @this
                 var comment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
                 pendingComment.Clear();
 
-                currentStep = new Step
+                currentStep = new Step(context.App.type.list)
                 {
                     Goal = currentGoal,   // birth fact — the parser holds the goal, so it hands it over
                     Index = stepIndex,
@@ -564,7 +602,7 @@ public sealed partial class @this
             // Continuation line
             if (currentStep != null && raw.Length > 0 && raw[0] == ' ')
             {
-                currentStep = new Step
+                currentStep = new Step(context.App.type.list)
                 {
                     Goal = currentStep.Goal,
                     Index = currentStep.Index,
@@ -578,7 +616,7 @@ public sealed partial class @this
             if (currentStep != null && trimmed.StartsWith("\\"))
             {
                 var escapedText = trimmed[1..].TrimEnd(); // strip the leading backslash
-                currentStep = new Step
+                currentStep = new Step(context.App.type.list)
                 {
                     Goal = currentStep.Goal,
                     Index = currentStep.Index,
@@ -598,15 +636,14 @@ public sealed partial class @this
 
             // what the goal is — setup, system, a test — it answers itself from where it lives; a sub-goal lives in
             // its parent's file, so only the file's first goal holds the path
-            currentGoal = new @this
+            currentGoal = new @this(context.App.type.list)
             {
                 Name = goalName,
                 Comment = goalComment,
                 Path = goals.Count == 0 ? path : null,
             };
             goals.Add(currentGoal);
-            stepNode = new global::app.goal.step.list.@this();
-            currentGoal.Step = stepNode;
+            stepNode = currentGoal.Step;
             stepIndex = 0;
             currentStep = null;
         }

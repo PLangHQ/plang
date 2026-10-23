@@ -1,0 +1,9 @@
+{
+ "status": "pass",
+ "summary": "item-doors re-check 4 at e502d8520: X1, X2, X3 closed, no findings; all pins green. Accepted risks S2 (313f) and R1b (317). Windows junction/8.3 tests are the host's. Next bot: auditor.",
+ "open": [],
+ "accepted_risk": [
+  "S2: actor choice (313f)",
+  "R1b: shipped whole .data/ (317)"
+ ]
+}

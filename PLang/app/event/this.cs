@@ -43,7 +43,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     {
         int outer = -1, inner = -1;
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            if (Of(level.on) is { } held && side(held).Count > 0)
+            if (Of(level.on) is { } @event && side(@event).Count > 0)
             {
                 if (outer < 0) outer = depth;
                 inner = depth;
@@ -102,7 +102,9 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         return result;
     }
 
-    /// <summary>Every event is of the event type (<c>event</c>), whichever its class.</summary>
+    /// <summary>Every event is of the event type (<c>event</c>), whichever its class. Events are made by the event
+    /// door's own table and the empty ones are shared across apps (on's static empties), so no one app's type is
+    /// theirs to hold: it is built from the class.</summary>
     protected internal override global::app.type.@this Type => new(typeof(@this));
 
     public override string ToString() => Name;

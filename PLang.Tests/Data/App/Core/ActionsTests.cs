@@ -12,7 +12,7 @@ public class ActionsTests : System.IAsyncDisposable
     [Test]
     public async Task Constructor_Default_CreatesEmptyList()
     {
-        var actions = new StepActions();
+        var actions = new StepActions(app.type.list);
 
         await Assert.That(actions.Count).IsEqualTo(0);
     }
@@ -22,11 +22,11 @@ public class ActionsTests : System.IAsyncDisposable
     {
         var list = new List<global::app.goal.step.action.@this>
         {
-            new() { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" },
-            new() { Module = app.actor.list.User.Context.App.Module("file"), Name = "save" }
+            new(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" },
+            new(app.type.list) { Module = app.actor.list.User.Context.App.Module("file"), Name = "save" }
         };
 
-        var actions = new StepActions(list);
+        var actions = new StepActions(app.type.list, list);
 
         await Assert.That(actions.Count).IsEqualTo(2);
     }
@@ -107,7 +107,7 @@ public class ActionsTests : System.IAsyncDisposable
     [Test]
     public async Task ValidateActions_EmptyActions_ReturnsError()
     {
-        var (isValid, error) = ValidateActions(new StepActions());
+        var (isValid, error) = ValidateActions(new StepActions(app.type.list));
 
         await Assert.That(isValid).IsEqualTo(false);
         await Assert.That(error).IsNotNull();
@@ -117,10 +117,10 @@ public class ActionsTests : System.IAsyncDisposable
     [Test]
     public async Task ValidateActions_ValidActions_ReturnsTrue()
     {
-        var actions = new StepActions
+        var actions = new StepActions(app.type.list)
         {
-            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" },
-            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("file"), Name = "save" }
+            new global::app.goal.step.action.@this(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" },
+            new global::app.goal.step.action.@this(app.type.list) { Module = app.actor.list.User.Context.App.Module("file"), Name = "save" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -132,9 +132,9 @@ public class ActionsTests : System.IAsyncDisposable
     [Test]
     public async Task ValidateActions_OneInvalid_ReturnsActionNotFound()
     {
-        var actions = new StepActions
+        var actions = new StepActions(app.type.list)
         {
-            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("bogus"), Name = "nope" }
+            new global::app.goal.step.action.@this(app.type.list) { Module = app.actor.list.User.Context.App.Module("bogus"), Name = "nope" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -147,11 +147,11 @@ public class ActionsTests : System.IAsyncDisposable
     [Test]
     public async Task ValidateActions_MixedValidAndInvalid_ReturnsActionNotFound()
     {
-        var actions = new StepActions
+        var actions = new StepActions(app.type.list)
         {
-            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" },
-            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("bogus"), Name = "nope" },
-            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("fake"), Name = "missing" }
+            new global::app.goal.step.action.@this(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" },
+            new global::app.goal.step.action.@this(app.type.list) { Module = app.actor.list.User.Context.App.Module("bogus"), Name = "nope" },
+            new global::app.goal.step.action.@this(app.type.list) { Module = app.actor.list.User.Context.App.Module("fake"), Name = "missing" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -168,7 +168,7 @@ public class ActionsTests : System.IAsyncDisposable
     [Test]
     public async Task MergeStep_NullStep_ReturnsError()
     {
-        var stepFromLlm = new Step { Index = 0, Text = "test" };
+        var stepFromLlm = new Step(app.type.list) { Index = 0, Text = "test" };
 
         var (result, error) = MergeStep(null!, stepFromLlm);
 
@@ -180,7 +180,7 @@ public class ActionsTests : System.IAsyncDisposable
     [Test]
     public async Task MergeStep_NullStepFromLlm_ReturnsError()
     {
-        var step = new Step { Index = 0, Text = "test" };
+        var step = new Step(app.type.list) { Index = 0, Text = "test" };
 
         var (result, error) = MergeStep(step, null!);
 
@@ -192,12 +192,12 @@ public class ActionsTests : System.IAsyncDisposable
     [Test]
     public async Task MergeStep_ValidMerge_CopiesActions()
     {
-        var step = new Step { Index = 0, Text = "set greeting" };
-        var stepFromLlm = new Step
+        var step = new Step(app.type.list) { Index = 0, Text = "set greeting" };
+        var stepFromLlm = new Step(app.type.list)
         {
-            Code = new StepActions
+            Code = new StepActions(app.type.list)
             {
-                new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }
+                new global::app.goal.step.action.@this(app.type.list) { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }
             }
         };
 
@@ -213,12 +213,12 @@ public class ActionsTests : System.IAsyncDisposable
     [Test]
     public async Task MergeStep_PreservesExistingStepProperties()
     {
-        var step = new Step { Index = 3, Text = "original text", Line = new() { Number = 10 } };
-        var stepFromLlm = new Step
+        var step = new Step(app.type.list) { Index = 3, Text = "original text", Line = new() { Number = 10 } };
+        var stepFromLlm = new Step(app.type.list)
         {
-            Code = new StepActions
+            Code = new StepActions(app.type.list)
             {
-                new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" }
+                new global::app.goal.step.action.@this(app.type.list) { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" }
             }
         };
 
@@ -233,33 +233,33 @@ public class ActionsTests : System.IAsyncDisposable
     [Test]
     public async Task MergeStep_CopiesWarnings()
     {
-        var step = new Step { Index = 0, Text = "test" };
-        var stepFromLlm = new Step
+        var step = new Step(app.type.list) { Index = 0, Text = "test" };
+        var stepFromLlm = new Step(app.type.list)
         {
-            Code = new StepActions(),
-            Warning = { new global::app.warning.@this { Key = "W1", Message = "Some warning" } }
+            Code = new StepActions(app.type.list),
         };
+        stepFromLlm.Warning.Add(new global::app.warning.@this(app.type.list) { Key = "W1", Message = "Some warning" });
 
         var (result, error) = MergeStep(step, stepFromLlm);
 
         await Assert.That(error).IsNull();
-        await Assert.That(result!.Warning.Count).IsEqualTo(1);
+        await Assert.That(result!.Warning.CountRaw).IsEqualTo(1);
         await Assert.That(result.Warning[0].Key).IsEqualTo("W1");
     }
 
     [Test]
     public async Task MergeStep_EmptyActions_ClearsStepActions()
     {
-        var step = new Step
+        var step = new Step(app.type.list)
         {
             Index = 0,
             Text = "test",
-            Code = new StepActions
+            Code = new StepActions(app.type.list)
             {
-                new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("old"), Name = "action" }
+                new global::app.goal.step.action.@this(app.type.list) { Module = app.actor.list.User.Context.App.Module("old"), Name = "action" }
             }
         };
-        var stepFromLlm = new Step { Code = new StepActions() };
+        var stepFromLlm = new Step(app.type.list) { Code = new StepActions(app.type.list) };
 
         var (result, error) = MergeStep(step, stepFromLlm);
 
@@ -279,11 +279,7 @@ public class ActionsTests : System.IAsyncDisposable
 
         step.Code = stepFromLlm.Code;   // take the node (mirrors step.Merge)
 
-        if (stepFromLlm.Warning.Count > 0)
-        {
-            step.Warning.Clear();
-            step.Warning.AddRange(stepFromLlm.Warning);
-        }
+        step.Merge(stepFromLlm);   // the warnings, as step.Merge takes them
 
         return (step, null);
     }
@@ -319,13 +315,13 @@ public class ActionsTests : System.IAsyncDisposable
     {
         var modules = new global::app.@this("/app").Testing().module.list;
 
-        var actions = new StepActions();
+        var actions = new StepActions(app.type.list);
 
         foreach (var module in modules.Items())
         {
             foreach (var actionName in module.ActionNames)
             {
-                actions.Add(new global::app.goal.step.action.@this
+                actions.Add(new global::app.goal.step.action.@this(app.type.list)
                 {
                     Module = module,
                     Name = actionName,

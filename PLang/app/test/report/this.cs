@@ -10,10 +10,16 @@ public sealed class @this
 {
     private readonly global::app.test.list.@this _tests;
 
-    public @this(global::app.test.list.@this tests) => _tests = tests;
+    /// <summary>The report of <paramref name="tests"/>, its start born holding the app's datetime type from
+    /// <paramref name="types"/>.</summary>
+    public @this(global::app.test.list.@this tests, global::app.type.list.@this types)
+    {
+        _tests = tests;
+        StartedAt = new(System.DateTime.UtcNow, types[typeof(global::app.type.item.datetime.@this)]);
+    }
 
     /// <summary>When the run started.</summary>
-    public global::app.type.item.datetime.@this StartedAt { get; } = new(System.DateTime.UtcNow);
+    public global::app.type.item.datetime.@this StartedAt { get; }
 
     /// <summary>The run's coverage. Each test's App records its own, then merges it in here.</summary>
     public Coverage Coverage { get; } = new();
@@ -39,7 +45,7 @@ public sealed class @this
     public async Task<global::app.data.@this> Write(global::app.actor.context.@this context)
     {
         var tests = _tests.Items().ToList();
-        var chosen = context.Setting.Of<global::app.test.setting.@this>().Format.Value;
+        var chosen = (await context.Setting.Get<global::app.test.setting.@this>()).Format.Value;
         var nested = global::app.test.@this.Current(context) != null;
         var summary = Summary();
 
@@ -61,7 +67,7 @@ public sealed class @this
             }
             // the app's own goals under test — each file's public goal and its private ones; test files test them
             var goals = new List<global::app.goal.@this>();
-            await foreach (var file in context.App.goal.list.Walk(new global::app.type.item.dict.@this().Set("os", false), context))
+            await foreach (var file in context.App.goal.list.Walk(new global::app.type.item.dict.@this(context.App.type.list[typeof(global::app.type.item.dict.@this)]).Set("os", false), context))
                 if (!file.IsTest) goals.AddRange([file, .. file.Child.Items()]);
             console.Append(Coverage.Text(context.App.module.list, goals));
             // the channel ends the line
@@ -69,14 +75,15 @@ public sealed class @this
         }
 
         // the run written by the chosen format's kind, its Out face, to the file that kind writes a report to
-        var run = new global::app.type.item.list.@this<global::app.test.@this>(tests);
+        var run = new global::app.type.item.list.@this<global::app.test.@this>(tests,
+            context.App.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]);
         using var ms = new System.IO.MemoryStream();
         var encoded = await chosen.Kind.Encode(ms, context.Ok(run), context, global::app.View.Out);
         if (!encoded.Success) return encoded;
         var content = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         var target = global::app.type.item.path.@this.Resolve("/.test/" + chosen.Kind.Report, context);
-        var written = await target.WriteText(content, context);
-        if (!written.Success) return context.Error(written.Error!);
+        var path = await target.WriteText(content, context);
+        if (!path.Success) return context.Error(path.Error!);
 
         var result = context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(run);
         result.Properties.Set("format", chosen.ToString());

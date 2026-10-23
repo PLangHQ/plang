@@ -8,7 +8,7 @@ namespace app.type.kind.empty;
 /// </summary>
 public sealed class @this : global::app.type.kind.@this
 {
-    private readonly string _owner;
+    private readonly global::app.type.@this _owner;
     private readonly System.Collections.Generic.List<global::app.type.kind.@this> _kinds = new();
     // The held kinds by every key each answers to (Names): its name, its aliases, its MIMEs — and apart, by its
     // extensions without the dot — the first kind that answers, in the order they came. Made as a kind comes in
@@ -20,33 +20,41 @@ public sealed class @this : global::app.type.kind.@this
     // The type's own format — its class's [Format("", …)]: plain text is {text}, opaque bytes {binary}.
     private global::app.type.kind.@this? _format;
 
-    public @this(string owner) : base("") => _owner = owner;
+    /// <summary>The empty kind of <paramref name="owner"/>, the type it is born by.</summary>
+    public @this(global::app.type.@this owner, global::app.type.kind.@this? format = null) : base("")
+    {
+        _owner = owner;
+        _format = format;
+    }
 
     /// <summary>The empty kind is its own kind — ends the <c>kind : type</c> ctor's kind-minting chain
     /// without a new allocation. (Serializers are kept off <c>type.kind</c>, so this self-reference
     /// never loops a walk.)</summary>
     protected override global::app.type.kind.@this BornKind() => this;
 
-    protected internal override string Owner => _owner;
+    protected internal override global::app.type.@this Owner => _owner;
 
     public override System.Collections.Generic.IReadOnlyList<string> Mime => _format?.Mime ?? [];
     public override System.Collections.Generic.IReadOnlyList<string> Extension => _format?.Extension ?? [];
     public override bool Compressible => _format?.Compressible ?? false;
     public override bool IsText => _format?.IsText ?? false;
 
+    /// <summary>The type's own format's view (a .pr's is Store); a type with none crosses to others.</summary>
+    public override global::app.View View => _format?.View ?? base.View;
+
     /// <summary>The type's own format writes it (<c>.pr</c> for goal); a type with none writes nothing.</summary>
     public override System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
         => _format != null ? _format.Encode(stream, data, context, view, encoding, ct)
             : base.Encode(stream, data, context, view, encoding, ct);
 
     /// <summary>The type's own format reads it (<c>.pr</c> for goal); a type with none has its content born lazily.</summary>
     public override System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
-        global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
+        global::app.actor.context.@this context, global::app.View view, string name = "",
         System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
-        => _format != null ? _format.Decode(raw, context, name, view, ct, template, origin)
-            : base.Decode(raw, context, name, view, ct, template, origin);
+        => _format != null ? _format.Decode(raw, context, view, name, ct, template, origin)
+            : base.Decode(raw, context, view, name, ct, template, origin);
 
     /// <summary>What a value of the type can be in <paramref name="step"/>: its own kind's answer when it has one (a
     /// conversation offers only what can continue one), else the step's variables.</summary>
@@ -114,7 +122,8 @@ public sealed class @this : global::app.type.kind.@this
 
     /// <summary>This type's kinds, each as the full type it makes.</summary>
     public override global::app.type.kind.list.@this list(global::app.actor.context.@this context)
-        => new(Held.Select(k => context.App.type.list[new global::app.type.@this(_owner, k.Name), context]));
+        => new(Held.Select(k => context.App.type.list[new global::app.type.@this(_owner.Name, k.Name), context]),
+            context.App.type.list[typeof(global::app.type.kind.list.@this)]);
 
     /// <summary>Adds a kind of this type; a kind of the same name replaces the one before it. The type's own
     /// format (the empty name) is held as the type's, not as a kind.</summary>
@@ -127,10 +136,10 @@ public sealed class @this : global::app.type.kind.@this
             _kinds.Add(kind);
             var keys = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
             var extensions = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
-            foreach (var held in _kinds)
+            foreach (var entry in _kinds)
             {
-                foreach (var key in held.Alias.Prepend(held.Name).Concat(held.Mime)) keys.TryAdd(key, held);
-                foreach (var extension in held.Extension) extensions.TryAdd(extension.TrimStart('.'), held);
+                foreach (var key in entry.Keys) keys.TryAdd(key, entry);
+                foreach (var extension in entry.Extension) extensions.TryAdd(extension.TrimStart('.'), entry);
             }
             _keys = keys;
             _extensions = extensions;

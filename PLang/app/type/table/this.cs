@@ -28,7 +28,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 {
     /// <summary>Table's format (csv) is text: written as text writes.</summary>
     public static System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
         => global::app.type.item.text.@this.Encode(stream, data, context, view, encoding, ct);
 
@@ -38,19 +38,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Rows, each keyed by header — the navigation surface (<c>%t.rows[0]["amount"]%</c>).</summary>
     public IReadOnlyList<IReadOnlyDictionary<string, object?>> Rows { get; }
 
-    /// <summary>The encoding the grid was read from (<c>csv</c>, <c>xlsx</c>) —
-    /// the table's kind, carried so <c>%t!type%</c> reports <c>{table, csv}</c>.</summary>
-    public string? Kind { get; }
+    /// <summary>The encoding the grid was read from (<c>csv</c>, <c>xlsx</c>) — its type's kind, so
+    /// <c>%t!type%</c> reports <c>{table, csv}</c>; null for a table of no encoding.</summary>
+    public string? Kind => Type.kind.IsEmpty ? null : Type.kind.Name;
 
-    public @this(IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows, string? kind = null)
+    /// <summary>A grid, born holding <paramref name="type"/> — the app's <c>{table, &lt;encoding&gt;}</c>.</summary>
+    public @this(IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows, global::app.type.@this type)
+        : base(type)
     {
         Headers = headers;
         Rows = rows;
-        Kind = kind;
     }
-
-    /// <summary>type = <c>table</c>; kind = the encoding it was read from (csv/xlsx).</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this), Kind);
 
     /// <summary>
     /// Navigate <c>rows</c> (the row list), <c>headers</c> (the column names) and <c>count</c> (the
@@ -70,13 +68,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Writes itself as an array of rows, each row an object keyed by header that writes itself
     /// (<see cref="EnumerateItems"/> hands each out as its own Data); the writer decides how a list of
     /// objects looks — json on a json channel, json text on a text one.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginArray(Rows.Count);
-        foreach (var (_, row) in EnumerateItems(context))
-            await row.Output(writer, mode, context);
+        foreach (var (_, row) in EnumerateItems(writer.Context))
+            await row.Output(writer);
         writer.EndArray();
     }
 

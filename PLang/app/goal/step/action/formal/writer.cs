@@ -19,10 +19,19 @@ namespace app.goal.step.action.formal;
 /// </summary>
 public sealed class Writer : IWriter
 {
-    /// <summary>The format token owners branch on.</summary>
+    /// <summary>The format's name: list's <c>formal</c>.</summary>
     public const string Token = "formal";
 
-    public string Format => Token;
+    /// <summary>List's <c>formal</c> — what a list of actions is written as.</summary>
+    public global::app.type.kind.@this Kind { get; }
+
+    /// <summary>Formal is program text: what the step gave, as written — the Store view, always.</summary>
+    public global::app.View View => global::app.View.Store;
+
+    public global::app.actor.context.@this Context { get; }
+
+    /// <summary>A value written in formal: its formal look (an action its call), else its own write.</summary>
+    public System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value) => value.Write(this);
 
     private readonly StringBuilder _out = new();
 
@@ -30,7 +39,16 @@ public sealed class Writer : IWriter
     private enum Frame { Top, Array, Dict, Rows, Call, Actions, Body, Record }
     private readonly Stack<(Frame Kind, int Count)> _frames = new();
 
-    public Writer() => _frames.Push((Frame.Top, 0));
+    /// <summary>A formal writer asked by <paramref name="context"/>, its kind found among the asker's types.</summary>
+    public Writer(global::app.actor.context.@this context) : this(context.App.type.list["list"].kind[Token]!, context) { }
+
+    // a writer of the same kind as one in hand (an option's value, written apart)
+    private Writer(global::app.type.kind.@this kind, global::app.actor.context.@this context)
+    {
+        Kind = kind;
+        Context = context;
+        _frames.Push((Frame.Top, 0));
+    }
 
     /// <summary>The formal written so far.</summary>
     public override string ToString() => _out.ToString();
@@ -66,6 +84,10 @@ public sealed class Writer : IWriter
 
     public void Decimal(decimal value) { Element(); _out.Append(value.ToString(CultureInfo.InvariantCulture)); }
     public void String(string value) { Element(); Quote(value); }
+
+    // formal's view is Store for the record layout, never because it writes plang's store: characters nobody should
+    // see stay masked
+    public void Sensitive(string characters) => String("****");
     public void DateTime(System.DateTime value) => String(value.ToString("O", CultureInfo.InvariantCulture));
     public void DateTimeOffset(System.DateTimeOffset value) => String(value.ToString("O", CultureInfo.InvariantCulture));
     /// <summary>A length of time in ISO 8601 (<c>"PT5S"</c>) — the form the duration type teaches and reads, bare
@@ -73,10 +95,12 @@ public sealed class Writer : IWriter
     public void TimeSpan(System.TimeSpan value) => String(System.Xml.XmlConvert.ToString(value));
     public void Guid(System.Guid value) => String(value.ToString());
     public void Enum(System.Enum value) => String(value.ToString());
-    public void Bytes(byte[] value) => String(System.Convert.ToBase64String(value));
+    /// <summary>A text's bytes are the text they spell; any other bytes are base64.</summary>
+    public void Bytes(byte[] value, global::app.type.kind.@this kind)
+        => String(kind.IsText ? System.Text.Encoding.UTF8.GetString(value) : System.Convert.ToBase64String(value));
 
-    /// <summary>Verbatim — content already formal (a %variable% written bare).</summary>
-    public void Raw(string value) { Element(); _out.Append(value); }
+    // Verbatim — content already formal (a %variable% written bare).
+    private void Raw(string value) { Element(); _out.Append(value); }
 
     /// <summary>A variable, bare: <c>%content%</c>.</summary>
     public void Variable(string name) => Raw($"%{name}%");
@@ -86,13 +110,13 @@ public sealed class Writer : IWriter
 
     /// <summary>An option as a starting line writes it: <c>Template="plang"</c>, or its bare name — a slot still to
     /// fill — when its value writes nothing (<c>Permission</c>: the step gives it, the writer fills it).</summary>
-    public void Option(string name, global::app.type.item.@this value)
+    public async System.Threading.Tasks.ValueTask Option(string name, global::app.type.item.@this value)
     {
-        var written = new Writer();
-        value.Write(written);
+        var writer = new Writer(Kind, Context);
+        await value.Output(writer);
         Element();
         _out.Append(name);
-        if (written._out.Length > 0) _out.Append('=').Append(written._out);
+        if (writer._out.Length > 0) _out.Append('=').Append(writer._out);
     }
 
     // A text in double quotes, escaped as JSON escapes it — quote, backslash and control characters;
@@ -149,10 +173,6 @@ public sealed class Writer : IWriter
 
     // ---------------------------------------------------------------- a Data record
 
-    /// <summary>Formal carries no Data envelope — a record is its value.</summary>
-    public void BeginRecord(global::app.data.@this record) { }
-    public void EndRecord() { }
-
     public void Value(object? normalized)
     {
         switch (normalized)
@@ -165,9 +185,7 @@ public sealed class Writer : IWriter
             case double d: Double(d); return;
             case decimal m: Decimal(m); return;
             case string s: String(s); return;
-            case byte[] bytes: Bytes(bytes); return;
-            case global::app.data.@this nested: Value(nested.Peek()); return;
-            case global::app.type.item.@this v: v.Write(this); return;
+            case byte[] bytes: String(System.Convert.ToBase64String(bytes)); return;
             default:
                 throw new global::app.data.NormalizeException(
                     $"formal.Writer received a value of type {normalized.GetType().FullName} that has no formal form.",
@@ -193,25 +211,42 @@ public sealed class Writer : IWriter
     }
 
     /// <summary>A row — a call's property or an argument: <c>Name: type = </c>, <c>?=</c> for a frozen
-    /// default; its value follows.</summary>
-    public void Row(string name, string type, bool frozen = false)
+    /// default; the type named by the word it goes by, its value following.</summary>
+    public void Row(string name, global::app.type.@this type, bool frozen = false)
     {
         if (_frames.Peek().Kind == Frame.Record) Close();
         var (kind, count) = _frames.Pop();
         if (count > 0) _out.Append(", ");
         _frames.Push((kind, count + 1));
-        _out.Append(name).Append(": ").Append(type).Append(frozen ? " ?= " : " = ");
+        _out.Append(name).Append(": ").Append(type.Face).Append(frozen ? " ?= " : " = ");
         Open(Frame.Record);
     }
 
-    /// <summary>Argument rows: <c>{kind: text = "x", path: item = %path%}</c>.</summary>
-    public void BeginRows() { Element(); _out.Append('{'); Open(Frame.Rows); }
+    // whether each Data written opened its record, so its end closes what it opened
+    private readonly Stack<bool> _records = new();
 
-    public void EndRows()
+    /// <summary>A Data that is an element of a sequence (an argument in a list) is its record:
+    /// <c>{name: type = value}</c>, its value following. A Data written after a name (a dict's entry) or with no name of
+    /// its own is its value alone.</summary>
+    public System.Threading.Tasks.ValueTask BeginRecord(global::app.data.@this record, bool layer)
     {
+        var opens = _frames.Peek().Kind == Frame.Array && !string.IsNullOrEmpty(record.Name);
+        _records.Push(opens);
+        if (!opens) return default;
+        Element();
+        _out.Append('{');
+        Open(Frame.Rows);
+        Row(record.Name, record.Type);
+        return default;
+    }
+
+    public System.Threading.Tasks.ValueTask EndRecord(global::app.data.@this record)
+    {
+        if (!_records.Pop()) return default;
         if (_frames.Peek().Kind == Frame.Record) Close();
         Close();
         _out.Append('}');
+        return default;
     }
 
     /// <summary>A sequence of actions: <c>a; b</c> — a step's, or a condition's body inside

@@ -1,0 +1,239 @@
+{
+  "name": "Start",
+  "comment": "A goal channel calls back into a goal for each message: its writes reach the writer, while %message% ends\nwith the callback.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set channel \"log\" call Log",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "channel",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "log"
+            },
+            {
+              "name": "Goal",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "Log"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "write \"hello\" to \"log\" channel",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            },
+            {
+              "name": "channel",
+              "type": {
+                "name": "text"
+              },
+              "value": "log"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %logged% equals \"hello\", \"the callback's write reaches the caller\"",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%logged%",
+              "variable": [
+                {
+                  "text": "%logged%",
+                  "code": [
+                    {
+                      "variable": "logged"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the callback's write reaches the caller"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %message% is null, \"the message ends with the callback\"",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%message%",
+              "variable": [
+                {
+                  "text": "%message%",
+                  "code": [
+                    {
+                      "variable": "message"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the message ends with the callback"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Log",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %logged% = %message%",
+          "line": {
+            "number": 10,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%logged%",
+                  "variable": [
+                    {
+                      "text": "%logged%",
+                      "code": [
+                        {
+                          "variable": "logged"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%message%",
+                  "variable": [
+                    {
+                      "text": "%message%",
+                      "code": [
+                        {
+                          "variable": "message"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "47ac22d279bdbb94822f4f3e2ede40a1c9fa0e1a08f2d44419d76550b0b485c3"
+    }
+  ],
+  "visibility": "Public",
+  "file": "CallbackWriteReachesTheCaller.test.goal",
+  "hash": "0d5aa775d05f86f853cbb6a18995591fae9c79f16e610c687f8c70963d344b9f"
+}

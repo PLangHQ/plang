@@ -74,7 +74,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_PropertiesAliased()
     {
-        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) });
+        var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) }, _app.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.number.@this>)]);
         var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.actor.list.User.Context);
         var wrapped = source.As<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();

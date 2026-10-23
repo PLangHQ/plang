@@ -122,16 +122,12 @@ public sealed class @this : browser.@this
         /// <summary>Where the mouse moved to, when it did: the pointer there is asked for.</summary>
         internal (int x, int y)? Moved { get; private set; }
 
-        // the modifier keys by name → DevTools' bits (alt 1, ctrl 2, meta 4, shift 8: the modifier choice's own values)
-        private static int Bits(global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.type.item.input.Modifier>> held)
-            => held.Items().Aggregate(0, (bits, modifier) => bits | (int)modifier.Value);
-
         public void Stamped(long stamp) { }
 
         public void Mouse(global::app.type.item.input.mouse.@this mouse)
         {
             int x = mouse.X.Clr<int>(), y = mouse.Y.Clr<int>();
-            var p = new JsonObject { ["x"] = x, ["y"] = y, ["modifiers"] = Bits(mouse.Modifiers) };
+            var p = new JsonObject { ["x"] = x, ["y"] = y, ["modifiers"] = mouse.Modifier.Code };
             switch (mouse.Action.Value)
             {
                 case global::app.type.item.input.mouse.Gesture.wheel:
@@ -155,7 +151,7 @@ public sealed class @this : browser.@this
         public void Key(global::app.type.item.input.key.@this key)
         {
             if (key.Name?.ToString() is not { Length: > 0 } name) return;   // a text key: its character comes as text
-            int vk = key.Vk.Clr<int>(), mods = Bits(key.Modifiers);
+            int vk = key.Vk.Clr<int>(), mods = key.Modifier.Code;
             Method = "Input.dispatchKeyEvent";
             Parameters = !key.Down.Value
                 ? new JsonObject { ["type"] = "keyUp", ["key"] = name, ["windowsVirtualKeyCode"] = vk, ["modifiers"] = mods }
@@ -203,9 +199,9 @@ public sealed class @this : browser.@this
                 if (css == _lastCursor) return;
                 _lastCursor = css;
                 // the cursor writes itself: the line it is, beside the frames
-                using var written = new MemoryStream();
-                var encoded = await context.App.type.list.Mime("application/json").Encode(written, context.Ok(new cursor.@this(css)), context);
-                if (encoded.Success) await _emit!(Encoding.UTF8.GetString(written.ToArray()));
+                using var stream = new MemoryStream();
+                var encoded = await context.App.type.list.Mime("application/json").Encode(stream, context.Ok(new cursor.@this(css)), context);
+                if (encoded.Success) await _emit!(Encoding.UTF8.GetString(stream.ToArray()));
             }
             catch (Exception ex) when (ex is TimeoutException or JsonException or IOException or InvalidOperationException)
             {

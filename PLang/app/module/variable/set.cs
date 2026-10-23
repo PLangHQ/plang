@@ -29,8 +29,14 @@ public partial class Set : IContext, IScope, IKeep
         }
         // a text with variables inside is unknown; a literal is read as the value it is
         if (Value.HasVariable) return;
-        if (await Value.Value() is { IsNull: false }) await name.Set(Value, Context);
+        if (await Value.Value() is { IsNull: false }) await name.Set(Binding(name), Context);
     }
+
+    // What the variable binds: a root is bound to a copy of the Value under its own name (Value is named for this
+    // action's parameter, never what the variable is called); a write deeper in hands Value to its container, which
+    // holds it under its own key.
+    private data.@this Binding(global::app.type.item.variable.@this name)
+        => name.Code.Count == 1 ? Value.Copy(name.Code.Root.Name) : Value;
 
     /// <summary>Build-time judgement of my own properties, read as authored — Peek, never the
     /// value door: a %var% is unknown at build and defers to Run.</summary>
@@ -40,10 +46,11 @@ public partial class Set : IContext, IScope, IKeep
         // CLR-facing machinery).
         // Strict kind enforcement at build for literals: the user-named type entity (a type, not a
         // string) against the literal's content. %var% values defer to Run. The raw face is read only
-        // here, where a strict type asks for it.
+        // here, where a strict type asks for it — through the value's Data, which decodes the line's own
+        // slice with its context.
         if (Type?.Peek() is global::app.type.@this t && t.Strict && !t.kind.IsEmpty && !Value.HasVariable
-            && Value.Peek() is { } peeked
-            && (peeked is global::app.type.item.@this value ? value.Backing : peeked) is { } valueBacking)
+            && await Value.Value() is { } item
+            && (item is global::app.type.item.@this value ? value.Backing : item) is { } valueBacking)
         {
             var clr = t.ClrType;
             if (clr != null && typeof(global::app.data.IKindValidatable).IsAssignableFrom(clr))
@@ -61,10 +68,13 @@ public partial class Set : IContext, IScope, IKeep
             }
         }
 
-        // Real content truth has two owners, both elsewhere: the strict-kind probe above
-        // (magic bytes, at build) and the first-touch parse at runtime (strict at the load
-        // seam). A declared-but-unparsed value (a source) is valid by construction — nothing
-        // has become anything yet — so there is no build-time type-match check to make here.
+        // A literal is made as the type the step declares, here at build: one that doesn't make it (`"30s" as iso
+        // duration`) is the step's error, with the type's own reason, so the LLM fixes the step. A %var% defers to Run.
+        if (Type?.Peek() is global::app.type.@this type && !Value.HasVariable && await Value.Value() is { } literal)
+        {
+            try { Context.App.type.list[type, Context].Make(literal, Context); }
+            catch (global::app.error.AppException refused) { return refused.Error; }
+        }
         return null;
     }
 
@@ -100,7 +110,7 @@ public partial class Set : IContext, IScope, IKeep
         var source = (await Context.Variable.Get("!buildData")).Peek();
         var inferred = source as global::app.type.@this;
         if (inferred == null && source is global::app.type.item.text.@this t && t.ToString() is { Length: > 0 } n
-            && await Context.App.type.Get(n) is { Success: true } named)
+            && await Context.App.type.Get(n, Context) is { Success: true } named)
             inferred = await named.Value();
         if (inferred is { IsNull: false })
             __action.Property.Add(new global::app.type.property.@this
@@ -160,18 +170,17 @@ public partial class Set : IContext, IScope, IKeep
         {
             // The Type value reads through the `type` reader, so it materializes as the type
             // entity itself ({name, kind?, strict?} → type.@this). A bare type-name (raw string)
-            // still names a type by name. No dict rebuild — that was the pre-reader path.
+            // still names a type by name. No dict rebuild.
             // The developer named the type — an unknown name is their error, answered as plang's.
-            var declaredName = (typeValue as global::app.type.@this)?.Name ?? typeValue.ToString()!;
-            var named = await Context.App.type.Get(declaredName);
-            if (!named.Success || await named.Value() is not { } declared)
+            var typeName = (typeValue as global::app.type.@this)?.Name ?? typeValue.ToString()!;
+            var answer = await Context.App.type.Get(typeName, Context);
+            if (!answer.Success || await answer.Value() is not { } entity)
                 return Context.Error(
-                    new global::app.error.ServiceError($"Unknown type '{declaredName}'", "UnknownType", 400));
+                    new global::app.error.ServiceError($"Unknown type '{typeName}'", "UnknownType", 400));
             // The declared type through the types: its item class, its kind canonicalised
             // (`markdown` → `md`, `jpeg` → `jpg`). The declared type object is the program's (shared
             // by every run), so a changed kind is this run's own type object.
-            var type = typeValue is global::app.type.@this written ? Context.App.type.list[written, Context] : declared;
-            var typeName = type.Name;
+            var type = typeValue is global::app.type.@this declaration ? Context.App.type.list[declaration, Context] : entity;
             var targetType = type.ClrType;
 
             // A value that already is the declared type is kept as it is — followed to what it names
@@ -179,9 +188,9 @@ public partial class Set : IContext, IScope, IKeep
             // unread, and is no new birth. Only a value that isn't the type is opened and converted below
             // (a re-kind and a strict declaration go on too).
             var incoming = await Value.Follow(Context);
-            if (!type.Strict && incoming.Peek() is { IsNull: false } held && held.Is(type)
-                && (type.kind.IsEmpty || string.Equals(held.Type.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase)))
-                return await name.Set(Value, Context);
+            if (!type.Strict && incoming.Peek() is { IsNull: false } item && item.Is(type)
+                && (type.kind.IsEmpty || string.Equals(item.Type.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase)))
+                return await name.Set(Binding(name), Context);
 
             // Kind-derivation and the strict probe read the IN-MEMORY value only: a
             // raw-backed (unparsed) value contributes null — deriving a kind from
@@ -189,7 +198,7 @@ public partial class Set : IContext, IScope, IKeep
             // avoid. Content is read (door opened) only for a value that isn't the declared type.
             object? sourceValue = incoming.RawUntouched ? null : await incoming.Value();
             // The value as it is — what the declared type is handed to make itself from.
-            object? heldValue = sourceValue;
+            object? converted = sourceValue;
             // The strict probe below reasons over the raw CLR face (ctor matching, magic-byte
             // sniffing) — a born-typed text/binary leaf presents its backing to it.
             if (sourceValue is global::app.type.item.text.@this st) sourceValue = st.Clr<string>();
@@ -198,7 +207,7 @@ public partial class Set : IContext, IScope, IKeep
             if (targetType == null)
             {
                 return Context.Error(
-                    new global::app.error.ServiceError($"Unknown type '{typeName}'", "UnknownType", 400));
+                    new global::app.error.ServiceError($"Unknown type '{type.Name}'", "UnknownType", 400));
             }
 
             // Strict kind enforcement at runtime — for `%var%` paths
@@ -217,7 +226,7 @@ public partial class Set : IContext, IScope, IKeep
                     if (!ok)
                         return Context.Error(
                             new global::app.error.ServiceError(
-                                $"Strict kind mismatch: declared {typeName}/{type.kind}"
+                                $"Strict kind mismatch: declared {type.Name}/{type.kind}"
                                 + (actual != null ? $" but content is {actual}." : "."),
                                 "StrictKindMismatch", 400));
                 }
@@ -233,12 +242,10 @@ public partial class Set : IContext, IScope, IKeep
                 && string.Equals(vt.Name, type.Name, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(vt.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase))
             {
-                Value.Name = name!;
-                return await Context.Variable.Set(Value);
+                return await Context.Variable.Set(Value.Copy(name!));
             }
 
-            if (Value.RawUntouched) heldValue = await Value.Value();
-            object? converted = heldValue;
+            if (Value.RawUntouched) converted = await Value.Value();
 
             // The incoming value composes the declared type as a facet under a DIFFERENT
             // name (an image has-a path, so an image bound to a `path` slot satisfies `path`)
@@ -283,19 +290,20 @@ public partial class Set : IContext, IScope, IKeep
             var typedData = new data.@this(name, converted, keepAsIs ? null : type, context: Context);
 
             // Strict kind for a reference fundamental rides WITH the value to its
-            // load seam (Ingi: validate at byte-materialization, throw if strict).
+            // load seam: a strict kind is validated when the bytes materialize, and a mismatch throws.
             // An already-loaded value (read-lift, raw bytes in hand) validates
             // now; a lazy path-backed value defers — its own load enforces (e.g.
             // image.BytesAsync throws on mismatch). Raw byte[] slots are handled
-            // separately above via the IKindValidatable probe.
+            // separately above via the IKindValidatable probe. The value is reached as it is in
+            // memory, never opened: opening a path-backed image would load its bytes here.
             if (type.Strict && !type.kind.IsEmpty
-                && (await typedData.Value()) is global::app.data.IStrictKindEnforcer enforcer)
+                && typedData.Peek() is global::app.data.IStrictKindEnforcer enforcer)
             {
                 enforcer.RequireStrictKind(type.kind.Name);
                 if (enforcer.CheckStrictKind() is { ok: false } mismatch)
                     return Context.Error(
                         new global::app.error.ServiceError(
-                            $"Strict kind mismatch: declared {typeName}/{type.kind}"
+                            $"Strict kind mismatch: declared {type.Name}/{type.kind}"
                             + (mismatch.actualKind != null ? $" but content is {mismatch.actualKind}." : "."),
                             "StrictKindMismatch", 400));
             }
@@ -305,12 +313,12 @@ public partial class Set : IContext, IScope, IKeep
         }
 
         // No forced type — just set the data. Data flows: bind the Value's Data under the target
-        // name as-is, without inspecting or computing it (no .Value). A reference
+        // name, without inspecting or computing it (no .Value). A reference
         // or template resolves/renders on its own door at read; a literal is itself. A self-write
         // (`set %a%=%a%`) is dropped at build, never handled here. The variable writes itself: a
         // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties, `%!llm.setting.cache%`
         // a setting's option for this run.
-        return await name.Set(Value, Context);
+        return await name.Set(Binding(name), Context);
     }
 
     /// <summary>

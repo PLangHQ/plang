@@ -13,7 +13,7 @@ namespace app.data;
 /// Every operator answers a plang bool — true, false, or the developer's error
 /// (<c>is foo</c>, ordering values that have no order) — never a thrown exception.
 /// </summary>
-[global::app.Attributes.PlangType("operator")]
+[global::app.Attributes.PlangType("operator"), global::app.Attributes.Choice]
 public sealed class Operator
 {
     // Evaluators are async: a Data value may be IBooleanResolvable (a path,
@@ -171,17 +171,17 @@ public sealed class Operator
         if (!types.Contains(typeName) && !types.HasKind(typeName))
             return Refused(context, $"Unknown type '{typeName}'", "UnknownType");
         if (!left.Success) return Failed(left, context);
-        var held = await left.Follow(context);
-        if (!held.IsInitialized) return Answer(context, false);
-        if (held.Is(typeName, types)) return Answer(context, true);
-        if (held.Peek() is { IsFinal: false })
+        var value = await left.Follow(context);
+        if (!value.IsInitialized) return Answer(context, false);
+        if (value.Is(typeName, types)) return Answer(context, true);
+        if (value.Peek() is { IsFinal: false })
         {
             // `is dict` on a reference not yet read examines its content: that is a use, so it opens the value,
             // parsing a resting source once and narrowing it (a bare Value would rest it) — then the value
             // answers from its retained chain
-            _ = await held.Open();
-            if (!held.Success) return Failed(held, context);
-            return Answer(context, held.Is(typeName, types));
+            _ = await value.Open();
+            if (!value.Success) return Failed(value, context);
+            return Answer(context, value.Is(typeName, types));
         }
         return Answer(context, false);
     }

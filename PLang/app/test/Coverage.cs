@@ -199,33 +199,33 @@ public sealed class Coverage
         }
 
         int sitesComplete = 0, sitesPartial = 0, sitesUnreached = 0;
-        int declaredTotal = 0, hitTotal = 0;
+        int branchTotal = 0, hitTotal = 0;
         var untested = new List<(string Site, List<string> Missing)>();
         foreach (var site in allSites)
         {
-            var declared = chains.TryGetValue(site, out var chain) ? chain : null;
+            var branches = chains.TryGetValue(site, out var chain) ? chain : null;
             var observedLabels = labelsMap.TryGetValue(site, out var labels) ? labels : new HashSet<string>();
 
             bool labelBacked = true;
-            if (declared == null || declared.Count == 0)
+            if (branches == null || branches.Count == 0)
             {
                 if (observedLabels.Count > 0)
-                    declared = observedLabels.OrderBy(Order).ToList();
+                    branches = observedLabels.OrderBy(Order).ToList();
                 else if (indicesMap.TryGetValue(site, out var indices))
                 {
-                    declared = indices.OrderBy(i => i).Select(i => i.ToString()).ToList();
+                    branches = indices.OrderBy(i => i).Select(i => i.ToString()).ToList();
                     labelBacked = false;
                 }
-                else declared = new List<string>();
+                else branches = new List<string>();
             }
 
             var missing = new List<string>();
             var parts = new List<string>();
-            foreach (var branch in declared)
+            foreach (var branch in branches)
             {
                 var hit = !labelBacked || observedLabels.Contains(branch);
                 parts.Add((hit ? "✅ " : "❌ ") + branch);
-                declaredTotal++;
+                branchTotal++;
                 if (hit) hitTotal++;
                 else missing.Add(branch);
             }
@@ -236,10 +236,10 @@ public sealed class Coverage
             else { sitesPartial++; untested.Add((site, missing)); }
         }
 
-        var percent = declaredTotal > 0 ? (int)Math.Round(100.0 * hitTotal / declaredTotal) : 0;
+        var percent = branchTotal > 0 ? (int)Math.Round(100.0 * hitTotal / branchTotal) : 0;
         sb.AppendLine();
         sb.AppendLine($"  Sites: {allSites.Count} total ({sitesComplete} complete, {sitesPartial} partial, {sitesUnreached} unreached)");
-        sb.AppendLine($"  Branches: {hitTotal}/{declaredTotal} covered ({percent}%)");
+        sb.AppendLine($"  Branches: {hitTotal}/{branchTotal} covered ({percent}%)");
         if (untested.Count > 0)
         {
             sb.AppendLine();

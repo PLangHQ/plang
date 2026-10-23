@@ -34,7 +34,7 @@ public class SensitivePropertyFilterTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_sensitive_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir).Consenting();
     }
 
     [After(Test)]
@@ -52,7 +52,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_ExcludedFromJsonStreamSerializer()
     {
-        var identity = new Identity
+        var identity = new Identity(_app.type.list[typeof(global::app.module.identity.Identity)])
         {
             Name = "test",
             PublicKey = "pubkey123",
@@ -72,7 +72,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_IncludedInRawJsonSerializer()
     {
-        var identity = new Identity
+        var identity = new Identity(_app.type.list[typeof(global::app.module.identity.Identity)])
         {
             Name = "test",
             PublicKey = "pubkey123",
@@ -105,7 +105,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_DiagnosticOutput_MasksValueAsAsterisks()
     {
-        var identity = new Identity
+        var identity = new Identity(_app.type.list[typeof(global::app.module.identity.Identity)])
         {
             Name = "test",
             PublicKey = "pubkey123",
@@ -127,7 +127,7 @@ public class SensitivePropertyFilterTests
     {
         var held = new Dictionary<string, object?>
         {
-            ["id"] = new Identity { Name = "test", PublicKey = "pubkey123", PrivateKey = "secret456" },
+            ["id"] = new Identity(_app.type.list[typeof(global::app.module.identity.Identity)]) { Name = "test", PublicKey = "pubkey123", PrivateKey = "secret456" },
         };
 
         var json = await global::app.type.item.@this.Create(held, _app.actor.list.User.Context).Debug(_app.actor.list.User.Context);
@@ -142,7 +142,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_CamelCaseIndented_KeepsSensitiveData()
     {
-        var identity = new Identity
+        var identity = new Identity(_app.type.list[typeof(global::app.module.identity.Identity)])
         {
             Name = "test",
             PublicKey = "pubkey123",
@@ -198,8 +198,12 @@ public class SensitivePropertyFilterTests
         // End-to-end: create real identity, serialize, verify PrivateKey absent
         var create = new Create(_app.actor.list.System.Context) { Name = (global::app.type.item.text.@this)"e2e", Default = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, _app.actor.list.System.Context);
-        var result = await create.Start();
-        var identity = (await result.Value()) as Identity;
+        await (await create.Start()).IsSuccess();
+        // the identity whole, its key in it, as its owner holds it (a step's copy holds no key to leave out)
+        Identity? identity = null;
+        foreach (var row in (await _app.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity.Items(Ctx))
+            if ((await row.Value()) is Identity stored && stored.Name == "e2e") identity = stored;
+        await Assert.That(identity!.PrivateKey).IsNotEmpty();
 
         var json = (await Json.Serialize(_app.Ok(identity), Ctx).Value())!.Clr<string>()!;
 

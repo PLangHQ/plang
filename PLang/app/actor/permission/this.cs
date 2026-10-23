@@ -26,24 +26,30 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         _actor = actor;
         // Every actor's standing grant on the runtime's shared os folder: it reads and runs what is there (the
         // builder's goals, /system/error/show). Writing there is the system actor's alone (Stand).
-        Stand(Verb.read, Verb.execute);
+        Stand(actor.App.filesystem.os, Verb.read, Verb.execute);
     }
 
     /// <summary>
-    /// This actor's standing grant on the runtime's shared os folder — held in memory for the run, never persisted
-    /// or asked; it replaces the one before (the grant store keys by path).
+    /// This actor's standing grant on <paramref name="place"/> (one of the filesystem's folders, where the OS lands for
+    /// it) and all under it — the runtime's shared os folder, the stores' folder — held in memory for the run, never
+    /// persisted or asked; it replaces the one before on that folder (the grant store keys by path). Two grants: the
+    /// folder itself (a glob's <c>/**</c> doesn't match its own folder), and all under it.
     /// </summary>
-    internal void Stand(params Verb[] verbs)
+    internal void Stand(path place, params Verb[] verbs)
     {
-        var grant = new Grant(_actor.Name,
-            _actor.App.OsAbsolutePath + global::app.Utils.PathHelper.DirectorySeparatorChar + "**",
-            new HashSet<Verb>(verbs), MatchMode.glob);
-        var held = new global::app.data.@this<Grant>("", grant, context: _actor.Context);
+        var folder = place.Absolute;
+        Grant[] grants =
+        [
+            new(_actor.Name, folder, new HashSet<Verb>(verbs), MatchMode.exact, _actor.App.type.list[typeof(Grant)]),
+            new(_actor.Name, folder + global::app.Utils.PathHelper.DirectorySeparatorChar + "**",
+                new HashSet<Verb>(verbs), MatchMode.glob, _actor.App.type.list[typeof(Grant)]),
+        ];
         lock (_lock)
-        {
-            _inMemory.RemoveAll(d => d.Peek() is Grant g && string.Equals(g.Path, grant.Path, StringComparison.Ordinal));
-            _inMemory.Add(held);
-        }
+            foreach (var grant in grants)
+            {
+                _inMemory.RemoveAll(d => d.Peek() is Grant g && string.Equals(g.Path, grant.Path, StringComparison.Ordinal));
+                _inMemory.Add(new global::app.data.@this<Grant>("", grant, context: _actor.Context));
+            }
     }
 
     /// <summary>
@@ -59,13 +65,26 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         // Loop, not recursion: a channel that keeps returning garbage would grow the async state machine
         // without bound under recursion.
         var prefix = "";
+        // Asked of the actor's own input itself — the question written on its output, the answer read off its input —
+        // never through output.ask or the input's ask event: nothing a step can set (%!ask.answer%) or bind (on ask)
+        // answers for the actor. A consent can be watched on the output, never answered but by the actor's input.
+        if (context.Actor.Channel.Get(global::app.channel.list.@this.Input) is not { } input)
+            return context.Error(new global::app.error.PermissionDenied(request));
         while (true)
         {
-            // asked as an action, so on.ask fires as for any ask
-            var asked = await new global::app.goal.step.action.@this(new global::app.module.output.ask(context)
+            global::app.data.@this asked;
+            try
             {
-                Question = new global::app.data.@this<global::app.type.item.text.@this>("", prefix + question, context: context),
-            }, context).Start(context);
+                asked = await input.Ask(new global::app.module.output.ask(context)
+                {
+                    Question = new global::app.data.@this<global::app.type.item.text.@this>("", prefix + question, context: context),
+                }, context.CancellationToken);
+            }
+            // an input that couldn't answer (cancelled, its transport broken): nobody answered, so no
+            catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+            {
+                return context.Error(new global::app.error.PermissionDenied(request) { list = [global::app.error.@this.FromException(ex)] });
+            }
             // decided before the exit check, which would otherwise hand the failed ask back as itself
             if (!asked.Success && asked.Error!.Unanswered)
                 return context.Error(new global::app.error.PermissionDenied(request) { list = [asked.Error] });
@@ -92,10 +111,16 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     /// verification is cached via the Data instance's Properties bag — repeat
     /// Find calls on the same in-memory grant don't re-verify.
     /// </summary>
-    public async Task<global::app.data.@this?> Find(path requestPath, Verb verb)
+    public Task<global::app.data.@this?> Find(path requestPath, Verb verb)
+        // a grant is on the place: the request names where the OS lands for the path — one that lands nowhere the gate
+        // can tell has none
+        => requestPath.Location(_actor.Context.Filesystem) is { } place ? Find(place.Absolute, verb) : Task.FromResult<global::app.data.@this?>(null);
+
+    /// <summary>The first grant allowing <paramref name="verb"/> at <paramref name="place"/> — where the OS lands for a
+    /// path, worked out by the gate once per call; null when none does.</summary>
+    internal async Task<global::app.data.@this?> Find(string place, Verb verb)
     {
-        var request = Grant.Request(
-            _actor.Name, requestPath.Absolute, verb, MatchMode.exact);
+        var request = Grant.Request(_actor, place, verb, MatchMode.exact);
 
         // A grant read here is already trustworthy, so it is asked only whether it allows the request: a persisted
         // grant was verified at the I/O boundary on load (auto-verify-on-read peels + validates its signature
@@ -130,11 +155,11 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         if (persist)
         {
             var setting = await Saved();
-            var kept = new List<Grant>();
+            var grants = new List<Grant>();
             foreach (var row in setting.Grant.Items(_actor.Context))
-                if (await row.Value<Grant>() is { } held && !string.Equals(held.Path, key, StringComparison.Ordinal)) kept.Add(held);
-            kept.Add(__rec);
-            await Save(setting, kept);
+                if (await row.Value<Grant>() is { } entry && !string.Equals(entry.Path, key, StringComparison.Ordinal)) grants.Add(entry);
+            grants.Add(__rec);
+            await Save(setting, grants);
             return;
         }
 
@@ -165,13 +190,13 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         }
 
         var setting = await Saved();
-        var kept = new List<Grant>();
+        var grants = new List<Grant>();
         foreach (var row in setting.Grant.Items(_actor.Context))
-            if (await row.Value<Grant>() is { } held && !(held.Actor == match.Actor && held.Path == match.Path)) kept.Add(held);
-        if (kept.Count < setting.Grant.CountRaw)
+            if (await row.Value<Grant>() is { } grant && !(grant.Actor == match.Actor && grant.Path == match.Path)) grants.Add(grant);
+        if (grants.Count < setting.Grant.CountRaw)
         {
-            var saved = await Save(setting, kept);
-            if (saved.Success) removed = true;
+            var row = await Save(setting, grants);
+            if (row.Success) removed = true;
         }
         return removed;
     }
@@ -180,16 +205,15 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     // and a save would overwrite them).
     private async Task<setting.@this> Saved()
     {
-        await _actor.Setting.Load();
-        return _actor.Setting.Of<setting.@this>();
+        return await _actor.Setting.Get<setting.@this>();
     }
 
     // Saves the grants as the actor's own permission setting — one row, whole: a copy of what the settings hold,
     // with the grants, never the setting they handed out.
     private async Task<global::app.data.@this> Save(setting.@this setting, List<Grant> grants)
     {
-        var saved = (global::app.actor.permission.setting.@this)setting.Copy();
-        saved.Grant = new global::app.type.item.list.@this<Grant>(grants);
-        return await _actor.Setting.Save(saved);
+        var permission = (global::app.actor.permission.setting.@this)setting.Copy();
+        permission.Grant = new global::app.type.item.list.@this<Grant>(grants, _actor.App.type.list[typeof(global::app.type.item.list.@this<Grant>)]);
+        return await _actor.Setting.Save(permission);
     }
 }

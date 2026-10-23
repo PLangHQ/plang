@@ -20,6 +20,22 @@ Several subsystems have resource limits to prevent abuse:
 | **Variable resolution** | `ResolveDeep` depth | 100 levels |
 | **Ed25519 verification** | Header comparison | Constant-time via `CryptographicOperations.FixedTimeEquals` |
 | **File errors** | Error messages | No absolute paths exposed |
+| **Regex** | `NonBacktracking`, else a timeout | A timeout throw is answered at the action's and step's `FromException` (500, fails closed) |
+| **Kept list** | Members in a canonical order (by name, ignoring case) | The digest never depends on insertion order |
+| **Archive unpack** | A link whose target leaves its folder | Refused |
+
+---
+
+## Own settings and identity keys
+
+A setting class marked `[Own]` (`permission`, `identity`) belongs to its actor's own row:
+
+- It takes no run value: `Under()` takes none for it, the setting node's `Set` refuses it (403), and the `setting.save` and `setting.remove` actions refuse it (a step removing the identity row would lose the key). Its row is written only by its owner's code (`Permission.Add` after the prompt, the identity's code) through `actor.Setting.Save`.
+- An `[Own]` row read without a signature is refused loudly (`SettingUnsigned`, 403); a row that can't be read names its key and says to delete it and set it again.
+- An identity's private key is never carried by `get`, `list` or `create` (`Identity.Public()`), nor by `%MyIdentity%`. `export` is its only door: it asks every time, never persisted, and a yes hands the step the key as plain text it can send anywhere, for this call only. Signing reads the full identity through the owner door `GetOrCreateDefaultAsync`.
+- `create`, `rename`, `archive`, `unarchive` and `setDefault` ask through `Permission.Ask`; first-run and the owner's own code never ask.
+
+What the permission prompts guard, and what they do not: `filesystem-permission.md`, "What the prompts guard".
 
 ---
 
@@ -43,9 +59,10 @@ silently. It's the filesystem analogue of the `Console.*` ban below.
 
 **The rule.** A filesystem path in interior C# is `app.type.path.@this`
 (the lowercase `path` alias). `string` only appears at the perimeter:
-CLI args, JSON-on-disk shape (the wire format), scheme-resolved DLL
-loads, and the App root anchors (`App.AbsolutePath`, `App.OsDirectory`,
-`App.OsAbsolutePath` — they define the root, so they can't be lifted).
+CLI args, JSON-on-disk shape (the wire format), and scheme-resolved DLL
+loads. The app's anchors are paths, not strings: `app.filesystem.root` (the
+app's folder, what `/` is) and `app.filesystem.os` (what ships with plang),
+navigable as `%!app.filesystem.root%` and `%!app.filesystem.os%`.
 Crossing the perimeter into memory means calling
 `path.Resolve(rawString, context)`.
 

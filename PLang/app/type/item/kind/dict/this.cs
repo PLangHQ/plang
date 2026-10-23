@@ -5,19 +5,17 @@ namespace app.type.item.kind.dict;
 /// <summary>
 /// The dict kind — a raw CLR <see cref="System.Collections.IDictionary"/> host (a POCO's
 /// <c>Dictionary&lt;string,string&gt;</c>). Owns key-descend (<c>%config.settings.foo%</c>),
-/// entry-enumeration, and object-Output. Also owns the
+/// and entry-enumeration. Also owns the
 /// OUTBOUND convert: <c>dict</c> knows how to build itself FROM a json source, so <c>%x% as
 /// dict</c> (a clr(json) → native dict) is here, not on json — reusing the universal DOM
 /// narrower (<c>item.serializer.json.Parse</c>). Claims <c>IDictionary</c> by assignable match.
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.type.item.@this>
 {
-    public @this() : base("dict") { }
+    public @this(global::app.type.@this owner) : base("dict", owner) { }
 
-    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out (814).
+    // A C# host carrier, never a type a program names: the builder's kind follow-up leaves it out.
     protected override bool? OwnInternal => true;
-
-    protected internal override string Owner => "item";
 
     public override System.Type? ClrForm => typeof(System.Collections.IDictionary);
 
@@ -34,20 +32,6 @@ public sealed class @this : global::app.type.kind.@this
     {
         foreach (System.Collections.DictionaryEntry e in (System.Collections.IDictionary)obj)
             yield return Data(e.Key.ToString() ?? "", e.Value, null, ctx);
-    }
-
-    public override async global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? ctx)
-    {
-        writer.BeginObject();
-        foreach (System.Collections.DictionaryEntry e in (System.Collections.IDictionary)obj)
-        {
-            writer.Name(e.Key.ToString() ?? "");
-            if (e.Value is { } v) await WriteReflected(writer, v, mode, ctx!);
-            else writer.Value(null);
-        }
-        writer.EndObject();
     }
 
     public override async global::System.Threading.Tasks.ValueTask<global::app.data.@this> Convert(

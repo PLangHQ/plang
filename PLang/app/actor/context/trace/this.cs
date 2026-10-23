@@ -17,7 +17,7 @@ public sealed class @this : global::app.type.item.@this
     /// Ticks make file listings sort by build order; the guid suffix prevents
     /// collisions when two contexts are constructed in the same tick.
     /// </summary>
-    [global::app.Out, global::app.Debug]
+    [global::app.Out, global::app.Debug, global::app.LlmBuilder]
     public global::app.type.item.text.@this Id { get; }
 
     /// <summary>
@@ -26,10 +26,11 @@ public sealed class @this : global::app.type.item.@this
     [global::app.Out, global::app.Debug]
     public global::app.type.item.datetime.@this Started { get; }
 
-    public @this()
+    /// <summary>A trace starting now, of the app's <paramref name="types"/>: its own, and its time's datetime.</summary>
+    public @this(global::app.type.list.@this types) : base(types[typeof(@this)])
     {
         var started = DateTimeOffset.UtcNow;
-        Started = new(started);
+        Started = new(started, types[typeof(global::app.type.item.datetime.@this)]);
         Id = $"{started.Ticks}_{Guid.NewGuid().ToString("N")[..8]}";
     }
 }

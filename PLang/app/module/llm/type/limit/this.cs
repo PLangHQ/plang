@@ -12,13 +12,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Shape => "object";
 
     /// <summary>The most tokens in the answer — <c>%!llm.query.setting.limit.token%</c>.</summary>
-    [Out, Store] public global::app.type.item.number.@this Token { get; }
+    [Out, Store, LlmBuilder] public global::app.type.item.number.@this Token { get; }
 
     /// <summary>The most tool calls before the query stops — <c>%!llm.query.setting.limit.tool%</c>.</summary>
-    [Out, Store] public global::app.type.item.number.@this Tool { get; }
+    [Out, Store, LlmBuilder] public global::app.type.item.number.@this Tool { get; }
 
     /// <summary>How many times an answer that fails validation is asked again — <c>%!llm.query.setting.limit.retry%</c>.</summary>
-    [Out, Store] public global::app.type.item.number.@this Retry { get; }
+    [Out, Store, LlmBuilder] public global::app.type.item.number.@this Retry { get; }
 
     /// <summary>The defaults: 16000 tokens, ten tool calls, no retry.</summary>
     public @this() : this(16000, 10, 0) { }
@@ -36,7 +36,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override bool IsLeaf => false;
     /// <summary>A limit is made from a dict of its members — any left out keeps its default; a member that is no
     /// member of a limit, or a value it can't take, declines with why.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
         if (raw is @this limit) return limit;
         if (raw is not global::app.type.item.dict.@this dict)
@@ -44,10 +44,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             data.Fail(new global::app.error.@this("a limit is {token, tool, retry}", "LimitInvalid", 400));
             return null;
         }
-        var fresh = new @this();
-        global::app.type.item.number.@this token = fresh.Token;
-        global::app.type.item.number.@this tool = fresh.Tool;
-        global::app.type.item.number.@this retry = fresh.Retry;
+        var @default = new @this();
+        global::app.type.item.number.@this token = @default.Token;
+        global::app.type.item.number.@this tool = @default.Tool;
+        global::app.type.item.number.@this retry = @default.Retry;
         foreach (var entry in dict.Entries(data.Context!))
             switch (entry.Name.ToLowerInvariant())
             {
@@ -63,14 +63,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>Writes itself as its dict.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        writer.Name("token"); Token.Write(writer);
-        writer.Name("tool"); Tool.Write(writer);
-        writer.Name("retry"); Retry.Write(writer);
+        writer.Name("token"); await Token.Output(writer);
+        writer.Name("tool"); await Tool.Output(writer);
+        writer.Name("retry"); await Retry.Output(writer);
         writer.EndObject();
-        return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 }

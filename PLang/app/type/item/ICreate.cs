@@ -42,21 +42,21 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
 
     /// <summary>
     /// The birth — the one door a declared value is made through (the typed ask <c>Data.Value&lt;T&gt;()</c>,
-    /// the type door): <paramref name="raw"/> made a <typeparamref name="TSelf"/> as <paramref name="declared"/>
+    /// the type door): <paramref name="raw"/> made a <typeparamref name="TSelf"/> as <paramref name="type"/>
     /// says (its facts: kind, template), for the binding <paramref name="data"/> — which names it, carries the
-    /// context, and takes the reason of a decline (<c>data.Fail</c>). A null <paramref name="declared"/> is "as
+    /// context, and takes the reason of a decline (<c>data.Fail</c>). A null <paramref name="type"/> is "as
     /// the binding declares" (<c>data.Type</c>, asked only by a type that needs the declaration — so the typed
     /// ask pays nothing for it). A type that needs none of the declaration ignores it; a type that resolves
     /// against an actor (<c>path</c>/<c>file</c>/<c>url</c>) reads <c>data.Context</c>. The default runs the
     /// pure core, then the container deserialize, then fails typed.
     /// </summary>
-    static virtual TSelf? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    static virtual TSelf? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         // Pass-through — the same instance rides out.
         if (raw is TSelf self) return self;
 
         // The pure core builds it — the type owns its own arms (CLR/item coercions in one switch).
-        if (TSelf.Create(raw) is { } made) return made;
+        if (TSelf.Create(raw) is { } value) return value;
 
         // A dict/list deserializes ITSELF to a record / domain item (step, …). Only a
         // container reaches this — a genuine deserialize failure surfaces (it throws).

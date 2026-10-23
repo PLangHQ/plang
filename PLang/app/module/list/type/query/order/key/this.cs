@@ -44,18 +44,19 @@ public sealed class @this
         {
             var read = await _field.Settle();
             if (!read.Success) return read;
-            by = (await read.Value())?.ToString() is { Length: > 0 } name ? new global::app.type.item.text.@this(name) : null;
+            by = (await read.Value())?.ToString() is { Length: > 0 } name
+                ? new global::app.type.item.text.@this(name, context.App.type.list[typeof(global::app.type.item.text.@this)]) : null;
         }
         return await rows.Sort(by, _desc, context);
     }
 
     /// <summary>Writes the key as <c>{field, desc}</c>, its field as written; a key with no field writes only its
     /// desc.</summary>
-    internal void Output(global::app.type.format.IWriter writer)
+    internal async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         if (_field != null) { writer.Name("field"); writer.String(_field.Peek().ToString() ?? ""); }
-        writer.Name("desc"); _desc.Write(writer);
+        writer.Name("desc"); await _desc.Output(writer);
         writer.EndObject();
     }
 }

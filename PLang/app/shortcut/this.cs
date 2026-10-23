@@ -12,8 +12,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     global::app.type.item.IMatch<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, list.@this>
 {
-    /// <summary>The shortcut <paramref name="goal"/> is, named by its file.</summary>
-    internal @this(global::app.goal.@this goal) => Goal = goal;
+    /// <summary>The shortcut <paramref name="goal"/> is, named by its file — a value of the app's shortcut
+    /// <paramref name="type"/>.</summary>
+    internal @this(global::app.goal.@this goal, global::app.type.@this type) : base(type) => Goal = goal;
 
     /// <summary>Its name — its goal's file (<c>goal.goal</c> → <c>goal</c>), read as <c>%!goal%</c>.</summary>
     [global::app.Out]
@@ -41,7 +42,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// the read.</summary>
     public async System.Threading.Tasks.Task<global::app.data.@this> Read(global::app.actor.context.@this asker)
     {
-        await using (asker.call.Isolate(null))
+        await using (asker.call.Isolate(null, await asker.call.Setting()))
             return await Goal.Start(asker);
     }
 

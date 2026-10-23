@@ -4,9 +4,10 @@
   "step": [
     {
       "index": 0,
-      "text": "write %message% to echo",
+      "text": "write 'again' to echo",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -16,29 +17,23 @@
             {
               "name": "Data",
               "type": {
-                "name": "item",
-                "template": "plang"
+                "name": "text"
               },
-              "value": "%message%",
-              "variable": [
-                {
-                  "text": "%message%",
-                  "code": [
-                    {
-                      "variable": "message"
-                    }
-                  ]
-                }
-              ]
+              "value": "again"
+            },
+            {
+              "name": "channel",
+              "type": {
+                "name": "text"
+              },
+              "value": "echo"
             }
           ]
         }
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/module/channel/goalchannelrecursion/EchoBack.goal",
-  "prPath": "/module/channel/goalchannelrecursion/.build/echoback.pr",
-  "hash": "2efbde2d405bdcd05e5e256e07ce8ca8baa12134fc97d386d1d45ffb7feb1e95"
+  "file": "EchoBack.goal",
+  "hash": "4071348b46dff44024f21a8aedf359170933c77518dc1cd092fba96985fe6a6e"
 }

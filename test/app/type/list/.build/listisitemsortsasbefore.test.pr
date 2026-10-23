@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %nums% = [3, 1, 2]",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -54,7 +55,8 @@
       "index": 1,
       "text": "sort %nums%",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -84,7 +86,17 @@
               "type": {
                 "name": "query"
               },
-              "value": {}
+              "value": {"order":{}}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
             }
           ]
         },
@@ -135,7 +147,8 @@
       "index": 2,
       "text": "get first item from %nums%, write to %first%",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -217,7 +230,8 @@
       "index": 3,
       "text": "assert %first% equals 1",
       "line": {
-        "number": 8
+        "number": 8,
+        "indent": 0
       },
       "code": [
         {
@@ -257,7 +271,8 @@
       "index": 4,
       "text": "get last item from %nums%, write to %last%",
       "line": {
-        "number": 9
+        "number": 9,
+        "indent": 0
       },
       "code": [
         {
@@ -339,7 +354,8 @@
       "index": 5,
       "text": "assert %last% equals 3",
       "line": {
-        "number": 10
+        "number": 10,
+        "indent": 0
       },
       "code": [
         {
@@ -376,9 +392,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/app/type/list/ListIsItemSortsAsBefore.test.goal",
-  "prPath": "/app/type/list/.build/listisitemsortsasbefore.test.pr",
+  "file": "ListIsItemSortsAsBefore.test.goal",
   "hash": "7e782eba57da2272ed1fa124742b375f7cf13cdd0667bd659f2e04fcddb9f9e3"
 }

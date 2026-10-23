@@ -13,7 +13,7 @@ public sealed class @this : query.@this
     // the clauses, in the order the query writes them
     private readonly IReadOnlyList<query.@this> _clause;
 
-    private @this(IReadOnlyList<query.@this> clause) => _clause = clause;
+    private @this(IReadOnlyList<query.@this> clause, global::app.type.@this type) : base(type) => _clause = clause;
 
     /// <summary>The query a dict is: each key a clause, made from what the key holds. A key that is no clause, or a
     /// clause that doesn't read, declines with why on <paramref name="data"/>, naming the clause.</summary>
@@ -29,25 +29,23 @@ public sealed class @this : query.@this
                     $"'{entry.Name}' is no part of a query — its parts are {Names}", "QueryInvalid", 400));
                 return null;
             }
-            if (make(entry, data, context) is not { } made)
+            if (make(entry, data, context) is not { } clause)
             {
                 // the clause's why, said as the clause's: "where: …"
                 var why = data.Error!;
                 data.Fail(new global::app.error.@this($"{entry.Name}: {why.Message}", why.Key, why.Status) { list = [why] });
                 return null;
             }
-            clauses.Add(made);
+            clauses.Add(clause);
         }
         if (clauses.Count == 0)
         {
             data.Fail(new global::app.error.@this($"a query names at least one part: {Names}", "QueryInvalid", 400));
             return null;
         }
-        return new @this(clauses);
+        // a query value reads as query, the type itself: the app's
+        return new @this(clauses, context.App.type.list[typeof(query.@this)]);
     }
-
-    /// <summary>A query value reads as <c>query</c>, the type itself.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(query.@this));
 
     /// <summary>Its clauses in SQL's order (where, group, distinct, order), or as written, each applying itself to
     /// what the one before answered. A new list; <paramref name="list"/> is unchanged.</summary>
@@ -67,14 +65,13 @@ public sealed class @this : query.@this
         => _clause[0].Apply(rows, _clause.Skip(1).Concat(rest).ToList(), context);
 
     /// <summary>Writes itself as its dict: each clause under its name, in the order written.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         foreach (var clause in _clause)
         {
             writer.Name(clause.Name);
-            await clause.Output(writer, mode, context);
+            await clause.Output(writer);
         }
         writer.EndObject();
     }

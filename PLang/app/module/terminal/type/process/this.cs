@@ -17,6 +17,10 @@ namespace app.module.terminal.type.process;
 [PlangType("process")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
+    /// <summary>A started program, born holding <paramref name="type"/> — the app's process.</summary>
+    public @this(global::app.type.@this type) : base(type)
+        => Remote = new(type.Types![typeof(global::app.parent.@this)]);
+
     /// <summary>The program's full path.</summary>
     [LlmBuilder, Out] public string Program { get; set; } = "";
 
@@ -34,7 +38,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// pipe ends each with NUL). Null when it was started without one.</summary>
     [LlmBuilder, Out] public global::app.channel.type.stream.@this? pipe { get; internal set; }
 
-    /// <summary>It speaks plang's own format — a plang started with <c>--app.type.format=application/plang</c>: what it
+    /// <summary>It speaks plang's own format — a plang started with <c>--channel.setting.format=plang</c>: what it
     /// writes arrives as Data (an ask as an Ask), and what is sent to it goes as Data, signed.</summary>
     internal bool Plang { get; init; }
 
@@ -83,11 +87,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         string line;
         if (Plang)
         {
-            using var written = new MemoryStream();
+            using var stream = new MemoryStream();
             // what is sent is the value itself (what %answer% names), signed as it is — never the reference
-            var encoded = await PlangFormat(context).Encode(written, context.Ok(await data.Value()), context);
+            var encoded = await PlangFormat(context).Encode(stream, context.Ok(await data.Value()), context);
             if (!encoded.Success) return encoded;
-            line = Encoding.UTF8.GetString(written.ToArray()).TrimEnd('\r', '\n');
+            line = Encoding.UTF8.GetString(stream.ToArray()).TrimEnd('\r', '\n');
         }
         else
         {
@@ -95,9 +99,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             if (value is Text t) line = t.Clr<string>() ?? "";
             else
             {
-                using var written = new MemoryStream();
-                await Text.Encode(written, context.Ok(value), context, null, null, CancellationToken.None);
-                line = Encoding.UTF8.GetString(written.ToArray()).ReplaceLineEndings(" ");
+                using var stream = new MemoryStream();
+                await Text.Encode(stream, context.Ok(value), context, global::app.View.Out, null, CancellationToken.None);
+                line = Encoding.UTF8.GetString(stream.ToArray()).ReplaceLineEndings(" ");
             }
         }
         var sent = await Write(line, context);
@@ -217,7 +221,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 screen?.Show(message);
                 if (onOutput != null)
                     await global::app.module.on.code.Gate.Call(onOutput,
-                        new Data("!data", new global::app.type.item.binary.@this(message), context.App.type.list["binary"], context: context), context);
+                        new Data("!data", new global::app.type.item.binary.@this(message, context.App.type.list["binary"]), context.App.type.list["binary"], context: context), context);
             }
             await said;   // its last stderr lines are delivered too
         });
@@ -308,14 +312,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // A line from a plang that didn't read as Data: said on the error channel, never swallowed.
     private static Task Unread(Error why, Context context) => context.Actor.Channel.Report(context.Error(why));
 
-    /// <summary>plang's own format — the one a plang started with --app.type.format=application/plang speaks.</summary>
+    /// <summary>plang's own format — the one a plang started with --channel.setting.format=plang speaks.</summary>
     internal static global::app.type.kind.@this PlangFormat(Context context) => context.App.type.list.Mime("application/plang");
 
     /// <summary>The app this program runs, when it is a plang that takes calls on its input (PlangOS): its goals are
     /// called like this app's — <c>call goal Question in %container%</c>, <c>%container.goal["Question"]%</c> — the call
     /// going down its input, the answer coming back beside its frames. The same link as <c>%!app.parent%</c>, the
     /// other way.</summary>
-    internal global::app.parent.@this Remote { get; } = new();
+    internal global::app.parent.@this Remote { get; }
 
     /// <summary>One step by dot: <c>goal</c> — the goals of the app it runs; any other member as every item's.</summary>
     public override ValueTask<Data> Get(Data parent, string key)

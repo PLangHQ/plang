@@ -2,13 +2,12 @@ namespace app.type.item.@null;
 
 /// <summary>
 /// PLang <c>null</c> value — the null <em>value</em> (a present value that is
-/// null), hosted as a process-wide <b>singleton</b> (<see cref="Instance"/>) so
-/// the scattered <c>is null</c> / <c>== null</c> value-switches dissolve onto a
-/// type like every other scalar. There is one null in the world; it is never
-/// per-value allocated.
+/// null), a type like every other scalar so the scattered <c>is null</c> /
+/// <c>== null</c> value-switches dissolve onto it. Each null is born holding its
+/// app's null type (or the declared type it is the null of); there is no shared one.
 ///
 /// <para><b>The null value, and the absent item.</b> A <c>Data</c> whose value is
-/// null carries this singleton (a present null, <c>IsInitialized = true</c>). A
+/// null carries its app's null (a present null, <c>IsInitialized = true</c>). A
 /// <em>missing</em> variable / <c>NotFound</c> / uninitialised Data
 /// (<c>IsInitialized = false</c>) holds it too, so the item answers for the absence:
 /// not truthy, empty, <c>== null</c>. Whether the Data was given is Data's own
@@ -24,27 +23,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 {
     public static string Shape => "null";
 
-    /// <summary>The one typeless null value in the world.</summary>
-    public static @this Instance { get; } = new();
-
-    private @this() { }
-
-    // A TYPED null — a declared slot that holds no value yet (`set %x% as path`
-    // with no value, a tool-definition parameter the LLM will fill, a typed null
-    // result). It is still null (IsNull, falsy, empty, renders/serialises null);
-    // the declaration only surfaces through Mint/Type/Kind. Absorbs the former
-    // `item.absent` — a value-less slot is just a null that remembers its type.
-    private readonly global::app.type.@this? _declared;
-
-    internal @this(string typeName, string? kind = null)
-        => _declared = string.IsNullOrWhiteSpace(typeName) ? null : new global::app.type.@this(typeName, kind);
-
-    /// <summary>A null of <paramref name="declared"/> — the type as declared, its class with it.</summary>
-    internal @this(global::app.type.@this declared) => _declared = declared;
-
-    /// <summary>A typeless null mints "null"; a typed null answers its declared
-    /// type/kind so an empty <c>path</c> slot still answers <c>path</c>.</summary>
-    protected internal override global::app.type.@this Type => _declared ?? base.Type;
+    /// <summary>A null of <paramref name="type"/> — born holding the type as declared, its class with it.</summary>
+    internal @this(global::app.type.@this type) : base(type) { }
 
     /// <summary>
     /// Is this raw value "null" in PLang's sense — a C# null reference OR the born-native
@@ -75,7 +55,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override bool IsTruthy() => false;
 
     public override bool IsLeaf => true;
-    public override void Write(global::app.type.format.IWriter w) => w.Null();
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.Null(); return default; }
 
     /// <summary>The raw form of null is C# null.</summary>
 

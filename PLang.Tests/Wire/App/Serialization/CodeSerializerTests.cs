@@ -9,12 +9,16 @@ namespace PLang.Tests.App.Serialization;
 
 public class CodeSerializerTests
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+
     private sealed class CaptureWriter : global::app.type.format.IWriter
     {
-        public string Format { get; }
+        public global::app.type.kind.@this Kind { get; }
         public object? Last { get; private set; }
         public string LastMethod { get; private set; } = "";
-        public CaptureWriter(string format) { Format = format; }
+        public CaptureWriter(global::app.type.kind.@this kind, global::app.actor.context.@this context) { Kind = kind; Context = context; }
+        public global::app.View View => global::app.View.Out;
+        public global::app.actor.context.@this Context { get; }
         public void Null() { }
         public void Bool(bool v) { }
         public void Int(int v) { }
@@ -28,22 +32,20 @@ public class CodeSerializerTests
         public void Guid(System.Guid v) { }
         public void Enum(System.Enum v) { }
         public void Decimal(decimal v) { }
-        public void Bytes(byte[] v) { }
+        public void Bytes(byte[] v, global::app.type.kind.@this kind) { }
         public void BeginArray(int c) { }
         public void BeginObject() { LastMethod = "BeginObject"; }
         public void Name(string n) { LastMethod = "Name"; Last = n; }
         public void EndObject() { LastMethod = "EndObject"; }
         public void EndArray() { }
-        public void BeginRecord(global::app.data.@this r) { }
-        public void EndRecord() { }
         public void Value(object? n) { }
     }
 
     [Test] public async Task Code_DefaultFormat_EmitsStringSource()
     {
-        var c = new code("hello", "text");
-        var w = new CaptureWriter("json");
-        c.Write(w);
+        var c = new code("hello", "text", app.type.list[typeof(code)]);
+        var w = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
+        await c.Output(w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(w.Last).IsEqualTo("hello");
     }
@@ -54,8 +56,8 @@ public class CodeSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
-            w.Value(new code("Console.WriteLine();", "csharp"));
+            var w = new global::app.type.item.kind.json.Writer(utf, global::app.View.Out, app.actor.list.System.Context);
+            await (new code("Console.WriteLine();", "csharp", app.type.list[typeof(code)])).Output(w);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json.Contains("Console.WriteLine")).IsTrue();
@@ -63,8 +65,8 @@ public class CodeSerializerTests
 
     [Test] public async Task Code_PlangFormat_WritesSource()
     {
-        var w = new CaptureWriter("plang");
-        new code("print(1)", "python").Write(w);
+        var w = new CaptureWriter(app.type.list["wire"].kind["plang"]!, app.actor.list.System.Context);
+        await (new code("print(1)", "python", app.type.list[typeof(code)])).Output(w);
         await Assert.That(w.Last).IsEqualTo("print(1)");
     }
 
@@ -72,8 +74,8 @@ public class CodeSerializerTests
     {
         // text Format writes the plain source — no HTML wrap (the HTML
         // writer is a follow-up).
-        var w = new CaptureWriter("text");
-        new code("body", "text").Write(w);
+        var w = new CaptureWriter(app.type.list["text"].kind, app.actor.list.System.Context);
+        await (new code("body", "text", app.type.list[typeof(code)])).Output(w);
         await Assert.That(w.Last).IsEqualTo("body");
         await Assert.That(((string)w.Last!).Contains("<pre>") || ((string)w.Last!).Contains("<code>")).IsFalse();
     }

@@ -30,7 +30,7 @@ a post-build cleanup.
 
 ```bash
 cd os/
-plang build '--build={"cache":"skip","files":[
+plang build '--build.setting={"cache":"skip","files":[
   "system/builder/Build.goal",
   "system/builder/BuildGoal.goal",
   "system/builder/BuildGoal/Start.goal",
@@ -108,7 +108,7 @@ and confirming nothing moved. Build from the project root with a relative filter
 `CLAUDE.md` "Running plang Tests"):
 
 ```bash
-cd Tests && ../PlangConsole/bin/Debug/net10.0/plang build '--build={"files":"<Area>/Start.goal"}'
+cd Tests && ../PlangConsole/bin/Debug/net10.0/plang build '--build.setting={"files":"<Area>/Start.goal"}'
 ```
 
 With the cache on and the source unchanged, every step should report cached (`[≡]`) and the

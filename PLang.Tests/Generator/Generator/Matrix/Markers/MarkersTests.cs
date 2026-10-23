@@ -18,7 +18,7 @@ public class IContextHandlerTests
     public async Task IContextHandler_ContextSameInstance_AsExecuteAsyncArg()
     {
         await using var app = new global::app.@this("/app").Testing();
-        var action = new PrAction { Module = app.Module("matrix.markers"), Name = "icontexthandler" };
+        var action = new PrAction(app.type.list) { Module = app.Module("matrix.markers"), Name = "icontexthandler" };
         var (h, err) = await new IContextHandler(app.actor.list.User.Context).Resolve(action, app.actor.list.User.Context);
         await Assert.That(err).IsNull();
         await Assert.That(ReferenceEquals(((IContextHandler)h!).Context, app.actor.list.User.Context)).IsTrue();
@@ -54,7 +54,7 @@ public class IStepHandlerTests
     public async Task IStepHandler_StepAssigned_BeforeRun()
     {
         await using var app = new global::app.@this("/app").Testing();
-        var step = new Step { Index = 0, Text = "step" };
+        var step = new Step(app.type.list) { Index = 0, Text = "step" };
         var result = await MatrixRunner.RunAsync<IStepHandler>(app, step: step);
         await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
     }
@@ -84,7 +84,7 @@ public class MultiMarkerHandlerTests
         var context = await MatrixRunner.RunAsync<IContextHandler>(app);
         var ch = await MatrixRunner.RunAsync<IChannelHandler>(app);
         var act = await MatrixRunner.RunAsync<IActionHandler>(app);
-        var step = await MatrixRunner.RunAsync<IStepHandler>(app, step: new Step { Index = 0 });
+        var step = await MatrixRunner.RunAsync<IStepHandler>(app, step: new Step(app.type.list) { Index = 0 });
         var stc = await MatrixRunner.RunAsync<IStaticHandler>(app);
 
         await Assert.That((await context.Data.Value())?.ToString()).IsEqualTo("true");

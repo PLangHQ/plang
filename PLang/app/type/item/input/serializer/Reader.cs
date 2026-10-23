@@ -13,7 +13,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("input", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("input", kind), ctx.Context]);
         reader.BeginObject();
         string? variant = null, what = null, button = null, name = null;
         int x = 0, y = 0, clicks = 0, dx = 0, dy = 0, mods = 0, vk = 0;
@@ -44,14 +44,16 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             }
         }
         reader.EndObject();
+        var types = ctx.Context.App.type.list;
+        var modifier = new modifier.list.@this(mods, types);
         return variant switch
         {
-            "mouse" => new mouse.@this(Parsed<mouse.Gesture>(what, "mouse"), x, y,
-                button == null ? mouse.Button.none : Parsed<mouse.Button>(button, "button"), clicks, dx, dy, mods, stamp),
-            "key" => new key.@this(what == "down" ? true : what == "up" ? false
-                : throw new FormatException($"a key goes down or up, not '{what}'"), (uint)scancode, extended, vk, name, mods, stamp),
-            "text" => new text.@this(what ?? "", stamp),
-            "nav" => new navigate.@this(Parsed<navigate.Direction>(what, "nav"), stamp),
+            "mouse" => new mouse.@this(types, Parsed<mouse.Gesture>(what, "mouse"), x, y,
+                button == null ? mouse.Button.none : Parsed<mouse.Button>(button, "button"), clicks, dx, dy, modifier, stamp),
+            "key" => new key.@this(types, what == "down" ? true : what == "up" ? false
+                : throw new FormatException($"a key goes down or up, not '{what}'"), (uint)scancode, extended, vk, name, modifier, stamp),
+            "text" => new text.@this(types, what ?? "", stamp),
+            "nav" => new navigate.@this(types, Parsed<navigate.Direction>(what, "nav"), stamp),
             _ => throw new FormatException("an input names what it is first: mouse, key, text or nav"),
         };
     }

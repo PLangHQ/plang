@@ -62,25 +62,18 @@ public sealed class OpenAi : ILlm
         var context = action.Context;
 
         // --- Config: the llm module's settings — a saved key wins, else its environment's ---
-        var llm = context.Setting.Of<global::app.module.llm.setting.@this>();
+        var llm = await context.Setting.Get<global::app.module.llm.setting.@this>();
         var endpoint = llm.Endpoint.ToString();
-        var held = await llm.Asked(context);
-        if (!held.Success) return held;
-        var apiKey = (await held.Value())!.ToString();
+        var secret = await llm.Asked(context);
+        if (!secret.Success) return secret;
+        var apiKey = (await secret.Value())!.ToString();
         var model = ((action.Model == null ? null : await action.Model.Value())?.ToString()) is { Length: >0 } __m ? __m : llm.Model.ToString();
 
         // --- Validate ---
-        // HACK (minimal): Messages.Value can be NULL (not just empty) — the [IsNotNull]
-        // guard checks the parameter's presence, not the lazily-resolved value. Seen in the
-        // builder self-build: when on.error RETRIES QueryAndValidatePlan
-        // (BuildGoal/Plan.goal:26), the parent-scope %messages% variable resolves to null on
-        // the retry (it's fine on the first call), so `action.Messages.Value!.Count` NRE'd
-        // and crashed the whole build with a bare NullReferenceException. Treat null like
-        // empty → clean ValidationError instead of a crash.
-        // TODO(coder): real fix is in the retry/scope handling — a sub-goal's access to a
-        // parent-scope variable should survive an on.error retry (or pass %messages% as
-        // a goal.call parameter to QueryAndValidatePlan so it re-binds each attempt). See
-        // .bot/type-kind-strict/builder/v2/baseline-findings.md.
+        // Messages can resolve to null (not just empty): the [IsNotNull] guard checks the
+        // parameter's presence, not the lazily-resolved value, and a parent-scope %messages%
+        // reads null when on.error retries the sub-goal that asks (BuildGoal/Plan.goal:26).
+        // Null is treated as empty: a ValidationError, never a NullReferenceException.
         // The .NET edge: the message list lowers ITSELF to the API's CLR shape.
         var rawMessages = (await action.Message.Value()).Clr<List<LlmMessage>>();
         if (rawMessages is not { Count: > 0 })
@@ -222,14 +215,14 @@ public sealed class OpenAi : ILlm
 
             var httpAction = new request(context)
             {
-                Url = new data.@this<global::app.type.item.text.@this>("", endpoint),
-                Method = new data.@this<global::app.type.item.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
+                Url = new data.@this<global::app.type.item.text.@this>("", endpoint, context: context),
+                Method = new data.@this<global::app.type.item.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST, context: context),
                 Body = new data.@this("", body, context: context),
-                Header = new data.@this<global::app.type.item.dict.@this>("", (global::app.type.item.dict.@this)global::app.type.item.@this.Create(headers, context)),
-                Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true),
-                Timeout = new data.@this<global::app.type.item.duration.@this>("", new global::app.type.item.duration.@this(System.TimeSpan.FromMinutes(2))),
+                Header = new data.@this<global::app.type.item.dict.@this>("", (global::app.type.item.dict.@this)global::app.type.item.@this.Create(headers, context), context: context),
+                Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true, context: context),
+                Timeout = new data.@this<global::app.type.item.duration.@this>("", global::app.type.item.duration.@this.Create(System.TimeSpan.FromMinutes(2), context), context: context),
                 OnStream = action.OnStream,
-                StreamAs = (action.OnStream == null ? null : await action.OnStream.Value()) != null ? new data.@this<global::app.type.item.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
+                StreamAs = (action.OnStream == null ? null : await action.OnStream.Value()) != null ? new data.@this<global::app.type.item.choice.@this<StreamFormat>>("", StreamFormat.SSE, context: context) : default
             };
 
             data.@this httpResult = await new global::app.goal.step.action.@this(httpAction, context).Start(context);
@@ -414,7 +407,7 @@ public sealed class OpenAi : ILlm
             {
                 // The answer is the validator's %response%, in a frame for it — never the caller's own variables.
                 data.@this validationResult;
-                await using (context.call.Push([new data.@this("response", extracted, context: context)], validator))
+                await using (context.call.Push([new data.@this("response", extracted, context: context)], await context.call.Setting(), validator))
                     validationResult = await validator.Start(context);
 
                 if (!validationResult.Success)
@@ -521,11 +514,13 @@ public sealed class OpenAi : ILlm
     private static async Task<data.@this> Call(query action, ToolCall toolCall, List<Tool>? tools)
     {
         var context = action.Context;
+        // one ask for the tool call: its OnToolCall frame and the tool's own are pushed through this door
+        var setting = await context.call.Setting();
 
         // OnToolCall — starting. The run-state binds in a frame for the held call (never the caller's own
         // variables: a user's %name% stays theirs); the held call runs as itself.
         if (action.OnToolCall != null && await action.OnToolCall.Value() is { } onToolCall)
-            await using (context.call.Push(toolCall.State("starting", null, context), onToolCall))
+            await using (context.call.Push(toolCall.State("starting", null, context), setting, onToolCall))
                 await onToolCall.Start(context);
 
         if (tools?.Find(t => t.Name == toolCall.Name) is not { } tool)
@@ -537,7 +532,7 @@ public sealed class OpenAi : ILlm
         // keeps the frame it was started in).
         var parameters = tool.Arguments(toolCall.Arguments, context);
         if (parameters.Find(p => !p.Success) is { } unread) return unread;
-        await using (context.call.Isolate(parameters, tool.Held))
+        await using (context.call.Isolate(parameters, setting, tool.Held))
             return await tool.Held.Start(context);
     }
 
@@ -561,7 +556,7 @@ public sealed class OpenAi : ILlm
 
         // OnToolCall — completed
         if (action.OnToolCall != null && await action.OnToolCall.Value() is { } onToolCall)
-            await using (context.call.Push(toolCall.State("completed", result, context), onToolCall))
+            await using (context.call.Push(toolCall.State("completed", result, context), await context.call.Setting(), onToolCall))
                 await onToolCall.Start(context);
 
         return result;
@@ -871,9 +866,8 @@ public sealed class OpenAi : ILlm
         var props = new Dictionary<string, object?>();
 
         // The cache entry round-trips as a native dict (in-memory) or a clr(json) (through the
-        // json reader) — both enumerate uniformly. The old per-shape reconstruction
-        // (dict / Clr{JsonElement} / Clr{Dictionary}) existed ONLY because a JsonElement
-        // couldn't survive the cache; a clr(json) round-trips as raw json now.
+        // json reader) — both enumerate uniformly: a clr(json) round-trips as raw json, so no
+        // per-shape reconstruction is needed.
         System.Collections.Generic.IEnumerable<data.@this>? entries = cachedValue switch
         {
             global::app.type.item.dict.@this d => d.Entries(cached.Context),
@@ -952,12 +946,12 @@ public sealed class OpenAi : ILlm
             if (opened.Peek() is not { IsSequence: false, IsLeaf: false } members)
                 return [context.Error(new ServiceError($"the arguments of {Name} are not an object of named arguments", "ArgumentsNotAnObject", 400))];
 
-            var declared = Declared.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var names = Declared.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
             foreach (var (_, argument) in members.EnumerateItems(context))
             {
-                if (!declared.Contains(argument.Name))
+                if (!names.Contains(argument.Name))
                     return [context.Error(new ServiceError(
-                        $"'{argument.Name}' is not an argument of {Name}" + (declared.Count == 0 ? " — it takes none" : $" — it takes {string.Join(", ", declared)}"),
+                        $"'{argument.Name}' is not an argument of {Name}" + (names.Count == 0 ? " — it takes none" : $" — it takes {string.Join(", ", names)}"),
                         "UnknownArgument", 400))];
                 arguments.Add(argument);
             }
@@ -973,11 +967,11 @@ public sealed class OpenAi : ILlm
         var tools = new List<Tool>();
         foreach (var row in list.Items(action.Context))
         {
-            if (row.Peek() is not global::app.goal.step.action.@this held) continue;
-            if ((await held.Bind(action.Context)).Handler is not global::app.module.goal.Call call) continue;
+            if (row.Peek() is not global::app.goal.step.action.@this tool) continue;
+            if ((await tool.Bind(action.Context)).Handler is not global::app.module.goal.Call call) continue;
             // a tool goes by its goal's name as written, the leaf of an address
-            var goal = held["Name"]?.Value?.RawText ?? "";
-            tools.Add(new Tool(held, call, goal[(goal.LastIndexOf('/') + 1)..]));
+            var goal = tool["Name"]?.Value?.RawText ?? "";
+            tools.Add(new Tool(tool, call, goal[(goal.LastIndexOf('/') + 1)..]));
         }
         return tools;
     }

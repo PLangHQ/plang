@@ -264,7 +264,7 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %x% and %y% inside"
             }
         };
-        context.Variable.Set(new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.@this>>("messages", new global::app.type.item.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d))), context: context));
+        context.Variable.Set(new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.@this>>("messages", new global::app.type.item.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d)), _app.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.@this>)]), context: context));
 
         var paramData = PLang.Tests.Shared.Make.Built(context, "Messages", "%messages%");
         var result = paramData.As<global::app.type.item.list.@this<global::app.type.item.dict.@this>>(await paramData.Value<global::app.type.item.list.@this<global::app.type.item.dict.@this>>());
@@ -299,7 +299,7 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %goal.Name% and %buildStart% inside"
             }
         };
-        context.Variable.Set(new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.@this>>("fixerMessages", new global::app.type.item.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d))), context: context));
+        context.Variable.Set(new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.@this>>("fixerMessages", new global::app.type.item.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d)), _app.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.@this>)]), context: context));
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
         var paramData = PLang.Tests.Shared.Make.Built(context, "Messages", "%fixerMessages%");

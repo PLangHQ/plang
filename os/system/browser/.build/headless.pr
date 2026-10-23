@@ -1,12 +1,13 @@
 {
   "name": "Headless",
-  "comment": "The browser off-screen: headless Chromium rendering one page, DevTools over its pipe (fd 3 and 4), no port. It starts\nblank, at its default size: the page and the size are the caller's to give, over the pipe — never on this command line.\nHeadless Chromium says \"HeadlessChrome\" in its user agent and bot checks (Cloudflare) stop there, so it says a normal one.\nTrusted by origin (579): the program, its flags and environment are named here, with only the app's own anchor\n%!app.AbsolutePath%.",
+  "comment": "The browser off-screen: headless Chromium rendering one page, DevTools over its pipe (fd 3 and 4), no port. It starts\nblank, at its default size: the page and the size are the caller's to give, over the pipe — never on this command line.\nHeadless Chromium says \"HeadlessChrome\" in its user agent and bot checks (Cloudflare) stop there, so it says a normal one.\nTrusted by origin (579): the program, its flags and environment are named here, with only the app's own anchor\n%!app.filesystem.root%.",
   "step": [
     {
       "index": 0,
-      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--headless', '--disable-gpu', '--hide-scrollbars',\n'--no-first-run', '--no-default-browser-check', '--user-data-dir=%!app.AbsolutePath%/.browser',\n'--remote-debugging-pipe',\n'--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36',\n'about:blank', with a clean environment, copying HOME from plang's environment,\nkeep running, with pipe, write to %program%",
+      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--headless', '--disable-gpu', '--hide-scrollbars',\n'--no-first-run', '--no-default-browser-check', '--user-data-dir=%!app.filesystem.root%/.browser',\n'--remote-debugging-pipe',\n'--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36',\n'about:blank', with a clean environment, copying HOME from plang's environment,\nkeep running, with pipe, write to %program%",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -26,30 +27,33 @@
                 "name": "list",
                 "template": "plang"
               },
-              "value": ["--headless","--disable-gpu","--hide-scrollbars","--no-first-run","--no-default-browser-check","--user-data-dir=%!app.AbsolutePath%/.browser","--remote-debugging-pipe","--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36","about:blank"],
+              "value": ["--headless","--disable-gpu","--hide-scrollbars","--no-first-run","--no-default-browser-check","--user-data-dir=%!app.filesystem.root%/.browser","--remote-debugging-pipe","--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36","about:blank"],
               "variable": [
                 {
-                  "text": "%!app.AbsolutePath%",
+                  "text": "%!app.filesystem.root%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "AbsolutePath"
+                      "property": "filesystem"
+                    },
+                    {
+                      "property": "root"
                     }
                   ]
                 }
               ]
             },
             {
-              "name": "Clean",
+              "name": "Pipe",
               "type": {
                 "name": "bool"
               },
               "value": true
             },
             {
-              "name": "Pipe",
+              "name": "Clean",
               "type": {
                 "name": "bool"
               },
@@ -129,7 +133,8 @@
       "index": 1,
       "text": "return %program%",
       "line": {
-        "number": 13
+        "number": 13,
+        "indent": 0
       },
       "code": [
         {
@@ -168,9 +173,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/system/browser/Headless.goal",
-  "prPath": "/system/browser/.build/headless.pr",
-  "hash": "c19e29b3837633ac61788fa9ad0c6fb26a77f7bb3baf585a5b7cb28e3ac81324"
+  "file": "Headless.goal",
+  "hash": "139f74fc618bfc4af45750d8e6288e82946f8d50284cf99413cf0a3f979b1644"
 }

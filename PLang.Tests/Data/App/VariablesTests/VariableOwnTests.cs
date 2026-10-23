@@ -16,7 +16,10 @@ public class VariableOwnTests
     [Arguments("%name.replace(\"a\", \"b\")%")]
     [Arguments("%name.replace(%a%, \"b\")%")]
     public async Task TheProgramsOwn(string text)
-        => await Assert.That(new Parser(text).Whole!.IsOwn).IsTrue();
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        await Assert.That(new Parser(text, app.type.list).Whole!.IsProgram).IsTrue();
+    }
 
     [Test]
     [Arguments("%!app%")]
@@ -29,5 +32,8 @@ public class VariableOwnTests
     [Arguments("%name.replace(%!a%, \"b\")%")]
     [Arguments("%name.replace(\"a\", %x!context%)%")]
     public async Task ReachesOutside(string text)
-        => await Assert.That(new Parser(text).Whole!.IsOwn).IsFalse();
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        await Assert.That(new Parser(text, app.type.list).Whole!.IsProgram).IsFalse();
+    }
 }

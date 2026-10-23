@@ -5,13 +5,12 @@ namespace app.goal.child;
 /// its parent, wherever it is added from (the build's parse, the <c>.pr</c> reader), so a sub-goal
 /// always knows the goal it lives in: its address (<c>/start#show</c>) and its visibility derive from it.
 /// </summary>
-public sealed class @this : global::app.type.item.list.@this<goal.@this>
+public sealed class @this : global::app.type.item.list.bare.@this<goal.@this>
 {
     private readonly goal.@this _owner;
 
-    internal @this(goal.@this owner) : base(new List<object?>()) => _owner = owner;
+    internal @this(goal.@this owner, global::app.type.@this type) : base(new List<object?>(), type) => _owner = owner;
 
-    protected override global::app.type.item.list.@this Empty() => new @this(_owner);
 
     protected override void Admit(object? slot)
     {

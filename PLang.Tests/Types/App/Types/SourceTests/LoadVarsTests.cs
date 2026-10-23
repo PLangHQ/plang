@@ -90,7 +90,7 @@ public class LoadVarsTests
         var read = await LoadVars(ctx, root, "data.json", "{\"b\":\"%!app.type.list.count%\"}");
         await ctx.Variable.Set("j", read);
 
-        var b = await new global::app.type.item.variable.@this("j.b").Start(ctx);
+        var b = await new global::app.type.item.variable.@this("j.b", ctx.App.type.list).Start(ctx);
         await Assert.That(await Text(b)).IsEqualTo("%!app.type.list.count%");
     }
 
@@ -100,8 +100,8 @@ public class LoadVarsTests
         var (app, root, ctx) = await NewApp();
         await using var _ = app;
         var address = server.MapStoredBody(System.Text.Encoding.UTF8.GetBytes("Hi %name% n=%!app.type.list.count%"), "text/plain");
-        var grant = new global::app.type.item.permission.@this("User", new global::app.type.item.path.http.@this(address).Absolute,
-            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact);
+        var grant = new global::app.type.item.permission.@this("User", ctx.Url(address).Absolute,
+            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact, ctx.App.type.list[typeof(global::app.type.item.permission.@this)]);
         await ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: ctx), persist: false);
 
         var read = await global::app.type.item.path.@this.Resolve(address, ctx).Read(ctx, new global::app.type.item.template.kind.plang.@this());
@@ -153,7 +153,7 @@ public class LoadVarsTests
     {
         var (app, root, ctx) = await NewApp();
         await using var _ = app;
-        var count = await Text(await new global::app.type.item.variable.@this("!app.type.list.count").Start(ctx));
+        var count = await Text(await new global::app.type.item.variable.@this("!app.type.list.count", ctx.App.type.list).Start(ctx));
         var goal = Make.Goal(ctx, "G", "/g.goal",
             Make.Step("s",
                 Make.Action(ctx, "output", "write",

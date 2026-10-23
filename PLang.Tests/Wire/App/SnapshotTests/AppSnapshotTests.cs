@@ -22,7 +22,7 @@ public class AppSnapshotTests
     public async Task App_Restore_DispatchesEachSubtree_ToMatchingThisRestore()
     {
         var src = new global::app.@this("/src").Testing();
-        src.actor.list.User.Context.Variable.Set("x", 1);
+        await src.actor.list.User.Context.Variable.Set("x", 1);
         src.Build = new global::app.module.build.@this(src.actor.list.System.Context);   // building — Mode is Build
 
         var snap = src.Snapshot(src.actor.list.User.Context);

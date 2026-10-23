@@ -28,6 +28,7 @@ public sealed partial class @this : ISnapshot
     {
         var registrations = new List<Registration>();
         var overrides = new List<DefaultOverride>();
+        var types = s.Context.App.type.list;
 
         foreach (var (type, dict) in _providers)
         {
@@ -36,7 +37,7 @@ public sealed partial class @this : ISnapshot
             foreach (var (name, provider) in dict)
             {
                 if (!provider.IsBuiltIn)
-                    registrations.Add(new Registration
+                    registrations.Add(new Registration(types[typeof(Registration)])
                     {
                         TypeName = type.AssemblyQualifiedName ?? type.FullName!,
                         ProviderName = name,
@@ -54,7 +55,7 @@ public sealed partial class @this : ISnapshot
                 && (bornDefault == null
                     || !string.Equals(currentDefaultName, bornDefault, StringComparison.OrdinalIgnoreCase)))
             {
-                overrides.Add(new DefaultOverride
+                overrides.Add(new DefaultOverride(types[typeof(DefaultOverride)])
                 {
                     TypeName = type.AssemblyQualifiedName ?? type.FullName!,
                     ProviderName = currentDefaultName,

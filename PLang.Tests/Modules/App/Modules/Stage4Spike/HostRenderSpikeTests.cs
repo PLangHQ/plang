@@ -51,7 +51,7 @@ public class HostRenderSpikeTests
     }
 
     private static ItemList NativeList(global::app.actor.context.@this ctx, params object?[] elems)
-        => new(new List<object?>(elems));
+        => new(new List<object?>(elems), ctx.App.type.list["list"]);
 
     private static ItemList SampleModules(global::app.actor.context.@this ctx)
     {
@@ -159,14 +159,14 @@ public class HostRenderSpikeTests
         var subset = new[] { "file", "variable" }
             .SelectMany(m => app.Module(m).ActionNames.Select(a => (global::app.goal.step.action.@this)app.Module(m)[a]!))
             .ToList();
-        var actions = new ItemList(new List<object?>(subset.Cast<object?>()));
+        var actions = new ItemList(new List<object?>(subset.Cast<object?>()), app.type.list["list"]);
         ctx.Variable.Set(new Data("actions", actions, context: ctx));
 
         // where %actions% Name in ["read","set"]  — proves Get(field) over clr(action)
         // + the "in" operator, the exact mechanic behind `where %actions% Name in %planStep.actions%`.
-        var wanted = new ItemList(new List<object?> { "read", "set" });
+        var wanted = new ItemList(new List<object?> { "read", "set" }, app.type.list["list"]);
         // the Where door directly (the list.where action was replaced by list.query; the door is what it drove)
-        var result = await actions.Where(new global::app.type.item.text.@this("Name"), new Op("in"), new Data("", wanted, context: ctx), ctx);
+        var result = await actions.Where(ctx.Text("Name"),new Op("in"), new Data("", wanted, context: ctx), ctx);
         await result.IsSuccess();
 
         var kept = (await result.Value()) as ItemList;

@@ -1,12 +1,13 @@
 {
   "name": "Window",
-  "comment": "A window of its own for the browser on PlangOS's screen: a second Chromium, started with the running one's\nprofile, hands it a new app window on plang's own blank page and exits. The page it shows is the caller's to give,\nover the running browser's pipe — never on this command line.\nTrusted by origin (579), as Screen is: the program, its flags and environment are named here, with only the app's\nown anchors %!app.AbsolutePath% and %!app.OsAbsolutePath%.",
+  "comment": "A window of its own for the browser on PlangOS's screen: a second Chromium, started with the running one's\nprofile, hands it a new app window on plang's own blank page and exits. The page it shows is the caller's to give,\nover the running browser's pipe — never on this command line.\nTrusted by origin (579), as Screen is: the program, its flags and environment are named here, with only the app's\nown anchors %!app.filesystem.root% and %!app.filesystem.os%.",
   "step": [
     {
       "index": 0,
-      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',\n'--no-default-browser-check', '--user-data-dir=%!app.AbsolutePath%/.browser',\n'--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',\nwith environment variables XDG_RUNTIME_DIR=\"%!app.AbsolutePath%/.run\" and WAYLAND_DISPLAY=\"wayland-plang\",\nwith a clean environment, keep PULSE_SERVER and HOME from plang's environment,\nand wait until it exits (it hands the window over and ends)",
+      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',\n'--no-default-browser-check', '--user-data-dir=%!app.filesystem.root%/.browser',\n'--app=file://%!app.filesystem.os%/system/browser/blank.html',\nwith environment variables XDG_RUNTIME_DIR=\"%!app.filesystem.root%/.run\" and WAYLAND_DISPLAY=\"wayland-plang\",\nwith a clean environment, keep PULSE_SERVER and HOME from plang's environment,\nand wait until it exits (it hands the window over and ends)",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -26,27 +27,33 @@
                 "name": "list",
                 "template": "plang"
               },
-              "value": ["--ozone-platform=wayland","--no-first-run","--no-default-browser-check","--user-data-dir=%!app.AbsolutePath%/.browser","--app=file://%!app.OsAbsolutePath%/system/browser/blank.html"],
+              "value": ["--ozone-platform=wayland","--no-first-run","--no-default-browser-check","--user-data-dir=%!app.filesystem.root%/.browser","--app=file://%!app.filesystem.os%/system/browser/blank.html"],
               "variable": [
                 {
-                  "text": "%!app.AbsolutePath%",
+                  "text": "%!app.filesystem.root%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "AbsolutePath"
+                      "property": "filesystem"
+                    },
+                    {
+                      "property": "root"
                     }
                   ]
                 },
                 {
-                  "text": "%!app.OsAbsolutePath%",
+                  "text": "%!app.filesystem.os%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "OsAbsolutePath"
+                      "property": "filesystem"
+                    },
+                    {
+                      "property": "os"
                     }
                   ]
                 }
@@ -58,16 +65,19 @@
                 "name": "dict",
                 "template": "plang"
               },
-              "value": {"XDG_RUNTIME_DIR":"%!app.AbsolutePath%/.run","WAYLAND_DISPLAY":"wayland-plang"},
+              "value": {"XDG_RUNTIME_DIR":"%!app.filesystem.root%/.run","WAYLAND_DISPLAY":"wayland-plang"},
               "variable": [
                 {
-                  "text": "%!app.AbsolutePath%",
+                  "text": "%!app.filesystem.root%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "AbsolutePath"
+                      "property": "filesystem"
+                    },
+                    {
+                      "property": "root"
                     }
                   ]
                 }
@@ -108,9 +118,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/system/browser/Window.goal",
-  "prPath": "/system/browser/.build/window.pr",
-  "hash": "8b96868c0b26777635a72282f05fb6a602720acaab2fde1e7609018cc8ae4dbd"
+  "file": "Window.goal",
+  "hash": "9e76b1ac398c7c0efe814857aa7a257054a3b7772d019327b98f255c1748f370"
 }

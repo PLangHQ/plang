@@ -8,7 +8,7 @@ public class OsFolderGrantTests
 {
     private static global::app.type.item.path.@this Under(global::app.@this app, string relative)
         => global::app.type.item.path.@this.Resolve(
-            app.OsAbsolutePath + global::System.IO.Path.DirectorySeparatorChar + relative, app.actor.list.User.Context);
+            app.filesystem.os.Absolute + global::System.IO.Path.DirectorySeparatorChar + relative, app.actor.list.User.Context);
 
     private static async Task<global::app.data.@this> Authorize(global::app.@this app, global::app.actor.@this actor, Verb verb)
         => await Under(app, "system/builder/Probe.goal").Authorize(verb, actor.Context);
@@ -56,7 +56,7 @@ public class OsFolderGrantTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-os-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var folder = "grant-" + System.Guid.NewGuid().ToString("N")[..8];
-        var system = System.IO.Path.Join(app.OsAbsolutePath, "system", folder);
+        var system = System.IO.Path.Join(app.filesystem.os.Absolute, "system", folder);
         System.IO.Directory.CreateDirectory(system);
         try
         {
@@ -77,7 +77,7 @@ public class OsFolderGrantTests
     public async Task AUserInsideTheOsApp_StillCantWriteTheOsFolder()
     {
         await using var probe = new global::app.@this(System.IO.Path.GetTempPath()).Testing();
-        await using var app = new global::app.@this(probe.OsAbsolutePath).Testing();
+        await using var app = new global::app.@this(probe.filesystem.os.Absolute).Testing();
 
         var write = await Authorize(app, app.actor.list.User, Verb.write);
 

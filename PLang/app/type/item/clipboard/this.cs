@@ -34,20 +34,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A clipboard is its content: a text when what was copied is one.</summary>
     public override string ToString() => _content.ToString() ?? "";
 
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("clipboard");
-        await _content.Output(writer, mode, context);
-        writer.EndObject();
-    }
-
-    public override void Write(global::app.type.format.IWriter writer)
-    {
-        writer.BeginObject();
-        writer.Name("clipboard");
-        _content.Write(writer);
+        await _content.Output(writer);
         writer.EndObject();
     }
 
@@ -60,9 +51,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _ => null,
     };
 
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
-        if (Create(raw) is { } made) return made;
+        if (Create(raw) is { } clipboard) return clipboard;
         data.Fail(new global::app.error.@this("a clipboard holds what was copied: a text, or a value", "ClipboardInvalid", 400));
         return null;
     }

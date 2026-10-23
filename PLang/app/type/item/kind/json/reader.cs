@@ -37,7 +37,6 @@ public ref struct Reader : IReader
     [System.Diagnostics.CodeAnalysis.UnscopedRef]
     internal ref Utf8JsonReader Inner => ref _r;
 
-    public string Format => "json";
 
     public TokenKind Peek() => _r.TokenType switch
     {
@@ -50,23 +49,28 @@ public ref struct Reader : IReader
         _ => throw new JsonException($"json.Reader.Peek: not positioned at a value token ({_r.TokenType})"),
     };
 
+    // Each read takes the token it is at only as what it says it is; any other token, or text that isn't one, is
+    // refused as this reader refuses a wrong shape (a JsonException), never the token reader's own throw.
     public bool Null() => _r.TokenType == JsonTokenType.Null;
-    public bool Bool() => _r.GetBoolean();
-    public int Int() => _r.GetInt32();
-    public long Long() => _r.GetInt64();
+    public bool Bool() => _r.TokenType is JsonTokenType.True or JsonTokenType.False ? _r.GetBoolean() : throw Refusal("a bool");
+    public int Int() => _r.TokenType == JsonTokenType.Number && _r.TryGetInt32(out var value) ? value : throw Refusal("an int");
+    public long Long() => _r.TokenType == JsonTokenType.Number && _r.TryGetInt64(out var value) ? value : throw Refusal("a long");
     // The token's raw text, read by number's one rule (an integer long or past it exact, else double).
     public object Number() => global::app.type.item.number.@this.Parse(System.Text.Encoding.UTF8.GetString(_r.ValueSpan))!;
-    public float Float() => _r.GetSingle();
-    public double Double() => _r.GetDouble();
-    public decimal Decimal() => _r.GetDecimal();
-    public string String() => _r.GetString() ?? "";
-    public byte[] Bytes() => _r.GetBytesFromBase64();
-    public System.DateTime DateTime() => _r.GetDateTime();
-    public System.DateTimeOffset DateTimeOffset() => _r.GetDateTimeOffset();
+    public float Float() => _r.TokenType == JsonTokenType.Number && _r.TryGetSingle(out var value) ? value : throw Refusal("a float");
+    public double Double() => _r.TokenType == JsonTokenType.Number && _r.TryGetDouble(out var value) ? value : throw Refusal("a double");
+    public decimal Decimal() => _r.TokenType == JsonTokenType.Number && _r.TryGetDecimal(out var value) ? value : throw Refusal("a decimal");
+    public string String() => _r.TokenType is JsonTokenType.String or JsonTokenType.PropertyName ? _r.GetString() ?? "" : throw Refusal("a string");
+    public byte[] Bytes() => _r.TokenType == JsonTokenType.String && _r.TryGetBytesFromBase64(out var value) ? value : throw Refusal("base64 bytes");
+    public System.DateTime DateTime() => _r.TokenType == JsonTokenType.String && _r.TryGetDateTime(out var value) ? value : throw Refusal("a date");
+    public System.DateTimeOffset DateTimeOffset() => _r.TokenType == JsonTokenType.String && _r.TryGetDateTimeOffset(out var value) ? value : throw Refusal("a date");
     // The writer emits TimeSpan via ToString("c"); read it back the same way.
-    public System.TimeSpan TimeSpan() => System.TimeSpan.ParseExact(
-        _r.GetString() ?? "", "c", System.Globalization.CultureInfo.InvariantCulture);
-    public System.Guid Guid() => _r.GetGuid();
+    public System.TimeSpan TimeSpan() => System.TimeSpan.TryParseExact(String(), "c", System.Globalization.CultureInfo.InvariantCulture, out var value)
+        ? value : throw Refusal("a span");
+    public System.Guid Guid() => _r.TokenType == JsonTokenType.String && _r.TryGetGuid(out var value) ? value : throw Refusal("a guid");
+
+    // A token that isn't what the read asked for, said as this reader says a wrong shape.
+    private JsonException Refusal(string expected) => new($"json.Reader: expected {expected}, got {_r.TokenType}");
 
     public void BeginArray()
     {

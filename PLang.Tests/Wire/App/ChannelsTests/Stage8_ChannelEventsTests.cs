@@ -89,7 +89,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task ATransportFailure_IsAnErrorResult_AndAfterWriteSeesIt()
     {
-        var ch = new ThrowOnWriteChannel("c");
+        var ch = new ThrowOnWriteChannel("c", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         Data? received = null;
         Bind(ch, "write", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
@@ -176,7 +176,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         Data? received = null;
         Bind(ch, "ask", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
 
-        var result = await ch.AskAsync(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") });
+        var result = await ch.AskAsync(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("answer");
         await Assert.That((await received!.Value())?.ToString()).IsEqualTo("answer");
@@ -192,7 +192,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         using var stop = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
 
         var result = await ch.AskAsync(new global::app.module.output.ask(app.actor.list.User.Context)
-            { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") }, stop.Token);
+            { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) }, stop.Token);
 
         await Assert.That(result.Error?.Key).IsEqualTo("Cancelled");
     }
@@ -205,7 +205,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("first\nsecond\n"));
         var ch = new StreamChannel("i2", ms, ChannelDirection.Bidirectional, ownsStream: false) { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(ch);
-        global::app.module.output.ask Ask() => new(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") };
+        global::app.module.output.ask Ask() => new(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) };
 
         var first = await ch.AskAsync(Ask());
         var second = await ch.AskAsync(Ask());
@@ -217,12 +217,12 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task AfterAsk_OnAMessageChannel_Fires()
     {
-        var ch = new MessageProbeChannel("m");
+        var ch = new MessageProbeChannel("m", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var fired = false;
         Bind(ch, "ask", When.after, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); });
 
-        await ch.AskAsync(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
+        await ch.AskAsync(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?", context: app.actor.list.User.Context) });
 
         await Assert.That(fired).IsTrue();
     }
@@ -251,7 +251,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         var fired = false;
-        app.goal.Own().Bind("start", When.before, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app);
+        app.goal.type.Own().Bind("start", When.before, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app);
 
         await ch.WriteAsync(app.Ok("x"));
 
@@ -260,18 +260,20 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
 
     private sealed class ThrowOnWriteChannel : Channel
     {
-        public ThrowOnWriteChannel(string name) { Name = name; }
+        private readonly global::app.actor.context.@this _ctx;
+        public ThrowOnWriteChannel(string name, global::app.actor.context.@this ctx) { Name = name; _ctx = ctx; }
         public override Task<Data> Write(Data data, CancellationToken ct = default)
             => throw new IOException("boom");
-        public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(action.Context.Ok());
     }
 
     private sealed class MessageProbeChannel : global::app.channel.type.message.@this
     {
-        public MessageProbeChannel(string name) { Name = name; }
-        public override Task<Data> Write(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        private readonly global::app.actor.context.@this _ctx;
+        public MessageProbeChannel(string name, global::app.actor.context.@this ctx) { Name = name; _ctx = ctx; }
+        public override Task<Data> Write(Data data, CancellationToken ct = default) => Task.FromResult(data.Context.Ok());
+        public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(action.Context.Ok("answer-from-resume"));
     }
 }

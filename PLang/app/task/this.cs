@@ -12,7 +12,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly run.@this _run;
     private readonly @this? _replaced;
 
-    internal @this(run.@this run, @this? replaced = null)
+    internal @this(run.@this run, @this? replaced = null) : base(run.Actor.App.type.list[typeof(@this)])
     {
         _run = run;
         _replaced = replaced;
@@ -22,15 +22,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public global::app.goal.@this Goal => _run.Goal;
 
     /// <summary>Which task it is among its actor's — <c>%!app.actor.current.task[id]%</c>.</summary>
-    [Out] public global::app.type.item.text.@this Id => new(_run.Id);
+    [Out, global::app.LlmBuilder] public global::app.type.item.text.@this Id
+        => new(_run.Id, _run.Actor.App.type.list[typeof(global::app.type.item.text.@this)]);
 
     /// <summary>Whether its run has ended (it has left its actor's list by then).</summary>
-    [Out] public global::app.type.item.@bool.@this Ended => new(_run.Ended);
+    [Out, global::app.LlmBuilder] public global::app.type.item.@bool.@this Ended
+        => new(_run.Ended, _run.Actor.App.type.list[typeof(global::app.type.item.@bool.@this)]);
 
     /// <summary>Every task written where this one is, in the order written — the last this one.</summary>
     /// <remarks>JsonIgnore: the list holds this task itself, so a dump writing it would never end.</remarks>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.type.item.list.@this list => new(Written.Cast<global::app.type.item.@this>());
+    [global::app.LlmBuilder]
+    public global::app.type.item.list.@this list
+        => new(Written.Cast<global::app.type.item.@this>(), _run.Actor.App.type.list["list"]);
 
     private System.Collections.Generic.IEnumerable<@this> Written
         => (_replaced?.Written ?? []).Append(this);

@@ -12,10 +12,12 @@ public class ImageSerializerTests
 
     private sealed class CaptureWriter : global::app.type.format.IWriter
     {
-        public string Format { get; }
+        public global::app.type.kind.@this Kind { get; }
         public object? Last { get; private set; }
         public string LastMethod { get; private set; } = "";
-        public CaptureWriter(string format) { Format = format; }
+        public CaptureWriter(global::app.type.kind.@this kind, global::app.actor.context.@this context) { Kind = kind; Context = context; }
+        public global::app.View View => global::app.View.Out;
+        public global::app.actor.context.@this Context { get; }
         public void Null() { LastMethod = "Null"; }
         public void Bool(bool v) { }
         public void Int(int v) { }
@@ -29,24 +31,30 @@ public class ImageSerializerTests
         public void Guid(System.Guid v) { }
         public void Enum(System.Enum v) { }
         public void Decimal(decimal v) { }
-        public void Bytes(byte[] v) { LastMethod = "Bytes"; Last = v; }
+        public void Bytes(byte[] v, global::app.type.kind.@this kind) { LastMethod = "Bytes"; Last = v; }
         public void BeginArray(int c) { }
         public void BeginObject() { LastMethod = "BeginObject"; }
         public void Name(string n) { LastMethod = "Name"; Last = n; }
         public void EndObject() { LastMethod = "EndObject"; }
         public void EndArray() { }
-        public void BeginRecord(global::app.data.@this r) { }
-        public void EndRecord() { }
         public void Value(object? n) { }
     }
 
     // The image states what it has; the format is not its question.
     [Test] public async Task Image_Loaded_WritesItsBytes_WhateverTheFormat()
     {
-        foreach (var format in new[] { "text", "json", "plang", "protobuf" })
+        await using var app = new global::app.@this("/test").Testing();
+        var kinds = new[]
         {
-            var w = new CaptureWriter(format);
-            new image(PngBytes, "image/png").Write(w);
+            app.type.list["text"].kind,
+            app.type.list["item"].kind["json"]!,
+            app.type.list["wire"].kind["plang"]!,
+            app.type.list["list"].kind["formal"]!,
+        };
+        foreach (var kind in kinds)
+        {
+            var w = new CaptureWriter(kind, app.actor.list.System.Context);
+            await app.actor.list.User.Context.Image(PngBytes, "image/png").Output(w);
             await Assert.That(w.LastMethod).IsEqualTo("Bytes");
             await Assert.That(w.Last).IsEqualTo(PngBytes);
         }
@@ -57,8 +65,8 @@ public class ImageSerializerTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.actor.list.User.Context);
-        var w = new CaptureWriter("text");
-        new image(PngBytes, p!, app.actor.list.User.Context).Write(w);
+        var w = new CaptureWriter(app.type.list["text"].kind, app.actor.list.System.Context);
+        await app.actor.list.User.Context.Image(p!, PngBytes).Output(w);
         await Assert.That(w.LastMethod).IsEqualTo("Bytes");
         await Assert.That(w.Last).IsEqualTo(PngBytes);
     }
@@ -68,28 +76,30 @@ public class ImageSerializerTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.actor.list.User.Context);
-        var w = new CaptureWriter("json");
-        new image(p!, app.actor.list.User.Context).Write(w);
+        var w = new CaptureWriter(app.type.list["item"].kind["json"]!, app.actor.list.System.Context);
+        await app.actor.list.User.Context.Image(p!).Output(w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That((string)w.Last!).Contains("photo.png");
     }
 
     [Test] public async Task Image_RoundTrip_JsonBase64_PreservesBytesAndMime()
     {
-        // Write → base64 string. Round-trip back via image.Resolve(byte[]).
-        var img = new image(PngBytes, "image/png");
+        // Write → base64 string. Round-trip back via image.FromBytes.
+        await using var app = new global::app.@this("/test").Testing();
+        var ctx = app.actor.list.User.Context;
+        var img = ctx.Image(PngBytes, "image/png");
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
-            w.Value(img);
+            var w = new global::app.type.item.kind.json.Writer(utf, global::app.View.Out, app.actor.list.System.Context);
+            await img.Output(w);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         // The JSON is a base64 string literal.
         await Assert.That(json.StartsWith("\"")).IsTrue();
         // Decode back.
         var b64 = json.Trim('"');
-        var roundTripped = image.FromBytes(System.Convert.FromBase64String(b64));
+        var roundTripped = image.FromBytes(System.Convert.FromBase64String(b64), ctx);
         await Assert.That(roundTripped!.Mime).IsEqualTo("image/png");
         await Assert.That(roundTripped.Bytes.SequenceEqual(PngBytes)).IsTrue();
     }

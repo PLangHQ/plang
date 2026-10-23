@@ -34,43 +34,43 @@ public class AbsoluteCanonicalFormTests
     [Test] public async Task HttpPath_Absolute_LowercasesSchemeAndHost()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("HTTP://Example.COM/Foo");
+        var p = context.Url("HTTP://Example.COM/Foo");
         await Assert.That(p.Absolute).IsEqualTo("http://example.com/Foo");
     }
 
     [Test] public async Task HttpPath_Absolute_StripsDefaultHttpsPort()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("https://example.com:443/foo");
+        var p = context.Url("https://example.com:443/foo");
         await Assert.That(p.Absolute).IsEqualTo("https://example.com/foo");
     }
 
     [Test] public async Task HttpPath_Absolute_StripsDefaultHttpPort()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("http://example.com:80/foo");
+        var p = context.Url("http://example.com:80/foo");
         await Assert.That(p.Absolute).IsEqualTo("http://example.com/foo");
     }
 
     [Test] public async Task HttpPath_Absolute_KeepsNonDefaultPort()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("https://example.com:8443/foo");
+        var p = context.Url("https://example.com:8443/foo");
         await Assert.That(p.Absolute).IsEqualTo("https://example.com:8443/foo");
     }
 
     [Test] public async Task HttpPath_Absolute_NormalizesPathSegments()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("https://example.com/a/../b");
+        var p = context.Url("https://example.com/a/../b");
         await Assert.That(p.Absolute).IsEqualTo("https://example.com/b");
     }
 
     [Test] public async Task HttpPath_Absolute_RootWithAndWithoutTrailingSlash_AreEqual()
     {
         var (_, context) = MakeApp();
-        var withSlash = new HttpPath("https://example.com/");
-        var withoutSlash = new HttpPath("https://example.com");
+        var withSlash = context.Url("https://example.com/");
+        var withoutSlash = context.Url("https://example.com");
         await Assert.That(withSlash.Absolute).IsEqualTo(withoutSlash.Absolute);
         await Assert.That(withSlash.Absolute).IsEqualTo("https://example.com/");
     }
@@ -78,14 +78,14 @@ public class AbsoluteCanonicalFormTests
     [Test] public async Task HttpPath_Absolute_SortsQueryParameters_ByKey()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("https://example.com/?b=2&a=1");
+        var p = context.Url("https://example.com/?b=2&a=1");
         await Assert.That(p.Absolute).IsEqualTo("https://example.com/?a=1&b=2");
     }
 
     [Test] public async Task HttpPath_Absolute_StripsFragment()
     {
         var (_, context) = MakeApp();
-        var p = new HttpPath("https://example.com/foo#bar");
+        var p = context.Url("https://example.com/foo#bar");
         await Assert.That(p.Absolute).IsEqualTo("https://example.com/foo");
     }
 
@@ -93,10 +93,10 @@ public class AbsoluteCanonicalFormTests
     {
         var (_, context) = MakeApp();
         var filePath = FilePath.Resolve("/home/data.json", context);
-        var httpPath = new HttpPath("https://api.example.com/data.json");
+        var httpPath = context.Url("https://api.example.com/data.json");
 
-        var grant = new PermissionRecord("User", filePath.Absolute, global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
-        var request = new PermissionRecord("User", httpPath.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, MatchMode.exact);
+        var grant = new PermissionRecord("User", filePath.Absolute, global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, context.App.type.list[typeof(PermissionRecord)]);
+        var request = new PermissionRecord("User", httpPath.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, MatchMode.exact, context.App.type.list[typeof(PermissionRecord)]);
 
         await Assert.That(grant.Allows(request)).IsFalse();
     }
@@ -104,10 +104,10 @@ public class AbsoluteCanonicalFormTests
     [Test] public async Task Permission_HttpPathGlobGrant_MatchesUrlUnderHost()
     {
         var (_, context) = MakeApp();
-        var request = new HttpPath("https://api.example.com/users");
+        var request = context.Url("https://api.example.com/users");
 
-        var grant = new PermissionRecord("User", "https://api.example.com/*", global::app.type.item.permission.@this.AllVerbs, MatchMode.glob);
-        var req = new PermissionRecord("User", request.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, MatchMode.exact);
+        var grant = new PermissionRecord("User", "https://api.example.com/*", global::app.type.item.permission.@this.AllVerbs, MatchMode.glob, context.App.type.list[typeof(PermissionRecord)]);
+        var req = new PermissionRecord("User", request.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, MatchMode.exact, context.App.type.list[typeof(PermissionRecord)]);
 
         await Assert.That(grant.Allows(req)).IsTrue();
     }

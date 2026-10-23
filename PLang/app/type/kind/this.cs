@@ -19,7 +19,6 @@ namespace app.type.kind;
 /// </summary>
 public class @this : global::app.type.@this
 {
-    private readonly string? _owner;
     private readonly System.Collections.Generic.IReadOnlyList<string> _mime = [];
     private readonly System.Collections.Generic.IReadOnlyList<string> _extension = [];
     private readonly bool _compressible;
@@ -30,10 +29,13 @@ public class @this : global::app.type.@this
     // How the owning type reads this format — its class's IDecode, bound when the kind was made; null for a type
     // whose content is born lazily.
     private readonly Decoder? _decode;
+    // The view content of this format is written and read in when no one says: plang's own store for a format plang
+    // keeps (a .pr), else what crosses to others.
+    private readonly global::app.View _view = global::app.View.Out;
 
     /// <summary>How a type writes its formats: the value a Data holds onto a stream, in a view.</summary>
     public delegate global::System.Threading.Tasks.Task<global::app.data.@this> Encoder(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct);
 
     /// <summary>How a type reads its formats: content of one, made into a value of the type.</summary>
@@ -42,13 +44,13 @@ public class @this : global::app.type.@this
 
     public @this(string name) : base(name ?? throw new System.ArgumentNullException(nameof(name))) { }
 
-    /// <summary>A kind named <paramref name="name"/> whose facts fall back to <paramref name="family"/>'s
-    /// (its parent type) — used by <c>kind&lt;T&gt;</c> to pass what the kind does not answer up to T.</summary>
-    protected @this(string name, global::app.type.@this? family) : base(name, family) { }
+    /// <summary>A kind named <paramref name="name"/> of <paramref name="owner"/> — the app's entry for the type it is a
+    /// kind of, handed in by the registry that enlists it. Its facts fall back to the owner's.</summary>
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     /// <summary>A kind whose own kind is <paramref name="ownKind"/> — a nested kind (<c>{list, kind: {list, kind:
     /// path}}</c>), where this kind is itself a kinded type. Null <paramref name="ownKind"/> leaves the born empty kind.</summary>
-    private protected @this(string name, global::app.type.kind.@this? ownKind, global::app.type.@this? family) : base(name, ownKind, family) { }
+    private protected @this(string name, global::app.type.kind.@this? ownKind, global::app.type.@this owner) : base(name, ownKind, owner) { }
 
     /// <summary>A kind is a full type already — its facts are its own (a setting kind's options, a
     /// format's MIMEs), its parent's the fallback. It navigates its OWN members directly, never
@@ -61,28 +63,24 @@ public class @this : global::app.type.@this
         return member.IsInitialized ? member : await base.Get(parent, key);
     }
 
-    /// <summary>Every kind <paramref name="assembly"/> builds from nothing — each kind class (not abstract, a
-    /// parameterless ctor), one instance each. How the type registry finds the kinds it holds, and how a choice over a
-    /// kind family finds that family's: one discovery, so the two agree on what a family holds.</summary>
-    internal static System.Collections.Generic.IEnumerable<@this> Every(System.Reflection.Assembly assembly)
-        => assembly.GetTypes()
-            .Where(t => typeof(@this).IsAssignableFrom(t) && t is { IsAbstract: false } && t != typeof(@this)
-                        && t.GetConstructor(System.Type.EmptyTypes) != null)
-            .Select(t => (@this)System.Activator.CreateInstance(t)!);
-
     /// <summary>A format of <paramref name="owner"/> — a kind its class declares with <c>[Format]</c>: the
     /// MIMEs and extensions it answers to, whether its content compresses, and how its type writes and reads it.</summary>
-    public @this(global::app.Attributes.FormatAttribute format, string owner, Encoder? encode = null, Decoder? decode = null)
-        : this(format.Name)
+    public @this(global::app.Attributes.FormatAttribute format, global::app.type.@this owner, Encoder? encode = null, Decoder? decode = null)
+        : this(format.Name, owner)
     {
-        _owner = owner;
         _mime = format.Mime is { } mime ? [mime] : [];
         _extension = format.Extension;
         _compressible = format.Compressible;
         _text = format.Text;
+        _view = format.Store ? global::app.View.Store : global::app.View.Out;
         _encode = encode;
         _decode = decode;
     }
+
+    /// <summary>The view content of this format is written and read in when its asker names none: Store for a format
+    /// plang keeps (a <c>.pr</c>), Out for every other.</summary>
+    public virtual global::app.View View => _view;
+
 
     /// <summary>The MIMEs content of this kind arrives as — each a bare media type.</summary>
     public virtual System.Collections.Generic.IReadOnlyList<string> Mime => _mime;
@@ -100,10 +98,11 @@ public class @this : global::app.type.@this
     /// </summary>
     internal override bool Names(string key)
     {
-        // A kind answers to its type's names (its own name and aliases, through the base) AND to its MIMEs
-        // and extensions — a format kind answers to `application/json` and `.json` too.
-        if (base.Names(key)) return true;
+        // A kind answers to its own name and aliases — never its owner's, which the type's names fall back to — AND
+        // to its MIMEs and extensions: a format kind answers to `application/json` and `.json` too.
         if (string.IsNullOrEmpty(key)) return false;
+        if (string.Equals(Name, key, System.StringComparison.OrdinalIgnoreCase)
+            || Own.Contains(key, System.StringComparer.OrdinalIgnoreCase)) return true;
         if (Mime.Count > 0)
         {
             var semicolon = key.IndexOf(';');
@@ -161,7 +160,7 @@ public class @this : global::app.type.@this
     /// <summary>What a value of this kind can be in <paramref name="step"/>, as the decider is offered it: one of the
     /// step's own variables (<c>%field%</c>), each once. A closed set offers its options.</summary>
     public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
-        => new(new global::app.type.item.variable.parser.@this(step.Text).Variable
+        => new(new global::app.type.item.variable.parser.@this(step.Text, step.Type.Types!).Variable
             .DistinctBy(v => v.Text).Cast<global::app.type.item.@this>().ToList());
 
     /// <summary>Whether what this kind offers is all a value of it can be (a choice's options, a bool's true and
@@ -172,29 +171,35 @@ public class @this : global::app.type.@this
     /// <see cref="ClrForm"/> takes it.</summary>
     public virtual bool Carries(System.Type clr) => ClrForm is { } form && form.IsAssignableFrom(clr);
 
-    /// <summary>Whether <paramref name="writer"/> writes this kind's own format — content of this kind is then
-    /// already a token of it, relayed verbatim. By default no writer is.</summary>
-    public virtual bool Owns(global::app.type.format.IWriter writer) => false;
+    /// <summary>Content of this kind, unread: <paramref name="raw"/> (characters or bytes) as a value of
+    /// <paramref name="type"/>, read off <paramref name="origin"/> when it came from a file — a template holding
+    /// <paramref name="variable"/> (the build's own when <paramref name="built"/>), its raw in <paramref name="format"/>
+    /// when it was read in another. By default a source; a kind whose content looks different in a format makes its own.</summary>
+    public virtual global::app.type.item.source Make(object raw, global::app.type.@this type, global::app.type.item.path.@this? origin,
+        System.Collections.Generic.IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false,
+        @this? format = null)
+        => new(raw, type, variable, origin, built, format);
 
-    // A kind's own aliases are its answer to the type's OwnAlias hook (int → "integer").
+    // A kind's own aliases (int → "integer") — what it answers to by name besides its name; never its owner's, which a
+    // kinded type ({text, md}) reads as its family's.
+    private System.Collections.Generic.IReadOnlyList<string> Own => OwnAlias ?? [];
 
-    /// <summary>The name of the type this kind is a kind of: the type whose class declares it as a format
-    /// (png is image's, md text's), or whose kind class it is (number's precisions are number's,
-    /// json/list/dict/<c>*</c> are item's). Null for a name no type declares.</summary>
-    protected internal virtual string? Owner => _owner;
+    /// <summary>The keys this kind answers to as its type holds it: its name, its own aliases, its MIMEs.</summary>
+    internal System.Collections.Generic.IEnumerable<string> Keys => Own.Prepend(Name).Concat(Mime);
+
+    /// <summary>The type this kind is a kind of — the app's entry it was born holding: the type whose class
+    /// declares it as a format (png is image's, md text's), or whose kind class it is (number's precisions are
+    /// number's, json/list/dict/<c>*</c> are item's). Null for a kind of a name no type holds.</summary>
+    protected internal virtual global::app.type.@this? Owner => _family;
 
     /// <summary>
     /// The type this kind is a kind of — what its content is (md → text, json → item, int →
-    /// number): the type that declares it, else the type whose reader reads this kind, else
+    /// number): its owner, else the type whose reader reads this kind, else
     /// <c>binary</c>. <c>{binary, md}</c> is bytes whose content is text. Asked with the caller's context.
     /// </summary>
     public global::app.type.@this type(actor.context.@this context)
-    {
-        string name = Owner
-                      ?? context.App.type.list.Reader.TypeOf(Name)
-                      ?? "binary";
-        return context.App.type.list[new global::app.type.@this(name), context];
-    }
+        => Owner ?? context.App.type.list[new global::app.type.@this(
+            context.App.type.list.Reader.TypeOf(Name) ?? "binary"), context];
 
     /// <summary>
     /// The kinds of this kind's type, each as the full type it makes: <c>{number, int}</c>,
@@ -228,16 +233,17 @@ public class @this : global::app.type.@this
     /// <summary>Whether a host of this kind holds its children by position (an array) rather than by name (an
     /// object's members).</summary>
     // `new`: this host verb — "is a HOST of this kind positional" — shares a name with item's own
-    // IsSequence (a property: "is this value a sequence"), a coincidental collision once kind : item.
-    // It is a host kind's concern (json/dict/list/*) and moves off the base in stage 3 with the rest.
+    // IsSequence (a property: "is this value a sequence"), a coincidental collision since kind : item.
+    // It is a host kind's concern (json/dict/list/*).
     public new virtual bool IsSequence(object host) => false;
 
     /// <summary>Write a child <paramref name="key"/> onto a host of this kind — the kind owns HOW
     /// its content takes a new child (<paramref name="isIndex"/> tells positional from named).
-    /// Returns the value carried as an item; a kind with no writable content throws.</summary>
+    /// Returns the value carried as an item; a kind with no writable content refuses, its error carried.</summary>
     public virtual global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
         object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
-        => throw new System.NotSupportedException($"kind '{Name}' cannot set a child");
+        => throw new global::app.error.AppException(new global::app.error.@this(
+            $"kind '{Name}' cannot set a child", "NoAddedMember", 404));
 
     /// <summary>The SYNC decode: raw (string / bytes) → a value item OF this kind, or DECLINE
     /// (null). This is the SINGLE decode body — <see cref="Load"/> is its async face, and the sync
@@ -255,15 +261,20 @@ public class @this : global::app.type.@this
     /// born a template (a file read with its variables resolved). Content read off a file is born knowing it
     /// (<paramref name="origin"/>); null for content with no location.
     /// </summary>
+    public global::System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
+        global::app.actor.context.@this context, string name = "",
+        System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
+        => Decode(raw, context, View, name, ct, template, origin);
+
+    /// <summary>The decode door, read as written for <paramref name="view"/>.</summary>
     public virtual async global::System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
-        global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
+        global::app.actor.context.@this context, global::app.View view, string name = "",
         System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
     {
         // a type that reads this format itself makes the value now (a .pr into a goal)
         if (_decode != null && template == null) return await _decode(raw, context, name, origin);
         // else content decoded into a new value is a birth: it comes through its type's on.create, unread until used
-        var type = context.App.type.list[new global::app.type.@this(Owner ?? "binary", IsEmpty ? null : Name, template: template), context];
-        return await type.Create(raw, context, name, origin);
+        return await context.App.type.list.Of(this, context, template).Create(raw, context, name, origin);
     }
 
     /// <summary>
@@ -271,15 +282,21 @@ public class @this : global::app.type.@this
     /// type that declares the format writes it (bound once, when the kind was made); a kind whose content is
     /// written its own way overrides it (json, plang's transport). A kind with no writer of its own (one coined
     /// for an extension: <c>.xyz</c>) writes as its family writes; a family with no format answers an error.
-    /// With no <paramref name="view"/> the format writes its own face (a .pr its Store face).
+    /// With no view named, the format writes in its own (<see cref="View"/>: a .pr in Store).
     /// </summary>
+    public global::System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context,
+        System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
+        => Encode(stream, data, context, View, encoding, ct);
+
+    /// <summary>The encode door, written in <paramref name="view"/>.</summary>
     public virtual global::System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
         => _encode != null ? _encode(stream, data, context, view, encoding, ct)
-            : !IsEmpty ? context.App.type.list[Owner ?? "binary"].kind.Encode(stream, data, context, view, encoding, ct)
+            : !IsEmpty ? (Owner ?? context.App.type.list["binary"]).kind.Encode(stream, data, context, view, encoding, ct)
             : global::System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.@this(
-                $"nothing writes {Owner ?? "binary"} content", "NoEncoder", 400)));
+                $"nothing writes {Owner?.Name ?? "binary"} content", "NoEncoder", 400)));
 
     /// <summary>What characters of this kind stand for, opened when they are needed — a text of kind json walked by
     /// <c>%x.a%</c> is the json its characters are — or, as a failed Data, why they don't read as this kind. Null when
@@ -302,21 +319,17 @@ public class @this : global::app.type.@this
         => throw new System.NotSupportedException(
             $"cannot convert {source.Type?.Name} into kind '{Name}'");
 
-    /// <summary>A kind held AS A VALUE writes its own name — <c>%x!type.kind%</c> is "json", "decimal".
-    /// The kind is a type, but its bare face is the subtype word; navigation reaches the rest (.name).</summary>
-    public override global::System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode, global::app.actor.context.@this? context)
+    /// <summary>A kind held AS A VALUE writes its own name — <c>%x!type.kind%</c> is "json", "decimal" — in every
+    /// format. The kind is a type, but its face is the subtype word, never a type's identity or word; navigation reaches
+    /// the rest (.name).</summary>
+    protected internal override global::System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.String(Name);
         return default;
     }
 
-    /// <summary>Write a host value OF this kind to the wire — json emits raw json, <c>*</c>
-    /// reflects a POCO's tagged fields. The carrier delegates its <c>Output</c> here.</summary>
-    public virtual global::System.Threading.Tasks.ValueTask Output(
-        object obj, global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? ctx)
-        => throw new System.NotSupportedException($"kind '{Name}' cannot write itself");
+    /// <summary>The word a kind goes by is its name ("json", "decimal"), never a type's word: text writes it.</summary>
+    internal override string Face => Name;
 
     /// <summary>A kind held AS A VALUE lowers to its name — its value IS the subtype word ("md",
     /// "decimal"), so a text coercion and <c>%x!type.kind% equals "md"</c> read it as that name.
@@ -339,31 +352,6 @@ public class @this : global::app.type.@this
     /// that is not a format has nothing to bridge and declines (null → the caller's Clr path).</summary>
     public virtual object? Read(object obj, global::app.type.reader.ITypeReader reader, string? kind,
                                 global::app.actor.context.@this context) => null;
-
-    // OBPV — carry marked, collapse after the restructure compiles: this is a verb+noun name
-    // AND a type-switch fork standing in for a value's own self-write. Fix: a reflected value
-    // writes itself via `new Data(name, value, ctx).Output(...)` — Data.Output already emits bare
-    // vs {name,type,value} envelope by the writer's format (EmitsSchema), not by value type, so
-    // the switch below should dissolve. (todos.md 2026-07-09)
-    protected async global::System.Threading.Tasks.ValueTask WriteReflected(
-        global::app.type.format.IWriter writer, object value, global::app.View mode,
-        global::app.actor.context.@this ctx)
-    {
-        switch (value)
-        {
-            case global::app.type.item.@this item: await item.Output(writer, mode, ctx); break;
-            case global::app.data.@this d: await d.Output(writer, mode, ctx); break;
-            case string s: writer.String(s); break;
-            // A raw C# scalar the writer renders (number/bool/date/enum/…). Everything else —
-            // a collection OR an object — writes through ITS kind (IDictionary → object, IList /
-            // any sequence → array, an object → the * kind's declared-face Output). One rule, no
-            // categories: the kind decides; an undeclared plang type throws there, loud.
-            default:
-                if (value.GetType().IsClass) await ctx.App.type.list.Kind(value.GetType()).Output(value, writer, mode, ctx);
-                else writer.Value(value);
-                break;
-        }
-    }
 
     public override string ToString() => Name;
 

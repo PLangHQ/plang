@@ -18,7 +18,7 @@ public class ParallelWireTests
         var context = os.actor.list.User.Context;
         var goal = global::app.goal.@this.Parse("Start\n- foreach %orders% in parallel, call Ship\n",
             global::app.type.item.path.@this.Resolve("/Start.goal", context), context)!;
-        var read = new global::app.goal.step.action.formal.Reader(goal.Step[0], context.App.module.list)
+        var read = await new global::app.goal.step.action.formal.Reader(goal.Step[0], context.App.module.list)
             .Read($"loop.foreach(Collection=%orders%, Parallel={parallel}); goal.call(Name=\"Ship\")", context);
         await read.IsSuccess();
         goal.Step[0].Code = (global::app.goal.step.action.list.@this)read.Peek()!;
@@ -74,9 +74,10 @@ public class ParallelWireTests
     [Test]
     public async Task AParallelValue_RelayedThroughTheWire_IsItself()
     {
-        await Assert.That((await Relayed(global::app.type.item.parallel.@this.Off)).IsTruthy()).IsFalse();
-        await Assert.That((await Relayed(new global::app.type.item.parallel.@this(2))).Cpu.ToInt64()).IsEqualTo(2L);
-        var machine = await Relayed(new global::app.type.item.parallel.@this());
+        await using var app = new global::app.@this("/app").Testing();
+        await Assert.That((await Relayed(global::app.type.item.parallel.@this.Off(app.type.list[typeof(global::app.type.item.parallel.@this)]))).IsTruthy()).IsFalse();
+        await Assert.That((await Relayed(new global::app.type.item.parallel.@this(app.type.list[typeof(global::app.type.item.parallel.@this)], 2))).Cpu.ToInt64()).IsEqualTo(2L);
+        var machine = await Relayed(new global::app.type.item.parallel.@this(app.type.list[typeof(global::app.type.item.parallel.@this)]));
         await Assert.That(machine.IsTruthy()).IsTrue();
         await Assert.That(machine.Cpu.ToInt64()).IsEqualTo(System.Math.Max(1, (long)(System.Environment.ProcessorCount * 0.8)));
     }

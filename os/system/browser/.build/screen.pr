@@ -1,12 +1,13 @@
 {
   "name": "Screen",
-  "comment": "The browser on PlangOS's screen: Chromium drawing onto the display, its first page an app window (no tabs, no\ntoolbar) that becomes the desktop. DevTools speaks over its pipe (fd 3 and 4), no port. It starts on plang's own blank\npage (an app window needs a real page; about:blank opens a tab): the page it shows is the caller's to give, over the\npipe — never on this command line.\nTrusted by origin (579): this goal ships with plang, so it starts Chromium without asking — only because it names\nthe program, every flag and the environment itself. %!app.AbsolutePath% and %!app.OsAbsolutePath% are the app's own\nanchors (no caller sets them); any other variable here would make the start the caller's, and asked.",
+  "comment": "The browser on PlangOS's screen: Chromium drawing onto the display, its first page an app window (no tabs, no\ntoolbar) that becomes the desktop. DevTools speaks over its pipe (fd 3 and 4), no port. It starts on plang's own blank\npage (an app window needs a real page; about:blank opens a tab): the page it shows is the caller's to give, over the\npipe — never on this command line.\nTrusted by origin (579): this goal ships with plang, so it starts Chromium without asking — only because it names\nthe program, every flag and the environment itself. %!app.filesystem.root% and %!app.filesystem.os% are the app's own\nanchors (no caller sets them); any other variable here would make the start the caller's, and asked.",
   "step": [
     {
       "index": 0,
       "text": "delete file '/.browser/SingletonLock', on error 'NotFound' ignore",
       "line": {
-        "number": 12
+        "number": 12,
+        "indent": 0
       },
       "comment": "a Chromium that was killed (PlangOS closed hard) leaves its profile's lock naming its process; in a new PlangOS\nanother process can have that number, and the new Chromium would hand its page to \"the running one\" and exit.\nNone of ours runs yet: the lock is stale.",
       "code": [
@@ -58,7 +59,8 @@
       "index": 1,
       "text": "delete file '/.browser/SingletonSocket', on error 'NotFound' ignore",
       "line": {
-        "number": 13
+        "number": 13,
+        "indent": 0
       },
       "code": [
         {
@@ -109,7 +111,8 @@
       "index": 2,
       "text": "delete file '/.browser/SingletonCookie', on error 'NotFound' ignore",
       "line": {
-        "number": 14
+        "number": 14,
+        "indent": 0
       },
       "code": [
         {
@@ -158,9 +161,10 @@
     },
     {
       "index": 3,
-      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',\n'--no-default-browser-check', '--disable-gpu-compositing', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',\n'--num-raster-threads=4', '--hide-crash-restore-bubble', '--disable-quic',\n'--disable-blink-features=AutomationControlled', '--in-process-gpu',\n'--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup',\n'--user-data-dir=%!app.AbsolutePath%/.browser', '--remote-debugging-pipe',\n'--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',\nwith environment variables XDG_RUNTIME_DIR=\"%!app.AbsolutePath%/.run\" and WAYLAND_DISPLAY=\"wayland-plang\",\nwith a clean environment, keep 'PULSE_SERVER', 'HOME' from plang's environment,\nkeep running, with pipe, write to %program%",
+      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',\n'--no-default-browser-check', '--disable-gpu-compositing', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',\n'--num-raster-threads=4', '--hide-crash-restore-bubble', '--disable-quic',\n'--disable-blink-features=AutomationControlled', '--in-process-gpu',\n'--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup',\n'--user-data-dir=%!app.filesystem.root%/.browser', '--remote-debugging-pipe',\n'--app=file://%!app.filesystem.os%/system/browser/blank.html',\nwith environment variables XDG_RUNTIME_DIR=\"%!app.filesystem.root%/.run\" and WAYLAND_DISPLAY=\"wayland-plang\",\nwith a clean environment, keep 'PULSE_SERVER', 'HOME' from plang's environment,\nkeep running, with pipe, write to %program%",
       "line": {
-        "number": 15
+        "number": 15,
+        "indent": 0
       },
       "code": [
         {
@@ -180,27 +184,33 @@
                 "name": "list",
                 "template": "plang"
               },
-              "value": ["--ozone-platform=wayland","--no-first-run","--no-default-browser-check","--disable-gpu-compositing","--use-angle=swiftshader","--enable-unsafe-swiftshader","--num-raster-threads=4","--hide-crash-restore-bubble","--disable-quic","--disable-blink-features=AutomationControlled","--in-process-gpu","--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup","--user-data-dir=%!app.AbsolutePath%/.browser","--remote-debugging-pipe","--app=file://%!app.OsAbsolutePath%/system/browser/blank.html"],
+              "value": ["--ozone-platform=wayland","--no-first-run","--no-default-browser-check","--disable-gpu-compositing","--use-angle=swiftshader","--enable-unsafe-swiftshader","--num-raster-threads=4","--hide-crash-restore-bubble","--disable-quic","--disable-blink-features=AutomationControlled","--in-process-gpu","--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup","--user-data-dir=%!app.filesystem.root%/.browser","--remote-debugging-pipe","--app=file://%!app.filesystem.os%/system/browser/blank.html"],
               "variable": [
                 {
-                  "text": "%!app.AbsolutePath%",
+                  "text": "%!app.filesystem.root%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "AbsolutePath"
+                      "property": "filesystem"
+                    },
+                    {
+                      "property": "root"
                     }
                   ]
                 },
                 {
-                  "text": "%!app.OsAbsolutePath%",
+                  "text": "%!app.filesystem.os%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "OsAbsolutePath"
+                      "property": "filesystem"
+                    },
+                    {
+                      "property": "os"
                     }
                   ]
                 }
@@ -212,16 +222,19 @@
                 "name": "dict",
                 "template": "plang"
               },
-              "value": {"XDG_RUNTIME_DIR":"%!app.AbsolutePath%/.run","WAYLAND_DISPLAY":"wayland-plang"},
+              "value": {"XDG_RUNTIME_DIR":"%!app.filesystem.root%/.run","WAYLAND_DISPLAY":"wayland-plang"},
               "variable": [
                 {
-                  "text": "%!app.AbsolutePath%",
+                  "text": "%!app.filesystem.root%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "AbsolutePath"
+                      "property": "filesystem"
+                    },
+                    {
+                      "property": "root"
                     }
                   ]
                 }
@@ -247,24 +260,6 @@
                 "name": "bool"
               },
               "value": true
-            },
-            {
-              "name": "OutputTo",
-              "type": {
-                "name": "screen",
-                "template": "plang"
-              },
-              "value": "%program%",
-              "variable": [
-                {
-                  "text": "%program%",
-                  "code": [
-                    {
-                      "variable": "program"
-                    }
-                  ]
-                }
-              ]
             }
           ],
           "default": [
@@ -333,7 +328,8 @@
       "index": 4,
       "text": "return %program%",
       "line": {
-        "number": 25
+        "number": 25,
+        "indent": 0
       },
       "code": [
         {
@@ -372,9 +368,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/system/browser/Screen.goal",
-  "prPath": "/system/browser/.build/screen.pr",
-  "hash": "961c17bca03ebfd1d9a6a005a452e58a312bd737823d976c9cd995ac45985ada"
+  "file": "Screen.goal",
+  "hash": "1de074a40a6c0ee3a016ee6d43c2ab5b2bbeac7e114a283ec9410a7f249f1fb5"
 }

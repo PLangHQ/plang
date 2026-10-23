@@ -41,7 +41,7 @@ public class @this : global::app.type.item.source
         : base.RawText;
 
     // A slice is no text: decoded, its parts render themselves (a %ref% leaf is the value it names).
-    private protected override global::app.type.item.text.@this? Text => null;
+    private protected override global::app.type.item.text.@this? Text(global::app.actor.context.@this context) => null;
 
     // The slice's own read keeps whose bytes they are: a row nested in the build's slice (a goal call's
     // parameters) is the build's too.
@@ -53,29 +53,23 @@ public class @this : global::app.type.item.source
     private protected global::app.type.item.@this Decoded(actor.context.@this context)
         => (Type.kind is { IsEmpty: false } ? context.App.type.list.Kind(Type, context).Parse(Raw, context) : null) ?? Read(context);
 
-    // A wire writes verbatim ONLY into its own format (a byte-identical relay of the captured
-    // slice). Any other writer is a USE — decoding needs a context, which this context-free door
-    // does not have: a foreign writer reaches a wire through Output.
-    public override void Write(global::app.type.format.IWriter w)
+    // Its characters already are json: into json and plang's own format the slice is pasted (a byte-identical relay,
+    // signatures hold).
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.kind.json.Writer writer)
     {
-        if (_reader.Owns(w)) { w.Raw((string)Raw); return; }
-        throw new System.InvalidOperationException(
-            "an undecoded wire writes into a foreign format through Output(writer, mode, context) — decoding needs the caller's context.");
+        writer.Raw((string)Raw);
+        return default;
     }
 
-    // Output is the SHAPE-AWARE door. A wire wrapping a STRUCTURE (dict/list/object) reports
-    // IsLeaf=true yet decodes to a non-leaf; Output lets the decoded value render itself through its
-    // OWN shape (a leaf via Write, a structure structurally). Own format still rides raw —
-    // byte-identical relay, signatures hold.
-    public override async System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.wire.kind.plang.Writer writer)
     {
-        if (_reader.Owns(writer)) { writer.Raw((string)Raw); return; }
-        if (context is null) throw new System.InvalidOperationException(
-            "an undecoded wire writes into a foreign format only with the caller's context.");
-        await Decoded(context).Output(writer, mode, context);
+        writer.Raw((string)Raw);
+        return default;
     }
+
+    // Any other writer is a USE: the slice decodes with the caller's context, and the decoded value writes itself.
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
+        => await Decoded(writer.Context).Output(writer);
 
     // Lowering an undecoded wire to CLR is a USE: graduate to the decoded value first (never hand
     // the ENCODED slice to a converter — the bug the inherited source.Clr would commit), then that
@@ -84,8 +78,13 @@ public class @this : global::app.type.item.source
     internal override object? Clr(System.Type target, actor.context.@this? context)
         => context is null ? Clr(target) : Decoded(context).Clr(target);
 
-    internal override object? Clr(System.Type target) => throw new System.InvalidOperationException(
-        "an undecoded wire lowers to CLR through its Data (Data.Clr) — decoding needs the caller's context.");
+    internal override object? Clr(System.Type target) => throw new global::app.error.AppException(new global::app.error.@this(
+        "an undecoded wire lowers to CLR through its Data (Data.Clr) — decoding needs the caller's context.", "WireUndecoded", 400));
+
+    // Read as another type, an undecoded wire is what it decodes to, read as tokens.
+    internal override object? Read(global::app.type.reader.ITypeReader reader, string? kind,
+                                   global::app.actor.context.@this context)
+        => Decoded(context).Read(reader, kind, context);
 
     // Re-declared, the slice is what its new declaration makes of it — a template only when marked one.
     internal override global::app.type.item.source Declared(global::app.type.@this type)

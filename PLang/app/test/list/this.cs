@@ -12,10 +12,10 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
 {
     private readonly global::app.@this _app;
 
-    public @this(global::app.@this app) : base(new List<object?>())
+    public @this(global::app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
     {
         _app = app;
-        Report = new(this);
+        Report = new(this, app.type.list);
     }
 
     /// <summary>What the run comes to.</summary>
@@ -29,10 +29,32 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
 
     /// <summary>Opens a session on the actor test's setting names: the run's own, or (given its test) the
     /// one a test's App writes into.</summary>
-    public global::app.channel.type.test.@this Open(global::app.test.@this? test = null)
+    public async Task<global::app.channel.type.test.@this> Open(global::app.test.@this? test = null)
+    {
+        // opened on the default actor first: the app is testing from here, so a store its setting's read opens (the
+        // settings' own) opens in memory
+        var user = _app.actor.list.User;
+        var session = new global::app.channel.type.test.@this(test);
+        // the channel the default actor has under the session's name (a test's own session is its output)
+        var channel = user.Channel.Get(session.Name);
+        user.Channel.Register(session);
+        // then where test's setting says, when that is another actor: the session moves there — opened on it first, so
+        // the app never stops testing, then the default actor given back its channel; one session is left, never two
+        var actor = await Actor();
+        if (actor == global::app.actor.Name.user) return session;
+        var name = session.Name;
+        session = Open(_app.actor.list[actor], test);
+        if (channel != null) await user.Channel.Set(channel);
+        else await user.Channel.Remove(name, user.Context);
+        return session;
+    }
+
+    /// <summary>Opens a session on <paramref name="actor"/> — the one test's setting names, read by a caller that can
+    /// wait for it.</summary>
+    public global::app.channel.type.test.@this Open(global::app.actor.@this actor, global::app.test.@this? test = null)
     {
         var session = new global::app.channel.type.test.@this(test);
-        Actor.Channel.Register(session);
+        actor.Channel.Register(session);
         return session;
     }
 
@@ -42,9 +64,9 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         if (Session is { } session) await session.Actor.Channel.Remove(session.Name, session.Actor.Context);
     }
 
-    // The actor test's setting names — one of the app's, which the actor list holds.
-    private global::app.actor.@this Actor
-        => _app.actor.list[_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Actor];
+    // The name of the actor test's setting names — one of the app's, which the actor list holds by it.
+    private async Task<global::app.actor.Name> Actor()
+        => (await _app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Actor;
 
     /// <summary>The App this run belongs to — reporters read its version for drift.</summary>
     internal global::app.@this App => _app;
@@ -67,10 +89,10 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         var tests = new List<global::app.test.@this>();
         foreach (var row in given.Items(context))
             if (await row.Value() is global::app.test.@this test) tests.Add(test);
-        var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests);
+        var executed = new global::app.type.item.list.@this<global::app.test.@this>(tests, given.Type);
         if (tests.Count == 0) return executed;
 
-        var parallel = context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32();
+        var parallel = (await context.Setting.Get<global::app.test.setting.@this>()).Parallel.ToInt32();
         if (parallel < 1) parallel = System.Environment.ProcessorCount;
 
         using var semaphore = new SemaphoreSlim(parallel);
@@ -98,14 +120,15 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         {
             var listed = await root.List(match.ToString(), under.Value == global::app.type.item.path.subfolder.include, context);
             if (!listed.Success) return listed;
-            var found = new List<data.@this>();
+            var tests = new List<data.@this>();
             if (await listed.Value() is global::app.type.item.list.@this files)
                 foreach (var row in files.Items(context))
                     // .test.goal files resolve only under the file scheme; another scheme is skipped
                     if (await row.Value<global::app.type.item.path.@this>() is global::app.type.item.path.file.@this file)
-                        found.Add(new data.@this("", await Of(file, context), context: context));
+                        tests.Add(new data.@this("", await Of(file, context), context: context));
             return (data.@this)context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(
-                new global::app.type.item.list.@this<global::app.test.@this>(found));
+                new global::app.type.item.list.@this<global::app.test.@this>(tests,
+                    context.App.type.list[typeof(global::app.type.item.list.@this<global::app.test.@this>)]));
         }));
 
     // The test a .test.goal file is: its goal read first (even with no .pr the source names the test), then
@@ -115,10 +138,10 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         var goalRead = await file.Read(context);
         var goalContent = goalRead.Success ? await goalRead.Value() : null;
         if (!goalRead.Success)
-            return Stale(new global::app.goal.@this { Path = file }, "goal read error: " + (goalRead.Error?.Message ?? ""));
+            return Stale(new global::app.goal.@this(context.App.type.list) { Path = file }, "goal read error: " + (goalRead.Error?.Message ?? ""));
         var source = goalContent as global::app.goal.@this
             ?? global::app.goal.@this.Parse(goalContent?.ToString() ?? "", file, context)
-            ?? new global::app.goal.@this { Path = file };
+            ?? new global::app.goal.@this(context.App.type.list) { Path = file };
 
         if (source.PrPath is not global::app.type.item.path.file.@this pr) return Stale(source, "no PrPath derivable from goal source");
         var prExists = await pr.Exists(context);
@@ -129,17 +152,19 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         // aborted discovery.
         var prRead = await pr.Read(context);
         if (!prRead.Success) return Stale(source, prRead.Error?.Message ?? "pr corrupt");
-        global::app.goal.@this? built;
-        try { built = (await prRead.Value()) as global::app.goal.@this; }
+        global::app.goal.@this? goal;
+        try { goal = (await prRead.Value()) as global::app.goal.@this; }
         catch (global::app.error.AppException refused) { return Stale(source, refused.Message); }
-        if (built == null) return Stale(source, prRead.Error?.Message ?? "pr corrupt");
-        if (!string.Equals(source.Hash, built.Hash, StringComparison.OrdinalIgnoreCase)) return Stale(source, "rebuild needed");
+        if (goal == null) return Stale(source, prRead.Error?.Message ?? "pr corrupt");
+        if (!string.Equals(source.Hash, goal.Hash, StringComparison.OrdinalIgnoreCase)) return Stale(source, "rebuild needed");
+        // the same words, but the saved code must still hold against today's catalogue (the build's own judgement), its
+        // sub-goals' too
+        if (await goal.Invalid(context) is { } invalid) return Stale(source, "rebuild needed: " + invalid.Message);
 
-        return await global::app.test.@this.From(built, context);
+        return await global::app.test.@this.From(goal, context);
 
-        static global::app.test.@this Stale(global::app.goal.@this goal, string reason)
-            => new() { Goal = goal, Status = Status.Stale, StatusReason = reason };
-    }
+        global::app.test.@this Stale(global::app.goal.@this goal, string reason)
+            => new(context.App.type.list) { Goal = goal, Status = Status.Stale, StatusReason = reason };    }
 
     // One test: this run's coverage takes in the goals it reaches (a site that never runs still shows); a test
     // that isn't Ready is recorded, not run; a Ready one runs itself in an App of its own, rooted at this one's folder
@@ -150,8 +175,8 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
         foreach (var goal in test.Reach) Report.Coverage.Add(goal);
         if (test.Status == Status.Ready)
         {
-            await using var app = new global::app.@this(_app.AbsolutePath);
-            app.test.list.Open(test);
+            await using var app = new global::app.@this(_app.filesystem.root.Absolute);
+            await app.test.list.Open(test);
             Made?.Invoke(app);
             await test.Start(app, context);
             Report.Coverage.Merge(app.test.list.Report.Coverage);

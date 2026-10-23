@@ -67,7 +67,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
         var kp = _provider.GenerateKeyPair().keys!;
         var standard = Convert.ToBase64String(System.Buffers.Text.Base64Url.DecodeFromChars(kp.PublicKey));
         var unsigned = Unsigned(standard);
-        var signed = unsigned.Signed(_provider.Sign(unsigned, new global::app.type.item.text.@this(kp.PrivateKey)));
+        var signed = unsigned.Signed(_provider.Sign(unsigned, app.actor.list.User.Context.Text(kp.PrivateKey)));
 
         await Assert.That(_provider.Verify(signed).Value).IsTrue();
     }
@@ -107,26 +107,27 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
     // [Code] boundary (SignAsync/VerifyAsync) maps throws → SignatureInvalid/SigningError.
     private global::app.type.item.signature.@this Unsigned(string identityPublicKey, string nonce = "nonce-1")
         => new(
-            value: app.actor.list.User.Context.Ok(new global::app.type.item.text.@this("payload")),
-            algorithm: new global::app.type.item.text.@this("ed25519"),
-            nonce: new global::app.type.item.text.@this(nonce),
-            created: new global::app.type.item.datetime.@this(DateTimeOffset.UnixEpoch),
-            identity: new global::app.type.item.text.@this(identityPublicKey),
-            hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
-            signature: new global::app.type.item.binary.@this(Array.Empty<byte>()));
+            type: app.type.list[new global::app.type.@this("signature", "ed25519"), app.actor.list.User.Context],
+            value: app.actor.list.User.Context.Ok(app.actor.list.User.Context.Text("payload")),
+            algorithm: app.actor.list.User.Context.Text("ed25519"),
+            nonce: app.actor.list.User.Context.Text(nonce),
+            created: new global::app.type.item.datetime.@this(DateTimeOffset.UnixEpoch, app.type.list[typeof(global::app.type.item.datetime.@this)]),
+            identity: app.actor.list.User.Context.Text(identityPublicKey),
+            hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), (global::app.module.crypto.type.hash.kind.keccak256.@this)app.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
+            signature: new global::app.type.item.binary.@this(Array.Empty<byte>(), app.type.list[typeof(global::app.type.item.binary.@this)]));
 
     // A copy of a signed signature with one field swapped — for the mismatch tests.
     private global::app.type.item.signature.@this Rebuilt(global::app.type.item.signature.@this s,
         string? nonce = null, string? identity = null, global::app.type.item.binary.@this? signature = null)
-        => new(s.Value, s.Algorithm,
-            nonce == null ? s.Nonce : new global::app.type.item.text.@this(nonce), s.Created,
-            identity == null ? s.Identity : new global::app.type.item.text.@this(identity),
+        => new(s.Type, s.Value, s.Algorithm,
+            nonce == null ? s.Nonce : app.actor.list.User.Context.Text(nonce), s.Created,
+            identity == null ? s.Identity : app.actor.list.User.Context.Text(identity),
             s.Hash, signature ?? s.Signature, s.Expires, s.Contracts);
 
     private global::app.type.item.signature.@this Signed(KeyPair kp, string nonce = "nonce-1")
     {
         var unsigned = Unsigned(kp.PublicKey, nonce);
-        return unsigned.Signed(_provider.Sign(unsigned, new global::app.type.item.text.@this(kp.PrivateKey)));
+        return unsigned.Signed(_provider.Sign(unsigned, app.actor.list.User.Context.Text(kp.PrivateKey)));
     }
 
     #region Sign
@@ -135,7 +136,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
     public async Task Sign_ProducesNonEmpty64ByteSignature()
     {
         var kp = _provider.GenerateKeyPair().keys!;
-        var signature = _provider.Sign(Unsigned(kp.PublicKey), new global::app.type.item.text.@this(kp.PrivateKey)).Value;
+        var signature = _provider.Sign(Unsigned(kp.PublicKey), app.actor.list.User.Context.Text(kp.PrivateKey)).Value;
 
         await Assert.That(signature.Length).IsEqualTo(64);
         await Assert.That(signature.Any(b => b != 0)).IsTrue();
@@ -145,7 +146,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
     public async Task Sign_DifferentData_DifferentSignatures()
     {
         var kp = _provider.GenerateKeyPair().keys!;
-        var privateKey = new global::app.type.item.text.@this(kp.PrivateKey);
+        var privateKey = app.actor.list.User.Context.Text(kp.PrivateKey);
         var sig1 = _provider.Sign(Unsigned(kp.PublicKey, "nonce-1"), privateKey).Value;
         var sig2 = _provider.Sign(Unsigned(kp.PublicKey, "nonce-2"), privateKey).Value;
 
@@ -155,7 +156,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
     [Test]
     public async Task Sign_InvalidBase64PrivateKey_Throws()
     {
-        await Assert.That(() => _provider.Sign(Unsigned("pub"), new global::app.type.item.text.@this("not-valid-base64!!!")))
+        await Assert.That(() => _provider.Sign(Unsigned("pub"), app.actor.list.User.Context.Text("not-valid-base64!!!")))
             .Throws<FormatException>();
     }
 
@@ -195,14 +196,14 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
         var signed = Signed(kp);
         var bytes = (byte[])signed.Signature.Value.Clone();
         bytes[0] ^= 0xFF;
-        var tampered = Rebuilt(signed, signature: new global::app.type.item.binary.@this(bytes));
+        var tampered = Rebuilt(signed, signature: new global::app.type.item.binary.@this(bytes, app.type.list[typeof(global::app.type.item.binary.@this)]));
         await Assert.That(_provider.Verify(tampered).Value).IsFalse();
     }
 
     [Test]
     public async Task Verify_InvalidBase64PublicKey_Throws()
     {
-        var signed = Unsigned("not-valid-base64!!!").Signed(new global::app.type.item.binary.@this(new byte[64]));
+        var signed = Unsigned("not-valid-base64!!!").Signed(new global::app.type.item.binary.@this(new byte[64], app.type.list[typeof(global::app.type.item.binary.@this)]));
         await Assert.That(() => _provider.Verify(signed)).Throws<FormatException>();
     }
 

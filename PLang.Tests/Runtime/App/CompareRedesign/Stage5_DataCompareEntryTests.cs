@@ -34,7 +34,7 @@ public class Stage5_DataCompareEntryTests
     {
         // exactly two awaits (this.Value(), other.Value()); per-type Compare is sync
         await using var app = NewApp(out var root);
-        var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "n.json"));
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "n.json"));
         await (await p.WriteText("42", app.actor.list.User.Context)).IsSuccess();
         var pending = await p.Decoded(app.actor.list.User.Context);   // raw-backed
         await Assert.That(pending.MaterializeCount()).IsEqualTo(0);
@@ -49,7 +49,7 @@ public class Stage5_DataCompareEntryTests
         // async reconcile: Compare awaits Value() on both operands, then ranks the real items —
         // the pending source is read (rank is an int on the value, not on the type)
         await using var app = NewApp(out var root);
-        var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "n.json"));
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "n.json"));
         await (await p.WriteText("42", app.actor.list.User.Context)).IsSuccess();
         var pending = await p.Decoded(app.actor.list.User.Context);
         _ = await pending.Compare(D(app, 5, "number"));       // the compare reads both values

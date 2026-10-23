@@ -132,7 +132,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// from it (a text is its UTF-8 bytes; a binding on binary create may answer); when nothing makes binary of
     /// it, an error — never a guessed writer.</summary>
     public static async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
     {
         var value = await data.Value();
@@ -140,7 +140,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (value is not @this bytes)
         {
             var born = await context.App.type.list[typeof(@this)].Create(value, context, data.Name);
-            if (born.Success && !born.Exits && born.Peek() is @this made) bytes = made;
+            if (born.Success && !born.Exits && born.Peek() is @this binary) bytes = binary;
             else return born.Success ? context.Error(new global::app.error.@this(
                 $"%{data.Name}% holds a {data.Type?.Name ?? "value"}, not bytes — nothing writes it as binary content", "NoEncoder", 400))
                 : born;
@@ -155,28 +155,29 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public byte[] Value { get; }
 
-    /// <summary>The value's kind — the byte-format vocabulary. An ordinary
-    /// typed property stamped at creation, never after.</summary>
-    public string? Kind { get; init; }
+    /// <summary>Bytes are plain: a file takes them as they are.</summary>
+    public override byte[]? Plain => Value;
 
-    protected internal override global::app.type.@this Type
-        => new("binary", typeof(@this), Kind);
+    /// <summary>Bytes, born holding <paramref name="type"/> — its kind the byte format.</summary>
+    public @this(byte[] value, global::app.type.@this type) : base(type) => Value = value ?? System.Array.Empty<byte>();
 
-    public @this(byte[] value) { Value = value ?? System.Array.Empty<byte>(); }
+    // Bytes through the implicit conversion, their type rebuilt from the class until that conversion goes.
+    private @this(byte[] value) => Value = value ?? System.Array.Empty<byte>();
 
     /// <summary>THE PURE CORE — a <c>binary</c> passes through; a raw <c>byte[]</c> passes; a text is its UTF-8
     /// bytes (text is bytes in an encoding); a raw base64 string (binary's wire form) decodes; anything else (or
-    /// non-base64) declines (<c>null</c>). Shared by the ICreate courier and comparison coercion.</summary>
-    public static @this? Create(object? raw)
+    /// non-base64) declines (<c>null</c>). What it makes is born holding <paramref name="type"/>. Shared by the
+    /// ICreate courier and comparison coercion.</summary>
+    public static @this? Create(object? raw, global::app.type.@this type)
     {
         if (raw is @this self) return self;
-        if (raw is global::app.type.item.text.@this text) return (@this)System.Text.Encoding.UTF8.GetBytes(text.Clr<string>() ?? "");
+        if (raw is global::app.type.item.text.@this text) return new @this(System.Text.Encoding.UTF8.GetBytes(text.Clr<string>() ?? ""), type);
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
         switch (value)
         {
-            case byte[] b: return (@this)b;
+            case byte[] b: return new @this(b, type);
             case string s:
-                try { return (@this)System.Convert.FromBase64String(s); }
+                try { return new @this(System.Convert.FromBase64String(s), type); }
                 catch (System.FormatException) { return null; }
             default: return null;
         }
@@ -184,18 +185,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
     /// on <paramref name="data"/> (a non-base64 string vs a wrong type).</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
-        if (Create(value) is { } built) return built;
+        // bytes are held as they are when they already are the declared type, else born again holding it
+        if (value is @this self) return type is null || self.Is(type) ? self : new @this(self.Value, type);
+        if (type is not null && Create(value, type) is { } binary) return binary;
         object? clr = (value as global::app.type.item.@this)?.Clr<object>() ?? value;
         data.Fail(clr is string
             ? new global::app.error.@this("Cannot parse string as binary — expected base64.", "BinaryParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {(value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name} to binary.", "BinaryConversionFailed", 400));
         return null;
     }
-
-    /// <summary>A re-kinded copy — same bytes, the declared kind stamped.</summary>
-    public override global::app.type.item.@this Kinded(string? kind) => new @this(Value) { Kind = kind };
 
     // INBOUND only — the entry lift (`.Ok(bytes)` constructs). The outbound
     // implicit (binary → byte[]) is gone: every site was a silent CLR exit;
@@ -208,7 +208,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
 
     public override bool IsLeaf => true;
-    public override void Write(global::app.type.format.IWriter w) => w.Bytes(Value);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.Bytes(Value, Type.kind); return default; }
 
     /// <summary>binary's byte face IS its bytes.</summary>
     public override byte[]? RawBytes => Value;
@@ -235,7 +235,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// a side that can't become bytes → <c>Incomparable</c>. No order.</summary>
     protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
-        var b = other as @this ?? Create(other);
+        var b = other as @this ?? Create(other, context.App.type.list[typeof(@this)]);
         return new(b is null ? global::app.data.Comparison.Incomparable
                  : Value.AsSpan().SequenceEqual(b.Value) ? global::app.data.Comparison.Equal
                  : global::app.data.Comparison.NotEqual);

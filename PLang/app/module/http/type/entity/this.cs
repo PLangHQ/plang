@@ -34,7 +34,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override bool IsLeaf => false;
     /// <summary>A content is made from a dict of its members — any left out keeps its default; a member that is no
     /// member of a content declines with why.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? raw, global::app.type.@this? type, Data data)
     {
         if (raw is @this content) return content;
         if (raw is not global::app.type.item.dict.@this dict)
@@ -42,9 +42,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             data.Fail(new global::app.error.@this("a request's content is {mime, encoding}", "ContentInvalid", 400));
             return null;
         }
-        var fresh = new @this();
-        global::app.type.item.text.@this mime = fresh.Mime;
-        global::app.type.item.text.@this encoding = fresh.Encoding;
+        var @default = new @this();
+        global::app.type.item.text.@this mime = @default.Mime;
+        global::app.type.item.text.@this encoding = @default.Encoding;
         foreach (var entry in dict.Entries(data.Context!))
             switch (entry.Name.ToLowerInvariant())
             {
@@ -59,8 +59,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>Writes itself as its dict.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("mime"); writer.String(Mime.ToString());

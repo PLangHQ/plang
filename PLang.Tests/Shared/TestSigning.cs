@@ -19,25 +19,38 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
     public (global::app.module.signing.code.KeyPair? keys, global::app.error.@this? error) GenerateKeyPair()
         => (new global::app.module.signing.code.KeyPair("test-public-key", "test-private-key"), null);
 
-    public Task<global::app.data.@this> SignAsync(global::app.module.signing.sign action)
+    public async Task<global::app.data.@this> SignAsync(global::app.module.signing.sign action)
     {
+        // the data as the view it is signed in takes it, as the real signer settles it
+        var view = action.StoreView != null && (await action.StoreView.Value())?.Value == true ? global::app.View.Store : global::app.View.Out;
+        var data = await action.Data!.Settle(view);
         var unsigned = new global::app.type.item.signature.@this(
-            value: action.Data!,
-            algorithm: new global::app.type.item.text.@this(Name),
-            nonce: new global::app.type.item.text.@this("test-nonce"),
-            created: new global::app.type.item.datetime.@this(System.DateTimeOffset.FromUnixTimeSeconds(0)),
-            identity: new global::app.type.item.text.@this("test-public-key"),
-            hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
-            signature: new global::app.type.item.binary.@this(System.Array.Empty<byte>()));
-        return Task.FromResult(action.Context.Ok((object?)unsigned));
+            type: action.Context.App.type.list[new global::app.type.@this("signature", Name), action.Context],
+            value: data,
+            algorithm: action.Context.Text(Name),
+            nonce: action.Context.Text("test-nonce"),
+            created: new global::app.type.item.datetime.@this(System.DateTimeOffset.FromUnixTimeSeconds(0),
+                action.Context.App.type.list[typeof(global::app.type.item.datetime.@this)]),
+            identity: action.Context.Text("test-public-key"),
+            hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(),
+                (global::app.module.crypto.type.hash.kind.@this)action.Context.App.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
+            signature: new global::app.type.item.binary.@this(System.Array.Empty<byte>(), action.Context.App.type.list[typeof(global::app.type.item.binary.@this)]));
+        // the Data it settled, holding its layer — as the real signer answers
+        return data.Copy(unsigned);
     }
 
-    public Task<global::app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(global::app.module.signing.verify action)
-        => Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(new global::app.type.item.@bool.@this(true)));
+    // The crypto is faked, but the Data is read as the real verifier reads it: one that holds no signature is refused.
+    public async Task<global::app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(global::app.module.signing.verify action)
+    {
+        if ((action.Data == null ? null : await action.Data.Follow(action.Context))?.Signature == null)
+            return action.Context.Error<global::app.type.item.@bool.@this>(new global::app.error.@this("Data has no signature", "NoSignature", 400));
+        return action.Context.Ok<global::app.type.item.@bool.@this>(new global::app.type.item.@bool.@this(true,
+            action.Context.App.type.list[typeof(global::app.type.item.@bool.@this)]));
+    }
 
     public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey)
-        => new global::app.type.item.binary.@this(System.Array.Empty<byte>());
+        => new global::app.type.item.binary.@this(System.Array.Empty<byte>(), unsigned.Signature.Type);
 
     public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
-        => new global::app.type.item.@bool.@this(true);
+        => global::app.type.item.@bool.@this.True;
 }

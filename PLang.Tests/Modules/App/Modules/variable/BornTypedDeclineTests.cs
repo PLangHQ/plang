@@ -15,7 +15,7 @@ public class BornTypedDeclineTests
     public async Task Create_TextValue_DeclinesWithCreateVariableDeclined()
     {
         var ctx = _app.actor.list.User.Context;
-        global::app.type.item.@this textValue = new global::app.type.item.text.@this("some value");
+        global::app.type.item.@this textValue = ctx.Text("some value");
         var asking = new Data("Name", "Name", context: ctx);
 
         var result = global::app.type.item.variable.@this.Create(textValue, null, asking);
@@ -47,7 +47,7 @@ public class BornTypedDeclineTests
     public async Task Set_NameTypedAsText_DeclinesAtDispatch()
     {
         var ctx = _app.actor.list.User.Context;
-        var act = new global::app.goal.step.action.@this
+        var act = new global::app.goal.step.action.@this(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"),
             Name = "set",
@@ -70,7 +70,7 @@ public class BornTypedDeclineTests
     public async Task Set_NameStampedVariable_Succeeds()
     {
         var ctx = _app.actor.list.User.Context;
-        var act = new global::app.goal.step.action.@this
+        var act = new global::app.goal.step.action.@this(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"),
             Name = "set",

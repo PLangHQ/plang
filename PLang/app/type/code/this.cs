@@ -30,7 +30,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 {
     /// <summary>Code's formats are text: written as text writes.</summary>
     public static System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
         => global::app.type.item.text.@this.Encode(stream, data, context, view, encoding, ct);
 
@@ -42,7 +42,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     [global::app.Out, global::app.Store]
     public string Language { get; }
 
-    public @this(string source, string language)
+    /// <summary>A snippet of <paramref name="language"/>, born holding <paramref name="type"/> — the app's code.</summary>
+    public @this(string source, string language, global::app.type.@this type) : base(type)
     {
         Source = source ?? "";
         Language = string.IsNullOrEmpty(language) ? "text" : language;
@@ -54,13 +55,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override string ToString() => Source;
 
     /// <summary>The code renders itself as its source text — uniform across formats.</summary>
-    public override void Write(global::app.type.format.IWriter writer) => writer.String(Source);
-
-    /// <summary>Code writes its own form — its source (<see cref="Write"/>) — in every view.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    /// <summary>Code writes its own form — its source — in every view.</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        writer.String(Source);
+        return default;
     }
 }

@@ -26,7 +26,7 @@ public class ActorPermissionStorageTests
         global::app.@this app, string actor, string path, Verb? verb = null, MatchMode match = MatchMode.exact)
     {
         var verbs = verb is { } v ? new System.Collections.Generic.HashSet<Verb> { v } : PermissionRecord.AllVerbs;
-        var p = new PermissionRecord(actor, path, verbs, match);
+        var p = new PermissionRecord(actor, path, verbs, match, app.type.list[typeof(PermissionRecord)]);
         return new global::app.data.@this<PermissionRecord>("", p, context: app.actor.list.User.Context);
     }
 
@@ -36,7 +36,7 @@ public class ActorPermissionStorageTests
         var grant = Grant(app, app.actor.list.User.Name, "/p");
         await app.actor.list.User.Permission.Add(grant, persist: true);
 
-        var found = await app.actor.list.User.Permission.Find(new Path("/p"), global::app.type.item.permission.Verb.read);
+        var found = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/p"), global::app.type.item.permission.Verb.read);
         await Assert.That(found).IsNotNull();
         await Assert.That((await found!.Value<PermissionRecord>())!.Path).IsEqualTo("/p");
     }
@@ -47,7 +47,7 @@ public class ActorPermissionStorageTests
         var userGrant = Grant(app, app.actor.list.User.Name, "/u");
         await app.actor.list.User.Permission.Add(userGrant, persist: true);
 
-        var found = await app.actor.list.System.Permission.Find(new Path("/u"), global::app.type.item.permission.Verb.read);
+        var found = await app.actor.list.System.Permission.Find(app.actor.list.User.Context.File("/u"), global::app.type.item.permission.Verb.read);
         await Assert.That(found).IsNull();
     }
 
@@ -62,8 +62,8 @@ public class ActorPermissionStorageTests
         var diskGrant = Grant(app, app.actor.list.User.Name, "/disk");
         await app.actor.list.User.Permission.Add(diskGrant, persist: true);
 
-        var mem = await app.actor.list.User.Permission.Find(new Path("/mem"), global::app.type.item.permission.Verb.read);
-        var disk = await app.actor.list.User.Permission.Find(new Path("/disk"), global::app.type.item.permission.Verb.read);
+        var mem = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/mem"), global::app.type.item.permission.Verb.read);
+        var disk = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/disk"), global::app.type.item.permission.Verb.read);
         await Assert.That(mem).IsNotNull();
         await Assert.That(disk).IsNotNull();
         // Routing: only the persisted grant lands in the actor's saved permission setting; the session
@@ -78,7 +78,7 @@ public class ActorPermissionStorageTests
     {
         await actor.Setting.Load();
         var paths = new List<string>();
-        foreach (var d in actor.Setting.Of<global::app.actor.permission.setting.@this>().Grant.Items(actor.Context))
+        foreach (var d in (await actor.Setting.Get<global::app.actor.permission.setting.@this>()).Grant.Items(actor.Context))
             if (await d.Value<PermissionRecord>() is { } p) paths.Add(p.Path);
         return paths;
     }
@@ -92,12 +92,12 @@ public class ActorPermissionStorageTests
         await app.actor.list.System.Permission.Add(systemGrant, persist: true);
         await app.actor.list.User.Permission.Add(userGrant, persist: true);
 
-        await Assert.That(await app.actor.list.System.Permission.Find(new Path("/shared"), Verb.read)).IsNotNull();
-        await Assert.That(await app.actor.list.User.Permission.Find(new Path("/shared"), Verb.read)).IsNotNull();
+        await Assert.That(await app.actor.list.System.Permission.Find(app.actor.list.User.Context.File("/shared"), Verb.read)).IsNotNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/shared"), Verb.read)).IsNotNull();
 
         await app.actor.list.User.Permission.Revoke((await userGrant.Value())!);
-        await Assert.That(await app.actor.list.User.Permission.Find(new Path("/shared"), Verb.read)).IsNull();
-        await Assert.That(await app.actor.list.System.Permission.Find(new Path("/shared"), Verb.read)).IsNotNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/shared"), Verb.read)).IsNull();
+        await Assert.That(await app.actor.list.System.Permission.Find(app.actor.list.User.Context.File("/shared"), Verb.read)).IsNotNull();
     }
 
     // Permission is an actor's own: the user never holds the system's saved grants.
@@ -106,7 +106,7 @@ public class ActorPermissionStorageTests
         var app = NewApp();
         await app.actor.list.System.Permission.Add(Grant(app, app.actor.list.System.Name, "/s"), persist: true);
 
-        await Assert.That(await app.actor.list.User.Permission.Find(new Path("/s"), Verb.read)).IsNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/s"), Verb.read)).IsNull();
         await Assert.That(await Saved(app, app.actor.list.User)).DoesNotContain("/s");
     }
 
@@ -119,7 +119,7 @@ public class ActorPermissionStorageTests
 
         await using var next = NewApp(root);
         await Assert.That(await Saved(next, next.actor.list.User)).Contains("/kept");
-        await Assert.That(await next.actor.list.User.Permission.Find(new Path("/kept"), Verb.read)).IsNotNull();
+        await Assert.That(await next.actor.list.User.Permission.Find(next.actor.list.User.Context.File("/kept"), Verb.read)).IsNotNull();
     }
 
     [Test] public async Task VerbNarrowing_FullAllowGrant_AllowsNarrowedReadRequest()
@@ -128,7 +128,7 @@ public class ActorPermissionStorageTests
         var grant = Grant(app, app.actor.list.User.Name, "/p"); // default verb = fully granted
         await app.actor.list.User.Permission.Add(grant, persist: false);
 
-        var found = await app.actor.list.User.Permission.Find(new Path("/p"), Verb.read);
+        var found = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/p"), Verb.read);
         await Assert.That(found).IsNotNull();
     }
 
@@ -139,7 +139,7 @@ public class ActorPermissionStorageTests
         var grant = Grant(app, app.actor.list.User.Name, "/p", verb: readOnly);
         await app.actor.list.User.Permission.Add(grant, persist: false);
 
-        var found = await app.actor.list.User.Permission.Find(new Path("/p"), global::app.type.item.permission.Verb.delete);
+        var found = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/p"), global::app.type.item.permission.Verb.delete);
         await Assert.That(found).IsNull();
     }
 
@@ -149,7 +149,7 @@ public class ActorPermissionStorageTests
         var grant = Grant(app, app.actor.list.User.Name, "/apps/*/file.txt", match: MatchMode.glob);
         await app.actor.list.User.Permission.Add(grant, persist: false);
 
-        var found = await app.actor.list.User.Permission.Find(new Path("/apps/Email/file.txt"), global::app.type.item.permission.Verb.read);
+        var found = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/apps/Email/file.txt"), global::app.type.item.permission.Verb.read);
         await Assert.That(found).IsNotNull();
     }
 
@@ -159,7 +159,7 @@ public class ActorPermissionStorageTests
         var grant = Grant(app, app.actor.list.User.Name, "/apps/*/file.txt", match: MatchMode.glob);
         await app.actor.list.User.Permission.Add(grant, persist: false);
 
-        var found = await app.actor.list.User.Permission.Find(new Path("/apps/Email/Sub/file.txt"), global::app.type.item.permission.Verb.read);
+        var found = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/apps/Email/Sub/file.txt"), global::app.type.item.permission.Verb.read);
         await Assert.That(found).IsNull();
     }
 
@@ -168,10 +168,10 @@ public class ActorPermissionStorageTests
         var app = NewApp();
         var grant = Grant(app, app.actor.list.User.Name, "/p"); // unsigned → in-memory
         await app.actor.list.User.Permission.Add(grant, persist: false);
-        await Assert.That(await app.actor.list.User.Permission.Find(new Path("/p"), global::app.type.item.permission.Verb.read)).IsNotNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/p"), global::app.type.item.permission.Verb.read)).IsNotNull();
 
         await app.actor.list.User.Permission.Revoke((await grant.Value())!);
-        await Assert.That(await app.actor.list.User.Permission.Find(new Path("/p"), global::app.type.item.permission.Verb.read)).IsNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/p"), global::app.type.item.permission.Verb.read)).IsNull();
     }
 
     [Test] public async Task Revoke_PersistedGrant_RemovesSqliteRow()
@@ -179,10 +179,10 @@ public class ActorPermissionStorageTests
         var app = NewApp();
         var grant = Grant(app, app.actor.list.User.Name, "/p");
         await app.actor.list.User.Permission.Add(grant, persist: true);
-        await Assert.That(await app.actor.list.User.Permission.Find(new Path("/p"), global::app.type.item.permission.Verb.read)).IsNotNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/p"), global::app.type.item.permission.Verb.read)).IsNotNull();
 
         await app.actor.list.User.Permission.Revoke((await grant.Value())!);
-        await Assert.That(await app.actor.list.User.Permission.Find(new Path("/p"), global::app.type.item.permission.Verb.read)).IsNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/p"), global::app.type.item.permission.Verb.read)).IsNull();
     }
 
     [Skip("Tamper-detection moved to verify-on-read at the application/plang store boundary; SettingsStore verify-on-read is a deferred todo (OBP rewrite).")]
@@ -192,10 +192,10 @@ public class ActorPermissionStorageTests
         var grant = Grant(app, app.actor.list.User.Name, "/p");
         // Tamper the path post-signing — signature no longer covers payload.
         var tampered = new global::app.data.@this<PermissionRecord>("",
-            new PermissionRecord(app.actor.list.User.Name, "/different", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact), context: app.actor.list.User.Context);
+            new PermissionRecord(app.actor.list.User.Name, "/different", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, app.type.list[typeof(PermissionRecord)]), context: app.actor.list.User.Context);
         await app.actor.list.User.Permission.Add(tampered, persist: true);
 
-        var found = await app.actor.list.User.Permission.Find(new Path("/different"), global::app.type.item.permission.Verb.read);
+        var found = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/different"), global::app.type.item.permission.Verb.read);
         await Assert.That(found).IsNull();
     }
 
@@ -208,14 +208,14 @@ public class ActorPermissionStorageTests
         await app.actor.list.User.Permission.Add(second, persist: false);
 
         // Find should still hit — overwrite, not duplicate.
-        var found = await app.actor.list.User.Permission.Find(new Path("/p"), global::app.type.item.permission.Verb.read);
+        var found = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/p"), global::app.type.item.permission.Verb.read);
         await Assert.That(found).IsNotNull();
 
         // Prove no-duplicate behaviorally: one Revoke should fully remove the
         // grant. If Add had stored a duplicate, the second copy would still
         // cover the request after Revoke.
         await app.actor.list.User.Permission.Revoke((await first.Value())!);
-        var afterRevoke = await app.actor.list.User.Permission.Find(new Path("/p"), global::app.type.item.permission.Verb.read);
+        var afterRevoke = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/p"), global::app.type.item.permission.Verb.read);
         await Assert.That(afterRevoke).IsNull();
     }
 
@@ -248,7 +248,7 @@ public class ActorPermissionStorageTests
         var grant = Grant(app, app.actor.list.User.Name, "/p");
         await app.actor.list.User.Permission.Add(grant, persist: true);
 
-        var f1 = await app.actor.list.User.Permission.Find(new Path("/p"), global::app.type.item.permission.Verb.read);
+        var f1 = await app.actor.list.User.Permission.Find(app.actor.list.User.Context.File("/p"), global::app.type.item.permission.Verb.read);
         await Assert.That(f1).IsNotNull();
         await Assert.That(f1!.Properties.Contains("permission.verified")).IsTrue();
     }

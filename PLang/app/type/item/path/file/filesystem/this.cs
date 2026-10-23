@@ -10,6 +10,65 @@ namespace app.type.item.path.file.filesystem;
 /// </summary>
 public class @this
 {
+    // its folders, each where the OS lands for it, read on first ask and kept (an overlay holds its disk's)
+    private readonly Lazy<global::app.type.item.path.file.@this> _root, _os, _store;
+
+    /// <summary>The disk of the app whose folder is <paramref name="folder"/>: what <c>/</c> is, beside the runtime's os
+    /// folder and the app's stores' folder.</summary>
+    public @this(string folder)
+    {
+        _root = new(() => Land(folder));
+        _os = new(() => Land(PathHelper.GetFullPath(PathHelper.Combine(AppContext.BaseDirectory, "os"))));
+        _store = new(() => Land(PathHelper.Combine(folder, global::app.store.@this.Folder)));
+    }
+
+    /// <summary>A filesystem over <paramref name="under"/>: its folders are the ones under it.</summary>
+    protected @this(@this under) => (_root, _os, _store) = (under._root, under._os, under._store);
+
+    /// <summary>The app's folder — what <c>/</c> is — where the OS lands for it: <c>%!app.filesystem.root%</c>.</summary>
+    [global::app.LlmBuilder]
+    public global::app.type.item.path.file.@this root => _root.Value;
+
+    /// <summary>The runtime's os folder — what <c>/system/</c> falls back to — where the OS lands for it:
+    /// <c>%!app.filesystem.os%</c>.</summary>
+    [global::app.LlmBuilder]
+    public global::app.type.item.path.file.@this os => _os.Value;
+
+    /// <summary>The app's stores' folder (<c>&lt;root&gt;/.data</c>), there yet or not — where the OS lands for it.</summary>
+    internal global::app.type.item.path.file.@this store => _store.Value;
+
+    // lands one of its folders: where the OS lands for it
+    private global::app.type.item.path.file.@this Land(string folder)
+    {
+        var at = new file.@this(folder, new global::app.type.@this("path", typeof(file.@this), "file"));
+        return at.Landing(this, last: true) is { } landed ? Long(landed) : at;
+    }
+
+    /// <summary><paramref name="path"/> with each part as the OS holds its name: on Windows an 8.3 short part
+    /// (<c>DATA~1</c>) is its long name, in its real case, for the part of the path that exists; elsewhere the path
+    /// itself.</summary>
+    internal global::app.type.item.path.file.@this Long(global::app.type.item.path.file.@this path)
+    {
+        if (!OperatingSystem.IsWindows()) return path;
+        // the deepest part that exists is what the OS can name; what is under it is written as asked
+        var at = path.Absolute;
+        var rest = new Stack<string>();
+        while (!System.IO.Directory.Exists(at) && !System.IO.File.Exists(at))
+        {
+            if (PathHelper.GetDirectoryName(at) is not { } parent) return path;
+            rest.Push(PathHelper.GetFileName(at));
+            at = parent;
+        }
+        var buffer = new char[32768];
+        var length = GetLongPathNameW(at, buffer, (uint)buffer.Length);
+        if (length == 0 || length > buffer.Length) return path;
+        return new file.@this(PathHelper.Combine([new string(buffer, 0, (int)length), .. rest]), path.Type);
+    }
+
+    // The OS boundary's own call (kernel32): a path's long form, every short part expanded. Windows only.
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    private static extern uint GetLongPathNameW(string shortPath, char[] longPath, uint size);
+
     public virtual bool IsFile(file.@this p) => System.IO.File.Exists(p.Absolute);
 
     public virtual bool IsFolder(file.@this p) => System.IO.Directory.Exists(p.Absolute);
@@ -45,7 +104,9 @@ public class @this
     /// removed itself, never what it leads to.</summary>
     public virtual void Delete(file.@this p, bool recursive)
     {
-        if (Link(p) != null || IsFile(p)) System.IO.File.Delete(p.Absolute);
+        // a link to a folder (a junction too) is removed as a folder is, alone: a file's delete refuses it on Windows
+        if (Link(p) != null) { if (IsFolder(p)) System.IO.Directory.Delete(p.Absolute, recursive: false); else System.IO.File.Delete(p.Absolute); }
+        else if (IsFile(p)) System.IO.File.Delete(p.Absolute);
         else System.IO.Directory.Delete(p.Absolute, recursive);
     }
 
@@ -68,11 +129,11 @@ public class @this
     public virtual void Create(file.@this p) => System.IO.Directory.CreateDirectory(p.Absolute);
 
     /// <summary>The files and folders in <paramref name="folder"/> whose name matches <paramref name="pattern"/>;
-    /// those under its folders too when <paramref name="recursive"/>.</summary>
+    /// those under its folders too when <paramref name="recursive"/>. Each holds the folder's type.</summary>
     public virtual IEnumerable<file.@this> List(file.@this folder, string pattern, bool recursive)
         => System.IO.Directory.EnumerateFileSystemEntries(folder.Absolute, pattern,
                 recursive ? System.IO.SearchOption.AllDirectories : System.IO.SearchOption.TopDirectoryOnly)
-            .Select(entry => new file.@this(entry));
+            .Select(entry => new file.@this(entry, folder.Type));
 
     /// <summary>Moves the file, or the folder whole — over what is at <paramref name="to"/> when
     /// <paramref name="overwrite"/>.</summary>
@@ -111,7 +172,7 @@ public class @this
         if (IsFile(p))
         {
             var info = new System.IO.FileInfo(p.Absolute);
-            return new StatInfo(Exists: true, IsFile: true, Size: new global::app.type.item.size.@this(info.Length, context),
+            return new StatInfo(Exists: true, IsFile: true, Size: global::app.type.item.size.@this.Create(info.Length, context),
                 Modified: info.LastWriteTimeUtc);
         }
         if (IsFolder(p))
@@ -123,6 +184,6 @@ public class @this
     private void Parent(file.@this p)
     {
         var folder = PathHelper.GetDirectoryName(p.Absolute);
-        if (!string.IsNullOrEmpty(folder)) Create(new file.@this(folder));
+        if (!string.IsNullOrEmpty(folder)) Create(new file.@this(folder, p.Type));
     }
 }

@@ -97,7 +97,7 @@ public sealed class @this
     /// narrowing <c>binary</c> content to the type its kind names (<c>json→item</c>,
     /// <c>jpg→image</c>, <c>csv→table</c>, <c>plang-goal→goal</c>). A type that ships no
     /// reader of its own reads its stored value as a record and makes itself from it
-    /// (<see cref="Record"/>, decision 789: the item owns how it's made) — the settings
+    /// (<see cref="Record"/>: the item owns how it's made) — the settings
     /// classes read this way, and a record a type can't be made from declines loudly.
     /// </summary>
     public ITypeReader Reader(string typeName, string? kind, actor.context.@this context)
@@ -114,7 +114,7 @@ public sealed class @this
                 && Typed(inner, kind) is not null) typeName = inner;
         }
         // A type that ships no reader of its own reads its stored value as a record and makes itself from it
-        // (decision 789: the item owns how it's made) — the settings classes read this way.
+        // (the item owns how it's made) — the settings classes read this way.
         return Typed(typeName, kind) ?? new Record(typeName);
     }
 

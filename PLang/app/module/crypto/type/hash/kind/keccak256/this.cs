@@ -5,7 +5,7 @@ namespace app.module.crypto.type.hash.kind.keccak256;
 /// is given until its hash is read.</summary>
 public sealed class @this : kind.@this
 {
-    public @this() : base("keccak256") { }
+    public @this(global::app.type.@this owner) : base("keccak256", owner) { }
 
     public override digest.@this Digest()
     {

@@ -11,7 +11,7 @@ public partial class Remove : IContext
     public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
 
     public Task<data.@this> Start() => Name.Use(async name =>
-        await (await Context.App.module.Get(name.ToString())).Use<global::app.module.@this>(async module =>
+        await (await Context.App.module.Get(name.ToString(), Context)).Use<global::app.module.@this>(async module =>
         {
             await module.Remove(Context);
             return Context.Ok();

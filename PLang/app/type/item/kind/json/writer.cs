@@ -5,31 +5,36 @@ namespace app.type.item.kind.json;
 
 /// <summary>
 /// JSON implementation of <see cref="IWriter"/> — wraps a
-/// <see cref="Utf8JsonWriter"/>. Emits the canonical Data wire envelope
-/// <c>{name, type, value, properties, signature}</c> for records, native JSON
-/// tokens for primitives, JSON arrays for lists.
+/// <see cref="Utf8JsonWriter"/>: native JSON tokens for primitives, JSON arrays
+/// and objects for structure.
 ///
-/// <para>The writer never reflects: each value writes itself through its own
-/// <c>Output</c>, and <see cref="Value"/> takes only the C# values of the tree
-/// contract (primitives / byte[] / Data / collections).</para>
+/// <para>The writer never reflects: each value (a Data's record too) writes itself
+/// through its own <c>Output</c>, and <see cref="Value"/> takes only the C# values of
+/// the tree contract (C# primitives and byte[]).</para>
 /// </summary>
 public sealed class Writer : IWriter
 {
     private readonly Utf8JsonWriter _writer;
-    private readonly app.View _view;
-    private readonly bool _emitsSchema;
+    private readonly global::app.type.kind.@this _binary;   // the kind of bytes handed as a C# byte[]: plain bytes
 
-    public Writer(Utf8JsonWriter writer, app.View view = app.View.Out, bool emitsSchema = false)
+    /// <summary>A json writer over <paramref name="writer"/>, for <paramref name="view"/>, asked by
+    /// <paramref name="context"/>; its kind item's <c>json</c> among the asker's types. Bare json shows a Data's value
+    /// only (the record door writes nothing).</summary>
+    public Writer(Utf8JsonWriter writer, global::app.View view, global::app.actor.context.@this context)
     {
         _writer = writer;
-        _view = view;
-        _emitsSchema = emitsSchema;
+        View = view;
+        Context = context;
+        Kind = context.App.type.list["item"].kind["json"]!;
+        _binary = context.App.type.list[typeof(global::app.type.item.binary.@this)].kind;
     }
 
-    public string Format => _emitsSchema ? "plang" : "json";
+    public global::app.type.kind.@this Kind { get; }
+    public global::app.View View { get; }
+    public global::app.actor.context.@this Context { get; }
 
-    /// <summary>The plang wire carries the @schema/type envelope; plain json is bare.</summary>
-    public bool EmitsSchema => _emitsSchema;
+    /// <summary>A value written as json: its json look (characters that already are json pasted), else its own write.</summary>
+    public System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value) => value.Write(this);
 
     public void Null() => _writer.WriteNullValue();
     public void Bool(bool value) => _writer.WriteBooleanValue(value);
@@ -38,19 +43,20 @@ public sealed class Writer : IWriter
     public void Float(float value) => _writer.WriteNumberValue(value);
     public void Double(double value) => _writer.WriteNumberValue(value);
     public void String(string value) => _writer.WriteStringValue(value);
-    // a sensitive value is kept whole in plang's own store, and shown masked in every other view
-    public void Sensitive(string characters) => String(_view == app.View.Store ? characters : "****");
     // Verbatim — raw json (object/number) rides inline, unquoted.
     public void Raw(string value) => _writer.WriteRawValue(value);
-    // Verbatim from UTF-8 bytes — validated as json the same way (invalid bytes or json throw).
-    public void Raw(byte[] value) => _writer.WriteRawValue(value);
     public void DateTime(System.DateTime value) => _writer.WriteStringValue(value);
     public void DateTimeOffset(System.DateTimeOffset value) => _writer.WriteStringValue(value);
     public void TimeSpan(System.TimeSpan value) => _writer.WriteStringValue(value.ToString("c"));
     public void Guid(System.Guid value) => _writer.WriteStringValue(value);
     public void Enum(System.Enum value) => _writer.WriteStringValue(value.ToString());
     public void Decimal(decimal value) => _writer.WriteNumberValue(value);
-    public void Bytes(byte[] value) => _writer.WriteBase64StringValue(value);
+    // A text's bytes are the text they spell; any other bytes are base64.
+    public void Bytes(byte[] value, global::app.type.kind.@this kind)
+    {
+        if (kind.IsText) _writer.WriteStringValue(System.Text.Encoding.UTF8.GetString(value));
+        else _writer.WriteBase64StringValue(value);
+    }
 
     public void BeginArray(int count) => _writer.WriteStartArray();
     public void EndArray() => _writer.WriteEndArray();
@@ -58,69 +64,6 @@ public sealed class Writer : IWriter
     public void BeginObject() => _writer.WriteStartObject();
     public void Name(string name) => _writer.WritePropertyName(name);
     public void EndObject() => _writer.WriteEndObject();
-
-    /// <summary>
-    /// Opens the canonical Data envelope. <c>name</c> is always present;
-    /// <c>type</c> is written only when non-null; <c>value</c> is opened with
-    /// the property name and left for the caller's value-emission calls;
-    /// <c>properties</c> and <c>signature</c> are closed out by
-    /// <see cref="EndRecord"/>.
-    /// </summary>
-    public void BeginRecord(app.data.@this record)
-    {
-        _writer.WriteStartObject();
-        // @schema:data — every Data marks itself, nested ones too, so the read side
-        // recognizes a Data inside a value the same way as the top-level one.
-        _writer.WriteString(global::app.data.@this.WireSchema, global::app.data.@this.WireSchemaData);
-        // The binding label rides only on the Store view (.pr parameters bind by
-        // name); the outbound wire omits it — a server's variable name is not
-        // API surface a client should couple to.
-        if (_view == app.View.Store)
-            _writer.WriteString("name", record.Name);
-
-        // type — the structured entity {name, kind?, strict?} via the type's own
-        // converter, identical to the top-level envelope. A bare-string `type` is the
-        // OLD shape the reader now rejects; a nested record must match the top.
-        if (record.Type is { IsNull: false })
-        {
-            _writer.WritePropertyName("type");
-            // The type descriptor writes ITSELF ({name, kind?, strict?}) through this same
-            // writer — no STJ, no per-type converter, symmetric with every other value.
-            record.Type.Write(this);
-        }
-
-        _writer.WritePropertyName("value");
-    }
-
-    /// <summary>
-    /// Closes the canonical Data envelope, emitting the <c>properties</c>
-    /// sidecar (if non-empty) and the <c>signature</c> (if present). The
-    /// caller is responsible for invoking <see cref="Value"/> (or an
-    /// equivalent leaf method) between Begin and End so the value slot is
-    /// populated.
-    /// </summary>
-    public void EndRecord(app.data.@this record)
-    {
-        if (record.Properties.Count > 0)
-        {
-            _writer.WritePropertyName("properties");
-            _writer.WriteStartObject();
-            foreach (var kvp in record.Properties)
-            {
-                _writer.WritePropertyName(kvp.Key);
-                Value(kvp.Value);
-            }
-            _writer.WriteEndObject();
-        }
-
-        // Signing is no longer a Data property — a signed payload is a `signature`
-        // layer wrapping the data record (emitted hoisted at the wire boundary),
-        // not a `signature` field inside the envelope.
-        _writer.WriteEndObject();
-    }
-
-    void IWriter.EndRecord() => throw new System.InvalidOperationException(
-        "JsonWriter.EndRecord requires the Data record reference — call EndRecord(Data) instead.");
 
     /// <summary>
     /// Writes a C# value: null, a primitive (string, int, long, double, float, bool,
@@ -144,50 +87,8 @@ public sealed class Writer : IWriter
             case System.TimeSpan ts: TimeSpan(ts); return;
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
-            case byte[] bytes: Bytes(bytes); return;
-            case app.data.@this nested:
-                BeginRecord(nested);
-                Value(nested.Peek());
-                EndRecord(nested);
-                return;
-            case app.type.item.dict.@this dict:
-                // The native object shape: a json-object value and a raw infra
-                // dict both converge here. Emit as a
-                // JSON object keyed by entry name, including the empty case so a
-                // record-with-no-properties round-trips as `{}` not `[]`. The
-                // writer disambiguates object-vs-array by value type: `dict`→`{}`,
-                // any other IEnumerable→`[]`. The writer knows no context, so it writes the stored
-                // slots as they are: a stored Data's value, or the raw CLR value itself.
-                _writer.WriteStartObject();
-                foreach (var key in dict.KeyNames)
-                {
-                    _writer.WritePropertyName(key);
-                    Value(dict.Stored(key) is app.data.@this d ? d.Peek() : dict.Stored(key));
-                }
-                _writer.WriteEndObject();
-                return;
-            case app.type.item.list.@this nativeList:
-                // The native list shape. On the wire each element self-describes —
-                // Value(item) routes an element Data through the record arm, so a
-                // signed element carries its envelope. Disambiguated by wrapper
-                // type from dict (`{}`); a bare IEnumerable still falls to `[]` below. A stored Data
-                // rides as its record; a raw slot as the CLR value it is (the writer knows no context).
-                BeginArray(nativeList.CountRaw);
-                foreach (var slot in nativeList.Slots()) Value(slot);
-                EndArray();
-                return;
-            // A value renders itself — leaves (text/number/bool/date-family/…) and
-            // structured types (path/file/url/code/directory/image) own their wire
-            // form via Write (OBP Rule 9: the value owns the mapping, the writer
-            // never type-switches per type). dict/list are matched above by their
-            // own cases. A type that reaches here without a Write override throws
-            // loudly from the base — the build gate forbids that for value types.
-            case app.type.item.@this v: v.Write(this); return;
-            case System.Collections.IEnumerable list:
-                BeginArray(-1);
-                foreach (var item in list) Value(item);
-                EndArray();
-                return;
+            case byte[] bytes: Bytes(bytes, _binary); return;
+            // A plang value is never handed here, nor a collection: each writes itself through its own Output.
             default:
                 // Reaching here means a caller handed the writer a C# value whose
                 // runtime type isn't in the tree contract. Falling back to STJ would

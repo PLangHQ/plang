@@ -238,7 +238,7 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
 
     void global::app.type.item.input.ITarget.Key(global::app.type.item.input.key.@this key)
         => Key(key.Scancode.Clr<uint>(), key.Extended.Value,
-            key.Modifiers.Items().Aggregate(0, (bits, held) => bits | (int)held.Value), key.Down.Value);
+            key.Modifier.Code, key.Down.Value);
 
     void global::app.type.item.input.ITarget.Text(global::app.type.item.input.text.@this text) => Panel?.Type(text.Typed.ToString());
 

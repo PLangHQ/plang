@@ -29,9 +29,9 @@ public class MissingKeyTests
         await using var _ = app;
         var ctx = app.actor.list.User.Context;
 
-        var first = await new global::app.module.llm.setting.@this { Key = "" }.Asked(ctx);
-        var again = await ctx.Setting.Of<global::app.module.llm.setting.@this>().Asked(ctx);
-        var stored = await new global::app.type.item.variable.@this("%!llm.setting.key%").Start(ctx);
+        var first = await new global::app.module.llm.setting.@this(new global::app.type.@this(typeof(global::app.module.llm.setting.@this))) { Key = "" }.Asked(ctx);
+        var again = await (await ctx.Setting.Get<global::app.module.llm.setting.@this>()).Asked(ctx);
+        var stored = await new global::app.type.item.variable.@this("%!llm.setting.key%", ctx.App.type.list).Start(ctx);
 
         await first.IsSuccess();
         await Assert.That((await first.Value())!.ToString()).IsEqualTo(Pasted);
@@ -51,7 +51,7 @@ public class MissingKeyTests
         var ctx = app.actor.list.User.Context;
         ctx.Actor!.Channel.Remove(global::app.channel.list.@this.Input, ctx);
 
-        var asked = await new global::app.module.llm.setting.@this { Key = "" }.Asked(ctx);
+        var asked = await new global::app.module.llm.setting.@this(new global::app.type.@this(typeof(global::app.module.llm.setting.@this))) { Key = "" }.Asked(ctx);
 
         await asked.IsFailure();
         await Assert.That(asked.Error!.Key).IsEqualTo("MissingLlmKey");
@@ -65,7 +65,7 @@ public class MissingKeyTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        await ctx.Variable.Set(new global::app.data.@this("pw", new global::app.type.item.sensitive.@this(Pasted), context: ctx));
+        await ctx.Variable.Set(new global::app.data.@this("pw", new global::app.type.item.sensitive.@this(Pasted, app.type.list[typeof(global::app.type.item.sensitive.@this)]), context: ctx));
 
         var set = Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "shown", "variable"), ("Value", "password: %pw%"));
         await (await set.Start(ctx)).IsSuccess();

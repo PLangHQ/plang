@@ -178,9 +178,9 @@ public sealed class @this : screen.@this
     internal override async Task<global::app.data.@this> Send(global::app.data.@this line, global::app.actor.context.@this context)
     {
         // the Data writes itself as text (a dict as its json): one line for the display
-        using var written = new MemoryStream();
-        await Text.Encode(written, line, context, null, null, CancellationToken.None);
-        Wayland.Input(Originated(Encoding.UTF8.GetString(written.ToArray()), line.Context ?? context));
+        using var stream = new MemoryStream();
+        await Text.Encode(stream, line, context, global::app.View.Out, null, CancellationToken.None);
+        Wayland.Input(Originated(Encoding.UTF8.GetString(stream.ToArray()), line.Context ?? context));
         return context.Ok();
     }
 
@@ -269,8 +269,8 @@ public sealed class @this : screen.@this
         }
         await global::app.module.on.code.Gate.Run(async () =>
         {
-            var found = await context.App.goal.list.Find(name, context.call.Goal);
-            if (!found.Success || await found.Value() is not { } goal)
+            var data = await context.App.goal.list.Find(name, context.call.Goal);
+            if (!data.Success || await data.Value() is not { } goal)
             {
                 await Answer(new() { ["error"] = $"PlangOS's shell has no goal {name}" });
                 return;
@@ -289,10 +289,10 @@ public sealed class @this : screen.@this
                 await Answer(new() { ["error"] = ran.Error?.Message ?? "failed" });
                 return;
             }
-            using var written = new MemoryStream();
-            var encoded = await context.App.type.list.Mime("application/json").Encode(written, ran, context);
+            using var stream = new MemoryStream();
+            var encoded = await context.App.type.list.Mime("application/json").Encode(stream, ran, context);
             if (!encoded.Success) { await Answer(new() { ["error"] = encoded.Error?.Message ?? "its answer couldn't be written" }); return; }
-            var text = Encoding.UTF8.GetString(written.ToArray());
+            var text = Encoding.UTF8.GetString(stream.ToArray());
             JsonNode? result;
             try { result = JsonNode.Parse(text); }
             catch (JsonException) { result = JsonValue.Create(text); }

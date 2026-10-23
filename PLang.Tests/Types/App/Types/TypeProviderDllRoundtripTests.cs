@@ -32,16 +32,23 @@ public class TypeProviderDllRoundtripTests : System.IAsyncDisposable
 
         var money = (global::app.type.item.@this)System.Activator.CreateInstance(moneyType, 10m, "USD")!;
 
-        var captured = new CapturingWriter("json");
-        money.Write(captured);
+        var captured = new CapturingWriter(app.type.list["item"].kind["json"]!, global::app.View.Store, app.actor.list.User.Context);
+        await money.Output(captured);
         await Assert.That(captured.Captured).IsEqualTo("USD 10");
     }
 
 
     private sealed class CapturingWriter : global::app.type.format.IWriter
     {
-        public CapturingWriter(string format) { Format = format; }
-        public string Format { get; }
+        public CapturingWriter(global::app.type.kind.@this kind, global::app.View view, global::app.actor.context.@this context)
+        {
+            Kind = kind;
+            View = view;
+            Context = context;
+        }
+        public global::app.View View { get; }
+        public global::app.actor.context.@this Context { get; }
+        public global::app.type.kind.@this Kind { get; }
         public string? Captured { get; private set; }
         public void Null() { Captured = "(null)"; }
         public void Bool(bool v) { Captured = v.ToString(); }
@@ -56,14 +63,12 @@ public class TypeProviderDllRoundtripTests : System.IAsyncDisposable
         public void Guid(System.Guid v) { Captured = v.ToString(); }
         public void Enum(System.Enum v) { Captured = v.ToString(); }
         public void Decimal(decimal v) { Captured = v.ToString(); }
-        public void Bytes(byte[] v) { Captured = System.Convert.ToBase64String(v); }
+        public void Bytes(byte[] v, global::app.type.kind.@this kind) { Captured = System.Convert.ToBase64String(v); }
         public void BeginArray(int c) { }
         public void BeginObject() { }
         public void Name(string n) { }
         public void EndObject() { }
         public void EndArray() { }
-        public void BeginRecord(global::app.data.@this r) { }
-        public void EndRecord() { }
         public void Value(object? n) { Captured = n?.ToString(); }
     }
 }

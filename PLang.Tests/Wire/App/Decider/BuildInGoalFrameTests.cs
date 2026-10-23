@@ -60,7 +60,7 @@ public class BuildInGoalFrameTests
             global::app.type.item.path.@this.Resolve("/Start.goal", context), context)!;
         await Assert.That((await goal.Step.Read("", context))?.Message).IsNull();
 
-        var note = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "note.txt"));
+        var note = context.File(System.IO.Path.Combine(root, "note.txt"));
         await Assert.That(app.Build!.Files.IsFile(note)).IsTrue();
         await Assert.That(System.IO.File.Exists(note.Absolute)).IsFalse();
     }
@@ -72,7 +72,7 @@ public class BuildInGoalFrameTests
         var (app, root, warned) = Building("plang_mock_");
         await using var _app = app;
         var context = app.actor.list.User.Context;
-        app.Build!.Files.Add(new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "mock.txt")));
+        app.Build!.Files.Add(context.File(System.IO.Path.Combine(root, "mock.txt")));
 
         var goal = global::app.goal.@this.Parse("Start\n- file.read(Path=\"mock.txt\")\n",
             global::app.type.item.path.@this.Resolve("/Start.goal", context), context)!;

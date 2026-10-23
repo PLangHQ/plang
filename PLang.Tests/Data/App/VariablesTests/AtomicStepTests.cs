@@ -17,12 +17,12 @@ public class AtomicStepTests : System.IAsyncDisposable
     public async Task Replace_NameReplacedInBetween_LeavesTheNewerValue()
     {
         var store = new Variables(_app.actor.list.User.Context);
-        await store.Set("l", new List());
+        await store.Set("l", new List(_app.type.list["list"]));
         var held = await store.Get("l");
-        var newer = new List();
+        var newer = new List(_app.type.list["list"]);
         await store.Set("l", newer);
 
-        var answer = await store.Replace("l", held, new List());
+        var answer = await store.Replace("l", held, new List(_app.type.list["list"]));
 
         // the newer value is left alone, and it is the answer
         await Assert.That(ReferenceEquals(await answer.Value(), newer)).IsTrue();
@@ -33,13 +33,13 @@ public class AtomicStepTests : System.IAsyncDisposable
     public async Task Replace_WhatIsBoundOnTheSetRefusing_IsTheAnswer_NothingWritten()
     {
         var store = _app.actor.list.User.Context.Variable;
-        await store.Set("l", new List());
+        await store.Set("l", new List(_app.type.list["list"]));
         var held = await store.Get("l");
-        _app.variable.Own().Bind("set", global::app.@event.When.before,
+        _app.variable.type.Own().Bind("set", global::app.@event.When.before,
             (_, _, c) => System.Threading.Tasks.Task.FromResult(c.Error(new global::app.error.@this("not today", "Refused", 403))),
             _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
-        var answer = await store.Replace("l", held, new List());
+        var answer = await store.Replace("l", held, new List(_app.type.list["list"]));
 
         await answer.IsFailure();
         await Assert.That(answer.Error!.Key).IsEqualTo("Refused");
@@ -50,9 +50,9 @@ public class AtomicStepTests : System.IAsyncDisposable
     public async Task Replace_NameStillHeld_WritesTheValue()
     {
         var store = new Variables(_app.actor.list.User.Context);
-        await store.Set("l", new List());
+        await store.Set("l", new List(_app.type.list["list"]));
         var held = await store.Get("l");
-        var value = new List();
+        var value = new List(_app.type.list["list"]);
 
         var written = await store.Replace("l", held, value);
 
@@ -65,7 +65,7 @@ public class AtomicStepTests : System.IAsyncDisposable
     public async Task Ensure_NameHoldsAValue_AnswersIt()
     {
         var store = new Variables(_app.actor.list.User.Context);
-        var existing = new List();
+        var existing = new List(_app.type.list["list"]);
         await store.Set("l", existing);
 
         var held = await store.Ensure("l", () => _app.type.list["list"].Create(System.Array.Empty<object?>(), _app.actor.list.User.Context));

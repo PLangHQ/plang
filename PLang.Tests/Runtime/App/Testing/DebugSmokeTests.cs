@@ -45,9 +45,9 @@ public class DebugSmokeTests
     public async Task Debug_GrepThatIsNotARegex_IsAnsweredAsInvalidPattern()
     {
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["grep"] = "a(b" });
+        await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["grep"] = "a(b" }, _app.actor.list.System.Context);
 
-        var refused = _app.Debug.Activate();
+        var refused = await _app.Debug.Activate();
 
         await Assert.That(refused?.Key).IsEqualTo("InvalidPattern");
     }
@@ -60,8 +60,8 @@ public class DebugSmokeTests
         // Fully-qualified: the `Debug` global alias is shadowed here by the sibling
         // PLang.Tests.App.Debug namespace (the App/Debug/ test folder). CLAUDE.md alias-clash trap.
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["level"] = "action" });
-        _app.Debug.Activate();
+        await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["level"] = "action" }, _app.actor.list.System.Context);
+        await _app.Debug.Activate();
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "Dbg",
             Make.Step("set x",
@@ -88,15 +88,16 @@ public class DebugSmokeTests
     public async Task Debug_AShortcutTheStepReads_IsListedAsTheStepReadsIt()
     {
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["level"] = "action" });
-        _app.Debug.Activate();
+        await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["level"] = "action" }, _app.actor.list.System.Context);
+        await _app.Debug.Activate();
         var ctx = _app.actor.list.User.Context;
         var show = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Show",
             Make.Step("set seen", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "seen", "variable"), ("Value", "%!error.Message%")))));
         _app.goal.list.Add(show);
-        var failing = new global::app.goal.step.@this { Text = "fail" };
-        var line = (global::app.goal.step.action.list.@this)new global::app.goal.step.action.formal.Reader(failing, _app.module.list)
-            .Read("error.throw(Message=\"it broke\", Key=\"Broke\"); on.error(Recovery=[goal.call(Name=\"Show\")])", ctx).Peek()!;
+        var failing = new global::app.goal.step.@this(_app.type.list) { Text = "fail" };
+        var read = await new global::app.goal.step.action.formal.Reader(failing, _app.module.list)
+            .Read("error.throw(Message=\"it broke\", Key=\"Broke\"); on.error(Recovery=[goal.call(Name=\"Show\")])", ctx);
+        var line = (global::app.goal.step.action.list.@this)read.Peek()!;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Dbg", Make.Step("fail", line.Items().ToArray())));
         _app.goal.list.Add(goal);
 
@@ -108,15 +109,41 @@ public class DebugSmokeTests
         await Assert.That(debugOut).DoesNotContain("%!error% = (undefined)");
     }
 
-    // --debug={"variables":["trace"]} binds through the setting walk as a list of names.
+    // --debug.setting={"llm":{"user":true,"response":true}} shows each step's variables: a step that reads the app (the
+    // builder's `build.load, write to %app%`) shows it, and the run completes — the app is held in the very memory
+    // the view lists, and is never walked back into.
+    [Test]
+    public async Task Debug_LlmView_AStepHoldingTheApp_IsShown()
+    {
+        _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
+        await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?>
+        {
+            ["llm"] = new Dictionary<string, object?> { ["user"] = true, ["response"] = true },
+        }, _app.actor.list.System.Context);
+        await _app.Debug.Activate();
+        var ctx = _app.actor.list.User.Context;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Dbg",
+            Make.Step("set app", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "app", "variable"), ("Value", "%!app%"))),
+            Make.Step("set copy", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "copy", "variable"), ("Value", "%app%")))));
+        _app.goal.list.Add(goal);
+
+        var run = await _app.Start(goal, ctx);
+
+        await run.IsSuccess();
+        var debugOut = ReadCapture();
+        await Assert.That(debugOut).Contains("%app% = ");
+        await Assert.That(debugOut).DoesNotContain("cannot be shown");
+    }
+
+    // --debug.setting={"variables":["trace"]} binds through the setting walk as a list of names.
     [Test]
     public async Task Debug_Variables_BindAsNames()
     {
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        var set = _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["variables"] = new List<object?> { "trace", "%goal%" } });
+        var set = await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["variables"] = new List<object?> { "trace", "%goal%" } }, _app.actor.list.System.Context);
 
         await set.IsSuccess();
-        await Assert.That(_app.Debug.Setting.Variables.Items(_app.actor.list.System.Context).Select(v => v.Peek()?.ToString()).ToList())
+        await Assert.That((await _app.Debug.Setting()).Variables.Items(_app.actor.list.System.Context).Select(v => v.Peek()?.ToString()).ToList())
             .IsEquivalentTo(new List<string> { "trace", "%goal%" });
     }
 
@@ -126,8 +153,8 @@ public class DebugSmokeTests
     public async Task Debug_WatchedVariable_LogsSetAndDeleted()
     {
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
-        _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["variables"] = new List<object?> { "%trace%" } });
-        _app.Debug.Activate();
+        await _app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["variables"] = new List<object?> { "%trace%" } }, _app.actor.list.System.Context);
+        await _app.Debug.Activate();
         var store = _app.actor.list.User.Context.Variable;
 
         await store.Set("trace", 1);

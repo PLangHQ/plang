@@ -11,13 +11,13 @@ public class EngineTests : System.IAsyncDisposable
 
     private Step MakeStep(string actionClass, string method, object? parameters = null, int index = 0, string text = "")
     {
-        return new Step
+        return new Step(app.type.list)
         {
             Index = index,
             Text = text,
-            Code = new StepActions
+            Code = new StepActions(app.type.list)
             {
-                new global::app.goal.step.action.@this
+                new global::app.goal.step.action.@this(app.type.list)
                 {
                     Module = app.actor.list.User.Context.App.Module(actionClass),
                     Name = method,
@@ -31,13 +31,13 @@ public class EngineTests : System.IAsyncDisposable
 
     private Step MakeStepWithReturn(string actionClass, string method, object? parameters, string returnVarName, int index = 0, string text = "")
     {
-        return new Step
+        return new Step(app.type.list)
         {
             Index = index,
             Text = text,
-            Code = new StepActions
+            Code = new StepActions(app.type.list)
             {
-                new global::app.goal.step.action.@this
+                new global::app.goal.step.action.@this(app.type.list)
                 {
                     Module = app.actor.list.User.Context.App.Module(actionClass),
                     Name = method,
@@ -45,7 +45,7 @@ public class EngineTests : System.IAsyncDisposable
                         ? PrParam.List(app.actor.list.User.Context, actionClass, method, dict)
                         : new List<Data>()),
                 },
-                new global::app.goal.step.action.@this
+                new global::app.goal.step.action.@this(app.type.list)
                 {
                     Module = app.actor.list.User.Context.App.Module("variable"),
                     Name = "set",
@@ -149,11 +149,11 @@ public class EngineTests : System.IAsyncDisposable
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
+        await Assert.That(engine.filesystem.root.Absolute).IsEqualTo("/app");
         await Assert.That(engine.Module).IsNotNull();
         await Assert.That(engine.actor.list.User.Channel).IsNotNull();
         await Assert.That(engine.goal).IsNotNull();
-        await Assert.That(engine.AbsolutePath).IsNotNull();
+        await Assert.That(engine.filesystem.root.Absolute).IsNotNull();
     }
 
     [Test]
@@ -180,7 +180,7 @@ public class EngineTests : System.IAsyncDisposable
         await using var engine = new global::app.@this("/app").Testing();
         var user = engine.actor.list.User.Context;
 
-        await user.Setting.Set("app.setting.name", new Data("name", new global::app.type.item.text.@this("CustomEngine"), context: user));
+        user.Setting.Set("app.setting.name", new Data("name", user.Text("CustomEngine"), context: user));
 
         await Assert.That(engine.Name(user).ToString()).IsEqualTo("CustomEngine");
         await Assert.That(engine.Name(engine.actor.list.System.Context).ToString()).IsEqualTo("app");
@@ -257,7 +257,7 @@ public class EngineTests : System.IAsyncDisposable
     public async Task RunGoalAsync_EmptyGoal_ReturnsSuccess()
     {
         await using var engine = new global::app.@this("/app").Testing();
-        var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", app.actor.list.User.Context) };
+        var goal = new Goal(engine.type.list) { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", app.actor.list.User.Context) };
         engine.goal.list.Add(goal);
 
         var result = await Make.Call(app.actor.list.User.Context, "EmptyGoal").Start(engine.actor.list.User.Context);
@@ -269,11 +269,11 @@ public class EngineTests : System.IAsyncDisposable
     public async Task RunGoalAsync_CancelledToken_ReturnsError()
     {
         await using var engine = new global::app.@this("/app").Testing();
-        var goal = new Goal
+        var goal = new Goal(engine.type.list)
         {
             Name = "TestGoal",
             Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context),
-            Step = new GoalSteps
+            Step = new GoalSteps(engine.type.list)
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "x" }, { "value", "y" } },
@@ -295,7 +295,7 @@ public class EngineTests : System.IAsyncDisposable
     public async Task RunGoalAsync_SetsContextGoal()
     {
         await using var engine = new global::app.@this("/app").Testing();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context) };
+        var goal = new Goal(engine.type.list) { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context) };
         engine.goal.list.Add(goal);
         var context = engine.actor.list.User.Context;
         await engine.Start(goal, context);
@@ -310,7 +310,7 @@ public class EngineTests : System.IAsyncDisposable
     public async Task RunGoalAsync_PushesCall()
     {
         await using var engine = new global::app.@this("/app").Testing();
-        var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context) };
+        var goal = new Goal(engine.type.list) { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context) };
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -342,11 +342,11 @@ public class EngineTests : System.IAsyncDisposable
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        var goal = new Goal
+        var goal = new Goal(engine.type.list)
         {
             Name = "TestGoal",
             Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", app.actor.list.User.Context),
-            Step = new GoalSteps
+            Step = new GoalSteps(engine.type.list)
             {
                 MakeStep("variable", "get", index: 0, text: "get variable")
                 // Missing name parameter -> will fail
@@ -366,7 +366,7 @@ public class EngineTests : System.IAsyncDisposable
         var step = MakeStep("nonexistent", "method");
         var context = engine.actor.list.User.Context;
 
-        var steps = new GoalSteps { step };
+        var steps = new GoalSteps(engine.type.list) { step };
         var result = await steps.Start(context);
 
         await result.IsFailure();
@@ -382,7 +382,7 @@ public class EngineTests : System.IAsyncDisposable
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
 
         var context = engine.actor.list.User.Context;
-        var steps = new GoalSteps { step };
+        var steps = new GoalSteps(engine.type.list) { step };
         await steps.Start(context);
 
         await Assert.That((await context.Variable.GetValue("source"))).IsEqualTo("hello");
@@ -397,10 +397,31 @@ public class EngineTests : System.IAsyncDisposable
         var context = app.actor.list.User.Context;
 
         // the action dispatch answers a handler's exception as ServiceError
-        var steps = new GoalSteps { step };
+        var steps = new GoalSteps(app.type.list) { step };
         var result = await steps.Start(context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
+    }
+
+    // A regex that runs past its match timeout throws RegexMatchTimeoutException: the action answers it as a 500
+    // (ServiceError), the step answers the same, and the run goes on — the next step in the same context runs.
+    [Test]
+    public async Task ARegexTimeout_Answers500_AtTheActionAndTheStep_AndTheRunGoesOn()
+    {
+        app.module.Register("regex", "timeout", typeof(RegexTimeoutHandler));
+        app.module.Register("regex", "fine", typeof(FineHandler));
+        var context = app.actor.list.User.Context;
+
+        var step = MakeStep("regex", "timeout");
+        var action = await step.Code[0].Start(context);
+        await action.IsFailure();
+        await Assert.That(action.Error!.Status.Code.ToInt32()).IsEqualTo(500);
+
+        var steps = await new GoalSteps(app.type.list) { MakeStep("regex", "timeout") }.Start(context);
+        await steps.IsFailure();
+        await Assert.That(steps.Error!.Status.Code.ToInt32()).IsEqualTo(500);
+
+        await (await new GoalSteps(app.type.list) { MakeStep("regex", "fine") }.Start(context)).IsSuccess();
     }
 
     [Test]
@@ -411,7 +432,7 @@ public class EngineTests : System.IAsyncDisposable
         var step = MakeStep("legacy", "do");
         var context = app.actor.list.User.Context;
 
-        var steps = new GoalSteps { step };
+        var steps = new GoalSteps(app.type.list) { step };
         var result = await steps.Start(context);
 
         await result.IsFailure();
@@ -505,7 +526,36 @@ public class EngineTests : System.IAsyncDisposable
         public System.Type? ParameterType => null;
 
         public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
-        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Context.Ok());
+    }
+
+    // A handler whose regex ran past its match timeout.
+    private class RegexTimeoutHandler : IAction, ICodeGenerated
+    {
+        public global::app.goal.step.action.@this Action { get; set; } = null!;
+        public global::app.@this App { get; private set; } = null!;
+        public global::app.actor.context.@this Context { get; private set; } = null!;
+        public System.Type? ParameterType => null;
+
+        public RegexTimeoutHandler(global::app.actor.context.@this context) => Initialize(context.App!, context);
+
+        public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
+        public Task<Data> Start()
+            => throw new System.Text.RegularExpressions.RegexMatchTimeoutException("x", "(a+)+$", System.TimeSpan.FromSeconds(1));
+    }
+
+    // A handler that answers Ok.
+    private class FineHandler : IAction, ICodeGenerated
+    {
+        public global::app.goal.step.action.@this Action { get; set; } = null!;
+        public global::app.@this App { get; private set; } = null!;
+        public global::app.actor.context.@this Context { get; private set; } = null!;
+        public System.Type? ParameterType => null;
+
+        public FineHandler(global::app.actor.context.@this context) => Initialize(context.App!, context);
+
+        public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
+        public Task<Data> Start() => Task.FromResult(Context.Ok());
     }
 
     private class ThrowingHandler : IAction, ICodeGenerated

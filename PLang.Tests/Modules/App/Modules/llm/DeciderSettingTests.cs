@@ -20,8 +20,8 @@ public class DeciderSettingTests : System.IAsyncDisposable
 
     private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
-    private static global::app.type.item.variable.@this Variable(string path)
-        => new global::app.type.item.variable.parser.@this(path).Variable.Single();
+    private global::app.type.item.variable.@this Variable(string path)
+        => new global::app.type.item.variable.parser.@this(path, _app.type.list).Variable.Single();
 
     private async Task Set(string path, string value)
         => await (await Variable(path).Set(Ctx.Ok((global::app.type.item.text.@this)value), Ctx)).IsSuccess();
@@ -33,7 +33,7 @@ public class DeciderSettingTests : System.IAsyncDisposable
         var endpoint = await Variable("%!llm.decider.setting.endpoint%").Start(Ctx);
 
         await Assert.That((await endpoint.Value())?.ToString()).IsEqualTo("https://decide.example/v1");
-        await Assert.That(Ctx.Setting.Of<decider.setting>().Endpoint.ToString()).IsEqualTo("https://decide.example/v1");
+        await Assert.That((await Ctx.Setting.Get<decider.setting>()).Endpoint.ToString()).IsEqualTo("https://decide.example/v1");
     }
 
     [Test] public async Task TypeSafe_AsksWhereTheSettingSays_WithItsKey()
@@ -43,7 +43,7 @@ public class DeciderSettingTests : System.IAsyncDisposable
         _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse("""{"answers": {"s0": {"noul": 0.9}}}"""));
         var action = new decider(Ctx)
         {
-            State = new global::app.data.@this<global::app.type.item.text.@this>("", "A plang goal."),
+            State = new global::app.data.@this<global::app.type.item.text.@this>("", "A plang goal.", context: Ctx),
             Question = new("", (Dict)global::app.type.item.@this.Create(new Dictionary<string, object?>
             {
                 ["s0"] = new Dictionary<string, object?> { ["type"] = "noul", ["instructions"] = "?" },
@@ -59,12 +59,12 @@ public class DeciderSettingTests : System.IAsyncDisposable
 
     [Test] public async Task ASavedKey_IsReadBack()
     {
-        var setting = Ctx.Setting.Of<decider.setting>().Copy();
+        var setting = (await Ctx.Setting.Get<decider.setting>()).Copy();
         ((decider.setting)setting).Key = "saved-key-2";
 
         await (await Ctx.Setting.Save(setting)).IsSuccess();
 
-        await Assert.That(Ctx.Setting.Of<decider.setting>().Key.ToString()).IsEqualTo("saved-key-2");
+        await Assert.That((await Ctx.Setting.Get<decider.setting>()).Key.ToString()).IsEqualTo("saved-key-2");
     }
 
     [Test] public async Task TheKey_IsNeverShown()

@@ -5,7 +5,7 @@ namespace app.module.archive.type.archive.kind.tar.gz;
 /// <summary>A tar, gzip-compressed — <c>photos.tar.gz</c>.</summary>
 public sealed class @this : tar.@this
 {
-    public @this() : base("tar.gz") { }
+    public @this(global::app.type.@this owner) : base("tar.gz", owner) { }
 
     public override string? Suffix => ".tar.gz";
 

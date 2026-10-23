@@ -29,10 +29,10 @@ public class Default : IBuilder
         // building"), not goal-relative. The runtime auto-seeds %path% to the
         // app root before Build.goal runs, so by the time we get here
         // (await action.Path.Value()) is typically already the absolute cwd. For the literal
-        // "/" / "." / empty cases (no auto-seed), fall back to app.AbsolutePath.
+        // "/" / "." / empty cases (no auto-seed), fall back to the app's root.
         // For any other input that doesn't start with the root or with
         // "/", treat as a sibling-relative subpath under the root.
-        var rootDir = app.AbsolutePath;
+        var rootDir = app.filesystem.root.Absolute;
         string rootRelative;
         if (searchPath == "." || searchPath == "/" || searchPath == "\\")
             rootRelative = rootDir;
@@ -51,9 +51,9 @@ public class Default : IBuilder
 
         var files = (await listResult.Value()).Clr<List<path>>();
         if (files == null || files.Count == 0)
-            return context.Ok(new global::app.type.item.list.@this<Goal>());
+            return context.Ok(new global::app.type.item.list.@this<Goal>(context.App.type.list[typeof(global::app.type.item.list.@this<Goal>)]));
 
-        // Filter by build's files setting if set (--build={"files":[...]}, %!build.setting.files%)
+        // Filter by build's files setting if set (--build.setting.files=[...], %!build.setting.files%)
         // Honor the user's specified order — building has bootstrapping concerns
         // (e.g., system/builder rebuilding itself: BuildGoal must come LAST so
         // earlier iterations use the previous in-memory build pipeline).
@@ -63,7 +63,7 @@ public class Default : IBuilder
         // A files entry names a goal file of the app being built: a relative one is from the app's root
         // (as the user types it at the root), never from the builder's own folder.
         var filters = new List<path>();
-        foreach (var row in context.Setting.Of<global::app.module.build.setting.@this>().Files.Items(context))
+        foreach (var row in (await context.Setting.Get<global::app.module.build.setting.@this>()).Files.Items(context))
             if ((await row.Value())?.ToString() is { Length: > 0 } entry)
                 filters.Add(path.Resolve(entry.StartsWith('/') || entry.StartsWith('\\') ? entry : "/" + entry, context));
 
@@ -113,7 +113,7 @@ public class Default : IBuilder
             // The .pr IS the build's cache: merging it sets goal.Cache (→ IsCached skips the goal) and carries
             // each step's prior code (→ step.IsCached skips the step). cache:skip means no cached answer of any
             // kind, so a fresh source rebuilds in full — skip the merge entirely and the goal is built anew.
-            if (context.Setting.Of<global::app.module.build.setting.@this>().Cache.Value == global::app.module.cache.type.cache.use)
+            if ((await context.Setting.Get<global::app.module.build.setting.@this>()).Cache.Value == global::app.module.cache.type.cache.use)
                 await MergePrData(goal, context);
             allGoals.Add(goal);
         }
@@ -128,7 +128,7 @@ public class Default : IBuilder
 
         _buildTimer.Restart();
 
-        return context.Ok(new global::app.type.item.list.@this<Goal>(allGoals));
+        return context.Ok(new global::app.type.item.list.@this<Goal>(allGoals, context.App.type.list[typeof(global::app.type.item.list.@this<Goal>)]));
     }
 
     // --- Fold: indent-authored sub-steps → gate-action Child ---
@@ -165,11 +165,15 @@ public class Default : IBuilder
     private global::app.goal.step.list.@this Fold(
         global::app.goal.step.list.@this flat, List<global::app.error.@this> errors)
     {
-        var top = new global::app.goal.step.list.@this();   // Add each real step into the node
+        var top = new global::app.goal.step.list.@this(flat.Type);   // Add each real step into the node
         int i = 0;
         while (i < flat.Count)
         {
             var step = flat[i];
+            // A step the build could not fix has no code, so no gate to fold a block into — and it is already broken,
+            // so that is not a second mistake. It is kept as it is, with the steps under it, which stay in the goal
+            // with their code; the goal is saved broken and will not start.
+            if (step.Error != null) { top.Add(step); i++; continue; }
             var block = flat.Body(i);   // the steps indented under it — the list answers
             int j = i + 1 + block.CountRaw;
 
@@ -275,7 +279,7 @@ public class Default : IBuilder
                     return new global::app.error.ValidationError(
                         $"step {step.Index}: {act.Module!.Name}.{act.Name} answers a new value and changes nothing — give it a destination (`…, write to %result%`); a literal or %!system% input has no name to write the answer back to.",
                         "NoWriteBackTarget");
-                var read = new global::app.goal.step.action.formal.Reader(step, modules)
+                var read = await new global::app.goal.step.action.formal.Reader(step, modules)
                     .Read($"variable.set(Name={target.Text}, Value=%!data%)", context);
                 if (!read.Success) return read.Error;
                 // right after the action, not at the step's end: a later output/write in the step would otherwise
@@ -353,7 +357,7 @@ public class Default : IBuilder
         }
         catch (System.Exception ex) when (ex is global::app.error.AppException or System.Text.Json.JsonException)
         {
-            goal.Warning.Add(new global::app.warning.@this
+            goal.Warning.Add(new global::app.warning.@this(context.App.type.list)
             {
                 Key = "CorruptPrFile",
                 Message = $"Failed to deserialize .pr file at {prPath}: {ex.Message}"
@@ -363,7 +367,7 @@ public class Default : IBuilder
 
         if (prGoal is null)
         {
-            goal.Warning.Add(new global::app.warning.@this
+            goal.Warning.Add(new global::app.warning.@this(context.App.type.list)
             {
                 Key = "CorruptPrFile",
                 Message = $"Failed to parse .pr file at {prPath}"

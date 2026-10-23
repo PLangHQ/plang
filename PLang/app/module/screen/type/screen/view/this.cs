@@ -28,12 +28,16 @@ public sealed class @this : screen.@this
     private int _told;   // PlangOS told the codecs this host decodes (once it sends frames, it listens)
     private volatile bool _closed;
     private int _frames;
+    // the app's image<png> type, the type its picture is born holding
+    private readonly global::app.type.@this _png;
 
-    private @this(string title, int width, int height, Func<global::app.type.item.@this, Task> said, Func<Task> closing)
+    private @this(string title, int width, int height, Func<global::app.type.item.@this, Task> said, Func<Task> closing,
+        global::app.type.@this png)
         : base(title, width, height)
     {
         _said = said;
         _closing = closing;
+        _png = png;
         _shown = new Shown(width, height, Decoded);
         new Thread(Apply) { IsBackground = true, Name = "screen view: " + title }.Start();
     }
@@ -47,7 +51,8 @@ public sealed class @this : screen.@this
         Task Call(global::app.goal.step.action.@this? call, global::app.type.item.@this? value)
             => call == null ? Task.CompletedTask
                 : global::app.module.on.code.Gate.Call(call, new global::app.data.@this("!data", value, context: context), context);
-        var view = new @this(title, width, height, value => Call(onInput, value), () => Call(onClose, (Text)"{\"closed\":true}"));
+        var view = new @this(title, width, height, value => Call(onInput, value), () => Call(onClose, (Text)"{\"closed\":true}"),
+            context.App.type.list[new global::app.type.@this("image", "png"), context]);
         return context.Ok<screen.@this>(view);
     }
 
@@ -63,7 +68,7 @@ public sealed class @this : screen.@this
             using var image = Image.LoadPixelData<Bgra32>(copy, _shown.Width, _shown.Height);
             using var png = new MemoryStream();
             image.SaveAsPng(png);
-            return new global::app.type.item.image.@this(png.ToArray(), "image/png");
+            return new global::app.type.item.image.@this(png.ToArray(), _png);
         }
     }
 

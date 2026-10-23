@@ -15,7 +15,7 @@ public static class ActionIn
         global::app.goal.step.@this step)
     {
         var kind = action.GetType();
-        var born = (global::app.goal.step.action.@this)System.Activator.CreateInstance(kind, nonPublic: true)!;
+        var born = (global::app.goal.step.action.@this)System.Activator.CreateInstance(kind, action.Module.App.type.list)!;
         foreach (var row in Rows)
         {
             var property = kind.GetProperty(row, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic

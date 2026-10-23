@@ -22,16 +22,16 @@ public class Stage4_TypeHintPrecedenceTests
     public async Task TearDown() { await _app.DisposeAsync(); }
 
     private PrAction Make(string module, string action, params (string name, object? value)[] parameters)
-        => new PrAction
+        => new PrAction(_app.type.list)
         {
             Module = _app.Module(module),
             Name = action,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.actor.list.User.Context)).ToList())
         };
 
-    private static StepActions ActionsOf(params PrAction[] actions)
+    private StepActions ActionsOf(params PrAction[] actions)
     {
-        var s = new StepActions();
+        var s = new StepActions(_app.type.list);
         foreach (var a in actions) s.Add(a);
         return s;
     }
@@ -46,7 +46,7 @@ public class Stage4_TypeHintPrecedenceTests
     // The chain finishes itself (action.list.Build); an empty list means nothing failed.
     private static async Task<List<string>> RunBuildPass(StepActions actions, global::app.@this app)
     {
-        var chain = new global::app.goal.step.action.list.@this();
+        var chain = new global::app.goal.step.action.list.@this(app.type.list[typeof(global::app.goal.step.action.list.@this)]);
         foreach (var a in actions) chain.Add(a);
         return await chain.Build(app.actor.list.User.Context) is { } failed ? new() { failed.Message } : new();
     }
@@ -108,8 +108,7 @@ public class Stage4_TypeHintPrecedenceTests
         var (handler, _) = await shell!.Resolve(action, _app.actor.list.User.Context);
         var result = await ((IClass)handler!).Build();
 
-        await result.IsSuccess();
-        await Assert.That((await result.Value())!.IsTruthy()).IsFalse()
-            .Because("output.ask defers Type to the (type) hint on the write target.");
+        await Assert.That(result).IsNull()
+            .Because("output.ask defers Type to the (type) hint on the write target: its Build has nothing to say.");
     }
 }

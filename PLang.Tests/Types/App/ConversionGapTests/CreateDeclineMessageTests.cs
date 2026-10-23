@@ -34,7 +34,7 @@ public class CreateDeclineMessageTests : System.IAsyncDisposable
     public async Task Number_DeclinesNonNumericText_NamesNumberType()
     {
         var d = new Data("Count", (object?)null, context: Ctx);
-        var result = Number.Create(new Text("not a number"), d.Type, d);
+        var result = Number.Create(Ctx.Text("not a number"), d.Type, d);
 
         await Assert.That(result).IsNull();
         await Assert.That(d.Error).IsNotNull();

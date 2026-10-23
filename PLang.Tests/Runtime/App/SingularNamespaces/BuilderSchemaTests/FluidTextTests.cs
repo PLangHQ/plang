@@ -30,7 +30,7 @@ public class FluidTextTests
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.System.Context;
         var holder = global::app.type.item.@this.Create(new Dictionary<string, object?>
-            { ["timeout"] = new global::app.type.item.duration.@this(System.TimeSpan.FromSeconds(30)) }, ctx);
+            { ["timeout"] = ctx.Duration(System.TimeSpan.FromSeconds(30)) }, ctx);
         await Assert.That(await Render(app, "{{ x.timeout }}", holder)).IsEqualTo("30s");
         await Assert.That(await Render(app, "{{ x.timeout | text }}", holder)).IsEqualTo("30s");
     }

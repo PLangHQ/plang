@@ -15,7 +15,7 @@ public partial class @this
     /// construction door sets it; reading it unset means the action was built outside a door,
     /// which is a bug, so it throws rather than answering a half-built identity. Carries [Debug]
     /// only — the wire form is written explicitly by <c>Output</c>.</summary>
-    [Debug]
+    [Debug, LlmBuilder]
     public global::app.module.@this Module
     {
         get => _module ?? throw new System.InvalidOperationException(
@@ -35,7 +35,7 @@ public partial class @this
     /// <summary>The action's properties. A program action's are what its step set (the .pr's
     /// <c>"property"</c>); a catalog action's (<c>module[name]</c>) are its handler class's, reflected.
     /// Which one is decided by the list's constructor — the catalog element is born with its own.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public global::app.type.property.list.@this Property { get; init; } = new();
 
     /// <summary>What the build froze for the properties the step did not set (the .pr's
@@ -49,7 +49,7 @@ public partial class @this
     /// Both nesting forms land here: inline <c>if/elseif/else</c> (each condition action carries its body)
     /// and indented sub-step blocks (folded onto the gate action). A <c>step.list</c>, so it runs itself.</summary>
     [Store, Debug, Default]
-    public global::app.goal.step.list.@this Child { get; set; } = new();
+    public global::app.goal.step.list.@this Child { get; set; }
 
     // `new`: this is the ACTION-cache flag (may this action's run result be
     // cached), a distinct concept from the item base's answer-keep rule —
@@ -87,8 +87,13 @@ public partial class @this
     /// </summary>
     public module.ICodeGenerated? Seed { get; init; }
 
-    /// <summary>An action read or built field by field (a <c>.pr</c> row, a catalog element).</summary>
-    public @this() { }
+    /// <summary>An action read or built field by field (a <c>.pr</c> row, a catalog element), born holding its type
+    /// and its child step list from <paramref name="types"/>, the app's type list (read at birth, never kept).</summary>
+    public @this(global::app.type.list.@this types) : this(types, types[typeof(@this)]) { }
+
+    /// <summary>An action of a role of its own (a clause, a keep, a loop), born holding <paramref name="type"/>.</summary>
+    protected @this(global::app.type.list.@this types, global::app.type.@this type) : base(type)
+        => Child = new(types[typeof(global::app.goal.step.list.@this)]);
 
     /// <summary>
     /// The action a C#-composed <paramref name="seed"/> is — an operation one owner composes from another's
@@ -99,7 +104,7 @@ public partial class @this
     /// started together, the calling frame is this invocation's provenance (null at the boot edge, before any
     /// goal runs).
     /// </summary>
-    public @this(module.ICodeGenerated seed, actor.context.@this context)
+    public @this(module.ICodeGenerated seed, actor.context.@this context) : this(context.App.type.list)
     {
         var catalog = context.App.module[seed.GetType()]
             ?? throw new System.InvalidOperationException($"no module holds the action {seed.GetType().Name}");
@@ -144,13 +149,13 @@ public partial class @this
     /// action exist outside any program and therefore have no step — a catalog element (a
     /// module-minted descriptor), and a synthetic action composed in C# (<c>new action(new sign{...}, context)</c>,
     /// the signing/verify/ask seam) when it starts before any goal runs.</summary>
-    [JsonIgnore]
+    [JsonIgnore, LlmBuilder]
     public Step? Step { get; init; }
 
-    // Teaching prose (Description / Notes / Examples) is no longer stored on the action host — it lives
+    // Teaching prose (Description / Notes / Examples) is not stored on the action host — it lives
     // as lazy `file` handles on the class-zoom partial (this.Schema.cs), over
     // os/system/modules/{Module}/{Name}.{facet}.md. Templates read module-first + action through
-    // those doors; the old string fields + MergeLayers `*Rendered` cousins are retired.
+    // those doors.
 
 
     /// <summary>
@@ -163,7 +168,7 @@ public partial class @this
     /// events, its module's, its catalog action's (when it is another object than this one), its own.</summary>
     protected internal override global::app.type.item.@this? Level(int depth, actor.context.@this context)
     {
-        var catalog = Module[Name] is { } found && !ReferenceEquals(found, this) ? found : null;
+        var catalog = Module[Name] is { } action && !ReferenceEquals(action, this) ? action : null;
         return depth switch
         {
             0 => context.App.action,
@@ -190,7 +195,8 @@ public partial class @this
         // Handled on that frame is what takes it out of play. When the Push wrapped dispatch only,
         // the frame died between the failure and the recovery that had to see it.
         global::app.call.@this call;
-        try { call = context.call.Push(this, context.Variable); }
+        var setting = await context.call.Setting();
+        try { call = context.call.Push(this, setting, context.Variable); }
         catch (global::app.error.CallStackOverflowException ex)
         {
             // The depth limit — trips at Push, before the frame is on the
@@ -245,7 +251,7 @@ public partial class @this
     /// <summary>A program action of this catalog element's kind, in <paramref name="step"/> — a clause when this
     /// one is (the role was decided when its module registered it).</summary>
     internal virtual @this Program(global::app.goal.step.@this? step)
-        => new() { Module = Module, Name = Name, Step = step, Synthetic = false };
+        => new(Module.App.type.list) { Module = Module, Name = Name, Step = step, Synthetic = false };
 
     // A step's code is a walk of its actions, each answering its own part. A step action runs and anchors
     // what follows it; a clause (clause.@this) overrides each part.
@@ -254,8 +260,13 @@ public partial class @this
     /// read does once a step's code is in. A step action attaches to nothing.</summary>
     internal virtual void Attach(@this? before) { }
 
-    /// <summary>The step action the actions after this one belong to: this one.</summary>
-    internal virtual @this? Anchor(@this? before) => this;
+    /// <summary>Whether this action belongs to <paramref name="before"/>, the step action it follows (a clause does: it
+    /// is that action's) — a step action is its own, so after a condition it stands beside it.</summary>
+    internal virtual bool Belongs(@this? before) => false;
+
+    /// <summary>The step action the actions after this one belong to: this one, or — when this one belongs to the
+    /// action before it — that one.</summary>
+    internal @this? Anchor(@this? before) => Belongs(before) ? before : this;
 
     /// <summary>This action's turn in its step's chain, after <paramref name="result"/>: it starts, and its result
     /// is the chain's.</summary>
@@ -276,7 +287,7 @@ public partial class @this
     /// a value (not a bare <c>item</c>) produces what a keep in the same step keeps — but not a condition, whose
     /// verdict gates its body and is never kept.</summary>
     internal virtual void Prefill(global::app.goal.step.pick.line.@this line, string call)
-        => line.Add(call, opens: Link == 0, produces: Link == null && Return is { } made && made.Name != "item");
+        => line.Add(call, opens: Link == 0, produces: Link == null && Return is { } type && type.Name != "item");
 
     /// <summary>What this catalog action adds to a step's known code: its call.</summary>
     internal virtual void Know(List<string> line, string call) => line.Add(call);
@@ -370,7 +381,7 @@ public partial class @this
         return _stale ??= Judged();
 
         async Task<global::app.error.@this?> Judged()
-            => handler is global::app.module.IClass own ? (await own.Parse()).FirstOrDefault(declined => declined.Key == "Stale") : null;
+            => handler is global::app.module.IClass @class ? (await @class.Parse()).FirstOrDefault(declined => declined.Key == "Stale") : null;
     }
 
     private Task<global::app.error.@this?>? _stale;

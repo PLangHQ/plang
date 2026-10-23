@@ -21,14 +21,14 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
 
     /// <summary>A file reference at <paramref name="path"/>, born with <paramref name="template"/>.</summary>
     public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context, global::app.type.item.template.kind.@this? template = null)
-        : base(path, context, template) { }
+        : base(typeof(@this), path, context, template) { }
 
-    /// <summary>A file is made from its path, as <paramref name="declared"/> says: the reference to what is there,
+    /// <summary>A file is made from its path, as <paramref name="type"/> says: the reference to what is there,
     /// nothing read, born with the declaration's template. Anything else declines.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data) => raw switch
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw switch
     {
         @this self => self,
-        global::app.type.item.path.@this path => new @this(path, data.Context, (declared ?? data.Type).Template),
+        global::app.type.item.path.@this path => new @this(path, data.Context, (type ?? data.Type).Template),
         _ => null,
     };
 
@@ -59,5 +59,5 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
     /// content.</summary>
     public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.size.@this>> Size(global::app.actor.context.@this context)
         => Path is global::app.type.item.path.file.@this fp ? await fp.Size(context)
-            : context.Ok(new global::app.type.item.size.@this(0, context));
+            : context.Ok(global::app.type.item.size.@this.Create(0, context));
 }

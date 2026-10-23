@@ -18,8 +18,8 @@ public class SnapshotWireTests
     public async Task Variables_SurviveWireRoundTrip_WithValueAndType()
     {
         var src = new global::app.@this("/src").Testing();
-        src.actor.list.User.Context.Variable.Set("count", 42L);
-        src.actor.list.User.Context.Variable.Set("name", "plang");
+        await src.actor.list.User.Context.Variable.Set("count", 42L);
+        await src.actor.list.User.Context.Variable.Set("name", "plang");
 
         var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context));
 
@@ -89,10 +89,10 @@ public class SnapshotWireTests
     private static string Formal(object value)
         => value is string s && s.Length > 1 && s.StartsWith('%') && s.EndsWith('%') ? s : System.Text.Json.JsonSerializer.Serialize(value);
 
-    private static Step SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
+    private static async Task<Step> SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
     {
-        var action = context.Action($"variable.set(Name=%{varName}%, Value={Formal(value)})");
-        var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
+        var action = await context.Action($"variable.set(Name=%{varName}%, Value={Formal(value)})");
+        var step = new Step(context.App.type.list) { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action = action.In(step);
         step.Code.Add(action);
         goal.Step.Add(step);
@@ -109,14 +109,14 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-wire-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
-        SetStep(context, goal, 0, "s0", "first");
-        var step1 = SetStep(context, goal, 1, "s1", "second");
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
+        await SetStep(context, goal, 0, "s0", "first");
+        var step1 = await SetStep(context, goal, 1, "s1", "second");
         app.goal.list.Add(goal);
 
         // Suspend at step1/action0 (what the throw-time snapshot captures).
         string json;
-        await using (var call = context.call.Push(step1.Code[0], context.Variable))
+        await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));   // <-- to disk (string)
             await call.DisposeAsync();
@@ -142,13 +142,13 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
-        SetStep(context, goal, 0, "s0", "first");
-        var step1 = SetStep(context, goal, 1, "s1", "second");
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
+        await SetStep(context, goal, 0, "s0", "first");
+        var step1 = await SetStep(context, goal, 1, "s1", "second");
         app.goal.list.Add(goal);
 
         string json;
-        await using (var call = context.call.Push(step1.Code[0], context.Variable))
+        await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
             await call.DisposeAsync();
@@ -156,8 +156,8 @@ public class SnapshotWireTests
 
         // The string → snapshot conversion the runtime performs for a Data<snapshot> slot:
         // the snapshot builds ITSELF from its wire string through its own Create door.
-        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("snapshot", null), context: context);
-        var converted = global::app.snapshot.@this.Create(new global::app.type.item.text.@this(json), carrier);
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(new global::app.type.@this("snapshot")), context: context);
+        var converted = global::app.snapshot.@this.Create(context.Text(json), carrier);
         await Assert.That(converted).IsNotNull();
 
         var result = await converted!.Resume(context);
@@ -165,10 +165,10 @@ public class SnapshotWireTests
         await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("second");
     }
 
-    private static Step SetStepRef(global::app.actor.context.@this context, Goal goal, int index, string varName, string expr)
+    private static async Task<Step> SetStepRef(global::app.actor.context.@this context, Goal goal, int index, string varName, string expr)
     {
-        var action = context.Action($"variable.set(Name=%{varName}%, Value={Formal(expr)})");
-        var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {expr}" };
+        var action = await context.Action($"variable.set(Name=%{varName}%, Value={Formal(expr)})");
+        var step = new Step(context.App.type.list) { Goal = goal, Index = index, Text = $"set %{varName}% = {expr}" };
         action = action.In(step);
         step.Code.Add(action);
         goal.Step.Add(step);
@@ -189,27 +189,27 @@ public class SnapshotWireTests
         var app = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-mid-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
-        context.Variable.Set("keep", "alive");
-        context.Variable.Set("i", 1L);
+        await context.Variable.Set("keep", "alive");
+        await context.Variable.Set("i", 1L);
 
         // Start: [0] set a, [1] the call to Sub, [2] post-call marker (the unwind proof).
-        var start = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", app.actor.list.User.Context) };
-        SetStep(context, start, 0, "a", "A");
-        SetStep(context, start, 1, "calledSub", "yes");          // stands in for `call Sub`
-        SetStepRef(context, start, 2, "entryReached", "END");    // post-call: only runs on unwind
+        var start = new Goal(app.type.list) { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", app.actor.list.User.Context) };
+        await SetStep(context, start, 0, "a", "A");
+        await SetStep(context, start, 1, "calledSub", "yes");          // stands in for `call Sub`
+        await SetStepRef(context, start, 2, "entryReached", "END");    // post-call: only runs on unwind
 
         // Sub: [0] set b, [1] the throw point (suspended here), [2] continuation reading %i%.
-        var sub = new Goal { Name = "Sub", Path = global::app.type.item.path.@this.Resolve("/Sub.goal", app.actor.list.User.Context) };
-        SetStep(context, sub, 0, "b", "B");
-        SetStep(context, sub, 1, "passedThrow", "ok");           // the `throw if i==1` step
-        SetStepRef(context, sub, 2, "seenI", "%i%");             // reads the patched value
+        var sub = new Goal(app.type.list) { Name = "Sub", Path = global::app.type.item.path.@this.Resolve("/Sub.goal", app.actor.list.User.Context) };
+        await SetStep(context, sub, 0, "b", "B");
+        await SetStep(context, sub, 1, "passedThrow", "ok");           // the `throw if i==1` step
+        await SetStepRef(context, sub, 2, "seenI", "%i%");             // reads the patched value
 
         app.goal.list.Add(start); app.goal.list.Add(sub);
 
         // Suspend mid-stack: Start at its call step (1,0), Sub at its throw step (1,0).
         string json;
-        await using (var startFrame = context.call.Push(start.Step[1].Code[0], context.Variable))
-        await using (var subFrame = context.call.Push(sub.Step[1].Code[0], context.Variable))
+        await using (var startFrame = context.call.Push(start.Step[1].Code[0], await context.call.Setting(), context.Variable))
+        await using (var subFrame = context.call.Push(sub.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
         }
@@ -243,14 +243,14 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-aspath-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
-        var step0 = SetStep(context, goal, 0, "x", "1");
-        var step1 = SetStepRef(context, goal, 1, "seen", "%x%");
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
+        var step0 = await SetStep(context, goal, 0, "x", "1");
+        var step1 = await SetStepRef(context, goal, 1, "seen", "%x%");
         app.goal.list.Add(goal);
 
-        context.Variable.Set("x", 1L);
+        await context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.call.Push(goal.Step[1].Code[0], context.Variable))
+        await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
         }
@@ -262,9 +262,9 @@ public class SnapshotWireTests
         await Assert.That(conv is global::app.snapshot.@this)
             .IsTrue(); // ← if false, the as-snapshot conversion is the bug
 
-        context.Variable.Set("snap", conv);
-        new global::app.type.item.variable.@this("snap.variables.x").Set(2L, context);
-        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x").Start(context)).Value()))).IsEqualTo(2L);
+        await context.Variable.Set("snap", conv);
+        await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Set(2L, context);
+        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(2L);
 
         var snap = (await (await context.Variable.Get("snap")).Value()) as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
@@ -284,7 +284,7 @@ public class SnapshotWireTests
         var app = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-fs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
-        context.Variable.Set("x", 1L);
+        await context.Variable.Set("x", 1L);
 
         var snap = app.Snapshot(app.actor.list.User.Context);
         var d = new global::app.data.@this<global::app.snapshot.@this>("", snap,
@@ -316,14 +316,14 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
-        var step0 = SetStep(context, goal, 0, "x", "1");
-        var step1 = SetStepRef(context, goal, 1, "seen", "%x%");
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
+        var step0 = await SetStep(context, goal, 0, "x", "1");
+        var step1 = await SetStepRef(context, goal, 1, "seen", "%x%");
         app.goal.list.Add(goal);
 
-        context.Variable.Set("x", 1L);
+        await context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.call.Push(goal.Step[1].Code[0], context.Variable))
+        await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
             var err = new ServiceError("boom", goal.Step[1],
                 context.call.Current!.Chain);
@@ -336,9 +336,9 @@ public class SnapshotWireTests
             as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
 
-        context.Variable.Set("snap", snap);
-        new global::app.type.item.variable.@this("snap.variables.x").Set(2L, context);
-        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x").Start(context)).Value()))).IsEqualTo(2L);
+        await context.Variable.Set("snap", snap);
+        await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Set(2L, context);
+        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(2L);
 
         var result = await snap!.Resume(context);
         await result.IsSuccess();
@@ -357,21 +357,21 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-typed-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
-        var step0 = SetStep(context, goal, 0, "x", "1");
-        var step1 = SetStepRef(context, goal, 1, "seen", "%x%");
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
+        var step0 = await SetStep(context, goal, 0, "x", "1");
+        var step1 = await SetStepRef(context, goal, 1, "seen", "%x%");
         app.goal.list.Add(goal);
 
-        context.Variable.Set("x", 1L);
+        await context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.call.Push(goal.Step[1].Code[0], context.Variable))
+        await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
             json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
 
         // %snap% = string value, but TYPED as snapshot (what an honored `as snapshot` yields).
-        context.Variable.Set(new global::app.data.@this(
+        await context.Variable.Set(new global::app.data.@this(
             "snap", json, new global::app.type.@this("snapshot"), context: context));
 
-        new global::app.type.item.variable.@this("snap.variables.x").Set(2L, context);
+        await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Set(2L, context);
 
         var snap = await (await context.Variable.Get("snap")).Value<global::app.snapshot.@this>();
         var result = await snap!.Resume(context);
@@ -390,29 +390,29 @@ public class SnapshotWireTests
             System.IO.Path.GetTempPath(), "plang-nav-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
-        var step0 = SetStep(context, goal, 0, "x", "1");
-        var step1 = SetStepRef(context, goal, 1, "seen", "%x%");   // reads the edited value
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
+        var step0 = await SetStep(context, goal, 0, "x", "1");
+        var step1 = await SetStepRef(context, goal, 1, "seen", "%x%");   // reads the edited value
         app.goal.list.Add(goal);
 
         // Suspend at step1 with %x% = 1 captured.
-        context.Variable.Set("x", 1L);
+        await context.Variable.Set("x", 1L);
         string json;
-        await using (var call = context.call.Push(goal.Step[1].Code[0], context.Variable))
+        await using (var call = context.call.Push(goal.Step[1].Code[0], await context.call.Setting(), context.Variable))
         {
             json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
         }
 
         // Read the snapshot back as a value, bind it under %snap%.
         var snap = (await new global::app.data.@this("", json, context: context).Value<global::app.snapshot.@this>())!;
-        context.Variable.Set("snap", snap);
+        await context.Variable.Set("snap", snap);
 
         // Navigate + read: %snap.variables.x% is 1.
-        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x").Start(context)).Value()))).IsEqualTo(1L);
+        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(1L);
 
         // Edit: set %snap.variables.x% = 2 — the snapshot's own entry navigation edits that entry.
-        new global::app.type.item.variable.@this("snap.variables.x").Set(2L, context);
-        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x").Start(context)).Value()))).IsEqualTo(2L);
+        await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Set(2L, context);
+        await Assert.That(System.Convert.ToInt64((await (await new global::app.type.item.variable.@this("snap.variables.x", context.App.type.list).Start(context)).Value()))).IsEqualTo(2L);
 
         // Resume the edited snapshot — step1 reads the patched %x%.
         var result = await snap.Resume(context);
@@ -429,7 +429,7 @@ public class SnapshotWireTests
         await Assert.That(json.StartsWith("{")).IsTrue();
 
         var dst = new global::app.@this("/dst").Testing();
-        dst.Restore((await (await src.SnapshotFromWire(json, dst.actor.list.User.Context)).Value())!, dst.actor.list.User.Context);
+        await dst.Restore((await (await src.SnapshotFromWire(json, dst.actor.list.User.Context)).Value())!, dst.actor.list.User.Context);
 
         await Assert.That(dst.Build != null).IsFalse();
     }

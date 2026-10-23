@@ -11,11 +11,11 @@ public class @this : global::app.goal.step.action.@this
 {
     /// <summary>A clause IS a distinct plang type (the role is the type): its wire shape is action's, its identity
     /// its own.</summary>
-    protected internal override global::app.type.@this Type => new(typeof(@this));
+    public @this(global::app.type.list.@this types) : base(types, types[typeof(@this)]) { }
 
     /// <summary>A program action of this clause's kind, in <paramref name="step"/>.</summary>
     internal override global::app.goal.step.action.@this Program(global::app.goal.step.@this? step)
-        => new @this { Module = Module, Name = Name, Step = step, Synthetic = false };
+        => new @this(Module.App.type.list) { Module = Module, Name = Name, Step = step, Synthetic = false };
 
     /// <summary>Binds this clause on <paramref name="before"/>'s own events — its handler knows which, and on
     /// which side.</summary>
@@ -26,7 +26,7 @@ public class @this : global::app.goal.step.action.@this
     }
 
     /// <summary>A clause belongs to the step action before it, and so does what follows it.</summary>
-    internal override global::app.goal.step.action.@this? Anchor(global::app.goal.step.action.@this? before) => before;
+    internal override bool Belongs(global::app.goal.step.action.@this? before) => true;
 
     /// <summary>A clause was attached when the program was read: its turn leaves the chain's result — and
     /// <c>%!data%</c> — as they stand.</summary>
@@ -35,7 +35,7 @@ public class @this : global::app.goal.step.action.@this
 
     /// <summary>A recovery that runs the very action it is a clause of is a retry, not a recovery.</summary>
     internal override global::app.error.@this? Refuse(global::app.goal.step.action.@this? before)
-        => before != null && Held.Any(before.Same)
+        => before != null && Action.Any(before.Same)
             ? new global::app.error.@this(
                 $"the Recovery of {Module}.{Name} runs {before.Module}.{before.Name}, the action it is " +
                 "a clause of — Recovery holds what the step runs on error", "RecoveryIsTheAction", 400)

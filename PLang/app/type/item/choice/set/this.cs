@@ -13,19 +13,22 @@ public abstract class @this : global::app.type.kind.@this
 {
     private readonly System.Type _form;
 
-    protected @this(System.Type clr, string name) : base(name)
+    /// <summary>A closed set named <paramref name="name"/> over <paramref name="clr"/>, a kind of
+    /// <paramref name="owner"/> — the app's choice.</summary>
+    protected @this(System.Type clr, string name, global::app.type.@this owner) : base(name, owner)
         => _form = typeof(global::app.type.item.choice.@this<>).MakeGenericType(clr);
 
-    /// <summary>The closed set <paramref name="clr"/> is — chosen once, here, by its shape; null when it is no closed
-    /// set (no enum members, no <c>Choices(context?)</c>, no kinds of its own).</summary>
-    public static @this? For(System.Type clr)
-        => clr.IsEnum ? new member.@this(clr)
-         : family.@this.Kinds(clr) is { Count: > 0 } kinds ? new family.@this(clr, kinds)
-         : named.@this.Choices(clr) is { } choices ? new named.@this(clr, choices)
-         : null;
-
-    /// <summary>A closed set is a kind of choice.</summary>
-    protected internal override string Owner => "choice";
+    /// <summary>The closed set <paramref name="clr"/> is, a kind of the choice <paramref name="types"/> holds — chosen
+    /// once, here, by its shape; null when it is no closed set (no enum members, no <c>Choices(context?)</c>, no kind
+    /// family).</summary>
+    public static @this? For(System.Type clr, global::app.type.list.@this types)
+    {
+        var choice = types.Items().First(type => type.Names("choice"));
+        return clr.IsEnum ? new member.@this(clr, choice)
+             : family.@this.Is(clr) ? new family.@this(clr, choice, types)
+             : named.@this.Choices(clr) is { } choices ? new named.@this(clr, choices, choice)
+             : null;
+    }
 
     /// <summary>A choice from this set is <c>choice&lt;T&gt;</c> closed over the set.</summary>
     public override System.Type? Of(System.Type? type) => _form;
@@ -34,9 +37,11 @@ public abstract class @this : global::app.type.kind.@this
     /// (a choice set IS a kind of its type; <c>%x!type.values%</c> reads this through <c>type.Values</c>).</summary>
     protected abstract override System.Collections.Generic.IReadOnlyList<string>? OwnValues { get; }
 
-    /// <summary>A choice is one of its options, whatever the step's words — each a choice from this set.</summary>
+    /// <summary>A choice is one of its options, whatever the step's words — each a choice from this set, born as the
+    /// T → choice operator births one (no app is asked for an offer).</summary>
     public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
-        => new(Values!.Select(option => (global::app.type.item.@this)System.Activator.CreateInstance(_form, Member(option))!).ToList());
+        => new(Values!.Select(option => (global::app.type.item.@this)System.Activator.CreateInstance(_form,
+            BindingFlags.Instance | BindingFlags.NonPublic, null, [Member(option)], null)!).ToList());
 
     /// <summary>A choice is none but its options.</summary>
     public override bool IsClosed => true;

@@ -48,7 +48,7 @@ public class GoalCallResolutionTests
         var abs = System.IO.Path.Combine(_tempDir, relativePrPath.Replace('/', System.IO.Path.DirectorySeparatorChar));
         var source = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(abs)!)!, goalName + ".goal");
         var relative = "/" + System.IO.Path.GetRelativePath(_tempDir, source).Replace('\\', '/');
-        var goal = new PLangGoal { Name = goalName, Path = global::app.type.item.path.@this.Resolve(relative, ctx) };
+        var goal = new PLangGoal(_app.type.list) { Name = goalName, Path = global::app.type.item.path.@this.Resolve(relative, ctx) };
         var pr = await ctx.Pr(goal);
 
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(abs)!);
@@ -58,7 +58,7 @@ public class GoalCallResolutionTests
 
     /// <summary>A caller goal whose Path anchors the folder walk.</summary>
     private PLangGoal CallerAt(string callerGoalPath)
-        => new() { Name = "Caller", Path = global::app.type.item.path.@this.Resolve(callerGoalPath, _app.actor.list.User.Context) };
+        => new(_app.type.list) { Name = "Caller", Path = global::app.type.item.path.@this.Resolve(callerGoalPath, _app.actor.list.User.Context) };
 
     // A goal's name in a goal slot (a call's Name) selects the goal that exists — here one only on disk, loaded by
     // the selection — and selecting is no birth: nothing bound on goal create fires. %!app.goal["…"]% selects the
@@ -73,16 +73,16 @@ public class GoalCallResolutionTests
             (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
             _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
-        var slot = new global::app.data.@this("", new global::app.type.item.text.@this("Target"), context: ctx).As<PLangGoal>();
+        var slot = new global::app.data.@this("", ctx.Text("Target"), context: ctx).As<PLangGoal>();
         var selected = await slot.Value();
-        var byApp = await new global::app.type.item.variable.@this("!app.goal[\"Target\"]").Start(ctx);
+        var byApp = await new global::app.type.item.variable.@this("!app.goal[\"Target\"]", _app.type.list).Start(ctx);
 
         await Assert.That(selected?.Name).IsEqualTo("Target");
         await Assert.That(births).IsEmpty();
         await Assert.That(byApp.Peek()).IsSameReferenceAs(selected);
 
         // the binding is live: a goal born from its .pr fires it
-        var pr = await ctx.Pr(new PLangGoal { Name = "Born", Path = global::app.type.item.path.@this.Resolve("/Born.goal", ctx) });
+        var pr = await ctx.Pr(new PLangGoal(_app.type.list) { Name = "Born", Path = global::app.type.item.path.@this.Resolve("/Born.goal", ctx) });
         await _app.type.list["goal"].Create(System.Text.Encoding.UTF8.GetBytes(pr), ctx);
         await Assert.That(births.Count).IsEqualTo(1);
     }
@@ -118,15 +118,15 @@ public class GoalCallResolutionTests
     {
         // BuildGoal calls BuildGoal/Start: a Start elsewhere is not it, and neither is BuildGoal itself
         var ctx = _app.actor.list.User.Context;
-        var caller = new PLangGoal { Name = "BuildGoal", Path = global::app.type.item.path.@this.Resolve("/builder/BuildGoal.goal", ctx) };
+        var caller = new PLangGoal(_app.type.list) { Name = "BuildGoal", Path = global::app.type.item.path.@this.Resolve("/builder/BuildGoal.goal", ctx) };
         _app.goal.list.Add(caller);
-        _app.goal.list.Add(new PLangGoal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/other/Start.goal", ctx) });
+        _app.goal.list.Add(new PLangGoal(_app.type.list) { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/other/Start.goal", ctx) });
 
         var none = await _app.goal.list.Find("BuildGoal/Start", caller).Found();
 
         await Assert.That(none).IsNull();
 
-        var start = new PLangGoal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/builder/BuildGoal/Start.goal", ctx) };
+        var start = new PLangGoal(_app.type.list) { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/builder/BuildGoal/Start.goal", ctx) };
         _app.goal.list.Add(start);
         await Assert.That(await _app.goal.list.Find("BuildGoal/Start", caller).Found()).IsSameReferenceAs(start);
     }
@@ -161,7 +161,7 @@ public class GoalCallResolutionTests
     public async Task AnOsGoal_CallingAGoalBesideIt_FindsTheAppsCopy()
     {
         await WritePr("system/builder/.build/buildgoal.pr", "BuildGoal");
-        var caller = CallerAt(_app.OsAbsolutePath + "/system/builder/Build.goal");
+        var caller = CallerAt(_app.filesystem.os.Absolute + "/system/builder/Build.goal");
 
         var goal = await _app.goal.list.Find("BuildGoal", caller).Found();
 
@@ -211,7 +211,7 @@ public class GoalCallResolutionTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "Fresh.goal"), "Fresh\n- write out 1\n");
 
         var found = await _app.goal.list.Find("Fresh");
-        var slot = new global::app.data.@this("", new global::app.type.item.text.@this("Fresh"), context: _app.actor.list.User.Context)
+        var slot = new global::app.data.@this("", _app.actor.list.User.Context.Text("Fresh"), context: _app.actor.list.User.Context)
             .As<PLangGoal>();
         var selected = await slot.Value();
 
@@ -226,7 +226,7 @@ public class GoalCallResolutionTests
     public async Task ChildOfTheCaller_WinsBeforeAnyFile()
     {
         var caller = CallerAt("/foo/Caller.goal");
-        var child = new PLangGoal { Name = "Helper", Path = caller.Path, Parent = caller };
+        var child = new PLangGoal(_app.type.list) { Name = "Helper", Path = caller.Path, Parent = caller };
         caller.Child.Add(child);
 
         var goal = await _app.goal.list.Find("Helper", caller).Found();

@@ -50,7 +50,7 @@ public class TypedListKindTests
         var typed = app.type.list[new global::app.type.@this("list", "path"), ctx];
 
         // a text, as a member read off a .pr's dict arrives — not raw, which the list's reader reads
-        var made = await typed.Create(new global::app.type.item.text.@this("/granted"), ctx);
+        var made = await typed.Create(ctx.Text("/granted"), ctx);
 
         await made.IsSuccess();
         var list = (global::app.type.item.list.@this<global::app.type.item.path.@this>)(await made.Value())!;
@@ -64,7 +64,7 @@ public class TypedListKindTests
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
 
-        var made = await app.type.list["list"]!.Create(new global::app.type.item.text.@this("/granted"), ctx);
+        var made = await app.type.list["list"]!.Create(ctx.Text("/granted"), ctx);
 
         await made.IsSuccess();
         var row = ((global::app.type.item.list.@this)(await made.Value())!).Rows(ctx).Single();

@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %d% = {\"v\": null}",
       "line": {
-        "number": 4
+        "number": 4,
+        "indent": 0
       },
       "code": [
         {
@@ -54,7 +55,8 @@
       "index": 1,
       "text": "set %v% = %d.v%",
       "line": {
-        "number": 5
+        "number": 5,
+        "indent": 0
       },
       "code": [
         {
@@ -114,9 +116,10 @@
     },
     {
       "index": 2,
-      "text": "assert %v.Type.Name% equals \"null\"",
+      "text": "assert %v!type.name% equals \"null\"",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -136,19 +139,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%v.Type.Name%",
+              "value": "%v!type.name%",
               "variable": [
                 {
-                  "text": "%v.Type.Name%",
+                  "text": "%v!type.name%",
                   "code": [
                     {
                       "variable": "v"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -162,7 +165,8 @@
       "index": 3,
       "text": "assert %v% is null",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -192,9 +196,7 @@
       ]
     }
   ],
-  "child": [],
   "visibility": "Public",
-  "path": "/app/type/null/NullBareOnJson.test.goal",
-  "prPath": "/app/type/null/.build/nullbareonjson.test.pr",
-  "hash": "90f465a2fb3a68d02588e2ded25402e93d628909498254f85b573b82db6960e1"
+  "file": "NullBareOnJson.test.goal",
+  "hash": "21104d7e8648cb47a96c78b4e4fa9afd579cee09e3276ff60fe6db2d700081b9"
 }

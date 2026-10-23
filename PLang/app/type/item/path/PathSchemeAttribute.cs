@@ -1,11 +1,8 @@
 namespace app.type.item.path;
 
 /// <summary>
-/// Marks a class as a Path-scheme handler for the named scheme. Stage 4 — the
-/// attribute is defined here but not yet consumed at runtime; built-in schemes
-/// register explicitly at App startup. Future <c>code.load</c> will discover
-/// external scheme handlers by reflecting <see cref="PathSchemeAttribute"/>
-/// from a loaded DLL.
+/// Marks a class as a Path-scheme handler for the named scheme. Nothing reads the
+/// attribute at runtime: built-in schemes register explicitly at App startup.
 /// </summary>
 /// <remarks>
 /// Classes decorated with <see cref="PathSchemeAttribute"/> MUST expose a

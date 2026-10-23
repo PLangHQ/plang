@@ -27,7 +27,7 @@ public class MessageHoldsTests
         {
             new LlmMessage { Role = "system", Content = "Reply in JSON format only" },
             new LlmMessage { Role = "user", Content = Said },
-        });
+        }, _app.type.list[typeof(global::app.type.item.list.@this<LlmMessage>)]);
 
         await Assert.That(await messages.Holds(Said, Ctx)).IsTrue();
         await Assert.That(await messages.Holds("set to \"red\"", Ctx)).IsFalse();

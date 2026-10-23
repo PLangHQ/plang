@@ -21,10 +21,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        if (reader.Null()) return new global::app.type.item.@null.@this("goal", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("goal", kind), ctx.Context]);
         // a goal written by its name is that name
         if (reader.Peek() == global::app.type.format.TokenKind.String)
-            return new global::app.type.item.text.@this(reader.String());
+            return new global::app.type.item.text.@this(reader.String(), ctx.Context.App.type.list[typeof(global::app.type.item.text.@this)]);
         return Walk(ref reader, ctx);
     }
 
@@ -38,7 +38,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx, global::app.goal.@this? parent = null)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        var goal = new global::app.goal.@this { Parent = parent };
+        var goal = new global::app.goal.@this(ctx.Context.App.type.list) { Parent = parent };
         var step = new global::app.goal.step.serializer.Reader(goal);   // born holding this goal
 
         var named = false;
@@ -67,10 +67,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // is still written, read by no one.
                 case "visibility": reader.Skip(); break;
                 case "file":
-                    // A .pr stores only the goal file's NAME (start.md ruling 11). A "file" that is MORE than a
+                    // A .pr stores only the goal file's NAME. A "file" that is MORE than a
                     // bare name — a path separator, a `.`/`..` segment, a rooted or drive form — could aim the
                     // goal's folder elsewhere (even under the os root, which AskedByOs then trusts): it is
-                    // refused BEFORE it is combined, loud, so a rebuild writes it right (decision 745). Not
+                    // refused BEFORE it is combined, loud, so a rebuild writes it right. Not
                     // silently reduced to a last segment — a .pr that says more than a name is wrong.
                     var named0 = reader.String();
                     if (named0.Length == 0 || named0 is "." or ".." || named0.IndexOfAny(['/', '\\', ':']) >= 0)

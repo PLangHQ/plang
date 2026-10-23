@@ -149,7 +149,7 @@ public class PrLoadTests : System.IAsyncDisposable
     public async Task ASettingOverAStaleFrozenDefault_IsJudgedAsTheSetting()
     {
         var context = _app.actor.list.User.Context;
-        await context.Setting.Set("list.split.setting.empty", context.Ok("sometimes"));
+        context.Setting.Set("list.split.setting.empty", context.Ok("sometimes"));
 
         var ran = await RanWith("set.pr", Make.Action(context, "list", "split", ("Value", "a\nb")),
             "default", "{\"name\":\"empty\",\"type\":{\"name\":\"bool\"},\"value\":true}");
@@ -178,7 +178,7 @@ public class PrLoadTests : System.IAsyncDisposable
             Make.Step("set %n% = 5", Make.Action(_app.actor.list.User.Context, "variable", "set", Make.Param(_app.actor.list.User.Context, "Name", "n", "variable"), ("Value", 5))),
             Make.Step("write out \"n is %n%\"", Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "n is %n%"))));
         built.Step[1].Line = new() { Indent = 1 };
-        built.Step[1].Warning.Add(new global::app.warning.@this { Key = "Unsure", Message = "step 1 uses output.write" });
+        built.Step[1].Warning.Add(new global::app.warning.@this(_app.type.list) { Key = "Unsure", Message = "step 1 uses output.write" });
         var output = new System.IO.MemoryStream();
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, output, ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
@@ -190,7 +190,7 @@ public class PrLoadTests : System.IAsyncDisposable
         await Assert.That(System.Text.Encoding.UTF8.GetString(output.ToArray())).Contains("n is 5");
         await Assert.That((await (await _app.actor.list.User.Context.Variable.Get("n")).Value())?.ToString()).IsEqualTo("5");
         await Assert.That(goal.Step[1].Line.Indent).IsEqualTo(1);
-        await Assert.That(goal.Step[1].Warning.Single().Key).IsEqualTo("Unsure");
+        await Assert.That(goal.Step[1].Warning.Items().Single().Key).IsEqualTo("Unsure");
     }
 
 

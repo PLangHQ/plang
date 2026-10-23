@@ -14,26 +14,26 @@ public class BoolWrapperTests : System.IAsyncDisposable
     [Test]
     public async Task Bool_WrapsRawBool_AsBooleanAsyncBottomsOutAtValue()
     {
-        await Assert.That(await new Bool(true).AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
-        await Assert.That(await new Bool(false).AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
-        await Assert.That(new Bool(true).IsTruthy()).IsTrue();
-        await Assert.That(new Bool(false).IsTruthy()).IsFalse();
+        await Assert.That(await app.actor.list.User.Context.Bool(true).AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
+        await Assert.That(await app.actor.list.User.Context.Bool(false).AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
+        await Assert.That(app.actor.list.User.Context.Bool(true).IsTruthy()).IsTrue();
+        await Assert.That(app.actor.list.User.Context.Bool(false).IsTruthy()).IsFalse();
     }
 
     [Test]
     public async Task Bool_Equality_TrueEqualsTrueAndHashEqual()
     {
-        await Assert.That(new Bool(true).Equals(new Bool(true))).IsTrue();
-        await Assert.That(new Bool(true).Equals(new Bool(false))).IsFalse();
-        await Assert.That(new Bool(true).GetHashCode()).IsEqualTo(new Bool(true).GetHashCode());
+        await Assert.That(app.actor.list.User.Context.Bool(true).Equals(app.actor.list.User.Context.Bool(true))).IsTrue();
+        await Assert.That(app.actor.list.User.Context.Bool(true).Equals(app.actor.list.User.Context.Bool(false))).IsFalse();
+        await Assert.That(app.actor.list.User.Context.Bool(true).GetHashCode()).IsEqualTo(app.actor.list.User.Context.Bool(true).GetHashCode());
     }
 
     [Test]
     public async Task Bool_BareSerialize_TrueFalseOnApplicationJson()
     {
         // Bare lowercase true/false form.
-        await Assert.That(new Bool(true).ToString()).IsEqualTo("true");
-        await Assert.That(new Bool(false).ToString()).IsEqualTo("false");
+        await Assert.That(app.actor.list.User.Context.Bool(true).ToString()).IsEqualTo("true");
+        await Assert.That(app.actor.list.User.Context.Bool(false).ToString()).IsEqualTo("false");
     }
 
     [Test]
@@ -47,8 +47,8 @@ public class BoolWrapperTests : System.IAsyncDisposable
     {
         // bool is equality-only: unequal bools answer NotEqual (never an order),
         // so the ordering boundary errors.
-        await Assert.That(await new Bool(true).Compare(new Bool(false), app.actor.list.User.Context)).IsEqualTo(global::app.data.Comparison.NotEqual);
-        await Assert.That(() => CompareTestOps.OrdD(new Data("", new Bool(true)), new Data("", new Bool(false))))
+        await Assert.That(await app.actor.list.User.Context.Bool(true).Compare(app.actor.list.User.Context.Bool(false), app.actor.list.User.Context)).IsEqualTo(global::app.data.Comparison.NotEqual);
+        await Assert.That(() => CompareTestOps.OrdD(new Data("", app.actor.list.User.Context.Bool(true), context: app.actor.list.User.Context), new Data("", app.actor.list.User.Context.Bool(false), context: app.actor.list.User.Context)))
             .Throws<global::app.data.IncomparableException>();
     }
 }

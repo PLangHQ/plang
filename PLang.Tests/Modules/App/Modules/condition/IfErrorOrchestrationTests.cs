@@ -34,7 +34,7 @@ public class IfErrorOrchestrationTests : IDisposable
         var ctx = _app.actor.list.User.Context;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "IfCallMissing",
             Make.Step("if true, call DoesNotExist",
-                ctx.Action("condition.if(Left=true, Operator=\"==\", Right=true) { goal.call(Name=\"DoesNotExist\") }"))));
+                await ctx.Action("condition.if(Left=true, Operator=\"==\", Right=true) { goal.call(Name=\"DoesNotExist\") }"))));
         var step = goal.Step[0];
 
         var result = await step.Start(ctx);

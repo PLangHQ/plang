@@ -50,10 +50,11 @@
     },
     {
       "index": 1,
-      "text": "set %traceGoals% = []",
+      "text": "variable.set(Name=%traceGoals%, Value=[]); variable.set(Name=%brokenGoals%, Value=[])",
       "line": {
-        "number": 7
+        "number": 10
       },
+      "comment": "The goals saved with steps the build could not fix are collected in %brokenGoals% (BuildGoal's LeaveBroken adds\neach) and named at the end. Started here, in an existing step: a step is matched to its earlier build by its\nposition, so a step inserted among the others would make every one after it build again.",
       "code": [
         {
           "module": "variable",
@@ -93,6 +94,45 @@
               "value": false
             }
           ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%brokenGoals%",
+              "variable": [
+                {
+                  "text": "%brokenGoals%",
+                  "code": [
+                    {
+                      "variable": "brokenGoals"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": []
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
         }
       ]
     },
@@ -100,7 +140,7 @@
       "index": 2,
       "text": "set channel \"builder\" call BuilderChannel",
       "line": {
-        "number": 8
+        "number": 11
       },
       "code": [
         {
@@ -130,26 +170,16 @@
                     },
                     "value": "/system/builder/BuilderChannel"
                   }
-                ],
-                "default": [
-                  {
-                    "name": "parallel",
-                    "type": {
-                      "name": "bool"
-                    },
-                    "value": false
-                  },
-                  {
-                    "name": "wait",
-                    "type": {
-                      "name": "bool"
-                    },
-                    "value": true
-                  }
                 ]
               }
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 2's saved code no longer holds — rebuilt: step 2 'set channel \"builder\" call BuilderChannel': goal.call: the default frozen for 'wait' is no option of this action any more."
         }
       ]
     },
@@ -157,7 +187,7 @@
       "index": 3,
       "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
       "line": {
-        "number": 9
+        "number": 12
       },
       "code": [
         {
@@ -178,23 +208,13 @@
               },
               "value": [{"name":"kind","type":{"name":"text"},"value":"build-path"},{"name":"path","type":{"name":"item","template":"plang"},"value":"%path%","variable":[{"text":"%path%","code":[{"variable":"path"}]}]}]
             }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            },
-            {
-              "name": "wait",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
-            }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 3's saved code no longer holds — rebuilt: step 3 'call EmitBuildEvent kind=\"build-path\", path=%path%': goal.call: the default frozen for 'wait' is no option of this action any more."
         }
       ]
     },
@@ -202,7 +222,7 @@
       "index": 4,
       "text": "build.load, write to %app%",
       "line": {
-        "number": 10
+        "number": 13
       },
       "code": [
         {
@@ -275,7 +295,7 @@
       "index": 5,
       "text": "build.goals path=%path%, write to %goals%",
       "line": {
-        "number": 11
+        "number": 14
       },
       "code": [
         {
@@ -358,7 +378,7 @@
       "index": 6,
       "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
       "line": {
-        "number": 12
+        "number": 15
       },
       "code": [
         {
@@ -379,22 +399,6 @@
               },
               "value": [{"name":"kind","type":{"name":"text"},"value":"goals-found"},{"name":"goals","type":{"name":"item","template":"plang"},"value":"%goals%","variable":[{"text":"%goals%","code":[{"variable":"goals"}]}]}]
             }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            },
-            {
-              "name": "wait",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
-            }
           ]
         }
       ],
@@ -402,14 +406,18 @@
         {
           "key": "Unsure",
           "message": "step 7 uses goal.call, which the decider was not sure of (0.89)"
+        },
+        {
+          "key": "Reopened",
+          "message": "step 6's saved code no longer holds — rebuilt: step 6 'call EmitBuildEvent kind=\"goals-found\", goals=%goals%': goal.call: the default frozen for 'wait' is no option of this action any more."
         }
       ]
     },
     {
       "index": 7,
-      "text": "foreach %goals%, call BuildGoal goal=%item%",
+      "text": "loop.foreach(Collection=%goals%); goal.call(Name=\"/system/builder/BuildGoal\", Parameter=[{goal: %item%}])",
       "line": {
-        "number": 13
+        "number": 16
       },
       "code": [
         {
@@ -473,22 +481,6 @@
               },
               "value": [{"name":"goal","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
             }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            },
-            {
-              "name": "wait",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
-            }
           ]
         }
       ]
@@ -497,7 +489,7 @@
       "index": 8,
       "text": "build.unreached",
       "line": {
-        "number": 14
+        "number": 17
       },
       "code": [
         {
@@ -511,7 +503,7 @@
       "index": 9,
       "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
       "line": {
-        "number": 15
+        "number": 18
       },
       "code": [
         {
@@ -565,7 +557,7 @@
       "index": 10,
       "text": "build.appSave",
       "line": {
-        "number": 16
+        "number": 19
       },
       "code": [
         {
@@ -574,11 +566,128 @@
           "property": []
         }
       ]
+    },
+    {
+      "index": 11,
+      "text": "condition.if(Left=%brokenGoals.count%, Operator=\">\", Right=0) { error.throw(Message=\"the build left goals with steps it could not fix\", Key=\"StepsBroken\", Status=400, Cause=%brokenGoals%, FixSuggestion=\"fix the words and build again\") }",
+      "line": {
+        "number": 22
+      },
+      "comment": "A goal was saved with broken steps: the build ends failed, holding each such goal's refusal whole as a cause, so the\nerror page names every goal, its step and why.",
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%brokenGoals.count%",
+              "variable": [
+                {
+                  "text": "%brokenGoals.count%",
+                  "code": [
+                    {
+                      "variable": "brokenGoals"
+                    },
+                    {
+                      "property": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": ">"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "error.throw(Message=\"the build left goals with steps it could not fix\", Key=\"StepsBroken\", Status=400, Cause=%brokenGoals%, FixSuggestion=\"fix the words and build again\")",
+              "line": {
+                "number": 22
+              },
+              "code": [
+                {
+                  "module": "error",
+                  "name": "throw",
+                  "property": [
+                    {
+                      "name": "Message",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "the build left goals with steps it could not fix"
+                    },
+                    {
+                      "name": "Key",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "StepsBroken"
+                    },
+                    {
+                      "name": "Cause",
+                      "type": {
+                        "name": "list",
+                        "kind": "error",
+                        "template": "plang"
+                      },
+                      "value": "%brokenGoals%",
+                      "variable": [
+                        {
+                          "text": "%brokenGoals%",
+                          "code": [
+                            {
+                              "variable": "brokenGoals"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "FixSuggestion",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "fix the words and build again"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "status",
+                      "type": {
+                        "name": "status"
+                      },
+                      "value": 400
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/system/builder/Build.goal",
-  "prPath": "/system/builder/.build/build.pr",
-  "hash": "c0be979a3836c3d8998523667afa0858fc258a715848d787914bd08f69bc4593"
+  "file": "Build.goal",
+  "hash": "d765336ae00bb15b0cf653f06e9700ea9afe411f83921fc680fc92c798b895fa"
 }

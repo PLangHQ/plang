@@ -20,7 +20,7 @@ public class SystemPlaceTests : System.IAsyncDisposable
     }
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
-    private string Os(string relative) => System.IO.Path.GetFullPath(System.IO.Path.Combine(_app.OsAbsolutePath, relative));
+    private string Os(string relative) => System.IO.Path.GetFullPath(System.IO.Path.Combine(_app.filesystem.os.Absolute, relative));
     private string Own(string relative) => System.IO.Path.GetFullPath(System.IO.Path.Combine(_root, relative));
 
     [Test] public async Task WithoutTheAppsCopy_ItIsTheOss_AndNamesBoth()

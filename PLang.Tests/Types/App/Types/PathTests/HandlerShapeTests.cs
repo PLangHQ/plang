@@ -105,7 +105,7 @@ public class HandlerShapeTests
         var fp = global::app.type.item.path.file.@this.Resolve("doc.txt", app.actor.list.User.Context);
         await fp.WriteText("delegated body", app.actor.list.User.Context);
 
-        var handler = new global::app.module.file.Read(app.actor.list.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
+        var handler = new global::app.module.file.Read(app.actor.list.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp, context: app.actor.list.User.Context),
         };
         var viaHandler = await handler.Start();
         var viaPath = await global::app.type.item.path.file.@this.Resolve("doc.txt", app.actor.list.User.Context).Touch(app.actor.list.User.Context);
@@ -119,15 +119,15 @@ public class HandlerShapeTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-hs2-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root).Testing();
-        app.actor.list.User.Channel.Register(new CannedNoChannel());
+        app.actor.list.User.Channel.Register(new CannedNoChannel(app.actor.list.User.Context));
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-foreign-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(outOfRoot);
         var target = System.IO.Path.Combine(outOfRoot, "secret.txt");
         System.IO.File.WriteAllText(target, "secret");
 
-        var fp = new global::app.type.item.path.file.@this(target);
-        var handler = new global::app.module.file.Read(app.actor.list.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
+        var fp = app.actor.list.User.Context.File(target);
+        var handler = new global::app.module.file.Read(app.actor.list.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp, context: app.actor.list.User.Context),
         };
         var result = await handler.Start();
         await result.IsFailure();
@@ -141,14 +141,14 @@ public class HandlerShapeTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root).Testing();
-        app.actor.list.User.Channel.Register(new CannedNoChannel());
+        app.actor.list.User.Channel.Register(new CannedNoChannel(app.actor.list.User.Context));
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-foreign-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(outOfRoot);
         var target = System.IO.Path.Combine(outOfRoot, "exists.txt");
         System.IO.File.WriteAllText(target, "i exist");
 
-        var fp = new global::app.type.item.path.file.@this(target);
+        var fp = app.actor.list.User.Context.File(target);
         // The file is really on disk — but permission is denied, so truthiness
         // is false. If the gate were skipped this would be true.
         await Assert.That(await fp.AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
@@ -156,9 +156,10 @@ public class HandlerShapeTests
 
     private sealed class CannedNoChannel : global::app.channel.@this
     {
-        public CannedNoChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok("n"));
+        private readonly global::app.actor.context.@this _ctx;
+        public CannedNoChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(_ctx.Ok("n"));
     }
 }

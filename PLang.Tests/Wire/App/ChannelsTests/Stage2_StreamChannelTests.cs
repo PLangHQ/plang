@@ -55,6 +55,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     public async Task StreamChannel_OutputFactory_CreatesWriteOnlyChannel()
     {
         var ch = StreamChannel.Output("o", new MemoryStream());
+        app.actor.list.User.Channel.Register(ch);
         await Assert.That(ch.Direction).IsEqualTo(ChannelDirection.Output);
         await Assert.That(ch.CanWrite).IsTrue();
         await Assert.That(ch.CanRead).IsFalse();
@@ -92,6 +93,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     public async Task StreamChannel_ReadCore_FailsWithReadError_OnUnderlyingStreamThrow()
     {
         var ch = new StreamChannel("c", new ThrowingStream(throwOnRead: true), ChannelDirection.Input, ownsStream: false);
+        app.actor.list.User.Channel.Register(ch);
         var result = await ch.Read();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ReadError");

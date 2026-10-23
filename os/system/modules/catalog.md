@@ -262,7 +262,7 @@ applies to every action in the module.
 Build any goal with `cache:skip` and dump the prompts:
 
 ```bash
-plang build '--build={"cache":"skip"}' '--debug={"llm":{"system":true,"user":true},"length":{"max":50000}}'
+plang build '--build.setting={"cache":"skip"}' '--debug.setting={"llm":{"system":true,"user":true},"length":{"max":50000}}'
 ```
 
 The decider State is the **system** side of the `Decide` call (module descriptions +

@@ -51,8 +51,7 @@ public class TypeNavigatesAsFullTypeTests
     [Test]
     public async Task Choice_TypeValues_AnswersItsSetsOptions()
     {
-        var x = new Data("x", new global::app.type.item.choice.@this<global::app.goal.step.ErrorOrder>(
-            global::app.goal.step.ErrorOrder.RetryFirst), context: Ctx);
+        var x = new Data("x", Ctx.Choice(global::app.goal.step.ErrorOrder.RetryFirst), context: Ctx);
         var values = await (await x.Get("!type.Values")).Value() as global::app.type.item.list.@this;
         await Assert.That(values).IsNotNull();
         var options = values!.Items(Ctx).Select(o => o.Peek()?.ToString()).ToList();

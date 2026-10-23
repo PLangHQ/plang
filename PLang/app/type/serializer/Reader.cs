@@ -19,7 +19,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         // Token-parse the descriptor {name, kind?, strict?, template?} — the symmetric mirror of
         // type.@this.Write; no STJ, no per-type converter. Field names are written lowercase.
-        if (reader.Null()) return new global::app.type.item.@null.@this("type", kind);
+        if (reader.Null()) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("type", kind), ctx.Context]);
         // a type written as its name (`"path"`) is the type that name names
         if (reader.Peek() == global::app.type.format.TokenKind.String)
             return ctx.Context.App.type.list[new global::app.type.@this(reader.String()), ctx.Context];
@@ -31,7 +31,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             switch (field)
             {
                 case "name":     name = reader.String(); break;
-                // a kind nests (774): its value is a type itself ({list, kind: {list, kind: path}}). Read that
+                // a kind nests: its value is a type itself ({list, kind: {list, kind: path}}). Read that
                 // inner type, which the outer's element kind then holds; a bare string is a simple kind name.
                 case "kind" when reader.Peek() == global::app.type.format.TokenKind.Object:
                                  nested = Read(ref reader, null, ctx) as global::app.type.@this; break;
@@ -42,24 +42,26 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             }
         }
         reader.EndObject();
-        if (name == null) return new global::app.type.item.@null.@this("type", kind);
+        if (name == null) return new global::app.type.item.@null.@this(ctx.Context.App.type.list[new global::app.type.@this("type", kind), ctx.Context]);
         // Born through the types: an alias (string) canonicalises and the type carries its class; a
         // name no type answers to stays as written, for the reader of the type to judge. The template is the kind
         // its name names; a name that is no kind of template is refused here, saying the kinds.
         global::app.type.item.template.kind.@this? marked = null;
         if (template != null)
         {
-            try { marked = global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>.Parse(template).Value; }
-            catch (System.FormatException refused)
-            {
-                throw new global::app.error.DeclinedException(new global::app.error.@this(refused.Message, "TemplateInvalid", 400));
-            }
+            // the template kinds are a closed set, a kind of choice: the set names its member
+            var set = ctx.Context.App.type.list[typeof(global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>)].kind
+                as global::app.type.item.choice.set.@this;
+            if (set?.Values is not { } kinds || !kinds.Contains(template, System.StringComparer.OrdinalIgnoreCase))
+                throw new global::app.error.DeclinedException(new global::app.error.@this(
+                    $"'{template}' is no kind of template. Valid: {string.Join(", ", set?.Values ?? [])}", "TemplateInvalid", 400));
+            marked = (global::app.type.item.template.kind.@this)set.Member(template);
         }
         // a nested kind: the outer holds the inner type as its element kind ({list, kind: {list, kind: path}})
         if (nested != null)
         {
             var entry = ctx.Context.App.type.list[name];
-            var element = new global::app.type.item.list.kind.element.@this(nested);
+            var element = new global::app.type.item.list.kind.element.@this(entry, nested);
             return new global::app.type.@this(entry, element, strict, marked);
         }
         return ctx.Context.App.type.list[new global::app.type.@this(name, typeKind, strict, marked), ctx.Context];

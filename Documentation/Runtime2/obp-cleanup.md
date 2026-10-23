@@ -300,3 +300,15 @@ copies the whole container through `item.Copy()`: every nested dict and list, re
 Correct, and a write deeper down later finds everything its own. But a task's first write into a 100k-row list of
 dicts copies every dict. The cheaper shape: copy only the containers on the written path, and keep the set of copies
 the task owns, so a later write deeper down copies just the next level it reaches.
+
+## type.list.Property makes a bare type (item-doors, stage 5)
+
+*shape.* `type/list/this.cs` `Property(name, clr, …)` births each member's type as `new app.type.@this(typeName, clr,
+kind)` — a bare type, which stage 1 said nothing makes. A member's type should be the list's own entry for that class
+(`this[clr]` / `this[new type(name, kind), context]`), so a member's type carries its facts like every other.
+
+## property.Read unwraps a task by reflection on every read (item-doors, stage 5)
+
+*cost.* `type/property/this.cs` `Read` finds `AsTask` and the task's `Result` by reflection each time a member that
+answers asynchronously is read. Reflection now lives only in `property`, but it could be bound once where the property
+is built from its member (a compiled getter that answers the awaited value), taking reflection off the read path.

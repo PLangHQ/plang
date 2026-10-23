@@ -28,14 +28,13 @@ public sealed partial class @this : global::app.type.item.@this
     /// this run observed. Where it is, the error and event in play, the depth limit and the whole run's tree
     /// (<see cref="Root"/>) are one navigation away, never written.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        if (Current is { } current) { writer.Name("current"); await current.Output(writer, mode, context); }
-        if (Scope is { } scope) { writer.Name("scope"); await scope.Output(writer, mode, context); }
+        if (Current is { } current) { writer.Name("current"); await current.Output(writer); }
+        if (Scope is { } scope) { writer.Name("scope"); await scope.Output(writer); }
         writer.Name("audit");
-        Audit.Write(writer);
+        await Audit.Output(writer);
         writer.EndObject();
     }
 
@@ -48,30 +47,58 @@ public sealed partial class @this : global::app.type.item.@this
     // at birth (a context's calls are born while the context is, before its settings can be read).
     private readonly Func<global::app.actor.setting.@this> _settings;
 
-    /// <summary>A context's calls, reading what they capture through its <paramref name="settings"/>.</summary>
-    public @this(Func<global::app.actor.setting.@this> settings) => _settings = settings;
+    // The app's types, handed to each frame at its push: the frame's own (a call, a binding, an isolated call), its
+    // start and end (datetime), and its tags (dict).
+    private readonly global::app.type.@this _call;
+    private readonly global::app.type.@this _binding;
+    private readonly global::app.type.@this _isolated;
+    private readonly global::app.type.@this _datetime;
+    private readonly global::app.type.@this _dict;
 
-    /// <summary>What this stack captures (<c>%!app.call.setting%</c>), as its settings have it now — a read is
-    /// a lookup in their cache, built again only after a write. A push reads it once.</summary>
-    public setting.@this Setting => _settings().Of<setting.@this>();
+    /// <summary>The app's datetime type — a frame's start and end are of it.</summary>
+    internal global::app.type.@this Datetime => _datetime;
+
+    /// <summary>The app's dict type — a frame's tags are of it.</summary>
+    internal global::app.type.@this Dict => _dict;
+
+    /// <summary>A context's calls, of the app's <paramref name="types"/>, reading what they capture through its
+    /// <paramref name="settings"/>; <paramref name="audit"/> is where every error they observe is kept.</summary>
+    public @this(global::app.type.list.@this types,
+        Func<global::app.actor.setting.@this> settings, global::app.error.list.@this audit) : base(types[typeof(@this)])
+    {
+        _call = types[typeof(call.@this)];
+        _binding = types[typeof(call.binding.@this)];
+        _isolated = types[typeof(call.isolated.@this)];
+        _datetime = types[typeof(global::app.type.item.datetime.@this)];
+        _dict = types[typeof(global::app.type.item.dict.@this)];
+        _settings = settings;
+        Audit = audit;
+    }
+
+    /// <summary>What this stack captures (<c>%!app.call.setting%</c>), as its settings have it now — kept by them until a
+    /// write. A push is handed it by its async caller: a frame is made current where it is pushed, which an awaited push
+    /// would undo on its return.</summary>
+    [global::app.LlmBuilder]
+    public System.Threading.Tasks.ValueTask<setting.@this> Setting() => _settings().Get<setting.@this>();
 
     // An open diff scope (DiffScope) turns Diff on for as long as it's open, whatever the setting says.
     private int _diffScopes;
 
-    public @bool  Timing    => Setting.Timing;
-    public @bool  Diff      => IsDiffing(Setting) ? @bool.True : @bool.False;
+    public async System.Threading.Tasks.ValueTask<@bool> Timing() => (await Setting()).Timing;
+    public async System.Threading.Tasks.ValueTask<@bool> Diff() => IsDiffing(await Setting()) ? @bool.True : @bool.False;
 
     /// <summary>Whether a push captures diffs under <paramref name="setting"/>: an open diff scope says yes whatever
     /// the setting says.</summary>
     internal bool IsDiffing(setting.@this setting) => Volatile.Read(ref _diffScopes) > 0 || setting.Diff.Enabled.Value;
-    public @bool  Tags      => Setting.Tags;
-    public @bool  History   => Setting.History;
+    public async System.Threading.Tasks.ValueTask<@bool> Tags() => (await Setting()).Tags;
+    public async System.Threading.Tasks.ValueTask<@bool> History() => (await Setting()).History;
 
     /// <summary>
     /// Every error observed this run at every frame (handled or unhandled). Survives Pop.
     /// See <see cref="global::app.error.list.@this"/> for thread-safety + lifecycle.
     /// </summary>
-    public global::app.error.list.@this Audit { get; } = new();
+    [global::app.LlmBuilder]
+    public global::app.error.list.@this Audit { get; }
 
     /// <summary>
     /// Optional Variables source for diff capture — the store a Call captures when pushed with none of its own
@@ -83,6 +110,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// <summary>
     /// The current Call in this async context. Null when no Push has happened on this branch.
     /// </summary>
+    [global::app.LlmBuilder]
     public call.@this? Current => _current.Value;
 
     /// <summary>The goal in play on this branch (<c>%!goal%</c>) — the current frame's; null before any frame is
@@ -96,15 +124,8 @@ public sealed partial class @this : global::app.type.item.@this
     /// <summary>The frame of the goal run in play (<c>%!callStack.Scope%</c>) — the nearest frame outward from
     /// <see cref="Current"/> pushed for a goal itself (a goal, no step). Its steps' frames come and go inside
     /// it; what lives for the goal's run (its tags) lives here. Null outside any goal.</summary>
-    public call.@this? Scope
-    {
-        get
-        {
-            for (var frame = _current.Value; frame != null; frame = frame.Caller)
-                if (frame.IsGoal) return frame;
-            return null;
-        }
-    }
+    [global::app.LlmBuilder]
+    public call.@this? Scope => _current.Value?.Within.LastOrDefault(frame => frame.IsGoal);
 
     /// <summary>
     /// The error in play — what PLang reads as <c>%!error%</c>. Walks <c>Caller</c> outward from
@@ -120,34 +141,6 @@ public sealed partial class @this : global::app.type.item.@this
                 if (node.Error is { } error) return error;
             return null;
         }
-    }
-
-    /// <summary>
-    /// The format a goal set, in play here — part of what PLang reads as <c>%!app.type.format%</c>: the nearest
-    /// frame outward that holds one. Null when no running goal set one (the app's own is then in play).
-    /// </summary>
-    public global::app.type.kind.@this? Format
-    {
-        get
-        {
-            for (var node = _current.Value; node != null; node = node.Caller)
-                if (node.Format is { } format) return format;
-            return null;
-        }
-    }
-
-    /// <summary>Sets <paramref name="format"/> on the running goal's own frame — the nearest outward that runs a goal
-    /// (not one of its steps or actions) — so it holds for that goal and what it calls, and goes when it returns.
-    /// False when no goal is running.</summary>
-    public bool SetFormat(global::app.type.kind.@this format)
-    {
-        for (var node = _current.Value; node != null; node = node.Caller)
-            if (node.Goal != null && node.Step == null && node.Action == null)
-            {
-                node.Format = format;
-                return true;
-            }
-        return false;
     }
 
     /// <summary>
@@ -184,40 +177,39 @@ public sealed partial class @this : global::app.type.item.@this
     /// automatic Pop.
     /// </summary>
     /// <param name="goal">The goal starting — its frame's goal is itself.</param>
+    /// <param name="setting">What the stack captures, as its async caller read it (<see cref="Setting"/>).</param>
     /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
-    public call.@this Push(global::app.goal.@this goal, IEnumerable<global::app.data.@this>? names = null)
-        => Push(goal, null, null, null, names);
+    public call.@this Push(global::app.goal.@this goal, setting.@this setting, IEnumerable<global::app.data.@this>? names = null)
+        => Enter(new call.@this(_call, this, goal, setting, names));
 
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
     /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
-    public call.@this Push(IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? held = null)
-        => Enter(new call.binding.@this(_current.Value, this, names, held));
+    public call.@this Push(IEnumerable<global::app.data.@this>? names, setting.@this setting, global::app.goal.step.action.@this? held = null)
+        => Enter(new call.binding.@this(_binding, _current.Value, this, names, held, setting));
 
     /// <summary>Pushes a frame with memory of its own, born with <paramref name="names"/>: every write under it stays
     /// in it (a tool's goal, a shortcut's). A task's run starts its chain with one whose <paramref name="caller"/> is
     /// the frame its caller was in — reads fall through to the caller's frames and memory.</summary>
-    public call.@this Isolate(IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? held = null,
-        call.@this? caller = null)
-        => Enter(new call.isolated.@this(caller ?? _current.Value, this, names, held));
+    public call.@this Isolate(IEnumerable<global::app.data.@this>? names, setting.@this setting,
+        global::app.goal.step.action.@this? held = null, call.@this? caller = null)
+        => Enter(new call.isolated.@this(_isolated, caller ?? _current.Value, this, names, held, setting));
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
-    public call.@this Push(global::app.goal.step.@this step) => Push(step.Goal, step, null, null);
+    public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
+        => Enter(new call.@this(_call, this, step, setting));
 
     /// <summary>Pushes the frame of an action starting: its step's goal, its step and itself — an action composed
     /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
-    public call.@this Push(global::app.goal.step.action.@this action, Variables? variables = null)
-        => Push(action.Step?.Goal, action.Step, action, variables);
+    public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
+        => Enter(new call.@this(_call, this, action, setting, variables));
 
-    private call.@this Push(global::app.goal.@this? goal, global::app.goal.step.@this? step,
-        global::app.goal.step.action.@this? action, Variables? variables, IEnumerable<global::app.data.@this>? names = null)
+    // The frame a frame pushed now is called from — the current one; past MaxDepth (the caller's own depth) the
+    // overflow.
+    internal call.@this? Caller()
     {
         var caller = _current.Value;
-
-        // the caller's depth is its own fact: one more frame past MaxDepth is the overflow
-        if (caller != null && caller.Depth >= MaxDepth)
-            throw new CallStackOverflowException(MaxDepth);
-
-        return Enter(new call.@this(goal, step, action, caller, this, caller, variables ?? Variables, names));
+        if (caller != null && caller.Depth >= MaxDepth) throw new CallStackOverflowException(MaxDepth);
+        return caller;
     }
 
     // The frame becomes current: it joins its caller's children (Children owns its own lock + FIFO eviction), and a

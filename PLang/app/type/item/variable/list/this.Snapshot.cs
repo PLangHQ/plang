@@ -8,7 +8,7 @@ public partial class @this : ISnapshot
     /// <summary>
     /// Captures user-visible variables into the snapshot. Honours the existing
     /// partition (the <see cref="Snapshot()"/> method documents the rules):
-    ///  - skip !-prefix (infrastructure vars: !app, !fileSystem, !error, …)
+    ///  - skip !-prefix (infrastructure vars: !app, !filesystem, !error, …)
     ///  - skip DynamicData (Now, NowUtc, GUID — always-fresh)
     /// Each remaining variable is cloned so the snapshot is detached from
     /// further mutations on the live store. Full Data shape is preserved
@@ -28,7 +28,8 @@ public partial class @this : ISnapshot
             // the Data subtype (a store re-wrap loses the subtype).
             if (kvp.Value is data.DynamicData
                 || kvp.Value.Item is global::app.type.item.computed) continue;
-            s.Entries.Set(kvp.Value.Clone());
+            // under the store's key, the truth: one Data held under two names is captured under both
+            s.Entries.Set(kvp.Key, kvp.Value.Clone());
         }
     }
 
@@ -37,13 +38,13 @@ public partial class @this : ISnapshot
     /// (Now, NowUtc, GUID) are left in place — the snapshot only carries user-visible state, so
     /// adding restored entries on top is the correct merge.
     /// </summary>
-    public System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
+    public async System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
     {
         // Every entry of the section IS a captured variable (edited in place or not) — cloned so the
-        // snapshot can be re-restored independently.
+        // snapshot can be re-restored independently. A set can wait (its before and after events, a value that binds
+        // others), so the restore answers when the last one has finished — not before.
         foreach (var entry in s.Entries.Entries(context))
-            Set(entry.Name, entry.Clone());
-        return System.Threading.Tasks.Task.CompletedTask;
+            await Set(entry.Name, entry.Clone());
     }
 
 }

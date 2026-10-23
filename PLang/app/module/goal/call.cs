@@ -19,6 +19,7 @@ public partial class Call : IContext
 
     /// <summary>The parameters — one named, typed row each, bound as a variable of that name in the
     /// called goal.</summary>
+    [global::app.Attributes.Records]
     public partial data.@this<global::app.type.item.list.@this>? Parameter { get; init; }
 
     /// <summary>
@@ -46,7 +47,7 @@ public partial class Call : IContext
             && (await Context.App.goal.list.Find(authored, __action.Step?.Goal)).Peek() is global::app.goal.@this target
             && target.Reference(__action.Step?.Goal) is { } address
             && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase))
-            __action.Property.Set(name.Holding(new global::app.type.item.text.@this(address)));
+            __action.Property.Set(name.Holding(new global::app.type.item.text.@this(address, Context.App.type.list[typeof(global::app.type.item.text.@this)])));
         return Context.Ok();
     }
 
@@ -65,9 +66,9 @@ public partial class Call : IContext
     private global::app.error.@this? Unnamed(global::app.type.item.@this value)
     {
         if (value.Rows(Context) is { } rows && rows.All(row => row.Name.Length > 0)) return null;
-        var written = __action?["Parameter"]?.Value?.RawText ?? value.ToString();
+        var text = __action?["Parameter"]?.Value?.RawText ?? value.ToString();
         return new global::app.error.@this(
-            $"Parameter takes named rows — write each argument as the step names it, {{<the name before =>: {written}}}: {written} alone is one value with no name, which binds nothing",
+            $"Parameter takes a list of named arguments — write each argument as the step names it, [{{<the name before =>: {text}}}]: {text} alone is one value with no name, which binds nothing",
             "ParameterUnnamed", 400);
     }
 
@@ -93,7 +94,7 @@ public partial class Call : IContext
                 ? Context.Ok(runs.Actor.Task.Start(goal, async token =>
                 {
                     using var child = Context.Child(runs.Actor, token);
-                    await using (child.call.Isolate(null, caller: from))
+                    await using (child.call.Isolate(null, await child.call.Setting(), caller: from))
                         return await goal.Start(child, bound);
                 }))
                 : await goal.Start(runs, bound);

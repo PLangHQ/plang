@@ -1,4 +1,10 @@
 {{ error.Key }} ({{ error.status.code }}): {{ error.Message }}
+{%- for cause in error.list %}
+  - {{ cause.Message }}{% if cause.Goal %} (in {{ cause.Goal.Path }}){% endif %}
+{%- for reason in cause.list %}
+      - {{ reason.Message }}{% if reason.Goal %} (in {{ reason.Goal.Path }}){% endif %}
+{%- endfor %}
+{%- endfor %}
 {%- if error.Step %}
   at {{ error.Step.Goal.Path }}:{{ error.Step.Line.Number }}
     - {{ error.Step.Text }}

@@ -4,5 +4,8 @@
 Start
 - set %a% = "0.1" as number/decimal
 - set %b% = "0.2" as number/decimal
+/ the cast holds: a double here would add to 0.30000…4 and still pass the equals below
+- assert %a!type.kind% equals "decimal"
 - math.add A=%a% B=%b%, write to %sum%
+- assert %sum!type.kind% equals "decimal"
 - assert %sum% equals "0.3" as number/decimal

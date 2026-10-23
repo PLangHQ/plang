@@ -5,8 +5,12 @@ using ImageType = global::app.type.item.image.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.KindDerivationTests;
 
-public class ImageValidateKindTests
+public class ImageValidateKindTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this _app = new global::app.@this("/test").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
+    private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
+
     // Minimal 1×1 transparent GIF (smallest legal GIF87a payload).
     private static readonly byte[] GifBytes = new byte[]
     {
@@ -28,7 +32,7 @@ public class ImageValidateKindTests
 
     [Test] public async Task ValidateKind_GifBytesMatchingGif_OkTrue()
     {
-        var img = new ImageType(GifBytes, "image/gif");
+        var img = Ctx.Image(GifBytes, "image/gif");
         var (ok, actual) = img.ValidateKind(GifBytes, "gif");
         await Assert.That(ok).IsTrue();
         await Assert.That(actual).IsNull();
@@ -36,7 +40,7 @@ public class ImageValidateKindTests
 
     [Test] public async Task ValidateKind_PngBytesMatchingGif_OkFalse_ActualIsPng()
     {
-        var img = new ImageType(PngBytes, "image/png");
+        var img = Ctx.Image(PngBytes, "image/png");
         var (ok, actual) = img.ValidateKind(PngBytes, "gif");
         await Assert.That(ok).IsFalse();
         await Assert.That(actual).IsEqualTo("png");
@@ -45,7 +49,7 @@ public class ImageValidateKindTests
     [Test] public async Task ValidateKind_GarbageBytes_OkFalse()
     {
         var garbage = new byte[] { 0, 1, 2, 3, 4, 5 };
-        var img = new ImageType(garbage, "application/octet-stream");
+        var img = Ctx.Image(garbage, "application/octet-stream");
         var (ok, actual) = img.ValidateKind(garbage, "gif");
         await Assert.That(ok).IsFalse();
         await Assert.That(actual).IsNull();
@@ -54,7 +58,7 @@ public class ImageValidateKindTests
     [Test] public async Task ValidateKind_EmptyBytes_OkFalse()
     {
         var empty = System.Array.Empty<byte>();
-        var img = new ImageType(empty, "application/octet-stream");
+        var img = Ctx.Image(empty, "application/octet-stream");
         var (ok, actual) = img.ValidateKind(empty, "gif");
         await Assert.That(ok).IsFalse();
         await Assert.That(actual).IsNull();

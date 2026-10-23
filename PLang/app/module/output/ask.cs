@@ -8,10 +8,8 @@ namespace app.module.output;
 [global::app.Attributes.PlangType("ask")]
 public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICreate<Ask>, global::app.IExitsGoal
 {
-    /// <summary>The entity is "ask" (the namespace-tail default would say
-    /// "output", the owning module, not this value's name).</summary>
-    protected internal override global::app.type.@this Type
-        => new("ask", typeof(Ask));
+    /// <summary>A pending ask, born holding <paramref name="type"/> — the app's <c>ask</c>.</summary>
+    public Ask(global::app.type.@this type) : base(type) { }
 
     /// <summary>What is asked, as the asker resolved it — what a program reading this plang shows the person.</summary>
     [global::app.Out] public global::app.type.item.text.@this? Question { get; init; }
@@ -23,6 +21,10 @@ public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICr
 
     /// <summary>Stops the goal only when it is this goal's own, waiting.</summary>
     public bool ShouldExit() => Waiting;
+
+    /// <summary>In text, an ask is its question — the line a person reads and answers.</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
+        => Question is { } question ? question.Output(writer) : default;
 }
 
 /// <summary>
@@ -65,13 +67,14 @@ public partial class ask : IContext
         var answer = await Answer();
         if (!answer.Success || !answer.IsInitialized || !await Sensitive.ToBooleanAsync()
             || answer.Peek() is global::app.type.item.sensitive.@this) return answer;
-        return Context.Ok(new global::app.type.item.sensitive.@this((await answer.Value())?.ToString() ?? ""));
+        return Context.Ok(new global::app.type.item.sensitive.@this((await answer.Value())?.ToString() ?? "",
+            Context.App.type.list[typeof(global::app.type.item.sensitive.@this)]));
     }
 
     private async Task<data.@this> Answer()
     {
         // Resume path: channel pre-bound the answer under !ask.answer.
-        var answer = await new global::app.type.item.variable.@this(AnswerVariableName).Start(Context);
+        var answer = await new global::app.type.item.variable.@this(AnswerVariableName, Context.App.type.list).Start(Context);
         if (answer.IsInitialized)
         {
             // The sentinel rides as the "answer" property of the infra root

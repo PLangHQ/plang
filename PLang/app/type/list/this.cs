@@ -17,7 +17,11 @@ public sealed partial class @this
 {
     /// <summary>The types hold no context and no app: a lookup that needs the app's formats takes
     /// the caller's context.</summary>
-    public @this() { }
+    public @this() : base(new List<object?>()) { }
+
+    /// <summary>The type list's own type, <c>{list, type}</c>, asked of itself: it is the maker of types, so it is
+    /// born without one and answers from its own entries (one of item's two bootstraps; the root type is the other).</summary>
+    protected internal override app.type.@this Type => this[typeof(@this)];
 
     /// <summary>
     /// The kind of <paramref name="type"/> — the type's own kind by its kind's name. A kind the type holds
@@ -29,9 +33,9 @@ public sealed partial class @this
 
     /// <summary>
     /// The kind the type named <paramref name="type"/> has by the name <paramref name="kind"/>: one it holds, or one
-    /// it coins for the name (text's <c>{text, json}</c>); the type's own empty kind when no kind is named or the name
+    /// it coins for the name (a list's element kind, <c>{list, path}</c>); the type's own empty kind when no kind is named or the name
     /// is the type's own format. A kind the type does NOT hold is that name with no class — asked of its parent, never
-    /// of the app (decision 774, ruling 2): a kind is found under its type, no app-wide search by bare name. The type
+    /// of the app: a kind is found under its type, no app-wide search by bare name. The type
     /// is found by its name, and no type is made — a value writing itself asks this on every write.
     /// </summary>
     public global::app.type.kind.@this Kind(string type, string? kind)
@@ -39,7 +43,7 @@ public sealed partial class @this
         var root = Named.GetValueOrDefault(type)?.kind;
         var had = string.IsNullOrEmpty(kind) ? root : root?[kind] ?? root?.Coin(kind);
         return had is { Owner: not null } ? had
-            : string.IsNullOrEmpty(kind) ? new global::app.type.kind.empty.@this(type) : new global::app.type.kind.@this(kind!);
+            : string.IsNullOrEmpty(kind) ? new app.type.@this(type).kind : new global::app.type.kind.@this(kind!);
     }
 
     // The kind a type holds that answers to the key — by name, alias, MIME or extension; a type's own
@@ -47,16 +51,16 @@ public sealed partial class @this
     // extension to one kind; a name two types hold is refused here.
     private global::app.type.kind.@this? Held(string key)
     {
-        global::app.type.kind.@this? found = null;
+        global::app.type.kind.@this? match = null;
         foreach (var type in Types)
         {
             if (type.kind[key] is not { } kind) continue;
-            if (found != null)
+            if (match != null)
                 throw new System.InvalidOperationException(
-                    $"'{key}' is a kind of more than one type ({found.Owner}, {kind.Owner}) — ask the type for its kind.");
-            found = kind;
+                    $"'{key}' is a kind of more than one type ({match.Owner?.Name}, {kind.Owner?.Name}) — ask the type for its kind.");
+            match = kind;
         }
-        return found;
+        return match;
     }
 
     /// <summary>
@@ -128,9 +132,12 @@ public sealed partial class @this
             : this[new app.type.@this("binary", extension.TrimStart('.')), context];
     }
 
-    // The full type a held kind makes: its owner, with the kind unless it is the owner's own format.
-    private app.type.@this Of(global::app.type.kind.@this kind, actor.context.@this context)
-        => this[new app.type.@this(kind.Owner!, kind.IsEmpty ? null : kind.Name), context];
+    /// <summary>The type content of <paramref name="kind"/> is born as: its owner, with the kind unless it is the
+    /// owner's own format (bytes with no owner are binary's); a template when <paramref name="template"/> marks it
+    /// one.</summary>
+    internal app.type.@this Of(global::app.type.kind.@this kind, actor.context.@this context,
+        global::app.type.item.template.kind.@this? template = null)
+        => this[new app.type.@this(kind.Owner?.Name ?? "binary", kind.IsEmpty ? null : kind.Name, template: template), context];
 
     /// <summary>
     /// The full type for a value's type — its identity (name, kind, strict, template) with the
@@ -168,13 +175,17 @@ public sealed partial class @this
     {
         var entry = Named.GetValueOrDefault(type.Name);
         var kind = name == null ? null
-            : entry?.kind[name] is { } held ? (held.IsEmpty ? null : held)
+            : entry?.kind[name] is { } match ? (match.IsEmpty ? null : match)
             : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
-        if (entry == null)
-            return new app.type.@this(type.Name, kind?.Name, type.Strict, type.Template) { kind = kind };
-        if (kind == null && !type.Strict && type.Template == null) return entry;
-        return new app.type.@this(entry, kind, type.Strict, type.Template);
+        if (entry != null && kind == null && !type.Strict && type.Template == null) return entry;
+        return _full.GetOrAdd((entry, type.Name, kind?.Name, type.Strict, type.Template?.Name), _ => entry == null
+            ? new app.type.@this(type.Name, kind?.Name, type.Strict, type.Template) { kind = kind }
+            : new app.type.@this(entry, kind, type.Strict, type.Template));
     }
+
+    // The full types made, one per entry, kind, strict and template: a kinded type is one object in this app.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<
+        (app.type.@this? Entry, string Name, string? Kind, bool Strict, string? Template), app.type.@this> _full = new();
 
     // The container families whose element rides as the KIND (list<path> = {list, kind:path}).
     // The one generic recognition (PlangName names through it) — the element is the kind; dict's kind is the VALUE
@@ -217,7 +228,7 @@ public sealed partial class @this
         return listIface != null ? ("list", listIface.GetGenericArguments()[0]) : null;
     }
 
-    // The born-native lift moved to its rightful owner — the produced type. "Build whatever this raw
+    // The born-native lift is the produced type's. "Build whatever this raw
     // is" is item.@this.Create(raw, ctx) (item's own ICreate face); the registry keeps only SELECTION
     // (the identity indexer this[System.Type], the name door), never construction.
 
@@ -231,7 +242,6 @@ public sealed partial class @this
     // kind; a C# shape a type owns is that type (int → number); a raw CLR type no plang type owns is clr.
     private (string Name, string? Kind) PlangName(System.Type type)
     {
-        var types = Items().ToArray();
         type = Nullable.GetUnderlyingType(type) ?? type;
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(data.@this<>))
             type = type.GetGenericArguments()[0];
@@ -240,17 +250,21 @@ public sealed partial class @this
         // the item classes, which would answer a plain "list" with no element.
         if (typeof(app.type.item.list.@this).IsAssignableFrom(type) && ContainerFamily(type) is { } node)
             return (node.Family, Face(PlangName(node.Element)));
-        // A collected type (type<goal>, type<type>) is a type.
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.@this<,>)) return ("type", null);
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
-            return ("choice", global::app.type.item.choice.set.@this.For(type.GetGenericArguments()[0])?.Name ?? type.GetGenericArguments()[0].Name);
-        if (typeof(app.type.item.@this).IsAssignableFrom(type) && Array.Find(types, t => t.ClrType == type) is { } own)
-            return (own.Name, null);
+        // a choice by its set's name; an enum that declares none is a bare choice, a class that is no set its class's name
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>)
+            && type.GetGenericArguments()[0] is var options)
+            return ("choice", options.IsEnum && options.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false) is null
+                ? null
+                : global::app.type.item.choice.set.@this.For(options, this)?.Name ?? options.Name);
+        if (typeof(app.type.item.@this).IsAssignableFrom(type) && _classed.GetValueOrDefault(type) is { } entity)
+            return (entity.Name, null);
+        // the app's node for a concept (node<goal>, its current node) is a node
+        if (typeof(app.type.node.@this).IsAssignableFrom(type)) return ("node", null);
         // a kind of a family: the family, with the kind whose values are this class (a setting class)
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && FamilyName(type) is { } family)
-            return (family, Array.Find(types, t => t.Names(family))?.kind[type]?.Name);
+            return (family, Items().FirstOrDefault(t => t.Names(family))?.kind[type]?.Name);
         // An item class is named by its own class above; a raw C# shape by the type that owns it.
-        if (Array.Find(types, t => t.Owns(type)) is { } owner)
+        if (Items().FirstOrDefault(t => t.Owns(type)) is { } owner)
             return (owner.Name, null);
         if (ContainerFamily(type) is { } fam) return (fam.Family, Face(PlangName(fam.Element)));
         return ("clr", null);
@@ -267,8 +281,56 @@ public sealed partial class @this
     /// <summary>A type's property <paramref name="name"/> of C# class <paramref name="clr"/> — its
     /// type born from its name and class directly, since a type's facts are read while the set fills. A member a step
     /// calls with <paramref name="arguments"/> carries them.</summary>
+    // The members each class marks plang's ([LlmBuilder]) — what it declares and what it inherits, built on the first ask
+    // and kept: the one source a value reads its members from and a type's offer is made of.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, property.list.@this> _member = new();
+
+    /// <summary>The members <paramref name="clr"/> marks plang's, listed where they are declared. A method that asks
+    /// only for its asker's context is read as a property (<c>%p.relative%</c>); any other is called with its arguments
+    /// (<c>%x.replace("a", "b")%</c>).</summary>
+    internal property.list.@this Member(System.Type clr) => _member.GetOrAdd(clr, @class =>
+    {
+        var owner = _classed.GetValueOrDefault(@class)?.Name ?? app.type.item.@this.NameOf(@class);
+        var list = new property.list.@this();
+        var methods = new Queue<System.Reflection.MethodInfo>(@class.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void))
+            .OrderBy(m => m.MetadataToken));
+        foreach (var prop in @class.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            if (!prop.CanRead || prop.Name == "EqualityContract") continue;
+            if (!System.Attribute.IsDefined(prop, typeof(global::app.LlmBuilderAttribute))) continue;
+            while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
+                && m.MetadataToken < prop.GetMethod!.MetadataToken)
+                list.Add(Method(methods.Dequeue()));
+            list.Add(Property(prop.Name, prop.PropertyType, owner: owner, member: prop));
+        }
+        while (methods.TryDequeue(out var m)) list.Add(Method(m));
+        return list;
+
+        // A method as the catalog lists it: what it answers (an asynchronous one, what its task completes with), and —
+        // unless it asks only for its asker — what it is called with. The asker's context and a cancellation are the
+        // runtime's to give, never a step's argument.
+        property.@this Method(System.Reflection.MethodInfo m)
+        {
+            var answers = m.ReturnType is { IsGenericType: true } task
+                          && (task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
+                              || task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.ValueTask<>))
+                ? task.GenericTypeArguments[0] : m.ReturnType;
+            // a member answering through a Data (so a failure rides it) answers what the Data holds
+            if (answers is { IsGenericType: true } data && data.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
+                answers = data.GenericTypeArguments[0];
+            var parameters = m.GetParameters();
+            if (parameters is [{ ParameterType: var only }] && only == typeof(actor.context.@this))
+                return Property(m.Name, answers, owner: owner, member: m);
+            return Property(m.Name, answers, parameters
+                .Where(p => p.ParameterType != typeof(actor.context.@this) && p.ParameterType != typeof(System.Threading.CancellationToken))
+                .Select(p => Property(p.Name!, p.ParameterType, optional: p.IsOptional))
+                .ToList(), owner: owner, member: m);
+        }
+    });
+
     internal property.@this Property(string name, System.Type clr, System.Collections.Generic.IReadOnlyList<property.@this>? arguments = null,
-        bool optional = false, string? owner = null)
+        bool optional = false, string? owner = null, System.Reflection.MemberInfo? member = null)
     {
         var (typeName, kind) = PlangName(clr);
         return new property.@this
@@ -278,6 +340,7 @@ public sealed partial class @this
             Arguments = arguments,
             Nullable = optional,
             Owner = owner,
+            Member = member,
         };
     }
 

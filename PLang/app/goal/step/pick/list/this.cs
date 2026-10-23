@@ -49,7 +49,11 @@ public sealed class @this
     // The app's modules by name, awaited once when the answer is taken — what the picks are made from.
     private Dictionary<string, global::app.module.@this> _modules = new(StringComparer.OrdinalIgnoreCase);
 
-    public @this(global::app.goal.step.@this step) => _step = step;
+    public @this(global::app.goal.step.@this step)
+    {
+        _step = step;
+        Known = new(step.Code.Type);
+    }
 
     /// <summary>The id of one of this step's questions: <c>s{index}_{question}</c>.</summary>
     public string Key(string question) => $"s{_step.Index}_{question}";
@@ -90,7 +94,7 @@ public sealed class @this
     /// variable binding its item (<c>as %i%</c>, else <c>%item%</c>) first, then each other certain
     /// action as it is (its values still to fill), a certain <c>set %x% = </c>one literal or one variable,
     /// and a <c>write to %x%</c> last. Empty when nothing is certain.</summary>
-    public global::app.goal.step.action.list.@this Known { get; private set; } = new();
+    public global::app.goal.step.action.list.@this Known { get; private set; }
 
     // The step's words the known code reads: its first variable, and a `%x% = ` that ends in one
     // literal (quoted text, a number, true/false) or one variable. The variables are the parser's;
@@ -104,7 +108,7 @@ public sealed class @this
     {
         var text = _step.Text;
         int from = 0;
-        foreach (var v in new global::app.type.item.variable.parser.@this(text).Variable)
+        foreach (var v in new global::app.type.item.variable.parser.@this(text, _step.Type.Types!).Variable)
         {
             from = text.IndexOf(v.Text, from, StringComparison.Ordinal) + v.Text.Length;
             yield return (v, from);
@@ -127,7 +131,7 @@ public sealed class @this
             if (!v.IsBare || AssignsOne.Match(_step.Text[end..]) is not { Success: true } m) continue;
             var value = m.Groups[1].Value;
             if (value.StartsWith('%')
-                && new global::app.type.item.variable.parser.@this(value).Whole is not { IsBare: true }) continue;
+                && new global::app.type.item.variable.parser.@this(value, _step.Type.Types!).Whole is not { IsBare: true }) continue;
             return (v.Text, value);
         }
         return null;
@@ -140,7 +144,7 @@ public sealed class @this
         foreach (var a in actions)
         {
             yield return a;
-            foreach (var h in Every(a.Held)) yield return h;
+            foreach (var h in Every(a.Action)) yield return h;
             foreach (var child in a.Child.Items())
                 foreach (var c in Every(child.Code.Items())) yield return c;
         }
@@ -177,7 +181,8 @@ public sealed class @this
             else if (id == "@popular") await Share(a, context, _popular = new());
             else if (id.StartsWith("@also.", StringComparison.Ordinal)) _also[id["@also.".Length..]] = noul;
             else if (id.StartsWith(OptionKey, StringComparison.Ordinal)) await Choose(id[OptionKey.Length..], await Choice(a, context), context);
-            else if (id.StartsWith(KindKey, StringComparison.Ordinal)) Refine(id[KindKey.Length..], await Choice(a, context), context);
+            else if (id.StartsWith(KindKey, StringComparison.Ordinal)) await Refine(id[KindKey.Length..], await Choice(a, context), context);
+            else if (id.StartsWith(StrictKey, StringComparison.Ordinal)) await Tighten(id[StrictKey.Length..], noul, context);
             else if (Branch(context).Any(b => $"{b.Module.Name}.{b.Name}" == id)) _branch[id] = noul;
             else if (id.Contains('.')) _named[id] = noul;
             else _choice[id] = (await Choice(a, context), a.Get<number>("confidence", context));
@@ -187,8 +192,8 @@ public sealed class @this
         _moduleAsked = Asked(context).Select(m => _modules[m]).ToList();
         IsCondition = Tests;
         IsUnsure = Unsure(context);
-        _listed = Listing(context);
-        Formal = Prefill(context);
+        _listed = await Listing(context);
+        Formal = await Prefill(context);
         Known = await Code(context.App.module.list, context);
     }
 
@@ -198,7 +203,8 @@ public sealed class @this
     /// left out, an action the decider did not list, an action held as a value that is not listed —
     /// goal.call excepted), and the warnings it builds with (an action the decider was not sure of,
     /// one from the popular choice).</summary>
-    public (List<string> Refused, List<global::app.warning.@this> Warning) Agree(global::app.goal.step.action.list.@this code)
+    public async Task<(List<string> Refused, List<global::app.warning.@this> Warning)> Agree(
+        global::app.goal.step.action.list.@this code, global::app.actor.context.@this context)
     {
         var i = _step.Index;
         var used = code.Own.Distinct().ToList();
@@ -212,12 +218,12 @@ public sealed class @this
         foreach (var (key, (property, value)) in _option)
         {
             var name = key[..key.LastIndexOf('.')];
-            var built = every.Where(a => $"{a.Module.Name}.{a.Name}" == name).ToList();
+            var actions = every.Where(a => $"{a.Module.Name}.{a.Name}" == name).ToList();
             // a capture's options aren't the step's to give: none is held to it
-            if (built.Count > 0 && !built.Any(IsCapture) && built.All(a => a[property.Name] == null) && !property.IsDefault(value))
+            if (actions.Count > 0 && !actions.Any(IsCapture) && actions.All(a => a[property.Name] == null) && !await property.IsDefault(value, context))
             {
-                var option = new global::app.goal.step.action.formal.Writer();
-                option.Option(property.Name, value);
+                var option = new global::app.goal.step.action.formal.Writer(context);
+                await option.Option(property.Name, value);
                 refused.Add($"step {i}'s {name} leaves out {property.Name}, which the decider says the step gives: write {option}");
             }
         }
@@ -232,15 +238,15 @@ public sealed class @this
         refused.AddRange(Held(code.Items()).Distinct().Where(a => a != "goal.call" && _listed.All(l => l.Name != a))
             .Select(a => $"step {i} holds {a}, which is not listed; only goal.call may be held without being listed"));
         // the variable the step's words write is written by a variable.set somewhere in the step's code
-        if (Writes() is { } written && !every.Any(a => a.Module.Name == "variable" && a.Name == "set"
-                && string.Equals(a["Name"]?.Value?.ToString()?.Trim('%', '"'), written.Trim('%'), StringComparison.OrdinalIgnoreCase)))
-            refused.Add($"step {i} says it writes {written}, but no action writes it: end the step with variable.set(Name={written}, Value=%!data%)");
+        if (Writes() is { } variable && !every.Any(a => a.Module.Name == "variable" && a.Name == "set"
+                && string.Equals(a["Name"]?.Value?.ToString()?.Trim('%', '"'), variable.Trim('%'), StringComparison.OrdinalIgnoreCase)))
+            refused.Add($"step {i} says it writes {variable}, but no action writes it: end the step with variable.set(Name={variable}, Value=%!data%)");
         var warnings = new List<global::app.warning.@this>();
         foreach (var l in _listed.Where(l => used.Contains(l.Name)))
             if (l.Mark == listed.Mark.Possible)
-                warnings.Add(new() { Key = "Unsure", Message = $"step {i} uses {l.Name}, which the decider was not sure of ({l.Shown})" });
+                warnings.Add(new(context.App.type.list) { Key = "Unsure", Message = $"step {i} uses {l.Name}, which the decider was not sure of ({l.Shown})" });
             else if (l.Mark == listed.Mark.Popular)
-                warnings.Add(new() { Key = "Popular", Message = $"step {i} uses {l.Name} from the decider's popular-action choice ({l.Shown}): unsure" });
+                warnings.Add(new(context.App.type.list) { Key = "Popular", Message = $"step {i} uses {l.Name} from the decider's popular-action choice ({l.Shown}): unsure" });
         return (refused, warnings);
     }
 
@@ -255,10 +261,10 @@ public sealed class @this
     {
         foreach (var a in actions)
         {
-            foreach (var held in a.Held)
+            foreach (var action in a.Action)
             {
-                yield return $"{held.Module.Name}.{held.Name}";
-                foreach (var name in Held([held])) yield return name;
+                yield return $"{action.Module.Name}.{action.Name}";
+                foreach (var name in Held([action])) yield return name;
             }
             foreach (var child in a.Child.Items())
                 foreach (var name in Held(child.Code.Items())) yield return name;
@@ -267,7 +273,7 @@ public sealed class @this
 
     // ---------------------------------------------------------------- what the prompt shows
 
-    private List<listed.@this> Listing(global::app.actor.context.@this context)
+    private async Task<List<listed.@this>> Listing(global::app.actor.context.@this context)
     {
         // how sure stage 1 was of each module stage 2 asked about — shown beside an action picked through one
         var modules = string.Join(", ", Asked(context).Select(m =>
@@ -284,23 +290,26 @@ public sealed class @this
         bool Sure(string name) => !Through(name)
             || (_module.GetValueOrDefault(name.Split('.')[0]) ?? (number)0.0) >= (number)Near;
         // most certain first; equal scores keep their order
-        return shown.OrderByDescending(p => p.Score).Select(p => new listed.@this
-        {
-            Name = p.Name, Score = p.Score,
-            Mark = p.Score >= (number)Near && Sure(p.Name) ? listed.Mark.Certain
-                 : popular.ContainsKey(p.Name) && !(_items.FirstOrDefault(i => i.Name == p.Name)?.Score is { } own && own >= (number)Possible)
-                     ? listed.Mark.Popular
-                 : listed.Mark.Possible,
-            Module = modules.Length > 0 && Through(p.Name) ? modules : null,
-            Option = Chosen(Catalog(p.Name, context)).Select(c => c.Written).ToList(),
-        }).ToList();
+        var listing = new List<listed.@this>();
+        foreach (var p in shown.OrderByDescending(p => p.Score))
+            listing.Add(new listed.@this
+            {
+                Name = p.Name, Score = p.Score,
+                Mark = p.Score >= (number)Near && Sure(p.Name) ? listed.Mark.Certain
+                     : popular.ContainsKey(p.Name) && !(_items.FirstOrDefault(i => i.Name == p.Name)?.Score is { } score && score >= (number)Possible)
+                         ? listed.Mark.Popular
+                     : listed.Mark.Possible,
+                Module = modules.Length > 0 && Through(p.Name) ? modules : null,
+                Option = (await Chosen(Catalog(p.Name, context), context)).Select(c => c.Written).ToList(),
+            });
+        return listing;
     }
 
     // The popular choice's options at the choice floor or more.
     private Dictionary<string, number> Popular() =>
         (_popular ?? new()).Where(p => (p.Value ?? (number)0.0) >= (number)Runner).ToDictionary(p => p.Key, p => p.Value ?? (number)0.0);
 
-    private string? Prefill(global::app.actor.context.@this context)
+    private async Task<string?> Prefill(global::app.actor.context.@this context)
     {
         var certain = _listed.Where(l => l.Mark == listed.Mark.Certain)
             .Select(l => Catalog(l.Name, context)).Where(a => a != null).Select(a => a!).ToList();
@@ -315,7 +324,7 @@ public sealed class @this
         // never puts a body's action before its if
         certain = certain.OrderBy(a => a.Place(nests)).ToList();
         var line = new line.@this(nests);
-        foreach (var action in certain) action.Prefill(line, Call(action));
+        foreach (var action in certain) action.Prefill(line, await Call(action, context));
         return line.ToString();
     }
 
@@ -340,26 +349,26 @@ public sealed class @this
             {
                 if (Assigned() is { } set) line.Add($"variable.set(Name={set.Name}, Value={set.Value})");
                 // a capture keeps the step's earlier answer: the decider says which variable (Name), its value is %!data%
-                else if (Chosen(action).FirstOrDefault(c => c.Property.Name == "Name") is { Written: { } named })
+                else if ((await Chosen(action, context)).FirstOrDefault(c => c.Property.Name == "Name") is { Written: { } named })
                     line.Add($"variable.set({named}, Value=%!data%)");
                 // else the words name no variable the decider chose: the writer fills Name from the step
             }
             else action.Know(line, $"{name}()");
         }
-        if (line.Count == 0) return new();
-        var read = new global::app.goal.step.action.formal.Reader(_step, modules).Read(string.Join("; ", line), context);
+        if (line.Count == 0) return new(_step.Code.Type);
+        var read = await new global::app.goal.step.action.formal.Reader(_step, modules).Read(string.Join("; ", line), context);
         if (read.Success) return (global::app.goal.step.action.list.@this)read.Peek()!;
         await (context.App.Debug?.Write($"build.pick: step {_step.Index}'s known code does not read: {read.Error?.Message}") ?? Task.CompletedTask);
-        return new();
+        return new(_step.Code.Type);
     }
 
     // One action as the pre-fill starts it: its required properties by name alone — a slot still to fill, nothing
     // the LLM could copy as a value — then each option the decider chose a value of (`Template=plang`; "none" leaves
     // it out). Any other optional property gets no slot — it is the LLM's to add when the step names it (a Recovery,
     // a Parameter, a RetryCount), as the examples teach.
-    private string Call(global::app.goal.step.action.@this action)
+    private async Task<string> Call(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
     {
-        var chosen = Chosen(action);
+        var chosen = await Chosen(action, context);
         // a required property the decider chose a value of is written with it, not as a slot still to fill
         var given = action.Property.Where(p => p.Required && chosen.All(c => c.Property != p))
             .Select(p => p.Name).Concat(chosen.Select(c => c.Written));
@@ -369,7 +378,8 @@ public sealed class @this
     // The options the decider chose a value of for <paramref name="action"/>, each as formal writes an option
     // (`Template="plang"`, `Item=%value%`, `Name="Page"`, a bare `Permission` the writer fills). What the starting line
     // writes and what the listed action carries: one reading, so they never drift.
-    private List<(global::app.type.property.@this Property, string Written)> Chosen(global::app.goal.step.action.@this? action)
+    private async Task<List<(global::app.type.property.@this Property, string Written)>> Chosen(
+        global::app.goal.step.action.@this? action, global::app.actor.context.@this context)
     {
         if (action == null) return [];
         var asked = $"{action.Module.Name}.{action.Name}.";
@@ -377,8 +387,8 @@ public sealed class @this
         foreach (var (key, (property, value)) in _option)
             if (key.StartsWith(asked, StringComparison.Ordinal))
             {
-                var writer = new global::app.goal.step.action.formal.Writer();
-                writer.Option(property.Name, value);
+                var writer = new global::app.goal.step.action.formal.Writer(context);
+                await writer.Option(property.Name, value);
                 chosen.Add((property, writer.ToString()));
             }
         return chosen;
@@ -401,7 +411,7 @@ public sealed class @this
             return;
         }
         foreach (var offer in await Offered(action, property, context))
-            if (Shown(offer, context) == choice) { _option[key] = (property, offer); return; }
+            if (await Shown(offer, context) == choice) { _option[key] = (property, offer); return; }
     }
 
     // What `property` of `action` is offered in this step: what its type offers (a closed set its options, a
@@ -411,18 +421,30 @@ public sealed class @this
     private async Task<List<global::app.type.item.@this>> Offered(global::app.goal.step.action.@this action,
         global::app.type.property.@this property, global::app.actor.context.@this context)
     {
-        var written = action.Bound.Cast<global::app.type.item.@this>()
-            .Select(v => Shown(v, context)).ToHashSet(StringComparer.Ordinal);
-        return (await property.Type.Offers(_step)).Where(o => !written.Contains(Shown(o, context))).ToList();
+        var variables = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var bound in action.Bound.Cast<global::app.type.item.@this>()) variables.Add(await Shown(bound, context));
+        var offered = new List<global::app.type.item.@this>();
+        foreach (var offer in await property.Type.Offers(_step))
+            if (!variables.Contains(await Shown(offer, context))) offered.Add(offer);
+        return offered;
     }
 
     // An offer as the decider is shown it: its text, as a text channel writes it (`%field%`, `plang`, `Page`).
-    private string Shown(global::app.type.item.@this offer, global::app.actor.context.@this context)
+    private async Task<string> Shown(global::app.type.item.@this offer, global::app.actor.context.@this context)
     {
         using var stream = new System.IO.MemoryStream();
-        offer.Write(new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8,
-            context.Setting.Of<global::app.setting.@this>().Culture));
+        var writer = new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8,
+            (await context.Setting.Get<global::app.setting.@this>()).Culture, global::app.View.Out, context);
+        await offer.Output(writer);
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    // Each offer as the decider is shown it.
+    private async Task<List<string>> Shown(IEnumerable<global::app.type.item.@this> offers, global::app.actor.context.@this context)
+    {
+        var shown = new List<string>();
+        foreach (var offer in offers) shown.Add(await Shown(offer, context));
+        return shown;
     }
 
     private global::app.goal.step.action.@this? Catalog(string name, global::app.actor.context.@this context)
@@ -525,7 +547,7 @@ public sealed class @this
             // of; below that, stage 2's answer is the pick when it is the stronger, as its own (module) pick
             if (picks.FirstOrDefault(p => p.Name == name) is { } common)
             {
-                if (common.Score is { } own && (own >= (number)Near || score is not { } confirmed || confirmed <= own)) continue;
+                if (common.Score is { } certainty && (certainty >= (number)Near || score is not { } confirmed || confirmed <= certainty)) continue;
                 picks.Remove(common);
             }
             picks.Add(new pick.@this
@@ -548,6 +570,9 @@ public sealed class @this
     // A kind follow-up's id: @kindof.{module}.{action}.{option} — it refines the Option of the same key with the kind
     // (or, for a generic, the element) the next exchange picks.
     private const string KindKey = "@kindof.";
+
+    // A strict follow-up's id: @strict.{module}.{action}.{option} — a yes/no that sets the Option's type strict.
+    private const string StrictKey = "@strict.";
 
     private async Task<List<question.@this>> Questions(IEnumerable<string> popular, global::app.actor.context.@this context)
     {
@@ -591,7 +616,7 @@ public sealed class @this
                 if (line is not { Ask: not null, Name: { } named } || action[named.ToString()] is not { } property) continue;
                 if (capture && property.Name is "Type" or "Default") continue;
                 // an option with nothing to offer isn't asked
-                var offers = (await Offered(action, property, context)).Select(o => Shown(o, context)).ToList();
+                var offers = await Shown(await Offered(action, property, context), context);
                 if (offers.Count == 0) continue;
                 questions.Add(new question.@this
                 {
@@ -600,16 +625,25 @@ public sealed class @this
                 });
             }
         }
-        // a type a step coerced to may carry kinds a program names (ruling 10). Once the type is picked (an Option
+        // a type a step coerced to may carry kinds a program names. Once the type is picked (an Option
         // answered with a type whose kind is still empty), a follow-up asks which kind — the type's own kind.list
         // (a number's int/decimal, an item's json), or, for a generic, the element type, offered the same way. A
         // kind already picked (a non-empty kind) ends it; a type with no program-named kind is not asked.
         foreach (var (key, (property, value)) in _option)
         {
-            // only a slot that holds a type (a coercion: variable.set's Type, …) carries a kind
+            // only a slot that holds a type (a coercion: variable.set's Type, …) carries a kind or strict
             if (property.Type.ClrType != typeof(global::app.type.@this)) continue;
-            // the pick is the type by its name (stage 2) or the kinded type (after a refine); a kind already set ends it
-            var picked = Picked(value, context);
+            // the pick is the type by its name (stage 2) or the refined type (after a refine)
+            var picked = await Picked(value, context);
+            // strict: a yes/no asked for any type coercion not yet strict — the step may mark a coercion strict with
+            // or without a kind (`as image strict`), so it is asked independent of the kind
+            if (!picked.Strict)
+                questions.Add(new question.@this
+                {
+                    Id = Key($"{StrictKey}{key}"), Kind = Kind.Strict,
+                    Action = Catalog(key[..key.LastIndexOf('.')], context), Property = property, Of = picked.Name,
+                });
+            // the kind: asked only while the kind is still empty and the type offers program-named kinds
             if (!picked.kind.IsEmpty) continue;
             var kinds = await KindsOffered(picked, context);
             if (kinds.Count == 0) continue;
@@ -625,9 +659,9 @@ public sealed class @this
 
     // The type a Type option picked: the kinded type once a refine set it, else the type named by the offer the
     // stage-2 choice chose (its text).
-    private global::app.type.@this Picked(global::app.type.item.@this value, global::app.actor.context.@this context)
+    private async Task<global::app.type.@this> Picked(global::app.type.item.@this value, global::app.actor.context.@this context)
         => value as global::app.type.@this
-           ?? context.App.type.list[new global::app.type.@this(Shown(value, context)), context];
+           ?? context.App.type.list[new global::app.type.@this(await Shown(value, context)), context];
 
     // What a picked type offers as its kind: a generic (list, dict) is asked its element — any type, offered as the
     // Type question is; any other type offers its own kind.list, less the internal (host) kinds a program never
@@ -635,7 +669,7 @@ public sealed class @this
     private async Task<List<string>> KindsOffered(global::app.type.@this picked, global::app.actor.context.@this context)
     {
         if (picked.Name is "list" or "dict")
-            return (await context.App.type.list.Offers(_step)).Select(o => Shown(o, context)).ToList();
+            return await Shown(await context.App.type.list.Offers(_step), context);
         return picked.kind.list(context).Items()
             .Where(k => !k.kind.IsEmpty && !k.Internal)
             .Select(k => k.kind.Name).ToList();
@@ -643,11 +677,23 @@ public sealed class @this
 
     // The kind follow-up's answer refines the Option it belongs to: the picked type gains the kind (a scalar's
     // sub-sort) or the element (a generic's), as the full type {name, kind}. "none" leaves the type bare.
-    private void Refine(string key, string? kind, global::app.actor.context.@this context)
+    private async Task Refine(string key, string? kind, global::app.actor.context.@this context)
     {
         if (kind is null || kind == question.@this.None || !_option.TryGetValue(key, out var option)) return;
-        var picked = Picked(option.Value, context);
-        var kinded = context.App.type.list[new global::app.type.@this(picked.Name, kind), context];
+        var picked = await Picked(option.Value, context);
+        // keep a strict already set by the strict follow-up (the two answers ride the same stage-3 exchange)
+        var kinded = context.App.type.list[new global::app.type.@this(picked.Name, kind, picked.Strict), context];
         _option[key] = (option.Property, kinded);
+    }
+
+    // The strict follow-up's answer: a yes (noul at the possible floor or more) makes the Option's type strict, born
+    // through the type's constructor, keeping whatever kind a kind follow-up has already set. A no leaves it as is.
+    private async Task Tighten(string key, number? noul, global::app.actor.context.@this context)
+    {
+        if (noul is not { } yes || !(yes >= (number)Possible) || !_option.TryGetValue(key, out var option)) return;
+        var picked = await Picked(option.Value, context);
+        var strict = context.App.type.list[
+            new global::app.type.@this(picked.Name, picked.kind.IsEmpty ? null : picked.kind.Name, true), context];
+        _option[key] = (option.Property, strict);
     }
 }

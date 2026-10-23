@@ -13,27 +13,29 @@ namespace app.type.item.wire.kind.plang;
 /// view (plang's own files and store) skips the freshness window — at-rest artefacts present the same nonce
 /// by design. Sensitive values are not stripped here: plang's store rides this format to keep an identity.</para>
 ///
-/// <para>The format also reads a value slot a <c>.pr</c> captured still encoded (<see cref="Read"/>) and says
-/// whether a writer writes this format (<see cref="Owns"/>), so a captured slice relays byte-identical.</para>
+/// <para>The format also reads a value slot a <c>.pr</c> captured still encoded (<see cref="Read"/>).</para>
 /// </summary>
 public sealed class @this : global::app.type.kind.@this<global::app.type.item.wire.@this>
 {
-    public @this() : base("plang") { }
+    public @this(global::app.type.@this owner) : base("plang", owner) { }
 
     public override System.Collections.Generic.IReadOnlyList<string> Mime => ["application/plang", "application/plang+json"];
     public override System.Collections.Generic.IReadOnlyList<string> Extension => [".plang"];
     public override bool Compressible => true;
 
+    /// <summary>Its content is characters — json, one whole Data per line on a framed channel.</summary>
+    public override bool IsText => true;
+
     public override async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? asked = null,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
     {
-        var view = asked ?? global::app.View.Out;   // its own face: the transport's
         try
         {
             // Sign-if-missing at the I/O boundary: a Data crossing in a real actor scope rides in ONE signature
-            // layer; skipped with no actor (an internal write) or when it already is one.
-            if (context.Actor != null && data.Peek() is not global::app.type.item.signature.@this)
+            // layer; skipped with no actor (an internal write) or when it holds one already — a Data changed after
+            // signing goes out with the layer it holds and is refused where it arrives, never re-signed here.
+            if (context.Actor != null && data.Signature == null)
             {
                 var signed = await new global::app.goal.step.action.@this(
                     new global::app.module.signing.sign(context) { Data = data,
@@ -41,22 +43,24 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
                         // the same view) gets matching bytes.
                         StoreView = new global::app.data.@this<global::app.type.item.@bool.@this>("", view == global::app.View.Store, context: context) },
                     context).Start(context);
-                // A Data that should cross signed and couldn't be is the write's failure — never sent unsigned.
-                if (!signed.Success) return signed;
+                // A Data that should cross signed and couldn't be is the write's failure — never sent unsigned. A failed
+                // result signs as itself, so what tells is the signature it holds.
+                if (signed.Signature == null) return signed;
                 data = signed;
             }
             await using var utf8 = new Utf8JsonWriter(stream);
-            var writer = new global::app.type.item.kind.json.Writer(utf8, view, emitsSchema: true);
-            if (data.Peek() is global::app.type.item.signature.@this sig)
-                await sig.Output(writer, view, context);
+            var writer = new Writer(utf8, view, context);
+            if (data.Signature is { } layer)
+                await layer.Over(data).Output(writer);
             else
-                await data.Output(writer, view, context, layer: true);
+                await data.Output(writer, layer: true);
             await utf8.FlushAsync(ct);
             return context.Ok();
         }
         // a write that refused itself (a getter that threw, a type with no wire contract) is the encode's answer
         catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
-        catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException)
+        // what the json writer itself refuses (System.Text.Json's own throw, which carries no Error)
+        catch (JsonException ex)
         {
             return context.Error(new global::app.error.ServiceError(
                 $"Plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
@@ -67,23 +71,26 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
     /// without a signature is refused. A Data carries its own facts, so a <paramref name="template"/> and an
     /// <paramref name="origin"/> ask nothing of it.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
-        global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
+        global::app.actor.context.@this context, global::app.View view, string name = "",
         System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
     {
         try
         {
             if (raw.Length == 0) return context.Ok();
             // The container IS a Data — the reconstruction itself, never an Ok around it.
-            var read = new global::app.data.Wire(view, context: context, deferVerify: true).ReadBuffered(raw);
+            // a signature read live is good for the signing setting's window: read here, where the read can wait for it
+            var window = view == global::app.View.Store ? null
+                : (await context.Setting.Get<global::app.module.signing.setting.@this>()).Expiry;
+            var read = new global::app.data.Wire(view, context: context, deferVerify: true, window: window).ReadBuffered(raw);
             if (read == null) return context.Ok();
 
             // Deferred verify: the sync reader answered the Data holding the signature it arrived in (it can't
             // await inside a ref-struct reader); verify it now, awaited. A failed verify answers a fresh error,
             // so a Data this answers holds only a signer it verified.
-            if (read.Signature is { } layer)
+            if (read.Signature != null)
             {
                 var verified = await new global::app.goal.step.action.@this(
-                    new global::app.module.signing.verify(context) { Data = context.Ok(layer) }, context).Start(context);
+                    new global::app.module.signing.verify(context) { Data = read }, context).Start(context);
                 if (!verified.Success)
                     return context.Error(verified.Error ?? new global::app.error.ServiceError(
                         "Signature verification failed", "SignatureInvalid", 400));
@@ -93,11 +100,16 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
             else if (view == global::app.View.Out)
                 return context.Error(new global::app.error.ServiceError(
                     "plang content arrived unsigned — between actors a Data rides signed", "UnsignedPlang", 403));
+            // between actors a Data's name is no part of what crosses (not written, not signed): it is named by its
+            // receiver, never by what the wire says
+            if (view == global::app.View.Out) read.Name = name;
             return read;
         }
-        // what the bytes say a value is, refused by that value (a signature whose hash is of no kind) — the read's answer
-        catch (global::app.error.DeclinedException refused) { return context.Error(refused.Error); }
-        catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException)
+        // what the bytes say a value is, refused by that value (a signature whose hash is of no kind), or a layer no
+        // reader reads — the read's answer, its Error whole
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
+        // bytes the json reader itself refuses (System.Text.Json's own throw, which carries no Error)
+        catch (JsonException ex)
         {
             return context.Error(new global::app.error.ServiceError(
                 $"Plang deserialize failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
@@ -119,9 +131,4 @@ public sealed class @this : global::app.type.kind.@this<global::app.type.item.wi
         var reader = new global::app.type.item.kind.json.Reader(utf8);
         return typeReader.Read(ref reader, kind, ctx);
     }
-
-    /// <summary>Whether <paramref name="writer"/> writes this format — a captured slice rides verbatim into a json
-    /// writer (schema on → "plang", off → "json"); any other writer is a different format, where the slice is
-    /// decoded and the value writes itself.</summary>
-    public override bool Owns(global::app.type.format.IWriter writer) => writer.Format is "plang" or "json";
 }

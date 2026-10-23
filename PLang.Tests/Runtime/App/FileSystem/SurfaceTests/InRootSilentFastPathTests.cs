@@ -14,13 +14,14 @@ public class InRootSilentFastPathTests
     private sealed class AskCountingChannel : global::app.channel.@this
     {
         public int AskCount;
-        public AskCountingChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        private readonly global::app.actor.context.@this _ctx;
+        public AskCountingChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             System.Threading.Interlocked.Increment(ref AskCount);
-            return Task.FromResult(global::app.data.@this.Ok("y"));
+            return Task.FromResult(_ctx.Ok("y"));
         }
     }
 
@@ -35,11 +36,11 @@ public class InRootSilentFastPathTests
     [Test] public async Task InRootRead_DoesNotInvokeOutputAsk()
     {
         var app = NewApp(out var root);
-        var ch = new AskCountingChannel();
+        var ch = new AskCountingChannel(app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "f.txt");
         System.IO.File.WriteAllText(file, "hello");
-        var p = new FilePath(file);
+        var p = app.actor.list.User.Context.File(file);
         var r = await p.Touch(app.actor.list.User.Context);
         await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
@@ -48,10 +49,10 @@ public class InRootSilentFastPathTests
     [Test] public async Task InRootWrite_DoesNotInvokeOutputAsk()
     {
         var app = NewApp(out var root);
-        var ch = new AskCountingChannel();
+        var ch = new AskCountingChannel(app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "w.txt");
-        var p = new FilePath(file);
+        var p = app.actor.list.User.Context.File(file);
         var r = await p.WriteText("hello", app.actor.list.User.Context);
         await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
@@ -60,11 +61,11 @@ public class InRootSilentFastPathTests
     [Test] public async Task InRootListThenReadEach_BatchOfTen_ZeroAskInvocations()
     {
         var app = NewApp(out var root);
-        var ch = new AskCountingChannel();
+        var ch = new AskCountingChannel(app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         for (int i = 0; i < 10; i++)
             System.IO.File.WriteAllText(System.IO.Path.Combine(root, $"f{i}.txt"), $"f{i}");
-        var dir = new FilePath(root);
+        var dir = app.actor.list.User.Context.File(root);
         var listed = await dir.List("*.txt", recursive: false, app.actor.list.User.Context);
         await listed.IsSuccess();
         foreach (var f in listed.GetValue<List<global::app.type.item.path.@this>>()!)
@@ -75,12 +76,12 @@ public class InRootSilentFastPathTests
     [Test] public async Task InRootLoadAssembly_DoesNotInvokeOutputAsk()
     {
         var app = NewApp(out var root);
-        var ch = new AskCountingChannel();
+        var ch = new AskCountingChannel(app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var srcAssembly = typeof(InRootSilentFastPathTests).Assembly.Location;
         var copyAt = System.IO.Path.Combine(root, "test.dll");
         System.IO.File.Copy(srcAssembly, copyAt, overwrite: true);
-        var p = new FilePath(copyAt);
+        var p = app.actor.list.User.Context.File(copyAt);
         var r = await p.LoadAssemblyAsync(app.actor.list.User.Context);
         await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);

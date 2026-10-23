@@ -41,10 +41,10 @@ public sealed record @this(
     /// door under __ctx — so a context-needing inner type (path) borns its value with a real
     /// context, never through a context-less cast operator.</summary>
     private string Fallback => IsPlainData
-        ? $"global::app.data.@this.Uninitialized(\"{ParamName}\")"
+        ? $"global::app.data.@this.Uninitialized(\"{ParamName}\", __ctx)"
         : DefaultValue != null
             ? Defaulted("__ctx")
-            : $"global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\")";
+            : $"global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\", __ctx)";
 
     /// <summary>The [Default] as the slot's Data, born through the slot's type (its <c>Make</c>, as the build freezes
     /// it) — so a default the build froze and one the run falls back on are the same value: a name slot's
@@ -125,8 +125,8 @@ public sealed record @this(
                 : $"new global::app.data.@this(\"{ParamName}\", {CtorArg}, context: __ctx).As<{InnerType}>()";
             if (CtorRequired) return $"{Name} = {wrap};";
             var uninit = IsPlainData
-                ? $"global::app.data.@this.Uninitialized(\"{ParamName}\")"
-                : $"global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\")";
+                ? $"global::app.data.@this.Uninitialized(\"{ParamName}\", __ctx)"
+                : $"global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\", __ctx)";
             return $"{Name} = {CtorArg} is not null ? {wrap} : {uninit};";
         }
     }
@@ -171,7 +171,7 @@ public sealed record @this(
         sb.AppendLine($"            else if ({settingGet} is {{ IsInitialized: true }} __s) {Local} = __s.As<{InnerType}>();");
         sb.AppendLine($"            else if (__Default<{InnerType}>(action, \"{ParamName}\", context) is var __f && __f.HasValue) {Local} = __f;");
         if (IsNullable)
-            sb.AppendLine($"            else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\");");
+            sb.AppendLine($"            else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\", context);");
         else if (DefaultValue != null)
             sb.AppendLine($"            else {Local} = {Defaulted("context")};");
         else

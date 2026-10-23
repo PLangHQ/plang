@@ -11,15 +11,17 @@ public class AskAnswerTests
 {
     private sealed class TestMessageChannel : global::app.channel.type.message.@this
     {
-        public TestMessageChannel(string name)
+        private readonly global::app.actor.context.@this _ctx;
+        public TestMessageChannel(string name, global::app.actor.context.@this ctx)
         {
             Name = name;
+            _ctx = ctx;
             Direction = global::app.channel.ChannelDirection.Bidirectional;
         }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok());
+            => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
-            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+            => Task.FromResult(_ctx.Ok((object?)null));
     }
 
     private static global::app.channel.type.stream.@this Console(global::app.@this app, string typed)
@@ -46,8 +48,9 @@ public class AskAnswerTests
         await ctx.Variable.Set("name", asked);
 
         var name = await ctx.Variable.Get("name");
-        await Assert.That(name.Peek()).IsTypeOf<global::app.type.item.text.@this>();
-        await Assert.That(name.Peek().ToString()).IsEqualTo("Ada");
+        await Assert.That(name.Type.Name).IsEqualTo("text");
+        await Assert.That(await name.Value()).IsTypeOf<global::app.type.item.text.@this>();
+        await Assert.That((await name.Value())!.ToString()).IsEqualTo("Ada");
     }
 
     [Test] public async Task TheAnswer_RendersInATemplate()
@@ -70,8 +73,8 @@ public class AskAnswerTests
 
         var equals = new global::app.data.Operator("==");
         var name = await ctx.Variable.Get("name");
-        await Assert.That((await equals.Evaluate(name, ctx.Ok(new global::app.type.item.text.@this("Ingi")), ctx)).ToBoolean()).IsTrue();
-        await Assert.That((await equals.Evaluate(name, ctx.Ok(new global::app.type.item.text.@this("Ada")), ctx)).ToBoolean()).IsFalse();
+        await Assert.That((await equals.Evaluate(name, ctx.Ok(ctx.Text("Ingi")), ctx)).ToBoolean()).IsTrue();
+        await Assert.That((await equals.Evaluate(name, ctx.Ok(ctx.Text("Ada")), ctx)).ToBoolean()).IsFalse();
     }
 
     // A message channel suspends on a pending Ask; resumed, the ask answers with the answer as it came.
@@ -79,14 +82,14 @@ public class AskAnswerTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
         var ctx = app.actor.list.User.Context;
-        app.actor.list.User.Channel.Register(new TestMessageChannel("input"));
+        app.actor.list.User.Channel.Register(new TestMessageChannel("input", app.actor.list.User.Context));
 
         var pending = await Asked(ctx);
         await Assert.That(pending.Peek()).IsTypeOf<Ask>();
         await Assert.That(pending.ShouldExit()).IsTrue();
         await Assert.That(pending.Snapshot).IsNotNull();
 
-        await new global::app.type.item.variable.@this(ask.AnswerVariableName).Set(new global::app.type.item.text.@this("Ada"), ctx);
+        await new global::app.type.item.variable.@this(ask.AnswerVariableName, ctx.App.type.list).Set(ctx.Text("Ada"), ctx);
         var resumed = await Asked(ctx);
         await Assert.That(resumed.ShouldExit()).IsFalse();
         await Assert.That(resumed.Peek()).IsTypeOf<global::app.type.item.text.@this>();
@@ -99,7 +102,7 @@ public class AskAnswerTests
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
         var ctx = app.actor.list.User.Context;
         var input = Console(app, "never read\n");
-        var given = new global::app.type.item.text.@this("from the binding");
+        var given = ctx.Text("from the binding");
         input.Own().Bind("ask", global::app.@event.When.before, (_, _, c) =>
         {
             global::app.data.@this answered = c.Ok(given);

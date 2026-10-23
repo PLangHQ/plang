@@ -235,12 +235,12 @@ public sealed partial class @this : IAsyncDisposable
             : new global::app.module.screen.code.Wayland());
         RegisterBuiltIn<global::app.module.condition.code.IEvaluator>(new global::app.module.condition.code.Default());
         RegisterBuiltIn<global::app.module.assert.code.IAssert>(new global::app.module.assert.code.Default());
-        // global::app.module.file.code.IFile registration removed in Stage 3.
         RegisterBuiltIn<ITemplate>(new global::app.module.ui.code.Fluid());
         RegisterBuiltIn<global::app.module.llm.code.ILlm>(new global::app.module.llm.code.OpenAi());
         RegisterBuiltIn<global::app.module.llm.code.IDecider>(new global::app.module.llm.code.TypeSafe());
         RegisterBuiltIn<global::app.module.build.code.IBuilder>(new global::app.module.build.code.Default());
         RegisterBuiltIn<global::app.data.code.IGrep>(new global::app.data.code.Default());
+        RegisterBuiltIn<global::app.store.code.IStore>(new global::app.store.code.Sqlite());
     }
 
     private void RegisterBuiltIn<T>(T provider) where T : class, ICode

@@ -257,8 +257,8 @@ public class ReturnTests
     [Test]
     public async Task AReturnedReference_ToContentNotRead_StaysUnread()
     {
-        var http = new global::app.type.item.path.http.@this("http://example.com/data.json");
-        var read = await new global::app.module.file.Read(Ctx) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", http) }.Start();
+        var http = _app.actor.list.User.Context.Url("http://example.com/data.json");
+        var read = await new global::app.module.file.Read(Ctx) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", http, context: Ctx) }.Start();
         await read.IsSuccess();
         var doc = (global::app.type.item.url.@this)read.Peek()!;
         await Ctx.Variable.Set("doc", read);

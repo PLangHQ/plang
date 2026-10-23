@@ -13,7 +13,7 @@ namespace app.type.item.text;
 /// delegated to a <see cref="Utf8JsonWriter"/> over the SAME stream. The WRITER owns that — there
 /// is no per-type <c>serializer/text.cs</c> override and no shape branch at the selector: a leaf
 /// writes itself bare, a container writes itself as json, both through this one writer.
-/// <para><see cref="IWriter.EmitsSchema"/> stays false — the text channel carries no Data envelope.</para>
+/// <para>A Data shows only its value here: the record door writes nothing.</para>
 /// </summary>
 public sealed class Writer : global::app.type.format.IWriter
 {
@@ -23,17 +23,29 @@ public sealed class Writer : global::app.type.format.IWriter
     private Utf8JsonWriter? _utf8;
     private int _depth;                                          // open object/array nesting
     private readonly global::app.type.item.culture.@this _culture;
+    private readonly global::app.type.list.@this _types;
 
     /// <summary>A writer of text into <paramref name="stream"/>, its numbers read as <paramref name="culture"/>
-    /// reads them (the asker's <c>%!app.setting.culture%</c>).</summary>
-    public Writer(Stream stream, Encoding encoding, global::app.type.item.culture.@this culture)
+    /// reads them (the asker's <c>%!app.setting.culture%</c>), for <paramref name="view"/>, asked by
+    /// <paramref name="context"/>; its kind is text's own format.</summary>
+    public Writer(Stream stream, Encoding encoding, global::app.type.item.culture.@this culture, global::app.View view,
+        global::app.actor.context.@this context)
     {
         _stream = stream;
         _encoding = encoding;
         _culture = culture;
+        View = view;
+        Context = context;
+        _types = context.App.type.list;
+        Kind = _types["text"].kind;
     }
 
-    public string Format => "text";
+    public global::app.type.kind.@this Kind { get; }
+    public global::app.View View { get; }
+    public global::app.actor.context.@this Context { get; }
+
+    /// <summary>A value written as text: its text look (a type its word), else its own write.</summary>
+    public System.Threading.Tasks.ValueTask Write(global::app.type.item.@this value) => value.Write(this);
 
     private void Bare(string text) => _stream.Write(_encoding.GetBytes(text));
 
@@ -42,7 +54,7 @@ public sealed class Writer : global::app.type.format.IWriter
     // EITHER a bare top-level scalar OR structural json, never interleaved.
     private global::app.type.item.kind.json.Writer Structural()
         => _json ??= new global::app.type.item.kind.json.Writer(
-               _utf8 = new Utf8JsonWriter(_stream), emitsSchema: false);
+               _utf8 = new Utf8JsonWriter(_stream), View, Context);
 
     // Scalars: bare at the top, json (quoted / comma-joined) when nested inside an open structure.
     public void Null() { if (_depth > 0) Structural().Null(); }
@@ -66,14 +78,17 @@ public sealed class Writer : global::app.type.format.IWriter
         return (exact ?? value).ToString(pattern, _culture.Number);
     }
     public void String(string value) { if (_depth > 0) Structural().String(value); else Bare(value); }
-    public void Raw(string value) { if (_depth > 0) Structural().Raw(value); else Bare(value); }
     public void DateTime(System.DateTime value) { if (_depth > 0) Structural().DateTime(value); else Bare(value.ToString("o", CultureInfo.InvariantCulture)); }
     public void DateTimeOffset(System.DateTimeOffset value) { if (_depth > 0) Structural().DateTimeOffset(value); else Bare(value.ToString("o", CultureInfo.InvariantCulture)); }
     public void TimeSpan(System.TimeSpan value) { if (_depth > 0) Structural().TimeSpan(value); else Bare(value.ToString("c")); }
     public void Guid(System.Guid value) { if (_depth > 0) Structural().Guid(value); else Bare(value.ToString()); }
     public void Enum(System.Enum value) { if (_depth > 0) Structural().Enum(value); else Bare(value.ToString()); }
-    // Bytes read as text are noise: the text form of a byte payload is its size.
-    public void Bytes(byte[] value) { if (_depth > 0) Structural().String($"[{value.Length} bytes]"); else Bare($"[{value.Length} bytes]"); }
+    // A text's bytes are the text they spell; any other bytes read as text are noise: their text form is their size.
+    public void Bytes(byte[] value, global::app.type.kind.@this kind)
+    {
+        var text = kind.IsText ? Encoding.UTF8.GetString(value) : $"[{value.Length} bytes]";
+        if (_depth > 0) Structural().String(text); else Bare(text);
+    }
 
     // Structure: always json; flush the buffered json when the outermost closes.
     public void BeginArray(int count) { Structural().BeginArray(count); _depth++; }
@@ -81,9 +96,6 @@ public sealed class Writer : global::app.type.format.IWriter
     public void BeginObject() { Structural().BeginObject(); _depth++; }
     public void Name(string name) => Structural().Name(name);
     public void EndObject() { Structural().EndObject(); Close(); }
-    public void BeginRecord(global::app.data.@this record) { Structural().BeginRecord(record); _depth++; }
-    public void EndRecord() => throw new System.InvalidOperationException(
-        "text.Writer.EndRecord requires the Data record — records ride the json delegate's EndRecord(Data).");
 
     // A top-level scalar rides bare (its own scalar method, depth 0); a top-level container is json.
     public void Value(object? normalized)
@@ -104,16 +116,10 @@ public sealed class Writer : global::app.type.format.IWriter
             case System.TimeSpan ts: TimeSpan(ts); return;
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
-            case byte[] bytes: Bytes(bytes); return;
-            // TOMBSTONE — a closing door, do NOT build on it. Value(item) is being retired:
-            // an item in hand is rendered by asking `item.Output`, never by handing the boxed
-            // item to a writer. This leaf arm (mirroring json.Writer's item arm) keeps existing
-            // Value(item) feeders green until they migrate to Output; it dies with piece (B) when
-            // that inventory empties. Value(object) narrows back to raw normalized CLR leaves.
-            case global::app.type.item.@this { IsLeaf: true } v: v.Write(this); return;
-            default:                                    // container / Data / enumerable → json content
+            case byte[] bytes: Bytes(bytes, _types[typeof(global::app.type.item.binary.@this)].kind); return;
+            // a plang value is never handed here, nor a collection: each writes itself through its own Output
+            default:
                 Structural().Value(normalized);
-                _utf8!.Flush();
                 return;
         }
     }

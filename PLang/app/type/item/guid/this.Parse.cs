@@ -10,6 +10,6 @@ public sealed partial class @this
     public static @this? Resolve(string raw, global::app.actor.context.@this context)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
-        return System.Guid.TryParse(raw.Trim(), out var v) ? new @this(v) : null;
+        return System.Guid.TryParse(raw.Trim(), out var v) ? new @this(v, context.App.type.list[typeof(@this)]) : null;
     }
 }

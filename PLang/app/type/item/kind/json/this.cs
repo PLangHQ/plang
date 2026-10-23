@@ -3,16 +3,14 @@ using System.Text.Json;
 namespace app.type.item.kind.json;
 
 /// <summary>
-/// The json kind — a value of kind json rests as its raw bytes until a use opens it (decision 792): its
+/// The json kind — a value of kind json rests as its raw bytes until a use opens it: its
 /// untyped materialize answers an unread <c>{item, json}</c> source (<see cref="Load"/>), and a use parses it
 /// once into a plang value through <see cref="Parse"/> (an object into a dict, an array into a list, a scalar
 /// into its native) — no <c>JsonElement</c> carrier, no navigator.
 /// </summary>
-public sealed class @this : global::app.type.kind.@this
+public sealed class @this : global::app.type.kind.@this<global::app.type.item.@this>
 {
-    public @this() : base("json") { }
-
-    protected internal override string Owner => "item";
+    public @this(global::app.type.@this owner) : base("json", owner) { }
 
     public override System.Collections.Generic.IReadOnlyList<string> Mime => ["application/json", "text/json"];
     public override System.Collections.Generic.IReadOnlyList<string> Extension => [".json"];
@@ -21,24 +19,24 @@ public sealed class @this : global::app.type.kind.@this
     /// <summary>json content is text.</summary>
     public override bool IsText => true;
 
-    /// <summary>A json writer — plain json, or plang's schema-on json — writes json: json content goes into it
-    /// as the token it already is.</summary>
-    public override bool Owns(global::app.type.format.IWriter writer) => writer.Format is "plang" or "json";
-
     /// <summary>A test run's report in json: the run's tests, written as json.</summary>
     public override string? Report => "results.json";
 
-    // json RESTS (ruling 6, decision 792): its untyped materialize does NOT parse — an unread {item, json}
-    // answers itself, so a courier (content.Value, a variable set, passing a value on, a url's or a render's
-    // result) carries it unread. Only a USE opens it: navigation, enumeration, `is`, a typed ask each parse once
-    // (through Parse) and narrow. The source form IS the rest: the source materialize sees a source come back
-    // and answers itself.
+    // json RESTS: its untyped materialize does NOT parse — an unread {item, json} answers itself, so a courier
+    // (content.Value, a variable set, passing a value on, a url's or a render's result) carries it unread. Only a USE
+    // opens it: navigation, enumeration, `is`, a typed ask each parse once (through Parse) and narrow. The json
+    // content IS the rest: the source materialize sees a source come back and answers itself.
     public override System.Threading.Tasks.ValueTask<global::app.data.@this?> Load(
         object raw, global::app.actor.context.@this ctx)
-        // The source carries THIS kind as the format its raw is in — the object the raw was decoded by, so a
+        // The content carries THIS kind as the format its raw is in — the object the raw was decoded by, so a
         // re-declaration keeps it and asks it to Parse directly (never a kind-name lookup across the app).
-        => new(ctx.Ok(new global::app.type.item.source(raw,
-            ctx.App.type.list[new global::app.type.@this("item", "json"), ctx], format: this)));
+        => new(ctx.Ok(Make(raw, ctx.App.type.list[new global::app.type.@this("item", "json"), ctx], null)));
+
+    /// <summary>json content, unread: its characters already are json, so a json document pastes them.</summary>
+    public override global::app.type.item.source Make(object raw, global::app.type.@this type, global::app.type.item.path.@this? origin,
+        System.Collections.Generic.IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false,
+        global::app.type.kind.@this? format = null)
+        => new source(raw, type, this, origin, variable, built);
 
     // Every character written as itself (Icelandic letters, "—"); the ones a page reads as markup (< > & ' +)
     // still escaped, as json in an HTML page needs.
@@ -48,14 +46,13 @@ public sealed class @this : global::app.type.kind.@this
     /// <summary>json content written: the value alone, as json — no Data around it (the type is inferred on
     /// read). The value writes itself through the json writer.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
     {
         try
         {
-            var face = view ?? global::app.View.Out;
             await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions { Encoder = _encoder });
-            await data.Output(new global::app.type.item.kind.json.Writer(utf8, face, emitsSchema: false), face, context);
+            await data.Output(new global::app.type.item.kind.json.Writer(utf8, view, context));
             await utf8.FlushAsync(ct);
             return context.Ok();
         }
@@ -73,13 +70,21 @@ public sealed class @this : global::app.type.kind.@this
     public override global::app.type.item.@this? Parse(object raw, global::app.actor.context.@this ctx)
     {
         if (raw is not (string or byte[])) return null;                        // decline — not a raw json payload
-        var s = new global::app.type.item.text.@this(raw).ToString();
+        var s = new global::app.type.item.text.@this(raw, ctx.App.type.list[typeof(global::app.type.item.text.@this)]).ToString();
         if (string.IsNullOrEmpty(s)) return global::app.type.item.@this.Create(null, ctx);    // empty → the null value (NOT a decline)
-        // json parses itself into a plang value (decision 774, ruling 9): an object into a dict, an array into
+        // json parses itself into a plang value: an object into a dict, an array into
         // a list, each read through its own type's reader over the json token stream — no JsonElement carrier,
         // no navigator. A scalar root IS its native value (`42` a number). Verify:false — ingested content is
         // unsigned, like every nested/ingest read.
-        var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(s));
+        var bytes = System.Text.Encoding.UTF8.GetBytes(s);
+        // json content is one value: anything after it means the characters are no json (JsonException, as any
+        // malformed json), never a value with the rest dropped
+        var whole = new Utf8JsonReader(bytes);
+        whole.Read();
+        whole.Skip();
+        if (whole.Read())
+            throw new JsonException($"json content is one value; '{whole.TokenType}' follows it at byte {whole.TokenStartIndex}.");
+        var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
         var reader = new global::app.type.item.kind.json.Reader(utf8);
         var read = new global::app.type.reader.ReadContext(ctx, Verify: false);

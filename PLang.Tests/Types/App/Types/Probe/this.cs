@@ -7,7 +7,7 @@ public sealed class @this : global::app.type.item.@this,
     global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, global::app.type.item.list.@this<@this>>
 {
-    public static global::app.type.item.list.@this<@this> List(global::app.@this app) => new();
+    public static global::app.type.item.list.@this<@this> List(global::app.@this app) => new(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
 
     public string Key { get; }
     public @this(string key) { Key = key; }

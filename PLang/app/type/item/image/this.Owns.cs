@@ -4,8 +4,7 @@ public sealed partial class @this
 {
     /// <summary>
     /// <c>image</c> owns its own wrapper type — a value already shaped as an
-    /// <see cref="@this"/> routes to the image family. (Distributed <c>OwnerOf</c>;
-    /// matches the old self-owning <c>Discover</c> arm.)
+    /// <see cref="@this"/> routes to the image family (each family answers its own <c>OwnerOf</c>).
     ///
     /// <para>Note: <c>byte[]</c> is deliberately <em>not</em> declared here.
     /// <c>OwnerOf</c> keys on the conversion <em>target</em>; claiming <c>byte[]</c>

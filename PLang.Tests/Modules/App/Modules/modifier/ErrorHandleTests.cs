@@ -25,7 +25,7 @@ public class ErrorHandleTests
         var parameters = new List<global::app.data.@this> { new("message", message, context: _app.actor.list.User.Context) };
         if (status != null) parameters.Add(new("status", status.Value, context: _app.actor.list.User.Context));
         if (key != null) parameters.Add(new("key", key, context: _app.actor.list.User.Context));
-        return global::PLang.Tests.Shared.Make.With(new PrAction
+        return global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("error"), Name = "throw",
             Property = global::PLang.Tests.Shared.Make.Properties(parameters),
@@ -42,7 +42,7 @@ public class ErrorHandleTests
             [.. parameters, global::PLang.Tests.Shared.Make.Recovery(Ctx, CallGoal(goalName))]);
 
     /// <summary>One recovery action: a call to <paramref name="goalName"/>.</summary>
-    private PrAction CallGoal(string goalName) => new()
+    private PrAction CallGoal(string goalName) => new(_app.type.list)
     {
         Module = _app.actor.list.User.Context.App.Module("goal"), Name = "call",
         Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
@@ -54,7 +54,7 @@ public class ErrorHandleTests
     [Test]
     public async Task Handle_ActionSucceeds_PassesThrough()
     {
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
+        var action = global::PLang.Tests.Shared.Make.With(new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
@@ -226,7 +226,7 @@ public class ErrorHandleTests
     // (a success cancels the dispatch; a failure is the attempt's) — each retry is another attempt.
     private PrAction Attempting(Func<Task<global::app.data.@this>> attempt, params PrAction[] clauses)
     {
-        var action = new PrAction
+        var action = new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>()),
@@ -250,7 +250,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.error.ServiceError("persistent failure", "TransientError", 503)));
+                new global::app.error.ServiceError("persistent failure", "TransientError", 503), Ctx));
         };
 
         var result = await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 2), ("order", "RetryFirst"))).Start(Ctx);
@@ -269,7 +269,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.error.ServiceError("failure", "TransientError", 503)));
+                new global::app.error.ServiceError("failure", "TransientError", 503), Ctx));
         };
 
         var result = await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 1), ("order", "GoalFirst"))).Start(Ctx);
@@ -287,7 +287,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.error.ServiceError("intentional failure", "TransientError", 503)));
+                new global::app.error.ServiceError("intentional failure", "TransientError", 503), Ctx));
         };
 
         var result = await Attempting(persistentlyFailing,
@@ -302,7 +302,7 @@ public class ErrorHandleTests
     public async Task Handle_GoalFirst_RecoveryThenAFailedRetry_TheRecoveryStands()
     {
         Func<Task<global::app.data.@this>> persistentlyFailing = () => Task.FromResult(global::app.data.@this.FromError(
-            new global::app.error.ServiceError("always fails", "TransientError", 503)));
+            new global::app.error.ServiceError("always fails", "TransientError", 503), Ctx));
         var fix = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set",
             global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "fixed", "variable"), ("Value", true));
 
@@ -322,7 +322,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.error.ServiceError("always fails", "TransientError", 503)));
+                new global::app.error.ServiceError("always fails", "TransientError", 503), Ctx));
         };
 
         var result = await Attempting(persistentlyFailing, ErrorHandler(("retryCount", 3))).Start(Ctx);
@@ -342,8 +342,8 @@ public class ErrorHandleTests
             callCount++;
             if (callCount == 1)
                 return Task.FromResult(global::app.data.@this.FromError(
-                    new global::app.error.ServiceError("transient failure", "TransientError", 503)));
-            return Task.FromResult(global::app.data.@this.Ok());
+                    new global::app.error.ServiceError("transient failure", "TransientError", 503), Ctx));
+            return Task.FromResult(Ctx.Ok());
         };
 
         var result = await Attempting(statefulNext, ErrorHandler(("retryCount", 3))).Start(Ctx);
@@ -360,15 +360,15 @@ public class ErrorHandleTests
     private Goal RegisterGoal(string name, string module, string actionName,
         params (string name, object? value)[] parameters)
     {
-        var prAction = new PrAction
+        var prAction = new PrAction(_app.type.list)
         {
             Module = _app.actor.list.User.Context.App.Module(module), Name = actionName,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new global::app.data.@this(p.name, p.value,
                 PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null, context: _app.actor.list.User.Context)).ToList())
         };
-        var step = new Step { Text = $"test step for {name}" };
+        var step = new Step(_app.type.list) { Text = $"test step for {name}" };
         step.Code.Add(prAction);
-        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", _app.actor.list.User.Context) };
+        var goal = new Goal(_app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", _app.actor.list.User.Context) };
         goal.Step.Add(step);
         _app.goal.list.Add(goal);
         return goal;
@@ -403,7 +403,7 @@ public class ErrorHandleTests
             var fixedFlag = await Ctx.Variable.Get("fixed");
             return fixedFlag.IsInitialized
                 ? Ctx.Ok("done after fix")
-                : global::app.data.@this.FromError(new global::app.error.ServiceError("not fixed yet", "NotFixed", 404));
+                : global::app.data.@this.FromError(new global::app.error.ServiceError("not fixed yet", "NotFixed", 404), Ctx);
         };
 
         var result = await Attempting(needsFix, ErrorHandlerCalling("Fix", ("order", "GoalFirst"), ("retryCount", 1))).Start(Ctx);

@@ -27,8 +27,8 @@ public sealed class Default : IEvaluator
             return !hasRight ? null : new ValidationError(
                 "Right is compared by an Operator — write the Operator, or leave Right out for Left's own truth", "OperandExtra");
         if (op.HasVariable) return null;   // an operator named by a variable is known at run
-        Operator written = (await op.Value())!;
-        return written.Operands(hasRight);
+        Operator @operator = (await op.Value())!;
+        return @operator.Operands(hasRight);
     }
 
     public Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(Compare action) =>

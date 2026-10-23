@@ -28,16 +28,15 @@ public sealed class @this : global::app.type.item.@this
 
     // Null until the notes are read.
     private System.Collections.Generic.IReadOnlyList<line.@this>? _line;
-    private global::app.warning.list.@this _warning = new();
+    private global::app.warning.list.@this? _warning;
 
-    /// <summary>The notes of <paramref name="about"/>, in <paramref name="file"/> — nothing read yet.</summary>
-    internal @this(IAbout about, global::app.type.item.file.@this file)
+    /// <summary>The notes of <paramref name="about"/>, in <paramref name="file"/> — nothing read yet; born holding the
+    /// app's <paramref name="type"/> for notes.</summary>
+    internal @this(IAbout about, global::app.type.item.file.@this file, global::app.type.@this type) : base(type)
     {
         _about = about;
         _file = file;
     }
-
-    protected internal override global::app.type.@this Type => new(typeof(@this));
 
     /// <summary>Plang's own teaching, read by its templates — never a type a program's value is.</summary>
     public static bool Internal => true;
@@ -46,15 +45,18 @@ public sealed class @this : global::app.type.item.@this
     public override bool IsLeaf => false;
 
     /// <summary>The lines, in the file's order; none before the notes are read, or when there are none.</summary>
-    [global::app.Out]
+    [global::app.Out, global::app.LlmBuilder]
     public System.Collections.Generic.IReadOnlyList<line.@this> Line => _line ?? [];
 
     /// <summary>The line that says what it returns (<c>Returns — …</c>); null when none does.</summary>
+    [global::app.LlmBuilder]
     public line.@this? Returns => Line.FirstOrDefault(line => string.Equals(line.Name?.ToString(), Result, System.StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>What the notes and its parts don't agree on: a line naming none of them, a part no line names.</summary>
+    /// <summary>What the notes and its parts don't agree on: a line naming none of them, a part no line names. None
+    /// before the notes are read.</summary>
     [global::app.Out]
-    public global::app.warning.list.@this Warning => _warning;
+    [global::app.LlmBuilder]
+    public global::app.warning.list.@this? Warning => _warning;
 
     /// <summary>The notes read, once: the file's lines, each a named line or a free one, then what they and its parts
     /// don't agree on. Something with no notes file has no lines. A file that can't be read fails
@@ -66,26 +68,29 @@ public sealed class @this : global::app.type.item.@this
         if (await _file.AsBooleanAsync(data.Context))
         {
             var sample = await _file.Content(data.Context);
-            if (!sample.Success) { data.Fail(sample.Error!); return Absent; }
+            if (!sample.Success) { data.Fail(sample.Error!); return data.Empty; }
             var fenced = false;
+            var types = data.Context.App.type.list;
             foreach (var text in _file.ContentText().Split('\n').Select(text => text.TrimEnd('\r')))
             {
                 var fence = text.TrimStart().StartsWith(Fence, System.StringComparison.Ordinal);
-                read.Add(fenced || fence ? new line.@this(new global::app.type.item.text.@this(text)) : Read(text));
+                read.Add(fenced || fence
+                    ? new line.@this(new global::app.type.item.text.@this(text, types[typeof(global::app.type.item.text.@this)]), types[typeof(line.@this)])
+                    : Read(text, types));
                 if (fence) fenced = !fenced;
             }
         }
-        var warning = new global::app.warning.list.@this();
+        var warning = new global::app.warning.list.@this(data.Context.App.type.list);
         // names are plang's: read whatever their case
         var named = read.Where(line => line.Name != null).Select(line => line.Name!.ToString())
             .ToHashSet(System.StringComparer.OrdinalIgnoreCase);
         var part = _about.Part;
         var title = char.ToUpperInvariant(part[0]) + part[1..];
         foreach (var name in named.Where(name => !string.Equals(name, Result, System.StringComparison.OrdinalIgnoreCase) && !_about.Names(name)))
-            warning.Add(new global::app.warning.@this { Key = $"NoteWithout{title}",
+            warning.Add(new global::app.warning.@this(data.Context.App.type.list) { Key = $"NoteWithout{title}",
                 Message = $"{_about.Noted}: the notes line '{name}' names no {part}" });
         foreach (var owed in _about.Parts.Where(owed => !named.Contains(owed)))
-            warning.Add(new global::app.warning.@this { Key = $"{title}WithoutNote",
+            warning.Add(new global::app.warning.@this(data.Context.App.type.list) { Key = $"{title}WithoutNote",
                 Message = $"{_about.Noted}: the {part} '{owed}' has no notes line" });
         _warning = warning;
         _line = read;
@@ -101,20 +106,22 @@ public sealed class @this : global::app.type.item.@this
 
     // A line outside a fence: `Name — …` is a named line, its prose running to the first tag; `say:`, `builder:` and
     // `ask:` tags follow, each after " · ". A part after " · " that is no tag stays in the prose. Anything else is a
-    // free line.
-    private line.@this Read(string text)
+    // free line. Each line and each text is born holding the app's type for it, from <paramref name="types"/>.
+    private line.@this Read(string text, global::app.type.list.@this types)
     {
-        if (Named.Match(text) is not { Success: true } named) return new line.@this(new global::app.type.item.text.@this(text));
+        var type = types[typeof(global::app.type.item.text.@this)];
+        if (Named.Match(text) is not { Success: true } named) return new line.@this(new global::app.type.item.text.@this(text, type), types[typeof(line.@this)]);
         var part = named.Groups[2].Value.Split(Tag);
         var prose = part[0];
         global::app.type.item.text.@this? say = null, builder = null, ask = null;
         foreach (var tag in part.Skip(1))
         {
-            if (tag.StartsWith("say:", System.StringComparison.Ordinal)) say = new(tag["say:".Length..].Trim());
-            else if (tag.StartsWith("builder:", System.StringComparison.Ordinal)) builder = new(tag["builder:".Length..].Trim());
-            else if (tag.StartsWith("ask:", System.StringComparison.Ordinal)) ask = new(tag["ask:".Length..].Trim());
+            if (tag.StartsWith("say:", System.StringComparison.Ordinal)) say = new(tag["say:".Length..].Trim(), type);
+            else if (tag.StartsWith("builder:", System.StringComparison.Ordinal)) builder = new(tag["builder:".Length..].Trim(), type);
+            else if (tag.StartsWith("ask:", System.StringComparison.Ordinal)) ask = new(tag["ask:".Length..].Trim(), type);
             else prose += Tag + tag;
         }
-        return new line.@this(new global::app.type.item.text.@this(named.Groups[1].Value), new global::app.type.item.text.@this(prose), say, builder, ask);
+        return new line.@this(types[typeof(line.@this)], new global::app.type.item.text.@this(named.Groups[1].Value, type),
+            new global::app.type.item.text.@this(prose, type), say, builder, ask);
     }
 }

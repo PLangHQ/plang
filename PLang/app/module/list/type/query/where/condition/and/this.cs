@@ -16,22 +16,21 @@ public sealed class @this : condition.@this
 
     internal override async System.Threading.Tasks.Task<Data> Keep(List rows, global::app.actor.context.@this context)
     {
-        Data kept = context.Ok(rows);
+        Data answer = context.Ok(rows);
         foreach (var condition in _condition)
         {
-            kept = await kept.Use<List>(left => condition.Keep(left, context));
-            if (!kept.Success) return kept;
+            answer = await answer.Use<List>(left => condition.Keep(left, context));
+            if (!answer.Success) return answer;
         }
-        return kept;
+        return answer;
     }
 
-    internal override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this context)
+    internal override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("and");
         writer.BeginArray(_condition.Count);
-        foreach (var condition in _condition) await condition.Output(writer, mode, context);
+        foreach (var condition in _condition) await condition.Output(writer);
         writer.EndArray();
         writer.EndObject();
     }

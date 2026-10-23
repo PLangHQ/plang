@@ -10,13 +10,14 @@ public class AppRootTests
     private sealed class AskCountingChannel : global::app.channel.@this
     {
         public int AskCount;
-        public AskCountingChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        private readonly global::app.actor.context.@this _ctx;
+        public AskCountingChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             System.Threading.Interlocked.Increment(ref AskCount);
-            return Task.FromResult(global::app.data.@this.Ok("n"));
+            return Task.FromResult(_ctx.Ok("n"));
         }
     }
 
@@ -33,13 +34,13 @@ public class AppRootTests
         try
         {
             await using var runner = new global::app.@this(root).Testing();
-            await using var app = new global::app.@this(runner.AbsolutePath).Testing();
-            var ch = new AskCountingChannel();
+            await using var app = new global::app.@this(runner.filesystem.root.Absolute).Testing();
+            var ch = new AskCountingChannel(app.actor.list.User.Context);
             app.actor.list.User.Channel.Register(ch);
 
-            await (await new FilePath(System.IO.Path.Combine(root, "in.txt")).Touch(app.actor.list.User.Context)).IsSuccess();
+            await (await app.actor.list.User.Context.File(System.IO.Path.Combine(root, "in.txt")).Touch(app.actor.list.User.Context)).IsSuccess();
             await Assert.That(ch.AskCount).IsEqualTo(0);
-            await new FilePath(System.IO.Path.Combine(outside, "out.txt")).Touch(app.actor.list.User.Context);
+            await app.actor.list.User.Context.File(System.IO.Path.Combine(outside, "out.txt")).Touch(app.actor.list.User.Context);
             await Assert.That(ch.AskCount).IsGreaterThan(0);
         }
         finally
@@ -54,15 +55,15 @@ public class AppRootTests
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
 
-        var parent = await new global::app.type.item.variable.@this("!app.parent").Start(ctx);
+        var parent = await new global::app.type.item.variable.@this("!app.parent", ctx.App.type.list).Start(ctx);
 
         await Assert.That(parent.Peek() is global::app.parent.@this).IsTrue();
     }
 
     private sealed class CasedItem : global::app.type.item.@this
     {
-        public string Thing { get; set; } = "upper";
-        public string thing { get; set; } = "lower";
+        [global::app.LlmBuilder] public string Thing { get; set; } = "upper";
+        [global::app.LlmBuilder] public string thing { get; set; } = "lower";
     }
 
     // a write onto a plang value finds its member the way a read does: two members differing only by case is the error
@@ -84,6 +85,7 @@ public class AppRootTests
 
     private sealed class CasedList : global::app.type.item.list.@this
     {
+        public CasedList(global::app.type.@this type) : base(type) { }
         [global::app.LlmBuilder] public global::app.type.item.number.@this Total => 1;
         [global::app.LlmBuilder] public global::app.type.item.number.@this total => 2;
     }
@@ -94,7 +96,7 @@ public class AppRootTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var held = new global::app.data.@this("rows", new CasedList(), context: ctx);
+        var held = new global::app.data.@this("rows", new CasedList(app.type.list["list"]), context: ctx);
 
         foreach (var spelling in new[] { "total", "Total", "TOTAL" })
         {

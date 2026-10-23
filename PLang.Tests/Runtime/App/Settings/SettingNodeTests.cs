@@ -6,20 +6,20 @@ namespace PLang.Tests.App.Settings;
 /// </summary>
 public class SettingNodeTests
 {
-    private static string Path => new global::app.call.setting.@this().Path;
+    private static string Path => new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Path;
 
     private static async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
-        => await new global::app.type.item.variable.parser.@this(text).Variable.Single().Start(ctx);
+        => await new global::app.type.item.variable.parser.@this(text, ctx.App.type.list).Variable.Single().Start(ctx);
 
     // set %!…diff% = true, then set %!…diff.deep% = true: the node is on, and so is its member.
     [Test] public async Task ANodeSetWholeAndByItsMembers_KeepsBoth()
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.System.Context;
-        await ctx.Setting.Set(Path + ".diff", ctx.Ok(true));
-        await ctx.Setting.Set(Path + ".diff.deep", ctx.Ok(true));
+        ctx.Setting.Set(Path + ".diff", ctx.Ok(true));
+        ctx.Setting.Set(Path + ".diff.deep", ctx.Ok(true));
 
-        var setting = ctx.Setting.Of<global::app.call.setting.@this>();
+        var setting = (await ctx.Setting.Get<global::app.call.setting.@this>());
         await Assert.That(setting.Diff.Enabled.Value).IsTrue();
         await Assert.That(setting.Diff.Deep.Value).IsTrue();
     }
@@ -42,7 +42,7 @@ public class SettingNodeTests
         var ctx = app.actor.list.System.Context;
         await Assert.That(await (await Read("%!app.call.setting.diff%", ctx)).ToBooleanAsync()).IsFalse();
 
-        await ctx.Setting.Set(Path + ".diff", ctx.Ok(true));
+        ctx.Setting.Set(Path + ".diff", ctx.Ok(true));
         await Assert.That(await (await Read("%!app.call.setting.diff%", ctx)).ToBooleanAsync()).IsTrue();
     }
 
@@ -50,7 +50,7 @@ public class SettingNodeTests
     [Test] public async Task ANode_RefusesAValueThatIsNoBool()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var applied = new global::app.call.setting.@this().Apply(
+        var applied = new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Apply(
             new Dictionary<string, object?> { ["diff"] = 5 }, app.actor.list.System.Context);
 
         await Assert.That(applied.Success).IsFalse();

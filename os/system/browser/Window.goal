@@ -2,11 +2,11 @@
 / profile, hands it a new app window on plang's own blank page and exits. The page it shows is the caller's to give,
 / over the running browser's pipe — never on this command line.
 / Trusted by origin (579), as Screen is: the program, its flags and environment are named here, with only the app's
-/ own anchors %!app.AbsolutePath% and %!app.OsAbsolutePath%.
+/ own anchors %!app.filesystem.root% and %!app.filesystem.os%.
 Window
 - start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',
-    '--no-default-browser-check', '--user-data-dir=%!app.AbsolutePath%/.browser',
-    '--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',
-    with environment variables XDG_RUNTIME_DIR="%!app.AbsolutePath%/.run" and WAYLAND_DISPLAY="wayland-plang",
+    '--no-default-browser-check', '--user-data-dir=%!app.filesystem.root%/.browser',
+    '--app=file://%!app.filesystem.os%/system/browser/blank.html',
+    with environment variables XDG_RUNTIME_DIR="%!app.filesystem.root%/.run" and WAYLAND_DISPLAY="wayland-plang",
     with a clean environment, keep PULSE_SERVER and HOME from plang's environment,
     and wait until it exits (it hands the window over and ends)

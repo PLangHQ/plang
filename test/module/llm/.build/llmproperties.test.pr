@@ -1,0 +1,148 @@
+{
+  "name": "Start",
+  "comment": "Verify response properties accessible via %result!TotalTokens%, %result!Model%, etc.",
+  "step": [
+    {
+      "index": 0,
+      "text": "[llm] system: 'You are a helpful assistant'\nuser: 'Say hello'\ntemperature: 0.5\nmaxTokens: 50\nwrite to %result%",
+      "line": {
+        "number": 3,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "llm",
+          "name": "query",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "list",
+                "kind": "message"
+              },
+              "value": [{"Role":"system","Content":"You are a helpful assistant"},{"Role":"user","Content":"Say hello"}]
+            },
+            {
+              "name": "Temperature",
+              "type": {
+                "name": "number"
+              },
+              "value": 0.5
+            },
+            {
+              "name": "Limit",
+              "type": {
+                "name": "limit"
+              },
+              "value": {"token":50}
+            }
+          ],
+          "default": [
+            {
+              "name": "conversation",
+              "type": {
+                "name": "conversation"
+              },
+              "value": {}
+            },
+            {
+              "name": "cache",
+              "type": {
+                "name": "choice",
+                "kind": "cache"
+              },
+              "value": "use"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %result% is not null",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "LlmProperties.test.goal",
+  "hash": "02fc68932c4d6e248605625a5d746ba2d5cd5b1a9255350597d5a30d15794782"
+}

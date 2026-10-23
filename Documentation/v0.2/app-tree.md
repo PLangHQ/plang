@@ -60,7 +60,6 @@ current. The collection never lives on the element and is never a flat
 app
 ├── Id, Name, Version, Created, Updated
 ├── Parent                                  // child apps inherit parent filesystem scope (IsInRoot walks the chain)
-├── AbsolutePath, OsDirectory
 ├── Environment, Culture
 ├── StartedAt, Uptime
 ├── ShutdownToken, Create
@@ -71,7 +70,7 @@ app
 ├── Code                  → app/module/code/   // type-keyed provider registry
 ├── Navigator             → app/variable/Navigators/  // per-type Data navigation
 ├── Goal                  → app/goal/          // loaded goals + Setup
-├── FileSystem            → app/filesystem/    // IPLangFileSystem abstraction
+├── filesystem            → app/type/item/path/file/filesystem/  // the disk: root (what "/" is), os (what ships with plang), store (.data) — %!app.filesystem.root%, %!app.filesystem.os%
 ├── Cache                 → app/module/cache/  // pluggable step cache (default: memory)
 ├── Config                → app/config/        // goal-scoped strongly-typed module config
 ├── Settings              → app/module/settings/  // shared key/value, SQLite-backed
@@ -235,7 +234,7 @@ Full rule + tests:
 lifetime (AsyncLocal Current, Children, Variables.OnSet subscription) is
 managed by `await using`. Structural data is always captured; richer
 capture (timing, tags, history) is gated by `CallStack.Flags`, populated
-from `--debug={callstack:{...}}` via `Debug.Apply`.
+from `--debug.setting={callstack:{...}}` via `Debug.Apply`.
 
 ## What's NOT on `app` (and where it lives instead)
 

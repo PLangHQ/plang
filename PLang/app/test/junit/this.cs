@@ -10,7 +10,7 @@ namespace app.test.junit;
 /// </summary>
 public sealed class @this : global::app.type.kind.@this<global::app.test.@this>
 {
-    public @this() : base("junit") { }
+    public @this(global::app.type.@this owner) : base("junit", owner) { }
 
     public override System.Collections.Generic.IReadOnlyList<string> Mime => ["application/junit+xml"];
 
@@ -22,7 +22,7 @@ public sealed class @this : global::app.type.kind.@this<global::app.test.@this>
 
     /// <summary>The run <paramref name="data"/> holds (its tests), written as a JUnit document.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
     {
         if (data.Peek() is not global::app.type.item.list.@this<global::app.test.@this> run)

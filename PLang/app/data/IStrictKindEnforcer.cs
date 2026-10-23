@@ -13,8 +13,8 @@ namespace app.data;
 /// a stateless sniffer (does <em>this</em> byte[] match <em>that</em> kind). The
 /// enforcer is the imprint — "when my bytes exist, they must be a gif" — that a
 /// path-backed value must remember so <c>BytesAsync</c> can throw on a mismatch
-/// the <c>set</c> never saw (Ingi: validate at byte-materialization, throw if
-/// strict).</para>
+/// the <c>set</c> never saw: a strict kind is validated when the bytes materialize,
+/// and a mismatch throws.</para>
 /// </summary>
 public interface IStrictKindEnforcer
 {

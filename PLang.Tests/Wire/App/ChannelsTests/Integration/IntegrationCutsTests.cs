@@ -87,7 +87,7 @@ public class IntegrationCutsTests
         public override Task<Data> Write(Data data, CancellationToken ct = default)
         {
             _onInvoke();
-            return Task.FromResult(Data.Ok());
+            return Task.FromResult(data.Context.Ok());
         }
     }
 }

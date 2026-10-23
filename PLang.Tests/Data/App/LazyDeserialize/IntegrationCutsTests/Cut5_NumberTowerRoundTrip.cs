@@ -10,19 +10,22 @@ namespace PLang.Tests.App.LazyDeserialize.IntegrationCutsTests;
 // Cut 5 — values across the full tower (sbyte/uint/ulong/Int128/
 // BigInteger/Half/float/decimal) round-trip with their exact kind
 // preserved. Arithmetic promotes-then-narrows; double⊕decimal raises.
-public class Cut5_NumberTowerRoundTrip
+public class Cut5_NumberTowerRoundTrip : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     // A number serialized to its text form and read back through the
     // (number, kind) reader returns the EXACT CLR type — a float stays a
     // float (not double), a uint stays a uint. Exact-kind preservation is
     // the point of Decision 5.
-    private static async Task RoundTrips(number n, System.Type expectedClr)
+    private async Task RoundTrips(number n, System.Type expectedClr)
     {
         // The (number, kind) reader is number's Create courier — a carrier declares number{kind}
         // so the exact CLR type is preserved (parsing is context-free).
-        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("number", n.Kind.Name), context: null!);
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(new global::app.type.@this("number", n.Kind.Name)), context: app.actor.list.User.Context);
         var built = number.Create(n.ToString(), carrier.Type, carrier);
-        var r = built != null ? new global::app.data.@this("", built, context: null!) : carrier;
+        var r = built != null ? new global::app.data.@this("", built, context: app.actor.list.User.Context) : carrier;
         await Assert.That(((global::app.type.item.number.@this)(await r.Value())!).BoxedValue.GetType()).IsEqualTo(expectedClr);
     }
 

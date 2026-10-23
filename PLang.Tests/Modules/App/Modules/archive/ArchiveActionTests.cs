@@ -33,7 +33,7 @@ public class ArchiveActionTests : IDisposable
         => new global::app.data.@this("", name, context: Ctx).As<global::app.type.item.choice.@this<Kind>>();
 
     private global::app.data.@this<global::app.type.item.path.@this> At(string plang)
-        => global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(plang, Ctx));
+        => Ctx.Ok<global::app.type.item.path.@this>(global::app.type.item.path.@this.Resolve(plang, Ctx));
 
     private async Task<global::app.data.@this> Pack(global::app.data.@this value, string? format = null, string? to = null)
     {
@@ -54,7 +54,7 @@ public class ArchiveActionTests : IDisposable
             Value = global::app.data.@this<Archive>.From(new global::app.data.@this("archive", archive, context: Ctx)),
             Into = into == null ? null : At(into),
             Format = format == null ? null : Format(format),
-            Max = max == null ? global::app.data.@this<global::app.type.item.size.@this>.Uninitialized("max") : new global::app.type.item.size.@this(max.Value, Ctx),
+            Max = max == null ? global::app.data.@this<global::app.type.item.size.@this>.Uninitialized("max", Ctx) : global::app.type.item.size.@this.Create(max.Value, Ctx),
         };
         await action.Attach(null, Ctx);
         return await action.Start();
@@ -91,17 +91,17 @@ public class ArchiveActionTests : IDisposable
         try
         {
             await using var app = new global::app.@this(root);
-            app.test.list.Open();
+            await app.test.list.Open();
             app.TestIdentity();
             var ctx = app.actor.list.User.Context;
             await ctx.Variable.Set("original", new global::app.data.@this("original", "The quick brown fox jumps over the lazy dog.",
                 app.type.list.Stamp("text/plain", ctx), context: ctx));
 
             // as a step runs them: the value read from %original%, the archive kept in %archived% and read from there
-            var packed = await ctx.Action("archive.pack(Value=%original%)").Start(ctx);
+            var packed = await (await ctx.Action("archive.pack(Value=%original%)")).Start(ctx);
             await packed.IsSuccess();
             await ctx.Variable.Set("archived", packed);
-            var restored = await ctx.Action("archive.unpack(Value=%archived%)").Start(ctx);
+            var restored = await (await ctx.Action("archive.unpack(Value=%archived%)")).Start(ctx);
 
             await restored.IsSuccess();
             await Assert.That((await restored.Value())?.ToString()).IsEqualTo("The quick brown fox jumps over the lazy dog.");
@@ -135,8 +135,10 @@ public class ArchiveActionTests : IDisposable
     [Test]
     public async Task CorruptBytes_AreRefused()
     {
-        var archive = new Archive([0xFF, 0xFE, 0x00, 0x42], (Kind)_app.type.list["archive"].kind["gzip"]!,
-            new global::app.module.archive.type.archive.held.@this("data"));
+        var gzipKind = (Kind)_app.type.list["archive"].kind["gzip"]!;
+        var archive = new Archive([0xFF, 0xFE, 0x00, 0x42],
+            new global::app.module.archive.type.archive.held.@this(_app.type.list[typeof(global::app.module.archive.type.archive.held.@this)], "data"),
+            Ctx.App.type.list[new global::app.type.@this("archive", gzipKind.Name), Ctx]);
 
         var restored = await Unpack(archive);
 
@@ -197,8 +199,10 @@ public class ArchiveActionTests : IDisposable
         var gz = new MemoryStream();
         using (var zip = new System.IO.Compression.GZipStream(gz, System.IO.Compression.CompressionLevel.Optimal, leaveOpen: true))
             zip.Write("escaped?"u8);
-        var archive = new Archive(gz.ToArray(), (Kind)_app.type.list["archive"].kind["gzip"]!,
-            new global::app.module.archive.type.archive.held.@this("file", "../../escape.txt"));
+        var gzipKind = (Kind)_app.type.list["archive"].kind["gzip"]!;
+        var archive = new Archive(gz.ToArray(),
+            new global::app.module.archive.type.archive.held.@this(_app.type.list[typeof(global::app.module.archive.type.archive.held.@this)], "file", "../../escape.txt"),
+            Ctx.App.type.list[new global::app.type.@this("archive", gzipKind.Name), Ctx]);
 
         var unpacked = await Unpack(archive, into: "/out/deep");
 
@@ -315,8 +319,8 @@ public class ArchiveActionTests : IDisposable
     public async Task TheSettingsMax_AppliesWhenTheStepSaysNone()
     {
         var archive = (Archive)(await (await Pack(Text("big", new string('x', 10_000)))).Value())!;
-        await (await new global::app.type.item.variable.parser.@this("%!archive.setting.max%").Variable.Single()
-            .Set(Ctx.Ok(new global::app.type.item.text.@this("1 kB")), Ctx)).IsSuccess();
+        await (await new global::app.type.item.variable.parser.@this("%!archive.setting.max%", Ctx.App.type.list).Variable.Single()
+            .Set(Ctx.Ok(Ctx.Text("1 kB")), Ctx)).IsSuccess();
 
         var restored = await Unpack(archive);
 

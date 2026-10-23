@@ -11,7 +11,7 @@ public class DefaultSwitchTests
             "plang-default-switch-" + Guid.NewGuid().ToString("N")[..8])).FullName;
         try
         {
-            await using var app = new global::app.@this(root);
+            await using var app = new global::app.@this(root).Consenting();
             return await then(app);
         }
         finally { System.IO.Directory.Delete(root, recursive: true); }
@@ -21,10 +21,10 @@ public class DefaultSwitchTests
         => await (await Make.Action(ctx, "identity", action, properties).Start(ctx)).IsSuccess();
 
     private static async Task<string?> MyIdentityName(global::app.actor.context.@this ctx)
-        => (await (await new global::app.type.item.variable.@this("MyIdentity.Name").Start(ctx)).Value())?.ToString();
+        => (await (await new global::app.type.item.variable.@this("MyIdentity.Name", ctx.App.type.list).Start(ctx)).Value())?.ToString();
 
-    private static int Defaults(global::app.@this app)
-        => app.actor.list.System.Setting.Of<global::app.module.identity.setting.@this>().Identity
+    private static async Task<int> Defaults(global::app.@this app)
+        => (await app.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity
             .Items(app.actor.list.System.Context).Count(row => row.Peek() is global::app.module.identity.Identity { IsDefault: true });
 
     [Test] public async Task SetDefault_MovesTheDefault_AndLeavesExactlyOne() => await InApp(async app =>
@@ -37,7 +37,31 @@ public class DefaultSwitchTests
         await Run(ctx, "setDefault", ("Name", "TestSwitchB"));
 
         await Assert.That(await MyIdentityName(ctx)).IsEqualTo("TestSwitchB");
-        await Assert.That(Defaults(app)).IsEqualTo(1);
+        await Assert.That(await Defaults(app)).IsEqualTo(1);
+        return true;
+    });
+
+    // archiving an identity that is not the default leaves the default — %MyIdentity% — as it was
+    [Test] public async Task ArchivingANonDefault_LeavesTheDefault() => await InApp(async app =>
+    {
+        var ctx = app.actor.list.User.Context;
+        await Run(ctx, "create", ("Name", "TestArcNonDefA"), ("Default", true));
+        await Run(ctx, "create", ("Name", "TestArcNonDefB"));
+
+        await Run(ctx, "archive", ("Name", "TestArcNonDefB"), ("Force", true));
+
+        await Assert.That(await MyIdentityName(ctx)).IsEqualTo("TestArcNonDefA");
+        await Assert.That(await Defaults(app)).IsEqualTo(1);
+        return true;
+    });
+
+    // %MyIdentity.IsDefault% reads true off the default identity, by dot navigation
+    [Test] public async Task MyIdentity_IsDefault_ReadsTrue() => await InApp(async app =>
+    {
+        var ctx = app.actor.list.User.Context;
+        await Run(ctx, "create", ("Name", "TestDotNav"), ("Default", true));
+        var isDefault = await (await new global::app.type.item.variable.@this("MyIdentity.IsDefault", ctx.App.type.list).Start(ctx)).Value();
+        await Assert.That(isDefault?.ToString()).IsEqualTo("true");
         return true;
     });
 
@@ -49,7 +73,7 @@ public class DefaultSwitchTests
         await Run(ctx, "create", ("Name", "TestSwitchA"), ("Default", true));
 
         await Assert.That(await MyIdentityName(ctx)).IsEqualTo("TestSwitchA");
-        await Assert.That(Defaults(app)).IsEqualTo(1);
+        await Assert.That(await Defaults(app)).IsEqualTo(1);
         return true;
     });
 }

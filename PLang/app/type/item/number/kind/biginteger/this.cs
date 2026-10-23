@@ -5,7 +5,7 @@ namespace app.type.item.number.kind.biginteger;
 /// lowers through its own exact-integer door, a string parses, anything else declines loud.</summary>
 public sealed class @this : global::app.type.item.number.kind.@this
 {
-    public @this() : base("biginteger") { }
+    public @this(global::app.type.@this owner) : base("biginteger", owner) { }
 
     public override global::app.type.item.number.@this Create(global::app.type.item.@this value)
         => value.Clr<object>() switch
@@ -16,7 +16,6 @@ public sealed class @this : global::app.type.item.number.kind.@this
             var o => throw new System.FormatException($"'{o}' cannot be biginteger."),
         };
 
-    public override void Write(global::app.type.item.number.@this v, global::app.type.format.IWriter w) => w.String(v.ToString());
     public override global::app.type.item.@this Read<TReader>(ref TReader r)
         => (global::app.type.item.number.@this)System.Numerics.BigInteger.Parse(r.String(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
 }

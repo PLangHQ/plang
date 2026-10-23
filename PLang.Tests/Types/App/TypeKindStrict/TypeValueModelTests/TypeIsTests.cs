@@ -25,8 +25,8 @@ public class TypeIsTests
         var ctx = app.actor.list.User.Context;
         // Composition is the VALUE's type history: an image born from a path carries a "path"
         // entry, so the value answers `is path`. (A bare type entity does NOT — no history.)
-        var path = new global::app.type.item.path.file.@this("/test/photo.png");
-        var img = new image(new byte[] { 1, 2, 3 }, path, ctx);
+        var path = app.actor.list.User.Context.File("/test/photo.png");
+        var img = ctx.Image(path, new byte[] { 1, 2, 3 });
         await Assert.That(img.Is(app.type.list["path"])).IsTrue();
         await Assert.That(app.type.list["image"].Is(app.type.list["path"])).IsFalse();   // bare type: no history
     }
@@ -48,7 +48,7 @@ public class TypeIsTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        var img = new image(PngHeader, "image/png");
+        var img = ctx.Image(PngHeader, "image/png");
 
         // Declared type=path, but the value is already an image (which has-a
         // path). It must stay an image — not be converted/downgraded to path.

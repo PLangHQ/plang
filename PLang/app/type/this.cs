@@ -35,56 +35,40 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>
     public static list.@this List(global::app.@this app) => new();
 
-    /// <summary>Self-write: the type entity's <c>{name, kind?, strict?, template?}</c> identity — the
-    /// shape Data writes for its <c>type</c> slot (<c>json.Writer.BeginRecord</c>), and a type held
-    /// as a value in every view but Out (a <c>.pr</c> row holding a type stays its identity).</summary>
-    public override void Write(global::app.type.format.IWriter writer)
+    /// <summary>Writes the type's identity — <c>{name, kind?, strict?, template?}</c>: what a type is written as in json
+    /// and plang (a Data's and a property row's type slot, a type held as a value). A nested kind is written as its own
+    /// identity, not as a kind held as a value (its name).</summary>
+    private protected void Identify(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
         writer.Name("name"); writer.String(Name);
-        // a kind nests (774): a kind that is itself kinded writes as the object it is ({list, kind: {list, kind:
+        // a kind nests: a kind that is itself kinded writes as the object it is ({list, kind: {list, kind:
         // path}}), so read and write are symmetric; a plain kind writes its name.
-        if (!kind.IsEmpty) { writer.Name("kind"); if (kind.kind.IsEmpty) writer.String(kind.Name); else kind.Write(writer); }
+        if (!kind.IsEmpty) { writer.Name("kind"); if (kind.kind.IsEmpty) writer.String(kind.Name); else kind.Identify(writer); }
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
         if (Template != null) { writer.Name("template"); writer.String(Template.Name); }
         writer.EndObject();
     }
 
-    /// <summary>
-    /// A type held as a value: its face in the Out view — what a program sees when it writes
-    /// <c>%!app.type.text%</c>: its name (the namespace), the word it goes by when it declares one, its
-    /// description, example and aliases, and its kinds' names (a kinded type shows its own kind). Every other
-    /// view writes the identity (<see cref="Write"/>).
-    /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    /// <summary>A type is its identity, in every format it has no look of its own for.</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        if (mode != global::app.View.Out || context == null) { Write(writer); return; }
-        var full = context.App.type.list[this, context];
-        writer.BeginObject();
-        writer.Name("name"); writer.String(full.Namespace ?? full.Name);
-        if (full.Namespace != null && full.Namespace != full.Name) { writer.Name("word"); writer.String(full.Name); }
-        if (await full.Description(context).Text(context) is { Length: > 0 } description) { writer.Name("description"); writer.String(description); }
-        if (await full.Example(context).Text(context) is { Length: > 0 } example) { writer.Name("example"); writer.String(example); }
-        if (full.Alias.Count > 0)
-        {
-            writer.Name("alias");
-            writer.BeginArray(full.Alias.Count);
-            foreach (var alias in full.Alias) writer.String(alias);
-            writer.EndArray();
-        }
-        writer.Name("kind");
-        if (!kind.IsEmpty) writer.String(kind.Name);
-        else
-        {
-            var names = full.kind.list(context).Items().Select(t => t.kind.Name).ToList();
-            writer.BeginArray(names.Count);
-            foreach (var name in names) writer.String(name);
-            writer.EndArray();
-        }
-        writer.EndObject();
-        await System.Threading.Tasks.ValueTask.CompletedTask;
+        Identify(writer);
+        return default;
     }
+
+    /// <summary>A type in text is the word it goes by with its kind (<c>text</c>, <c>list&lt;path&gt;</c>), as a
+    /// <c>.goal</c> writes it — what a program sees when it writes <c>%!app.type.text%</c>. Its facts (name, description,
+    /// example, alias, kind) are reached by navigation (<c>%!app.type.text.description%</c>).</summary>
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.item.text.Writer writer)
+    {
+        writer.String(Face);
+        return default;
+    }
+
+    /// <summary>The word a type goes by with its kind (<c>text</c>, <c>list&lt;path&gt;</c>): what text writes, and what a
+    /// formal row names its type by (<c>Path: path = …</c>).</summary>
+    internal virtual string Face => kind.IsEmpty ? Name : $"{Name}<{kind.Name}>";
 
     /// <summary>The name the type goes by — the word its class declares (<c>text</c>), else its
     /// <see cref="Namespace"/>. What the wire, a <c>.pr</c> slot and the prompts write.</summary>
@@ -120,7 +104,25 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// (<c>kind : type</c>); the empty kind answers itself here (never a new one), ending the ctor's
     /// kind-minting chain. Serializers are kept off <see cref="kind"/> (JsonIgnore), so the self-kind
     /// never loops a walk.</summary>
-    protected virtual global::app.type.kind.@this BornKind() => new global::app.type.kind.empty.@this(Name);
+    protected virtual global::app.type.kind.@this BornKind() => new global::app.type.kind.empty.@this(this);
+
+    /// <summary>The kind a value class declares for <paramref name="name"/> — or its own format for the empty
+    /// name — read from the class's <c>[Format]</c>: the facts (MIME, extension, whether it is characters) a
+    /// value carries without asking the app, a kind of <paramref name="owner"/>, the class-built type asking. Null
+    /// when the class declares no such format, so the caller keeps the bare by-name kind. Only a class-built type
+    /// asks: a value born through an operator, with no app.</summary>
+    private static global::app.type.kind.@this? KindOfClass(System.Type clr, string? name, @this owner)
+    {
+        var wanted = name ?? "";
+        global::app.Attributes.FormatAttribute? format = null;
+        foreach (var attribute in clr.GetCustomAttributes(typeof(global::app.Attributes.FormatAttribute), inherit: false))
+            if (attribute is global::app.Attributes.FormatAttribute fmt
+                && string.Equals(fmt.Name, wanted, System.StringComparison.OrdinalIgnoreCase)) { format = fmt; break; }
+        if (format == null) return null;
+        var facts = (global::app.type.kind.@this)System.Activator.CreateInstance(
+            typeof(global::app.type.kind.format.@this<>).MakeGenericType(clr), format, owner, null, null)!;
+        return wanted.Length == 0 ? new global::app.type.kind.empty.@this(owner, facts) : facts;
+    }
 
     /// <summary>
     /// When true, <see cref="kind"/> is a requirement (enforced at build for
@@ -168,7 +170,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// only for a name no type answers to.
     /// </summary>
     [JsonIgnore]
-    internal System.Type? ClrType => _clrType;
+    internal virtual System.Type? ClrType => _clrType;
     private System.Type? _clrType;
 
     /// <summary>This type's empty value — what a value of it holds before anything is in it: the value
@@ -176,18 +178,26 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// (a goal, an item, a host) answers its typed null: still null, still this type.</summary>
     public item.@this Empty(global::app.actor.context.@this context)
     {
+        if (_empty is { } empty) return empty();
         var clr = ClrType;
-        if (clr == null || !typeof(item.@this).IsAssignableFrom(clr) || clr.IsAbstract || clr.ContainsGenericParameters)
-            return new item.@null.@this(this);
         const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance
             | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
-        // a kinded type is born with its kind (an empty list<goal>) when it takes one
-        if (!kind.IsEmpty && clr.GetConstructor(any, [typeof(global::app.type.kind.@this)]) is { } kinded)
-            return (item.@this)kinded.Invoke([kind]);
-        if (clr.GetConstructor(any, System.Type.EmptyTypes) is { } empty)
-            return (item.@this)empty.Invoke(null);
-        return new item.@null.@this(this);
+        // a value class born holding its type is handed this one (an empty list<goal> holds {list, goal})
+        _empty = clr == null || !typeof(item.@this).IsAssignableFrom(clr) || clr.IsAbstract || clr.ContainsGenericParameters
+            ? () => new item.@null.@this(this)
+            : clr.GetConstructor(any, [typeof(@this)]) is { } typed ? () => (item.@this)typed.Invoke([this])
+            : clr.GetConstructor(any, System.Type.EmptyTypes) is { } ctor ? () => (item.@this)ctor.Invoke(null)
+            : () => new item.@null.@this(this);
+        // an empty value no holder's change can reach (its Copy is itself — a null, 0, "") is one value, its type's
+        // own: the app's null is one per app; a container's empty is made fresh for each holder
+        var first = _empty();
+        if (ReferenceEquals(first.Copy(), first)) _empty = () => first;
+        return first;
     }
+
+    // How this type makes its empty value — its class's constructor, found once (every value-less Data asks); for an
+    // empty value that can be shared, that one value.
+    private System.Func<item.@this>? _empty;
 
 
     /// <summary>
@@ -245,7 +255,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>A type is made from what names it, among the app's types: a type passes; a text is the type it names
     /// (<c>path</c>); a dict describes one (<c>{name: "number", kind: "int", strict: true}</c>). Anything else declines.</summary>
-    public static @this? Create(object? raw, @this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, @this? type, global::app.data.@this data)
     {
         if (raw is @this self) return self;
         var context = data.Context!;
@@ -266,7 +276,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         global::app.actor.context.@this context, string name, global::app.type.item.path.@this? origin = null)
     {
         // a value that already is this type is no birth: it is answered as it is, nothing fired, nothing read
-        if (Held(raw) is { } held) return new(new global::app.data.@this(name, held, context: context));
+        if (Held(raw) is { } value) return new(new global::app.data.@this(name, value, context: context));
         // nothing bound: the value, made — nothing awaited, nothing else allocated
         var events = on.create;
         return events.IsBound(this, context)
@@ -296,8 +306,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (await events.Before(this, context, new global::app.data.@this(name, raw, context: context)) is { } answer
             && (!answer.Success || answer.Handled))
             return answer;
-        var made = Made(raw, context, name, origin);
-        return made.Success ? await events.After(this, made, context) : made;
+        var value = Made(raw, context, name, origin);
+        return value.Success ? await events.After(this, value, context) : value;
     }
 
     // The value a birth makes, or the reason this type declined to make it.
@@ -315,15 +325,17 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // scalar → born through the family lift, then refined. ALWAYS returns a value (never null); a
     // bad conversion throws (the throw boundary — rides MaterializeFailed like a reader parse).
     // Fires nothing: it is the build a birth runs, and every re-type inside the type system.
-    internal item.@this Make(object? raw, global::app.actor.context.@this? context, global::app.type.item.path.@this? origin = null)
+    internal item.@this Make(object? raw, global::app.actor.context.@this context, global::app.type.item.path.@this? origin = null)
     {
         // context-never-null: a value is born WITH context. A null here is a construction site that
         // forgot to pass one — fail with a pointer, not an NRE deep in materialization.
         if (context is null) throw new System.InvalidOperationException(
             $"context-never-null: building a '{Name}' value without a context — pass the actor context at the construction site.");
 
-        // Typed absence — the declaration survives (a typed null, a tool-parameter slot; a JSON-null too).
-        if (raw is null or global::app.type.item.@null.@this) return new global::app.type.item.@null.@this(this);
+        // Typed absence — the declaration survives (a typed null, a tool-parameter slot; a JSON-null too). Under `item`
+        // (no declaration: any value) it is the null type's own, as a literal null is.
+        if (raw is null or global::app.type.item.@null.@this)
+            return new global::app.type.item.@null.@this(Polymorphic ? context.App.type.list["null"] : this);
 
         // A name type's text IS the name (a write target), not content to defer: its own reader reads it now,
         // as it reads a wire slot. A raw string, or the text a built leaf of another type holds; an unread
@@ -351,7 +363,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // first use. The source carries the type's Name/Kind/Strict/template and reads its own raw —
         // knowing where the raw came from, when it was read off a file.
         if (raw is string or byte[])
-            return new item.source(raw, this, origin: origin);
+            return kind.Make(raw, this, origin);
 
         // A container / domain value is already native (dict, list, path, image, …) — hold it; a value of a
         // type this type takes (a path declared a file, a list declared list<path>) is made into this type by
@@ -362,7 +374,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             if (!Takes(native.Type)) return native;
             // a decline lands its reason on the carrier — this door throws it, as a leaf's does
             var declined = new global::app.data.@this("", context: context);
-            if (Make(raw, declined) is { } made) return made;
+            if (Make(raw, declined) is { } value) return value;
             if (declined.Error != null) throw Failed(declined.Error);
             return native;
         }
@@ -377,12 +389,16 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // A built leaf (text/number/… carrying its raw):
         if (raw is item.@this leaf)
         {
-            // Already this type → hold; refine a matching leaf to the declared kind.
+            // Already this type → hold; a kindless leaf declared a kind is made into this type by its own Create,
+            // handed this declaration (its courier re-births a value of its class holding it).
             var minted = leaf.Type;
             if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
             {
-                var refined = !kind.IsEmpty && minted.kind.IsEmpty ? leaf.Kinded(kind.Name) : leaf;
-                return refined;
+                if (kind.IsEmpty || !minted.kind.IsEmpty) return leaf;
+                var data = new global::app.data.@this("", context: context);
+                if (Make(leaf, data) is { } value) return value;
+                if (data.Error != null) throw Failed(data.Error);
+                return leaf;
             }
             // The value's type history already contains this type (an image born from a path
             // satisfies a path slot) → hold it, don't downgrade.
@@ -391,7 +407,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             // build — path parses a text, number parses a token, binary takes a text's bytes). A decline lands
             // its reason on the carrier's Error — this door is the throw boundary (rides MaterializeFailed).
             var carrier = new global::app.data.@this("", context: context);
-            if (Make(leaf, carrier) is { } made) return made;
+            if (Make(leaf, carrier) is { } instance) return instance;
             if (carrier.Error != null) throw Failed(carrier.Error);
             // Nothing in this type builds it from that value (`set %x% as dict = "hello"`): the type refuses the
             // conversion, as its own answer.
@@ -416,10 +432,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// the parse stays at first touch. The one place a slice is made (a re-declared slice comes back here).
     /// The capture build beside the content <see cref="Make(object?, actor.context.@this?)"/> build —
     /// same verb, the capture's knowledge as an argument, never a format name. Not a birth.
-    /// <paramref name="built"/>: the slice is the build's own bytes (its read granted it).</summary>
+    /// <paramref name="pr"/>: the slice is the build's own bytes, a <c>.pr</c> (its read granted it).</summary>
     internal item.wire.@this Make(string slice, global::app.type.item.wire.kind.plang.@this reader,
-        IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false)
-        => Template != null ? new item.wire.template(slice, this, reader, variable ?? [], built) : new item.wire.@this(slice, this, reader, built: built);
+        IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool pr = false)
+        => Template != null ? new item.wire.template(slice, this, reader, variable ?? [], pr) : new item.wire.@this(slice, this, reader, built: pr);
 
     /// <summary>Reads a value slot of this type off the reader — the one door for a
     /// <c>{name, type, value}</c> row's value, a Data's or an action property's. The slot is exactly
@@ -439,6 +455,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // The slot is captured in plang's own format — the wire type's plang kind, which reads it on first touch.
         var transport = (global::app.type.item.wire.kind.plang.@this)ctx.Context.App.type.list["wire"].kind["plang"]!;
 
+        // A null slot is a typed absence now, as a birth's null is — under `item`, the null type's own.
+        if (reader.Null()) return Make(null, ctx.Context);
+
         if (reader.Peek() == global::app.type.format.TokenKind.String)
         {
             var slice = System.Text.Encoding.UTF8.GetString(reader.Slice());
@@ -447,8 +466,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             // the content source. A literal string under any other type rides the wire (strict,
             // byte-identical). A name was read above, by its own eager reader.
             return Template != null
-                ? new item.source(JsonSerializer.Deserialize<string>(slice)!, this, ctx.Variable, built: ctx.IsBuilt)
-                : Make(slice, transport, built: ctx.IsBuilt);
+                ? kind.Make(JsonSerializer.Deserialize<string>(slice)!, this, null, ctx.Variable, ctx.IsBuilt)
+                : Make(slice, transport, pr: ctx.IsBuilt);
         }
         // EVERY other slot is a wire: a VERBATIM Slice with the capturing transport named at the
         // mint site. Face validation is free — the type's own pull IS the validator on first touch.
@@ -462,19 +481,19 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     // The one-shot binder: on first use it swaps the field for the closed thunk (or the decline) and forwards,
     // so every later door call is a bare invocation.
-    private item.@this? Bind(object? raw, @this declared, global::app.data.@this data)
+    private item.@this? Bind(object? raw, @this type, global::app.data.@this data)
     {
         _lift = Creatable is { } clr
             ? _open.MakeGenericMethod(clr).CreateDelegate<System.Func<object?, @this, global::app.data.@this, item.@this?>>()
             : static (_, _, _) => null;
-        return _lift(raw, declared, data);
+        return _lift(raw, type, data);
     }
 
     // Construct a value of this type from <paramref name="raw"/> THROUGH the ICreate&lt;T&gt; family its class
     // belongs to, even when the class is a subtype of that family (a settings class : setting is
     // ICreate&lt;setting&gt;, not ICreate&lt;itself&gt;, so its own <see cref="Make"/> declines): the family's
     // Create is handed THIS as the declaration, so the base's Create makes the subclass by its declared.ClrType.
-    // Only the record reader asks this (decision 789); the general Make stays on the EXACT <see cref="Creatable"/>
+    // Only the record reader asks this; the general Make stays on the EXACT <see cref="Creatable"/>
     // so its CLR-value fallback (the `Make(item.Create(raw))` rung) keeps converging and never recurses. The
     // closed family thunk is a fact of the class — bound once, on first use, like <see cref="_lift"/>.
     internal item.@this? Construct(object? raw, global::app.data.@this data)
@@ -556,9 +575,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     // The generic thunk: the raw rides into the type's own birth, as this type declares it — unless the value
     // refuses to become one (a raw C# value, lifted here, is no item and refuses nothing).
-    private static item.@this? Create<T>(object? raw, @this declared, global::app.data.@this data)
+    private static item.@this? Create<T>(object? raw, @this type, global::app.data.@this data)
         where T : item.@this, global::app.type.item.ICreate<T>
-        => raw is item.@this value && value.Refuses(declared, data) ? null : T.Create(raw, declared, data);
+        => raw is item.@this value && value.Refuses(type, data) ? null : T.Create(raw, type, data);
 
     private static readonly System.Reflection.MethodInfo _open = System.Array.Find(
         typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),
@@ -567,8 +586,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // The entity's face — a kinded type writes its kind in its name (number<decimal>, list<path>, text<md>),
     // a kindless one its name alone. The face is the type's own; which faces a prompt shows is the builder's
     // business, not ToString's. Templates and catalog text print this.
-    public override string ToString()
-        => kind.IsEmpty ? Name : $"{Name}<{kind.Name}>";
+    public override string ToString() => Face;
 
     /// <summary>
     /// Value equality — the entity is minted on ask now, so two asks yield two
@@ -626,7 +644,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     }
 
     // --- The facts ---
-    // Set by app.type when it builds a full type; a value's bare type carries none. Navigation
+    // Read from its class the first time each is asked, by a type the list holds; a value's bare type carries none. Navigation
     // (%x!type.Description%) answers them through the full type — see Get below. The wire form is
     // Write's {name, kind?, strict?, template?}; these never ride it. A kinded type ({text, md}) holds
     // its family's entry and reads every fact through it: one set of facts per class.
@@ -634,12 +652,16 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>The family entry this type's facts are — the registry's entry for its class; a family
     /// entry (or a type with none) is its own.</summary>
     internal @this Family => _family ?? this;
-    private readonly @this? _family;
+    private protected readonly @this? _family;
 
     /// <summary>The type's properties — a record's fields, a scalar's navigable members; each a
     /// named slot carrying its type. Null when the type declares none. A record is a type with
     /// properties and no <see cref="Shape"/>.</summary>
-    public property.list.@this? Property { get => OwnProperty ?? kind.OwnProperty ?? Family._property; init => _property = value; }
+    public property.list.@this? Property
+    {
+        get => OwnProperty ?? kind.OwnProperty ?? (Member is { Count: > 0 } member ? member : null);
+        init => _property = value;
+    }
     private property.list.@this? _property;
 
     // A kind answers its own fact through these hooks, else the type falls back to its Family's STORED
@@ -660,17 +682,21 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — what its
     /// class declares it is offered (a permission: that the step gives one), else the kind's answer: a closed set its
-    /// options, any other the step's own variables. A collected concept's type offers its collection's members first.</summary>
-    public virtual System.Threading.Tasks.ValueTask<IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step)
-        => Family._offer is { } declared ? new(declared) : kind.Offers(step);
+    /// options, any other the step's own variables. The type <c>type</c> offers the types it is born among first.</summary>
+    public virtual async System.Threading.Tasks.ValueTask<IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step)
+        => Family._offer is { } offers ? offers
+            : Family._types is { } types ? [.. await types.Offers(step), .. await kind.Offers(step)]
+            : await kind.Offers(step);
     private IReadOnlyList<item.@this>? _offer;
+    // The types the type `type` is born among — its values, what a type slot is offered; null for any other type.
+    private list.@this? _types;
 
     /// <summary>Whether what this type offers is all a value of it can be — its kind says (a choice's options, a bool's
     /// pair); offers its class declares are a convenience, never closed.</summary>
     public virtual bool IsClosed => Family._offer is null && kind.IsClosed;
 
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
-    public string? Shape { get => Family._shape; init => _shape = value; }
+    public string? Shape { get => Family._shape ??= Family.Form; init => _shape = value; }
     private string? _shape;
 
     /// <summary>A value of this type is written as an object: a record (its builder properties, no shape of its own),
@@ -678,7 +704,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public bool IsRecord => Shape is null ? Property != null : Shape == "object";
 
     /// <summary>Constructor signature for scalar types (<c>"name: shape"</c>).</summary>
-    public string? ConstructorSignature { get => Family._constructorSignature; init => _constructorSignature = value; }
+    public string? ConstructorSignature
+    {
+        get => Family._constructorSignature ??= Family.Source is { } source && Family._list is { } list
+            ? $"{source.Name}: {list.Face(source.ParameterType)}" : null;
+        init => _constructorSignature = value;
+    }
     private string? _constructorSignature;
 
     /// <summary>Where this type's teaching lives — <c>/system/type/&lt;name&gt;/</c>, its family's (a kinded type's facts
@@ -693,15 +724,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// its element), else <c>type.description.md</c>; read when asked, empty when there is none.</summary>
     [LlmBuilder] public item.prose.@this Description(actor.context.@this context)
         => (OwnDescription(context) ?? kind.OwnDescription(context)) is { } its
-            ? its.Or(new item.prose.@this(Taught("type.description.md", context)))
-            : new item.prose.@this(Taught("type.description.md", context));
+            ? its.Or(new item.prose.@this(context.App.type.list["text"], Taught("type.description.md", context)))
+            : new item.prose.@this(context.App.type.list["text"], Taught("type.description.md", context));
 
     /// <summary>A value of this type as a step writes one (<c>5m</c>, <c>42</c>) — the kind's own when it shows one (a
     /// list of records, one of its element), else <c>type.examples.md</c>; read when asked, empty when there is none.</summary>
     [LlmBuilder] public item.prose.@this Example(actor.context.@this context)
         => (OwnExample(context) ?? kind.OwnExample(context)) is { } its
-            ? its.Or(new item.prose.@this(Taught("type.examples.md", context)))
-            : new item.prose.@this(Taught("type.examples.md", context));
+            ? its.Or(new item.prose.@this(context.App.type.list["text"], Taught("type.examples.md", context)))
+            : new item.prose.@this(context.App.type.list["text"], Taught("type.examples.md", context));
 
     /// <summary>What the builder is taught about this type — <c>type.notes.md</c>; falsy when it has none.</summary>
     [LlmBuilder] public item.file.@this Notes(actor.context.@this context) => Taught("type.notes.md", context);
@@ -736,22 +767,34 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public bool Internal { get => OwnInternal ?? kind.OwnInternal ?? Family._internal; init => _internal = value; }
     private bool _internal;
 
-    /// <summary>A type born knowing its C# class — the registry's entries and the full types it
-    /// builds for an identity.</summary>
+    /// <summary>A type built from a C# class where no app is in reach — the class-built fallbacks (the C# operator
+    /// births, error, event): its kind carries its class's [Format] facts, read from the class, so the value's own
+    /// type answers its MIME / extension / text without asking an app. A class that declares no such format keeps the
+    /// bare by-name kind. It exists for the values born through an operator, with no app's list to be born from.</summary>
     internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
+        : this(name, clrType, kind, strict, template, known: true)
+    {
+        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType) && KindOfClass(clrType, kind, this) is { } format)
+            _kind = format;
+    }
+
+    // A type born knowing its C# class — its identity: the class, and its namespace for an item class. The registry's
+    // entries are born here; their own format and kinds are the app's, held at enlist.
+    private @this(string name, System.Type? clrType, string? kind, bool strict, global::app.type.item.template.kind.@this? template, bool known)
         : this(name, kind, strict, template)
     {
         _clrType = clrType;
-        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType)) Namespace = item.@this.NamespaceOf(clrType);
+        if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType))
+            Namespace = item.@this.NamespaceOf(clrType);
     }
 
     /// <summary>A kinded type of <paramref name="family"/> ({text, md}, {choice, operator}): born holding the family
     /// entry, whose facts it reads; its class is the one <paramref name="kind"/> makes of the family's.</summary>
     internal @this(@this family, global::app.type.kind.@this? kind, bool strict, global::app.type.item.template.kind.@this? template)
-        : this(family.Name, kind != null ? kind.Of(family.ClrType) : family.ClrType, kind?.Name, strict, template)
+        : this(family.Name, kind != null ? kind.Of(family.ClrType) : family.ClrType, kind?.Name, strict, template, known: true)
     {
         _family = family;
-        _kind = kind ?? new global::app.type.kind.empty.@this(Name);
+        _kind = kind ?? new global::app.type.kind.empty.@this(this);
     }
 
     /// <summary>A type whose own kind is a given <paramref name="ownKind"/> — the seam a nested kind rides
@@ -768,14 +811,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     internal @this(System.Type clr, string? kind = null) : this(item.@this.NameOf(clr), clr, kind) { }
 
     /// <summary>
-    /// The type a class defines: its name, its C# class, its aliases and owned C# shapes, and — when
-    /// <paramref name="types"/> is given — the facts the class declares: a closed set's options, a
-    /// scalar's wire shape and constructor, a record's <c>[LlmBuilder]</c> properties, its static
-    /// <c>Description</c> and <c>Example</c>. The facts name property types through
-    /// <paramref name="types"/>, so they are read once every type's name is known; without it the
-    /// type is its identity alone.
+    /// The type a class defines: its name, its C# class, its aliases and owned C# shapes, what it declares it is
+    /// offered, and — when <paramref name="types"/> is given — the list it is in, through which its other facts are
+    /// read when first asked (a scalar's wire shape and constructor, a record's <c>[LlmBuilder]</c> properties): a
+    /// fact names its property types, so it is read once every type's name is known. Without the list the type is
+    /// its identity alone.
     /// </summary>
-    internal @this(string name, System.Type clr, list.@this? types) : this(name, clr)
+    internal @this(string name, System.Type clr, list.@this? types) : this(name, clr, null, false, null, known: true)
     {
         Alias = Declared<IReadOnlyList<string>>("Alias") ?? [];
         Owned = Declared<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
@@ -784,70 +826,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                                                | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(null) is true;
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         if (types == null || clr == typeof(@this)) return;
-
         _offer = Declared<IReadOnlyList<item.@this>>("Offer");
-        if (global::app.type.item.choice.set.@this.For(clr) is { } set)
-        {
-            Values = set.Values;
-            return;
-        }
-
-        var shape = Declared<string>("Shape");
-        string? signature = null, derived = null;
-        if (clr.GetMethod("Resolve", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-                ?.GetParameters() is [var first, ..])
-        {
-            derived = types.Face(first.ParameterType);
-            signature = $"{first.Name}: {derived}";
-        }
-
-        var property = new property.list.@this();
-        // Every member the class marks plang's, listed where it is declared. A method that asks only for its asker's
-        // context is read as a property (%p.relative%); any other is called with its arguments (%x.replace("a", "b")%).
-        var methods = new Queue<System.Reflection.MethodInfo>(clr.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void))
-            .OrderBy(m => m.MetadataToken));
-        foreach (var prop in clr.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-        {
-            if (!prop.CanRead || prop.Name == "EqualityContract") continue;
-            if (!System.Attribute.IsDefined(prop, typeof(global::app.LlmBuilderAttribute))) continue;
-            while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
-                && m.MetadataToken < prop.GetMethod!.MetadataToken)
-                property.Add(Member(methods.Dequeue()));
-            property.Add(types.Property(prop.Name, prop.PropertyType, owner: Name));
-        }
-        while (methods.TryDequeue(out var m)) property.Add(Member(m));
-
-        // A method as the catalog lists it: what it answers (an asynchronous one, what its task completes with), and —
-        // unless it asks only for its asker — what it is called with. The asker's context and a cancellation are the
-        // runtime's to give, never a step's argument.
-        property.@this Member(System.Reflection.MethodInfo m)
-        {
-            var answers = m.ReturnType is { IsGenericType: true } task
-                          && (task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
-                              || task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.ValueTask<>))
-                ? task.GenericTypeArguments[0] : m.ReturnType;
-            // a member answering through a Data (so a failure rides it) answers what the Data holds
-            if (answers is { IsGenericType: true } data && data.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
-                answers = data.GenericTypeArguments[0];
-            var parameters = m.GetParameters();
-            if (parameters is [{ ParameterType: var only }] && only == typeof(actor.context.@this))
-                return types.Property(m.Name, answers, owner: Name);
-            return types.Property(m.Name, answers, parameters
-                .Where(p => p.ParameterType != typeof(actor.context.@this) && p.ParameterType != typeof(System.Threading.CancellationToken))
-                .Select(p => types.Property(p.Name!, p.ParameterType, optional: p.IsOptional))
-                .ToList(), owner: Name);
-        }
-
-        // A scalar has a constructor, a declared wire shape, or is a named type with no builder
-        // properties (a domain wrapper around a primitive); a record has builder properties.
-        if (signature != null || shape != null || property.Count == 0)
-        {
-            Shape = derived ?? shape ?? "string";
-            ConstructorSignature = signature;
-            Property = property.Count > 0 ? property : null;
-        }
-        else Property = property;
+        _list = types;
 
         T? Declared<T>(string member) where T : class
         {
@@ -856,6 +836,43 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             return p?.GetValue(null) as T;
         }
     }
+
+    // The list this type is in — its facts name their property types through it; null for a type that is its
+    // identity alone.
+    private readonly list.@this? _list;
+
+    /// <summary>The app's type list this type is in — what a value holding it asks the app's other types of (a text
+    /// reading the variables it holds); null for a type that is its identity alone.</summary>
+    internal list.@this? Types => _list ?? Family._list;
+
+    // The members of the class this type describes — the type list's one list per class, which a value of that class
+    // reads its members from too. A class under it that is no kind of its own (an error's subclass) is read by its
+    // value through its own class's list, but offered here as this type's. Empty for a type that is its identity alone.
+    private property.list.@this Member
+        => _property ?? Family._property
+           ?? ((Family._list is { } list && (ClrType ?? Family.ClrType) is { } clr) ? list.Member(clr) : new());
+
+    // What the class's Resolve takes first — a scalar is made from it; null when the class resolves nothing.
+    private System.Reflection.ParameterInfo? Source
+        => ClrType?.GetMethod("Resolve", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            ?.GetParameters() is [var first, ..] ? first : null;
+
+    // The shape a scalar is written in: what its Resolve takes, else the one its class declares, else — a named type
+    // with no builder properties (a domain wrapper around a primitive) — a string; null for a record (builder
+    // properties, no shape of its own) and for a type that is its identity alone.
+    private string? Form
+        => _list is not { } list ? null
+            : Source is { } source ? list.Face(source.ParameterType)
+            : ClrType!.GetProperty("Shape", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                  | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null) as string
+              ?? (Member.Count == 0 ? "string" : null);
+
+    /// <summary>
+    /// The type <c>type</c>, made by the list of <paramref name="types"/> for its own entry. A type's values are the
+    /// types, so this one type holds the list they are in — as a choice holds its set — and offers them; every other
+    /// type knows no list.
+    /// </summary>
+    internal @this(list.@this types) : this(item.@this.NameOf(typeof(@this)), typeof(@this), (list.@this?)null) => _types = types;
 
     /// <summary>This type answers for its name or one of its aliases, case-insensitive.</summary>
     public System.Threading.Tasks.ValueTask<@this?> Match(string key) => new(Names(key) ? this : null);
@@ -888,7 +905,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // comparing as its name; nothing when it has none.
         if (string.Equals(key, "kind", System.StringComparison.OrdinalIgnoreCase))
             return full.kind.IsEmpty
-                ? new global::app.data.@this(key, global::app.type.item.@null.@this.Instance, context: parent.Context)
+                ? new global::app.data.@this(key, context: parent.Context)
                 : new global::app.data.@this(key, full.kind, context: parent.Context);
         var member = await new global::app.type.clr.@this(full, parent.Context).Get(parent, key);
         return member.IsInitialized ? member : await Setting(parent, key) ?? member;
@@ -897,5 +914,5 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>A type's settings are the ones its class names (<c>%!app.type.size.setting%</c>) — the registry's
     /// type, as the asker sees it.</summary>
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
-        => await parent.Context.Setting.Of(parent.Context.App.type.list[this, parent.Context]);
+        => parent.Context.App.type.list[this, parent.Context].ClrType is { } clr ? await parent.Context.Setting.Get(clr) : null;
 }

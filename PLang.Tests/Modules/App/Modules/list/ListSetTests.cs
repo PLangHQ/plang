@@ -21,7 +21,7 @@ public class ListSetTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList"), Index = (global::app.type.item.number.@this)1, Value = new global::app.data.@this("", "replaced", context: context)};
+        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = (global::app.type.item.number.@this)1, Value = new global::app.data.@this("", "replaced", context: context)};
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -35,7 +35,7 @@ public class ListSetTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "old", "keep" });
 
-        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList"), Index = (global::app.type.item.number.@this)0, Value = new global::app.data.@this("", "new", context: context)};
+        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = (global::app.type.item.number.@this)0, Value = new global::app.data.@this("", "new", context: context)};
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -50,7 +50,7 @@ public class ListSetTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList"), Index = (global::app.type.item.number.@this)5, Value = new global::app.data.@this("", "x", context: context)};
+        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = (global::app.type.item.number.@this)5, Value = new global::app.data.@this("", "x", context: context)};
         var result = await action.Start();
 
         await result.IsFailure();
@@ -63,7 +63,7 @@ public class ListSetTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a" });
 
-        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList"), Index = (global::app.type.item.number.@this)(-1), Value = new global::app.data.@this("", "x", context: context)};
+        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = (global::app.type.item.number.@this)(-1), Value = new global::app.data.@this("", "x", context: context)};
         var result = await action.Start();
 
         await result.IsFailure();
@@ -76,7 +76,7 @@ public class ListSetTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", "not a list");
 
-        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList"), Index = (global::app.type.item.number.@this)0, Value = new global::app.data.@this("", "x", context: context)};
+        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = (global::app.type.item.number.@this)0, Value = new global::app.data.@this("", "x", context: context)};
         var result = await action.Start();
 
         await result.IsFailure();
@@ -88,7 +88,7 @@ public class ListSetTests : System.IAsyncDisposable
     {
         var (context, _) = CreateContext();
 
-        var action = new Set(context) { ListName = new app.type.item.variable.@this("missing"), Index = (global::app.type.item.number.@this)0, Value = new global::app.data.@this("", "x", context: context)};
+        var action = new Set(context) { ListName = new app.type.item.variable.@this("missing", context.App.type.list), Index = (global::app.type.item.number.@this)0, Value = new global::app.data.@this("", "x", context: context)};
         var result = await action.Start();
 
         await result.IsFailure();
@@ -100,7 +100,7 @@ public class ListSetTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList"), Index = (global::app.type.item.number.@this)0, Value = null };
+        var action = new Set(context) { ListName = new app.type.item.variable.@this("myList", context.App.type.list), Index = (global::app.type.item.number.@this)0, Value = null };
         var result = await action.Start();
 
         await result.IsSuccess();

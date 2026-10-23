@@ -11,7 +11,10 @@ public partial class decider
     [global::app.Attributes.PlangType("app.module.llm.decider.setting")]
     public sealed class setting : global::app.type.item.setting.@this
     {
-        /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+        /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+        public setting(global::app.type.@this type) : base(type) { }
+
+        /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
         public static bool Internal => true;
 
         /// <summary>The key the decider is asked with — <c>%!llm.decider.setting.key%</c>; when none is saved, the

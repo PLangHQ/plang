@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Settings;
 public class SettingOwnerTests
 {
     private static async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
-        => await new global::app.type.item.variable.parser.@this(text).Variable.Single().Start(ctx);
+        => await new global::app.type.item.variable.parser.@this(text, ctx.App.type.list).Variable.Single().Start(ctx);
 
     // A plang `set` of a call stack option, through its owner (a call stack is an actor's), reaches the
     // stack that reads it on every push.
@@ -16,23 +16,23 @@ public class SettingOwnerTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await Assert.That(app.actor.list.User.Context.call.Timing.Value).IsFalse();
+        await Assert.That((await app.actor.list.User.Context.call.Timing()).Value).IsFalse();
 
-        var set = await new global::app.type.item.variable.parser.@this("%!app.actor[\"user\"].context.call.setting.timing%").Variable.Single()
+        var set = await new global::app.type.item.variable.parser.@this("%!app.actor[\"user\"].context.call.setting.timing%", ctx.App.type.list).Variable.Single()
             .Set(new global::app.data.@this("timing", true, context: ctx), ctx);
         await set.IsSuccess();
 
-        await Assert.That(app.actor.list.User.Context.call.Timing.Value).IsTrue();
-        await Assert.That(app.actor.list.System.Context.call.Timing.Value).IsFalse();
+        await Assert.That((await app.actor.list.User.Context.call.Timing()).Value).IsTrue();
+        await Assert.That((await app.actor.list.System.Context.call.Timing()).Value).IsFalse();
     }
 
     // The system's value (a CLI flag) reaches both actors' stacks — the user falls back to it.
     [Test] public async Task CallStack_TakesTheSystemsValue()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.System.Setting.Set("app.call.setting", new Dictionary<string, object?> { ["history"] = true }).IsSuccess();
-        await Assert.That(app.actor.list.System.Context.call.History.Value).IsTrue();
-        await Assert.That(app.actor.list.User.Context.call.History.Value).IsTrue();
+        await (await app.actor.list.System.Setting.Flag("app.call.setting", new Dictionary<string, object?> { ["history"] = true }, app.actor.list.System.Context)).IsSuccess();
+        await Assert.That((await app.actor.list.System.Context.call.History()).Value).IsTrue();
+        await Assert.That((await app.actor.list.User.Context.call.History()).Value).IsTrue();
     }
 
     // A call stack reads through its actor's context's settings: a value written there (a goal's own set) reaches
@@ -40,9 +40,9 @@ public class SettingOwnerTests
     [Test] public async Task CallStack_TakesItsContextsValue_AndNoOthers()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.User.Context.Setting.Set("app.call.setting", new Dictionary<string, object?> { ["timing"] = true }).IsSuccess();
-        await Assert.That(app.actor.list.User.Context.call.Timing.Value).IsTrue();
-        await Assert.That(app.actor.list.System.Context.call.Timing.Value).IsFalse();
+        await (await app.actor.list.User.Context.Setting.Flag("app.call.setting", new Dictionary<string, object?> { ["timing"] = true }, app.actor.list.User.Context)).IsSuccess();
+        await Assert.That((await app.actor.list.User.Context.call.Timing()).Value).IsTrue();
+        await Assert.That((await app.actor.list.System.Context.call.Timing()).Value).IsFalse();
     }
 
     // Debug, once born, takes a later value under its path.
@@ -50,19 +50,19 @@ public class SettingOwnerTests
     {
         await using var app = new global::app.@this("/test").Testing();
         app.Debug = new global::app.module.debug.@this(app.actor.list.System.Context);
-        await Assert.That(app.Debug.Setting.Length.Max.ToInt32()).IsEqualTo(500);
+        await Assert.That((await app.Debug.Setting()).Length.Max.ToInt32()).IsEqualTo(500);
 
-        await app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["length"] = new Dictionary<string, object?> { ["max"] = 10 } }).IsSuccess();
-        await Assert.That(app.Debug.Setting.Length.Max.ToInt32()).IsEqualTo(10);
+        await (await app.actor.list.System.Setting.Flag("debug.setting", new Dictionary<string, object?> { ["length"] = new Dictionary<string, object?> { ["max"] = 10 } }, app.actor.list.System.Context)).IsSuccess();
+        await Assert.That((await app.Debug.Setting()).Length.Max.ToInt32()).IsEqualTo(10);
     }
 
     // A value the option can't take is refused at the flag, and nothing is written.
     [Test] public async Task Flag_RefusesAValueItsOptionCantTake()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var set = app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "nonsense" });
+        var set = await app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "nonsense" }, app.actor.list.System.Context);
         await set.IsFailure();
-        await Assert.That(app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Format.Value.ToString())
+        await Assert.That((await app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Format.Value.ToString())
             .IsEqualTo("json");
     }
 
@@ -72,19 +72,19 @@ public class SettingOwnerTests
         await using var app = new global::app.@this("/test").Testing();
         await Assert.That((await (await Read("%!app.setting.create%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("false");
 
-        await app.actor.list.System.Setting.Set("app.setting", new Dictionary<string, object?> { ["create"] = true }).IsSuccess();
+        await (await app.actor.list.System.Setting.Flag("app.setting", new Dictionary<string, object?> { ["create"] = true }, app.actor.list.System.Context)).IsSuccess();
         await Assert.That((await (await Read("%!app.setting.create%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("true");
     }
 
-    // A setting always has a value — its class default, or the one written: the CLI's --build={"cache":"skip"} reads
+    // A setting always has a value — its class default, or the one written: the CLI's --build.setting={"cache":"skip"} reads
     // as skip in a goal, and a `set default` on it leaves the CLI's value.
     [Test] public async Task ASettingTheCliWrote_ReadsAsWritten_AndASetDefaultLeavesIt()
     {
         await using var app = new global::app.@this("/test").Testing();
         // as the CLI does it: build mode born, then the flag's values written
         app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
-        var path = new global::app.module.build.setting.@this().Path;
-        await app.actor.list.System.Setting.Set(path, new Dictionary<string, object?> { ["cache"] = "skip" }).IsSuccess();
+        var path = new global::app.module.build.setting.@this(new global::app.type.@this(typeof(global::app.module.build.setting.@this))).Path;
+        await (await app.actor.list.System.Setting.Flag(path, new Dictionary<string, object?> { ["cache"] = "skip" }, app.actor.list.System.Context)).IsSuccess();
 
         foreach (var ctx in new[] { app.actor.list.System.Context, app.actor.list.User.Context })
         {
@@ -109,13 +109,13 @@ public class SettingOwnerTests
         {
             await using (var first = new global::app.@this(dir))
             {
-                var saved = new global::app.test.setting.@this { Timeout = System.TimeSpan.FromSeconds(7) };
+                var saved = new global::app.test.setting.@this(new global::app.type.@this(typeof(global::app.test.setting.@this))) { Timeout = System.TimeSpan.FromSeconds(7) };
                 await (await first.actor.list.System.Setting.Save(saved)).IsSuccess();
             }
 
             await using var app = new global::app.@this(dir);
             await app.Load();
-            await Assert.That(app.actor.list.User.Context.Setting.Of<global::app.test.setting.@this>().Timeout.Value.TotalSeconds).IsEqualTo(7);
+            await Assert.That((await app.actor.list.User.Context.Setting.Get<global::app.test.setting.@this>()).Timeout.Value.TotalSeconds).IsEqualTo(7);
         }
         finally { try { System.IO.Directory.Delete(dir, true); } catch (System.IO.IOException) { } }
     }

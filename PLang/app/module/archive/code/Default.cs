@@ -24,7 +24,7 @@ public class Default : IArchive
         if (!packing.Success) return packing;
         var to = action.To == null || !action.To.IsInitialized ? null : await action.To.Value();
         if (action.To != null && action.To.IsInitialized && !action.To.Success) return action.To;
-        var setting = context.Setting.Of<global::app.module.archive.setting.@this>();
+        var setting = await context.Setting.Get<global::app.module.archive.setting.@this>();
         var level = action.Level == null || !action.Level.IsInitialized ? setting.Level.Value : (await action.Level.Value())!.Value;
 
         // the format named, else the one the archive's path ends in, else gzip
@@ -37,19 +37,21 @@ public class Default : IArchive
         {
             using var packed = new MemoryStream();
             var (result, held) = await format.Pack(packing, value!, packed, level, context);
-            return result.Success ? context.Ok(new Archive(packed.ToArray(), format, held!)) : result;
+            return result.Success
+                ? context.Ok(new Archive(packed.ToArray(), held!, context.App.type.list[new global::app.type.@this("archive", format.Name), context]))
+                : result;
         }
 
         // written to the path as it is packed, never held whole; a pack that fails leaves nothing there
         var pipe = new System.IO.Pipelines.Pipe();
         var writing = Write(to, pipe, context);
-        (data.@this result, global::app.module.archive.type.archive.held.@this? held) made;
+        (data.@this result, global::app.module.archive.type.archive.held.@this? held) answer;
         await using (var into = pipe.Writer.AsStream())
-            made = await format.Pack(packing, value!, into, level, context);
-        var written = await writing;
-        if (made.result.Success && written.Success) return context.Ok<global::app.type.item.path.@this>(to);
+            answer = await format.Pack(packing, value!, into, level, context);
+        var file = await writing;
+        if (answer.result.Success && file.Success) return context.Ok<global::app.type.item.path.@this>(to);
         await to.Delete(context);
-        return made.result.Success ? written : made.result;
+        return answer.result.Success ? file : answer.result;
     }
 
     // the pipe's bytes written to the path as they come; once the path has them all — or refused them — the pipe's
@@ -76,7 +78,7 @@ public class Default : IArchive
         if (action.Into != null && action.Into.IsInitialized && !action.Into.Success) return action.Into;
         if (into != null && into is not File)
             return context.Error(new global::app.error.ServiceError($"{into} is no folder on this machine: an archive unpacks into a folder", "UnpackNeedsFolder", 400));
-        var max = action.Max == null || !action.Max.IsInitialized ? context.Setting.Of<global::app.module.archive.setting.@this>().Max : (await action.Max.Value())!;
+        var max = action.Max == null || !action.Max.IsInitialized ? (await context.Setting.Get<global::app.module.archive.setting.@this>()).Max : (await action.Max.Value())!;
         if (action.Max != null && action.Max.IsInitialized && !action.Max.Success) return action.Max;
         var named = action.Format == null || !action.Format.IsInitialized ? null : (await action.Format.Value())?.Value;
         if (action.Format != null && action.Format.IsInitialized && !action.Format.Success) return action.Format;

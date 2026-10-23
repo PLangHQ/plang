@@ -10,7 +10,7 @@ namespace app.module.archive.type.archive.kind.compression;
 /// </summary>
 public abstract class @this : kind.@this
 {
-    protected @this(string name) : base(name) { }
+    protected @this(string name, global::app.type.@this owner) : base(name, owner) { }
 
     /// <summary>A stream that compresses what is written to it into <paramref name="into"/> (left open).</summary>
     protected abstract System.IO.Stream Writer(System.IO.Stream into, CompressionLevel level);
@@ -34,13 +34,14 @@ public abstract class @this : kind.@this
         (global::app.data.@this result, string held, string? name) packed;
         await using (var writer = Writer(into, Of(level)))
             packed = await value.Pack(self, writer, context);
-        return packed.result.Success ? (packed.result, new held.@this(packed.held, packed.name)) : (packed.result, null);
+        return packed.result.Success
+            ? (packed.result, new held.@this(context.App.type.list[typeof(held.@this)], packed.held, packed.name)) : (packed.result, null);
     }
 
     internal override async Task<global::app.data.@this> Unpack(System.IO.Stream from, held.@this? held, File? into,
         global::app.type.item.size.@this max, global::app.actor.context.@this context)
     {
-        held ??= new held.@this("file");
+        held ??= new held.@this(context.App.type.list[typeof(held.@this)], "file");
         try
         {
             await using var read = new cap.@this(max).Over(Reader(from));
@@ -56,9 +57,9 @@ public abstract class @this : kind.@this
             var (at, refused) = await Under(into, held.Name?.ToString() ?? "unpacked", context);
             if (at == null) return refused ?? context.Error(new global::app.error.ServiceError(
                 $"an archived {held.Of} named {held.Name} has no place inside {into.Raw}", "UnpackFailed", 400));
-            await Clear(at, context);
-            var written = await at.Write(read, context);
-            return written.Success ? context.Ok<global::app.type.item.path.@this>(at) : written;
+            if (await Clear(at, context) is { } kept) return kept;
+            var file = await at.Write(read, context);
+            return file.Success ? context.Ok<global::app.type.item.path.@this>(at) : file;
         }
         catch (global::app.error.AppException refused)
         {

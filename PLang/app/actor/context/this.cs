@@ -28,7 +28,7 @@ public sealed class @this : IDisposable
     /// output (trace JSON, LLM debug files) under a single id for one execution.
     /// Accessible from PLang as <c>%!trace.id%</c>.
     /// </summary>
-    public TraceContext Trace { get; } = new();
+    public TraceContext Trace { get; }
 
     /// <summary>
     /// Reference to the app.
@@ -120,15 +120,16 @@ public sealed class @this : IDisposable
     /// What this context's file paths read and write once their gate has passed: the one it was born with,
     /// else its parent's, else the app's disk. A build checks a goal in a context born with the build's overlay.
     /// </summary>
-    public global::app.type.item.path.file.filesystem.@this FileSystem { get; }
+    public global::app.type.item.path.file.filesystem.@this Filesystem { get; }
 
     public @this(app.@this app, ActorType owner, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null,
-        global::app.type.item.path.file.filesystem.@this? fileSystem = null)
+        global::app.type.item.path.file.filesystem.@this? filesystem = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         App = app;
+        Trace = new(app.type.list);
         Actor = owner;
-        FileSystem = fileSystem ?? parent?.FileSystem ?? app.FileSystem;
+        Filesystem = filesystem ?? parent?.Filesystem ?? app.filesystem;
         Variable = variables ?? new Variables(this);
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
@@ -137,7 +138,9 @@ public sealed class @this : IDisposable
 
         // Stamp context on Variables (propagates to all existing Data)
         Variable.Context = this;
-        call = new(() => Setting);
+        // a frame's values are the app's types
+        call = new(app.type.list,
+            () => Setting, new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
 
         // Register context variables on the Variables
         RegisterContextVariables();
@@ -176,7 +179,7 @@ public sealed class @this : IDisposable
 
     /// <summary>A present-null Data, born with this context.</summary>
     public data.@this Null(string name = "")
-        => new(name, global::app.type.item.@null.@this.Instance, context: this);
+        => new(name, context: this);
 
     /// <summary>An error Data carrying <paramref name="error"/>, born with this context. An error
     /// meeting its first run here takes this context as where it happened.</summary>
@@ -284,7 +287,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public @this Clone(Variables? variables = null)
     {
-        var clone = new @this(App, Actor, variables ?? Variable.Clone(), Parent, fileSystem: FileSystem)
+        var clone = new @this(App, Actor, variables ?? Variable.Clone(), Parent, filesystem: Filesystem)
         {
             IsAsync = IsAsync,
             Setup = Setup,

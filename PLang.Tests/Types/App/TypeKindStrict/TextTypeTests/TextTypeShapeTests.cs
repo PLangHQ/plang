@@ -27,7 +27,7 @@ public class TextTypeShapeTests
     // A text holds its type, made once: a text writes itself by asking its type's kind, so every write reads it.
     [Test] public async Task Text_HoldsItsType_MadeOnce()
     {
-        var text = new TextType("# title") { Kind = "md" };
+        var text = new TextType("# title", new global::app.type.@this("text", typeof(TextType), "md"));
 
         var first = text.Type;
 
@@ -43,13 +43,15 @@ public class TextTypeShapeTests
         await using var app = new global::app.@this("/tmp/text-miss-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         var ctx = app.actor.list.User.Context;
         var grid = new global::app.type.table.@this(new[] { "name" },
-            new IReadOnlyDictionary<string, object?>[] { new Dictionary<string, object?> { ["name"] = "Ada" } }, "csv");
+            new IReadOnlyDictionary<string, object?>[] { new Dictionary<string, object?> { ["name"] = "Ada" } },
+            ctx.App.type.list[new global::app.type.@this("table", "csv"), ctx]);
         await ctx.Variable.Set("t", new global::app.data.@this("t", grid, context: ctx));
 
         var ex = await Assert.That(async () => await ctx.Rendered("rows: %t.nope%"))
-            .Throws<global::app.error.VariableNotFoundException>();
+            .Throws<global::app.error.AppException>();
 
-        await Assert.That(ex!.Message).Contains("(a table)");
+        await Assert.That(ex!.Error.Key).IsEqualTo("VariableNotFound");
+        await Assert.That(ex.Message).Contains("(a table)");
         await Assert.That(ex.Message).DoesNotContain("(a this)");
     }
 

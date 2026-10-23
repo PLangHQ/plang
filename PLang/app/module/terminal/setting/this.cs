@@ -6,12 +6,15 @@ namespace app.module.terminal.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
-    /// <summary>A settings class is a type but never LLM vocabulary (774) — kept out of the catalog.</summary>
+    /// <summary>Born holding its type — the app's list hands it its own class.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
+
+    /// <summary>A settings class is a type but never LLM vocabulary — kept out of the catalog.</summary>
     public static bool Internal => true;
 
     /// <summary>Environment variables set for every program, e.g. <c>{"WSL_UTF8":"1"}</c>. A step's own
     /// <c>Environment</c> is merged over these.</summary>
-    [Out, Store] public global::app.type.item.dict.@this Environment { get; set; } = new();
+    [Out, Store] public global::app.type.item.dict.@this Environment { get; set; }
 
     /// <summary>Text encoding of the program's output. Default utf-8.</summary>
     [Out, Store] public global::app.type.item.text.@this Encoding { get; set; } = "utf-8";

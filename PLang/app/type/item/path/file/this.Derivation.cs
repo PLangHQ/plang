@@ -9,7 +9,7 @@ namespace app.type.item.path.file;
 /// segments these verbs introduce via <c>PathHelper.Combine</c> are
 /// resolved before the derived path is stored. Each derived path carries typed
 /// text derived from this path's typed text by the same math, so it shows as the
-/// developer would have written it — never the install root.
+/// developer would have written it — never the install root — and holds this path's type.
 /// </summary>
 public sealed partial class @this
 {
@@ -19,7 +19,7 @@ public sealed partial class @this
         {
             var dir = PathHelper.GetDirectoryName(Absolute);
             if (string.IsNullOrEmpty(dir)) return this;
-            return new @this(dir) { Raw = TypedParent };
+            return new @this(dir, Type) { Raw = TypedParent };
         }
     }
 
@@ -32,14 +32,14 @@ public sealed partial class @this
     public override global::app.type.item.path.@this WithExtension(string extension)
     {
         ArgumentNullException.ThrowIfNull(extension);
-        return new @this(PathHelper.ChangeExtension(Absolute, extension)) { Raw = PathHelper.ChangeExtension(Raw, extension) };
+        return new @this(PathHelper.ChangeExtension(Absolute, extension), Type) { Raw = PathHelper.ChangeExtension(Raw, extension) };
     }
 
     public override global::app.type.item.path.@this Combine(string child)
     {
         ArgumentException.ThrowIfNullOrEmpty(child);
         // Under "." (the goal folder) the typed child is the child itself.
-        return new @this(PathHelper.Combine(Absolute, child))
+        return new @this(PathHelper.Combine(Absolute, child), Type)
             { Raw = Raw is "" or "." ? child : PathHelper.Combine(Raw, child) };
     }
 

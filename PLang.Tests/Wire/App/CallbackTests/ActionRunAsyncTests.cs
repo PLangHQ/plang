@@ -19,7 +19,7 @@ public class ActionRunAsyncTests
     {
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var action = context.Action("variable.set(Name=%v%, Value=\"ok\")");
+        var action = await context.Action("variable.set(Name=%v%, Value=\"ok\")");
         var result = await action.Start(context);
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("v"))).IsEqualTo("ok");

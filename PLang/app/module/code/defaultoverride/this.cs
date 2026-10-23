@@ -10,16 +10,11 @@ namespace app.module.code.defaultoverride;
 /// </summary>
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    protected internal override global::app.type.@this Type => new(typeof(@this));
+    /// <summary>A captured override, born holding <paramref name="type"/> — the app's.</summary>
+    public @this(global::app.type.@this type) : base(type) { }
 
     /// <summary>A structure, not a single-token leaf.</summary>
     public override bool IsLeaf => false;
-
-    /// <summary>Self-write: the tagged fields, the View selecting the set.</summary>
-    public override System.Threading.Tasks.ValueTask Output(
-        global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-        => OutputTagged(writer, mode, context);
 
     [Store, Out]
     public string TypeName { get; init; } = "";
@@ -32,5 +27,5 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The pure core — an override passes through; nothing else converts into one.</summary>
     public static @this? Create(object? raw) => raw as @this;
 
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data) => Create(raw);
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => Create(raw);
 }

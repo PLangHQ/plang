@@ -36,7 +36,7 @@ public enum Verb
 /// <para>Permission is a fundamental PLang value (an <c>item</c>), not a path
 /// thing: it <i>references</i> a resource (a <see cref="Path"/> of any scheme —
 /// <c>file://</c>, <c>http://</c>, …) but is an authorization in its own right.
-/// It owns its wire form via <see cref="Write"/>/<see cref="Create"/> — no
+/// It owns its wire form via <see cref="Output"/>/<see cref="Create"/> — no
 /// reflection, no Normalize.</para>
 ///
 /// <para>Identity is (Actor + Path + Verbs); the persistence root is the
@@ -58,7 +58,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [Out, Store] public IReadOnlySet<Verb> Verbs { get; }
     [Out, Store] public Match Match { get; }
 
-    public @this(string Actor, string Path, IReadOnlySet<Verb> Verbs, Match Match)
+    /// <summary>A grant, born holding <paramref name="type"/> — the app's permission.</summary>
+    public @this(string Actor, string Path, IReadOnlySet<Verb> Verbs, Match Match, global::app.type.@this type) : base(type)
     {
         this.Actor = Actor;
         this.Path = Path;
@@ -70,9 +71,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static IReadOnlySet<Verb> AllVerbs { get; } =
         new HashSet<Verb> { Verb.read, Verb.write, Verb.delete, Verb.execute };
 
-    /// <summary>A request for a single verb against one resource.</summary>
-    public static @this Request(string actor, string path, Verb verb, Match match = Match.exact)
-        => new(actor, path, new HashSet<Verb> { verb }, match);
+    /// <summary><paramref name="actor"/>'s request for a single verb against one resource.</summary>
+    public static @this Request(global::app.actor.@this actor, string path, Verb verb, Match match = Match.exact)
+        => new(actor.Name, path, new HashSet<Verb> { verb }, match, actor.App.type.list[typeof(@this)]);
 
     // Value equality — two grants for the same actor/path/verb-set/match are
     // equal, which the permission-table dedup + the round-trip test rely on.
@@ -138,20 +139,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return Regex.IsMatch(candidate, rx.ToString());
     }
 
-    /// <summary>A grant writes its own form (<see cref="Write"/>) in every view.</summary>
-    public override System.Threading.Tasks.ValueTask Output(IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-    {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
-
+    /// <summary>A grant writes its own form in every view.</summary>
     /// <summary>
-    /// The grant owns its wire form: <c>{actor, path, match, verbs:[…]}</c>. No
+    /// The grant owns its wire form: <c>{actor, path, match, verbs:[…]}</c>, in every view. No
     /// reflection — the writer never type-switches on it (OBP Rule 9). Symmetric
     /// with <see cref="Create"/>.
     /// </summary>
-    public override void Write(IWriter w)
+    protected internal override System.Threading.Tasks.ValueTask Write(IWriter w)
     {
         w.BeginObject();
         w.Name("actor"); w.String(Actor);
@@ -162,14 +156,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         foreach (var v in Verbs) w.String(v.ToString());
         w.EndArray();
         w.EndObject();
+        return default;
     }
 
     /// <summary>
-    /// Reconstructs a grant from its own <see cref="Write"/> shape (the wire dict
+    /// Reconstructs a grant from its own <see cref="Output"/> shape (the wire dict
     /// <c>{actor, path, match, verbs:[…]}</c>). Pass-through when the value already
     /// is a grant; declines anything else.
     /// </summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
         if (value is @this self) return self;
         if (value is not global::app.type.item.dict.@this dict)
@@ -192,6 +187,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 if (entry.Peek() is Text t && System.Enum.TryParse<Verb>(t.ToString(), ignoreCase: true, out var v))
                     verbs.Add(v);
 
-        return new @this(actor, path, verbs, match);
+        return new @this(actor, path, verbs, match, context!.App.type.list[typeof(@this)]);
     }
 }

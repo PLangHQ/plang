@@ -84,15 +84,15 @@ internal sealed class Mp4
     // the boxes named <paramref name="type"/> directly inside d[start..end]: where each one's body starts and ends
     private static List<(int start, int end)> Inside(byte[] d, int start, int end, string type)
     {
-        var found = new List<(int, int)>();
+        var boxes = new List<(int, int)>();
         for (var at = start; at + 8 <= end;)
         {
             var (t, s, e) = Box(d, at);
             if (e > end || e <= at) break;
-            if (t == type) found.Add((s, e));
+            if (t == type) boxes.Add((s, e));
             at = e;
         }
-        return found;
+        return boxes;
     }
 
     /// <summary>A media segment's samples of the video track, in decode order.</summary>

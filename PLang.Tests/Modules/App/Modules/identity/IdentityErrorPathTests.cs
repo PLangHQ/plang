@@ -26,7 +26,7 @@ public class IdentityErrorPathTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_iderr_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).TestSigning();
+        _app = new global::app.@this(_tempDir).TestSigning().Consenting();
     }
 
     [After(Test)]
@@ -281,7 +281,7 @@ public class IdentityErrorPathTests
     [Test]
     public async Task GetAll_DataSourceFails_ReturnsError()
     {
-        SwapDataSource(_app, new FailingGetAllDataSource());
+        SwapDataSource(_app, new FailingGetAllDataSource(_app.actor.list.User.Context));
 
         var handler = new list(Ctx);
         await handler.Attach(null, Ctx);
@@ -355,7 +355,7 @@ public class IdentityErrorPathTests
     private class FailingSaveDataSource : global::app.store.@this
     {
         private readonly global::app.store.@this _inner;
-        public FailingSaveDataSource(global::app.store.@this inner) => _inner = inner;
+        public FailingSaveDataSource(global::app.store.@this inner) : base(inner.Type) => _inner = inner;
         protected override string Kind => "failing";
 
         public override Task<global::app.data.@this<T>> Get<T>(string table, string key) => _inner.Get<T>(table, key);
@@ -363,7 +363,7 @@ public class IdentityErrorPathTests
         public override Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(
                 new SettingsError("Simulated save failure", "IOError", 500)
-                { TableName = table, KeyName = key }));
+                { TableName = table, KeyName = key }, data.Context));
         public override Task<Data> Remove(string table, string key) => _inner.Remove(table, key);
         public override Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key) => _inner.Exists(table, key);
         public override Task<global::app.data.@this<global::app.type.item.list.@this>> Tables() => _inner.Tables();
@@ -375,19 +375,22 @@ public class IdentityErrorPathTests
     /// </summary>
     private class FailingGetAllDataSource : global::app.store.@this
     {
+        private readonly global::app.actor.context.@this _ctx;
+        public FailingGetAllDataSource(global::app.actor.context.@this ctx)
+            : base(ctx.App.type.list[new global::app.type.@this("store", "failing"), ctx]) => _ctx = ctx;
         protected override string Kind => "failing";
         public override Task<global::app.data.@this<T>> Get<T>(string table, string key)
-            => Task.FromResult(global::app.data.@this<T>.FromError(new SettingsError("Simulated failure")));
+            => Task.FromResult(global::app.data.@this<T>.FromError(new SettingsError("Simulated failure"), _ctx));
         public override Task<global::app.data.@this<global::app.type.item.list.@this>> GetAll<T>(string table)
-            => Task.FromResult(global::app.data.@this<global::app.type.item.list.@this>.FromError(new SettingsError("Simulated GetAll failure")));
+            => Task.FromResult(global::app.data.@this<global::app.type.item.list.@this>.FromError(new SettingsError("Simulated GetAll failure"), _ctx));
         public override Task<Data> Set(string table, string key, Data data)
-            => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
+            => Task.FromResult(Data.FromError(new SettingsError("Simulated failure"), _ctx));
         public override Task<Data> Remove(string table, string key)
-            => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
+            => Task.FromResult(Data.FromError(new SettingsError("Simulated failure"), _ctx));
         public override Task<global::app.data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key)
-            => Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.FromError(new SettingsError("Simulated failure")));
+            => Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.FromError(new SettingsError("Simulated failure"), _ctx));
         public override Task<global::app.data.@this<global::app.type.item.list.@this>> Tables()
-            => Task.FromResult(global::app.data.@this<global::app.type.item.list.@this>.FromError(new SettingsError("Simulated failure")));
+            => Task.FromResult(global::app.data.@this<global::app.type.item.list.@this>.FromError(new SettingsError("Simulated failure"), _ctx));
         public override void Dispose() { }
     }
 }

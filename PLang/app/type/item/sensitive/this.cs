@@ -14,7 +14,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     public static string Shape => "string";
 
-    public @this(string characters) => Characters = characters;
+    /// <summary>Characters nobody should see, born holding <paramref name="type"/> — the app's sensitive.</summary>
+    public @this(string characters, global::app.type.@this type) : base(type) => Characters = characters;
 
     /// <summary>The characters, for code that must send them — never shown.</summary>
     internal string Characters { get; }
@@ -25,16 +26,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>A sensitive value says what it is; the writer says how it shows — whole in plang's own store, masked
     /// elsewhere.</summary>
-    public override void Write(global::app.type.format.IWriter w) => w.Sensitive(Characters);
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.Sensitive(Characters); return default; }
 
     public override string ToString() => Masked;
 
-    /// <summary>A sensitive value passes through; a text or characters become one.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data) => raw switch
+    /// <summary>A sensitive value passes through; a text or characters become one, born holding the app's type.</summary>
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data) => raw switch
     {
         @this sensitive => sensitive,
-        global::app.type.item.@this { RawText: { } text } => new @this(text),
-        string text => new @this(text),
+        global::app.type.item.@this { RawText: { } text } => new @this(text, data.Context!.App.type.list[typeof(@this)]),
+        string text => new @this(text, data.Context!.App.type.list[typeof(@this)]),
         _ => null,
     };
 }

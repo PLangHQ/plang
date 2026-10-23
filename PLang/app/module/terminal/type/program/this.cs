@@ -27,14 +27,15 @@ public sealed partial class @this(IProgram asked)
     /// <summary>The hold on it, when the step gives it permissions.</summary>
     internal Sandbox? Sandbox { get; private set; }
 
-    /// <summary>A start trusted by its origin (579): an os goal naming it all.</summary>
+    /// <summary>A start trusted by its origin: an os goal naming it all.</summary>
     internal bool Trusted { get; private set; }
 
     /// <summary>It gets a pipe pair beside its standard streams (fd 3 in, fd 4 out).</summary>
     internal bool Pipe { get; private set; }
 
-    /// <summary>The terminal's settings it runs by: the actor's, or the defaults for a start trusted by its origin.</summary>
-    internal setting.@this Setting { get; private set; } = new();
+    /// <summary>The terminal's settings it runs by: the actor's, or the defaults for a start trusted by its origin —
+    /// read by <see cref="Prepare"/>, before it runs.</summary>
+    internal setting.@this Setting { get; private set; } = null!;
 
     /// <summary>The program found and permitted, with its arguments, environment and folder, held when the step gives
     /// it permissions; or why not (null when ready).</summary>
@@ -43,7 +44,7 @@ public sealed partial class @this(IProgram asked)
         var context = asked.Context;
         var permission = asked.Permission;
         // what the step wrote, before it is read: a %ref% names permissions even when it holds none
-        var named = permission?.Peek() is { } written and not global::app.type.item.@null.@this ? written : null;
+        var named = permission?.Peek() is { } item and not global::app.type.item.@null.@this ? item : null;
         var given = permission == null ? null : await permission.Value();
         // permissions named but not read (one that is no permission, a %ref% holding none) stop the start — a step that
         // gives a program permissions never runs it free; to run free, the step leaves Permission out
@@ -52,26 +53,26 @@ public sealed partial class @this(IProgram asked)
         if (given == null && named != null)
             return context.Error(new ActionError(
                 $"The step gives the program permissions, but {named} holds none — leave Permission out to run it free.", "PermissionInvalid", 400));
-        if (await Found(held: given != null) is { } failed) return failed;
-        // a start trusted by its origin runs by the terminal's defaults, none of the actor's settings (579)
-        Setting = Trusted ? new() : context.Setting.Of<setting.@this>();
+        if (await Locate(sandbox: given != null) is { } failed) return failed;
+        // a start trusted by its origin runs by the terminal's defaults, none of the actor's settings
+        Setting = Trusted ? new(context.App.type.list[typeof(setting.@this)]) : await context.Setting.Get<setting.@this>();
         if (given == null) return null;
         var (sandbox, refused) = await Sandbox.Of(given.Rows(context), File!, context);
         Sandbox = sandbox;
         return sandbox == null ? refused : null;
     }
 
-    private async Task<Data?> Found(bool held)
+    private async Task<Data?> Locate(bool sandbox)
     {
         var context = asked.Context;
         var (app, parameter, environment, workingDirectory, clean, keep) =
             (asked.App, asked.Parameter, asked.Environment, asked.WorkingDirectory, asked.Clean, asked.Keep);
         // the step names what it starts itself when the program, its arguments, environment, folder, whether it is clean
-        // and what it keeps are all written in it — no variable but the running app's anchors (%!app.AbsolutePath%),
-        // nothing its caller handed it: only then may a goal that ships with plang start it unasked (decision 579; any
+        // and what it keeps are all written in it — no variable but the running app's anchors (%!app.filesystem.root%),
+        // nothing its caller handed it: only then may a goal that ships with plang start it unasked (any
         // other variable there is the caller's, and is asked as the caller)
         static bool Written(Data? given)
-            => given?.Peek() is not { } held || held.Variable.All(global::app.type.item.path.@this.IsAnchor);
+            => given?.Peek() is not { } item || item.Variable.All(global::app.type.item.path.@this.IsAnchor);
         var named = Written(app) && Written(parameter) && Written(environment) && Written(workingDirectory)
             && Written(clean) && Written(keep);
         var cleanStart = clean != null && (await clean.Value())?.Value == true;
@@ -94,15 +95,15 @@ public sealed partial class @this(IProgram asked)
                 }
 
         // what a clean start keeps of plang's own environment: names, each a plain variable name, never a value
-        var kept = keep == null || !await keep.ToBooleanAsync() ? [] : ((await keep.Value())!.Clr<List<object?>>() ?? [])
+        var names = keep == null || !await keep.ToBooleanAsync() ? [] : ((await keep.Value())!.Clr<List<object?>>() ?? [])
             .Select(k => k?.ToString() ?? "").ToList();
-        if (kept.FirstOrDefault(k => !System.Text.RegularExpressions.Regex.IsMatch(k, "^[A-Za-z_][A-Za-z0-9_]*$")) is { } bad)
+        if (names.FirstOrDefault(k => !System.Text.RegularExpressions.Regex.IsMatch(k, "^[A-Za-z_][A-Za-z0-9_]*$")) is { } bad)
             return context.Error(new ActionError($"Keep names variables to keep, by name: '{bad}' is no variable name.", "KeepInvalid", 400));
 
         var name = (await app.Value())!.Clr<string>()!;
         // a name with a folder in it is a plang path; a bare name is the terminal's to find, on this machine's PATH
         var program = name.Contains('/') || name.Contains('\\')
-            ? FilePath.Resolve(name, context) is var given && context.FileSystem.IsFile(given) ? given : null
+            ? FilePath.Resolve(name, context) is var given && context.Filesystem.IsFile(given) ? given : null
             : asked.Terminal.Find(name, context);
         if (program == null)
             return context.Error(new ActionError($"Program not found: {name}. Not a path, and not on PATH.", "ProgramNotFound", 404));
@@ -116,19 +117,19 @@ public sealed partial class @this(IProgram asked)
             if (readable.Exits || !readable.Success) return readable;
         }
 
-        var info = new ProcessStartInfo(program.Absolute) { WorkingDirectory = folder?.Absolute ?? context.App.AbsolutePath };
+        var info = new ProcessStartInfo(program.Absolute) { WorkingDirectory = folder?.Absolute ?? context.App.filesystem.root.Absolute };
         var parameters = parameter == null || !await parameter.ToBooleanAsync() ? null : (await parameter.Value())!.Clr<List<object?>>();
         foreach (var p in parameters ?? []) info.ArgumentList.Add(p?.ToString() ?? "");
 
         // a program held to permissions, or started clean, starts with none of plang's own environment (its keys among
         // it): only the sandbox's base, what it keeps of plang's by name, and what the step gives it
-        if (held || cleanStart)
+        if (sandbox || cleanStart)
         {
-            var own = new Dictionary<string, string?>(info.Environment);
+            var variables = new Dictionary<string, string?>(info.Environment);
             info.Environment.Clear();
             foreach (var (key, value) in Sandbox.Environment) info.Environment[key] = value;
-            foreach (var variable in kept)
-                if (own.TryGetValue(variable, out var value) && value != null) info.Environment[variable] = value;
+            foreach (var variable in names)
+                if (variables.TryGetValue(variable, out var value) && value != null) info.Environment[variable] = value;
                 else if (context.App.Debug is { } debug) await debug.Write($"{program.Name}: plang has no {variable} to keep");
         }
         // a start trusted by its origin (an os goal naming it all) takes nothing of the actor's settings that changes what
@@ -136,11 +137,11 @@ public sealed partial class @this(IProgram asked)
         // inside what started unasked. Its environment is plang's own and what the step names, nothing else. A clean
         // start takes no environment setting either.
         var trusted = named && global::app.type.item.path.@this.AskedByOs(context);
-        var env = trusted || cleanStart ? new() : context.Setting.Of<setting.@this>().Environment.Clr<Dictionary<string, object?>>() ?? new();
+        var env = trusted || cleanStart ? new() : (await context.Setting.Get<setting.@this>()).Environment.Clr<Dictionary<string, object?>>() ?? new();
         // a step that writes no Environment reads the setting's through its property — for a trusted or clean start that
         // is the same side door: it takes only what the step itself wrote
-        var written = asking?.Property["Environment"] != null || environment?.Peek() is { IsNull: false } && asking == null;
-        if (environment != null && (written || !(trusted || cleanStart)) && await environment.ToBooleanAsync())
+        var isStep = asking?.Property["Environment"] != null || environment?.Peek() is { IsNull: false } && asking == null;
+        if (environment != null && (isStep || !(trusted || cleanStart)) && await environment.ToBooleanAsync())
             foreach (var (key, value) in (await environment.Value())!.Clr<Dictionary<string, object?>>() ?? new())
                 env[key] = value;
         foreach (var (key, value) in env) info.Environment[key] = value?.ToString();
@@ -163,12 +164,22 @@ public sealed partial class @this(IProgram asked)
         info.StandardInputEncoding = new UTF8Encoding(false);
     }
 
-    /// <summary>It is a plang told to speak plang's own format (<c>--app.type.format=…</c>, a name of that format).</summary>
-    internal bool SpeaksPlang(Context context)
+    /// <summary>It is a plang told to speak plang's own format on its console — its command line read as a plang reads
+    /// its own (<c>--channel.setting.format=plang</c>, with or without <c>app.</c>, or the setting's dict).</summary>
+    internal async Task<bool> IsPlang(Context context)
     {
-        const string flag = "--app.type.format=";
-        var named = Info!.ArgumentList.FirstOrDefault(a => a.StartsWith(flag, StringComparison.OrdinalIgnoreCase))?[flag.Length..];
-        return named != null && ReferenceEquals(context.App.type.Named(named), process.@this.PlangFormat(context));
+        // what each flag of the child's line sets, read by the setting it names (as the child reads its own line), nothing
+        // written; a flag that is no setting (a mode word), or one its setting refuses, is the child's to refuse when it
+        // starts, not this read's — so each argument (whole, as the program is handed it) is a start of its own, and the
+        // last that sets the channel's format says which
+        var address = context.Setting.Address(typeof(global::app.channel.setting.@this), "format");
+        global::app.data.@this? format = null;
+        foreach (var argument in Info!.ArgumentList)
+            if (await global::app.start.@this.Parse([argument]).Values(context.Setting, context) is { Success: true } values
+                && (await values.Value())!.Get(address, context) is { } value)
+                format = value;
+        return format != null && context.App.type.list[typeof(global::app.channel.format.@this)].Make(format.Peek(), format)
+            is global::app.channel.format.@this { IsPlang: true };
     }
 
     public override string ToString() => File?.Absolute ?? asked.App.Peek()?.ToString() ?? "a program";

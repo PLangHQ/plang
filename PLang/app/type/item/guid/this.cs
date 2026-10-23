@@ -23,42 +23,43 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
-    public override void Write(global::app.type.format.IWriter w) => w.Guid(Value);
-    protected internal override global::app.type.@this Type => new(typeof(@this));
+    protected internal override System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter w) { w.Guid(Value); return default; }
 
-    public @this(System.Guid value) { Value = value; }
+    /// <summary>Born holding the app's <c>guid</c> type its maker hands it.</summary>
+    public @this(System.Guid value, global::app.type.@this type) : base(type) { Value = value; }
 
     /// <summary>THE PURE CORE — a <c>guid</c> passes through; a CLR <see cref="System.Guid"/> or a
-    /// guid string (canonical/braced/hyphenless) parses; anything else declines (<c>null</c>). A
-    /// text-wrapped literal unwraps through <c>Clr&lt;object&gt;()</c>. Context-free (the parse is
-    /// <c>Guid.TryParse</c>). Shared by the ICreate courier and comparison coercion.</summary>
-    public static @this? Create(object? raw)
+    /// guid string (canonical/braced/hyphenless) parses into a guid of <paramref name="type"/>; anything else
+    /// declines (<c>null</c>). A text-wrapped literal unwraps through <c>Clr&lt;object&gt;()</c>. Shared by the
+    /// ICreate courier and comparison coercion.</summary>
+    public static @this? Create(object? raw, global::app.type.@this type)
     {
         if (raw is @this self) return self;
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
         return value switch
         {
-            System.Guid g => new @this(g),
-            string s when System.Guid.TryParse(s.Trim(), out var v) => new @this(v),
+            System.Guid g => new @this(g, type),
+            string s when System.Guid.TryParse(s.Trim(), out var v) => new @this(v, type),
             _ => null,
         };
     }
 
     /// <summary>The ICreate courier face — delegates to the pure core; on decline lands the reason
     /// on <paramref name="data"/> (a string that didn't parse vs a wrong type).</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
-        if (Create(value) is { } built) return built;
+        if (value is @this self) return self;
+        // made by the type that asks; with none (a read that names no app) no guid is made
+        if (type is not null && Create(value, type) is { } guid) return guid;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
             ? new global::app.error.@this($"Cannot parse '{s}' as guid — expected a 36-char guid (e.g. 550e8400-e29b-41d4-a716-446655440000).", "GuidParseFailed", 400)
             : new global::app.error.@this($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to guid.", "GuidConversionFailed", 400));
         return null;
     }
 
-    // Both directions are lossless; the wrapper owns its conversions. Guid is a
-    // value type so `g == null` is unambiguous (matches only @this==@this).
+    // Out to C# only: a guid into plang is made by the app's type. Guid is a value type so `g == null` is
+    // unambiguous (matches only @this==@this).
     public static implicit operator System.Guid(@this g) => g.Value;
-    public static implicit operator @this(System.Guid g) => new(g);
 
     public static bool operator ==(@this? a, @this? b) => a is null ? b is null : a.Equals(b);
     public static bool operator !=(@this? a, @this? b) => !(a == b);
@@ -83,7 +84,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the pure <c>Create</c> core (guid text → guid). Non-coercible → Incomparable.</summary>
     protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
     {
-        var b = other as @this ?? Create(other);
+        var b = other as @this ?? Create(other, Type);
         if (b is null) return new(global::app.data.Comparison.Incomparable);
         var c = Value.CompareTo(b.Value);
         return new(c < 0 ? global::app.data.Comparison.Less

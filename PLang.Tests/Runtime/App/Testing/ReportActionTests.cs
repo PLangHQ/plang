@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Tester;
 /// Three output surfaces: console (always), file artifact (format-selected), and
 /// coverage tables (console). Output directory is .test/ at the app root — users
 /// narrow focus via include/exclude, report stays predictable.
-/// Format selector: --test={"format":"json"|"junit"}. Default "json".
+/// Format selector: --test.setting={"format":"json"|"junit"}. Default "json".
 /// File format is single-select; if users need both, they run twice.
 /// Failure rendering: Expected/Actual + Variables snapshot block.
 /// </summary>
@@ -46,14 +46,14 @@ public class ReportActionTests
 
     private global::app.test.@this NewTest(string name, global::app.test.Status status, global::app.error.@this? error = null, string? output = null)
     {
-        var goal = new Goal
+        var goal = new Goal(_app.type.list)
         {
             Name = name,
             Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", _app.actor.list.User.Context),
             Hash = "deadbeef",
             BuilderVersion = "v1"
         };
-        var test = new global::app.test.@this() { Goal = goal };
+        var test = new global::app.test.@this(_app.type.list) { Goal = goal };
         if (output != null) test.Stdout = output;
         test.Complete(status, error);
         return test;
@@ -71,7 +71,7 @@ public class ReportActionTests
     public async Task Report_Console_AlwaysWritesSummary_RegardlessOfFormat()
     {
         _app.test.list.Add(NewTest("X", global::app.test.Status.Pass));
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
 
         await Report();
 
@@ -114,8 +114,8 @@ public class ReportActionTests
     public async Task Report_NamesTheGoal_WithoutWritingItsProgram()
     {
         var test = NewTest("X", global::app.test.Status.Pass);
-        var steps = new global::app.goal.step.list.@this();
-        steps.Add(new global::app.goal.step.@this { Goal = test.Goal, Text = "write out %response%" });
+        var steps = new global::app.goal.step.list.@this(_app.type.list[typeof(global::app.goal.step.list.@this)]);
+        steps.Add(new global::app.goal.step.@this(_app.type.list) { Goal = test.Goal, Text = "write out %response%" });
         test.Goal.Step = steps;
         _app.test.list.Add(test);
 
@@ -127,12 +127,12 @@ public class ReportActionTests
         await Assert.That(json).DoesNotContain("%response%");
     }
 
-    // --test={"format":"junit"}: .test/junit.xml is written, .test/results.json is NOT.
+    // --test.setting={"format":"junit"}: .test/junit.xml is written, .test/results.json is NOT.
     // Single-select format — each file artifact is either-or per run.
     [Test]
     public async Task Report_Format_Junit_WritesJunitXml()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
         _app.test.list.Add(NewTest("X", global::app.test.Status.Pass));
 
         await Report();
@@ -149,7 +149,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_JUnit_TestNameWithXmlSpecialChars_Escaped()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
         _app.test.list.Add(NewTest("asserts <x> & <y>", global::app.test.Status.Pass));
 
         await Report();
@@ -211,8 +211,8 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_FailStatus_EmitsFailureElement()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
-        var err = new AssertionError("Expected: 1, Actual: 2", 1, 2, "mismatch");
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
+        var err = new AssertionError("Expected: 1, Actual: 2", "1", "2", "mismatch");
         _app.test.list.Add(NewTest("Failing", global::app.test.Status.Fail, err));
 
         await Report();
@@ -230,7 +230,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_TimeoutStatus_EmitsFailureWithTypeTimeout()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
         _app.test.list.Add(NewTest("SlowTest", global::app.test.Status.Timeout));
 
         await Report();
@@ -247,7 +247,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_SkippedStatus_EmitsSkippedElement()
     {
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
         var run = NewTest("Filtered", global::app.test.Status.Skipped);
         run.StatusReason = "excluded by tag";
         _app.test.list.Add(run);
@@ -268,7 +268,7 @@ public class ReportActionTests
     public async Task Report_Junit_StaleStatus_EmitsErrorWithReason()
     {
         // A test that could not load is an error in junit — never a quiet skip.
-        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        await _app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" }, _app.actor.list.System.Context);
         var run = NewTest("StaleTest", global::app.test.Status.Stale);
         run.StatusReason = "goal hash changed since build";
         _app.test.list.Add(run);
@@ -293,7 +293,7 @@ public class ReportActionTests
         await vars.Set("idx", 1);
         await vars.Set("items", new List<int> { 1, 2, 3 });
         await vars.Set("maybe", null);
-        var err = new AssertionError("Expected: 1, Actual: 2", 1, 2, null);
+        var err = new AssertionError("Expected: 1, Actual: 2", "1", "2", null);
         err.Variables = vars.Snapshot();
         _app.test.list.Add(NewTest("Failing", global::app.test.Status.Fail, err));
 

@@ -22,7 +22,7 @@ public class ElseWithoutIfTests : System.IAsyncDisposable
 
     private async Task<global::app.error.@this?> Validate(params global::app.goal.step.action.@this[] actions)
     {
-        var list = new global::app.goal.step.action.list.@this();
+        var list = new global::app.goal.step.action.list.@this(app.type.list[typeof(global::app.goal.step.action.list.@this)]);
         foreach (var a in actions) list.Add(a);
         return await list.Validate(app.actor.list.System.Context);
     }
@@ -62,10 +62,38 @@ public class ElseWithoutIfTests : System.IAsyncDisposable
     private global::app.goal.step.action.@this WithBody(global::app.goal.step.action.@this condition, string text,
         params global::app.goal.step.action.@this[] body)
     {
-        var step = new Step { Text = text };
+        var step = new Step(app.type.list) { Text = text };
         foreach (var a in body) step.Code.Add(a);
         condition.Child.Add(step);
         return condition;
+    }
+
+    // A clause after a condition is the condition's (its evaluation's error): `if %d% == %n% then … on error call
+    // Caught` chains. A step action after it is still a body beside it.
+    private global::app.goal.step.action.@this OnError() =>
+        Make.Action(app.actor.list.User.Context, "on", "error", ("Ignore", true));
+
+    [Test]
+    public async Task AClauseAfterAnIf_IsTheIfs()
+    {
+        var error = await Validate(WithBody(If(), "a", Write("a")), OnError());
+        await Assert.That(error?.Key).IsNotEqualTo("BodyBesideCondition");
+        await Assert.That(error).IsNull();
+    }
+
+    [Test]
+    public async Task AClauseAfterAnElseIfOrAnElse_IsTheirs()
+    {
+        var error = await Validate(WithBody(If(), "a", Write("a")), WithBody(ElseIf(), "b", Write("b")), OnError(),
+            WithBody(Else(), "c", Write("c")), OnError());
+        await Assert.That(error).IsNull();
+    }
+
+    [Test]
+    public async Task AStepActionAfterAnIfAndItsClause_IsStillBesideIt()
+    {
+        var error = await Validate(WithBody(If(), "a", Write("a")), OnError(), Write("beside"));
+        await Assert.That(error!.Key).IsEqualTo("BodyBesideCondition");
     }
 
     // gpt-5.4-mini, child eval run 3, inline_if_then_step: `if %n% > 5, call Big` answered flat.

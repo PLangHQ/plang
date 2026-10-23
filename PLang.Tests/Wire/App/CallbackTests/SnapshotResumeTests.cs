@@ -19,10 +19,10 @@ public class SnapshotResumeTests
     private static string Formal(object value)
         => value is string s && s.Length > 1 && s.StartsWith('%') && s.EndsWith('%') ? s : System.Text.Json.JsonSerializer.Serialize(value);
 
-    private static Step SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
+    private static async Task<Step> SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
     {
-        var action = context.Action($"variable.set(Name=%{varName}%, Value={Formal(value)})");
-        var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
+        var action = await context.Action($"variable.set(Name=%{varName}%, Value={Formal(value)})");
+        var step = new Step(context.App.type.list) { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action = action.In(step);
         step.Code.Add(action);
         goal.Step.Add(step);
@@ -66,13 +66,13 @@ public class SnapshotResumeTests
         // one of its actions (synthesise suspension), snapshot, then Resume.
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
-        SetStep(context, goal, 0, "s0", "first");
-        var step1 = SetStep(context, goal, 1, "s1", "second");
+        var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
+        await SetStep(context, goal, 0, "s0", "first");
+        var step1 = await SetStep(context, goal, 1, "s1", "second");
         app.goal.list.Add(goal);
 
         // Push the action of step1 so the snapshot captures (stepIdx=1, actionIdx=0).
-        await using (var call = context.call.Push(step1.Code[0], context.Variable))
+        await using (var call = context.call.Push(step1.Code[0], await context.call.Setting(), context.Variable))
         {
             var snap = app.Snapshot(app.actor.list.User.Context);
             // Pop the call frame before Resume so Restore doesn't conflict.

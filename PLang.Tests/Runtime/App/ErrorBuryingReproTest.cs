@@ -5,8 +5,11 @@ namespace PLang.Tests.App;
 // captured a NullReferenceException), the conversion-failure wrapper
 // must NOT become the primary displayed error. The original global::app.error.@this
 // stays as primary; the conversion failure rides on its causing list.
-public class ErrorBuryingReproTest
+public class ErrorBuryingReproTest : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static System.NullReferenceException ThrownNRE()
     {
         try { object? x = null; var _ = x!.GetType(); return null!; }
@@ -21,7 +24,7 @@ public class ErrorBuryingReproTest
             "NullReferenceException", 500)
         { Exception = nre };
 
-        var d = new global::app.data.@this("!error", rootError);
+        var d = new global::app.data.@this("!error", rootError, context: app.actor.list.User.Context);
         var resolved = d.As<global::app.type.item.text.@this>(await d.Value<global::app.type.item.text.@this>());
 
         await resolved.IsFailure();
@@ -38,7 +41,7 @@ public class ErrorBuryingReproTest
     [Test] public async Task ErrorAskedAsItselfOrItem_PassesThrough()
     {
         var rootError = new global::app.error.ServiceError("the build failed", "BuildFailed", 500);
-        var d = new global::app.data.@this("!error", rootError);
+        var d = new global::app.data.@this("!error", rootError, context: app.actor.list.User.Context);
 
         await Assert.That(await d.Value<global::app.type.item.@this>()).IsSameReferenceAs(rootError);
         await Assert.That(rootError.Refuses(new global::app.type.@this(typeof(global::app.error.@this)), d)).IsFalse();
@@ -50,7 +53,7 @@ public class ErrorBuryingReproTest
     {
         var rootError = new global::app.error.ServiceError("the build failed", "BuildFailed", 500);
 
-        var d = new global::app.data.@this("!error", rootError);
+        var d = new global::app.data.@this("!error", rootError, context: app.actor.list.User.Context);
         var resolved = d.As<global::app.type.item.number.@this>(await d.Value<global::app.type.item.number.@this>());
 
         await resolved.IsFailure();

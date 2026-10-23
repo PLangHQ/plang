@@ -4,7 +4,7 @@
   "step": [
     {
       "index": 0,
-      "text": "call BuildGoal/Start goal=%goal%",
+      "text": "goal.call(Name=\"/system/builder/BuildGoal/Start\", Parameter=[{goal: %goal%}])",
       "line": {
         "number": 4
       },
@@ -27,28 +27,13 @@
               },
               "value": [{"name":"goal","type":{"name":"item","template":"plang"},"value":"%goal%","variable":[{"text":"%goal%","code":[{"variable":"goal"}]}]}]
             }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/system/builder/BuildGoal.goal",
-  "prPath": "/system/builder/.build/buildgoal.pr",
-  "hash": "dd1bd4b1906f7fa357c8e6c7dd2e3c750402da379fbb41e1f2ac67eb1ea166ae",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false
+  "file": "BuildGoal.goal",
+  "hash": "93cb68495a9518cf20db20a67b3717b6cb03750deaccab0c5f349bff970b6c72"
 }

@@ -8,7 +8,7 @@ namespace PLang.Tests.App;
 public class CurrentNodeTests
 {
     private static async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
-        => await new global::app.type.item.variable.parser.@this(text).Variable.Single().Start(ctx);
+        => await new global::app.type.item.variable.parser.@this(text, ctx.App.type.list).Variable.Single().Start(ctx);
 
     [Test] public async Task Brackets_PickAnActorByName()
     {
@@ -17,17 +17,18 @@ public class CurrentNodeTests
         await Assert.That(user.Peek()).IsSameReferenceAs(app.actor.list.User);
     }
 
-    // A dot: the type's facts first (%!goal.Name% is the type's name), then the current's member; .current reads the
-    // running one.
-    [Test] public async Task Dot_TheTypesFacts_ThenTheCurrentsMember()
+    // A dot reads the current's member (%!app.goal.Name% is the running goal's); .type is the concept's type, .current
+    // the running one.
+    [Test] public async Task Dot_TheCurrentsMember_ItsTypeByType()
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        var goal = new global::app.goal.@this { Name = "Checkout",
+        var goal = new global::app.goal.@this(ctx.App.type.list) { Name = "Checkout",
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
-        await using var frame = ctx.call.Push(goal);
+        await using var frame = ctx.call.Push(goal, await ctx.call.Setting());
 
-        await Assert.That((await (await Read("%!app.goal.Name%", ctx)).Value())?.ToString()).IsEqualTo("goal");
+        await Assert.That((await (await Read("%!app.goal.Name%", ctx)).Value())?.ToString()).IsEqualTo("Checkout");
+        await Assert.That((await (await Read("%!app.goal.type.name%", ctx)).Value())?.ToString()).IsEqualTo("goal");
         await Assert.That((await (await Read("%!app.goal.current.Name%", ctx)).Value())?.ToString()).IsEqualTo("Checkout");
         await Assert.That((await Read("%!app.goal.Path%", ctx)).Peek()).IsSameReferenceAs(goal.Path);
         // a name is not a member of the current actor: the dot never picks by name
@@ -81,7 +82,7 @@ public class CurrentNodeTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await ctx.Setting.Set("variable.set.setting.name", ctx.Ok("%x%"));
+        ctx.Setting.Set("variable.set.setting.name", ctx.Ok("%x%"));
         var read = await Read("%!module.variable.set.setting.name%", ctx);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("%x%");
     }
@@ -92,7 +93,7 @@ public class CurrentNodeTests
         var ctx = app.actor.list.User.Context;
         var dot = await Read("%!app.type.goal%", ctx);
         var bracket = await Read("%!app.type[\"goal\"]%", ctx);
-        await Assert.That(dot.Peek()).IsSameReferenceAs(app.goal);
-        await Assert.That(bracket.Peek()).IsSameReferenceAs(app.goal);
+        await Assert.That(dot.Peek()).IsSameReferenceAs(app.goal.type);
+        await Assert.That(bracket.Peek()).IsSameReferenceAs(app.goal.type);
     }
 }

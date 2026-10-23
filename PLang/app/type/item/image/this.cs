@@ -31,7 +31,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// through its own door). Any other value asks image to be born from it (a binding on image create or a
     /// provider may answer); when nothing makes an image of it, an error.</summary>
     public static async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
-        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
     {
         var value = await data.Value();
@@ -56,11 +56,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // Null until loaded — a path-backed image reads nothing until first content
     // access. A bytes-backed image sets this in the constructor.
     private byte[]? _bytes;
-    private string? _mime;
-
-    // The canonical kind ("png", "jpg", …) — a fact named at birth: from the creator's
-    // format registry for a path-born image, from the magic bytes or the wire otherwise.
-    private readonly global::app.type.kind.@this? _kind;
 
     // Imprinted strict-kind requirement (from `as image/<kind> strict`). When
     // set, the content must sniff to this kind the moment bytes are present —
@@ -81,18 +76,18 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// materializes at its Value door (the encode door loads first, which is right).</summary>
     public override byte[]? RawBytes => _bytes;
 
-    /// <summary>The image's mime — a fact set at birth (bytes with a known mime, or a path's
-    /// extension read through the creator's format registry) or at first load.</summary>
-    [global::app.Out, global::app.Store]
-    public string Mime => _mime ?? "application/octet-stream";
+    /// <summary>The image's mime — asked of its kind (the kind carries its format's MIME), so there is one
+    /// source: the image's own type. An image with no kind is opaque bytes.</summary>
+    [global::app.Out, global::app.Store, global::app.LlmBuilder]
+    public string Mime => Type.kind.Mime is { Count: > 0 } m ? m[0] : "application/octet-stream";
 
-    /// <summary>An image writes its own form (<see cref="Write"/>) in every view; it never loads while it
+    /// <summary>An image writes its own form in every view; it never loads while it
     /// writes.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    protected internal override async System.Threading.Tasks.ValueTask Write(global::app.type.format.IWriter writer)
     {
-        Write(writer);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
+        // An image not read writes where it is — never empty bytes.
+        if (_bytes == null && Path != null) { await Path.Output(writer); return; }
+        writer.Bytes(Bytes, Type.kind);
     }
 
     /// <summary>Opened to be written out: a path-backed image loads its bytes through its own door (as the
@@ -108,16 +103,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// The image writes its bytes; each writer shows them in its own way. An image not read yet writes its
     /// path.
     /// </summary>
-    public override void Write(global::app.type.format.IWriter writer)
-    {
-        // An image not read writes where it is — never empty bytes.
-        if (_bytes == null && Path != null) { Path.Write(writer); return; }
-        writer.Bytes(Bytes);
-    }
-
-    /// <summary>An image's entity: name "image", kind = the canonical kind named at birth.</summary>
-    protected internal override global::app.type.@this Type =>
-        new global::app.type.@this("image", typeof(@this)) { kind = _kind };
 
     /// <summary>
     /// Source path. Set for a path-backed image (content lazy-loads from here)
@@ -138,34 +123,46 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Lazy height — read on first access via SixLabors.ImageSharp.</summary>
     public int Height => _height ??= ProbeDimensions().h;
 
-    /// <summary>Bytes-backed: the content is already in hand (network fetch, base64 decode).</summary>
-    /// <summary>THE PURE CORE (context-free part) — an <c>image</c> passes through; a <c>byte[]</c>
-    /// declared <c>as image</c> becomes the image its magic bytes name (the declaration is the ask).
-    /// A string source needs the scheme registry (a context) and lives in the courier below; anything
-    /// else declines (<c>null</c>).</summary>
-    public static @this? Create(object? raw)
+    /// <summary>THE PURE CORE — an <c>image</c> passes through; a <c>byte[]</c> declared <c>as image</c> becomes the
+    /// image its magic bytes name (the declaration is the ask), born holding the app's type of that kind, asked of
+    /// <paramref name="context"/>'s types. A string source needs the scheme registry and lives in the courier below;
+    /// anything else declines (<c>null</c>).</summary>
+    public static @this? Create(object? raw, global::app.actor.context.@this context)
     {
         if (raw is @this self) return self;
         // A base64 → its DECODED bytes → an image (mime sniffed off the magic bytes). Before the
         // unwrap below: lowering a base64 to its payload STRING would then die in the scheme registry.
         if (raw is global::app.type.item.base64.@this b64)
-            return b64.RawBytes is { } bts ? FromBytes(bts) : null;
+            return b64.RawBytes is { } bts ? FromBytes(bts, context) : null;
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
-        return value is byte[] bytes ? FromBytes(bytes) : null;
+        return value is byte[] bytes ? FromBytes(bytes, context) : null;
     }
 
     /// <summary>The ICreate courier face — pass-through / byte[] via the core; a string is a path,
-    /// made by path's own courier, and the image is held over it. A non-string source declines silently;
+    /// made by path's own courier, and the image is held over it, holding what the step says: its kind as declared
+    /// (<c>as image/gif</c>), else the one its extension names (a <c>.png</c> is <c>image&lt;png&gt;</c>), else none;
+    /// strict as declared (<c>as image strict</c> over a <c>.png</c> is <c>{image, png, strict}</c>). A non-string
+    /// source declines silently;
     /// a location path declines (an unregistered scheme, an empty one) lands its reason on <paramref name="data"/>.
     /// A strict declaration (<c>as image/png strict</c>) is the image's own: imprinted at birth, checked now when
     /// the bytes are in hand (a mismatch declines onto <paramref name="data"/>), else when they load.</summary>
-    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? type, global::app.data.@this data)
     {
-        var image = Create(value)
-            ?? (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string
-                && global::app.type.item.path.@this.Create(value, null, data) is { } path ? new @this(path, data.Context) : null);
-        if (image == null || declared is not { Strict: true, kind.IsEmpty: false }) return image;
-        image.RequireStrictKind(declared.kind.Name);
+        var context = data.Context;
+        var image = Create(value, context);
+        if (image == null && ((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string
+            && global::app.type.item.path.@this.Create(value, null, data) is { } path)
+        {
+            // the kind as declared, else the extension's; strict as declared
+            var types = context.App.type.list;
+            var named = type is { kind.IsEmpty: false } ? type
+                : path.Kind(context) is { } extension && extension.Is("image") ? extension : types[typeof(@this)];
+            image = new @this(path, type is { Strict: true } && !named.Strict
+                ? types[new global::app.type.@this(named.Name, named.kind.IsEmpty ? null : named.kind.Name, strict: true), context]
+                : named);
+        }
+        if (image == null || type is not { Strict: true, kind.IsEmpty: false }) return image;
+        image.RequireStrictKind(type.kind.Name);
         if (image.Mismatch() is { } refused) { data.Fail(refused); return null; }
         return image;
     }
@@ -179,34 +176,28 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             "StrictKindMismatch", 400)
         : null;
 
-    /// <summary>Bytes-backed, no source: the content is in hand (base64 decode, the wire).
-    /// <paramref name="kind"/> is a fact the creator already has — sniffed off the magic
-    /// bytes or read off the wire; null when unknown.</summary>
-    public @this(byte[] bytes, string mime, string? kind = null)
-    {
-        _bytes = bytes ?? System.Array.Empty<byte>();
-        _mime = mime ?? "application/octet-stream";
-        _kind = kind is { Length: > 0 } ? new global::app.type.kind.@this(kind) : null;
-    }
+    /// <summary>Bytes-backed, no source: the content is in hand (base64 decode, the wire), born holding
+    /// <paramref name="type"/> — the app's <c>image&lt;kind&gt;</c> its maker names from the magic bytes or the
+    /// wire, the plain image type when unknown. The mime is asked of that kind, not stored.</summary>
+    public @this(byte[] bytes, global::app.type.@this type) : base(type)
+        => _bytes = bytes ?? System.Array.Empty<byte>();
 
     /// <summary>
     /// Path-backed: a lazy handle. <c>.Path</c> is set and <b>nothing is read</b>
     /// — the content materializes from the path on the first <see cref="Value"/>.
     /// The proving instance for reference-fundamental laziness (audio/video follow
-    /// the same shape). <paramref name="context"/> is the creator's, used once to name
-    /// the mime and the kind from the path's extension, and not kept.
+    /// the same shape). Born holding <paramref name="type"/>, the image type its maker names from the path's
+    /// extension.
     /// </summary>
-    public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
+    public @this(global::app.type.item.path.@this path, global::app.type.@this type) : base(type)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
-        _mime = path.Mime(context).ToString();
-        _kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null;
         history.Add(path);   // born from a path → `is path` from its history
     }
 
     /// <summary>Path-backed with the content already read (the file read keeps images eager).</summary>
-    public @this(byte[] bytes, global::app.type.item.path.@this path, global::app.actor.context.@this context)
-        : this(path, context)
+    public @this(byte[] bytes, global::app.type.item.path.@this path, global::app.type.@this type)
+        : this(path, type)
         => _bytes = bytes ?? System.Array.Empty<byte>();
 
     /// <summary>Imprint the strict kind this image's content must match (from `as image/<kind> strict`).</summary>
@@ -232,14 +223,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             {
                 data.Fail(read.Error ?? new global::app.error.@this(
                     $"could not read image from '{Path}'.", "ImageReadFailed", 400));
-                return Absent;
+                return data.Empty;
             }
             _bytes = (await read.Value())?.Value ?? System.Array.Empty<byte>();
             // Strict kind fires here, at byte-materialization — the set stayed lazy.
             if (Mismatch() is { } refused)
             {
                 data.Fail(refused);
-                return Absent;
+                return data.Empty;
             }
         }
         else if (_bytes == null)

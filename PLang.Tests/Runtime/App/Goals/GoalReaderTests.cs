@@ -44,7 +44,7 @@ public class GoalReaderTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var pr = await ctx.Pr(new global::app.goal.@this { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", ctx) });
+        var pr = await ctx.Pr(new global::app.goal.@this(app.type.list) { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", ctx) });
 
         var decoded = await app.type.list.Mime("application/plang-goal").Decode(System.Text.Encoding.UTF8.GetBytes(pr), ctx);
 

@@ -21,8 +21,8 @@ public class Stage5MessagesEndToEndTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-s5-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::app.@this(root).TestSigning();
-        app.actor.list.User.Channel.Register(new CannedChannel(answer));
+        var app = new global::app.@this(root).TestIdentity();
+        app.actor.list.User.Channel.Register(new CannedChannel(answer, app.actor.list.User.Context));
 
         // Simulate /apps/Email/system.sqlite living outside the app root.
         var foreignDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
@@ -36,10 +36,11 @@ public class Stage5MessagesEndToEndTests
     private sealed class CannedChannel : global::app.channel.@this
     {
         private readonly string _answer;
+        private readonly global::app.actor.context.@this _ctx;
         public int AskCount { get; private set; }
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             AskCount++;
@@ -49,22 +50,23 @@ public class Stage5MessagesEndToEndTests
 
     private sealed class StatelessChannel : global::app.channel.type.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        private readonly global::app.actor.context.@this _ctx;
+        public StatelessChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
     }
 
     [Test] public async Task Scenario1_NoGrantSuspends_StatelessChannelReturnsDataAsk()
     {
         var (app, _) = Setup("UNUSED");
         // Override channel: stateless.
-        app.actor.list.User.Channel.Register(new StatelessChannel());
+        app.actor.list.User.Channel.Register(new StatelessChannel(app.actor.list.User.Context));
         var foreignFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-email-x", "system.sqlite");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(foreignFile)!);
         System.IO.File.WriteAllText(foreignFile, "data");
 
-        var path = new Path(foreignFile);
+        var path = app.actor.list.User.Context.File(foreignFile);
         var result = await path.Touch(app.actor.list.User.Context);
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
@@ -73,7 +75,7 @@ public class Stage5MessagesEndToEndTests
     [Test] public async Task Scenario2_GrantAStoresPersisted_AnswerPathSignsAndAdds()
     {
         var (app, foreignFile) = Setup("a");
-        var path = new Path(foreignFile);
+        var path = app.actor.list.User.Context.File(foreignFile);
         var result = await path.Touch(app.actor.list.User.Context);
         await result.IsSuccess();
         // Grant landed and is signed (persisted).
@@ -84,7 +86,7 @@ public class Stage5MessagesEndToEndTests
     [Test] public async Task Scenario3_ImmediateRereadSkipsPrompt_FindAllowsNoAsk()
     {
         var (app, foreignFile) = Setup("a");
-        var path = new Path(foreignFile);
+        var path = app.actor.list.User.Context.File(foreignFile);
         var ch = (CannedChannel)app.actor.list.User.Channel.Get("input")!;
 
         await path.Touch(app.actor.list.User.Context); // grants via prompt
@@ -101,17 +103,17 @@ public class Stage5MessagesEndToEndTests
         // is identified by (Actor + Path + Verb) — App.Id no longer scopes
         // grants — so app2's Find must hit without a fresh prompt.
         var (app1, foreignFile) = Setup("a");
-        var root = app1.AbsolutePath;
-        var path1 = new Path(foreignFile);
+        var root = app1.filesystem.root.Absolute;
+        var path1 = app1.actor.list.User.Context.File(foreignFile);
         var firstRead = await path1.Touch(app1.actor.list.User.Context);
         await firstRead.IsSuccess();
 
         // App #2 on the same root. Channel here has zero "a" answers — any
         // prompt that fires means the persisted grant was missed.
-        var app2 = new global::app.@this(root).TestSigning();
-        var statelessProbe = new StatelessChannel();
+        var app2 = new global::app.@this(root).TestIdentity();
+        var statelessProbe = new StatelessChannel(app2.actor.list.User.Context);
         app2.actor.list.User.Channel.Register(statelessProbe);
-        var path2 = new Path(foreignFile);
+        var path2 = app2.actor.list.User.Context.File(foreignFile);
         var secondRead = await path2.Touch(app2.actor.list.User.Context);
         await secondRead.IsSuccess();
         // No Exit-typed bubble (no prompt) — the grant covered the request.
@@ -125,15 +127,15 @@ public class Stage5MessagesEndToEndTests
     [Test] public async Task Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow()
     {
         var (app1, foreignFile) = Setup("a");
-        var root = app1.AbsolutePath;
-        var path1 = new Path(foreignFile);
+        var root = app1.filesystem.root.Absolute;
+        var path1 = app1.actor.list.User.Context.File(foreignFile);
         var firstRead = await path1.Touch(app1.actor.list.User.Context);
         await firstRead.IsSuccess();
 
         // Advance clock by 10 minutes — past the default 5-minute
         // live-read window, which a stored grant does not get.
-        var app2 = new global::app.@this(root).TestSigning();
-        var statelessProbe = new StatelessChannel();
+        var app2 = new global::app.@this(root).TestIdentity();
+        var statelessProbe = new StatelessChannel(app2.actor.list.User.Context);
         app2.actor.list.User.Channel.Register(statelessProbe);
         // Replace the DynamicData NowUtc with a static Data (the DynamicData's
         // override Value getter ignores `_value`, so Set("NowUtc", offset)
@@ -142,7 +144,7 @@ public class Stage5MessagesEndToEndTests
             new global::app.data.@this("NowUtc", DateTimeOffset.UtcNow.AddMinutes(10),
                 app2.actor.list.User.Context.App.type.list["datetime"], context: app2.actor.list.User.Context));
 
-        var path2 = new Path(foreignFile);
+        var path2 = app2.actor.list.User.Context.File(foreignFile);
         var secondRead = await path2.Touch(app2.actor.list.User.Context);
         await secondRead.IsSuccess();
         await Assert.That(secondRead.Type?.Name).IsNotEqualTo("ask");
@@ -158,15 +160,15 @@ public class Stage5MessagesEndToEndTests
     [Test] public async Task Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt()
     {
         var (app1, foreignFile) = Setup("a");
-        var root = app1.AbsolutePath;
-        var path1 = new Path(foreignFile);
+        var root = app1.filesystem.root.Absolute;
+        var path1 = app1.actor.list.User.Context.File(foreignFile);
         await (await path1.Touch(app1.actor.list.User.Context)).IsSuccess();   // create persisted grant
 
         // app2: two reads. Each Find re-deserializes the grant → two real
         // VerifySignature passes → step 4 would NonceReplay the second.
-        var app2 = new global::app.@this(root).TestSigning();
-        app2.actor.list.User.Channel.Register(new StatelessChannel());
-        var path2 = new Path(foreignFile);
+        var app2 = new global::app.@this(root).TestIdentity();
+        app2.actor.list.User.Channel.Register(new StatelessChannel(app2.actor.list.User.Context));
+        var path2 = app2.actor.list.User.Context.File(foreignFile);
         var read1 = await path2.Touch(app2.actor.list.User.Context);   // verify #1 — nonce cached
         var read2 = await path2.Touch(app2.actor.list.User.Context);   // verify #2 — nonce replay if step 4 active
         await read1.IsSuccess();
@@ -178,14 +180,14 @@ public class Stage5MessagesEndToEndTests
     [Test] public async Task Scenario5_RevokeReprompts_AfterRevokeFreshPromptFires()
     {
         var (app, foreignFile) = Setup("a");
-        var path = new Path(foreignFile);
+        var path = app.actor.list.User.Context.File(foreignFile);
         var ch = (CannedChannel)app.actor.list.User.Channel.Get("input")!;
 
         await path.Touch(app.actor.list.User.Context);              // initial grant
         var asksBeforeRevoke = ch.AskCount;
 
         // Revoke the persisted grant.
-        var permission = new PermissionRecord(app.actor.list.User.Name, path.Absolute, global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
+        var permission = new PermissionRecord(app.actor.list.User.Name, path.Absolute, global::app.type.item.permission.@this.AllVerbs, MatchMode.exact, app.type.list[typeof(PermissionRecord)]);
         await app.actor.list.User.Permission.Revoke(permission);
 
         await path.Touch(app.actor.list.User.Context);              // fresh prompt fires
@@ -199,12 +201,12 @@ public class Stage5MessagesEndToEndTests
         // request (verb-set containment: {Write} is not a subset of {Read}).
         var narrowedVerbs = new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read };
         var narrowGrant = new global::app.data.@this<PermissionRecord>("",
-            new PermissionRecord(app.actor.list.User.Name, foreignFile, narrowedVerbs, MatchMode.exact), context: app.actor.list.User.Context);
+            new PermissionRecord(app.actor.list.User.Name, foreignFile, narrowedVerbs, MatchMode.exact, app.type.list[typeof(PermissionRecord)]), context: app.actor.list.User.Context);
         await app.actor.list.User.Permission.Add(narrowGrant, persist: true);
 
         // WriteText needs Write; the narrowed Read grant doesn't cover it.
         // Authorize asks; the CannedChannel answers "a" and a wider grant lands.
-        var path = new Path(foreignFile);
+        var path = app.actor.list.User.Context.File(foreignFile);
         var ch = (CannedChannel)app.actor.list.User.Channel.Get("input")!;
         var writeResult = await path.WriteText("data", app.actor.list.User.Context);
         await writeResult.IsSuccess();

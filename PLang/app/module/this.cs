@@ -18,7 +18,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal override global::app.type.item.kept.list.@this Kept => _kept;
 
     /// <summary>A module is registered from its actions' classes, never made from a value.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? type, global::app.data.@this data)
     {
         if (raw is @this module) return module;
         data.Fail(new global::app.error.@this(
@@ -42,7 +42,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly object? _registering;
 
     /// <summary>The module name — "file", "variable", "list"; empty for the app's module.</summary>
-    [Debug, Out]
+    [Debug, Out, LlmBuilder]
     public string Name { get; }
 
     /// <summary>The module IS its name in text — so a site composing the qualified form
@@ -58,16 +58,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         = new(System.StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The app's module — empty, holding every module the app loads.</summary>
-    internal @this(global::app.@this app)
+    internal @this(global::app.@this app) : base(app.type.list[typeof(@this)])
     {
         Name = "";
         _app = app;
-        _modules = new global::app.type.item.list.@this<@this>();
+        _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
         _registering = new object();
         Discover(typeof(@this).Assembly);
     }
 
-    internal @this(string name, @this root)
+    internal @this(string name, @this root) : base(root.Type)
     {
         Name = name;
         _root = root;
@@ -82,14 +82,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Every module the app has loaded — a plain list, the same for every module. Navigated
     /// (<c>%!app.module.list%</c>), never written with a module: every module reaches it.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
+    [global::app.LlmBuilder]
     public global::app.type.item.list.@this<@this> list => Root._modules!;
 
-    /// <summary>The module <paramref name="name"/> names, by its own <see cref="Match"/>; NotFound when none does.</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.data.@this<@this>> Get(string name)
+    /// <summary>The module <paramref name="name"/> names, by its own <see cref="Match"/>; NotFound when none does. The
+    /// answer is born with the asker's <paramref name="context"/>.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this<@this>> Get(string name, global::app.actor.context.@this context)
     {
         foreach (var module in list.Items())
-            if (await module.Match(name) is { } found) return global::app.data.@this<@this>.Ok(found);
-        return global::app.data.@this<@this>.FromError(new global::app.error.@this($"no module '{name}'", "NotFound", 404));
+            if (await module.Match(name) is { } match) return context.Ok<@this>(match);
+        return global::app.data.@this<@this>.FromError(new global::app.error.@this($"no module '{name}'", "NotFound", 404), context);
     }
 
     /// <summary>The module a <c>.pr</c> row names — for the readers, which read a synchronous pass; null when the
@@ -124,7 +126,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     {
         lock (Root._registering!)
         {
-            if (Named(name) is { } held) return held;
+            if (Named(name) is { } module) return module;
             var born = new @this(name, Root);
             list.Add(born);
             return born;
@@ -147,25 +149,27 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // The catalog action carries the [Action] cache flag so the teaching template can tag
         // [no-cache] — read off the attribute, its single source, not defaulted.
         var cacheable = clr.GetCustomAttribute<global::app.module.ActionAttribute>()?.Cacheable ?? true;
+        var types = App.type.list;
         // The catalog action is born with its class's properties, reflected on first read.
         _action[actionName] =
             typeof(global::app.module.IClause).IsAssignableFrom(clr)
-                ? new global::app.goal.step.action.clause.@this
+                ? new global::app.goal.step.action.clause.@this(types)
                     { Module = this, Name = actionName, Cacheable = cacheable, Class = clr, Property = new(this, actionName) }
             : typeof(global::app.module.ILoop).IsAssignableFrom(clr)
-                ? new global::app.goal.step.action.loop.@this
+                ? new global::app.goal.step.action.loop.@this(types)
                     { Module = this, Name = actionName, Cacheable = cacheable, Class = clr, Property = new(this, actionName) }
             : typeof(global::app.module.IKeep).IsAssignableFrom(clr)
-                ? new global::app.goal.step.action.keep.@this
+                ? new global::app.goal.step.action.keep.@this(types)
                     { Module = this, Name = actionName, Cacheable = cacheable, Class = clr, Property = new(this, actionName) }
-            : new global::app.goal.step.action.@this
+            : new global::app.goal.step.action.@this(types)
                 { Module = this, Name = actionName, Cacheable = cacheable, Class = clr, Property = new(this, actionName) };
     }
 
     /// <summary>The module's actions as the NATIVE plang list — step actions and clauses alike (the type
     /// IS the role). Filterable by the list module, renderable by templates.</summary>
+    [LlmBuilder]
     public global::app.type.item.list.@this Action
-        => new(_action.Values.Select(a => (object?)a).ToList());
+        => new(_action.Values.Select(a => (object?)a).ToList(), App.type.list["list"]);
 
     /// <summary>Select one catalog element by action name — a step action or a clause; the type answers
     /// the role. Null when the name isn't in this module.</summary>
@@ -196,7 +200,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>This module's settings — <c>%!llm.setting%</c>: its own class, or the options its actions take.</summary>
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
-        => _root != null ? await parent.Context.Setting.Of(this) : await base.Setting(parent);
+        // its own class, as the asker's settings build it; else the options its actions take, read and written through them
+        => _root == null ? await base.Setting(parent)
+            : await parent.Context.Setting.Get(Address, () => new global::app.type.item.setting.module.@this(Name,
+                parent.Context.App.type.list[typeof(global::app.type.item.setting.module.@this)]));
+
+    /// <summary>Where this module's settings are kept — its name, then <c>.setting</c> (<c>llm.setting</c>).</summary>
+    internal string Address => $"{Name}.setting";
 
     /// <summary>Select the catalog element that holds <paramref name="clr"/> — the module and the name registration
     /// gave the class; the app's module asks each of its modules. Null when no module holds it.</summary>
@@ -242,16 +252,19 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private global::app.type.item.file.@this? _description;
 
     /// <summary>The module's description — module.description.md.</summary>
+    [LlmBuilder]
     public global::app.type.item.file.@this Description => _description ??= new(Folder.Combine("module.description.md"), App.actor.list.System.Context!);
 
     private global::app.type.item.file.@this? _notes;
 
     /// <summary>The module's notes — module.notes.md; falsy when the module has none.</summary>
+    [LlmBuilder]
     public global::app.type.item.file.@this Notes => _notes ??= new(Folder.Combine("module.notes.md"), App.actor.list.System.Context!);
 
     private global::app.type.item.file.@this? _guide;
 
     /// <summary>The module's guide — module.guide.md: prose for a learner, shown on the module's page and never read by
     /// the builder; falsy when the module has none.</summary>
+    [LlmBuilder]
     public global::app.type.item.file.@this Guide => _guide ??= new(Folder.Combine("module.guide.md"), App.actor.list.System.Context!);
 }

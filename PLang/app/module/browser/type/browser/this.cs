@@ -12,7 +12,7 @@ namespace app.module.browser.type.browser;
 /// Which it is is its kind: <c>%browser!type.kind%</c> (<c>headless</c>, <c>screen</c>). <c>browser.stop</c> ends either.
 ///
 /// <para>Chromium is a program a goal that ships with plang starts (<c>/system/browser/</c>, through terminal: trusted
-/// by its origin, decision 579 — it names the program and every flag itself), and DevTools speaks over that program's
+/// by its origin — it names the program and every flag itself), and DevTools speaks over that program's
 /// pipe (<see cref="cdp.@this"/>). What the caller gives — the page, the size — goes over the pipe, never on Chromium's
 /// command line.</para>
 /// </summary>
@@ -61,8 +61,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// program, its pipe a channel; or why not.</summary>
     private protected static async Task<(Program? program, global::app.data.@this? failed)> Started(string goal, global::app.actor.context.@this context)
     {
-        var found = await context.App.goal.list.Find("/system/browser/" + goal, context.call.Goal);
-        if (!found.Success || await found.Value() is not { } starts) return (null, found.Success ? Fail(context, $"No /system/browser/{goal} goal", "BrowserNotFound", 404) : found);
+        var data = await context.App.goal.list.Find("/system/browser/" + goal, context.call.Goal);
+        if (!data.Success || await data.Value() is not { } starts) return (null, data.Success ? Fail(context, $"No /system/browser/{goal} goal", "BrowserNotFound", 404) : data);
         var ran = await starts.Start(context, []);
         if (!ran.Success) return (null, ran);
         if (await ran.Value() is not Program { pipe: not null } program)
@@ -70,7 +70,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         return (program, null);
     }
 
-    /// <summary>A <c>file://</c> page is read as the caller (finding 1 of 579: a browser started trusted must not read
+    /// <summary>A <c>file://</c> page is read as the caller (a browser started trusted must not read
     /// for a caller what the caller couldn't read itself); a website is the browser's normal job. The refusal, or null.</summary>
     internal static async Task<global::app.data.@this?> Readable(string url, global::app.actor.context.@this context)
     {

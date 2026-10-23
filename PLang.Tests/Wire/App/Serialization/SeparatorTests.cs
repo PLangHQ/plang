@@ -16,20 +16,21 @@ public class SeparatorTests
     private static global::app.@this Os() => new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
 
     // each offer as the formal line writes it, and as the decider is shown it
-    private static (List<string> Written, List<string> Shown) Offered(IReadOnlyList<global::app.type.item.@this> offers, global::app.actor.context.@this context)
+    private static async Task<(List<string> Written, List<string> Shown)> Offered(IReadOnlyList<global::app.type.item.@this> offers, global::app.actor.context.@this context)
     {
-        var written = offers.Select(offer =>
+        var written = new List<string>();
+        var shown = new List<string>();
+        foreach (var offer in offers)
         {
-            var writer = new global::app.goal.step.action.formal.Writer();
-            offer.Write(writer);
-            return writer.ToString();
-        }).ToList();
-        var shown = offers.Select(offer =>
-        {
+            var writer = new global::app.goal.step.action.formal.Writer(context);
+            await offer.Output(writer);
+            written.Add(writer.ToString());
+
             using var stream = new System.IO.MemoryStream();
-            offer.Write(new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture));
-            return System.Text.Encoding.UTF8.GetString(stream.ToArray());
-        }).ToList();
+            var text = new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, (await context.Setting.Get<global::app.setting.@this>()).Culture, global::app.View.Out, context);
+            await offer.Output(text);
+            shown.Add(System.Text.Encoding.UTF8.GetString(stream.ToArray()));
+        }
         return (written, shown);
     }
 
@@ -40,7 +41,7 @@ public class SeparatorTests
         var context = os.actor.list.User.Context;
         var step = Make.Goal(context, "G", "/G.goal", Make.Step("split %x% into lines", 0)).Step[0];
 
-        var (written, shown) = Offered(await os.Module("list")["split"]!["Separator"]!.Type.Offers(step), context);
+        var (written, shown) = await Offered(await os.Module("list")["split"]!["Separator"]!.Type.Offers(step), context);
 
         await Assert.That(shown).Contains("line");
         await Assert.That(shown).Contains("comma");
@@ -56,7 +57,7 @@ public class SeparatorTests
         var context = os.actor.list.User.Context;
         var goal = global::app.goal.@this.Parse("Start\n- split %x%\n",
             global::app.type.item.path.@this.Resolve("/Start.goal", context), context)!;
-        var read = new global::app.goal.step.action.formal.Reader(goal.Step[0], context.App.module.list)
+        var read = await new global::app.goal.step.action.formal.Reader(goal.Step[0], context.App.module.list)
             .Read($"list.split(Value=%x%, Separator={separator})", context);
         await read.IsSuccess();
         goal.Step[0].Code = (global::app.goal.step.action.list.@this)read.Peek()!;
@@ -76,17 +77,18 @@ public class SeparatorTests
         var newline = await RoundTrip("\"\\n\"");
 
         await Assert.That(line.Characters).IsEqualTo("\n");
-        await Assert.That(Written(line, ctx)).IsEqualTo("line");
+        await Assert.That(await Written(line, ctx)).IsEqualTo("line");
         await Assert.That(commaSpace.Characters).IsEqualTo(", ");
-        await Assert.That(Written(commaSpace, ctx)).IsEqualTo(", ");
+        await Assert.That(await Written(commaSpace, ctx)).IsEqualTo(", ");
         await Assert.That(newline.Characters).IsEqualTo("\n");
-        await Assert.That(Written(newline, ctx)).IsEqualTo("\n");
+        await Assert.That(await Written(newline, ctx)).IsEqualTo("\n");
     }
 
-    private static string Written(global::app.type.item.separator.@this separator, global::app.actor.context.@this context)
+    private static async Task<string> Written(global::app.type.item.separator.@this separator, global::app.actor.context.@this context)
     {
         using var stream = new System.IO.MemoryStream();
-        separator.Write(new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, context.Setting.Of<global::app.setting.@this>().Culture));
+        var writer = new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8, (await context.Setting.Get<global::app.setting.@this>()).Culture, global::app.View.Out, context);
+        await separator.Output(writer);
         return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 

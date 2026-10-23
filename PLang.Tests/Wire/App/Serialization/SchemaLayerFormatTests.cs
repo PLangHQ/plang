@@ -14,13 +14,13 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
 
     // Render a value through the json IWriter exactly as the wire writer's
     // value-slot dispatch does (case item.@this v: v.Write(this)).
-    private static string Render(global::app.type.item.@this value)
+    private async Task<string> Render(global::app.type.item.@this value)
     {
         using var ms = new MemoryStream();
         using (var jw = new System.Text.Json.Utf8JsonWriter(ms))
         {
-            var writer = new global::app.type.item.kind.json.Writer(jw);
-            writer.Value(value);
+            var writer = new global::app.type.item.wire.kind.plang.Writer(jw, global::app.View.Out, app.actor.list.System.Context);
+            await value.Output(writer);
         }
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
@@ -29,15 +29,16 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
     {
         var inner = new global::app.data.@this("user", "Ingi", app.actor.list.User.Context.App.type.list["text"], context: app.actor.list.User.Context);
         var sig = new global::app.type.item.signature.@this(
+            type: app.type.list[new global::app.type.@this("signature", "ed25519"), app.actor.list.User.Context],
             value: inner,
-            algorithm: new global::app.type.item.text.@this("ed25519"),
-            nonce: new global::app.type.item.text.@this("9f"),
-            created: new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero)),
-            identity: new global::app.type.item.text.@this("alice"),
-            hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
-            signature: new global::app.type.item.binary.@this(System.Convert.FromBase64String("c2ln")));
+            algorithm: app.actor.list.User.Context.Text("ed25519"),
+            nonce: app.actor.list.User.Context.Text("9f"),
+            created: new global::app.type.item.datetime.@this(new System.DateTimeOffset(2026, 6, 15, 10, 0, 0, System.TimeSpan.Zero), app.type.list[typeof(global::app.type.item.datetime.@this)]),
+            identity: app.actor.list.User.Context.Text("alice"),
+            hash: new global::app.module.crypto.type.hash.@this(System.Convert.FromBase64String("ZGlnZXN0"), (global::app.module.crypto.type.hash.kind.keccak256.@this)app.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
+            signature: new global::app.type.item.binary.@this(System.Convert.FromBase64String("c2ln"), app.type.list[typeof(global::app.type.item.binary.@this)]));
 
-        var json = Render(sig);
+        var json = await Render(sig);
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
@@ -67,15 +68,16 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
     {
         var inner = new global::app.data.@this("x", "y", app.actor.list.User.Context.App.type.list["text"], context: app.actor.list.User.Context);
         var sig = new global::app.type.item.signature.@this(
+            type: app.type.list[new global::app.type.@this("signature", "ed25519"), app.actor.list.User.Context],
             value: inner,
-            algorithm: new global::app.type.item.text.@this("ed25519"),
-            nonce: new global::app.type.item.text.@this("n"),
-            created: new global::app.type.item.datetime.@this(System.DateTimeOffset.UnixEpoch),
-            identity: new global::app.type.item.text.@this("id"),
-            hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, new global::app.module.crypto.type.hash.kind.keccak256.@this()),
-            signature: new global::app.type.item.binary.@this(new byte[] { 0x01 }));
+            algorithm: app.actor.list.User.Context.Text("ed25519"),
+            nonce: app.actor.list.User.Context.Text("n"),
+            created: new global::app.type.item.datetime.@this(System.DateTimeOffset.UnixEpoch, app.type.list[typeof(global::app.type.item.datetime.@this)]),
+            identity: app.actor.list.User.Context.Text("id"),
+            hash: new global::app.module.crypto.type.hash.@this(new byte[] { 0x68 }, (global::app.module.crypto.type.hash.kind.keccak256.@this)app.type.list[typeof(global::app.module.crypto.type.hash.@this)].kind["keccak256"]!),
+            signature: new global::app.type.item.binary.@this(new byte[] { 0x01 }, app.type.list[typeof(global::app.type.item.binary.@this)]));
 
-        using var doc = JsonDocument.Parse(Render(sig));
+        using var doc = JsonDocument.Parse(await Render(sig));
         await Assert.That(doc.RootElement.TryGetProperty("expires", out _)).IsFalse();
         await Assert.That(doc.RootElement.TryGetProperty("contracts", out _)).IsFalse();
     }

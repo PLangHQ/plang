@@ -19,7 +19,7 @@ public class FilePathVerbTests
     }
 
     private static FilePath At(global::app.@this app, string root, string name) =>
-        new(System.IO.Path.Combine(root, name));
+        app.actor.list.User.Context.File(System.IO.Path.Combine(root, name));
 
     [Test] public async Task WriteText_ThenReadText_RoundTrips()
     {
@@ -115,7 +115,7 @@ public class FilePathVerbTests
         var (app, root) = MakeApp();
         await At(app, root, "a.txt").WriteText("a", app.actor.list.User.Context);
         await At(app, root, "b.txt").WriteText("b", app.actor.list.User.Context);
-        var dir = new FilePath(root);
+        var dir = app.actor.list.User.Context.File(root);
         var list = await dir.List(app.actor.list.User.Context);
         await list.IsSuccess();
         var entries = (await list.Value())!;
@@ -125,7 +125,7 @@ public class FilePathVerbTests
     [Test] public async Task WriteText_CreatesMissingParentDirectory()
     {
         var (app, root) = MakeApp();
-        var p = new FilePath(System.IO.Path.Combine(root, "newsub", "deep", "f.txt"));
+        var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "newsub", "deep", "f.txt"));
         var w = await p.WriteText("nested", app.actor.list.User.Context);
         await w.IsSuccess();
         var r = await p.Touch(app.actor.list.User.Context);

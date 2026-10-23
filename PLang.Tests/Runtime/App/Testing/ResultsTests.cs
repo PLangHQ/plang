@@ -18,9 +18,9 @@ public class ResultsTests
     }
 
     private global::app.test.@this NewTest(string name = "T") =>
-        new()
+        new(_app.type.list)
         {
-            Goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", _app.actor.list.User.Context) }
+            Goal = new Goal(_app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", _app.actor.list.User.Context) }
         };
 
     // Fresh session starts empty — Count == 0, no tests.

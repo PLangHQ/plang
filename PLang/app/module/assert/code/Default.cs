@@ -175,11 +175,14 @@ public class Default : IAssert
         => data != null && await data.ToBooleanAsync();
 
     // The failure of an assertion: what it expected and what it got, each shown as a diagnostic shows it (a
-    // secret masked), after the step's own message when there is one.
+    // secret masked) in the test's own context, after the step's own message when there is one. The error keeps
+    // them as shown, so a report written elsewhere never fills a template again.
     private async Task<AssertionError> Failure(object? expected, object? actual, string? message, actor.context.@this context)
     {
-        var shown = $"Expected: {await Shown(expected, context)}, Actual: {await Shown(actual, context)}";
-        return new AssertionError(string.IsNullOrEmpty(message) ? shown : $"{message} — {shown}", expected, actual, message);
+        var wanted = await Shown(expected, context);
+        var got = await Shown(actual, context);
+        var shown = $"Expected: {wanted}, Actual: {got}";
+        return new AssertionError(string.IsNullOrEmpty(message) ? shown : $"{message} — {shown}", wanted, got, message);
     }
 
     // A compared value as a diagnostic shows it — its own debug face (a raw value taken as its plang value).

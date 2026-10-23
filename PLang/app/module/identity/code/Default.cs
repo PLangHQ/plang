@@ -26,10 +26,12 @@ public sealed class Default : IIdentity
         if (!result.Success) return result;
 
         // Refresh cached %MyIdentity% when resolving the default
+        var identity = (await result.Value())!;
         if ((action.Name == null ? null : await action.Name.Value()) == null)
-            action.Context.App.actor.list.System.Identity = (await result.Value())!;
+            action.Context.App.actor.list.System.Identity = identity;
 
-        return result;
+        // the step holds it without its private key
+        return action.Context.Ok<Identity>(identity.Public());
     }
 
     public async Task<data.@this<Identity>> CreateAsync(Create action)
@@ -44,6 +46,8 @@ public sealed class Default : IIdentity
         var __an = (await action.Name.Value())?.Clr<string>();
         if (items.Exists(i => string.Equals(i.Name, __an, StringComparison.OrdinalIgnoreCase)))
             return action.Context.Error<Identity>(new ActionError($"Identity '{await action.Name.Value()}' already exists", "DuplicateName", 409));
+        if (await Consent(action, $"create the identity '{__an}'", __an!, global::app.type.item.permission.Verb.write) is { } refused)
+            return data.@this<Identity>.From(refused);
 
         var genResult = await GenerateIdentity(action, (await action.Name.Value())!.Clr<string>()!, (await action.Default.Value())!.Value, (action.Provider == null ? null : (await action.Provider.Value())?.Clr<string>()));
         if (!genResult.Success) return genResult;
@@ -61,7 +65,7 @@ public sealed class Default : IIdentity
         if (await action.Default.ToBooleanAsync())
             app.actor.list.System.Identity = identity;
 
-        return action.Context.Ok<Identity>(identity);
+        return action.Context.Ok<Identity>(identity.Public());
     }
 
     public async Task<data.@this<Identity>> ArchiveAsync(Archive action)
@@ -76,12 +80,14 @@ public sealed class Default : IIdentity
                 "CannotArchiveDefault", 400));
 
         if (identity.IsArchived)
-            return action.Context.Ok<Identity>(identity);
+            return action.Context.Ok<Identity>(identity.Public());
+        if (await Consent(action, $"archive the identity '{identity.Name}'", identity.Name, global::app.type.item.permission.Verb.write) is { } refused)
+            return data.@this<Identity>.From(refused);
 
         identity.IsArchived = true;
         var saveResult = await SaveAsync(action, identity);
         if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
-        return action.Context.Ok<Identity>(identity);
+        return action.Context.Ok<Identity>(identity.Public());
     }
 
     public async Task<data.@this<Identity>> UnarchiveAsync(Unarchive action)
@@ -91,12 +97,14 @@ public sealed class Default : IIdentity
         var identity = (await loadResult.Value())!;
 
         if (!identity.IsArchived)
-            return action.Context.Ok<Identity>(identity);
+            return action.Context.Ok<Identity>(identity.Public());
+        if (await Consent(action, $"unarchive the identity '{identity.Name}'", identity.Name, global::app.type.item.permission.Verb.write) is { } refused)
+            return data.@this<Identity>.From(refused);
 
         identity.IsArchived = false;
         var saveResult = await SaveAsync(action, identity);
         if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
-        return action.Context.Ok<Identity>(identity);
+        return action.Context.Ok<Identity>(identity.Public());
     }
 
     public async Task<data.@this<Identity>> SetDefaultAsync(SetDefault action)
@@ -114,7 +122,9 @@ public sealed class Default : IIdentity
             return action.Context.Error<Identity>(new ActionError($"Cannot set archived identity '{await action.Name.Value()}' as default", "ArchivedIdentity", 400));
 
         if (target.IsDefault)
-            return action.Context.Ok<Identity>(target);
+            return action.Context.Ok<Identity>(target.Public());
+        if (await Consent(action, $"make the identity '{target.Name}' the app's default", target.Name, global::app.type.item.permission.Verb.write) is { } refused)
+            return data.@this<Identity>.From(refused);
 
         // the flag moves in one write: the store never holds a moment with no default, which a signing read in
         // between would fill by promoting another
@@ -125,7 +135,7 @@ public sealed class Default : IIdentity
         if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
 
         app.actor.list.System.Identity = target;
-        return action.Context.Ok<Identity>(target);
+        return action.Context.Ok<Identity>(target.Public());
     }
 
     public async Task<data.@this<Identity>> RenameAsync(Rename action)
@@ -144,6 +154,8 @@ public sealed class Default : IIdentity
         var __nn = (await action.NewName.Value())?.Clr<string>();
         if (items.Exists(i => string.Equals(i.Name, __nn, StringComparison.OrdinalIgnoreCase)))
             return action.Context.Error<Identity>(new ActionError($"Identity '{await action.NewName.Value()}' already exists", "DuplicateName", 409));
+        if (await Consent(action, $"rename the identity '{identity.Name}' to '{__nn}'", identity.Name, global::app.type.item.permission.Verb.write) is { } refused)
+            return data.@this<Identity>.From(refused);
 
         // One row holds every identity, so the rename is one write: the old name out, the new one in.
         var oldName = identity.Name;
@@ -167,25 +179,49 @@ public sealed class Default : IIdentity
         if (identity.IsDefault)
             app.actor.list.System.Identity = identity;
 
-        return action.Context.Ok<Identity>(identity);
+        return action.Context.Ok<Identity>(identity.Public());
     }
 
     public async Task<data.@this<global::app.type.item.list.@this<Identity>>> ListAsync(list action)
     {
         var (items, err) = await LoadAll(action);
         if (err != null) return action.Context.Error<global::app.type.item.list.@this<Identity>>(err);
+        // the step holds each without its private key
         var active = items!.Where(i => !i.IsArchived)
-            .Select(i => new data.@this("", i, context: action.Context)).ToList();
+            .Select(i => new data.@this("", i.Public(), context: action.Context)).ToList();
         return action.Context.Ok<global::app.type.item.list.@this<Identity>>(
-            new global::app.type.item.list.@this<Identity>(active));
+            new global::app.type.item.list.@this<Identity>(active, action.Context.App.type.list[typeof(global::app.type.item.list.@this<Identity>)]));
     }
 
+    // The one door to a private key: the identity whole, the asking actor asked every time.
     public async Task<data.@this<Identity>> ExportAsync(Export action)
     {
-        return await ResolveIdentityAsync(action, (action.Name == null ? null : (await action.Name.Value())?.Clr<string>()));
+        var name = action.Name == null ? null : (await action.Name.Value())?.Clr<string>();
+        var identity = await ResolveIdentityAsync(action, name);
+        if (!identity.Success) return identity;
+        var exported = (await identity.Value())!;
+        // what a yes means, said plainly: the key leaves as text the step can send anywhere — this once
+        if (await Consent(action, $"export the private key of the identity '{exported.Name}' — the step gets the key as text it " +
+                "can send anywhere, for this call only; you are asked every time, and the answer is never kept", exported.Name,
+                global::app.type.item.permission.Verb.read) is { } refused)
+            return data.@this<Identity>.From(refused);
+        return identity;
     }
 
     // --- Internal helpers ---
+
+    // The asking actor's yes to what changes the app's identities or hands a private key out — asked every time, the
+    // one consent door: an "always" counts for this time alone, nothing of it kept. Null on a yes; else the answer
+    // (the denial, or the ask that suspended the goal).
+    private async Task<data.@this?> Consent(IContext action, string what, string name, global::app.type.item.permission.Verb verb)
+    {
+        var context = action.Context;
+        var actor = context.Actor;
+        var request = global::app.type.item.permission.@this.Request(actor, "identity:" + name, verb);
+        var answer = await actor.Permission.Ask($"Allow {actor.Name} to {what}? (y/n)", request, context,
+            _ => Task.FromResult(context.Ok()));
+        return answer.Success && !answer.Exits ? null : answer;
+    }
 
     /// <summary>
     /// Resolves an identity by name, or gets/creates the default if name is null.
@@ -205,8 +241,8 @@ public sealed class Default : IIdentity
     {
         var (items, err) = await LoadAll(action);
         if (err != null) return action.Context.Error<Identity>(err);
-        return items!.Find(i => string.Equals(i.Name, name, StringComparison.Ordinal)) is { } found
-            ? action.Context.Ok<Identity>(found)
+        return items!.Find(i => string.Equals(i.Name, name, StringComparison.Ordinal)) is { } identity
+            ? action.Context.Ok<Identity>(identity)
             : action.Context.Error<Identity>(new ActionError($"Identity '{name}' not found", "NotFound", 404));
     }
 
@@ -224,7 +260,7 @@ public sealed class Default : IIdentity
     {
         var system = action.Context.App.actor.list.System.Setting;
         var loaded = await system.Load();
-        return loaded.Success ? (system.Of<setting.@this>(), null) : (null, loaded.Error);
+        return loaded.Success ? (await system.Get<setting.@this>(), null) : (null, loaded.Error);
     }
 
     // Each identity the setting holds.
@@ -239,7 +275,7 @@ public sealed class Default : IIdentity
     // Saves the identities as the system actor's identity setting — one row, whole.
     private async Task<data.@this> Store(IContext action, setting.@this setting, List<Identity> identities)
     {
-        setting.Identity = new global::app.type.item.list.@this<Identity>(identities);
+        setting.Identity = new global::app.type.item.list.@this<Identity>(identities, action.Context.App.type.list[typeof(global::app.type.item.list.@this<Identity>)]);
         return await action.Context.App.actor.list.System.Setting.Save(setting);
     }
 
@@ -321,7 +357,7 @@ public sealed class Default : IIdentity
 
         var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
 
-        var identity = new Identity(name)
+        var identity = new Identity(name, app.type.list[typeof(Identity)])
         {
             PublicKey = keys!.PublicKey,
             PrivateKey = keys.PrivateKey,

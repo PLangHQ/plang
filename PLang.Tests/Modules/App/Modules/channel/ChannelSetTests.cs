@@ -11,7 +11,7 @@ public class ChannelSetTests
     public void Setup()
     {
         _app = new global::app.@this("/app").Testing();
-        _app.goal.list.Add(new global::app.goal.@this
+        _app.goal.list.Add(new global::app.goal.@this(_app.type.list)
         {
             Name = "LogIt",
             Path = global::app.type.item.path.@this.Resolve("/LogIt.goal", _app.actor.list.User.Context)
@@ -33,7 +33,7 @@ public class ChannelSetTests
         var call = Make.Call(ctx, "SeeIt", ("level", "debug"));
         var action = new global::app.module.channel.Set(ctx)
         {
-            Name = new global::app.type.item.text.@this("logger"),
+            Name = ctx.Text("logger"),
             Goal = call,
         };
 
@@ -58,9 +58,9 @@ public class ChannelSetTests
     {
         var ctx = _app.actor.list.User.Context;
         await (await new global::app.module.channel.Set(ctx)
-            { Name = new global::app.type.item.text.@this("output"), Goal = Make.Call(ctx, "LogIt") }.Start()).IsSuccess();
+            { Name = ctx.Text("output"), Goal = Make.Call(ctx, "LogIt") }.Start()).IsSuccess();
         await (await new global::app.module.channel.Set(ctx)
-            { Name = new global::app.type.item.text.@this("chat"), Goal = Make.Call(ctx, "LogIt"),
+            { Name = ctx.Text("chat"), Goal = Make.Call(ctx, "LogIt"),
               Direction = (global::app.type.item.choice.@this<global::app.channel.ChannelDirection>)global::app.channel.ChannelDirection.Input, Buffer = (global::app.type.item.number.@this)65536 }.Start()).IsSuccess();
 
         var output = (global::app.channel.type.goal.@this)ctx.Actor!.Channel.Get("output")!;
@@ -80,7 +80,7 @@ public class ChannelSetTests
         var ctx = _app.actor.list.User.Context;
         var action = new global::app.module.channel.Set(ctx)
         {
-            Name = new global::app.type.item.text.@this("logger"),
+            Name = ctx.Text("logger"),
             Goal = Make.Call(ctx, "NoSuchGoal"),
         };
         await (await action.Start()).IsSuccess();
@@ -100,7 +100,7 @@ public class ChannelSetTests
         var ctx = _app.actor.list.User.Context;
         var channel = ctx.App.type.list[new global::app.type.@this(typeof(global::app.channel.type.goal.@this)), ctx];
 
-        var born = await channel.Create(new global::app.type.item.dict.@this().Set("Name", "logger"), ctx);
+        var born = await channel.Create(ctx.Dict().Set("Name", "logger"), ctx);
 
         await born.IsFailure();
         await Assert.That(born.Error!.Key).IsEqualTo("GoalChannelIncomplete");
@@ -113,9 +113,9 @@ public class ChannelSetTests
     public async Task Remove_TakesARegisteredChannel_RefusesADefault_AndOneNotThere()
     {
         var ctx = _app.actor.list.User.Context;
-        global::app.module.channel.Remove Of(string name) => new(ctx) { Name = new global::app.type.item.text.@this(name) };
+        global::app.module.channel.Remove Of(string name) => new(ctx) { Name = ctx.Text(name) };
         await (await new global::app.module.channel.Set(ctx)
-            { Name = new global::app.type.item.text.@this("logger"), Goal = Make.Call(ctx, "LogIt") }.Start()).IsSuccess();
+            { Name = ctx.Text("logger"), Goal = Make.Call(ctx, "LogIt") }.Start()).IsSuccess();
 
         await (await Of("logger").Start()).IsSuccess();
         await Assert.That(ctx.Actor!.Channel.Get("logger")).IsNull();

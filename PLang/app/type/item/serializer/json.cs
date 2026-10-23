@@ -64,9 +64,10 @@ public partial class json
     // template survives the container's fresh-per-read); a literal slot stays a raw scalar
     // (flagging it would change its canonicalization/signing). A runtime-ingest slot is
     // never a template (injection-safe). The text takes the row's variables it holds.
-    private static object? StringSlot(string s, global::app.type.reader.ReadContext? ctx)
-        => ctx?.Template != null && new text.@this(s, ctx.Template, ctx.Variable) is { HasVariable: true } held
-            ? held
+    private object? StringSlot(string s, global::app.type.reader.ReadContext? ctx)
+        => ctx?.Template is { } template
+           && new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable) is { HasVariable: true } value
+            ? value
             : s;
 
     // A typed value WITHOUT the @schema layer marker — a dict/list entry's {type:{name,…}, value:…}
@@ -128,10 +129,10 @@ public partial class json
             {
                 System.Text.Json.JsonValueKind.String => TextLeaf(element.GetString() ?? "", ctx),
                 System.Text.Json.JsonValueKind.Number => number.@this.Parse(element.GetRawText())!,
-                System.Text.Json.JsonValueKind.True => new @bool.@this(true),
-                System.Text.Json.JsonValueKind.False => new @bool.@this(false),
-                System.Text.Json.JsonValueKind.Null => @null.@this.Instance,
-                System.Text.Json.JsonValueKind.Undefined => @null.@this.Instance,
+                System.Text.Json.JsonValueKind.True => new @bool.@this(true, _context.App.type.list[typeof(@bool.@this)]),
+                System.Text.Json.JsonValueKind.False => new @bool.@this(false, _context.App.type.list[typeof(@bool.@this)]),
+                System.Text.Json.JsonValueKind.Null => _context.App.type.list["null"].Empty(_context),
+                System.Text.Json.JsonValueKind.Undefined => _context.App.type.list["null"].Empty(_context),
                 // A value object is a dict, whatever its shape — a Data rides only as a
                 // container's entry (RawSlot, reached through the leaves for the children).
                 System.Text.Json.JsonValueKind.Object => ObjectLeaf(element, ctx, depth),
@@ -162,7 +163,7 @@ public partial class json
     {
         // An authored container is born with its template mode so its `%ref%` leaves re-resolve
         // on read (dict.@this.Value → Resolve); a runtime-ingest read (ctx null) stays literal.
-        var d = new dict.@this { Template = ctx?.Template };
+        var d = new dict.@this(_context.App.type.list[new global::app.type.@this("dict", template: ctx?.Template), _context]);
         foreach (var prop in element.EnumerateObject())
             d.Set(prop.Name, RawSlot(prop.Value, ctx, depth + 1));
         return d;
@@ -170,7 +171,7 @@ public partial class json
 
     private list.@this ArrayLeaf(System.Text.Json.JsonElement element, global::app.type.reader.ReadContext? ctx, int depth)
     {
-        var l = new list.@this { Template = ctx?.Template };
+        var l = new list.@this(_context.App.type.list[new global::app.type.@this("list", null, false, ctx?.Template), _context]);
         foreach (var item in element.EnumerateArray())
             l.AddRaw(RawSlot(item, ctx, depth + 1));
         return l;
@@ -204,17 +205,17 @@ public partial class json
     // container (ctx.Template set) it rides as a STAMPED text template so it re-resolves on
     // read; a runtime-ingest slot (ctx null) stays a raw string (injection-safe, and a bare
     // literal keeps its canonicalization). Only a plain literal with no %ref% is born native text.
-    private static object TextLeaf(string s, global::app.type.reader.ReadContext? ctx)
+    private object TextLeaf(string s, global::app.type.reader.ReadContext? ctx)
     {
         // if/return, NOT a ternary: the common type of (string, text.@this)
         // would silently convert the wrapper back via text's implicit operator.
-        if (ctx?.Template != null)
+        if (ctx?.Template is { } template)
         {
-            var held = new text.@this(s, ctx.Template, ctx.Variable);
-            if (held.HasVariable) return held;
+            var value = new text.@this(s, _context.App.type.list[new global::app.type.@this("text", template: template), _context], ctx.Variable);
+            if (value.HasVariable) return value;
         }
-        else if (s.Contains('%') && new global::app.type.item.variable.parser.@this(s).Variable.Count > 0)
+        else if (s.Contains('%') && new global::app.type.item.variable.parser.@this(s, _context.App.type.list).Variable.Count > 0)
             return s;
-        return new text.@this(s);
+        return new text.@this(s, _context.App.type.list[typeof(text.@this)]);
     }
 }

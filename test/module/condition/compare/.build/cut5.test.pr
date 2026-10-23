@@ -6,7 +6,8 @@
       "index": 0,
       "text": "set %d% = '{\"a\": 1}', type=json",
       "line": {
-        "number": 6
+        "number": 6,
+        "indent": 0
       },
       "code": [
         {
@@ -42,7 +43,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "dict"
+              "value": {"name":"item","kind":"json"}
             }
           ],
           "default": [
@@ -61,7 +62,8 @@
       "index": 1,
       "text": "set %d2% = '{\"a\": 1}', type=json",
       "line": {
-        "number": 7
+        "number": 7,
+        "indent": 0
       },
       "code": [
         {
@@ -97,7 +99,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "dict"
+              "value": {"name":"item","kind":"json"}
             }
           ],
           "default": [
@@ -116,7 +118,8 @@
       "index": 2,
       "text": "set %n% = 5",
       "line": {
-        "number": 8
+        "number": 8,
+        "indent": 0
       },
       "code": [
         {
@@ -164,7 +167,8 @@
       "index": 3,
       "text": "set %orderCaught% = \"\"",
       "line": {
-        "number": 9
+        "number": 9,
+        "indent": 0
       },
       "code": [
         {
@@ -212,7 +216,8 @@
       "index": 4,
       "text": "if %d% > %n% then\non error call CaughtOrder",
       "line": {
-        "number": 10
+        "number": 10,
+        "indent": 0
       },
       "code": [
         {
@@ -315,6 +320,49 @@
               ]
             }
           ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "CaughtOrder"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 4 uses on.error, which the decider was not sure of (0.88)"
         }
       ]
     },
@@ -322,7 +370,8 @@
       "index": 6,
       "text": "assert %orderCaught% equals \"EvaluationError\"",
       "line": {
-        "number": 13
+        "number": 13,
+        "indent": 0
       },
       "code": [
         {
@@ -362,7 +411,8 @@
       "index": 7,
       "text": "set %dictsEqual% = false",
       "line": {
-        "number": 14
+        "number": 14,
+        "indent": 0
       },
       "code": [
         {
@@ -410,7 +460,8 @@
       "index": 8,
       "text": "if %d% == %d2% then",
       "line": {
-        "number": 15
+        "number": 15,
+        "indent": 0
       },
       "code": [
         {
@@ -520,7 +571,8 @@
       "index": 10,
       "text": "assert %dictsEqual% is true",
       "line": {
-        "number": 17
+        "number": 17,
+        "indent": 0
       },
       "code": [
         {
@@ -553,7 +605,8 @@
       "index": 11,
       "text": "set %list% = []",
       "line": {
-        "number": 18
+        "number": 18,
+        "indent": 0
       },
       "code": [
         {
@@ -601,7 +654,8 @@
       "index": 12,
       "text": "add %d% to %list%",
       "line": {
-        "number": 19
+        "number": 19,
+        "indent": 0
       },
       "code": [
         {
@@ -660,7 +714,8 @@
       "index": 13,
       "text": "set %found% = false",
       "line": {
-        "number": 20
+        "number": 20,
+        "indent": 0
       },
       "code": [
         {
@@ -708,7 +763,8 @@
       "index": 14,
       "text": "if %list% contains %n% then",
       "line": {
-        "number": 21
+        "number": 21,
+        "indent": 0
       },
       "code": [
         {
@@ -818,7 +874,8 @@
       "index": 16,
       "text": "assert %found% is false",
       "line": {
-        "number": 23
+        "number": 23,
+        "indent": 0
       },
       "code": [
         {
@@ -856,7 +913,8 @@
           "index": 0,
           "text": "set %orderCaught% = %!error.Key%",
           "line": {
-            "number": 26
+            "number": 26,
+            "indent": 0
           },
           "code": [
             {
@@ -915,15 +973,11 @@
           ]
         }
       ],
-      "child": [],
       "visibility": "Private",
-      "path": "/module/condition/compare/Cut5.test.goal",
-      "prPath": "/module/condition/compare/.build/cut5.test.pr",
       "hash": "719f56f0f1e64d000e3a702bfcd0cfc8c05427e278017f6b8982646b19115d9f"
     }
   ],
   "visibility": "Public",
-  "path": "/module/condition/compare/Cut5.test.goal",
-  "prPath": "/module/condition/compare/.build/cut5.test.pr",
+  "file": "Cut5.test.goal",
   "hash": "221dbb1b78faf0f864101fd1ff8108f13584f5686248f3a7ca7d7132ad4b19c7"
 }

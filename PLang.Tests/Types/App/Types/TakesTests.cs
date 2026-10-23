@@ -32,7 +32,7 @@ public class TakesTests : System.IAsyncDisposable
 
         await Assert.That(made).IsTypeOf<UrlValue>();
         await Assert.That(((UrlValue)made).Path).IsSameReferenceAs(address);
-        await Assert.That(made.Template?.Name).IsEqualTo("plang");
+        await Assert.That(made.Type.Template?.Name).IsEqualTo("plang");
     }
 
     // The declaration rides beside the binding: a binding that declares nothing still births a template.
@@ -44,13 +44,13 @@ public class TakesTests : System.IAsyncDisposable
         var aFile = FileValue.Create(PathValue.Resolve("some.txt", Ctx), declared, binding);
         var aUrl = UrlValue.Create(PathValue.Resolve("https://example.com/t.txt", Ctx), declared, binding);
 
-        await Assert.That(aFile!.Template?.Name).IsEqualTo("plang");
-        await Assert.That(aUrl!.Template?.Name).IsEqualTo("plang");
+        await Assert.That(aFile!.Type.Template?.Name).IsEqualTo("plang");
+        await Assert.That(aUrl!.Type.Template?.Name).IsEqualTo("plang");
     }
 
     [Test] public async Task APlainList_DeclaredATypedList_IsTakenAsIt()
     {
-        var plain = new global::app.type.item.list.@this();
+        var plain = new global::app.type.item.list.@this(app.type.list["list"]);
 
         var made = Declared("list", "path").Make(plain, Ctx);
 
@@ -59,7 +59,7 @@ public class TakesTests : System.IAsyncDisposable
 
     [Test] public async Task ADict_DeclaredATypedList_IsHeld()
     {
-        var dict = new global::app.type.item.dict.@this();
+        var dict = Ctx.Dict();
 
         var made = Declared("list", "path").Make(dict, Ctx);
 
@@ -73,8 +73,8 @@ public class TakesTests : System.IAsyncDisposable
         var body = System.Text.Encoding.UTF8.GetBytes("Hello %name%!");
         await System.IO.File.WriteAllBytesAsync(System.IO.Path.Combine(root, "t.txt"), body);
         var address = server.MapStoredBody(body, "text/plain");
-        var grant = new global::app.type.item.permission.@this("User", new global::app.type.item.path.http.@this(address).Absolute,
-            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact);
+        var grant = new global::app.type.item.permission.@this("User", Ctx.Url(address).Absolute,
+            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact, Ctx.App.type.list[typeof(global::app.type.item.permission.@this)]);
         await Ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: Ctx), persist: false);
         await Ctx.Variable.Set("name", "World");
 

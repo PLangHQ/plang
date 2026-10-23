@@ -81,9 +81,9 @@ public sealed partial class @this
             if (given is Text t) input = t.Clr<string>();
             else
             {
-                using var written = new MemoryStream();
-                await Text.Encode(written, context.Ok(given), context, null, null, CancellationToken.None);
-                input = Encoding.UTF8.GetString(written.ToArray());
+                using var stream = new MemoryStream();
+                await Text.Encode(stream, context.Ok(given), context, global::app.View.Out, null, CancellationToken.None);
+                input = Encoding.UTF8.GetString(stream.ToArray());
             }
         }
         var onOutput = step.OnOutput == null ? null : await step.OnOutput.Value();
@@ -112,8 +112,8 @@ public sealed partial class @this
         {
             await foreach (var (isError, line) in lines.ReadAllAsync(ct))
             {
-                var kept = isError ? error : output;
-                if (kept.Length < max) kept.AppendLine(line);
+                var text = isError ? error : output;
+                if (text.Length < max) text.AppendLine(line);
                 if (echo) await context.Actor.Channel[isError ? global::app.channel.list.@this.Error : global::app.channel.list.@this.Output].WriteText(line);
                 var call = isError ? onError : onOutput;
                 if (call != null) await OnLine(call, line, context);
@@ -172,10 +172,10 @@ public sealed partial class @this
 
     /// <summary>Runs the held goal call once for one line, the line as <c>%!data%</c>. A failing call is reported on
     /// the error channel and the program keeps running.</summary>
-    private static async Task OnLine(Call held, string line, Context context)
+    private static async Task OnLine(Call call, string line, Context context)
     {
         await context.Variable.Set("!data", process.@this.Written(line, context));
-        var result = await held.Start(context);
+        var result = await call.Start(context);
         if (!result.Success) await context.Actor.Channel.Report(result);
     }
 
