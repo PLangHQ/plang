@@ -38,13 +38,21 @@ public sealed partial class @this : global::app.type.item.path.@this
         // The "//x" prefix is an OS-rooted out-of-root form preserved
         // verbatim for idempotency under repeat normalization. GetFullPath
         // would collapse "//tmp/x" to "/tmp/x" and break that.
-        if (absolutePath.StartsWith("//")) return absolutePath;
+        if (absolutePath.StartsWith("//")) return Trimmed(absolutePath);
         // GetFullPath throws on inputs that can't be a real OS path
         // (ArgumentException, PathTooLongException, NotSupportedException,
         // SecurityException). Let those escape — the invariant above can't
         // hold for a string that isn't a path, and a silent fallback would
         // store a value whose textual form lies about what it points to.
-        return PathHelper.GetFullPath(absolutePath);
+        return Trimmed(PathHelper.GetFullPath(absolutePath));
+    }
+
+    // A trailing separator names no other place ("dl/" is the entry "dl"), and the OS reads one after a link as
+    // through it: dropped, so the string the gate judges is the string the OS is handed. A root keeps its own.
+    private static string Trimmed(string absolutePath)
+    {
+        var trimmed = absolutePath.TrimEnd(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar);
+        return trimmed.Length <= PathHelper.GetPathRoot(absolutePath).Length ? absolutePath : trimmed;
     }
 
     [Out, Store] public override string Scheme => "file";
@@ -53,7 +61,12 @@ public sealed partial class @this : global::app.type.item.path.@this
     // resolved), each part as the OS holds its name (an 8.3 short part long). Links that loop or run past 40 land
     // nowhere the gate can tell: null, never the path as written (an OS that follows more links may land elsewhere).
     internal override global::app.type.item.path.@this? Location(global::app.type.item.path.file.filesystem.@this filesystem)
-        => Landing(filesystem) is { } landing ? filesystem.Long(landing) : null;
+        => Landing(filesystem, last: true) is { } landing ? filesystem.Long(landing) : null;
+
+    // The entry an unlink or a rename acts on: where the OS lands for its folder, and its own name as written — a link
+    // there is the entry, never followed. Null when its folder's links loop or run past 40.
+    internal override global::app.type.item.path.@this? Spot(global::app.type.item.path.file.filesystem.@this filesystem)
+        => Landing(filesystem, last: false) is { } entry ? filesystem.Long(entry) : null;
 
     // A change under the os folder (write, delete) changes what ships with plang — and a goal there runs programs
     // without asking — so the question says so; it asks, it doesn't refuse.

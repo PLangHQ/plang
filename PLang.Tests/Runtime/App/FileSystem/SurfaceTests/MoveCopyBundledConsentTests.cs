@@ -141,6 +141,7 @@ public class MoveCopyBundledConsentTests
 
         // Both grants landed.
         await Assert.That(await app.actor.list.User.Permission.Find(src, global::app.type.item.permission.Verb.read)).IsNotNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(src, global::app.type.item.permission.Verb.delete)).IsNotNull();
         await Assert.That(await app.actor.list.User.Permission.Find(dst, global::app.type.item.permission.Verb.write)).IsNotNull();
     }
 

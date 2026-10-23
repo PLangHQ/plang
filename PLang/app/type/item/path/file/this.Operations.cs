@@ -298,11 +298,12 @@ public sealed partial class @this
 
     /// <summary>Where the OS lands for this path, read in <paramref name="filesystem"/>: from the host's root, each link on the
     /// way followed as the OS follows it (an absolute target from the host's root, a relative one from the link's own
-    /// folder), this path's own last part too; null on a loop. Not gated: it reads only what links say.</summary>
-    internal @this? Landing(global::app.type.item.path.file.filesystem.@this filesystem)
+    /// folder), this path's own last part too when <paramref name="last"/> (an open), never when the entry itself is what
+    /// is acted on (an unlink, a rename); null on a loop. Not gated: it reads only what links say.</summary>
+    internal @this? Landing(global::app.type.item.path.file.filesystem.@this filesystem, bool last)
     {
         var root = PathHelper.GetPathRoot(Absolute);
-        return string.IsNullOrEmpty(root) ? this : new @this(root, Type).Reach(Absolute[root.Length..], last: true, filesystem);
+        return string.IsNullOrEmpty(root) ? this : new @this(root, Type).Reach(Absolute[root.Length..], last, filesystem);
     }
 
     // what parts a path is written in: / everywhere, \ too on Windows (a legal name character elsewhere)
@@ -367,10 +368,11 @@ public sealed partial class @this
     /// </summary>
     public override async Task<data.@this<global::app.type.item.path.@this>> Delete(global::app.type.item.@bool.@this recursive, actor.context.@this context)
     {
-        if (await AuthGate(Verb.delete, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        var filesystem = context.Filesystem;
+        // an unlink acts on the entry itself — a link removed, never what it leads to — so it is judged there
+        if (await AuthGate(Verb.delete, Spot(filesystem), context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         try
         {
-            var filesystem = context.Filesystem;
             if (filesystem.Link(this) != null || filesystem.IsFile(this))
                 filesystem.Delete(this, recursive: false);
             else if (filesystem.IsFolder(this))
@@ -383,7 +385,7 @@ public sealed partial class @this
                 if (recursive.Value)
                 {
                     var tree = Tree(null, subfolder: true, filesystem).ToList();
-                    if (await Refusal(tree, Verb.delete, Verb.delete, null, context) is { } refused)
+                    if (await Refusal(tree, Verb.delete, Verb.delete, null, entry => entry.Spot(filesystem), context) is { } refused)
                         return data.@this<global::app.type.item.path.@this>.From(refused);
                     foreach (var (entry, _) in Enumerable.Reverse(tree)) filesystem.Delete(entry, recursive: false);
                 }
@@ -431,24 +433,31 @@ public sealed partial class @this
     /// </summary>
     private async Task<data.@this<global::app.type.item.path.@this>> BundledTransfer(@this destination, bool isMove, bool overwrite, bool subfolder, actor.context.@this context)
     {
-        var sourceVerb = Verb.read;
-        var destVerb   = Verb.write;
         var filesystem = context.Filesystem;
-        // each end where the OS lands for it, worked out once for the whole transfer
-        if (Location(filesystem) is not { } source) return context.Error<global::app.type.item.path.@this>(Loop);
-        if (destination.Location(filesystem) is not { } target) return context.Error<global::app.type.item.path.@this>(destination.Loop);
+        // Where the OS acts at each end, named once and worked out once for the whole transfer. A copy opens both: the
+        // source read where it lands, what it writes written through a link. A move renames: it takes the source's entry
+        // away and puts it at the destination's entry — a link there replaced, never written through — or, for a file
+        // sent into a folder that is there, under where that folder lands.
+        Func<@this, global::app.type.item.path.@this?> place = isMove ? end => end.Spot(filesystem) : end => end.Location(filesystem);
+        var intoFolder = !filesystem.IsFolder(this) && filesystem.IsFolder(destination);
+        if (place(this) is not { } source) return context.Error<global::app.type.item.path.@this>(Loop);
+        if ((intoFolder ? destination.Location(filesystem) : place(destination)) is not { } target)
+            return context.Error<global::app.type.item.path.@this>(destination.Loop);
 
         // a move carries what the folder holds in one rename: a folder that holds the stores' folder's place is never
         // moved, whether the stores are there yet or not
         if (isMove && filesystem.store.IsUnder(source).Value)
             return context.Error<global::app.type.item.path.@this>(new global::app.error.PermissionDenied(source.Request(context.Actor, Verb.delete)));
 
-        var sourceAuth = await source.Standing(sourceVerb, context);
-        var destAuth   = await target.Standing(destVerb, context);
+        // A copy reads its source; a move reads it too (what it holds is reachable where it lands) and deletes it (the
+        // name taken away): a read grant alone never removes a file by moving it. Either writes its destination.
+        var readAuth   = await source.Standing(Verb.read, context);
+        var deleteAuth = isMove ? await source.Standing(Verb.delete, context) : context.Ok();
+        var writeAuth  = await target.Standing(Verb.write, context);
 
         // a side the gate refuses without asking (the stores' folder) is the answer, never asked
-        if (sourceAuth is { Success: false }) return data.@this<global::app.type.item.path.@this>.From(sourceAuth);
-        if (destAuth is { Success: false }) return data.@this<global::app.type.item.path.@this>.From(destAuth);
+        foreach (var auth in new[] { readAuth, deleteAuth, writeAuth })
+            if (auth is { Success: false }) return data.@this<global::app.type.item.path.@this>.From(auth);
 
         // The entries the transfer writes, walked once: a folder's, or a file alone where it lands (under the destination
         // when that names a folder). Each asked of the gate, both ends, before anything is touched — an entry it refuses
@@ -463,27 +472,30 @@ public sealed partial class @this
         {
             return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
         }
-        if (await Refusal(tree, sourceVerb, destVerb, target, context) is { } refused)
+        if (await Refusal(tree, Verb.read, Verb.write, target, place, context) is { } refused)
             return data.@this<global::app.type.item.path.@this>.From(refused);
 
-        bool sourceOk = sourceAuth?.Success == true;
-        bool destOk   = destAuth?.Success == true;
+        // what is not yet granted, each on its place, asked in one question
+        var asked = new List<(Verb verb, global::app.type.item.path.@this at, string named)>();
+        if (readAuth == null)   asked.Add((Verb.read, source, Naming(source)));
+        if (deleteAuth == null) asked.Add((Verb.delete, source, Naming(source)));
+        if (writeAuth == null)  asked.Add((Verb.write, target, destination.Naming(target)));
 
-        if (sourceOk && destOk)
+        if (asked.Count == 0)
             return await PerformTransfer(destination, isMove, overwrite, tree, context);
 
         var question = new StringBuilder();
         question.Append(context.Actor!.Name).Append(" wants to:");
-        if (!sourceOk) question.Append("\n  - read ").Append(Naming(source));
-        if (!destOk)   question.Append("\n  - write ").Append(destination.Naming(target));
+        foreach (var (verb, _, named) in asked) question.Append("\n  - ").Append(verb).Append(' ').Append(named);
         question.Append("\n(y/n/a — covers all)");
 
-        // the denial names the side not yet granted; an answer's grants are on the places asked about
-        var request = !sourceOk ? source.Request(context.Actor, sourceVerb) : target.Request(context.Actor, destVerb);
+        // the denial names the first side not yet granted; an answer's grants are on the places asked about
+        var request = asked[0].at.Request(context.Actor, asked[0].verb);
         var consented = await context.Actor.Permission.Ask(question.ToString(), request, context, async persist =>
         {
-            if (!sourceOk) await source.Keep(context.Actor, sourceVerb, persist, context);
-            if (!destOk)   await target.Keep(context.Actor, destVerb, persist, context);
+            // one grant per place, holding every verb asked there (a move's source: read and delete)
+            foreach (var each in asked.GroupBy(a => a.at.Absolute))
+                await each.First().at.Keep(context.Actor, each.Select(a => a.verb), persist, context);
             return await PerformTransfer(destination, isMove, overwrite, tree, context);
         });
         return data.@this<global::app.type.item.path.@this>.From(consented);
@@ -507,25 +519,25 @@ public sealed partial class @this
         }
     }
 
-    // The first entry the gate refuses, asked without asking: each entry for verb, where it lands for toward. Null when
-    // none is refused — an entry it would ask is the top's answer's while it lands under the top's place (target); one a
-    // link in the destination leads out of it is no part of what the top's answer covers, and without a grant of its own
-    // is refused.
+    // The first entry the gate refuses, asked without asking: each entry for verb, its into for toward, both at the place
+    // the door acts on (place: where an open lands, or the entry an unlink or a rename acts on). Null when none is
+    // refused — an entry it would ask is the top's answer's while it lands under the top's place (target); one a link in
+    // the destination leads out of it is no part of what the top's answer covers, and without a grant of its own is
+    // refused.
     private async Task<data.@this?> Refusal(IEnumerable<(@this Entry, @this? Into)> tree, Verb verb, Verb toward,
-        global::app.type.item.path.@this? target, actor.context.@this context)
+        global::app.type.item.path.@this? target, Func<@this, global::app.type.item.path.@this?> place, actor.context.@this context)
     {
-        var filesystem = context.Filesystem;
         foreach (var (entry, into) in tree)
         {
-            if (entry.Location(filesystem) is not { } at) return context.Error(entry.Loop);
+            if (place(entry) is not { } at) return context.Error(entry.Loop);
             if (await at.Standing(verb, context) is { Success: false } refused) return refused;
             if (into == null) continue;
-            if (into.Location(filesystem) is not { } place) return context.Error(into.Loop);
-            var standing = await place.Standing(toward, context);
+            if (place(into) is not { } lands) return context.Error(into.Loop);
+            var standing = await lands.Standing(toward, context);
             if (standing is { Success: false }) return standing;
-            var outside = target != null && !place.IsUnder(target).Value;
+            var outside = target != null && !lands.IsUnder(target).Value;
             if (standing == null && outside)
-                return context.Error(new global::app.error.PermissionDenied(place.Request(context.Actor, toward)));
+                return context.Error(new global::app.error.PermissionDenied(lands.Request(context.Actor, toward)));
         }
         return null;
     }

@@ -57,7 +57,7 @@ public abstract class @this : kind.@this
             var (at, refused) = await Under(into, held.Name?.ToString() ?? "unpacked", context);
             if (at == null) return refused ?? context.Error(new global::app.error.ServiceError(
                 $"an archived {held.Of} named {held.Name} has no place inside {into.Raw}", "UnpackFailed", 400));
-            await Clear(at, context);
+            if (await Clear(at, context) is { } kept) return kept;
             var file = await at.Write(read, context);
             return file.Success ? context.Ok<global::app.type.item.path.@this>(at) : file;
         }

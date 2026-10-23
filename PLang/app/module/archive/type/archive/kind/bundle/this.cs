@@ -118,15 +118,17 @@ public abstract class @this : kind.@this
     private async Task<global::app.data.@this?> Leaving(File into, IEnumerable<string> names, global::app.actor.context.@this context)
     {
         var filesystem = context.Filesystem;
-        if (into.Landing(filesystem) is not { } inside) return null;
+        if (into.Landing(filesystem, last: true) is not { } inside) return null;
         foreach (var name in names.Distinct())
         {
             var (at, _) = await Under(into, name, context);
             if (at == null || filesystem.Link(at) == null) continue;
             // a loop leads nowhere: the OS refuses it too
-            if (at.Landing(filesystem) is not { } lands || lands.IsUnder(inside).Value)
+            if (at.Landing(filesystem, last: true) is not { } lands || lands.IsUnder(inside).Value)
                 continue;
-            await at.Delete(context);
+            // a delete refused or failed is the answer: the link is still there, so it was never removed
+            var removed = await at.Delete(context);
+            if (!removed.Success) return removed;
             return context.Error(new global::app.error.ServiceError(
                 $"the link {name} unpacked into {into.Raw} leads outside it, to {lands.Absolute} — it was removed", "LinkLeaves", 400));
         }
@@ -143,11 +145,11 @@ public abstract class @this : kind.@this
         switch (entry.Kind)
         {
             case Kind.Folder:
-                if (context.Filesystem.Link(at) != null) await at.Delete(context);
+                if (context.Filesystem.Link(at) != null && await at.Delete(context) is { Success: false } unlinked) return unlinked;
                 var folder = await at.Mkdir(context);
                 return folder.Success ? await at.Mode(entry.Mode, context) : folder;
             case Kind.File:
-                await Clear(at, context);
+                if (await Clear(at, context) is { } kept) return kept;
                 var file = entry.Content == null ? await at.WriteBytes([], context) : await at.Write(cap.Over(entry.Content), context);
                 return file.Success ? await at.Mode(entry.Mode, context) : file;
             case Kind.Link:
@@ -157,7 +159,7 @@ public abstract class @this : kind.@this
                 // a copy of the file it names inside the folder — a hard link needs link(2); a copy is the same bytes
                 var (target, unfollowed) = await into.Follow(entry.Target ?? "", last: true, context);
                 if (target == null) return unfollowed!;
-                await Clear(at, context);
+                if (await Clear(at, context) is { } stays) return stays;
                 if (!context.Filesystem.IsFile(target)) return context.Ok();
                 return await target.CopyTo(at, (global::app.type.item.@bool.@this)true, (global::app.type.item.@bool.@this)false, context);
             default:

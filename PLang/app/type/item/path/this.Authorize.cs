@@ -24,10 +24,18 @@ public partial class @this
     /// a path an os goal was handed (a parameter, a variable) is asked as any other.</summary>
     public async Task<data.@this> Authorize(Verb verb, actor.context.@this context, bool named = false)
     {
-        var actor = context.Actor;
-        // where the OS lands for this path, worked out once for the whole call (a link can change between calls); one
-        // that lands nowhere the gate can tell is refused
+        // where the OS lands for this path when it opens it, worked out once for the whole call (a link can change
+        // between calls); one that lands nowhere the gate can tell is refused
         if (Location(context.Filesystem) is not { } place) return context.Error(Loop);
+        return await Authorize(verb, place, context, named);
+    }
+
+    /// <summary>The actor may <paramref name="verb"/> this path where the OS acts for it, <paramref name="place"/> — the
+    /// door's own fact: where an open lands (<see cref="Location"/>), or the entry an unlink or a rename acts on
+    /// (<see cref="Spot"/>). The question, and a yes's grant, are on that place.</summary>
+    private protected async Task<data.@this> Authorize(Verb verb, @this place, actor.context.@this context, bool named = false)
+    {
+        var actor = context.Actor;
 
         // In its root, or a grant it holds: yes; the stores' folder with no grant: no — neither asks
         if (await place.Standing(verb, context) is { } answer) return answer;
@@ -36,17 +44,19 @@ public partial class @this
         if (named && AskedByOs(context)) return context.Ok();
 
         return await actor.Permission.Ask(Question(verb, place, context),
-            place.Request(actor, verb), context, persist => place.Keep(actor, verb, persist, context));
+            place.Request(actor, verb), context, persist => place.Keep(actor, [verb], persist, context));
     }
 
     /// <summary>The grant this place is asked for: the actor, this place, the verb, exactly.</summary>
     internal permission.@this Request(actor.@this actor, Verb verb) => permission.@this.Request(actor, Absolute, verb, MatchMode.exact);
 
-    /// <summary>The actor's answer kept as a grant on this place: in memory for the run, or persisted
-    /// (<paramref name="persist"/>, the answer "always"), signed as it crosses into the settings' store.</summary>
-    internal async Task<data.@this> Keep(actor.@this actor, Verb verb, bool persist, actor.context.@this context)
+    /// <summary>The actor's answer kept as one grant on this place, for each verb it was asked here: in memory for the
+    /// run, or persisted (<paramref name="persist"/>, the answer "always"), signed as it crosses into the settings'
+    /// store. One grant per place: a place's grant replaces the one before on it.</summary>
+    internal async Task<data.@this> Keep(actor.@this actor, IEnumerable<Verb> verbs, bool persist, actor.context.@this context)
     {
-        await actor.Permission.Add(new data.@this<permission.@this>("", Request(actor, verb), context: context), persist);
+        var grant = new permission.@this(actor.Name, Absolute, new HashSet<Verb>(verbs), MatchMode.exact, actor.App.type.list[typeof(permission.@this)]);
+        await actor.Permission.Add(new data.@this<permission.@this>("", grant, context: context), persist);
         return context.Ok();
     }
 
@@ -94,6 +104,11 @@ public partial class @this
     /// path itself, unless a scheme reads it otherwise (a file: each link on the way followed). Null when it lands
     /// nowhere the gate can tell (a file: its links loop, or run past 40) — every door refuses it (<see cref="Loop"/>).</summary>
     internal virtual @this? Location(file.filesystem.@this filesystem) => this;
+
+    /// <summary>Where the gate finds this path's entry itself, read in <paramref name="filesystem"/>: the place an unlink
+    /// or a rename acts on — the path itself, unless a scheme reads it otherwise (a file: its folder's landing, and its own
+    /// name, never followed). Null when its folder lands nowhere the gate can tell.</summary>
+    internal virtual @this? Spot(file.filesystem.@this filesystem) => this;
 
     /// <summary>What the gate refuses this path with when it lands nowhere it can tell.</summary>
     internal global::app.error.@this Loop

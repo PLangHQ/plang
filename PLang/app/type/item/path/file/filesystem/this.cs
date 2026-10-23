@@ -41,7 +41,7 @@ public class @this
     private global::app.type.item.path.file.@this Land(string folder)
     {
         var at = new file.@this(folder, new global::app.type.@this("path", typeof(file.@this), "file"));
-        return at.Landing(this) is { } landed ? Long(landed) : at;
+        return at.Landing(this, last: true) is { } landed ? Long(landed) : at;
     }
 
     /// <summary><paramref name="path"/> with each part as the OS holds its name: on Windows an 8.3 short part
@@ -104,7 +104,9 @@ public class @this
     /// removed itself, never what it leads to.</summary>
     public virtual void Delete(file.@this p, bool recursive)
     {
-        if (Link(p) != null || IsFile(p)) System.IO.File.Delete(p.Absolute);
+        // a link to a folder (a junction too) is removed as a folder is, alone: a file's delete refuses it on Windows
+        if (Link(p) != null) { if (IsFolder(p)) System.IO.Directory.Delete(p.Absolute, recursive: false); else System.IO.File.Delete(p.Absolute); }
+        else if (IsFile(p)) System.IO.File.Delete(p.Absolute);
         else System.IO.Directory.Delete(p.Absolute, recursive);
     }
 

@@ -104,8 +104,8 @@ public class RealPathGateReCheckProbeTests : System.IAsyncDisposable
         await Assert.That(channel.Count).IsEqualTo(0);
     }
 
-    // The same for a move: the file never lands where the link in dst leads.
-    [Test] public async Task AFileMovedIntoAFolder_NeverWritesThroughALinkThere_ToOutsideTheRoot()
+    // A move renames: the file takes the place of the link in dst (in the root, free), never lands where it leads.
+    [Test] public async Task AFileMovedIntoAFolder_ReplacesALinkThere_NeverWritesWhereItLeads()
     {
         if (!Unix) return;
         System.IO.File.WriteAllText(At("x.txt"), "planted");
@@ -116,9 +116,10 @@ public class RealPathGateReCheckProbeTests : System.IAsyncDisposable
 
         var moved = await user.File(At("x.txt")).MoveTo(user.File(At("dst")), overwrite: true, user);
 
-        await moved.IsFailure();
+        await moved.IsSuccess();
         await Assert.That(System.IO.File.ReadAllText(target)).IsEqualTo("original");
-        await Assert.That(System.IO.File.Exists(At("x.txt"))).IsTrue();
+        await Assert.That(new System.IO.FileInfo(At("dst", "x.txt")).LinkTarget).IsNull();
+        await Assert.That(System.IO.File.ReadAllText(At("dst", "x.txt"))).IsEqualTo("planted");
         await Assert.That(channel.Count).IsEqualTo(0);
     }
 

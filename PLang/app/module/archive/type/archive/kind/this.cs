@@ -42,11 +42,12 @@ public abstract class @this : global::app.type.kind.@this<global::app.module.arc
 
     /// <summary>Whatever is at <paramref name="at"/> — a file, a link (never what it leads to), a folder with what it
     /// holds — gone, so what is unpacked there is written in its place, never through a link; nothing there is nothing
-    /// to do.</summary>
-    protected async Task Clear(global::app.type.item.path.file.@this at, global::app.actor.context.@this context)
+    /// to do. Null when it is clear; else the delete's refusal or failure, and what is there stays.</summary>
+    protected async Task<global::app.data.@this?> Clear(global::app.type.item.path.file.@this at, global::app.actor.context.@this context)
     {
         var filesystem = context.Filesystem;
-        if (filesystem.Link(at) != null || filesystem.IsFile(at) || filesystem.IsFolder(at))
-            await at.Delete((global::app.type.item.@bool.@this)true, context);
+        if (filesystem.Link(at) == null && !filesystem.IsFile(at) && !filesystem.IsFolder(at)) return null;
+        var removed = await at.Delete((global::app.type.item.@bool.@this)true, context);
+        return removed.Success ? null : removed;
     }
 }

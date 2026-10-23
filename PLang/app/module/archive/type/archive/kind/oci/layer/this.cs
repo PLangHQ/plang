@@ -36,12 +36,11 @@ public sealed class @this : tar.@this
             var listed = await folder.List(context);
             if (!listed.Success) return listed;
             foreach (var child in (await listed.Value())!.Items())
-                if (child is File gone) await Clear(gone, context);
+                if (child is File gone && await Clear(gone, context) is { } kept) return kept;
             return context.Ok();
         }
         var (removed, unfollowed) = await Under(folder, entry.Leaf[Whiteout.Length..], context);
         if (removed == null) return unfollowed ?? context.Ok();
-        await Clear(removed, context);
-        return context.Ok();
+        return await Clear(removed, context) ?? context.Ok();
     }
 }
