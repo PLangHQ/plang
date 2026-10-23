@@ -123,3 +123,19 @@ Not covered: Windows junctions / 8.3 names (host run), hard links to the store f
 R1b (a whole shipped `.data/` whose identity and permission rows the author signed is read as the victim's own) is accepted in writing by Ingi: "if they give us zip with .data then that is ok, it is what it is" — a downloaded app never has a private key or even a `.data` folder; the runtime creates those on first run, so a folder that arrives with one is that author's whole app, its `.pr` included (313e). Neither the root fix (identity outside the app folder) nor the ask-once guard is built. Residual stays pinned by `ShippedIdentityStoreTests`. Docs line: plang makes `.data/` on an app's first run, and an app folder that arrives with one is used as it is, identity and settings included. Per-actor stores and identities: later branch (`.bot/item-doors/architect/backlog.md` §4).
 
 **Final item-doors security status:** no open findings; accepted risks S2 (actor choice, 313f) and R1b (shipped `.data/`, 317); informational/follow-up per decisions 300/305. My part is done unless the auditor's pass changes gate code.
+
+---
+
+# Re-check 4 at e502d8520 (X1 b4af67960, X2 3483f9d88, X3 02ffa24a7; probes 0d21f2b8c)
+
+## Verdict: PASS — no findings
+
+Tests, all 0 failed: LinkSpotTests 9, ArrivedSignatureTests 7, StoresFolderProbeTests 5, RealPathGateReCheckProbeTests 17, RealPathGateReCheck3ProbeTests 5, EntryGateTests 6, DeleteMoveWindowTests 2, LinkEntryTests 3, RealPathGateTests 6, StepWrittenGrantTests 6, PersistedGrantCannotOverrideStoresTests 7, OsTrustTests 21, ForeignSignedOwnRowTests 1, ShippedIdentityStoreTests 3, KeptDigestOrderTests 1, MalformedWireTests 3. New probes (green by design, `LinkSpotReCheckProbeTests` 4, `ArrivedNonceNotBurnedTests` 2): a file moved into a folder link leading out is asked and not moved on 'no'; a delete grant on a link never answers a read/write of its target; a listing of `dl/` is asked on where it lands; a move of a folder link moves the link and leaves the target's files; a tampered signature or hash does not burn the nonce and the genuine wire still arrives afterwards.
+
+- **X1 clean:** a file is a one-entry tree judged by `Refusal`; the earlier copy/move probes into a folder holding a file link are green.
+- **X2 clean:** delete judged at `Spot` (the folder's landing plus the entry's own name, last link never followed): an outside link into the root is asked; an in-root link to outside is free and its target kept; the delete grant is keyed on the link's place and never answers a read/write of the target; a move source is asked read+delete as one grant; a move over a link replaces the link; the trailing separator is trimmed in `Canonicalize` so the string judged is the string used; a folder link is removed with `Directory.Delete(p, false)` and never recursed; archive deletes answer their result.
+- **X3 clean:** `Present` runs only after hash and signature pass (a forged copy cannot burn the nonce); it settles once by `CompareExchange`, shared by every copy of the read's layer; the early look is gone and the record is atomic; the same wire decoded twice or eight times concurrently arrives exactly once; only `Decode` builds a reading `Wire`, and a direct read meeting a Live layer with no window throws `LiveSignatureNeedsWindow` (fails closed).
+- **Notes (no action):** grants on one place replace each other (one grant per place) — can only cause an extra ask, never a widening; a cached `Present` answer that threw stays failed for that arrival.
+- **Not covered:** the Windows junction test (`LinkSpotTests` skips it here, the host runs it), 8.3 names and junction behaviour of `Directory.Delete(p, false)`, hard links to the store file, unpack into a linked destination.
+
+**Final item-doors security status:** no open findings; accepted risks S2 (313f) and R1b (317).
