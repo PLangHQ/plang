@@ -244,7 +244,7 @@ A sender that produces non-canonical bytes (third-party, non-STJ writer, permute
 **`Wire.Read` auto-verifies `@schema:signature` layers on transport reads.** When the first property of a deserialized object is `@schema:"signature"`, `Wire.Read` dispatches to `ReadSignatureLayer`, which:
 
 1. Rebuilds the `signature.@this` layer from the JSON buffer.
-2. Verifies the signature against the actor context (runs the verify action inline — a bad or expired signature **fails the read**).
+2. Verifies the signature against the actor context (runs the verify action inline — a bad or expired signature **fails the read**). The nonce is presented once for this arrival, after the hash and signature pass; the same bytes arriving again answer `NonceReplay` ([callbacks.md](callbacks.md), "A signed value that arrives").
 3. Returns the peeled inner `Data`, now carrying the verifying actor's context.
 
 **Fail-closed on context-less transport reads.** If `_context == null` and the view is `View.Out` (transport), the read returns a typed `SignatureVerifyContextMissing` error instead of peeling the layer silently. A context-less Wire must not unwrap signed transport payloads — doing so would return the inner data as if verified.

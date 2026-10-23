@@ -199,6 +199,8 @@ Per-channel binding list with its own lock and an AsyncLocal "this binding is al
 
 `output` / `error` / `input` are in `Defaults` and **cannot be removed** — `channel.remove "output"` returns `ChannelInvariantViolation`. To redirect them, use `channel.set` to replace the backing. `debug` is not in `Defaults`; it can be added or removed freely.
 
+The console's format is a channel setting, `%!app.channel.setting.format%` (`--channel.setting.format=…`, default `txt`): `txt` for a person at a terminal, `plang` for a program that runs this plang, `json`, and `bin`, a value's own bytes written raw with no newline after them. `bin` to a terminal is by design: it is chosen by the user's own flag or row, and what the bytes do to the terminal is the user's to decide.
+
 `app.module.debug.Write(...)` resolves the System actor's `debug` channel falling back to `error`. It is gated on `IsEnabled` (set by `--debug`); production code calls it freely without checking. Full rule on when to use which surface: see `good_to_know.md` "Console.* Is Banned in Production C#".
 
 ## Actor channel resolution

@@ -2,7 +2,7 @@
 
 PLang has a built-in debugger that dumps step execution info to stderr. It shows step text, actions, parameters, call stack, and variable values before and after each step.
 
-All debug options are passed as JSON via `--debug.setting={...}`. The JSON properties map to the `debug` settings class (`debug.setting`).
+Debug options are the `debug` settings class (`debug.setting`), written at its path on the command line: one option as `--debug.setting.goal=Start`, several as a dict at the setting's path, `--debug.setting={...}` (`app.` may be left out of any path: `--app.debug.setting…` is the same). Writing a debug setting alone switches debug on, as the bare `--debug` does. `--debug={...}` is refused, naming `--debug.setting`; so is a path no setting answers.
 
 Code: `PLang/app/module/debug/this.cs`
 
@@ -209,7 +209,7 @@ Picks out only the diagnostic lines you care about, hiding the rest of the per-s
 - ❌ Full payload dumps (use `--debug.setting={"llm":{"response":true}}` for LLM data, or `--debug.setting={"variables":[...]}` for vars)
 - ❌ "I'm here" markers without context
 
-## CallStack (`--callstack`)
+## CallStack (`--call.setting`)
 
 Each actor keeps its **own** call tree at `Actor.CallStack` (a cross-actor call starts a
 separate tree — actor-model style). Structural data (Action / Caller / Cause / Errors) is
@@ -231,7 +231,7 @@ plang '--call.setting={"timing":true,"diff":true,"tags":true,"history":true,"fra
 | `history` | false | When on, popped Calls stay in `Caller.Children` instead of being removed on dispose. Combined with `frame.max` for retention cap (FIFO eviction). Off → live tree only; popped Calls are removed from Children. |
 | `frame.max` | 1000 | Sibling retention cap when `history:true`. The (N+1)th Push under the same Caller evicts the oldest from Children. Also doubles as the runaway-recursion guard for the Caller chain length — Push throws `CallStackOverflowException` when the chain reaches this depth. |
 
-There is no shorthand — name each knob explicitly. A bare `--callstack` (no object) does nothing.
+There is no shorthand — name each knob explicitly. `--callstack={...}` is refused; the knobs are written at `--call.setting`.
 
 ### Reading from PLang
 

@@ -1,18 +1,21 @@
 # CLI Changes (v0.2, `cli-app-property-override`)
 
-The CLI flags are now uniform: every flag is a walk onto the matching app-tree node
-(`--app` → `app`, `--build` → `app.Build`, `--test` → `app.Test`, `--debug` → `app.Debug`,
-`--callstack` → each actor's `CallStack`). JSON keys are **property names**; the walk is
-**strict** — an unknown key or a value outside a closed type (`choice`) is rejected.
+A command-line flag is a setting's path: `--<path>=<value>` sets `%!<path>%`, and `app.` may be left out
+(`--channel.setting.format=plang`, `--build.setting.cache=skip`, `--test.setting.parallel=1`, `--debug.setting.goal=Start`).
+Several options at once are a dict at the setting's path (`--debug.setting={"goal":"Start","step":3}`). The walk is
+**strict** — a path no setting answers, an unknown key, or a value outside a closed type (`choice`) is rejected, and the
+refusal names the path. The mode words `--build`, `--test` and `--debug` alone switch their mode on (so does writing one of
+their settings); `--build={...}`, `--test={...}`, `--debug={...}`, `--app={...}` and `--callstack={...}` are refused, naming the
+setting path to write instead (`--debug.setting`, `--call.setting`, …).
 
 ## Breaking changes
 
 - **`--builder` and `--tester` are gone.** Use `--build` and `--test` (canonical). The
   `plang build` subcommand still works (it's an alias for `--build`).
 - **`--debug` no longer carries callstack config.** Callstack capture is its own flag:
-  `--callstack={"timing":true,"diff":true,...}`. There is no shorthand (`callstack:true` is gone) —
+  `--call.setting={"timing":true,"diff":true,...}`. There is no shorthand (`callstack:true` is gone) —
   name each knob. It applies to the run's startup actors (System + User).
-- **`--debug`'s `variables` is a list of names:** `--debug={"variables":["x","y"]}`. A watched
+- **`--debug`'s `variables` is a list of names:** `--debug.setting={"variables":["x","y"]}`. A watched
   variable prints at every step and logs each create, change and delete (the old per-variable
   `{"name","event"}` objects are gone).
 - **`--test` config is validated by the types, and unknown keys are rejected.** `format` is a
@@ -26,5 +29,5 @@ The CLI flags are now uniform: every flag is a walk onto the matching app-tree n
 
 - Each actor owns its own `CallStack` (was app-level). A cross-actor call starts a separate
   tree — see `conventions.md` "Actor Owns Its CallStack".
-- Run-state app properties (Id/Name/Created/Version/OsDirectory/Culture/Cache/CurrentActor/…)
+- Run-state app properties (Id/Name/Created/Version/Culture/Cache/CurrentActor/…)
   are `internal set` — not settable via `--app`. Only `create`/`environment` are `--app`-overridable.

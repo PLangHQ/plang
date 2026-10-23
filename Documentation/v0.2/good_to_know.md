@@ -13,6 +13,10 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - [`code-modules.md`](code-modules.md) — app.module.code — Pluggable Implementations
 - [`obp-smells.md`](obp-smells.md) — OBP named smell catalog (worked examples), naming tells, variant design
 - [`object_pattern_formal.md`](object_pattern_formal.md) — the OBP pattern (philosophy + the 3 laws + the rules)
+- [`filesystem-permission.md`](filesystem-permission.md) — the permission gate: what the prompts guard, where a verb is judged, the stores' folder
+- [`callbacks.md`](callbacks.md) — callbacks, sealing, and a signed value that arrives
+- [`io-channels.md`](io-channels.md) — channels, their formats and the console
+- [`cli-changes.md`](cli-changes.md) — command-line flags are setting paths
 
 ## Section → doc
 - Folder Structure & Namespaces → `conventions.md`
@@ -98,4 +102,12 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - Construction door — the Data ctor + `Declare` delegate to `type.Build(value, context)`; the type forks (raw → lazy `source` at its `RawFormat`, built-same-type → hold, built-different → `Convert`, null → typed absence). Born-with-context via param, no `type.Context ??=`. → `value-type-method-map.md`
 - `type.Convert(value, ctx)` is the throw boundary — returns `item.@this` (not `Data`) and THROWS on a bad conversion, so it rides the same `MaterializeFailed` path as a bad reader parse (`source.Value` catches it). The per-type leaf hooks + `Conversions.Of` hub still answer `Data` internally. → `value-type-method-map.md`
 - `Judge` / `Deserialize` are gone — the no-context construction twins; all construction is born-with-context through `type.Build`. The `source.Read` context-less fallback is gone too (a context-less source now throws → `MaterializeFailed`). → `value-type-method-map.md`
+- What the permission prompts guard — the User actor's doing, not the app's own code (System by choice, its own channels); consent comes from the actor's input only → `filesystem-permission.md`
+- Where a verb is judged — an open at `Location` (links followed), a delete and a move's two ends at `Spot` (the entry itself); a move's source asked read and delete; a grant is on the place asked; ask once, check all, then do → `filesystem-permission.md`
+- The stores' folder (`.data/`) — the system's alone; an app folder that arrives with one is used as it is → `filesystem-permission.md`
+- A signed value that arrives — the nonce is presented once per arrival, the value verifies and names its signer any number of times, the same bytes again answer `NonceReplay` → `callbacks.md`
+- `[Own]` settings and identity keys — no run value, an unsigned row is refused, the private key leaves only through `export`, which asks every time → `bans.md`
+- The console's format — `%!app.channel.setting.format%` (`txt` / `plang` / `json` / `bin`) → `io-channels.md`
+- Command-line flags are setting paths — `--<path>=<value>`, `app.` optional; `--debug={…}` and `--callstack={…}` are refused → `cli-changes.md`
+- The app's anchors are paths — `app.filesystem.root` / `app.filesystem.os` (`%!app.filesystem.root%`) → `bans.md`, `filesystem-permission.md`
 - `date` / `datetime` / `time` ship an `ITypeReader` (`serializer/Reader.cs`) so `as date`/`as datetime`/`as time` literals materialize through `source` + the reader, not an eager `Convert` hook. → `type-system.md`

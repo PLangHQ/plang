@@ -6,7 +6,7 @@
       "bot": "coder",
       "timestamp_start": "2026-10-17T22:03:03Z",
       "timestamp_end": null,
-      "intent": "Stage 1: a value is born whole \u2014 the base item holds its registered type, set at construction, forwarded by every subtype; the INTO-plang implicit operators go; Create(raw) takes the type; the re-resolves, text floor, :754, source.cs:240, action-slot checks, list doors, bare-type makers, image _mime and name-sniffing all collapse.",
+      "intent": "Stage 1: a value is born whole — the base item holds its registered type, set at construction, forwarded by every subtype; the INTO-plang implicit operators go; Create(raw) takes the type; the re-resolves, text floor, :754, source.cs:240, action-slot checks, list doors, bare-type makers, image _mime and name-sniffing all collapse.",
       "before": {
         "assumptions": "Ingi approved fork (a): every value is born with its type from the app's list (the app always exists). The 28 subtype Type overrides rebuild the type per read; source.cs:115 floors text's IsText by Name; three re-resolves (type.Get:886, Out:63, Setting:900) patch the bare type at navigation.",
         "risk": "Big-bang: base item ctor becomes required (type.@this), so every subtype ctor and every construction site must supply the type at birth. Removing ~28 INTO-plang implicit operators surfaces a large caller wall (number especially). Must land as one coherent change with the 6 reds green, guards green, no new reds vs runtime2."
@@ -32,7 +32,7 @@
           "type": "decision",
           "category": "code",
           "confidence": "high",
-          "context": "Surfaced the hinge to the architect: context-free births (bool.True singleton, sniffed image FromBytes, text.ToUpper, number arithmetic) have no app, yet the 3 reds demand whole kind facts + by-name ClrType. Proposed a static assembly-scan facts cache ([Format]/[PlangType] metadata) backing the kind/by-name ctor \u2014 matches Ingi's 'facts from class declarations' and 876 'by-name ctor becomes the list's own'. Flagged as a new static (no-static-without-consent) + locked-core (type system). Holding the 28-file big-bang on the answer."
+          "context": "Surfaced the hinge to the architect: context-free births (bool.True singleton, sniffed image FromBytes, text.ToUpper, number arithmetic) have no app, yet the 3 reds demand whole kind facts + by-name ClrType. Proposed a static assembly-scan facts cache ([Format]/[PlangType] metadata) backing the kind/by-name ctor — matches Ingi's 'facts from class declarations' and 876 'by-name ctor becomes the list's own'. Flagged as a new static (no-static-without-consent) + locked-core (type system). Holding the 28-file big-bang on the answer."
         },
         {
           "paths": [
@@ -44,7 +44,7 @@
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Architect ruled (decision 880): NO static \u2014 every birth reaches the app's type via its maker (type.Make hands the registered type), from the value it came from (this.Type), or a passed context; the by-name test is the test-designer's to reroute. Enumerated the four static value singletons that can't hold an app's type and delivered the list with uses to the architect (REPLY asked for the singletons list first): bool.True/False (7 uses, mostly [Out,Store] setting field-defaults), null.Instance (the typeless-null citizen, ~18 uses \u2014 proposed exempt), given.Instance (1 use), culture.Machine (1 use). Holding the base-ctor big-bang until the architect rules how these four get their type."
+          "context": "Architect ruled (decision 880): NO static — every birth reaches the app's type via its maker (type.Make hands the registered type), from the value it came from (this.Type), or a passed context; the by-name test is the test-designer's to reroute. Enumerated the four static value singletons that can't hold an app's type and delivered the list with uses to the architect (REPLY asked for the singletons list first): bool.True/False (7 uses, mostly [Out,Store] setting field-defaults), null.Instance (the typeless-null citizen, ~18 uses — proposed exempt), given.Instance (1 use), culture.Machine (1 use). Holding the base-ctor big-bang until the architect rules how these four get their type."
         },
         {
           "paths": [
@@ -55,7 +55,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 1 (facts fix, static-free): the type entity, when built from a CLR class, reads its class's [Format] into its kind (KindOfClass via reflection \u2014 the empty kind now carries its _format, a named kind is a kind.format<T>). empty kind ctor takes an optional format. image's Type override passes the kind NAME so the type builds it from [Format]. Both Types reds green (PlainText_Kind_IsText_WithoutNameFloor, ImageFromBytes_Kind_CarriesItsRegisteredMime); Types suite 32/0, no regressions. This is the foundation born-whole builds each value's _type on."
+          "context": "Phase 1 (facts fix, static-free): the type entity, when built from a CLR class, reads its class's [Format] into its kind (KindOfClass via reflection — the empty kind now carries its _format, a named kind is a kind.format<T>). empty kind ctor takes an optional format. image's Type override passes the kind NAME so the type builds it from [Format]. Both Types reds green (PlainText_Kind_IsText_WithoutNameFloor, ImageFromBytes_Kind_CarriesItsRegisteredMime); Types suite 32/0, no regressions. This is the foundation born-whole builds each value's _type on."
         },
         {
           "paths": [
@@ -66,7 +66,7 @@
           "type": "decision",
           "category": "code",
           "confidence": "high",
-          "context": "Wrote the born-whole execution map (per-subtype forwarding type, operator-removal list, singleton handling, collapses). Surfaced two locked-core forks the briefing didn't cover and the architect ruled both: (1) meta-type recursion \u2014 Ingi: one self-typed root in the app's list (ctor sets _type=this), type+kind forward it via : base(root), no Type override. (2) the scope hinge now open \u2014 a value's type entity holds the per-app root (needs context), but the two green Types reds + internal helpers construct values context-free; asked whether origin-births route through context (option a, values always from the list/Make/context, the 2 Types tests reroute like the by-name one) vs keep context-free value ctors (option b). Holding the base-ctor big-bang on that answer."
+          "context": "Wrote the born-whole execution map (per-subtype forwarding type, operator-removal list, singleton handling, collapses). Surfaced two locked-core forks the briefing didn't cover and the architect ruled both: (1) meta-type recursion — Ingi: one self-typed root in the app's list (ctor sets _type=this), type+kind forward it via : base(root), no Type override. (2) the scope hinge now open — a value's type entity holds the per-app root (needs context), but the two green Types reds + internal helpers construct values context-free; asked whether origin-births route through context (option a, values always from the list/Make/context, the 2 Types tests reroute like the by-name one) vs keep context-free value ctors (option b). Holding the base-ctor big-bang on that answer."
         },
         {
           "paths": [
@@ -77,7 +77,7 @@
           "type": "decision",
           "category": "code",
           "confidence": "high",
-          "context": "Integrated architect/test-designer commits (decision 886; 2 Types tests + ActionSlot rerouted through app.type.list). Verified: reds 1&2 GREEN via the facts fix through the app's Create door (thread-safe). Red 3 (AKindedSlot) needs a targeted element-kind ClrType fix. Found and surfaced a hard COLLISION with concrete evidence: the required base ctor + per-app root (884) + no-static (882) collides with the type system's ~15 STATIC kind singletons \u2014 number's precision kinds (number/this.cs:57-71, `static readonly kind.@this @int = new kind.@int.@this()`) and other static kinds across ~50 kind classes. kind.@this : type.@this : item.@this, so every kind would have to hold the per-app root, but a static can't. Full swing = ~100+ files atomic + ~15 static-kind rulings (every number op would need the app for its precision kind). Offered 3 paths to the architect: (A) full per-app-kinds swing, (B) ship observable reds-green (facts fix + element fix + no-base-ctor collapses), (C) lighter born-whole (only value types born-whole; type/kind keep static bootstrap). Reverted the base-ctor change to keep the tree green (facts-fix-only). Holding for the ruling."
+          "context": "Integrated architect/test-designer commits (decision 886; 2 Types tests + ActionSlot rerouted through app.type.list). Verified: reds 1&2 GREEN via the facts fix through the app's Create door (thread-safe). Red 3 (AKindedSlot) needs a targeted element-kind ClrType fix. Found and surfaced a hard COLLISION with concrete evidence: the required base ctor + per-app root (884) + no-static (882) collides with the type system's ~15 STATIC kind singletons — number's precision kinds (number/this.cs:57-71, `static readonly kind.@this @int = new kind.@int.@this()`) and other static kinds across ~50 kind classes. kind.@this : type.@this : item.@this, so every kind would have to hold the per-app root, but a static can't. Full swing = ~100+ files atomic + ~15 static-kind rulings (every number op would need the app for its precision kind). Offered 3 paths to the architect: (A) full per-app-kinds swing, (B) ship observable reds-green (facts fix + element fix + no-base-ctor collapses), (C) lighter born-whole (only value types born-whole; type/kind keep static bootstrap). Reverted the base-ctor change to keep the tree green (facts-fix-only). Holding for the ruling."
         },
         {
           "paths": [
@@ -92,7 +92,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Ingi ruled (A) in 3 green steps (887/888): number ops are derived births (kind from the operand's own type, app-owned) so only origin births need the app. STEP 1 groundwork pushed: (1) base item got the born-whole foundation \u2014 a `_type` field, `@this(type.@this type)` ctor, a temporary parameterless stand-in, and `Type => _type ?? rebuild` (non-breaking: a value not yet moved falls back to the old rebuild). (2) image fix as briefed: Sniff returns only the kind name; the image's Mime is asked of its type's kind; `_mime` and the hard-coded mime pairs removed; serializers pass only the kind. (3) red 3: `ClrType` made virtual, `list<action>`'s element kind overrides it to carry the registered action's ClrType. All three C# reds green (reds 1&2 via the pushed facts fix; red 3 via the element fix). Surface re-pinned under 887/888 (image ctor + item's new ctor). Test fixes: ImageFormatTests, ImageValueTests to the new 2-arg image ctor. NOT yet done: the per-ctor `: base(type)` moves for the value types (the 'values hold the type' headline) \u2014 asked the architect whether to do them in step 1 or at step 3's required-ctor move. Flake flagged to architect/tester: ImageFromBytes + the text/image tests share `new app.@this(\"/app\")` and race under TUnit parallelism (pass in isolation)."
+          "context": "Ingi ruled (A) in 3 green steps (887/888): number ops are derived births (kind from the operand's own type, app-owned) so only origin births need the app. STEP 1 groundwork pushed: (1) base item got the born-whole foundation — a `_type` field, `@this(type.@this type)` ctor, a temporary parameterless stand-in, and `Type => _type ?? rebuild` (non-breaking: a value not yet moved falls back to the old rebuild). (2) image fix as briefed: Sniff returns only the kind name; the image's Mime is asked of its type's kind; `_mime` and the hard-coded mime pairs removed; serializers pass only the kind. (3) red 3: `ClrType` made virtual, `list<action>`'s element kind overrides it to carry the registered action's ClrType. All three C# reds green (reds 1&2 via the pushed facts fix; red 3 via the element fix). Surface re-pinned under 887/888 (image ctor + item's new ctor). Test fixes: ImageFormatTests, ImageValueTests to the new 2-arg image ctor. NOT yet done: the per-ctor `: base(type)` moves for the value types (the 'values hold the type' headline) — asked the architect whether to do them in step 1 or at step 3's required-ctor move. Flake flagged to architect/tester: ImageFromBytes + the text/image tests share `new app.@this(\"/app\")` and race under TUnit parallelism (pass in isolation)."
         },
         {
           "paths": [
@@ -104,7 +104,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Step 1 value-type moves (Ingi's go: move every value type to : base(type), delete each Type override). Pattern: a ctor forwards the type to base; Make hands the registered type, a legacy/operator build self-builds the same type. Learnings: (a) Activator matches ctors by exact arg count \u2014 no optional param for Activator-constructed types (choice); (b) born-whole makes Type/kind EAGER, which can trigger a static init or throw the old lazy Type avoided (choice<nameless-enum> \u2014 fixed by reading the set name from T's [PlangType] directly, not the throwing _set). PUSHED + GREEN, 22 value types born-whole (commits 8da3f0faf, fb0c7f778, 738a1c913, 026f9945e): guid, date, time, datetime, tag, bool, culture, note, note.line, number, duration, choice, source, prose, computed, base64, binary, image, path, file, url, null. path takes its scheme as a ctor arg; null holds its declared type or the null type. Surface re-pinned each push."
+          "context": "Step 1 value-type moves (Ingi's go: move every value type to : base(type), delete each Type override). Pattern: a ctor forwards the type to base; Make hands the registered type, a legacy/operator build self-builds the same type. Learnings: (a) Activator matches ctors by exact arg count — no optional param for Activator-constructed types (choice); (b) born-whole makes Type/kind EAGER, which can trigger a static init or throw the old lazy Type avoided (choice<nameless-enum> — fixed by reading the set name from T's [PlangType] directly, not the throwing _set). PUSHED + GREEN, 22 value types born-whole (commits 8da3f0faf, fb0c7f778, 738a1c913, 026f9945e): guid, date, time, datetime, tag, bool, culture, note, note.line, number, duration, choice, source, prose, computed, base64, binary, image, path, file, url, null. path takes its scheme as a ctor arg; null holds its declared type or the null type. Surface re-pinned each push."
         },
         {
           "paths": [
@@ -115,7 +115,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Settings born-whole, no exception (891, Ingi): every settings class (~23) gets `public X(type.@this type) : base(type) {}`; the base setting ctors carry the type; the reflection sites (actor/setting, item/setting, Executor.Flag) pass it from the app's list (Activator.CreateInstance(clr, app.type.list[clr])); the discovery gate checks for the (type) ctor; ISetting/IConcept/Of<T>/Listed<T> drop their new() constraint; owned-setting field-defaults and `new X()` callers/tests pass the type. Pushed b5b03185e, 43 files, all green (Modules/Data/Generator/Runtime 0; Types 1 = ImageFromBytes parallel flake; Wire 6 baseline). OPEN QUESTION to architect: text/dict/list/separator flag template only when a container inner slot's content holds a variable (literal slots stay plain so signing/canonicalization don't change) \u2014 a content-decided, post-construction fact the born-at-ctor type can't capture. Proposed: the reader decides template-ness from content and hands the value a type carrying the template only when a var is held. Holding on that before reshaping text/dict/list (touches signing). Remaining: text, dict, list, separator, list<T> (element kind), content (file/url lazy base, GetType-like)."
+          "context": "Settings born-whole, no exception (891, Ingi): every settings class (~23) gets `public X(type.@this type) : base(type) {}`; the base setting ctors carry the type; the reflection sites (actor/setting, item/setting, Executor.Flag) pass it from the app's list (Activator.CreateInstance(clr, app.type.list[clr])); the discovery gate checks for the (type) ctor; ISetting/IConcept/Of<T>/Listed<T> drop their new() constraint; owned-setting field-defaults and `new X()` callers/tests pass the type. Pushed b5b03185e, 43 files, all green (Modules/Data/Generator/Runtime 0; Types 1 = ImageFromBytes parallel flake; Wire 6 baseline). OPEN QUESTION to architect: text/dict/list/separator flag template only when a container inner slot's content holds a variable (literal slots stay plain so signing/canonicalization don't change) — a content-decided, post-construction fact the born-at-ctor type can't capture. Proposed: the reader decides template-ness from content and hands the value a type carrying the template only when a var is held. Holding on that before reshaping text/dict/list (touches signing). Remaining: text, dict, list, separator, list<T> (element kind), content (file/url lazy base, GetType-like)."
         },
         {
           "paths": [
@@ -155,7 +155,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "item-doors 42/47: parts and units are one-context [LlmBuilder] members answering data<T>.From(context.Ok(raw)) \u2014 the existing typed door; no helper, no cast; %now.year% unchanged."
+          "context": "item-doors 42/47: parts and units are one-context [LlmBuilder] members answering data<T>.From(context.Ok(raw)) — the existing typed door; no helper, no cast; %now.year% unchanged."
         },
         {
           "paths": [
@@ -203,7 +203,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "item-doors 51/56/57: the call stack is handed the app's datetime and {duration, short}; duration born (TimeSpan, type) and written by its type's kind (kind.Write, Ingi's locked addition); duration.Text and its ToString go \u2014 a duration shown as text is its Output (Fluid's span converter writes it through a text writer)."
+          "context": "item-doors 51/56/57: the call stack is handed the app's datetime and {duration, short}; duration born (TimeSpan, type) and written by its type's kind (kind.Write, Ingi's locked addition); duration.Text and its ToString go — a duration shown as text is its Output (Fluid's span converter writes it through a text writer)."
         },
         {
           "paths": [
@@ -366,9 +366,9 @@
         }
       ],
       "after": {
-        "status": "4 commits pushed; (3) formats and the shared code facts (\u00a76) wait on Ingi",
+        "status": "4 commits pushed; (3) formats and the shared code facts (§6) wait on Ingi",
         "health": "sweep green except 6 Wire snapshot/resume tests that fail on the tip too",
-        "notes": "birth 90-113 \u2192 28-30 ms median; 15.5 \u2192 5.1 MB per birth; Types suite 39 \u2192 14.6 s wall (quiet machine); serial CPU per test 94 \u2192 33 ms"
+        "notes": "birth 90-113 → 28-30 ms median; 15.5 → 5.1 MB per birth; Types suite 39 → 14.6 s wall (quiet machine); serial CPU per test 94 → 33 ms"
       }
     },
     {
@@ -639,6 +639,60 @@
         "status": "report written: .bot/item-doors/codeanalyzer/v5/report.md",
         "health": "fail, short list of three",
         "notes": "no build/tests run"
+      }
+    },
+    {
+      "id": "d0c5-item-doors-docs-v6",
+      "bot": "docs",
+      "timestamp_start": "2026-10-23T09:00:00Z",
+      "intent": "Docs pass before the item-doors merge into runtime2: eight brief items, CLAUDE.md proposals, N18 stale names.",
+      "before": {
+        "assumptions": "Decisions 300-320 and the code are the source of truth; docs state what is.",
+        "risk": "Gate and signing rules described wrongly; a teaching .md edit would trigger re-pins."
+      },
+      "plan": ".bot/item-doors/docs/v6/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/filesystem-permission.md",
+            "Documentation/v0.2/callbacks.md",
+            "Documentation/v0.2/wire-serialization.md",
+            "Documentation/v0.2/io-channels.md",
+            "Documentation/v0.2/bans.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Brief items 1-5 and 8, written against the gate and signature code."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md",
+            "Documentation/v0.2/debug.md",
+            "Documentation/v0.2/cli-changes.md",
+            "Documentation/v0.2/scripts/check-app-tree.sh",
+            "os.targets"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "N18 stale names; cli-changes.md added (same class)."
+        },
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Proposals 1,3,4,5,6 applied, 2 rejected as withdrawn; N18 lines."
+        }
+      ],
+      "timestamp_end": "2026-10-23T10:30:00Z",
+      "after": {
+        "status": "pass",
+        "health": "docs only; no teaching md, no production C#, no .pr",
+        "notes": "Open: CHANGELOG home; app-tree drift; Data.Merge on file-module-guide."
       }
     }
   ]
