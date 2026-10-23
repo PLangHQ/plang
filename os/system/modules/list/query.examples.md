@@ -1,6 +1,9 @@
 Step text: `keep %users% where age > 20`
 Properties: `{"List": "%users%", "Query": {"where": {"field": "age", "op": ">", "value": 20}}}` — a one-part sentence is a one-part query.
 
+Step text: `get all files in /temp, where size > 1mb, write to %big%`
+Properties: `{"List": "%!data%", "Query": {"where": {"field": "size", "op": ">", "value": "1mb"}}}` — the list is what the action before it just returned (file.list), so a condition on the files' properties is this query chained after the listing, in the same step; the trailing `write to %big%` is its own action.
+
 Step text: `filter %users% where type is "student" and age > 20, write to %students%`
 Properties: `{"List": "%users%", "Query": {"where": {"and": [{"field": "type", "op": "==", "value": "student"}, {"field": "age", "op": ">", "value": 20}]}}}` — two conditions joined by and; the trailing `write to %students%` is its own action.
 

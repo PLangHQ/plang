@@ -39,6 +39,10 @@
     "file.read": {
       "true": "the step reads a file's content: `read 'notes.txt'`, `read file %path%, write to %text%`",
       "false": "the step reads no file; saving, listing or deleting a file is not reading it"
+    },
+    "list.query": {
+      "true": "the step keeps only some items of a list, or sorts or groups it, by a condition on the items' own properties — the list can be what the step's first action just returned: `keep %users% where age > 20`, `sort %names%`, `get all files in /temp, where size > 1mb`",
+      "false": "the step filters, sorts and groups nothing; a name pattern (`matching '*.log'`), counting, reading or adding to a list is not querying it"
     }
   },
   "popular": [
