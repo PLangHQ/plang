@@ -56,7 +56,7 @@ public partial class @this
     public @this(actor.context.@this context)
     {
         Context = context;
-        _system = new system(context);
+        _system = new system(this);
     }
 
     // The system's variables, under this memory's own: what a name nothing else holds reads last.
@@ -281,7 +281,8 @@ public partial class @this
     {
         if (string.IsNullOrEmpty(name)) return null;
         if (_context.call.Current is { } frame && frame.TryGet(name, out var framed)) return framed;
-        return _variables.TryGetValue(name, out var v) ? v : Outer?.Peek(name) ?? _system[name];
+        // this memory's own, then the system's under it (a task's %!context% is its own), then its outer memory's
+        return _variables.TryGetValue(name, out var v) ? v : _system[name] ?? Outer?.Peek(name);
     }
 
     /// <summary>The value-counterpart to <see cref="Get"/>: hand back the VALUE a
@@ -300,7 +301,8 @@ public partial class @this
         if (_context.call.Current is { } frame && frame.TryGet(name, out var framed))
             return System.Threading.Tasks.ValueTask.FromResult(framed);
         if (_variables.TryGetValue(name, out var root)) return System.Threading.Tasks.ValueTask.FromResult(root);
-        return Outer?.Get(name) ?? System.Threading.Tasks.ValueTask.FromResult(_system[name] ?? _context.NotFound(name));
+        if (_system[name] is { } system) return System.Threading.Tasks.ValueTask.FromResult(system);
+        return Outer?.Get(name) ?? System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name));
     }
 
     /// <summary>
@@ -333,7 +335,7 @@ public partial class @this
     {
         if (_context.call.Current is { } frame && frame.TryGet(name, out _))
             return true;
-        return _variables.ContainsKey(name) || (Outer?.Contains(name) ?? false) || _system[name] != null;
+        return _variables.ContainsKey(name) || _system[name] != null || (Outer?.Contains(name) ?? false);
     }
 
     /// <summary>
@@ -392,7 +394,7 @@ public partial class @this
     public IEnumerable<string> GetNames()
         // this memory's own, then the system's under it that no own name shadows
         => _variables.Keys.Where(k => !k.StartsWith("!"))
-            .Concat(_system.All.Select(each => each.Key).Where(name => !_variables.ContainsKey(name)));
+            .Concat(_system.All.Select(each => each.Key).Where(name => !name.StartsWith('!') && !_variables.ContainsKey(name)));
 
     /// <summary>
     /// Gets all variables ordered by last update.
@@ -409,7 +411,7 @@ public partial class @this
         foreach (var kvp in _variables.Where(kvp => !kvp.Key.StartsWith("!")).OrderByDescending(kvp => kvp.Value.Updated))
             if (seen.Add(kvp.Key)) yield return kvp;
         foreach (var kvp in _system.All)
-            if (seen.Add(kvp.Key)) yield return kvp;
+            if (!kvp.Key.StartsWith('!') && seen.Add(kvp.Key)) yield return kvp;
     }
 
     /// <summary>
@@ -479,7 +481,7 @@ public partial class @this
             dict[kvp.Key] = kvp.Value.Peek();
         }
         foreach (var (name, system) in _system.All)
-            dict.TryAdd(name, system.Peek());
+            if (includeSystem || !name.StartsWith('!')) dict.TryAdd(name, system.Peek());
         return dict;
     }
 
