@@ -214,8 +214,8 @@ The type list, the module registry and goals are shared through the parent; the 
 (One reading, round 2's Release root request, 46.1 ms at load 12, is not used; it reran at 21.2 ms at load 1.2.)
 
 - **A child is born in half a millisecond, and a child request app runs in ~4 ms.** Against stage 0: a birth 28 ms → 0.5 ms
-  (**55×**), a request app 22 ms → 3.9 ms (**5.6×**) and 6.7 MB → 1.6 MB (**4×**), the sweep **2.3×–3×**, `plang --test`
-  **1.3–2×**. The plan's targets were ~3.5 ms (stage 2) and ~0.1 ms (stage 4): the birth is already under the first and
+  (**55×**), a request app 22 ms → 3.9 ms (**5.6×**) and 6.7 MB → 1.6 MB (**4×**), the sweep **1.6–3×** (103–136 s
+  against 44.5–64.6 s; 2.3–3× leaving out the slow first round), `plang --test` **1.2–2×** (17–27 s against 13.5–13.9 s). The plan's targets were ~3.5 ms (stage 2) and ~0.1 ms (stage 4): the birth is already under the first and
   within 5× of the second, with stage 4 (a birth makes only what's asked for) still to come.
 - **The plan test `TestAppHasItsRunnerAsParent` passes now** (`plang --test` went from 2 fails to 1).
 - **The root is unchanged** at 6.05 MB and 27–30 ms a birth (the coder's two allocation fixes are queued), and its
