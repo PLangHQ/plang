@@ -58,10 +58,20 @@ public sealed class @this
     // The facts of the code the readers are found in, read once per code.
     private readonly global::app.type.list.@this.Code _code;
 
-    public @this() : this(new global::app.type.list.@this.Code()) { }
+    // The readers of the list a sub app's list is a layer over: what this one doesn't answer, they do.
+    private readonly @this? _parent;
 
-    /// <summary>The readers of a type list, found in its code's facts.</summary>
-    internal @this(global::app.type.list.@this.Code code) => _code = code;
+    public @this() : this(new global::app.type.list.@this.Code(), null) { }
+
+    /// <summary>The readers of a type list, found in its code's facts; a layer's are only what its app registers, over
+    /// <paramref name="parent"/>'s.</summary>
+    internal @this(global::app.type.list.@this.Code code, @this? parent)
+    {
+        _code = code;
+        _parent = parent;
+        // a layer scans nothing: the shipped readers are its parent's
+        if (parent != null) Assemblies.Clear();
+    }
 
     /// <summary>
     /// Returns the <see cref="Read"/> delegate registered for
@@ -79,7 +89,7 @@ public sealed class @this
         if (_generated.TryGetValue((typeName, k), out var gen)) return gen;
         if (_runtime.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
         if (_generated.TryGetValue((typeName, AnyKind), out var genAny)) return genAny;
-        return null;
+        return _parent?.Of(typeName, kind);
     }
 
     /// <summary>
@@ -97,7 +107,7 @@ public sealed class @this
         if (_generatedTyped.TryGetValue((typeName, k), out var gen)) return gen;
         if (_runtimeTyped.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
         if (_generatedTyped.TryGetValue((typeName, AnyKind), out var genAny)) return genAny;
-        return null;
+        return _parent?.Typed(typeName, kind);
     }
 
     /// <summary>
@@ -143,7 +153,7 @@ public sealed class @this
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
         foreach (var key in _generated.Keys)
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
-        return null;
+        return _parent?.TypeOf(kind);
     }
 
     /// <summary>

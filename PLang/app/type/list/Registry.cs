@@ -70,19 +70,42 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private volatile System.Collections.Immutable.ImmutableDictionary<string, global::app.type.@this> _named
         = System.Collections.Immutable.ImmutableDictionary.Create<string, global::app.type.@this>(StringComparer.OrdinalIgnoreCase);
 
-    private System.Collections.Immutable.ImmutableDictionary<string, global::app.type.@this> Named
+    // The type a name names, the startup scan done first: this list's own, else the list it is a layer over.
+    private global::app.type.@this? Named(string name)
     {
-        get
-        {
-            Load();
-            return _named;
-        }
+        Load();
+        return Recorded(name);
     }
+
+    // The type a name names as the guard has recorded it so far — this list's own, else its parent's — with no scan:
+    // what the scan itself reads while it fills the set.
+    private global::app.type.@this? Recorded(string name) => _named.GetValueOrDefault(name) ?? _parent?.Recorded(name);
 
     // Every type's class to the type, the first that has it, as the set stands (naming reads the set while the scan
     // fills it). Kept by the guard beside the names, so a lookup by class never walks the set.
     private volatile System.Collections.Immutable.ImmutableDictionary<System.Type, global::app.type.@this> _classed
         = System.Collections.Immutable.ImmutableDictionary<System.Type, global::app.type.@this>.Empty;
+
+    // The type a class defines: this list's own, else its parent's.
+    private global::app.type.@this? Classed(System.Type clr) => _classed.GetValueOrDefault(clr) ?? _parent?.Classed(clr);
+
+    // The list this one is a layer over — a sub app's, over its parent's; null for a list an app made from its code.
+    private readonly @this? _parent;
+
+    /// <summary>Whether a layer is over this list: an app made by one of its actors shares its types, so nothing is
+    /// added to it from here on.</summary>
+    internal bool Shared { get; private set; }
+
+    /// <summary>Whether this list, a layer, holds types of its own — what its app loaded beside its parent's.</summary>
+    internal bool HasOwn => _parent != null && !_named.IsEmpty;
+
+    // An addition this list refuses: its types are shared with the apps it was made for.
+    private error.@this Refused()
+        => new("this app's types are shared with the apps its actors made: nothing is added to them", "TypesShared", 400);
+
+    // The entry is one this list holds itself, not one of the list it is a layer over.
+    private bool Holds(global::app.type.@this entry)
+        => _parent == null || ReferenceEquals(_named.GetValueOrDefault(entry.Name), entry);
 
     // The startup scan: every item class in Assemblies comes in under its name, then each type takes its kinds; a
     // type's facts are read when first asked, once every name is known (a fact names its property types). A clash
@@ -129,15 +152,18 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private error.@this? Clash(global::app.type.@this type)
     {
         foreach (var claim in type.Claims)
-            if (_named.GetValueOrDefault(claim) is { } owner && owner.ClrType != type.ClrType)
+            if (Recorded(claim) is { } owner && owner.ClrType != type.ClrType)
                 return new error.@this(
                     $"type name '{claim}' is claimed by both {owner.ClrType?.FullName} and {type.ClrType?.FullName} — one name, one class.",
                     "TypeLoadCollision", 400);
         return null;
     }
 
+    // The list this one is a layer over comes in as its first row and is never recorded here: its names are its own,
+    // answered through it.
     protected override void Admit(global::app.type.item.list.@this other)
     {
+        if (ReferenceEquals(other, _parent)) return;
         foreach (var slot in other.Slots()) Admit(slot);
     }
 
@@ -152,6 +178,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             return context.Error(new error.@this($"{clr.FullName} is not a plang type — only items are.", "TypeLoadNotAType", 400));
         // The class that already owns the name adds nothing new: the same answer, whatever the name.
         if (Types.FirstOrDefault(t => t.Names(claimed)) is { } type && type.ClrType == clr) return context.Ok(type);
+        if (Shared) return context.Error(Refused());
         var aliases = clr.GetProperty("Alias", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
             ?.GetValue(null) as IReadOnlyList<string> ?? [];
         if (aliases.Prepend(claimed).FirstOrDefault(Sealed.Contains) is { } sealedWord)
@@ -182,6 +209,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     {
         // An assembly the startup scan read brings nothing new: its types and kinds are in.
         if (Assemblies.Contains(assembly)) return context.Ok(new List<global::app.type.@this>());
+        if (Shared) return context.Error(Refused());
 
         System.Type[] exported;
         try { exported = assembly.GetExportedTypes(); }
@@ -224,15 +252,22 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 if (type.kind[key] is { } taken
                     && !(ReferenceEquals(taken.Owner, kind.Owner) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
                     throw new InvalidOperationException(Taken(key, taken, kind).Message);
-        Hold(kind);
+        if (Hold(kind) is { } refused) throw new global::app.error.AppException(refused);
     }
 
-    // Puts a kind on the empty kind of the type it was born holding (the startup scan calls it while loading).
-    private void Hold(global::app.type.kind.@this kind)
+    // Puts a kind on the empty kind of the type it was born holding (the startup scan calls it while loading) — on a
+    // type this list holds itself: a type it shares with its parent can't hold a kind one of the apps over it adds,
+    // and a list that is shared takes none. Answers the refusal; null when the kind is held.
+    private error.@this? Hold(global::app.type.kind.@this kind)
     {
-        if (kind.Owner?.kind is not global::app.type.kind.empty.@this root)
+        if (kind.Owner is not { kind: global::app.type.kind.empty.@this root } owner)
             throw new InvalidOperationException($"kind '{kind.Name}' names no type it is a kind of.");
+        if (Shared) return Refused();
+        if (!Holds(owner))
+            return new error.@this($"'{kind.Name}' is a kind of {owner.Name}, which this app shares with the app that "
+                + $"made it: a sub app can't add a kind to {owner.Name} yet", "TypesShared", 400);
         root.Add(kind);
+        return null;
     }
 
     // The guard every format passes once a scan has held its kinds: a MIME or an extension is one format's —
@@ -259,15 +294,15 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     // no closed set); null when every kind is held.
     private error.@this? Enlist(Assembly assembly)
     {
-        // the assembly's facts, read once per code; the types by every name they answer to, as the guard keeps them
-        // (the types don't change while their kinds are enlisted)
+        // the assembly's facts, read once per code; the types by every name they answer to, as the guard has recorded
+        // them here and below
         var library = code[assembly];
-        var named = _named;
         // each kind class, born holding the entry of the type it is a kind of (the T of its kind<T>), when this list
         // holds that type
         foreach (var (clr, type) in library.Kind)
-            if (named.GetValueOrDefault(type) is { } owner)
-                Hold((global::app.type.kind.@this)System.Activator.CreateInstance(clr, owner)!);
+            if (Recorded(type) is { } owner
+                && Hold((global::app.type.kind.@this)System.Activator.CreateInstance(clr, owner)!) is { } refused)
+                return refused;
         foreach (var mark in library.Marked)
         {
             var t = mark.Clr;
@@ -276,17 +311,19 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             // the list names the class (a list of actions is a list); a declared format no type reads is plang broken
             if (mark.Codec is { } format)
             {
-                if ((named.GetValueOrDefault(global::app.type.item.@this.NameOf(t)) ?? named.GetValueOrDefault(PlangName(t).Name))
+                if ((Recorded(global::app.type.item.@this.NameOf(t)!) ?? Recorded(PlangName(t).Name))
                     is not { } declaring)
                     return new error.@this($"{t.FullName} declares a format, but no type reads it — it is no type of its own "
                         + "and the list names none for it.", "TypeLoadFormat", 400);
                 // each format is a kind<declaring-type> — one concrete class over the declaring type
                 foreach (var attribute in format.Attribute)
-                    Hold((global::app.type.kind.@this)System.Activator.CreateInstance(format.Kind, attribute, declaring, format.Encode, format.Decode)!);
+                    if (Hold((global::app.type.kind.@this)System.Activator.CreateInstance(format.Kind, attribute, declaring, format.Encode, format.Decode)!) is { } refused)
+                        return refused;
             }
             // a list's element kinds, made as a list names its element (list<path>)
-            if (mark.List && named.GetValueOrDefault(global::app.type.item.@this.NameOf(t)!) is { } list)
-                Hold(new global::app.type.item.list.kind.@this(list, this));
+            if (mark.List && Recorded(global::app.type.item.@this.NameOf(t)!) is { } list
+                && Hold(new global::app.type.item.list.kind.@this(list, this)) is { } unheld)
+                return unheld;
             // each class marked a choice ([Choice]) is the closed set a choice<T> draws on, a kind of choice, with its reader
             if (mark.Choice)
             {
@@ -298,7 +335,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                     return new error.@this(
                         $"choice set name '{set.Name}' is claimed by both {taken.Of(null)?.GetGenericArguments()[0].FullName} and {t.FullName} — one name, one set.",
                         "TypeLoadCollision", 400);
-                Hold(set);
+                if (Hold(set) is { } refused) return refused;
                 // the closed reader for this set, over the class its members are — one reflective instantiation, then
                 // typed reads.
                 Reader.Register("choice", set.Name,
@@ -309,9 +346,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         // each class under a family that has kinds ([Kinds]) is one of its kinds, by its own name — but a kind the
         // family already holds (path's schemes, file and http)
         foreach (var subclass in library.Subclasses)
-            if (named.GetValueOrDefault(subclass.Family) is { } owner && owner.kind[subclass.Kind] == null)
+            if (Recorded(subclass.Family) is { } owner && owner.kind[subclass.Kind] == null)
             {
-                Hold((global::app.type.kind.@this)System.Activator.CreateInstance(subclass.Made, subclass.Kind, subclass.Clr, owner)!);
+                if (Hold((global::app.type.kind.@this)System.Activator.CreateInstance(subclass.Made, subclass.Kind, subclass.Clr, owner)!) is { } refused)
+                    return refused;
 
                 // a subclass kind that ships its own reader (separator) reads under its family and kind — a
                 // {text, separator} reads via (text, separator), and the family's own reader would make the

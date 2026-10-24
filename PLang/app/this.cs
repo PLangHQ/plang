@@ -330,12 +330,16 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         channel = type.list["channel"];
 
         Code.RegisterDefaults();
-        // path's schemes, each a kind of path that builds its own path subclass. (The types' own
-        // scan finds the kind classes and choice's closed sets.)
-        var path = type.list[typeof(global::app.type.item.path.@this)];
-        type.list.Add(new global::app.type.item.path.scheme.@this("file", path, (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
-        type.list.Add(new global::app.type.item.path.scheme.@this("http", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-        type.list.Add(new global::app.type.item.path.scheme.@this("https", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+        // path's schemes, each a kind of path that builds its own path subclass, added where a list is made from the
+        // code: a sub app's layer reaches them through path's entry. (The types' own scan finds the kind classes and
+        // choice's closed sets.)
+        if (caller == null)
+        {
+            var path = type.list[typeof(global::app.type.item.path.@this)];
+            type.list.Add(new global::app.type.item.path.scheme.@this("file", path, (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
+            type.list.Add(new global::app.type.item.path.scheme.@this("http", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+            type.list.Add(new global::app.type.item.path.scheme.@this("https", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+        }
         // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
         // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),
         // else its file.

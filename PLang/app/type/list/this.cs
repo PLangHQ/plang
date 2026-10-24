@@ -17,16 +17,25 @@ public sealed partial class @this
 {
     /// <summary>The types hold no context and no app: a lookup that needs the app's formats takes
     /// the caller's context.</summary>
-    public @this() : this(new Code()) { }
-
-    /// <summary>A list made from the same code as <paramref name="parent"/>: it takes the parent's facts whole and
-    /// makes its own entries from them.</summary>
-    internal @this(@this parent) : this(parent.code) { }
-
-    private @this(Code code) : base(new List<object?>())
+    public @this() : base(new List<object?>())
     {
-        this.code = code;
-        Reader = new(code);
+        code = new Code();
+        Reader = new(code, null);
+    }
+
+    /// <summary>A sub app's types: a layer of its own over <paramref name="parent"/>'s list, which it holds whole as its
+    /// first row and reads through — no entry copied, so a type it reaches is its parent's own object. What it loads is
+    /// its layer's alone, read from the facts of its own code; the list it is over is shared from here on.</summary>
+    internal @this(@this parent) : base(new List<object?>())
+    {
+        code = new Code();
+        _parent = parent;
+        parent.Load();
+        parent.Shared = true;
+        Reader = new(code, parent.Reader);
+        base.Add(parent);
+        // the scan is its parent's: this list reads no class of its own until it loads one
+        _loaded = true;
     }
 
     /// <summary>The type list's own type, <c>{list, type}</c>, asked of itself: it is the maker of types, so it is
@@ -50,7 +59,7 @@ public sealed partial class @this
     /// </summary>
     public global::app.type.kind.@this Kind(string type, string? kind)
     {
-        var root = Named.GetValueOrDefault(type)?.kind;
+        var root = Named(type)?.kind;
         var had = string.IsNullOrEmpty(kind) ? root : root?[kind] ?? root?.Coin(kind);
         return had is { Owner: not null } ? had
             : string.IsNullOrEmpty(kind) ? new app.type.@this(type).kind : new global::app.type.kind.@this(kind!);
@@ -99,12 +108,12 @@ public sealed partial class @this
     /// C# class. A spelled kind is not a name: <c>{text, md}</c> is asked by identity. Throws on a miss.
     /// </summary>
     public app.type.@this this[string name]
-        => name is not null && Named.TryGetValue(name, out var type) ? type
+        => name is not null && Named(name) is { } type ? type
             : throw new KeyNotFoundException($"No PLang type registered under name '{name}'.");
 
     /// <summary>True when <paramref name="name"/> names a plang type — the presence question
     /// beside the indexer, which selects and throws on a miss. No name names none.</summary>
-    public bool Contains(string name) => name is not null && Named.ContainsKey(name);
+    public bool Contains(string name) => name is not null && Named(name) != null;
 
     /// <summary>True when some type holds a kind <paramref name="name"/> names (by name, alias, MIME or extension).</summary>
     public bool HasKind(string name) => !string.IsNullOrEmpty(name) && Types.Any(type => type.kind[name] != null);
@@ -183,7 +192,10 @@ public sealed partial class @this
     // answering to the name (`{text, txt}`) is the type itself, no kind.
     private app.type.@this Full(app.type.@this type, string? name)
     {
-        var entry = Named.GetValueOrDefault(type.Name);
+        var entry = Named(type.Name);
+        // a full type is the list's that made its entry — its parent's for a type it shares (one object in every app
+        // over that list), the root's for a name no type answers to
+        if (_parent != null && (entry == null || !Holds(entry))) return _parent.Full(type, name);
         var kind = name == null ? null
             : entry?.kind[name] is { } match ? (match.IsEmpty ? null : match)
             : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
@@ -266,7 +278,7 @@ public sealed partial class @this
             return ("choice", options.IsEnum && options.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false) is null
                 ? null
                 : global::app.type.item.choice.set.@this.For(options, this)?.Name ?? options.Name);
-        if (typeof(app.type.item.@this).IsAssignableFrom(type) && _classed.GetValueOrDefault(type) is { } entity)
+        if (typeof(app.type.item.@this).IsAssignableFrom(type) && Classed(type) is { } entity)
             return (entity.Name, null);
         // the app's node for a concept (node<goal>, its current node) is a node
         if (typeof(app.type.node.@this).IsAssignableFrom(type)) return ("node", null);
@@ -298,9 +310,11 @@ public sealed partial class @this
     /// <summary>The members <paramref name="clr"/> marks plang's, listed where they are declared. A method that asks
     /// only for its asker's context is read as a property (<c>%p.relative%</c>); any other is called with its arguments
     /// (<c>%x.replace("a", "b")%</c>).</summary>
-    internal property.list.@this Member(System.Type clr) => _member.GetOrAdd(clr, @class =>
+    internal property.list.@this Member(System.Type clr)
+        // a class this list holds no type for is its parent's to list: one list per class in every app over it
+        => _parent != null && !_classed.ContainsKey(clr) ? _parent.Member(clr) : _member.GetOrAdd(clr, @class =>
     {
-        var owner = _classed.GetValueOrDefault(@class)?.Name ?? app.type.item.@this.NameOf(@class);
+        var owner = Classed(@class)?.Name ?? app.type.item.@this.NameOf(@class);
         var list = new property.list.@this();
         var methods = new Queue<System.Reflection.MethodInfo>(@class.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void))
