@@ -19,7 +19,7 @@ public class TemporalReaderTests
 
     [Test] public async Task Typed_DateDatetimeTime_AreRegistered()
     {
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.type.list.@this().Reader;
         await Assert.That(r.Typed("date", null)).IsNotNull();
         await Assert.That(r.Typed("datetime", null)).IsNotNull();
         await Assert.That(r.Typed("time", null)).IsNotNull();

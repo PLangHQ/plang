@@ -19,7 +19,7 @@ public class PerTypeReadEntriesTests
     // removal so nothing re-registers it.
     [Test] public async Task Of_ObjectJson_IsGone_JsonOwnedByKind()
     {
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.type.list.@this().Reader;
         await Assert.That(r.Of("object", "json")).IsNull();
     }
 
@@ -28,42 +28,42 @@ public class PerTypeReadEntriesTests
     // then, a .xlsx stamps `{table, xlsx}` and rides as raw bytes.
     [Test] public async Task Reader_Of_TableCsv_ReturnsDelegate()
     {
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.type.list.@this().Reader;
         await Assert.That(r.Of("table", "csv")).IsNotNull();
     }
     [Test] public async Task Reader_Of_PathDefault_ReturnsDelegate()
     {
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.type.list.@this().Reader;
         await Assert.That(r.Of("path", "json")).IsNotNull();
         await Assert.That(r.Of("path", global::app.type.reader.@this.AnyKind)).IsNotNull();
     }
     // number reads through its typed reader (each storage kind reads its own token).
     [Test] public async Task Reader_Of_NumberInt_ReturnsTypedReader()
     {
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.type.list.@this().Reader;
         await Assert.That(r.Typed("number", "int")).IsNotNull();
     }
     [Test] public async Task Reader_Of_NumberBigInteger_ReturnsTypedReader()
     {
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.type.list.@this().Reader;
         await Assert.That(r.Typed("number", "biginteger")).IsNotNull();
     }
     [Test] public async Task Reader_Of_ImagePng_ReturnsDelegate()
     {
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.type.list.@this().Reader;
         await Assert.That(r.Of("image", "png")).IsNotNull();
     }
     // duration owns the iso8601 kind in the reader registry (its Read parses
     // ISO-8601 + .NET forms).
     [Test] public async Task Reader_Of_DurationIso8601_ReturnsDelegate()
     {
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.type.list.@this().Reader;
         await Assert.That(r.Of("duration", "iso8601")).IsNotNull();
     }
     // crypto.hash's FromWire re-houses as hash's Read (default kind).
     [Test] public async Task Reader_Of_HashDefault_ReturnsDelegate()
     {
-        var r = new global::app.type.reader.@this();
+        var r = new global::app.type.list.@this().Reader;
         await Assert.That(r.Of("hash", global::app.type.reader.@this.AnyKind)).IsNotNull();
     }
 }

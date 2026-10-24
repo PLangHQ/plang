@@ -61,8 +61,6 @@ public sealed class @this
     // The readers of the list a sub app's list is a layer over: what this one doesn't answer, they do.
     private readonly @this? _parent;
 
-    public @this() : this(new global::app.type.list.@this.Code(), null) { }
-
     /// <summary>The readers of a type list, found in its code's facts; a layer's are only what its app registers, over
     /// <paramref name="parent"/>'s.</summary>
     internal @this(global::app.type.list.@this.Code code, @this? parent)
