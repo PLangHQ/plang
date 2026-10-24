@@ -109,6 +109,61 @@ child request, 27.7 ms. Both reran at load ~1.3 in rounds 2–3.)
   `BareLiteralJudgedByForm` and Wire's six are the known reds from stage 0. There is no coder
   `baseline-failures.txt` on the branch, so these are matched by name against `start.goal`, not against a baseline.
 
+## Why the root grew: 5.2 → 6.05 MB a birth (decision 25's first ask)
+
+Root-only birth test (`new app.@this(path)`, 20 warm then 100 births, alloc counted by the runtime) built at each commit
+between stage 1's close and the tip. Two commits did it, and the door did not:
+
+| commit | alloc per root birth | change |
+|---|---|---|
+| `9c0a7d129` stage 1 closed | 5,225 KB | — |
+| `090847b61` the facts are the type list's own, read once per code | 5,743 KB | **+518 KB** |
+| `854dd1fb2` the door, the System born from the caller | 5,745 KB | +2 KB |
+| `b67c9b782` a type's kinds looked up without its lock (stage 3 (5)) | 6,057 KB | **+312 KB** |
+| `388c667b5` the runner makes each test's app through the door | 6,057 KB | 0 |
+
+**`b67c9b782` — `type/kind/empty/this.cs` `Add`, lines 132–149 on the tip (+312 KB).** To publish the kinds whole, `Add`
+now builds a new array for every kind it takes in: `System.Array.FindAll(_kinds, …)` (line 138) makes one array and the
+collection expression `[.. …, kind]` a second; the old code did `_kinds.RemoveAll` / `_kinds.Add` in place. A type that
+takes k kinds one at a time allocates 2k arrays of growing size: O(k²). Checked directly: the tip with only the old
+`kind/empty/this.cs` put back (temporary, reverted, nothing committed) allocates **5,754 KB** a birth, 303 KB less.
+(The old `Held` copy under the lock, `ToArray()` on every read, is gone, and the saving is smaller than the cost.)
+
+**`090847b61` — `type/list/Code.cs` `Library`, built eagerly for every class of the assembly (+518 KB).** The architect's
+guess holds. Allocation sampling (`dotnet-trace gc-verbose`, 120 births at each commit, per birth, ±~20 KB sampling) names:
+
+| grew by | at | what it is |
+|---|---|---|
+| **+151 KB** `Mark` | `Code.cs:89` `Marked = Classes.Select(t => new Mark(t))…` | a `Mark` for every class (~3,340), of which a few are kept |
+| **+86 KB** closure class | `Code.cs:139–174` `Readers` | the lambda at 174 captures `method` (168), declared in the `foreach` body, so the compiler makes one closure object per class visited, including the classes that `continue` before they reach it |
+| +40 KB strings | `Code.cs:100` (Owner) and `:116` (Subclassed) `NameOf(Type)` | a name built for every class, in each of two passes |
+| +32 KB | `Class` ctor, `Code[type]` | the declared statics read per class |
+| +19 KB | `kind.json` ctor | — |
+| +21 KB | `MethodBase[]` in `Enlist` | — |
+| ~+100 KB | strings, `RuntimeTypeCache`, attribute records, delegates | spread over the passes above |
+
+(The old `Registry` path allocated ~650 KB a birth in `Enlist`'s per-class lambda and that is gone, so these are the
+net of a move, not the whole cost.) The command line makes one root app per process, so it pays this once; a server
+that makes root apps, or a test that does, pays it each time. A child that takes its parent's facts doesn't (below).
+
+## The layer — `fast-apps-layer` at `b7c59ecb8` (stage 3 part 1), bench only, `bench/results/layer.txt`
+
+A child's type list is a layer over its parent's; nothing is scanned at birth. The sweep was not run (expected red).
+
+| | stage 2 child | **layer child** | layer root (unchanged) | load |
+|---|---|---|---|---|
+| a birth | Debug 13.0–14.6 ms, Release 15.9–16.7 ms; 4.5 MB | **Debug 3.3–3.6 ms, Release 3.35–3.5 ms; 1.16–1.17 MB** | Debug 26.0–27.5 ms, Release 27.7–30.5 ms; 6.05 MB | 1.1–2.7 |
+| a request app × 3,000 | Release 13.0–13.5 ms; 5.9 MB; held 2.5 → 4.0 → 4.6 → 5.1 | **Release 7.1–7.9 ms; 2.5–2.7 MB; held 2.4–2.5 → 3.7–3.8 → 4.6–4.7 → 5.4–5.5**; Debug 8.4–8.8 ms, 2.76 MB | Release 20.9–21.8 ms; 7.2 MB; held 0.9 → 3.3 → 3.9 → 4.5 | 1.1–1.4 |
+
+- **A child is born at ~3.4 ms and 1.16 MB: the plan's ~3.5 ms is met.** That is a quarter of stage 2's child and an
+  eighth of a root. A child request app runs in 7–8 ms (a root: 21 ms) and allocates 2.5–2.7 MB (a root: 7.2 MB).
+  Because it is within target, no profile of a child's birth was taken.
+- **Held per request rose slightly**: ~0.8 KB a request after the first thousand (3.9 → 4.7 → 5.5 MB) against ~0.6 KB at
+  stage 2 (4.0 → 4.6 → 5.2). The sqlite pool bookkeeping above is the same; I did not look for the extra ~0.2 KB.
+  Rerun it with `BENCH_REST=300` if the layer lands.
+- **The root is the same as stage 2** (6.05 MB, 26–30 ms): the layer doesn't touch a root's birth, so the two causes above
+  stay for the command line.
+
 ## Not measured here
 
 - A class scanned twice in one process (stage 2's check): it needs a count of `GetTypes` calls, which comes with
