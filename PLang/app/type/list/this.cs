@@ -15,27 +15,33 @@ namespace app.type.list;
 /// </summary>
 public sealed partial class @this
 {
-    /// <summary>The types hold no context and no app: a lookup that needs the app's formats takes
-    /// the caller's context.</summary>
-    public @this() : base(new List<object?>())
+    /// <summary>The code's types — the bottom, with nothing under it: every type its facts hold, scanned on first ask.
+    /// The types hold no context and no app: a lookup that needs the app's formats takes the caller's context.</summary>
+    internal @this(global::app.origin.code origin) : base(new List<object?>())
     {
         code = new Code();
-        Reader = new(code, null);
+        _origin = origin;
+        Reader = new reader.code(code);
     }
 
-    /// <summary>A sub app's types: a layer of its own over <paramref name="parent"/>'s list, which it holds whole as its
-    /// first row and reads through — no entry copied, so a type it reaches is its parent's own object. What it loads is
-    /// its layer's alone, read from the facts of its own code; what the list it is over loads later is this one's too.</summary>
-    internal @this(@this parent) : base(new List<object?>())
+    /// <summary>An app's types: a layer of its own over the list its <paramref name="origin"/> answers, which it holds
+    /// whole as its first row and reads through — no entry copied, so a type it reaches is that list's own object. What
+    /// it loads is its layer's alone, read from the facts of its own code; what the list it is over loads later is this
+    /// one's too.</summary>
+    internal @this(global::app.origin.@this origin) : base(new List<object?>())
     {
         code = new Code();
-        _parent = parent;
-        parent.Load();
-        Reader = new(code, parent.Reader);
-        base.Add(parent);
-        // the scan is its parent's: this list reads no class of its own until it loads one
+        _origin = origin;
+        var under = origin.type;
+        under.Load();
+        Reader = new reader.layer(code, under.Reader);
+        base.Add(under);
+        // the scan is the list under's: this list reads no class of its own until it loads one
         _loaded = true;
     }
+
+    // What the app is made from — asked for a kind on a type below this layer.
+    private readonly global::app.origin.@this _origin;
 
     /// <summary>The type list's own type, <c>{list, type}</c>, asked of itself: it is the maker of types, so it is
     /// born without one and answers from its own entries (one of item's two bootstraps; the root type is the other).</summary>
@@ -192,9 +198,9 @@ public sealed partial class @this
     private app.type.@this Full(app.type.@this type, string? name)
     {
         var entry = Named(type.Name);
-        // a full type is the list's that made its entry — its parent's for a type it shares (one object in every app
-        // over that list), the root's for a name no type answers to
-        if (_parent != null && (entry == null || !Holds(entry))) return _parent.Full(type, name);
+        // a full type is the list's that made its entry — the list under's for a type it holds (one object in every app
+        // over that list), the code's for a name no type answers to
+        if ((entry == null || !Holds(entry)) && Chunks is [@this under]) return under.Full(type, name);
         var kind = name == null ? null
             : entry?.kind[name] is { } match ? (match.IsEmpty ? null : match)
             : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
@@ -310,8 +316,8 @@ public sealed partial class @this
     /// only for its asker's context is read as a property (<c>%p.relative%</c>); any other is called with its arguments
     /// (<c>%x.replace("a", "b")%</c>).</summary>
     internal property.list.@this Member(System.Type clr)
-        // a class this list holds no type for is its parent's to list: one list per class in every app over it
-        => _parent != null && !_classed.ContainsKey(clr) ? _parent.Member(clr) : _member.GetOrAdd(clr, @class =>
+        // a class this list holds no type for is the list under's to list: one list per class in every app over it
+        => !_classed.ContainsKey(clr) && Chunks is [@this under] ? under.Member(clr) : _member.GetOrAdd(clr, @class =>
     {
         var owner = Classed(@class)?.Name ?? app.type.item.@this.NameOf(@class);
         var list = new property.list.@this();

@@ -77,27 +77,25 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         return Recorded(name);
     }
 
-    // The type a name names as the guard has recorded it so far — this list's own, else its parent's — with no scan:
-    // what the scan itself reads while it fills the set.
-    private global::app.type.@this? Recorded(string name) => _named.GetValueOrDefault(name) ?? _parent?.Recorded(name);
+    // The type a name names as the guard has recorded it so far — this list's own, else the list under's — with no
+    // scan: what the scan itself reads while it fills the set.
+    private global::app.type.@this? Recorded(string name)
+        => _named.GetValueOrDefault(name) ?? (Chunks is [@this under] ? under.Recorded(name) : null);
 
     // Every type's class to the type, the first that has it, as the set stands (naming reads the set while the scan
     // fills it). Kept by the guard beside the names, so a lookup by class never walks the set.
     private volatile System.Collections.Immutable.ImmutableDictionary<System.Type, global::app.type.@this> _classed
         = System.Collections.Immutable.ImmutableDictionary<System.Type, global::app.type.@this>.Empty;
 
-    // The type a class defines: this list's own, else its parent's.
-    private global::app.type.@this? Classed(System.Type clr) => _classed.GetValueOrDefault(clr) ?? _parent?.Classed(clr);
+    // The type a class defines: this list's own, else the list under's.
+    private global::app.type.@this? Classed(System.Type clr)
+        => _classed.GetValueOrDefault(clr) ?? (Chunks is [@this under] ? under.Classed(clr) : null);
 
-    // The list this one is a layer over — a sub app's, over its parent's; null for a list an app made from its code.
-    private readonly @this? _parent;
-
-    /// <summary>Whether this list, a layer, holds types of its own — what its app loaded beside its parent's.</summary>
-    internal bool HasOwn => _parent != null && !_named.IsEmpty;
+    /// <summary>Whether this list, a layer, holds types of its own — what its app loaded over the list under it.</summary>
+    internal bool HasOwn => !_named.IsEmpty;
 
     // The entry is one this list holds itself, not one of the list it is a layer over.
-    private bool Holds(global::app.type.@this entry)
-        => _parent == null || ReferenceEquals(_named.GetValueOrDefault(entry.Name), entry);
+    private bool Holds(global::app.type.@this entry) => ReferenceEquals(_named.GetValueOrDefault(entry.Name), entry);
 
     // The startup scan: every item class in Assemblies comes in under its name, then each type takes its kinds; a
     // type's facts are read when first asked, once every name is known (a fact names its property types). A clash
@@ -151,12 +149,12 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         return null;
     }
 
-    // The list this one is a layer over comes in as its first row and is never recorded here: its names are its own,
-    // answered through it.
+    // A list comes in only as the one this list is a layer over, its first row, and is never recorded here: its names
+    // are its own, answered through it.
     protected override void Admit(global::app.type.item.list.@this other)
     {
-        if (ReferenceEquals(other, _parent)) return;
-        foreach (var slot in other.Slots()) Admit(slot);
+        if (other is not @this)
+            throw new InvalidOperationException($"the types are a layer over types, not {other.GetType().Name}.");
     }
 
     /// <summary>
@@ -245,18 +243,21 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         if (Hold(kind) is { } refused) throw new global::app.error.AppException(refused);
     }
 
-    // Puts a kind on the empty kind of the type it was born holding (the startup scan calls it while loading) — on a
-    // type this list holds itself: a type it shares with its parent can't hold a kind one of the apps over it adds.
-    // Answers the refusal; null when the kind is held.
+    // Holds a kind (the startup scan calls it while loading): on a type this list holds itself, here; on a type below
+    // this layer, as the app's origin answers it. Answers the refusal; null when the kind is held.
     private error.@this? Hold(global::app.type.kind.@this kind)
     {
-        if (kind.Owner is not { kind: global::app.type.kind.empty.@this root } owner)
-            throw new InvalidOperationException($"kind '{kind.Name}' names no type it is a kind of.");
-        if (!Holds(owner))
-            return new error.@this($"'{kind.Name}' is a kind of {owner.Name}, which this app shares with the app that "
-                + $"made it: a sub app can't add a kind to {owner.Name} yet", "TypesShared", 400);
-        root.Add(kind);
+        if (kind.Owner is { } owner && !Holds(owner)) return _origin.Hold(kind);
+        Put(kind);
         return null;
+    }
+
+    /// <summary>Puts a kind on the empty kind of the type it was born holding.</summary>
+    internal void Put(global::app.type.kind.@this kind)
+    {
+        if (kind.Owner is not { kind: global::app.type.kind.empty.@this root })
+            throw new InvalidOperationException($"kind '{kind.Name}' names no type it is a kind of.");
+        root.Add(kind);
     }
 
     // The guard every format passes once a scan has held its kinds: a MIME or an extension is one format's —

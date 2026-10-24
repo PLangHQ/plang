@@ -57,7 +57,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, global::app.goal.step.action.@this> _action
         = new(System.StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>The app's module — empty, holding every module the app loads.</summary>
+    /// <summary>The code's module — the bottom, holding every module the code ships, born with
+    /// <paramref name="app"/>, the app the code is made for, which answers for them.</summary>
     internal @this(global::app.@this app) : base(app.type.list[typeof(@this)])
     {
         Name = "";
@@ -67,16 +68,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Discover(typeof(@this).Assembly);
     }
 
-    /// <summary>A sub app's module — a layer of its own over <paramref name="parent"/>'s registry, which it holds whole
-    /// as its list's first row and reads through: a module it reaches is its parent's own object, a module it adds is its
-    /// layer's alone, and what the registry it is over loads later is this one's too.</summary>
-    internal @this(global::app.@this app, @this parent) : base(app.type.list[typeof(@this)])
+    /// <summary>An app's module — a layer of its own over the registry <paramref name="under"/>, which it holds whole as
+    /// its list's first row and reads through: a module it reaches is that registry's own object, a module it adds is
+    /// its layer's alone, and what the registry it is over loads later is this one's too.</summary>
+    internal @this(global::app.@this app, @this under) : base(app.type.list[typeof(@this)])
     {
         Name = "";
         _app = app;
-        _parent = parent;
         _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
-        _modules.Add(parent._modules!);
+        _modules.Add(under._modules!);
         _registering = new object();
     }
 
@@ -86,16 +86,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _root = root;
     }
 
-    // Held by a sub app's module only: the registry it is a layer over.
-    private readonly @this? _parent;
-
-    /// <summary>Whether this registry, a layer, holds modules of its own — what its app loaded beside its parent's.</summary>
-    internal bool HasOwn => _parent != null && list.CountRaw > _parent.list.CountRaw;
-
-    // An addition to a module of the registry this one is a layer over: the module is its parent's.
-    private global::app.error.@this Refused(@this module)
-        => new($"the module '{module.Name}' is shared with the app that made this one: a sub app adds its own modules, not "
-            + $"actions to '{module.Name}'", "ModuleShared", 400);
+    /// <summary>Whether this registry, a layer, holds modules of its own — a module this layer made.</summary>
+    internal bool HasOwn => list.Items().Any(module => ReferenceEquals(module.Root, this));
 
     // The app's module: this one, or the one holding it.
     private @this Root => _root ?? this;
@@ -130,8 +122,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var owner = Of(module);
         // the same action again is the same answer, whichever registry holds its module
         if (owner[actionName]?.Class == type) return;
-        if (!ReferenceEquals(owner.Root, Root)) throw new global::app.error.AppException(Refused(owner));
-        owner.Add(actionName, type);
+        // a module below this layer takes the action as the app's origin answers it
+        if (!ReferenceEquals(owner.Root, Root)) App.origin.Register(owner, actionName, type);
+        else owner.Add(actionName, type);
     }
 
     /// <summary>Registers every [Action] class under <paramref name="baseNamespace"/> in an assembly — the module is
@@ -165,11 +158,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>Takes this module out of the app — emptied too, so anyone still holding it finds no actions.</summary>
-    public async System.Threading.Tasks.ValueTask<bool> Remove(actor.context.@this context)
+    public System.Threading.Tasks.ValueTask<bool> Remove(actor.context.@this context)
+        // a module below the asker's app's layer is taken out as its origin answers it
+        => ReferenceEquals(context.App.module, Root) ? Drop(context) : context.App.origin.Remove(this, context);
+
+    /// <summary>Takes this module out of the registry that holds it, for every app over that registry too — emptied,
+    /// so anyone still holding it finds no actions.</summary>
+    internal async System.Threading.Tasks.ValueTask<bool> Drop(actor.context.@this context)
     {
-        // a module of the registry the asker's app is a layer over is its parent's, never taken out from here; one the
-        // asker's app holds is taken out for the sub apps over it too
-        if (!ReferenceEquals(context.App.module, Root)) throw new global::app.error.AppException(Refused(this));
         if (!await list.Remove(this, context)) return false;
         Clear();
         return true;

@@ -30,7 +30,7 @@ public class TableTypeTests
     // to raw-bytes passthrough, not a wildcard parse that would fail.
     [Test] public async Task TableReader_Discovered_ForCsvKind()
     {
-        var r = new global::app.type.list.@this().Reader;
+        var r = new global::app.origin.code().type.Reader;
         await Assert.That(r.Of("table", "csv")).IsNotNull();
     }
 

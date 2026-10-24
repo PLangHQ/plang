@@ -11,7 +11,7 @@ namespace app.actor;
 [global::app.Attributes.PlangType("actor")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable,
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>,
-    global::app.type.item.IList<@this, global::app.actor.list.@this>
+    global::app.type.item.IList<@this, global::app.actor.list.@this>, global::app.origin.@this
 {
     private readonly CancellationTokenSource _cts;
 
@@ -98,16 +98,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// This actor's own identity. The system's is held by the identity store as the app's default once it is
     /// resolved (<c>%MyIdentity%</c>); a user's or a service's is set by the HTTP/signing layer.
     /// </summary>
-    public Identity? Identity
-    {
-        get => _identity ?? (_caller is { } caller ? caller.Identity ?? caller.DefaultIdentity : null);
-        set => _identity = value;
-    }
-    private Identity? _identity;
-
-    // The actor whose identity this one answers as while it holds none of its own — for an app's System, the actor
-    // that made the app; null for every other.
-    private readonly @this? _caller;
+    public Identity? Identity { get; set; }
 
     private readonly @this? _fallback;
     private global::app.actor.setting.@this? _setting;
@@ -118,17 +109,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
     public @this(string name, app.@this app, CancellationToken parentToken = default, @this? fallback = null)
-        : this(name, app, parentToken, fallback, null) { }
-
-    /// <param name="caller">The actor whose identity this one answers as while it holds none of its own — for the
-    /// System of an app an actor made, that actor.</param>
-    internal @this(string name, app.@this app, CancellationToken parentToken, @this? fallback, @this? caller)
         : base(app.type.list[typeof(@this)])
     {
         Name = name;
         App = app;
         _fallback = fallback;
-        _caller = caller;
         _cts = parentToken == default
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
@@ -155,6 +140,38 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 : null;
         }
     }
+
+    // As what a sub app is made from: the actor answers each part from its own app, the sub app's life ends with its
+    // own, and the sub app is who it is.
+
+    System.Threading.CancellationTokenSource global::app.origin.@this.Shutdown()
+        => CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
+
+    global::app.type.list.@this global::app.origin.@this.type => App.type.list;
+
+    global::app.module.@this global::app.origin.@this.Module(global::app.@this app) => App.module;
+
+    // its app's goals are the sub app's while the sub app holds no code of its own (a goal is bound to its modules and
+    // types when it is read, so a goal its app reads reaches only its app's) and shares its folder (a .pr is then the same
+    // file in both)
+    async Task<global::app.data.@this?> global::app.origin.@this.Goal(global::app.type.item.path.@this source, global::app.@this app)
+        => app.HasCode || !Equals(app.filesystem.root, App.filesystem.root) ? null : await global::app.goal.@this.Load(source, App);
+
+    Identity? global::app.origin.@this.Identity(global::app.@this app) => Identity ?? DefaultIdentity;
+
+    // a type of its app is not a sub app's to change, until sub apps own their code
+    global::app.error.@this? global::app.origin.@this.Hold(global::app.type.kind.@this kind)
+        => new($"'{kind.Name}' is a kind of {kind.Owner?.Name}, which this app shares with the app that made it: a sub app "
+            + $"can't add a kind to {kind.Owner?.Name} yet", "TypesShared", 400);
+
+    // a module of its app is not a sub app's to change, until sub apps own their code
+    void global::app.origin.@this.Register(global::app.module.@this module, string action, System.Type type)
+        => throw new global::app.error.AppException(new global::app.error.@this($"the module '{module.Name}' is shared with the "
+            + $"app that made this one: a sub app adds its own modules, not actions to '{module.Name}'", "ModuleShared", 400));
+
+    System.Threading.Tasks.ValueTask<bool> global::app.origin.@this.Remove(global::app.module.@this module, global::app.actor.context.@this context)
+        => throw new global::app.error.AppException(new global::app.error.@this($"the module '{module.Name}' is shared with the "
+            + $"app that made this one: a sub app takes out only its own modules", "ModuleShared", 400));
 
     /// <summary>
     /// Cancels this actor. If System, cascades to User and Service.

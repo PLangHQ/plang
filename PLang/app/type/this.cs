@@ -33,7 +33,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     item.IList<@this, list.@this>
 {
     /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>
-    public static list.@this List(global::app.@this app) => new();
+    public static list.@this List(global::app.@this app) => new(app.origin);
 
     /// <summary>Writes the type's identity — <c>{name, kind?, strict?, template?}</c>: what a type is written as in json
     /// and plang (a Data's and a property row's type slot, a type held as a value). A nested kind is written as its own

@@ -40,8 +40,9 @@ public class TypedPropertyCatalogTests
     [Before(Test)]
     public void Setup()
     {
-        _types = new global::app.type.list.@this();
-        _types.Assemblies.Add(typeof(TypedPropertyCatalogTests).Assembly);
+        _types = new global::app.origin.code().type;
+        // the fixtures' assembly comes in as code.load brings one in
+        _types.Add(typeof(TypedPropertyCatalogTests).Assembly, global::PLang.Tests.Parent.Actor.Context);
     }
 
     private global::app.type.@this? FindEntry(string name)

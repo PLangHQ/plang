@@ -52,6 +52,12 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
     // The app's life: bounded by its caller's, when an actor made it.
     private readonly CancellationTokenSource _shutdownCts;
+
+    /// <summary>What the app is made from — the code or an actor: each of its lists is a layer over what it answers.</summary>
+    internal global::app.origin.@this origin { get; }
+
+    /// <summary>Whether the app holds code of its own: its layers hold types or modules it loaded.</summary>
+    internal bool HasCode => type.list.HasOwn || module.HasOwn;
     private bool _disposed;
 
     private global::app.service.list.@this? _services;
@@ -284,18 +290,20 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     public keepalive.@this KeepAlive { get; } = new();
 
+    /// <summary>An app made from the code: a new code of its own, under its layers.</summary>
     public @this(string absolutePath,
         string? environment = null,
         bool autoWireConsoleChannels = true)
-        : this(absolutePath, null, environment, autoWireConsoleChannels) { }
+        : this(absolutePath, new global::app.origin.code(), environment, autoWireConsoleChannels) { }
 
-    /// <summary>An app made by <paramref name="actor"/>, the actor that calls: its folder is its own, and it is made
-    /// from the same code as the caller's app. Its life ends with its caller's; its System acts as its caller.</summary>
+    /// <summary>An app made by <paramref name="actor"/>, the actor that calls: its folder is its own, and its lists are
+    /// layers over the caller's app's. Its life ends with its caller's; it is who its caller is.</summary>
     internal @this(string absolutePath, global::app.actor.@this actor) : this(absolutePath, actor, null, true) { }
 
-    private @this(string absolutePath, global::app.actor.@this? caller, string? environment, bool autoWireConsoleChannels)
+    private @this(string absolutePath, global::app.origin.@this origin, string? environment, bool autoWireConsoleChannels)
     {
-        _shutdownCts = caller == null ? new() : CancellationTokenSource.CreateLinkedTokenSource(caller.CancellationToken);
+        this.origin = origin;
+        _shutdownCts = origin.Shutdown();
         Id = Guid.NewGuid().ToString("N")[..12];
         var trimmed = absolutePath.TrimEnd('/', '\\');
         var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
@@ -303,9 +311,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // the app's disk, holding the app's folder as what / is
         filesystem = new(absolutePath);
 
-        // The types come first: every value is born holding its type from this list, the actors' contexts too.
-        // a caller's app is made from the same code: the list is born from its list's facts
-        type = caller == null ? new(this) : new(this, new global::app.type.list.@this(caller.App.type.list));
+        // The types come first: every value is born holding its type from this list, the actors' contexts too — a
+        // layer over the types the origin answers.
+        type = new(this);
         parent = new(type.list[typeof(global::app.parent.@this)]);
 
         StartedAt = new(DateTimeOffset.UtcNow, type.list[typeof(global::app.type.item.datetime.@this)]);
@@ -314,15 +322,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         // The system & user actors, each owning a long-lived context. System is the cancellation root; User links
         // to its token.
-        actor = new(this, () => new global::app.actor.list.@this(this, caller));
+        actor = new(this);
 
         // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
         Code = new AppCode(actor.list.System.Context);
-        // a caller's app's modules are this one's too, under a layer of its own
-        module = caller == null ? new(this) : new(this, caller.App.module);
-        // a caller's app's goals are this one's too, while it holds no code of its own
-        goal = new(this, () => new global::app.goal.list.@this(this, caller?.App.goal.list));
+        // the actions, a layer of its own over the ones the origin answers
+        module = new(this, origin.Module(this));
+        goal = new(this);
         test = new(this);
         error = new(this);
         variable = new(this);
@@ -332,16 +339,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         channel = type.list["channel"];
 
         Code.RegisterDefaults();
-        // path's schemes, each a kind of path that builds its own path subclass, added where a list is made from the
-        // code: a sub app's layer reaches them through path's entry. (The types' own scan finds the kind classes and
-        // choice's closed sets.)
-        if (caller == null)
-        {
-            var path = type.list[typeof(global::app.type.item.path.@this)];
-            type.list.Add(new global::app.type.item.path.scheme.@this("file", path, (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
-            type.list.Add(new global::app.type.item.path.scheme.@this("http", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-            type.list.Add(new global::app.type.item.path.scheme.@this("https", path, (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
-        }
         // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
         // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),
         // else its file.

@@ -29,15 +29,18 @@ public class @this<T, L> : @this
     private readonly System.Type? _setting;
 
     /// <summary>The app's node for <typeparamref name="T"/>, its list made from the class on first read.</summary>
-    public @this(global::app.@this app) : this(app, app.type.list, () => T.List(app)) { }
+    public @this(global::app.@this app)
+        : this(app, app.type.list, new System.Lazy<L>(() => T.List(app), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication)) { }
 
-    /// <summary>A node over the types <paramref name="types"/> and the list <paramref name="list"/> makes — the
-    /// types' own node is born before the app holds them.</summary>
-    private protected @this(global::app.@this app, global::app.type.list.@this types, System.Func<L> list)
+    /// <summary>A node over the types <paramref name="types"/> and the list <paramref name="list"/> it is born with — the
+    /// types' own node, born before the app holds them.</summary>
+    private protected @this(global::app.@this app, global::app.type.list.@this types, L list) : this(app, types, new System.Lazy<L>(list)) { }
+
+    private @this(global::app.@this app, global::app.type.list.@this types, System.Lazy<L> list)
         : base(types[typeof(global::app.type.node.@this)])
     {
         _app = app;
-        _list = new(list, System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
+        _list = list;
         _setting = typeof(T).GetInterfaces()
             .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(item.setting.IConcept<>))
             ?.GetGenericArguments()[0];

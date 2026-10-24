@@ -24,19 +24,11 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     private IReadOnlyList<global::app.type.item.path.@this>? _app, _system;
 
     /// <summary>The goals of <paramref name="app"/> — the list is born knowing the App it loads for.</summary>
-    public @this(app.@this app) : this(app, null) { }
-
-    /// <summary>The goals of a sub app <paramref name="app"/>, taken through <paramref name="parent"/>'s while they are
-    /// its too.</summary>
-    internal @this(app.@this app, @this? parent) : base(new List<object?>(), app.type.list[typeof(@this)])
+    public @this(app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
     {
         App = app;
         Setup = new setup.@this(this);
-        _parent = parent;
     }
-
-    // The parent app's goals, for a sub app; null for an app no actor made.
-    private readonly @this? _parent;
 
     // A replace of the goal held from a .pr is one step: two reads adding the same .pr at once never both stay.
     private readonly object _gate = new();
@@ -44,20 +36,12 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // The .pr reads in flight, by the .pr: the apps loading one goal at once make one read.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.path.@this, Task<data.@this>> _reading = new();
 
-    /// <summary>The parent's goals, while they are this app's too: it holds no code of its own (a goal is bound to its
-    /// modules and types when it is read, so a goal its parent reads can reach only the parent's), and its root is its
-    /// parent's (a .pr is then the same file in both). Null otherwise, and for an app no actor made.</summary>
-    internal @this? Parent
-        => _parent != null && !App.type.list.HasOwn && !App.module.HasOwn && Equals(App.filesystem.root, _parent.App.filesystem.root)
-            ? _parent : null;
-
-    /// <summary>The goal at <paramref name="source"/> as the parent loads it, as itself — held by this app too and
-    /// loaded here through this app's own on.load; null while the parent's goals aren't this app's (<see cref="Parent"/>).
-    /// A goal never goes up from a sub app: the parent reads it, so nothing of this app is in a goal its sub apps share.</summary>
+    /// <summary>The goal at <paramref name="source"/> as the app's origin answers it, as itself — held by this app too
+    /// and loaded here through this app's own on.load; null when the origin gives none. A goal never goes up from a sub
+    /// app: the parent reads it, so nothing of this app is in a goal its sub apps share.</summary>
     internal async Task<data.@this?> Take(global::app.type.item.path.@this source, actor.context.@this context)
     {
-        if (Parent is not { } parent) return null;
-        var loaded = await goal.@this.Load(source, parent.App);
+        if (await App.origin.Goal(source, App) is not { } loaded) return null;
         if (!loaded.Success || await loaded.Value() is not goal.@this taken) return loaded;
         Add(taken);
         return await taken.on.load.After(taken, context.Ok(taken), context);

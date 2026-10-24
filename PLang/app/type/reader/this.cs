@@ -17,10 +17,12 @@ namespace app.type.reader;
 /// The file name maps to the kind token (<c>Default.cs</c> → wildcard
 /// <c>"*"</c>); the parent folder name maps to the PLang type name.</para>
 ///
-/// <para><see cref="Register"/> is the runtime seam for DLLs loaded via
-/// <c>code.load</c> — runtime registrations shadow generator-discovered entries.</para>
+/// <para>Two kinds: the code's readers (<see cref="code"/>), the ones its facts ship, and a layer's
+/// (<see cref="layer"/>), only what its app registers, over the readers under it. <see cref="Register"/> is the
+/// runtime seam for DLLs loaded via <c>code.load</c> — runtime registrations shadow generator-discovered
+/// entries.</para>
 /// </summary>
-public sealed class @this
+public abstract class @this
 {
     /// <summary>Wildcard kind token — covers any kind the type reads uniformly.</summary>
     public const string AnyKind = "*";
@@ -50,25 +52,17 @@ public sealed class @this
     private bool _initialized;
 
     /// <summary>
-    /// Assemblies to scan for <c>serializer/&lt;kind&gt;.cs</c> classes.
-    /// Defaults to the App assembly; consumers can extend (test fixtures).
+    /// Assemblies to scan for <c>serializer/&lt;kind&gt;.cs</c> classes: the code's, its own; a layer's, none.
     /// </summary>
-    public List<Assembly> Assemblies { get; } = new() { typeof(@this).Assembly };
+    public List<Assembly> Assemblies { get; }
 
     // The facts of the code the readers are found in, read once per code.
     private readonly global::app.type.list.@this.Code _code;
 
-    // The readers of the list a sub app's list is a layer over: what this one doesn't answer, they do.
-    private readonly @this? _parent;
-
-    /// <summary>The readers of a type list, found in its code's facts; a layer's are only what its app registers, over
-    /// <paramref name="parent"/>'s.</summary>
-    internal @this(global::app.type.list.@this.Code code, @this? parent)
+    private protected @this(global::app.type.list.@this.Code code, List<Assembly> assemblies)
     {
         _code = code;
-        _parent = parent;
-        // a layer scans nothing: the shipped readers are its parent's
-        if (parent != null) Assemblies.Clear();
+        Assemblies = assemblies;
     }
 
     /// <summary>
@@ -77,18 +71,9 @@ public sealed class @this
     /// the wildcard <c>"*"</c> entry, or null when neither is present. Runtime
     /// registrations win over generated entries; an exact (type, kind) match
     /// wins over the wildcard at the same level. Precedence: runtime-exact → generated-exact →
-    /// runtime-"*" → generated-"*".
+    /// runtime-"*" → generated-"*", then the readers under a layer.
     /// </summary>
-    public Read? Of(string typeName, string? kind)
-    {
-        EnsureInitialized();
-        var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
-        if (_runtime.TryGetValue((typeName, k), out var rt)) return rt;
-        if (_generated.TryGetValue((typeName, k), out var gen)) return gen;
-        if (_runtime.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
-        if (_generated.TryGetValue((typeName, AnyKind), out var genAny)) return genAny;
-        return _parent?.Of(typeName, kind);
-    }
+    public Read? Of(string typeName, string? kind) => Payload(typeName, kind);
 
     /// <summary>
     /// Returns the <see cref="ITypeReader"/> registered for
@@ -97,15 +82,28 @@ public sealed class @this
     /// generated-exact → runtime-"*" → generated-"*". Null when the type has not
     /// been converted to a typed reader yet (the caller falls back to <see cref="Of"/>).
     /// </summary>
-    public ITypeReader? Typed(string typeName, string? kind)
+    public ITypeReader? Typed(string typeName, string? kind) => Token(typeName, kind);
+
+    // The whole-payload decode these readers hold for the type and kind, in the precedence Of names.
+    private protected virtual Read? Payload(string typeName, string? kind)
+    {
+        EnsureInitialized();
+        var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
+        if (_runtime.TryGetValue((typeName, k), out var rt)) return rt;
+        if (_generated.TryGetValue((typeName, k), out var gen)) return gen;
+        if (_runtime.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
+        return _generated.TryGetValue((typeName, AnyKind), out var genAny) ? genAny : null;
+    }
+
+    // The token reader these readers hold for the type and kind, in the precedence Typed names.
+    private protected virtual ITypeReader? Token(string typeName, string? kind)
     {
         EnsureInitialized();
         var k = string.IsNullOrEmpty(kind) ? AnyKind : kind!;
         if (_runtimeTyped.TryGetValue((typeName, k), out var rt)) return rt;
         if (_generatedTyped.TryGetValue((typeName, k), out var gen)) return gen;
         if (_runtimeTyped.TryGetValue((typeName, AnyKind), out var rtAny)) return rtAny;
-        if (_generatedTyped.TryGetValue((typeName, AnyKind), out var genAny)) return genAny;
-        return _parent?.Typed(typeName, kind);
+        return _generatedTyped.TryGetValue((typeName, AnyKind), out var genAny) ? genAny : null;
     }
 
     /// <summary>
@@ -143,15 +141,17 @@ public sealed class @this
     /// and never answer here. Null when no kind-specific reader exists (the
     /// caller falls back to the format family). Runtime registrations win.
     /// </summary>
-    public string? TypeOf(string? kind)
+    public string? TypeOf(string? kind) => string.IsNullOrEmpty(kind) ? null : Owner(kind!);
+
+    // The type these readers read under a kind-specific reader of <paramref name="kind"/>.
+    private protected virtual string? Owner(string kind)
     {
-        if (string.IsNullOrEmpty(kind)) return null;
         EnsureInitialized();
         foreach (var key in _runtime.Keys)
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
         foreach (var key in _generated.Keys)
             if (string.Equals(key.Kind, kind, System.StringComparison.OrdinalIgnoreCase)) return key.Type;
-        return _parent?.TypeOf(kind);
+        return null;
     }
 
     /// <summary>

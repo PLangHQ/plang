@@ -53,6 +53,20 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         }
     }
 
+    // The chunk rows' lists as they were at the last change, made from the rows' snapshot and dropped with it.
+    private @this[]? _chunks;
+
+    /// <summary>The lists this one's chunk rows read through, in row order — what a list that is a layer over another
+    /// reads its misses from. None for a list no other list was appended to.</summary>
+    private protected @this[] Chunks
+    {
+        get
+        {
+            if (System.Threading.Volatile.Read(ref _chunks) is { } chunks) return chunks;
+            lock (_gate) return _chunks ??= System.Array.ConvertAll(System.Array.FindAll(Now, row => row is Chunk), row => ((Chunk)row!).List);
+        }
+    }
+
     // A list stores no context: an element is handed out with the context of whoever asks for it
     // (Items, At). A stored Data keeps its own. Every list holds the app's type its maker hands it:
     // its element kind and its template ride on that type.
@@ -163,6 +177,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         {
             var answer = edit(this, state);
             _rows = null;
+            _chunks = null;
             return answer;
         }
     }

@@ -300,10 +300,10 @@ public sealed class Default : IIdentity
             return action.Context.Ok<Identity>(candidate);
         }
 
-        // None stored yet. One held in memory is the one being stored right now — its own row is signed with
-        // it on the way into the store, and that signing asks for the identity here — so it answers, rather
-        // than making another for every row.
-        if (action.Context.App.actor.list.System.Identity is { IsArchived: false } making)
+        // None stored yet: who the app is, as its origin answers — the code, the one being stored right now (its
+        // own row is signed with it on the way into the store, and that signing asks for the identity here, so it
+        // answers rather than making another for every row); an actor, the actor's.
+        if (action.Context.App.origin.Identity(action.Context.App) is { IsArchived: false } making)
             return action.Context.Ok<Identity>(making);
 
         // No identities at all — auto-create; it is the app's identity from here, before its row is stored

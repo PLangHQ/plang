@@ -39,7 +39,7 @@ public class ReadFailureTests
     {
         // Registry-level "no entry" path: Of(...) returns null; the dispatch
         // itself does not throw. The caller turns null into a typed error.
-        var r = new global::app.type.list.@this().Reader;
+        var r = new global::app.origin.code().type.Reader;
         await Assert.That(r.Of("no-such-type", "json")).IsNull();
     }
 

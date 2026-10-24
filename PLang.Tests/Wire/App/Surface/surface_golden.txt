@@ -3161,7 +3161,6 @@ class app.type.list.this : app.type.item.list.this<app.type.this>
   Reader : app.type.reader.this { get; }
   Reserved : System.Collections.Generic.IReadOnlySet<System.String> { get; }
   Sealed : System.Collections.Generic.IReadOnlySet<System.String> { get; }
-  ctor()
   protected override Admit(System.Object slot) : System.Void
   protected override Admit(app.type.item.list.this other) : System.Void
   protected override Type : app.type.this { get; }
@@ -3243,7 +3242,7 @@ class app.type.reader.ReadContext : System.IEquatable<app.type.reader.ReadContex
   Window : app.type.item.duration.this { get; init; }
   ctor(app.actor.context.this Context, app.type.item.template.kind.this Template = …, System.Boolean Verify = …, System.Boolean DeferVerify = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> Variable = …, app.type.item.path.this Origin = …, System.Boolean IsBuilt = …)
 
-class app.type.reader.this
+abstract class app.type.reader.this
   Assemblies : System.Collections.Generic.List<System.Reflection.Assembly> { get; }
   Of(System.String typeName, System.String kind) : app.type.reader.this+Read
   Reader(System.String typeName, System.String kind, app.actor.context.this context) : app.type.reader.ITypeReader
@@ -3251,7 +3250,6 @@ class app.type.reader.this
   Register(System.String typeName, System.String kind, app.type.reader.this+Read read) : System.Void
   TypeOf(System.String kind) : System.String
   Typed(System.String typeName, System.String kind) : app.type.reader.ITypeReader
-  ctor()
   static const AnyKind : System.String
 
 class app.type.reader.this+Read : System.MulticastDelegate
