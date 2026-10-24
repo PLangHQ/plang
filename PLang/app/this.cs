@@ -369,10 +369,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // The one interactive owner — the CLI (Executor) — constructs with
         // autoWireConsoleChannels:false and calls WireDefaultConsoleChannels
         // itself to bind real stdin.
+        // Each actor's channels are wired when it first uses them: an app that never writes makes none.
         if (autoWireConsoleChannels)
         {
-            WireConsoleChannels(actor.list.System, interactiveInput: false);
-            WireConsoleChannels(actor.list.User, interactiveInput: false);
+            actor.list.System.Channel.Standard();
+            actor.list.User.Channel.Standard();
         }
     }
 
@@ -402,27 +403,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// fast with ChannelEof rather than blocking on the shared process stdin.
     /// </summary>
     public static void WireConsoleChannels(global::app.actor.@this actor, bool interactiveInput)
-    {
-        // The console writes and reads in the channel setting's format (%!app.channel.setting.format%): text for a
-        // person at a terminal, plang's own for a program that runs this plang (--channel.setting.format=plang).
-        if (!actor.Channel.Contains(global::app.channel.list.@this.Output))
-            actor.Channel.Register(new global::app.channel.type.console.@this(
-                global::app.channel.list.@this.Output, Console.OpenStandardOutput(), global::app.channel.ChannelDirection.Output));
-        if (!actor.Channel.Contains(global::app.channel.list.@this.Error))
-            actor.Channel.Register(new global::app.channel.type.console.@this(
-                global::app.channel.list.@this.Error, Console.OpenStandardError(), global::app.channel.ChannelDirection.Output));
-        if (!actor.Channel.Contains(global::app.channel.list.@this.Input))
-            actor.Channel.Register(interactiveInput
-                // The one terminal owner (CLI) reads real stdin.
-                ? new global::app.channel.type.console.@this(
-                    global::app.channel.list.@this.Input, Console.OpenStandardInput(), global::app.channel.ChannelDirection.Input)
-                // Non-interactive: an empty in-memory stream — reads as instant
-                // EOF (ChannelEof), so a prompt with no registered answerer fails
-                // fast instead of blocking on the shared process stdin.
-                : global::app.channel.type.stream.@this.Memory(
-                    global::app.channel.list.@this.Input,
-                    global::app.channel.ChannelDirection.Input));
-    }
+        => actor.Channel.Wire(interactiveInput);
 
     /// <summary>
     /// Loads app identity from .build/app.pr. Called at startup.
