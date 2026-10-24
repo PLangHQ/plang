@@ -346,7 +346,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
-        Code = new AppCode(actor.list.System.Context);
+        // the code providers, the built-ins registered at the registry's first use
+        Code = new AppCode(actor.list.System.Context, builtIn: true);
         // the actions, a layer of its own over the ones the origin answers
         module = new(this, origin.Module(this));
         goal = new(this);
@@ -358,7 +359,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         action = type.list["action"];
         channel = type.list["channel"];
 
-        Code.RegisterDefaults();
         // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
         // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),
         // else its file.

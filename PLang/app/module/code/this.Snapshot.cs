@@ -21,8 +21,8 @@ public sealed partial class @this : ISnapshot
     ///  - non-built-in registrations as (typeName, providerName, source) tuples
     ///  - default-selection overrides where the current default differs from the
     ///    built-in default for that interface type
-    /// Built-in registrations stay out of the snapshot — App boot's RegisterDefaults
-    /// reproduces them on the fresh side.
+    /// Built-in registrations stay out of the snapshot — a fresh App's registry holds
+    /// them on the fresh side.
     /// </summary>
     public void Capture(global::app.snapshot.@this s)
     {
@@ -46,9 +46,9 @@ public sealed partial class @this : ISnapshot
             }
 
             // Compare current default to the built-in default this type was *born* with
-            // (tracked at RegisterDefaults time so SetDefault can't erase the evidence).
+            // (tracked as the built-ins are registered, so SetDefault can't erase the evidence).
             // If they differ, the user changed the selection — emit an override so Restore
-            // re-applies it after the fresh App's RegisterDefaults reproduces the built-ins.
+            // re-applies it over the built-ins a fresh App's registry holds.
             // No built-in for the type → emit unconditionally so the chosen default survives.
             _builtInDefaults.TryGetValue(type, out var bornDefault);
             if (currentDefaultName != null
@@ -72,7 +72,7 @@ public sealed partial class @this : ISnapshot
     ///   1) Replay non-built-in registrations — load source DLLs (hard error on failure),
     ///      register the provider instances against each ICode-derived interface they implement.
     ///   2) Apply default-selection overrides — hard error if the named provider isn't registered.
-    /// The fresh App boot has already run RegisterDefaults so built-ins are present.
+    /// A fresh App's registry holds the built-ins, so they are present.
     /// </summary>
     public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {

@@ -14,7 +14,6 @@ namespace app.module.code;
 /// </summary>
 public sealed partial class @this : IAsyncDisposable
 {
-    private readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> _providers = new();
     private bool _disposed;
 
     /// <summary>
@@ -23,15 +22,55 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     private readonly actor.context.@this Context;
 
-    public @this(actor.context.@this context) => Context = context;
+    // whether the registry holds the built-in providers: an app's does, a bare registry holds none
+    private readonly bool _builtIn;
 
-    // The default's name per interface. A default is selection, and selection is the registry's: one
-    // provider can serve several interfaces (Ed25519 is ISigning and IKey), each with its own default.
-    private readonly ConcurrentDictionary<System.Type, string> _defaults = new();
+    public @this(actor.context.@this context) : this(context, builtIn: false) { }
 
-    // The default each interface was born with at RegisterDefaults. Snapshot capture compares the
-    // current default against it to tell a user's selection from what a fresh App sets itself.
-    private readonly ConcurrentDictionary<System.Type, string> _builtInDefaults = new();
+    /// <summary>The registry of <paramref name="context"/>'s app, holding the built-in providers when
+    /// <paramref name="builtIn"/> — registered at its first use, so an app that asks for none makes none.</summary>
+    internal @this(actor.context.@this context, bool builtIn)
+    {
+        Context = context;
+        _builtIn = builtIn;
+    }
+
+    // The registry's tables, made at its first use — with the built-in providers when it holds them.
+    private sealed class tables
+    {
+        internal readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> Providers = new();
+        // The default's name per interface. A default is selection, and selection is the registry's: one
+        // provider can serve several interfaces (Ed25519 is ISigning and IKey), each with its own default.
+        internal readonly ConcurrentDictionary<System.Type, string> Defaults = new();
+        // The default each interface was born with. Snapshot capture compares the current default against it to
+        // tell a user's selection from what a fresh App sets itself.
+        internal readonly ConcurrentDictionary<System.Type, string> BuiltIn = new();
+    }
+
+    private tables? _tables;
+    private readonly object _gate = new();
+
+    // The tables as they are now: made, with the built-ins registered, on the first use — the one door every other
+    // reads through.
+    private tables Tables
+    {
+        get
+        {
+            if (System.Threading.Volatile.Read(ref _tables) is { } made) return made;
+            lock (_gate)
+            {
+                if (_tables is { } held) return held;
+                var tables = new tables();
+                if (_builtIn) BuiltIns(tables);
+                System.Threading.Volatile.Write(ref _tables, tables);
+                return tables;
+            }
+        }
+    }
+
+    private ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> _providers => Tables.Providers;
+    private ConcurrentDictionary<System.Type, string> _defaults => Tables.Defaults;
+    private ConcurrentDictionary<System.Type, string> _builtInDefaults => Tables.BuiltIn;
 
     /// <summary>
     /// Disposes every registered provider instance (IAsyncDisposable preferred,
@@ -41,7 +80,9 @@ public sealed partial class @this : IAsyncDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        foreach (var provider in _providers.Values.SelectMany(p => p.Values))
+        // a registry never used made no provider, so it has none to dispose
+        if (System.Threading.Volatile.Read(ref _tables) is not { } tables) return;
+        foreach (var provider in tables.Providers.Values.SelectMany(p => p.Values))
         {
             if (provider is IAsyncDisposable asyncProv)
                 await asyncProv.DisposeAsync();
@@ -147,18 +188,20 @@ public sealed partial class @this : IAsyncDisposable
     /// Registers a provider by runtime-resolved type. First registered for a type becomes default.
     /// </summary>
     public data.@this Register(System.Type providerType, ICode provider)
-    {
-        var typeDict = _providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
-
-        if (!typeDict.TryAdd(provider.Name, provider))
-            return Context.Error(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
-
-        _defaults.TryAdd(providerType, provider.Name);
-
         // A provider is engine plumbing, never a plang value — the registration
         // just succeeds. Returning the provider as the value would wrap a CLR
         // service in a Data (a throwaway clr); the value is never read.
-        return Context.Ok();
+        => Put(Tables, providerType, provider) ? Context.Ok()
+            : Context.Error(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
+
+    // Registers provider for providerType in tables; the first for a type becomes its default. False when a provider
+    // of its name is already there.
+    private bool Put(tables tables, System.Type providerType, ICode provider)
+    {
+        var typeDict = tables.Providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
+        if (!typeDict.TryAdd(provider.Name, provider)) return false;
+        tables.Defaults.TryAdd(providerType, provider.Name);
+        return true;
     }
 
     /// <summary>
@@ -210,45 +253,40 @@ public sealed partial class @this : IAsyncDisposable
         return Context.Ok();
     }
 
-    /// <summary>
-    /// Registers built-in default providers. Called by App constructor.
-    /// Each module owns its default provider — this method is the single registration point.
-    /// </summary>
-    public void RegisterDefaults()
+    // The built-in providers, into tables as they are made. Each module owns its default provider — this is the single
+    // registration point. Every built-in is stamped so the snapshot capture skips them: a fresh App's registry holds
+    // the same set, so they don't ride along in the payload.
+    private void BuiltIns(tables tables)
     {
-        // Stamp every built-in registration so the snapshot capture skips them —
-        // the fresh App's RegisterDefaults reproduces the same set on Restore, so
-        // they don't need to ride along in the payload.
         var ed25519 = new Ed25519();
-        RegisterBuiltIn<ISigning>(ed25519);
-        RegisterBuiltIn<IKey>(ed25519);
-        RegisterBuiltIn<IIdentity>(new global::app.module.identity.code.Default());
-        RegisterBuiltIn<ICrypto>(new global::app.module.crypto.code.Default());
-        RegisterBuiltIn<global::app.module.math.code.IMath>(new global::app.module.math.code.Default());
-        RegisterBuiltIn<global::app.module.http.code.IHttp>(new global::app.module.http.code.Default());
-        RegisterBuiltIn<global::app.module.archive.code.IArchive>(new global::app.module.archive.code.Default());
-        RegisterBuiltIn<global::app.module.terminal.code.ITerminal>(new global::app.module.terminal.code.Default());
-        RegisterBuiltIn<global::app.module.browser.code.IBrowser>(new global::app.module.browser.code.Chromium());
+        BuiltIn<ISigning>(tables, ed25519);
+        BuiltIn<IKey>(tables, ed25519);
+        BuiltIn<IIdentity>(tables, new global::app.module.identity.code.Default());
+        BuiltIn<ICrypto>(tables, new global::app.module.crypto.code.Default());
+        BuiltIn<global::app.module.math.code.IMath>(tables, new global::app.module.math.code.Default());
+        BuiltIn<global::app.module.http.code.IHttp>(tables, new global::app.module.http.code.Default());
+        BuiltIn<global::app.module.archive.code.IArchive>(tables, new global::app.module.archive.code.Default());
+        BuiltIn<global::app.module.terminal.code.ITerminal>(tables, new global::app.module.terminal.code.Default());
+        BuiltIn<global::app.module.browser.code.IBrowser>(tables, new global::app.module.browser.code.Chromium());
         // the screen: on Windows a window that shows frames; on Linux (PlangOS) the display that makes them
-        RegisterBuiltIn<global::app.module.screen.code.IScreen>(OperatingSystem.IsWindows()
+        BuiltIn<global::app.module.screen.code.IScreen>(tables, OperatingSystem.IsWindows()
             ? new global::app.module.screen.code.Default()
             : new global::app.module.screen.code.Wayland());
-        RegisterBuiltIn<global::app.module.condition.code.IEvaluator>(new global::app.module.condition.code.Default());
-        RegisterBuiltIn<global::app.module.assert.code.IAssert>(new global::app.module.assert.code.Default());
-        RegisterBuiltIn<ITemplate>(new global::app.module.ui.code.Fluid());
-        RegisterBuiltIn<global::app.module.llm.code.ILlm>(new global::app.module.llm.code.OpenAi());
-        RegisterBuiltIn<global::app.module.llm.code.IDecider>(new global::app.module.llm.code.TypeSafe());
-        RegisterBuiltIn<global::app.module.build.code.IBuilder>(new global::app.module.build.code.Default());
-        RegisterBuiltIn<global::app.data.code.IGrep>(new global::app.data.code.Default());
-        RegisterBuiltIn<global::app.store.code.IStore>(new global::app.store.code.Sqlite());
+        BuiltIn<global::app.module.condition.code.IEvaluator>(tables, new global::app.module.condition.code.Default());
+        BuiltIn<global::app.module.assert.code.IAssert>(tables, new global::app.module.assert.code.Default());
+        BuiltIn<ITemplate>(tables, new global::app.module.ui.code.Fluid());
+        BuiltIn<global::app.module.llm.code.ILlm>(tables, new global::app.module.llm.code.OpenAi());
+        BuiltIn<global::app.module.llm.code.IDecider>(tables, new global::app.module.llm.code.TypeSafe());
+        BuiltIn<global::app.module.build.code.IBuilder>(tables, new global::app.module.build.code.Default());
+        BuiltIn<global::app.data.code.IGrep>(tables, new global::app.data.code.Default());
+        BuiltIn<global::app.store.code.IStore>(tables, new global::app.store.code.Sqlite());
     }
 
-    private void RegisterBuiltIn<T>(T provider) where T : class, ICode
+    private void BuiltIn<T>(tables tables, T provider) where T : class, ICode
     {
         provider.IsBuiltIn = true;
-        Register(typeof(T), provider);
-        // Stamp the type's "natural" default name *once* — the first built-in for a type
-        // becomes default by virtue of being first-registered, mirroring Register's contract.
-        _builtInDefaults.TryAdd(typeof(T), provider.Name);
+        Put(tables, typeof(T), provider);
+        // the type's "natural" default name, once — the first built-in for a type becomes its default by being first
+        tables.BuiltIn.TryAdd(typeof(T), provider.Name);
     }
 }
