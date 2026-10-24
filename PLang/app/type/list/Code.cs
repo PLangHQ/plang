@@ -61,7 +61,7 @@ public sealed partial class @this
         internal IReadOnlyList<(string Name, System.Type Clr)> Item { get; }
 
         /// <summary>Each kind class born from the entry it is a kind of, with that type's name.</summary>
-        internal IReadOnlyList<(System.Type Clr, string Owner)> Kind { get; }
+        internal IReadOnlyList<KindClass> Kind { get; }
 
         /// <summary>Each class the second pass marks: the formats it declares, whether it is the list, whether it is a
         /// closed set.</summary>
@@ -74,7 +74,7 @@ public sealed partial class @this
         internal IReadOnlyList<(string Type, string Kind, ConstructorInfo Made)> Typed { get; }
 
         /// <summary>The whole-payload readers it ships under a serializer folder, by the type and kind they read.</summary>
-        internal IReadOnlyList<(string Type, string Kind, global::app.type.reader.@this.Read Read)> Read { get; }
+        internal IReadOnlyList<Payload> Read { get; }
 
         internal Library(Assembly assembly)
         {
@@ -83,7 +83,7 @@ public sealed partial class @this
             // subclass kind
             var item = new List<(string, System.Type)>();
             var subclasses = new List<Subclass>();
-            var readers = Shipped(Classes);
+            var readers = Shipped;
             foreach (var t in Classes)
             {
                 var member = global::app.type.item.@this.FamilyOf(t);
@@ -102,27 +102,16 @@ public sealed partial class @this
             Kind = Classes
                 .Where(t => typeof(global::app.type.kind.@this).IsAssignableFrom(t) && t is { IsAbstract: false, ContainsGenericParameters: false }
                     && t.GetConstructor([typeof(global::app.type.@this)]) != null)
-                .Select(t => (Clr: t, Owner: Owner(t))).Where(each => each.Owner != null)
-                .Select(each => (each.Clr, each.Owner!)).ToList();
-            // a Mark only for a class that has one of the three
-            Marked = Classes.Where(Mark.Has).Select(t => new Mark(t)).ToList();
-            (Typed, Read) = Readers(assembly, Classes);
-        }
-
-        // The type a kind class is a kind of — the T of the kind<T> it derives from, by its name; null for a class that
-        // is no kind<T>.
-        private static string? Owner(System.Type kind)
-        {
-            for (var parent = kind.BaseType; parent != null; parent = parent.BaseType)
-                if (parent.IsGenericType && parent.GetGenericTypeDefinition() == typeof(global::app.type.kind.@this<>))
-                    return global::app.type.item.@this.NameOf(parent.GetGenericArguments()[0]);
-            return null;
+                .Select(t => new KindClass(t)).Where(each => each.Owner != null).ToList();
+            // a Mark is asked of every class (a value: nothing made for one with none), kept for one that has one
+            Marked = Classes.Select(t => new Mark(t)).Where(mark => mark.Codec != null || mark.List || mark.Choice).ToList();
+            (Typed, Read) = Readers(assembly);
         }
 
         // The token readers the assembly ships, by their serializer namespace — a subclass kind's own reader is the one in
         // its serializer namespace.
-        private static Dictionary<string, System.Type> Shipped(System.Type[] classes)
-            => classes.Where(r => r.Namespace is { } ns && ns.EndsWith(".serializer", StringComparison.Ordinal)
+        private Dictionary<string, System.Type> Shipped
+            => Classes.Where(r => r.Namespace is { } ns && ns.EndsWith(".serializer", StringComparison.Ordinal)
                     && typeof(global::app.type.reader.ITypeReader).IsAssignableFrom(r)
                     && r is { IsAbstract: false } && r.GetConstructor(System.Type.EmptyTypes) != null)
                 .GroupBy(r => r.Namespace!).ToDictionary(group => group.Key, group => group.First());
@@ -131,11 +120,11 @@ public sealed partial class @this
         // name its type goes by (its word, else its namespace): a module's serializer folder reads the one type the
         // module declares by its word ([PlangType("ask")] in app.module.output); a folder with no such type registers
         // under its last segment.
-        private static (List<(string, string, ConstructorInfo)>, List<(string, string, global::app.type.reader.@this.Read)>) Readers(
-            Assembly assembly, System.Type[] classes)
+        private (List<(string, string, ConstructorInfo)>, List<Payload>) Readers(Assembly assembly)
         {
+            var classes = Classes;
             var typed = new List<(string, string, ConstructorInfo)>();
-            var read = new List<(string, string, global::app.type.reader.@this.Read)>();
+            var read = new List<Payload>();
             // the word each namespace declares its one item type by ([PlangType]); none when it declares none, or more
             var words = classes.Where(t => t.Namespace != null && typeof(global::app.type.item.@this).IsAssignableFrom(t))
                 .GroupBy(t => t.Namespace!)
@@ -175,16 +164,44 @@ public sealed partial class @this
                 if (method is not null
                     && method.GetParameters() is { Length: 3 } parameters
                     && parameters[2].ParameterType == typeof(global::app.type.reader.ReadContext))
-                    read.Add((typeName, kind, Invoking(method)));
+                    read.Add(new Payload(typeName, kind, method));
             }
             return (typed, read);
         }
+    }
 
-        // A whole-payload reader's static Read as a delegate — made only for a class that ships one. Reflection wraps a
-        // thrown exception in TargetInvocationException; it is unwrapped so callers (source.Value's parse-failure
-        // catch) see the real JsonException/FormatException and author their own error.
-        private static global::app.type.reader.@this.Read Invoking(MethodInfo method)
-            => (raw, k, ctx) =>
+    /// <summary>A kind class the startup scan holds: born from the entry of the type it is a kind of — the T of the
+    /// kind&lt;T&gt; it derives from, by its name; no owner for a class that is no kind&lt;T&gt;.</summary>
+    internal sealed class KindClass
+    {
+        internal System.Type Clr { get; }
+        internal string? Owner { get; }
+
+        internal KindClass(System.Type clr)
+        {
+            Clr = clr;
+            for (var parent = clr.BaseType; parent != null && Owner == null; parent = parent.BaseType)
+                if (parent.IsGenericType && parent.GetGenericTypeDefinition() == typeof(global::app.type.kind.@this<>))
+                    Owner = global::app.type.item.@this.NameOf(parent.GetGenericArguments()[0]);
+        }
+
+        public void Deconstruct(out System.Type clr, out string owner) => (clr, owner) = (Clr, Owner!);
+    }
+
+    /// <summary>A whole-payload reader a serializer folder ships — its static Read, by the type and kind it reads, as a
+    /// delegate. Reflection wraps a thrown exception in TargetInvocationException; it is unwrapped so callers
+    /// (source.Value's parse-failure catch) see the real JsonException/FormatException and author their own error.</summary>
+    internal sealed class Payload
+    {
+        internal string Type { get; }
+        internal string Kind { get; }
+        internal global::app.type.reader.@this.Read Read { get; }
+
+        internal Payload(string type, string kind, MethodInfo method)
+        {
+            Type = type;
+            Kind = kind;
+            Read = (raw, k, ctx) =>
             {
                 try { return method.Invoke(null, new object?[] { raw, k, ctx }); }
                 catch (TargetInvocationException tie) when (tie.InnerException != null)
@@ -193,22 +210,21 @@ public sealed partial class @this
                     throw; // unreachable — Throw() always rethrows
                 }
             };
+        }
+
+        public void Deconstruct(out string type, out string kind, out global::app.type.reader.@this.Read read)
+            => (type, kind, read) = (Type, Kind, Read);
     }
 
     /// <summary>A class the second pass marks: each format it declares (written by its own encode, read by its own
     /// decode when it has one), whether it is the list (whose element kinds are made as a list names its element),
-    /// whether it is marked a choice ([Choice]).</summary>
-    internal sealed class Mark
+    /// whether it is marked a choice ([Choice]). A value, asked of every class: one with no mark costs nothing kept.</summary>
+    internal readonly struct Mark
     {
         internal System.Type Clr { get; }
         internal Codec? Codec { get; }
         internal bool List { get; }
         internal bool Choice { get; }
-
-        /// <summary>Whether <paramref name="t"/> has any of the marks: a format, the list, a closed set.</summary>
-        internal static bool Has(System.Type t)
-            => t == typeof(global::app.type.item.list.@this) || t.IsDefined(typeof(FormatAttribute), inherit: false)
-               || t.IsDefined(typeof(ChoiceAttribute), inherit: false);
 
         internal Mark(System.Type t)
         {

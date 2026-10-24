@@ -63,7 +63,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     private bool IsBoundAt(global::app.type.item.@this level, global::app.actor.context.@this context,
         System.Func<@this, binding.list.@this> side)
     {
-        foreach (var @event in At(level, context))
+        foreach (var @event in Out(level, context))
             if (side(@event).Count > 0) return true;
         return false;
     }
@@ -76,7 +76,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     {
         if (!IsBoundBefore(level, context)) return null;
         var answer = result;
-        foreach (var @event in At(level, context))
+        foreach (var @event in Out(level, context))
         {
             if (@event.before is not { Count: > 0 } side) continue;
             answer = await side.Start(item, answer, context);
@@ -86,62 +86,87 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     }
 
     // This event where it is bound at a level, outward: the level's own events (what its program bound when it was
-    // read), then each actor's hold in the asker's app (what was bound while a program ran), in the actor list's order;
-    // inward the reverse.
-    private protected Sources At(global::app.type.item.@this level, global::app.actor.context.@this context, bool inward = false)
-        => new(this, level, context.App.actor.list, inward);
+    // read), then each actor's hold in the asker's app (what was bound while a program ran), in the actor list's order.
+    private protected Outward Out(global::app.type.item.@this level, global::app.actor.context.@this context)
+        => new(this, level, context.App.actor.list);
 
-    // The places this event can be bound at one level, walked without allocating: each is a set of events that takes
-    // bindings — the level's own, or one an actor holds for the level — and answers the event by its name, if it was
-    // ever bound there. (Events no binding gave an item are the shared empty ones, closed to bindings: nothing there.)
-    private protected struct Sources
+    // The same places inward: each actor's hold, last actor first, then the level's own events.
+    private protected Inward In(global::app.type.item.@this level, global::app.actor.context.@this context)
+        => new(this, level, context.App.actor.list);
+
+    // The places of one level, outward, walked without allocating; each answers the event by its name if a binding
+    // made it there.
+    private protected struct Outward
     {
         private readonly @this _event;
         private readonly global::app.type.item.@this _level;
         private readonly global::app.actor.list.@this _actors;
-        private readonly bool _inward;
         private readonly int _count;
-        // the next actor whose hold is asked, and whether the level's own events were
-        private int _next;
+        // whether the level's own events were asked, and the next actor whose hold is
         private bool _owned;
+        private int _next;
 
-        internal Sources(@this @event, global::app.type.item.@this level, global::app.actor.list.@this actors, bool inward)
+        internal Outward(@this @event, global::app.type.item.@this level, global::app.actor.list.@this actors)
         {
             _event = @event;
             _level = level;
             _actors = actors;
-            _inward = inward;
             _count = actors.CountRaw;
-            _next = inward ? _count - 1 : 0;
             _owned = false;
+            _next = 0;
             Current = null!;
         }
 
-        public readonly Sources GetEnumerator() => this;
+        public readonly Outward GetEnumerator() => this;
 
         public @this Current { get; private set; }
 
         public bool MoveNext()
         {
-            while (Next() is var (found, place))
+            if (!_owned)
             {
-                if (!found) return false;
-                if (place?.Bound(_event.Name) is not { } held) continue;
-                Current = held;
-                return true;
+                _owned = true;
+                if (_level.on.Bound(_event.Name) is { } own) { Current = own; return true; }
             }
+            while (_next < _count)
+                if (_actors[_next++].Context.on.Of(_level)?.Bound(_event.Name) is { } held) { Current = held; return true; }
             return false;
         }
+    }
 
-        // The next place, in the walk's direction: outward the level's own events, then each actor's hold; inward each
-        // actor's hold, then the level's own. Found is false past the last; the place is null where nothing was bound.
-        private (bool Found, global::app.@event.on.own? Place) Next()
+    // The places of one level, inward, walked without allocating.
+    private protected struct Inward
+    {
+        private readonly @this _event;
+        private readonly global::app.type.item.@this _level;
+        private readonly global::app.actor.list.@this _actors;
+        // the next actor whose hold is asked, and whether the level's own events were
+        private int _next;
+        private bool _owned;
+
+        internal Inward(@this @event, global::app.type.item.@this level, global::app.actor.list.@this actors)
         {
-            if (!_inward && !_owned) return (_owned = true, _level.on as global::app.@event.on.own);
-            if (_inward ? _next >= 0 : _next < _count)
-                return (true, _actors[_inward ? _next-- : _next++].Context.on.Of(_level));
-            if (_inward && !_owned) return (_owned = true, _level.on as global::app.@event.on.own);
-            return (false, null);
+            _event = @event;
+            _level = level;
+            _actors = actors;
+            _next = actors.CountRaw - 1;
+            _owned = false;
+            Current = null!;
+        }
+
+        public readonly Inward GetEnumerator() => this;
+
+        public @this Current { get; private set; }
+
+        public bool MoveNext()
+        {
+            while (_next >= 0)
+                if (_actors[_next--].Context.on.Of(_level)?.Bound(_event.Name) is { } held) { Current = held; return true; }
+            if (_owned) return false;
+            _owned = true;
+            if (_level.on.Bound(_event.Name) is not { } own) return false;
+            Current = own;
+            return true;
         }
     }
 
@@ -165,7 +190,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     {
         var answer = result ?? context.Ok();
         for (; item.Level(depth, context) is { } level; depth++)
-            foreach (var @event in At(level, context))
+            foreach (var @event in Out(level, context))
             {
                 if (@event.before is not { Count: > 0 } side) continue;
                 answer = await side.Start(item, answer, context);
@@ -191,7 +216,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         global::app.data.@this result, int depth, global::app.actor.context.@this context)
     {
         for (; depth >= 0; depth--)
-            foreach (var @event in At(item.Level(depth, context)!, context, inward: true))
+            foreach (var @event in In(item.Level(depth, context)!, context))
                 if (@event.after is { Count: > 0 } side) result = await side.Start(item, result, context);
         return result;
     }

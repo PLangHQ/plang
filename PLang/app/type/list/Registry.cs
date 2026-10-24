@@ -179,8 +179,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         // The class that already owns the name adds nothing new: the same answer, whatever the name.
         if (Types.FirstOrDefault(t => t.Names(claimed)) is { } type && type.ClrType == clr) return context.Ok(type);
         if (Shared) return context.Error(Refused());
-        var aliases = clr.GetProperty("Alias", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-            ?.GetValue(null) as IReadOnlyList<string> ?? [];
+        // what the class declares of itself, as the code's facts read it
+        var aliases = code[clr].Alias;
         if (aliases.Prepend(claimed).FirstOrDefault(Sealed.Contains) is { } sealedWord)
             return context.Error(new error.@this(
                 $"'{sealedWord}' is on the sealed built-in list and may not be claimed by a runtime-loaded type.", "TypeLoadCollision", 400));

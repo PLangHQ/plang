@@ -375,7 +375,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// its add; <see cref="Is"/> queries it.
     /// </summary>
     private global::app.type.item.history.@this? _history;
-    internal virtual global::app.type.item.history.@this history => _history ??= new();
+    internal global::app.type.item.history.@this history => _history ??= Blank();
+
+    // The history this value starts with, before anything is added: one that takes a prior, unless the value is one
+    // never made from another.
+    private protected virtual global::app.type.item.history.@this Blank() => new();
 
     /// <summary>
     /// This value's OWN type entity — the type that MADE it, handed in at birth (the app's list for an

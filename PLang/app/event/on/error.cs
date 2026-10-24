@@ -20,7 +20,7 @@ public sealed class error : global::app.@event.@this
         if (!IsBound(item, context)) return failed;
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
             // the level's own clauses, then what each actor of the asker's app holds for it
-            foreach (var @event in At(level, context))
+            foreach (var @event in Out(level, context))
                 foreach (var binding in @event.before)
                 {
                     if (!binding.For(item, context)) continue;

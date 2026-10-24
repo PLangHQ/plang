@@ -51,6 +51,18 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         => _parent != null && !App.type.list.HasOwn && !App.module.HasOwn && Equals(App.filesystem.root, _parent.App.filesystem.root)
             ? _parent : null;
 
+    /// <summary>The goal at <paramref name="source"/> as the parent loads it, as itself — held by this app too and
+    /// loaded here through this app's own on.load; null while the parent's goals aren't this app's (<see cref="Parent"/>).
+    /// A goal never goes up from a sub app: the parent reads it, so nothing of this app is in a goal its sub apps share.</summary>
+    internal async Task<data.@this?> Take(global::app.type.item.path.@this source, actor.context.@this context)
+    {
+        if (Parent is not { } parent) return null;
+        var loaded = await goal.@this.Load(source, parent.App);
+        if (!loaded.Success || await loaded.Value() is not goal.@this taken) return loaded;
+        Add(taken);
+        return await taken.on.load.After(taken, context.Ok(taken), context);
+    }
+
     /// <summary>The goal held from <paramref name="pr"/> while its .pr is as it was read; null when none is held, or the
     /// file changed since — then it is read again.</summary>
     internal async Task<goal.@this?> Held(global::app.type.item.path.@this pr, actor.context.@this context)

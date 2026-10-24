@@ -700,8 +700,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>A type is never made from a value: what reads a name to it finds it, so its history takes no prior —
     /// one entry is every app's made from the same code, and no read in any of them is written onto it.</summary>
-    internal override item.history.@this history => _history ??= new item.history.closed();
-    private item.history.@this? _history;
+    private protected override item.history.@this Blank() => new item.history.closed();
     private string? _shape;
 
     /// <summary>A value of this type is written as an object: a record (its builder properties, no shape of its own),

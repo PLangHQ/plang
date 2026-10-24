@@ -70,10 +70,10 @@ public partial class OnEvent : IContext
         // each carrier is opened through its door: the first that doesn't resolve (a %variable% holding nothing, a
         // name that is none of the choice's) is the answer
         // held on the context of the actor that binds, never on the item: it fires in this app alone and goes with it
-        var on = Context.Actor!.Context.on[item];
-        var @event = on[named.Name]!;
+        var held = Context.Actor!.Context.on;
+        var @event = held[item][named.Name]!;
         return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(call =>
-            Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(on.Bind(named.Name, when.Value,
-                side => new global::app.@event.binding.action.@this(side, @event, call, Context.Actor!, scope.Value))))))));
+            Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(held.Bind(item, named.Name, when.Value,
+                (side, actor) => new global::app.@event.binding.action.@this(side, @event, call, actor, scope.Value))))))));
     }
 }
