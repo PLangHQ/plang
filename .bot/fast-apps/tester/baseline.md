@@ -199,6 +199,52 @@ read paths; I haven't seen them hit.
 - The root request app at stage 1 also kept 0.9 MB after a rest (3k requests, 4.4 → 1.8 against a start of 0.9). A root
   shares no type entry, so this isn't its cause; I haven't found that one.
 
+## Stage 3 complete — the tip `94acb909b` (decision 32), 3 rounds, `bench/results/stage3.txt`
+
+The type list, the module registry and goals are shared through the parent; the hold and the history fix are in. Root is
+`new app.@this(path)`, child is `new app.@this(path, actor)`.
+
+| | stage 0 | stage 2 child | layer child | **stage 3 child** | **stage 3 root** | load |
+|---|---|---|---|---|---|---|
+| a birth | 27–32 ms, 5.2 MB | 13–16 ms, 4.5 MB | 3.3–3.6 ms, 1.16 MB | **Debug 0.50–0.56 ms, Release 0.46–0.52 ms; 646–654 KB** | Debug 27.6–29.5 ms, Release 27.1–30.8 ms; 6.05–6.07 MB | 1.2–3.0 |
+| a request app × 3,000 | Release 21–22 ms, 6.6–6.9 MB | Release 13.0–13.5 ms, 5.9 MB | Release 7.1–7.9 ms, 2.5–2.7 MB | **Release 3.7–4.0 ms, 1.62 MB; Debug 4.2–4.5 ms, 1.70 MB**; held 2.4–2.5 → 3.5–3.6 → 4.1–4.2 → 4.6–4.8 | Release 21.2–22.0 ms, 7.35 MB; Debug 23.3–25.6 ms, 7.40 MB; held 0.9 → 3.3–3.4 → 3.9–4.0 → 4.5–4.6 | 1.2–2.6 |
+| the C# sweep | 103–136 s | 104–106 s | — | **44.5–64.6 s** (64.6 was the first round after the build; 44.5 and 48.4 after), all green but Wire's 6 known: Modules 1,344, Types 960, Data 871, Generator 191, Runtime 1,242 | | 1.3–2.3 |
+| `plang --test` | 17–27 s | 17–18 s | — | **13.5–13.9 s**: 298 pass, 1 fail (`BareLiteralJudgedByForm`, known), 3 stale, 1 skipped | | 2.5–3.0 |
+
+(One reading, round 2's Release root request, 46.1 ms at load 12, is not used; it reran at 21.2 ms at load 1.2.)
+
+- **A child is born in half a millisecond, and a child request app runs in ~4 ms.** Against stage 0: a birth 28 ms → 0.5 ms
+  (**55×**), a request app 22 ms → 3.9 ms (**5.6×**) and 6.7 MB → 1.6 MB (**4×**), the sweep **2.3×–3×**, `plang --test`
+  **1.3–2×**. The plan's targets were ~3.5 ms (stage 2) and ~0.1 ms (stage 4): the birth is already under the first and
+  within 5× of the second, with stage 4 (a birth makes only what's asked for) still to come.
+- **The plan test `TestAppHasItsRunnerAsParent` passes now** (`plang --test` went from 2 fails to 1).
+- **The root is unchanged** at 6.05 MB and 27–30 ms a birth (the coder's two allocation fixes are queued), and its
+  request app allocates a little more than at stage 2 (7.35 against 7.0–7.2 MB Release; I have not looked for it).
+
+### REST=300 on a child, 6,000 requests: flat now
+
+Held MB at 0 / each 1k / after a 300 s rest: 2.5 → 3.6 → 4.2 → 4.8 → 5.3 → 6.0 → 6.4 → **2.7**. After the history fix the
+rest leaves **+0.2 MB above the start, against +1.7 MB for the same 6,000 requests at the layer** (0.28 KB a request). What
+the 6,000 requests add while they run (~0.5 KB each, the sqlite bookkeeping) is let go by the timer; nothing is left that
+grows with the count.
+
+### The root's 0.9 MB kept after a rest: a one-time cost, not a leak
+
+Root request app, rested 300 s, collected: **1,000 requests leave 1.7 MB and 3,000 leave 1.8 MB**, against 0.9 MB at the
+start. The residue does not grow with the request count (+0.8 at 1k, +0.9 at 3k), so it is not kept per request. Heap
+dumps taken after the rest at 1k and 3k: 2,503,009 and 2,526,033 bytes reachable, **+23 KB over the 2,000 extra requests**,
+all of it one array (the sqlite pool table, 32 KB); no other type grew. What the process holds after the first requests:
+
+| held | bytes | what it is |
+|---|---|---|
+| `ConcurrentDictionary<Type, Identity>`: 3,263 nodes + its 140 KB bucket array | ~375 KB | `type/item/this.cs:515`, `_identities`: a process-wide static cache, one entry per class, filled on first use |
+| strings (9,187) and `RuntimeType` (4,288) | ~375 KB | names and the reflection objects of the classes read once |
+| TUnit's test-source queue (164 segments) | ~126 KB | the test host's own, not plang's |
+| a few arrays (`int[]` 98 KB, `ulong[]` 66 KB), `OptimizedInboxTextEncoder`, method infos | ~300 KB | runtime and library tables |
+
+The cache at line 515 is a static in production code, filled once and bounded by the number of classes, so it is not
+growth; I note it because the plan says "no static in production" for the code's facts.
+
 ## Not measured here
 
 - A class scanned twice in one process (stage 2's check): it needs a count of `GetTypes` calls, which comes with
