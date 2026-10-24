@@ -122,6 +122,11 @@ public sealed class @this : IDisposable
     /// </summary>
     public global::app.type.item.path.file.filesystem.@this Filesystem { get; }
 
+    /// <summary>The bindings this context holds — what its actor bound while a program ran, on the items each is on.
+    /// Every run-time binding is held on its actor's own context, whatever its scope; an event reads the holds of every
+    /// actor of the asker's app, and the binding decides whether it fires. Let go with the context.</summary>
+    internal global::app.@event.on.list.@this on { get; } = new();
+
     public @this(app.@this app, ActorType owner, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null,
         global::app.type.item.path.file.filesystem.@this? filesystem = null)
     {
@@ -358,6 +363,7 @@ public sealed class @this : IDisposable
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = null;
+        on.Clear();
 
         // Dispose any disposable items in the dictionary
         foreach (var value in _data.Values)

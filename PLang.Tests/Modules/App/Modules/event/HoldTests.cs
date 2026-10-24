@@ -68,6 +68,26 @@ public class HoldTests
     }
 
     [Test]
+    public async Task AnUnboundBinding_LeavesNothingInTheHold()
+    {
+        await using var parent = new global::app.@this("/parent").Testing();
+        await using var app = Child(parent, "/app");
+        var ctx = app.actor.list.User.Context;
+        var binding = await Bind(ctx, "%!app.type.step.on.start%", Make.Call(ctx, "Log"), "app");
+        var held = app.type.list["step"].HeldIn(app);
+        await Assert.That(held.start.before.Count).IsEqualTo(1);
+
+        var unbound = await new global::app.module.on.OnUnbind(ctx)
+        {
+            Binding = new global::app.data.@this<global::app.@event.binding.@this>("Binding", binding, context: ctx),
+        }.Start();
+
+        await unbound.IsSuccess();
+        await Assert.That(held.start.before.Count).IsEqualTo(0);
+        await (await Run(app)).IsSuccess();
+    }
+
+    [Test]
     public async Task AnActorScopedBinding_FiresOnlyForItsActor()
     {
         await using var parent = new global::app.@this("/parent").Testing();

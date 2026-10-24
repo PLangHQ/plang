@@ -37,7 +37,7 @@ public class StartTests
     }
 
     private void Record(global::app.type.item.@this level, When when, List<string> ran, string name)
-        => _bound.Add(level.Own().Bind("start", when, (_, _, ctx) => { ran.Add(name); return Task.FromResult(ctx.Ok()); },
+        => _bound.Add(level.HeldIn(_app).Bind("start", when, (_, _, ctx) => { ran.Add(name); return Task.FromResult(ctx.Ok()); },
             _app.actor.list.User, Scope.actor));
 
     private async Task<bool> IsSet(string name)
@@ -119,7 +119,7 @@ public class StartTests
     {
         var (_, step, set) = Program();
         var ran = new List<string>();
-        _bound.Add(set.Module.Own().Bind("start", When.before, (_, _, ctx) =>
+        _bound.Add(set.Module.HeldIn(_app).Bind("start", When.before, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
@@ -128,7 +128,7 @@ public class StartTests
         Record(set.Module[set.Name]!, When.before, ran, "catalog before");
         Record(set, When.before, ran, "own before");
         global::app.data.@this? seen = null;
-        _bound.Add(_app.type.list["action"].Own().Bind("start", When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); },
+        _bound.Add(_app.type.list["action"].HeldIn(_app).Bind("start", When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); },
             _app.actor.list.User, Scope.actor));
         Record(set, When.after, ran, "own after");
 
@@ -147,7 +147,7 @@ public class StartTests
     {
         var (_, step, set) = Program();
         var context = _app.actor.list.User.Context;
-        _bound.Add(set.Module[set.Name]!.Own().Bind("start", When.before, (_, _, ctx) =>
+        _bound.Add(set.Module[set.Name]!.HeldIn(_app).Bind("start", When.before, (_, _, ctx) =>
         {
             var mocked = ctx.Ok("mocked");
             mocked.Handled = true;
@@ -171,12 +171,12 @@ public class StartTests
     {
         var (_, step, set) = Program();
         var context = _app.actor.list.User.Context;
-        _bound.Add(set.Own().Bind("start", When.after,
+        _bound.Add(set.HeldIn(_app).Bind("start", When.after,
             (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Broke", 400))), _app.actor.list.User, Scope.actor));
         var coverage = new global::app.test.Coverage();
         coverage.Watch(context);
         global::app.data.@this? seen = null;
-        _bound.Add(_app.type.list["action"].Own().Bind("start", When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); },
+        _bound.Add(_app.type.list["action"].HeldIn(_app).Bind("start", When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); },
             _app.actor.list.User, Scope.actor));
 
         var result = await step.Start(context);

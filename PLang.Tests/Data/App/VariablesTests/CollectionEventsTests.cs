@@ -11,7 +11,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
     private readonly global::app.@this app = new global::app.@this("/tmp/CollectionEventsTests-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private global::app.@event.on.own On => app.variable.type.Own();
+    private global::app.@event.on.own On => app.variable.type.HeldIn(app);
 
     [Test]
     public async Task AfterSet_IsHandedTheVariable_AndTheStoredValue()

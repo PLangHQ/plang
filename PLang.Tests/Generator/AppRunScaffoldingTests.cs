@@ -56,7 +56,7 @@ public class AppRunScaffoldingTests
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
         action = action.In(dispatchStep);
         Step? during = null;
-        _app.type.list["action"].Own().Bind("start", global::app.@event.When.before, (_, _, c) =>
+        _app.type.list["action"].HeldIn(_app).Bind("start", global::app.@event.When.before, (_, _, c) =>
         {
             during = c.call.Step;
             return Task.FromResult(c.Ok());

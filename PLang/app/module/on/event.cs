@@ -69,7 +69,8 @@ public partial class OnEvent : IContext
 
         // each carrier is opened through its door: the first that doesn't resolve (a %variable% holding nothing, a
         // name that is none of the choice's) is the answer
-        var on = item.Own();
+        // held on the context of the actor that binds, never on the item: it fires in this app alone and goes with it
+        var on = Context.Actor!.Context.on[item];
         var @event = on[named.Name]!;
         return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(call =>
             Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(on.Bind(named.Name, when.Value,

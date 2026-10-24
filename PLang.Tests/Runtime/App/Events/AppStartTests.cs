@@ -57,7 +57,7 @@ public class AppStartTests
     {
         await using var app = await App();
         var ran = new List<string>();
-        var own = app.Own();
+        var own = app.HeldIn(app);
         // bound by the System actor, for the app: it fires though the goal runs as the User
         own.Bind("start", When.before, (item, _, ctx) => { lock (ran) ran.Add($"before {(item as global::app.@this)?.Name(ctx)}"); return Task.FromResult(ctx.Ok()); },
             app.actor.list.System, Scope.app);
@@ -78,7 +78,7 @@ public class AppStartTests
     [Test] public async Task ARefusingBefore_IsTheAnswer_AndTheGoalDoesntRun()
     {
         await using var app = await App();
-        app.Own().Bind("start", When.before,
+        app.HeldIn(app).Bind("start", When.before,
             (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), app.actor.list.User, Scope.app);
 
         var result = await app.Start();
@@ -91,7 +91,7 @@ public class AppStartTests
     [Test] public async Task ACancellingBefore_IsTheAnswer_AndTheGoalDoesntRun()
     {
         await using var app = await App();
-        app.Own().Bind("start", When.before, (_, _, ctx) =>
+        app.HeldIn(app).Bind("start", When.before, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;

@@ -69,7 +69,7 @@ public class GoalCallResolutionTests
         await WritePr(".build/target.pr", "Target");
         var ctx = _app.actor.list.User.Context;
         var births = new List<string>();
-        _app.type.list["goal"].Own().Bind("create", global::app.@event.When.after,
+        _app.type.list["goal"].HeldIn(_app).Bind("create", global::app.@event.When.after,
             (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
             _app.actor.list.User, global::app.@event.binding.Scope.actor);
 

@@ -97,7 +97,7 @@ public class FileChannelTests
     {
         var (app, context, dir) = MakeApp();
         await using var _ = app;
-        app.type.list["image"].Own().Bind("create", global::app.@event.When.before, (_, _, ctx) =>
+        app.type.list["image"].HeldIn(app).Bind("create", global::app.@event.When.before, (_, _, ctx) =>
         {
             global::app.data.@this made = ctx.Ok(context.Image(Png1x1, "image/png"));
             made.Handled = true;

@@ -47,8 +47,10 @@ public class OnEventTests
     {
         var binding = await Bind("%!app.type.goal.on.start%", "before", "Log");
 
-        var before = _app.type.list["goal"].on.start.before;
+        // held on the binding actor's context, never on the type entry
+        var before = _app.type.list["goal"].HeldIn(_app).start.before;
         await Assert.That(before.Count).IsEqualTo(1);
+        await Assert.That(_app.type.list["goal"].on.start.before.Count).IsEqualTo(0);
         await Assert.That(before[0]).IsSameReferenceAs(binding);
         await Assert.That(binding.Actor).IsSameReferenceAs(_app.actor.list.User);
     }
@@ -56,14 +58,15 @@ public class OnEventTests
     [Test]
     public async Task BindingOneItemsEvent_LeavesEveryOtherItemUnbound()
     {
-        // file.read nothing is bound on answers the shared empty events; the binding lands on its own
+        // file.read nothing is bound on answers the shared empty events; the binding is held for it alone
         await Bind("%!app.module.file.read.on.start%", "before", "Log");
 
-        await Assert.That(_app.Module("file")["read"]!.on.start.before.Count).IsEqualTo(1);
-        await Assert.That(_app.Module("file")["save"]!.on.start.before.Count).IsEqualTo(0);
-        await Assert.That(_app.Module("file").on.start.before.Count).IsEqualTo(0);
-        await Assert.That(_app.type.list["action"].on.start.before.Count).IsEqualTo(0);
-        await Assert.That(_app.Module("output")["write"]!.on.start.before.Count).IsEqualTo(0);
+        await Assert.That(_app.Module("file")["read"]!.HeldIn(_app).start.before.Count).IsEqualTo(1);
+        await Assert.That(_app.Module("file")["save"]!.HeldIn(_app).start.before.Count).IsEqualTo(0);
+        await Assert.That(_app.Module("file").HeldIn(_app).start.before.Count).IsEqualTo(0);
+        await Assert.That(_app.type.list["action"].HeldIn(_app).start.before.Count).IsEqualTo(0);
+        await Assert.That(_app.Module("output")["write"]!.HeldIn(_app).start.before.Count).IsEqualTo(0);
+        await Assert.That(_app.Module("file")["read"]!.on.start.before.Count).IsEqualTo(0).Because("the item keeps nothing");
     }
 
     // an item's event that isn't one (before/after fused into the name) can never bind: the build refuses it, naming
@@ -245,7 +248,7 @@ public class OnEventTests
         }.Start();
 
         await unbound.IsSuccess();
-        await Assert.That(_app.type.list["goal"].on.start.before.Count).IsEqualTo(0);
+        await Assert.That(_app.type.list["goal"].HeldIn(_app).start.before.Count).IsEqualTo(0);
     }
 
     [Test]

@@ -190,13 +190,18 @@ public partial class @this
         return (binding, true, null);
     }
 
-    // The variable type's events — once the app has it: the actors' stores are born before the app's types.
-    private global::app.@event.on.@this? Events => _context.App.variable?.type.on;
+    // The variable type — once the app has it: the actors' stores are born before the app's types.
+    private global::app.type.@this? Entry => _context.App.variable?.type;
+
+    // The variable type's events.
+    private global::app.@event.on.@this? Events => Entry?.on;
 
     // What is bound before `name` changes to `value`: null to go on — nothing bound, or nothing refused — else a
-    // failure or a Handled answer, which is the write's answer. The variable is made only when something is bound.
+    // failure or a Handled answer, which is the write's answer. The variable is made only when something is bound on
+    // the variable type, its own or in an actor's hold.
     private System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.@this? @event, string name, object? value)
-        => @event is { before.Count: > 0 } ? Before(@event, name, value as data.@this ?? new data.@this(name, value, context: _context)) : default;
+        => @event != null && @event.IsBoundBefore(Entry!, _context)
+            ? Before(@event, name, value as data.@this ?? new data.@this(name, value, context: _context)) : default;
 
     private async System.Threading.Tasks.ValueTask<data.@this?> Before(global::app.@event.@this @event, string name, data.@this about)
     {
@@ -209,7 +214,7 @@ public partial class @this
     private System.Threading.Tasks.ValueTask<data.@this> After(string name, object? before, data.@this stored)
     {
         _context.call.Record(this, name, before);
-        return Events?.set is { after.Count: > 0 } set ? set.After(Named(name), stored, _context) : new(stored);
+        return Events?.set is { } set && set.IsBoundAfter(Entry!, _context) ? set.After(Named(name), stored, _context) : new(stored);
     }
 
     // The variable named `name`, as its events are handed it.
@@ -356,7 +361,7 @@ public partial class @this
         if (!_variables.TryGetValue(name, out var binding)) return _context.NotFound(name);
         if (await Before(Events?.remove, name, binding) is { } refused) return refused;
         if (!_variables.TryRemove(name, out var removed)) return _context.NotFound(name);
-        return Events?.remove is { after.Count: > 0 } remove ? await remove.After(Named(name), removed, _context) : removed;
+        return Events?.remove is { } remove && remove.IsBoundAfter(Entry!, _context) ? await remove.After(Named(name), removed, _context) : removed;
     }
 
     /// <summary>

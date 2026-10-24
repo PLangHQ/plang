@@ -16,15 +16,15 @@ public class DeclaredEventsTests : System.IAsyncDisposable
     {
         var window = new Window();
         global::app.data.@this? heard = null;
-        window.Own().Bind("closed", global::app.@event.When.after,
+        window.HeldIn(_app).Bind("closed", global::app.@event.When.after,
             (_, data, _) => { heard = data; return System.Threading.Tasks.Task.FromResult(data); },
             _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
-        await window.on["closed"]!.After(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
+        await window.HeldIn(_app)["closed"]!.After(window, Ctx.Ok((global::app.type.item.text.@this)"{\"window\":\"closed\",\"id\":3}"), Ctx);
 
         await Assert.That(heard).IsNotNull();
-        await Assert.That(window.on.Names).Contains("closed");
-        await Assert.That(window.on.Names).Contains("create");
+        await Assert.That(window.HeldIn(_app).Names).Contains("closed");
+        await Assert.That(window.HeldIn(_app).Names).Contains("create");
     }
 
     // nothing bound on a window yet: its declared events are still there to raise, shared and closed to bindings

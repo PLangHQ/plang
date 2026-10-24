@@ -355,8 +355,8 @@ public sealed partial class @this
     private static async Task<data.@this> Read(global::app.type.item.path.@this pr, global::app.@this app)
     {
         var context = app.actor.list.System.Context;
-        var before = app.goal.type.on.load.before;
-        if (before.Count > 0 && await before.Start(pr, context.Ok(), context) is { } answer
+        // what is bound before a goal loads is the goal type's (its own, and each actor's hold), handed the .pr
+        if (await app.goal.type.on.load.BeforeAt(app.goal.type, pr, context, context.Ok()) is { } answer
             && (!answer.Success || answer.Handled))
             return answer;
         try

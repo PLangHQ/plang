@@ -85,8 +85,10 @@ public class PlangRuntimeTests : IDisposable
         await (await Make.Action(context, "on", "event", ("Event", "%!app.type.step.on.start%"), ("When", "before"),
             ("Action", Make.Call(context, "LogBefore"))).Start(context)).IsSuccess();
 
-        var before = _app.type.list["step"].on["start"]!.before;
+        // held on the binding actor's context, never on the shared step type
+        var before = _app.type.list["step"].HeldIn(_app)["start"]!.before;
         await Assert.That(before.Count).IsEqualTo(1);
+        await Assert.That(_app.type.list["step"].on["start"]!.before.Count).IsEqualTo(0);
         await Assert.That(ReferenceEquals(before[0].Actor, _app.actor.list.User)).IsTrue();
     }
 

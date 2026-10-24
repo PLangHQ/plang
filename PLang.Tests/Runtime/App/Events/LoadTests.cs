@@ -33,7 +33,7 @@ public class LoadTests
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
         var handed = new List<global::app.type.item.@this>();
-        var on = app.goal.type.Own();
+        var on = app.goal.type.HeldIn(app);
         on.Bind("load", When.before, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app);
         on.Bind("load", When.after, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app);
 
@@ -49,7 +49,7 @@ public class LoadTests
     [Test] public async Task AFailingBeforeLoad_IsTheAnswer_AndNothingIsRead()
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
-        app.goal.type.Own().Bind("load", When.before,
+        app.goal.type.HeldIn(app).Bind("load", When.before,
             (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Refused", 400))), app.actor.list.System, Scope.app);
 
         var loaded = await app.goal.Load(Pr);
@@ -62,7 +62,7 @@ public class LoadTests
     [Test] public async Task ACancellingBeforeLoad_IsTheAnswer_AndNothingIsRead()
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
-        app.goal.type.Own().Bind("load", When.before, (_, _, ctx) =>
+        app.goal.type.HeldIn(app).Bind("load", When.before, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
@@ -78,7 +78,7 @@ public class LoadTests
     [Test] public async Task AFailingAfterLoad_IsTheAnswer()
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
-        app.goal.type.Own().Bind("load", When.after,
+        app.goal.type.HeldIn(app).Bind("load", When.after,
             (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.@this("no", "Broke", 400))), app.actor.list.System, Scope.app);
 
         var loaded = await app.goal.Load(Pr);
@@ -91,7 +91,7 @@ public class LoadTests
     {
         await using var app = new global::app.@this(Fixtures(), global::PLang.Tests.Parent.Actor).Testing();
         var loads = 0;
-        app.goal.type.Own().Bind("load", When.after, (_, _, ctx) => { loads++; return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app);
+        app.goal.type.HeldIn(app).Bind("load", When.after, (_, _, ctx) => { loads++; return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app);
 
         await (await app.goal.Load(Pr)).IsSuccess();
         await (await app.goal.Load(Pr)).IsSuccess();

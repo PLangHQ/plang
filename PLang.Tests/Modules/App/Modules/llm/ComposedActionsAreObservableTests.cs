@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Modules.llm;
 public class ComposedActionsAreObservableTests
 {
     private static void Watch(global::app.@this app, string module, string action, List<string> seen)
-        => app.type.list["action"].Own().Bind("start", global::app.@event.When.before, (item, _, ctx) =>
+        => app.type.list["action"].HeldIn(app).Bind("start", global::app.@event.When.before, (item, _, ctx) =>
         {
             if (item is global::app.goal.step.action.@this started && started.Module.Name == module && started.Name == action)
             {

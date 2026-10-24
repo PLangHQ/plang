@@ -147,7 +147,7 @@ public class RunActionTests
         void Probe(global::app.@this childApp)
         {
             if (!childApp.filesystem.root.Absolute.StartsWith(_tempDir)) return;
-            childApp.type.list["action"].Own().Bind("start", global::app.@event.When.before,
+            childApp.type.list["action"].HeldIn(childApp).Bind("start", global::app.@event.When.before,
                 async (_, _, context) =>
                 {
                     lock (depthLock)

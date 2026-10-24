@@ -89,7 +89,7 @@ public class ScopeTests
         await Picked(goal, app.actor.list.System.Context, BuildPicks);
         var heard = new List<string>();
         // every set made in the builder's own stores (the actors' contexts): the variable type's after-set, for the app
-        app.variable.type.Own().Bind("set", global::app.@event.When.after, (item, _, ctx) =>
+        app.variable.type.HeldIn(app).Bind("set", global::app.@event.When.after, (item, _, ctx) =>
         {
             if (ReferenceEquals(ctx, app.actor.list.System.Context) || ReferenceEquals(ctx, app.actor.list.User.Context))
                 lock (heard) heard.Add(((global::app.type.item.variable.@this)item).Name);

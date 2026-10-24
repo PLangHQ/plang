@@ -42,14 +42,63 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         System.Func<@this, binding.list.@this> side)
     {
         int outer = -1, inner = -1;
+        var sources = Sources(context);
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            if (Of(level.on) is { } @event && side(@event).Count > 0)
-            {
-                if (outer < 0) outer = depth;
-                inner = depth;
-            }
+            for (var source = 0; source < sources; source++)
+                if (At(level, source, context) is { } @event && side(@event).Count > 0)
+                {
+                    if (outer < 0) outer = depth;
+                    inner = depth;
+                    break;
+                }
         return (outer, inner);
     }
+
+    /// <summary>Whether anything is bound before this event at <paramref name="level"/> alone — on its own events or in
+    /// the hold of an actor of the asker's app — so a door that would have to make what it hands a binding asks first.</summary>
+    internal bool IsBoundBefore(global::app.type.item.@this level, global::app.actor.context.@this context)
+        => IsBoundAt(level, context, BeforeSide);
+
+    /// <summary>Whether anything is bound after this event at <paramref name="level"/> alone.</summary>
+    internal bool IsBoundAfter(global::app.type.item.@this level, global::app.actor.context.@this context)
+        => IsBoundAt(level, context, AfterSide);
+
+    private bool IsBoundAt(global::app.type.item.@this level, global::app.actor.context.@this context,
+        System.Func<@this, binding.list.@this> side)
+    {
+        var sources = Sources(context);
+        for (var source = 0; source < sources; source++)
+            if (At(level, source, context) is { } @event && side(@event).Count > 0) return true;
+        return false;
+    }
+
+    /// <summary>What is bound before this event at <paramref name="level"/> alone — its own, then each actor's hold —
+    /// started on <paramref name="item"/>, something other than the level's own items (a load's .pr, before there is a
+    /// goal). A failure or a Handled answer stops it and is the answer; null when nothing is bound there.</summary>
+    internal async System.Threading.Tasks.ValueTask<global::app.data.@this?> BeforeAt(global::app.type.item.@this level,
+        global::app.type.item.@this item, global::app.actor.context.@this context, global::app.data.@this result)
+    {
+        if (!IsBoundBefore(level, context)) return null;
+        var answer = result;
+        var sources = Sources(context);
+        for (var source = 0; source < sources; source++)
+        {
+            if (At(level, source, context)?.before is not { Count: > 0 } side) continue;
+            answer = await side.Start(item, answer, context);
+            if (!answer.Success || answer.Handled) return answer;
+        }
+        return answer;
+    }
+
+    // Where this event is bound at a level: the level's own events (what its program bound when it was read), then the
+    // hold of each actor of the asker's app (what was bound while a program ran), in the actor list's order.
+    private static int Sources(global::app.actor.context.@this context) => 1 + context.App.actor.list.CountRaw;
+
+    // This event at a level, from one of its sources: the level's own (0), or the one an actor of the asker's app
+    // holds for it; null where that source has nothing of it.
+    private @this? At(global::app.type.item.@this level, int source, global::app.actor.context.@this context)
+        => source == 0 ? Of(level.on)
+         : context.App.actor.list[source - 1].Context.on.Of(level)?.Bound(Name);
 
     /// <summary>
     /// Starts what is bound before <paramref name="item"/>'s event at each of its levels, outermost first
@@ -70,12 +119,15 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         int depth, global::app.actor.context.@this context, global::app.data.@this? result)
     {
         var answer = result ?? context.Ok();
+        var sources = Sources(context);
         for (; item.Level(depth, context) is { } level; depth++)
-        {
-            if (Of(level.on)?.before is not { Count: > 0 } side) continue;
-            answer = await side.Start(item, answer, context);
-            if (!answer.Success || answer.Handled) return answer;
-        }
+            // the level's own first, then each actor's hold
+            for (var source = 0; source < sources; source++)
+            {
+                if (At(level, source, context)?.before is not { Count: > 0 } side) continue;
+                answer = await side.Start(item, answer, context);
+                if (!answer.Success || answer.Handled) return answer;
+            }
         return answer;
     }
 
@@ -95,9 +147,13 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     private async System.Threading.Tasks.ValueTask<global::app.data.@this> After(global::app.type.item.@this item,
         global::app.data.@this result, int depth, global::app.actor.context.@this context)
     {
+        var sources = Sources(context);
         for (; depth >= 0; depth--)
         {
-            if (Of(item.Level(depth, context)!.on)?.after is { Count: > 0 } side) result = await side.Start(item, result, context);
+            var level = item.Level(depth, context)!;
+            // each actor's hold first, then the level's own: the reverse of before
+            for (var source = sources - 1; source >= 0; source--)
+                if (At(level, source, context)?.after is { Count: > 0 } side) result = await side.Start(item, result, context);
         }
         return result;
     }
