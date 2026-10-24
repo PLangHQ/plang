@@ -98,7 +98,16 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// This actor's own identity. The system's is held by the identity store as the app's default once it is
     /// resolved (<c>%MyIdentity%</c>); a user's or a service's is set by the HTTP/signing layer.
     /// </summary>
-    public Identity? Identity { get; set; }
+    public Identity? Identity
+    {
+        get => _identity ?? (_caller is { } caller ? caller.Identity ?? caller.DefaultIdentity : null);
+        set => _identity = value;
+    }
+    private Identity? _identity;
+
+    // The actor whose identity this one answers as while it holds none of its own — for an app's System, the actor
+    // that made the app; null for every other.
+    private readonly @this? _caller;
 
     private readonly @this? _fallback;
     private global::app.actor.setting.@this? _setting;
@@ -109,11 +118,17 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
     public @this(string name, app.@this app, CancellationToken parentToken = default, @this? fallback = null)
+        : this(name, app, parentToken, fallback, null) { }
+
+    /// <param name="caller">The actor whose identity this one answers as while it holds none of its own — for the
+    /// System of an app an actor made, that actor.</param>
+    internal @this(string name, app.@this app, CancellationToken parentToken, @this? fallback, @this? caller)
         : base(app.type.list[typeof(@this)])
     {
         Name = name;
         App = app;
         _fallback = fallback;
+        _caller = caller;
         _cts = parentToken == default
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);

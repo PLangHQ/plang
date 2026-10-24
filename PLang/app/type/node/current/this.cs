@@ -12,6 +12,9 @@ public sealed class @this<T, L> : global::app.type.node.@this<T, L>
 {
     public @this(global::app.@this app) : base(app) { }
 
+    /// <summary>The app's node for <typeparamref name="T"/>, over the list <paramref name="list"/> makes on first read.</summary>
+    internal @this(global::app.@this app, System.Func<L> list) : base(app, app.type.list, list) { }
+
     /// <summary>The one in play for the asker — the running goal, the acting actor; NotFound where
     /// nothing is inside one. Its Data is born with the asker's context.</summary>
     public data.@this<T> current(actor.context.@this context)

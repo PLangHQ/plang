@@ -50,7 +50,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>The one root: a copy of the app is the app.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
 
-    private readonly CancellationTokenSource _shutdownCts = new();
+    // The app's life: bounded by its caller's, when an actor made it.
+    private readonly CancellationTokenSource _shutdownCts;
     private bool _disposed;
 
     private global::app.service.list.@this? _services;
@@ -286,7 +287,15 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public @this(string absolutePath,
         string? environment = null,
         bool autoWireConsoleChannels = true)
+        : this(absolutePath, null, environment, autoWireConsoleChannels) { }
+
+    /// <summary>An app made by <paramref name="actor"/>, the actor that calls: its folder is its own, and it is made
+    /// from the same code as the caller's app. Its life ends with its caller's; its System acts as its caller.</summary>
+    internal @this(string absolutePath, global::app.actor.@this actor) : this(absolutePath, actor, null, true) { }
+
+    private @this(string absolutePath, global::app.actor.@this? caller, string? environment, bool autoWireConsoleChannels)
     {
+        _shutdownCts = caller == null ? new() : CancellationTokenSource.CreateLinkedTokenSource(caller.CancellationToken);
         Id = Guid.NewGuid().ToString("N")[..12];
         var trimmed = absolutePath.TrimEnd('/', '\\');
         var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
@@ -295,7 +304,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         filesystem = new(absolutePath);
 
         // The types come first: every value is born holding its type from this list, the actors' contexts too.
-        type = new(this);
+        // a caller's app is made from the same code: the list is born from its list's facts
+        type = caller == null ? new(this) : new(this, new global::app.type.list.@this(caller.App.type.list));
         parent = new(type.list[typeof(global::app.parent.@this)]);
 
         StartedAt = new(DateTimeOffset.UtcNow, type.list[typeof(global::app.type.item.datetime.@this)]);
@@ -304,7 +314,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         // The system & user actors, each owning a long-lived context. System is the cancellation root; User links
         // to its token.
-        actor = new(this);
+        actor = new(this, () => new global::app.actor.list.@this(this, caller));
 
         // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).

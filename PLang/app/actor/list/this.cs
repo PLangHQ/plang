@@ -8,9 +8,13 @@ namespace app.actor.list;
 /// </summary>
 public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyncDisposable
 {
-    public @this(global::app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
+    public @this(global::app.@this app) : this(app, null) { }
+
+    /// <summary>The actors of an app <paramref name="caller"/> made: its System acts as the caller (its identity is
+    /// the caller's), its own actor still.</summary>
+    internal @this(global::app.@this app, actor.@this? caller) : base(new List<object?>(), app.type.list[typeof(@this)])
     {
-        System = new actor.@this("System", app, app.ShutdownToken);
+        System = new actor.@this("System", app, app.ShutdownToken, null, caller);
         // the runtime's shared os folder is the system's to write: every actor reads and runs there, only it writes
         System.Permission.Stand(app.filesystem.os,
             global::app.type.item.permission.Verb.read, global::app.type.item.permission.Verb.execute,
