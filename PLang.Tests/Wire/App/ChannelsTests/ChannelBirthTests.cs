@@ -21,6 +21,29 @@ public class ChannelBirthTests
     }
 
     [Test]
+    public async Task ASubAppThatNeverWrites_WiresNoChannel()
+    {
+        var born = Bytes(() =>
+        {
+            var app = new global::app.@this("/channel-birth", global::PLang.Tests.Parent.Actor);
+            _ = app.DisposeAsync();
+            return app;
+        });
+
+        await Assert.That(born).IsLessThan(220 * 1024L).Because("an actor's console channels are wired at its channels' first use");
+    }
+
+    [Test]
+    public async Task ASubAppsChannels_AreWiredAtTheirFirstUse()
+    {
+        await using var app = new global::app.@this("/channel-birth", global::PLang.Tests.Parent.Actor);
+
+        foreach (var name in global::app.channel.list.@this.Defaults)
+            await Assert.That(app.actor.list.User.Channel.Get(name)).IsNotNull();
+        await app.actor.list.System.Channel.Verify().IsSuccess();
+    }
+
+    [Test]
     public async Task AStreamChannel_ReadsAMessageLongerThanItsFirstBuffer()
     {
         await using var app = new global::app.@this("/channel-birth", global::PLang.Tests.Parent.Actor).Testing();
