@@ -57,6 +57,19 @@ public class BirthTests
     }
 
     [Test]
+    public async Task ASubAppsNodes_AreMadeWhenFirstUsed()
+    {
+        var born = Bytes(() =>
+        {
+            var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor);
+            _ = app.DisposeAsync();
+            return app;
+        });
+
+        await Assert.That(born).IsLessThan(156_000L).Because("a node finds its type, its list and its setting class when first used");
+    }
+
+    [Test]
     public async Task AnActorsPermissionView_IsOneView()
     {
         var actor = new global::app.actor.@this("probe", global::PLang.Tests.Parent.Actor.App);
