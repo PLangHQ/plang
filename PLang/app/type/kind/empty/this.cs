@@ -13,12 +13,47 @@ public sealed class @this : global::app.type.kind.@this
     // published: a type is shared by every app made from the same code, so a lookup reads it without the gate.
     private volatile global::app.type.kind.@this[] _kinds = [];
     // The held kinds by every key each answers to (Names): its name, its aliases, its MIMEs — and apart, by its
-    // extensions without the dot — the first kind that answers, in the order they came. Made as a kind comes in
-    // (Add), so a key finds its kind in one look, never by asking each kind in turn; none while the type holds no kind
-    // (a type object made for a value, the common case, never pays for one). Replaced whole, read without the gate.
-    private volatile System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _keys;
-    private volatile System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _extensions;
-    // Taken only by an addition: two kinds coming in at once make their tables one after the other.
+    // extensions without the dot — the first kind that answers, in the order they came; so a key finds its kind in one
+    // look, never by asking each kind in turn. Made on the first look after kinds came in, from the kinds as they were
+    // then, and made again only when they've changed since: a type taking its kinds one by one makes its tables once,
+    // and one that holds no kind never makes them. Replaced whole, read without the gate.
+    private volatile Tables? _tables;
+
+    // The key tables of one set of kinds — the array they were made from, so a look knows they still answer it.
+    private sealed record Tables(global::app.type.kind.@this[] From,
+        System.Collections.Generic.Dictionary<string, global::app.type.kind.@this> Keys,
+        System.Collections.Generic.Dictionary<string, global::app.type.kind.@this> Extensions)
+    {
+        internal static Tables Of(global::app.type.kind.@this[] kinds)
+        {
+            var keys = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
+            var extensions = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in kinds)
+            {
+                foreach (var key in entry.Keys) keys.TryAdd(key, entry);
+                foreach (var extension in entry.Extension) extensions.TryAdd(extension.TrimStart('.'), entry);
+            }
+            return new(kinds, keys, extensions);
+        }
+    }
+
+    // The tables of the kinds as an addition last published them — made now when they were made from others.
+    private Tables Current
+    {
+        get
+        {
+            var kinds = _kinds;
+            if (_tables is { } made && ReferenceEquals(made.From, kinds)) return made;
+            lock (_gate)
+            {
+                kinds = _kinds;
+                if (_tables is { } again && ReferenceEquals(again.From, kinds)) return again;
+                return _tables = Tables.Of(kinds);
+            }
+        }
+    }
+
+    // Taken by an addition and by the making of the tables: one at a time.
     private readonly object _gate = new();
     // The type's own format — its class's [Format("", …)]: plain text is {text}, opaque bytes {binary}.
     private global::app.type.kind.@this? _format;
@@ -85,14 +120,15 @@ public sealed class @this : global::app.type.kind.@this
             // as Names reads a key: a key written with its dot is an extension, and only an extension answers it
             // (`.template` is a file's, never a kind named template); any other as it is, as a MIME without its
             // parameters, else as an extension
+            // a type that holds no kind answers no key, and makes no table
+            if (_kinds.Length == 0) return null;
             var semicolon = name.IndexOf(';');
-            // the tables as an addition last published them, each read once
-            var keys = _keys;
-            var extensions = _extensions;
-            return name.StartsWith('.') ? extensions?.GetValueOrDefault(name[1..])
-                   : keys?.GetValueOrDefault(name)
-                     ?? (semicolon >= 0 ? keys?.GetValueOrDefault(name[..semicolon].Trim()) : null)
-                     ?? extensions?.GetValueOrDefault(name);
+            // the tables of the kinds as they stand, read once
+            var tables = Current;
+            return name.StartsWith('.') ? tables.Extensions.GetValueOrDefault(name[1..])
+                   : tables.Keys.GetValueOrDefault(name)
+                     ?? (semicolon >= 0 ? tables.Keys.GetValueOrDefault(name[..semicolon].Trim()) : null)
+                     ?? tables.Extensions.GetValueOrDefault(name);
         }
     }
 
@@ -134,19 +170,12 @@ public sealed class @this : global::app.type.kind.@this
         lock (_gate)
         {
             if (kind.IsEmpty) { _format = kind; return; }
-            // the new kinds, made apart, then published whole: a reader sees the kinds before or after, never between
-            global::app.type.kind.@this[] kinds = [.. System.Array.FindAll(_kinds,
-                k => !string.Equals(k.Name, kind.Name, System.StringComparison.OrdinalIgnoreCase)), kind];
-            var keys = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
-            var extensions = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
-            foreach (var entry in kinds)
-            {
-                foreach (var key in entry.Keys) keys.TryAdd(key, entry);
-                foreach (var extension in entry.Extension) extensions.TryAdd(extension.TrimStart('.'), entry);
-            }
-            _keys = keys;
-            _extensions = extensions;
-            _kinds = kinds;
+            // the new kinds, made apart in one array, then published whole: a reader sees the kinds before or after,
+            // never between; the tables are made again at the next look
+            var held = _kinds;
+            _kinds = System.Array.Exists(held, k => string.Equals(k.Name, kind.Name, System.StringComparison.OrdinalIgnoreCase))
+                ? [.. System.Array.FindAll(held, k => !string.Equals(k.Name, kind.Name, System.StringComparison.OrdinalIgnoreCase)), kind]
+                : [.. held, kind];
         }
     }
 }

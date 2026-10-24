@@ -79,15 +79,33 @@ public sealed partial class @this
         internal Library(Assembly assembly)
         {
             Classes = assembly.GetTypes();
-            Item = Classes.Select(clr => (Name: NameOf(clr), Clr: clr)).Where(each => each.Name != null)
-                .Select(each => (each.Name!, each.Clr)).ToList();
+            // each class's family read once: what names it (a family's kind is no type of its own) and what makes it a
+            // subclass kind
+            var item = new List<(string, System.Type)>();
+            var subclasses = new List<Subclass>();
+            var readers = Shipped(Classes);
+            foreach (var t in Classes)
+            {
+                var member = global::app.type.item.@this.FamilyOf(t);
+                var family = member is { } of ? global::app.type.item.@this.NameOf(of.Family) : null;
+                if (NameOf(t, family) is { } name) item.Add((name, t));
+                // a class under a family that has kinds ([Kinds]) is one of its kinds by its own name — but a class named
+                // as its family (a typed list, a class of settings: the family holds those its own way)
+                if (member is { } kind && family != null && kind.Kind != family && t is { IsAbstract: false, ContainsGenericParameters: false })
+                    subclasses.Add(new Subclass(t, family, kind.Kind,
+                        // the kind object is a kind<family> typed to the family; the value class stays a family subclass
+                        typeof(global::app.type.kind.subclass.@this<>).MakeGenericType(kind.Family),
+                        readers.GetValueOrDefault($"{t.Namespace}.serializer")));
+            }
+            Item = item;
+            Subclasses = subclasses;
             Kind = Classes
                 .Where(t => typeof(global::app.type.kind.@this).IsAssignableFrom(t) && t is { IsAbstract: false, ContainsGenericParameters: false }
                     && t.GetConstructor([typeof(global::app.type.@this)]) != null)
                 .Select(t => (Clr: t, Owner: Owner(t))).Where(each => each.Owner != null)
                 .Select(each => (each.Clr, each.Owner!)).ToList();
-            Marked = Classes.Select(t => new Mark(t)).Where(mark => mark.Codec != null || mark.List || mark.Choice).ToList();
-            Subclasses = Subclassed(Classes);
+            // a Mark only for a class that has one of the three
+            Marked = Classes.Where(Mark.Has).Select(t => new Mark(t)).ToList();
             (Typed, Read) = Readers(assembly, Classes);
         }
 
@@ -101,25 +119,13 @@ public sealed partial class @this
             return null;
         }
 
-        // Each class under a family that has kinds ([Kinds]), by its own kind's name — but a class named as its family
-        // (a typed list, a class of settings: the family holds those its own way). A subclass kind's own reader is the
-        // one in its serializer namespace, among the readers the assembly ships.
-        private static List<Subclass> Subclassed(System.Type[] classes)
-        {
-            var readers = classes.Where(r => r.Namespace is { } ns && ns.EndsWith(".serializer", StringComparison.Ordinal)
+        // The token readers the assembly ships, by their serializer namespace — a subclass kind's own reader is the one in
+        // its serializer namespace.
+        private static Dictionary<string, System.Type> Shipped(System.Type[] classes)
+            => classes.Where(r => r.Namespace is { } ns && ns.EndsWith(".serializer", StringComparison.Ordinal)
                     && typeof(global::app.type.reader.ITypeReader).IsAssignableFrom(r)
                     && r is { IsAbstract: false } && r.GetConstructor(System.Type.EmptyTypes) != null)
                 .GroupBy(r => r.Namespace!).ToDictionary(group => group.Key, group => group.First());
-            var subclasses = new List<Subclass>();
-            foreach (var t in classes)
-                if (t is { IsAbstract: false, ContainsGenericParameters: false } && global::app.type.item.@this.FamilyOf(t) is { } member
-                    && global::app.type.item.@this.NameOf(member.Family) is { } family && member.Kind != family)
-                    subclasses.Add(new Subclass(t, family, member.Kind,
-                        // the kind object is a kind<family> typed to the family; the value class stays a family subclass
-                        typeof(global::app.type.kind.subclass.@this<>).MakeGenericType(member.Family),
-                        readers.GetValueOrDefault($"{t.Namespace}.serializer")));
-            return subclasses;
-        }
 
         // The readers the assembly ships under a serializer folder (<the type's namespace>.serializer), each under the
         // name its type goes by (its word, else its namespace): a module's serializer folder reads the one type the
@@ -169,20 +175,24 @@ public sealed partial class @this
                 if (method is not null
                     && method.GetParameters() is { Length: 3 } parameters
                     && parameters[2].ParameterType == typeof(global::app.type.reader.ReadContext))
-                    // Reflection wraps a thrown exception in TargetInvocationException; unwrap so callers (source.Value's
-                    // parse-failure catch) see the real JsonException/FormatException and author their own error.
-                    read.Add((typeName, kind, (raw, k, ctx) =>
-                    {
-                        try { return method.Invoke(null, new object?[] { raw, k, ctx }); }
-                        catch (TargetInvocationException tie) when (tie.InnerException != null)
-                        {
-                            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(tie.InnerException).Throw();
-                            throw; // unreachable — Throw() always rethrows
-                        }
-                    }));
+                    read.Add((typeName, kind, Invoking(method)));
             }
             return (typed, read);
         }
+
+        // A whole-payload reader's static Read as a delegate — made only for a class that ships one. Reflection wraps a
+        // thrown exception in TargetInvocationException; it is unwrapped so callers (source.Value's parse-failure
+        // catch) see the real JsonException/FormatException and author their own error.
+        private static global::app.type.reader.@this.Read Invoking(MethodInfo method)
+            => (raw, k, ctx) =>
+            {
+                try { return method.Invoke(null, new object?[] { raw, k, ctx }); }
+                catch (TargetInvocationException tie) when (tie.InnerException != null)
+                {
+                    System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(tie.InnerException).Throw();
+                    throw; // unreachable — Throw() always rethrows
+                }
+            };
     }
 
     /// <summary>A class the second pass marks: each format it declares (written by its own encode, read by its own
@@ -194,6 +204,11 @@ public sealed partial class @this
         internal Codec? Codec { get; }
         internal bool List { get; }
         internal bool Choice { get; }
+
+        /// <summary>Whether <paramref name="t"/> has any of the marks: a format, the list, a closed set.</summary>
+        internal static bool Has(System.Type t)
+            => t == typeof(global::app.type.item.list.@this) || t.IsDefined(typeof(FormatAttribute), inherit: false)
+               || t.IsDefined(typeof(ChoiceAttribute), inherit: false);
 
         internal Mark(System.Type t)
         {

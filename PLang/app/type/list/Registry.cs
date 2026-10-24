@@ -363,9 +363,12 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 
     // The name a class's type goes by (its declared word, else its namespace), or null when it is no type
     // of its own: not an item, a kind of a family, or a class that neither declares itself a type nor is an @this.
-    private static string? NameOf(System.Type type)
+    private static string? NameOf(System.Type type) => NameOf(type, FamilyName(type));
+
+    // The same, for a class whose family's name (null: no family) is already known.
+    private static string? NameOf(System.Type type, string? family)
     {
-        if (!typeof(app.type.item.@this).IsAssignableFrom(type) || FamilyName(type) != null) return null;
+        if (!typeof(app.type.item.@this).IsAssignableFrom(type) || family != null) return null;
         // A kind is a type under its parent, found only through it — never a top-level type,
         // though `kind : type : item` makes it an @this. Kinds are enlisted onto their parent by Enlist.
         if (typeof(global::app.type.kind.@this).IsAssignableFrom(type)) return null;
