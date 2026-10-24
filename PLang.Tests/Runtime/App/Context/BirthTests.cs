@@ -33,6 +33,16 @@ public class BirthTests
     }
 
     [Test]
+    public async Task AMemorysTable_IsMadeAtItsFirstWrite()
+    {
+        var actor = global::PLang.Tests.Parent.Actor.App.actor.list.User;
+
+        var born = Bytes(() => new global::app.actor.context.@this(actor.App, actor));
+
+        await Assert.That(born).IsLessThan(10_800L).Because("a memory's table is made at its first write");
+    }
+
+    [Test]
     public async Task ASystemVariable_IsReadUnderTheMemory_AndShadowedByASet()
     {
         await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
