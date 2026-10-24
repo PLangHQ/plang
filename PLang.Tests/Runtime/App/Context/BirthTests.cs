@@ -70,6 +70,21 @@ public class BirthTests
     }
 
     [Test]
+    public async Task AnAppsStart_ReadLater_IsWhenItWasBorn()
+    {
+        var before = System.DateTimeOffset.UtcNow;
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor);
+        var after = System.DateTimeOffset.UtcNow;
+        await System.Threading.Tasks.Task.Delay(50);
+
+        var started = app.StartedAt.Value;
+
+        await Assert.That(started >= before && started <= after).IsTrue().Because("the start is the birth's, read whenever");
+        await Assert.That(app.Created).IsSameReferenceAs(app.StartedAt);
+        await Assert.That(app.Id).IsEqualTo(app.Id);
+    }
+
+    [Test]
     public async Task AnActorsPermissionView_IsOneView()
     {
         var actor = new global::app.actor.@this("probe", global::PLang.Tests.Parent.Actor.App);
