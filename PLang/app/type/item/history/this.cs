@@ -15,6 +15,15 @@ public sealed class @this
 {
     private readonly System.Collections.Generic.List<global::app.type.item.@this> _list = new();
 
+    // Whether this history takes a prior: a value never made from another (a type) keeps none.
+    private readonly bool _closed;
+
+    public @this() { }
+
+    /// <summary>A history that takes no prior — the history of a value that is never made from another, whatever
+    /// reads it.</summary>
+    internal @this(bool closed) => _closed = closed;
+
     /// <summary>The values this item evolved through, in order — the tail of its history (the item's
     /// own type is the head, asked separately by the item itself).</summary>
     public System.Collections.Generic.IReadOnlyList<global::app.type.item.@this> list => _list;
@@ -23,7 +32,7 @@ public sealed class @this
     /// rides along (a source that was a file, then parsed to a dict). Idempotent by reference.</summary>
     public void Add(global::app.type.item.@this? prior)
     {
-        if (prior != null && !_list.Contains(prior)) _list.Add(prior);
+        if (!_closed && prior != null && !_list.Contains(prior)) _list.Add(prior);
     }
 
     /// <summary>Does any prior (recursively) answer to the type <paramref name="other"/>? The tail of
