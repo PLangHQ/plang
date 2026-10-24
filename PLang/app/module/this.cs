@@ -67,11 +67,44 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Discover(typeof(@this).Assembly);
     }
 
+    /// <summary>A sub app's module — a layer of its own over <paramref name="parent"/>'s registry, which it holds whole
+    /// as its list's first row and reads through: a module it reaches is its parent's own object, a module it adds is its
+    /// layer's alone. The registry it is over is shared from here on.</summary>
+    internal @this(global::app.@this app, @this parent) : base(app.type.list[typeof(@this)])
+    {
+        Name = "";
+        _app = app;
+        _parent = parent;
+        _modules = new global::app.type.item.list.@this<@this>(app.type.list[typeof(global::app.type.item.list.@this<@this>)]);
+        _modules.Add(parent._modules!);
+        _registering = new object();
+        parent.Shared = true;
+    }
+
     internal @this(string name, @this root) : base(root.Type)
     {
         Name = name;
         _root = root;
     }
+
+    // Held by a sub app's module only: the registry it is a layer over.
+    private readonly @this? _parent;
+
+    /// <summary>Whether a sub app's registry is over this one: its modules are every app's made from it, so nothing is
+    /// added to them from here on.</summary>
+    internal bool Shared { get; private set; }
+
+    /// <summary>Whether this registry, a layer, holds modules of its own — what its app loaded beside its parent's.</summary>
+    internal bool HasOwn => _parent != null && list.CountRaw > _parent.list.CountRaw;
+
+    // An addition this registry refuses: its modules are shared with the apps it was made for.
+    private global::app.error.@this Refused()
+        => new("this app's modules are shared with the apps its actors made: nothing is added to them", "ModuleShared", 400);
+
+    // An addition to a module of the registry this one is a layer over: the module is its parent's.
+    private global::app.error.@this Refused(@this module)
+        => new($"the module '{module.Name}' is shared with the app that made this one: a sub app adds its own modules, not "
+            + $"actions to '{module.Name}'", "ModuleShared", 400);
 
     // The app's module: this one, or the one holding it.
     private @this Root => _root ?? this;
@@ -101,7 +134,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Registers an action class for per-call instantiation in the module named <paramref name="module"/>
     /// — the module is made the first time an action names it.</summary>
-    public void Register(string module, string actionName, System.Type type) => Of(module).Add(actionName, type);
+    public void Register(string module, string actionName, System.Type type)
+    {
+        var owner = Of(module);
+        // the same action again is the same answer, whichever registry holds its module
+        if (owner[actionName]?.Class == type) return;
+        if (Root.Shared) throw new global::app.error.AppException(Refused());
+        if (!ReferenceEquals(owner.Root, Root)) throw new global::app.error.AppException(Refused(owner));
+        owner.Add(actionName, type);
+    }
 
     /// <summary>Registers every [Action] class under <paramref name="baseNamespace"/> in an assembly — the module is
     /// the namespace segment after it. The built-ins at birth; an external DLL through <c>module.add</c>.</summary>
@@ -127,6 +168,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         lock (Root._registering!)
         {
             if (Named(name) is { } module) return module;
+            if (Root.Shared) throw new global::app.error.AppException(Refused());
             var born = new @this(name, Root);
             list.Add(born);
             return born;
@@ -136,6 +178,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Takes this module out of the app — emptied too, so anyone still holding it finds no actions.</summary>
     public async System.Threading.Tasks.ValueTask<bool> Remove(actor.context.@this context)
     {
+        // a module the asker's app shares — its parent's, or its own once a sub app is over it — is never taken out
+        if (Root.Shared) throw new global::app.error.AppException(Refused());
+        if (!ReferenceEquals(context.App.module, Root)) throw new global::app.error.AppException(Refused(this));
         if (!await list.Remove(this, context)) return false;
         Clear();
         return true;
