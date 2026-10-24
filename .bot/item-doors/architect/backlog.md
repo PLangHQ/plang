@@ -25,7 +25,7 @@ What came up on item-doors and goes on after it, so nothing waits on us (Ingi, 2
 ## From fast-apps
 
 9. **The end of a parent link that answers a call has one owner** (fast-apps 11). PlangOS's shell answers a call from its host in its own private `Called` (`module/screen/type/screen/display/this.cs:255`, bare names only, `:265`). fast-apps stage 2 puts the same end on `parent/this.cs` for a parent in the same process. Move display's onto it, so there is one.
-10. **A request app's store and the server's** (fast-apps 11, with 317a). A child is rooted in its own folder, but a test's app and, later, a request app are rooted at the same folder as the app that made them (`test/list/this.cs:178`). A test's store is in memory, scoped by the app's id; a request app's file store would open the server's `.data/`. That's the actors' stores question (item 4).
+10. **A request app's store and the server's** (fast-apps 11, with 317a). A child is rooted in its own folder, but a test's app and, later, a request app are rooted at the same folder as the app that made them (`test/list/this.cs:178`). A test's store is in memory, scoped by the app's id; a request app's file store would open the server's `.data/`. That's the actors' stores question (item 4). With it, the SQLite pool (fast-apps 14): each store clears its database's pool when it's disposed (`store/sqlite/this.cs:310`); once many apps share one file store, one app's clear drops the others' pooled connections. test-speed counted holders in a process-wide static (c1582dcf5), which was refused. Ingi's question from test-speed §29: "never clear a file database's pool per app", that is, clear it only where plang lets the file go.
 
 ## Already on the list (see their decisions)
 
