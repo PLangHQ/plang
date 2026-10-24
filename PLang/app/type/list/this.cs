@@ -17,7 +17,17 @@ public sealed partial class @this
 {
     /// <summary>The types hold no context and no app: a lookup that needs the app's formats takes
     /// the caller's context.</summary>
-    public @this() : base(new List<object?>()) { }
+    public @this() : this(new Code()) { }
+
+    /// <summary>A list made from the same code as <paramref name="parent"/>: it takes the parent's facts whole and
+    /// makes its own entries from them.</summary>
+    internal @this(@this parent) : this(parent.code) { }
+
+    private @this(Code code) : base(new List<object?>())
+    {
+        this.code = code;
+        Reader = new(code);
+    }
 
     /// <summary>The type list's own type, <c>{list, type}</c>, asked of itself: it is the maker of types, so it is
     /// born without one and answers from its own entries (one of item's two bootstraps; the root type is the other).</summary>
@@ -81,7 +91,7 @@ public sealed partial class @this
     /// exposes the same runtime-registration seam. The single json
     /// <c>Converter</c> routes mid-graph typed fields through here.
     /// </summary>
-    public reader.@this Reader { get; } = new();
+    public reader.@this Reader { get; }
 
     /// <summary>
     /// The type <paramref name="name"/> names — its name or one of its aliases (<c>string</c> →

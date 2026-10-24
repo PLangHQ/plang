@@ -819,22 +819,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// </summary>
     internal @this(string name, System.Type clr, list.@this? types) : this(name, clr, null, false, null, known: true)
     {
-        Alias = Declared<IReadOnlyList<string>>("Alias") ?? [];
-        Owned = Declared<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
-        // declared by the class itself: a base that is internal (reference) leaves its subclasses (file, url) named
-        Internal = clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-                                               | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(null) is true;
+        // what the class declares of itself, read once per code: the list's facts, or the class's own without a list
+        var declared = types?.code[clr] ?? new list.@this.Class(clr);
+        Alias = declared.Alias;
+        Owned = declared.Owned;
+        Internal = declared.Internal;
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         if (types == null || clr == typeof(@this)) return;
-        _offer = Declared<IReadOnlyList<item.@this>>("Offer");
+        _offer = declared.Offer;
         _list = types;
-
-        T? Declared<T>(string member) where T : class
-        {
-            var p = clr.GetProperty(member, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-                                            | System.Reflection.BindingFlags.FlattenHierarchy);
-            return p?.GetValue(null) as T;
-        }
     }
 
     // The list this type is in — its facts name their property types through it; null for a type that is its

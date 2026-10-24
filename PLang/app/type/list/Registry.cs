@@ -96,11 +96,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             // each type is made holding this list, its facts read when asked; the type `type` is made holding this
             // list as its values
             foreach (var assembly in Assemblies)
-                foreach (var clr in assembly.GetTypes())
-                    if (NameOf(clr) is { } name)
-                        base.Add(clr == typeof(global::app.type.@this)
-                            ? new global::app.type.@this(this)
-                            : new global::app.type.@this(name, clr, this));
+                foreach (var (name, clr) in code[assembly].Item)
+                    base.Add(clr == typeof(global::app.type.@this)
+                        ? new global::app.type.@this(this)
+                        : new global::app.type.@this(name, clr, this));
             // plang's own assemblies: a refusal here is plang broken
             foreach (var assembly in Assemblies)
                 if (Enlist(assembly) is { } refused) throw new InvalidOperationException(refused.Message);
@@ -236,18 +235,6 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         root.Add(kind);
     }
 
-    // The app's entry a kind class is a kind of — the T of the kind<T> it derives from, among the types by every name
-    // they answer to; null for a class that is no kind<T>, or whose T this list does not hold.
-    private global::app.type.@this? Owner(System.Type kind, IReadOnlyDictionary<string, global::app.type.@this> named)
-    {
-        for (var parent = kind.BaseType; parent != null; parent = parent.BaseType)
-            if (parent.IsGenericType && parent.GetGenericTypeDefinition() == typeof(global::app.type.kind.@this<>))
-                return global::app.type.item.@this.NameOf(parent.GetGenericArguments()[0]) is { } name
-                    ? named.GetValueOrDefault(name)
-                    : null;
-        return null;
-    }
-
     // The guard every format passes once a scan has held its kinds: a MIME or an extension is one format's —
     // a second kind answering to it would make the walk's answer depend on the order the types came in.
     // One pass over the held kinds; what it sees is dropped when it returns. Answers the first clash.
@@ -267,66 +254,41 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         => new($"'{key}' is already the format '{taken.Owner?.Name}{(taken.IsEmpty ? "" : "/" + taken.Name)}' — "
                + $"'{kind.Owner?.Name}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.", "TypeLoadCollision", 400);
 
-    // How a type's class writes its formats — its IEncode, bound once into a delegate (no reflection per
-    // write); null when the class writes none.
-    private global::app.type.kind.@this.Encoder? Encoder(System.Type clr)
-        => clr.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.IEncode<>))
-            ? (global::app.type.kind.@this.Encoder)GetType().GetMethod(nameof(Bound), BindingFlags.NonPublic | BindingFlags.Instance)!
-                .MakeGenericMethod(clr).Invoke(this, null)!
-            : null;
-
-    private global::app.type.kind.@this.Encoder Bound<T>() where T : global::app.type.item.@this, global::app.type.item.IEncode<T>
-        => T.Encode;
-
-    // How a type's class reads its formats — its IDecode, bound once into a delegate; null when its content is
-    // born lazily.
-    private global::app.type.kind.@this.Decoder? Decoder(System.Type clr)
-        => clr.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.IDecode<>))
-            ? (global::app.type.kind.@this.Decoder)GetType().GetMethod(nameof(Reading), BindingFlags.NonPublic | BindingFlags.Instance)!
-                .MakeGenericMethod(clr).Invoke(this, null)!
-            : null;
-
-    private global::app.type.kind.@this.Decoder Reading<T>() where T : global::app.type.item.@this, global::app.type.item.IDecode<T>
-        => T.Decode;
-
     // The kinds an assembly brings onto their types: every kind class (born from nothing), and every closed set its
     // classes mark a choice ([Choice]), each with its reader. Answers what it refuses (a class marked a choice that is
     // no closed set); null when every kind is held.
     private error.@this? Enlist(Assembly assembly)
     {
-        // the assembly's classes, read once for every pass below; the types by every name they answer to, as the guard
-        // keeps them (the types don't change while their kinds are enlisted)
-        var classes = assembly.GetTypes();
+        // the assembly's facts, read once per code; the types by every name they answer to, as the guard keeps them
+        // (the types don't change while their kinds are enlisted)
+        var library = code[assembly];
         var named = _named;
-        // each kind class, born holding the entry of the type it is a kind of (the T of its kind<T>)
-        foreach (var t in classes)
-            if (typeof(global::app.type.kind.@this).IsAssignableFrom(t) && t is { IsAbstract: false, ContainsGenericParameters: false }
-                && t.GetConstructor([typeof(global::app.type.@this)]) != null && Owner(t, named) is { } owner)
-                Hold((global::app.type.kind.@this)System.Activator.CreateInstance(t, owner)!);
-        foreach (var t in classes)
+        // each kind class, born holding the entry of the type it is a kind of (the T of its kind<T>), when this list
+        // holds that type
+        foreach (var (clr, type) in library.Kind)
+            if (named.GetValueOrDefault(type) is { } owner)
+                Hold((global::app.type.kind.@this)System.Activator.CreateInstance(clr, owner)!);
+        foreach (var mark in library.Marked)
         {
+            var t = mark.Clr;
             // each format a type's class declares, a kind of that type — written by the class's own encode, read by
             // its own decode when it has one. The type is found as the list finds any class's: by its name, else as
             // the list names the class (a list of actions is a list); a declared format no type reads is plang broken
-            if (t.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false))
+            if (mark.Codec is { } format)
             {
                 if ((named.GetValueOrDefault(global::app.type.item.@this.NameOf(t)) ?? named.GetValueOrDefault(PlangName(t).Name))
                     is not { } declaring)
                     return new error.@this($"{t.FullName} declares a format, but no type reads it — it is no type of its own "
                         + "and the list names none for it.", "TypeLoadFormat", 400);
-                var encode = Encoder(t);
-                var decode = Decoder(t);
                 // each format is a kind<declaring-type> — one concrete class over the declaring type
-                var kindType = typeof(global::app.type.kind.format.@this<>).MakeGenericType(t);
-                foreach (var format in t.GetCustomAttributes<global::app.Attributes.FormatAttribute>(inherit: false))
-                    Hold((global::app.type.kind.@this)System.Activator.CreateInstance(kindType, format, declaring, encode, decode)!);
+                foreach (var attribute in format.Attribute)
+                    Hold((global::app.type.kind.@this)System.Activator.CreateInstance(format.Kind, attribute, declaring, format.Encode, format.Decode)!);
             }
             // a list's element kinds, made as a list names its element (list<path>)
-            if (t == typeof(global::app.type.item.list.@this)
-                && named.GetValueOrDefault(global::app.type.item.@this.NameOf(t)!) is { } list)
+            if (mark.List && named.GetValueOrDefault(global::app.type.item.@this.NameOf(t)!) is { } list)
                 Hold(new global::app.type.item.list.kind.@this(list, this));
             // each class marked a choice ([Choice]) is the closed set a choice<T> draws on, a kind of choice, with its reader
-            if (t.IsDefined(typeof(global::app.Attributes.ChoiceAttribute), inherit: false))
+            if (mark.Choice)
             {
                 if (global::app.type.item.choice.set.@this.For(t, this) is not { } set)
                     return new error.@this($"{t.FullName} is marked a choice but is no closed set — no enum members, no Choices(context?), no kinds of its own.", "TypeLoadOpenSet", 400);
@@ -344,28 +306,18 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                         typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(set.Of(null)!.GetGenericArguments()[0]), set.Name)!);
             }
         }
-        // each class under a family that has kinds ([Kinds]) is one of its kinds, by its own name — but a class named as
-        // its family (a typed list, a class of settings: the family holds those its own way) and a kind the family
-        // already holds (path's schemes, file and http). A subclass kind's own reader is the one in its serializer
-        // namespace, found among the readers the assembly ships, by their namespace.
-        var readers = classes.Where(r => r.Namespace is { } ns && ns.EndsWith(".serializer", StringComparison.Ordinal)
-                && typeof(global::app.type.reader.ITypeReader).IsAssignableFrom(r)
-                && r is { IsAbstract: false } && r.GetConstructor(System.Type.EmptyTypes) != null)
-            .GroupBy(r => r.Namespace!).ToDictionary(group => group.Key, group => group.First());
-        foreach (var t in classes)
-            if (t is { IsAbstract: false, ContainsGenericParameters: false } && global::app.type.item.@this.FamilyOf(t) is { } member
-                && global::app.type.item.@this.NameOf(member.Family) is { } family && member.Kind != family
-                && named.GetValueOrDefault(family) is { } owner && owner.kind[member.Kind] == null)
+        // each class under a family that has kinds ([Kinds]) is one of its kinds, by its own name — but a kind the
+        // family already holds (path's schemes, file and http)
+        foreach (var subclass in library.Subclasses)
+            if (named.GetValueOrDefault(subclass.Family) is { } owner && owner.kind[subclass.Kind] == null)
             {
-                // the kind object is a kind<family> typed to the family; the value class stays a family subclass
-                var subclassType = typeof(global::app.type.kind.subclass.@this<>).MakeGenericType(member.Family);
-                Hold((global::app.type.kind.@this)System.Activator.CreateInstance(subclassType, member.Kind, t, owner)!);
+                Hold((global::app.type.kind.@this)System.Activator.CreateInstance(subclass.Made, subclass.Kind, subclass.Clr, owner)!);
 
                 // a subclass kind that ships its own reader (separator) reads under its family and kind — a
                 // {text, separator} reads via (text, separator), and the family's own reader would make the
                 // family's value, not the subclass's. Its namespace-keyed auto-registration is never consulted.
-                if (readers.GetValueOrDefault($"{t.Namespace}.serializer") is { } readerType)
-                    Reader.Register(family, member.Kind,
+                if (subclass.Reader is { } readerType)
+                    Reader.Register(subclass.Family, subclass.Kind,
                         (global::app.type.reader.ITypeReader)System.Activator.CreateInstance(readerType)!);
             }
         return null;
