@@ -345,10 +345,40 @@ public sealed partial class @this
     {
         var pr = Pr(source);
         var context = app.actor.list.System.Context;
-        var loaded = app.goal.list[pr] is { } goal ? context.Ok(goal) : await Read(pr, app);
+        // the goal held while its .pr is as it was read; else, while the parent's goals are this app's too, the one
+        // the parent loads, as itself; else this app's own read — one read in flight for each .pr
+        var loaded = await app.goal.list.Held(pr, context) is { } goal ? context.Ok(goal)
+            : app.goal.list.Parent is { } parent ? await Taken(source, app, parent.App, context)
+            : await app.goal.list.Reading(pr, () => Read(pr, app));
         if (loaded.Success && await loaded.Value() is @this { IsSetup: true })
             return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
         return loaded;
+    }
+
+    // The goal the parent loads, held by this app too and loaded here through its own on.load: a goal never goes up
+    // from a sub app — the parent reads it as itself, so nothing of this app is in a goal every sub app shares.
+    private static async Task<data.@this> Taken(global::app.type.item.path.@this source, global::app.@this app,
+        global::app.@this parent, actor.context.@this context)
+    {
+        var loaded = await Load(source, parent);
+        if (!loaded.Success || await loaded.Value() is not @this goal) return loaded;
+        app.goal.list.Add(goal);
+        return await goal.on.load.After(goal, context.Ok(goal), context);
+    }
+
+    // The .pr's modified time and size when this goal was read from it: a changed file is read again.
+    private (DateTime? Modified, long? Size)? _read;
+
+    /// <summary>Whether <paramref name="pr"/> is as it was when this goal was read from it — the same modified time and
+    /// size; a goal not read from a file is as it is.</summary>
+    internal async Task<bool> Fresh(global::app.type.item.path.@this pr, actor.context.@this context)
+        => _read is not { } read || await Stat(pr, context) == read;
+
+    // The .pr's modified time and size, now; null fields when it can't be read.
+    private static async Task<(DateTime? Modified, long? Size)> Stat(global::app.type.item.path.@this pr, actor.context.@this context)
+    {
+        var stat = await pr.Stat(context);
+        return stat.Success && await stat.Value() is { } info ? (info.Modified, info.Size?.Value) : (null, null);
     }
 
     // One .pr read into a goal and held, through the goal's load.
@@ -361,6 +391,8 @@ public sealed partial class @this
             return answer;
         try
         {
+            // the .pr as it is before the read: a change during it is read again on the next use
+            var stamp = await Stat(pr, context);
             // The .pr lands as a file reference; its value is the content its format decodes — a goal.
             var read = await pr.Read(context);
             var content = read.Success ? await read.Value() : null;
@@ -370,6 +402,7 @@ public sealed partial class @this
                 return context.Error(read.Error ?? new global::app.error.@this(
                     $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
 
+            goal._read = stamp;
             app.goal.list.Add(goal);
             return await goal.on.load.After(goal, read, context);
         }

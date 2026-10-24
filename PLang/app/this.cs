@@ -321,7 +321,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         Code = new AppCode(actor.list.System.Context);
         // a caller's app's modules are this one's too, under a layer of its own
         module = caller == null ? new(this) : new(this, caller.App.module);
-        goal = new(this);
+        // a caller's app's goals are this one's too, while it holds no code of its own
+        goal = new(this, () => new global::app.goal.list.@this(this, caller?.App.goal.list));
         test = new(this);
         error = new(this);
         variable = new(this);
