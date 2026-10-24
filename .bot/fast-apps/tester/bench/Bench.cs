@@ -48,7 +48,9 @@ public class FastAppsBench
     [Test, Explicit]
     public async Task RequestApps()
     {
-        const int total = 3000, block = 1000;
+        // BENCH_N: how many request apps (default 3,000); the heap is collected and written down every 1,000
+        var total = int.TryParse(System.Environment.GetEnvironmentVariable("BENCH_N"), out var n) ? n : 3000;
+        const int block = 1000;
         const string goal = "/module/condition/if/basic/Condition.test.goal";
         var failed = 0; string? why = null;
         // the server is made before the first count: what it holds is the process's, not the requests'
@@ -87,6 +89,12 @@ public class FastAppsBench
         {
             await Task.Delay(rest * 1000);
             held.Add(Held());
+            if (System.Environment.GetEnvironmentVariable("BENCH_PAUSE") is { } after)
+            {
+                var gate = System.IO.Path.Combine(after, "pause-rest");
+                System.IO.File.WriteAllText(gate, System.Environment.ProcessId.ToString());
+                for (var w = 0; w < 600 && System.IO.File.Exists(gate); w++) await Task.Delay(1000);
+            }
         }
         var seconds = System.Diagnostics.Stopwatch.GetElapsedTime(t0).TotalSeconds;
         var kb = (System.GC.GetTotalAllocatedBytes(true) - alloc0) / (double)total / 1024.0;

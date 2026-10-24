@@ -164,6 +164,41 @@ A child's type list is a layer over its parent's; nothing is scanned at birth. T
 - **The root is the same as stage 2** (6.05 MB, 26–30 ms): the layer doesn't touch a root's birth, so the two causes above
   stay for the command line.
 
+### The layer's REST=300 (decision 27's ask): not all of it is let go — a real leak, ~0.28 KB a request
+
+A child request app on the layer (`b7c59ecb8`), the heap collected after a 300 s rest (`BENCH_REST=300 BENCH_N=…`):
+
+| requests | held, MB, at 0 / each 1k … | after 300 s rest | above the start |
+|---|---|---|---|
+| 1,000 | 2.5 → 3.9 | **2.8** | +0.3 |
+| 3,000 | 2.4 → 3.8 → 4.7 → 5.4 | **3.3** | +0.9 |
+| 6,000 | 2.5 → 3.9 → 5.0 → 5.5 → 6.3 → 7.3 → 8.1 | **4.2** | +1.7 |
+
+Most of the growth is let go (the sqlite bookkeeping, as at stage 1), but **what stays grows with the request count,
+0.3 / 0.9 / 1.7 MB: ~0.28 KB a request**, not time-bound. At a thousand requests a second that is ~1 GB a day.
+Heap dumps after the rest (1k and 3k requests), by type: the 2,000 extra requests left **+4,000 `item.wire.this`
+(88 B each = 352 KB) and +4,000 strings (88 KB)**, exactly two of each a request, and nothing else of size.
+
+**What holds them.** The retention path (dump after the rest) is `[static Server]` → the server-like app → `app.type`
+→ `type.list` → a type entry → `item.history` → its `List<item>` → the wires. All 6,000 are in **one** history. A scratch
+test that walks the type list after 5 and 25 child requests of `Condition.test.goal` finds it: **the shared type entry
+`bool` has 10 items in its history after 5 requests and 50 after 25, each a wire of type `type`**.
+
+**The line.** `type/item/source.cs:239`, `item.history.Add(this);` at the end of `Value`: a `.pr` slice that names a type
+(`"bool"`) reads to the type entry the list holds, and the source is added to that entry's history — "the source rides
+the materialized value's history". With the types shared by the layer, the entry is every app's, so each request's
+slices pile onto it. **Checked by mutation** (temporary, reverted, nothing committed): with that one line commented out,
+25 requests leave no history on any shared type entry. Lines 193, 210 and 220 of the same file do the same for the other
+read paths; I haven't seen them hit.
+
+- It is new with sharing: at stage 2 each child makes its own type entries, which die with it.
+- **Likely a race as well, not tested:** `history.Add` is `if (!_list.Contains(prior)) _list.Add(prior)` on a plain
+  `List<>` (`type/item/history/this.cs`), and the entry is now shared by concurrent requests.
+- Any shared object that takes `history.Add` has the same shape; `bool` is only what this goal reads. A goal with other
+  typed slots grows their entries.
+- The root request app at stage 1 also kept 0.9 MB after a rest (3k requests, 4.4 → 1.8 against a start of 0.9). A root
+  shares no type entry, so this isn't its cause; I haven't found that one.
+
 ## Not measured here
 
 - A class scanned twice in one process (stage 2's check): it needs a count of `GetTypes` calls, which comes with
