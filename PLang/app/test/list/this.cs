@@ -167,15 +167,15 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
             => new(context.App.type.list) { Goal = goal, Status = Status.Stale, StatusReason = reason };    }
 
     // One test: this run's coverage takes in the goals it reaches (a site that never runs still shows); a test
-    // that isn't Ready is recorded, not run; a Ready one runs itself in an App of its own, rooted at this one's folder
-    // (the .pr files' root-relative paths resolve as they were built), testing it (its session open) — the App lives
-    // exactly as long as the run.
+    // that isn't Ready is recorded, not run; a Ready one runs itself in an App of its own, made by the asker's actor
+    // and rooted at this one's folder (the .pr files' root-relative paths resolve as they were built), testing it (its
+    // session open) — the App lives exactly as long as the run, and no longer than its caller.
     private async Task Run(global::app.test.@this test, actor.context.@this context)
     {
         foreach (var goal in test.Reach) Report.Coverage.Add(goal);
         if (test.Status == Status.Ready)
         {
-            await using var app = new global::app.@this(_app.filesystem.root.Absolute);
+            await using var app = new global::app.@this(_app.filesystem.root.Absolute, context.Actor!);
             await app.test.list.Open(test);
             Made?.Invoke(app);
             await test.Start(app, context);
