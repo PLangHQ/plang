@@ -47,6 +47,9 @@ for r in $(seq 1 "$rounds"); do
     bench Release RequestApps
   done
 
+  # BENCH_ONLY=1: the four app measurements only, no sweep and no plang --test (a branch whose suites are known red)
+  [ -n "${BENCH_ONLY:-}" ] && continue
+
   calm; l=$(load); t=$(now)
   ./dev.sh test --force > "$here/results/last-sweep.log" 2>&1 || true
   echo "r$r sweep  load $l  wall $(since "$t") s  $(grep -E '^=== ' "$here/results/last-sweep.log" | sed -E 's/ *\(full output[^)]*\)//; s/=== ([A-Za-z]+) === /\1 /' | tr '\n' ';')" >> "$out"
