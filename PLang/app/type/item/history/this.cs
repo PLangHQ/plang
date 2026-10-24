@@ -11,18 +11,9 @@ namespace app.type.item.history;
 /// entry's <c>.Type</c> (<c>[{image},{path}]</c>). It does NOT reference the owner (the item asks its
 /// own type directly) — no back-reference, so a clone never cycles into the owner graph.</para>
 /// </summary>
-public sealed class @this
+public class @this
 {
     private readonly System.Collections.Generic.List<global::app.type.item.@this> _list = new();
-
-    // Whether this history takes a prior: a value never made from another (a type) keeps none.
-    private readonly bool _closed;
-
-    public @this() { }
-
-    /// <summary>A history that takes no prior — the history of a value that is never made from another, whatever
-    /// reads it.</summary>
-    internal @this(bool closed) => _closed = closed;
 
     /// <summary>The values this item evolved through, in order — the tail of its history (the item's
     /// own type is the head, asked separately by the item itself).</summary>
@@ -30,9 +21,9 @@ public sealed class @this
 
     /// <summary>Record that the item evolved FROM <paramref name="prior"/> — the prior's own history
     /// rides along (a source that was a file, then parsed to a dict). Idempotent by reference.</summary>
-    public void Add(global::app.type.item.@this? prior)
+    public virtual void Add(global::app.type.item.@this? prior)
     {
-        if (!_closed && prior != null && !_list.Contains(prior)) _list.Add(prior);
+        if (prior != null && !_list.Contains(prior)) _list.Add(prior);
     }
 
     /// <summary>Does any prior (recursively) answer to the type <paramref name="other"/>? The tail of

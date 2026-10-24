@@ -1629,11 +1629,11 @@ class app.type.item.guid.this : app.type.item.this, System.IEquatable<app.type.i
   static Shape : System.String { get; }
 
 class app.type.item.history.this
-  Add(app.type.item.this prior) : System.Void
   Has(app.type.this other) : System.Boolean
   HasKind(System.String name) : System.Boolean
   ctor()
   list : System.Collections.Generic.IReadOnlyList<app.type.item.this> { get; }
+  virtual Add(app.type.item.this prior) : System.Void
 
 static class app.type.item.image.serializer.Default
   static Read(System.Object raw, System.String kind, app.type.reader.ReadContext ctx) : System.Object
