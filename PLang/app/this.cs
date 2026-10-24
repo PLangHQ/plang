@@ -66,13 +66,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
     /// </summary>
     [global::app.Store, global::app.Out]
-    public string Id
-    {
-        // made on the first read, the first made kept: two first reads at once answer one id
-        get => _id ?? System.Threading.Interlocked.CompareExchange(ref _id, Guid.NewGuid().ToString("N")[..12], null) ?? _id;
-        internal set => _id = value;
-    }
-    private string? _id;
+    public string Id { get; internal set; }
 
     /// <summary>
     /// The app's name as <paramref name="context"/>'s settings have it (<c>%!app.setting.name%</c>), else its
@@ -80,36 +74,23 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     [global::app.LlmBuilder]
     public async System.Threading.Tasks.ValueTask<global::app.type.item.text.@this> Name(global::app.actor.context.@this context)
-        => (await context.Setting.Get<global::app.setting.@this>()).Name ?? Folder;
-
-    // The folder the app was made at, as it was handed.
-    private readonly string _path;
+        => (await context.Setting.Get<global::app.setting.@this>()).Name ?? _folder;
 
     // The app's folder's name — what the app goes by until a setting names it.
-    private string Folder
-    {
-        get
-        {
-            var trimmed = _path.TrimEnd('/', '\\');
-            var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
-            return lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
-        }
-    }
+    private readonly string _folder;
 
     /// <summary>
     /// When the app was first created — its identity's, else this run's start (an app with no identity yet is
     /// being created now).
     /// </summary>
     [global::app.Store, global::app.Out, global::app.LlmBuilder]
-    public global::app.type.item.datetime.@this Created { get => _created ?? StartedAt; internal set => _created = value; }
-    private global::app.type.item.datetime.@this? _created;
+    public global::app.type.item.datetime.@this Created { get; internal set; }
 
     /// <summary>
     /// When the app's identity last changed — read from app.pr, else this run's start (an identity created now).
     /// </summary>
     [global::app.Store, global::app.Out, global::app.LlmBuilder]
-    public global::app.type.item.datetime.@this Updated { get => _updated ?? StartedAt; internal set => _updated = value; }
-    private global::app.type.item.datetime.@this? _updated;
+    public global::app.type.item.datetime.@this Updated { get; internal set; }
 
     /// <summary>
     /// Version of the builder used.
@@ -149,13 +130,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// When the app was started.
     /// </summary>
     [global::app.LlmBuilder]
-    public global::app.type.item.datetime.@this StartedAt
-        => _startedAt ?? System.Threading.Interlocked.CompareExchange(ref _startedAt,
-            new(_started, type.list[typeof(global::app.type.item.datetime.@this)]), null) ?? _startedAt;
-
-    // The moment the app was started, kept at its birth; the value is made from it when first read.
-    private readonly DateTimeOffset _started;
-    private global::app.type.item.datetime.@this? _startedAt;
+    public global::app.type.item.datetime.@this StartedAt { get; }
 
     /// <summary>
     /// How long the app has been running.
@@ -330,8 +305,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         this.origin = origin;
         _shutdownCts = origin.Shutdown();
         Console = autoWireConsoleChannels;
-        _path = absolutePath;
-        _started = DateTimeOffset.UtcNow;
+        Id = Guid.NewGuid().ToString("N")[..12];
+        var trimmed = absolutePath.TrimEnd('/', '\\');
+        var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
+        _folder = lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
         // the app's disk, holding the app's folder as what / is
         filesystem = new(absolutePath);
 
@@ -339,6 +316,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // layer over the types the origin answers.
         type = new(this);
         parent = new(type.list[typeof(global::app.parent.@this)]);
+
+        StartedAt = new(DateTimeOffset.UtcNow, type.list[typeof(global::app.type.item.datetime.@this)]);
+        Created = StartedAt;
+        Updated = StartedAt;
 
         // The system & user actors, each owning a long-lived context. System is the cancellation root; User links
         // to its token.
