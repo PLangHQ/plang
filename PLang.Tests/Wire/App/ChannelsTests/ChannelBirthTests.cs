@@ -21,6 +21,14 @@ public class ChannelBirthTests
     }
 
     [Test]
+    public async Task AChannelsSettings_AreMadeWhenRead()
+    {
+        var born = Bytes(() => new global::app.channel.type.console.@this("output", System.IO.Stream.Null, global::app.channel.ChannelDirection.Output));
+
+        await Assert.That(born).IsLessThan(4 * 1024L).Because("a channel's direction, buffer and mime are made when read, unless given");
+    }
+
+    [Test]
     public async Task ASubAppThatNeverWrites_WiresNoChannel()
     {
         var born = Bytes(() =>
