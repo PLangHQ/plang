@@ -80,7 +80,16 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     // The type a name names as the guard has recorded it so far — this list's own, else the list under's — with no
     // scan: what the scan itself reads while it fills the set.
     private global::app.type.@this? Recorded(string name)
-        => _named.GetValueOrDefault(name) ?? (Chunks is [@this under] ? under.Recorded(name) : null);
+    {
+        if (_named.GetValueOrDefault(name) is { } type) return type;
+        foreach (var under in Under)
+            if (under.Recorded(name) is { } recorded) return recorded;
+        return null;
+    }
+
+    // The lists this one is a layer over, as type lists: the only list a type list admits as a row (Admit). None for the
+    // code's, one for a layer.
+    private @this[] Under => Chunks<@this>();
 
     // Every type's class to the type, the first that has it, as the set stands (naming reads the set while the scan
     // fills it). Kept by the guard beside the names, so a lookup by class never walks the set.
@@ -89,7 +98,12 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 
     // The type a class defines: this list's own, else the list under's.
     private global::app.type.@this? Classed(System.Type clr)
-        => _classed.GetValueOrDefault(clr) ?? (Chunks is [@this under] ? under.Classed(clr) : null);
+    {
+        if (_classed.GetValueOrDefault(clr) is { } type) return type;
+        foreach (var under in Under)
+            if (under.Classed(clr) is { } classed) return classed;
+        return null;
+    }
 
     /// <summary>Whether this list, a layer, holds types of its own — what its app loaded over the list under it.</summary>
     internal bool HasOwn => !_named.IsEmpty;

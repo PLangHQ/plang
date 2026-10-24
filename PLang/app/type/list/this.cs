@@ -200,7 +200,8 @@ public sealed partial class @this
         var entry = Named(type.Name);
         // a full type is the list's that made its entry — the list under's for a type it holds (one object in every app
         // over that list), the code's for a name no type answers to
-        if ((entry == null || !Holds(entry)) && Chunks is [@this under]) return under.Full(type, name);
+        if (entry == null || !Holds(entry))
+            foreach (var under in Under) return under.Full(type, name);
         var kind = name == null ? null
             : entry?.kind[name] is { } match ? (match.IsEmpty ? null : match)
             : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);
@@ -316,8 +317,11 @@ public sealed partial class @this
     /// only for its asker's context is read as a property (<c>%p.relative%</c>); any other is called with its arguments
     /// (<c>%x.replace("a", "b")%</c>).</summary>
     internal property.list.@this Member(System.Type clr)
+    {
         // a class this list holds no type for is the list under's to list: one list per class in every app over it
-        => !_classed.ContainsKey(clr) && Chunks is [@this under] ? under.Member(clr) : _member.GetOrAdd(clr, @class =>
+        if (!_classed.ContainsKey(clr))
+            foreach (var under in Under) return under.Member(clr);
+        return _member.GetOrAdd(clr, @class =>
     {
         var owner = Classed(@class)?.Name ?? app.type.item.@this.NameOf(@class);
         var list = new property.list.@this();
@@ -357,6 +361,7 @@ public sealed partial class @this
                 .ToList(), owner: owner, member: m);
         }
     });
+    }
 
     internal property.@this Property(string name, System.Type clr, System.Collections.Generic.IReadOnlyList<property.@this>? arguments = null,
         bool optional = false, string? owner = null, System.Reflection.MemberInfo? member = null)

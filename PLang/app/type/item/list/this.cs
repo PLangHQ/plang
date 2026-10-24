@@ -56,14 +56,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // The chunk rows' lists as they were at the last change, made from the rows' snapshot and dropped with it.
     private @this[]? _chunks;
 
-    /// <summary>The lists this one's chunk rows read through, in row order — what a list that is a layer over another
-    /// reads its misses from. None for a list no other list was appended to.</summary>
-    private protected @this[] Chunks
+    /// <summary>The lists this one's chunk rows read through, in row order, as the <typeparamref name="TList"/> its
+    /// subclass admits as a chunk — what a list that is a layer over another reads its misses from. None for a list no
+    /// other list was appended to.</summary>
+    private protected TList[] Chunks<TList>() where TList : @this
     {
-        get
+        if (System.Threading.Volatile.Read(ref _chunks) is TList[] chunks) return chunks;
+        lock (_gate)
         {
-            if (System.Threading.Volatile.Read(ref _chunks) is { } chunks) return chunks;
-            lock (_gate) return _chunks ??= System.Array.ConvertAll(System.Array.FindAll(Now, row => row is Chunk), row => ((Chunk)row!).List);
+            if (_chunks is TList[] made) return made;
+            var lists = System.Array.ConvertAll(System.Array.FindAll(Now, row => row is Chunk), row => (TList)((Chunk)row!).List);
+            _chunks = lists;
+            return lists;
         }
     }
 
