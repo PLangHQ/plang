@@ -24,26 +24,31 @@ Stage2
 / (AChildsSystem_StopsWithItsCaller)
 / a child's System is its own actor: a variable it sets, a channel it registers and a setting it writes are not the
 / caller's — C# test ChildSystemTests (AChildsSystem_KeepsItsOwnMemoryChannelsAndSettings)
-/ the code's facts are read once per code: a second app made from the same code reads no class — C# test
-/ CodeFactsTests (ASecondApp_ReadsNoClass)
+/ the code's facts are read once per code: a sub app reads no class at its birth — C# test CodeFactsTests
+/ (AChildsTypeList_HoldsNothingOfItsOwn_AtBirth, AnAppNoActorMade_ReadsItsOwnFacts)
 
 Stage3
-/ a child takes its parent's type list whole: a type in the child is the parent's own object — C# test
-/ SharedTypeListTests (AChildsType_IsItsParentsType)
-/ a shared list refuses an addition and says why (TypesShared) — C# test SharedTypeListTests
-/ (ASharedTypeList_RefusesAnAddition_SayingWhy)
-/ a program that loads code is born with its own list: the plugin's type joins its app, and only its app
+/ a sub app keeps its parent's type list whole under a layer of its own: a type in it is the parent's own object —
+/ C# test SharedTypeListTests (AChildsType_IsItsParentsType)
+/ what a sub app adds is its own alone: neither its parent nor a sibling has it — C# test SharedTypeListTests
+/ (ATypeASubAppAdds_IsOnlyItsOwn)
+/ a kind added to a type its parent holds is refused, naming the type (TypesShared), until sub apps own their code —
+/ C# test SharedTypeListTests (AKindOnAParentsType_IsRefused_NamingIt)
+/ the list a sub app is over refuses its own app's additions, saying why — C# test SharedTypeListTests
+/ (TheSharedList_RefusesItsOwnAppsAddition)
+/ the plugin's type joins only the sub app that loaded it, and its sibling never sees it
 - call /plan/fast-apps/app/type/plugin/PluginTypeJoinsOnlyItsApp
 - call /plan/fast-apps/app/type/plugin/SiblingDoesNotSeeThePluginType
-/ an action says whether it adds to the code; the runner asks it by navigating, never by its name — C# test
-/ AddsCodeTests (CodeLoad_SaysItAddsCode, ATestReachingCodeLoad_IsBornWithItsOwnList)
-/ a binding one test makes on a shared goal doesn't reach another test (a guard: red under its mutation)
+/ the module registry the same way, refused as ModuleShared — C# test SharedModuleTests
+/ a binding made while a program runs is held on the context of the actor that made it: it fires only in its own app
+/ and goes with it — C# tests HoldTests, HeldBindingTests
 - call /plan/fast-apps/app/event/BindingStaysInItsTest
 - call /plan/fast-apps/app/event/SiblingDoesNotSeeTheBinding
-/ a binding on a shared type entry is the binding app's own — C# test HeldBindingTests
-/ (ABindingOnASharedTypeEntry_IsTheBindingAppsOwn)
-/ a child finds the goal its parent read: the same goal object, no second .pr read — C# test SharedGoalTests
-/ (AChild_FindsItsParentsGoal)
+/ a run never writes an object its app shares: a type takes no prior into its history — C# test SharedEntryWritesTests
+/ a sub app finds the goal its parent read: the same goal object, no second .pr read — C# test SharedGoalTests
+/ (AChild_FindsItsParentsGoal); many sub apps loading one goal make one read (ManySubAppsLoadingOneGoal_MakeOneRead)
+/ a goal read after a sub app loads code stays its own, never its parent's — C# test SharedGoalTests
+/ (AGoalReadAfterTheSubAppLoadsCode_StaysItsOwn)
 / a goal changed on disk is read again on its next use, with no time window — C# test SharedGoalTests
 / (AGoalChangedOnDisk_IsReadAgain)
 / the kind lookup takes no lock: two apps sharing a type look up its kinds at once — C# test KindLookupTests
