@@ -9,13 +9,16 @@ namespace app.type.kind.empty;
 public sealed class @this : global::app.type.kind.@this
 {
     private readonly global::app.type.@this _owner;
-    private readonly System.Collections.Generic.List<global::app.type.kind.@this> _kinds = new();
+    // The kinds this type holds, in the order they came — replaced whole as a kind comes in, never written once
+    // published: a type is shared by every app made from the same code, so a lookup reads it without the gate.
+    private volatile global::app.type.kind.@this[] _kinds = [];
     // The held kinds by every key each answers to (Names): its name, its aliases, its MIMEs — and apart, by its
     // extensions without the dot — the first kind that answers, in the order they came. Made as a kind comes in
     // (Add), so a key finds its kind in one look, never by asking each kind in turn; none while the type holds no kind
-    // (a type object made for a value, the common case, never pays for one).
-    private System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _keys;
-    private System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _extensions;
+    // (a type object made for a value, the common case, never pays for one). Replaced whole, read without the gate.
+    private volatile System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _keys;
+    private volatile System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _extensions;
+    // Taken only by an addition: two kinds coming in at once make their tables one after the other.
     private readonly object _gate = new();
     // The type's own format — its class's [Format("", …)]: plain text is {text}, opaque bytes {binary}.
     private global::app.type.kind.@this? _format;
@@ -64,11 +67,8 @@ public sealed class @this : global::app.type.kind.@this
     /// <summary>Closed as the type's own kind is (a bool's); a type with none offers an open set.</summary>
     public override bool IsClosed => _format?.IsClosed ?? false;
 
-    // The kinds this type holds, in the order they came.
-    private global::app.type.kind.@this[] Held
-    {
-        get { lock (_gate) return _kinds.ToArray(); }
-    }
+    // The kinds this type holds, in the order they came, as an addition last published them.
+    private global::app.type.kind.@this[] Held => _kinds;
 
     /// <summary>Everything this type holds: its own format, if it has one, then its kinds — what a type
     /// object that replaces this one's type takes over.</summary>
@@ -86,11 +86,13 @@ public sealed class @this : global::app.type.kind.@this
             // (`.template` is a file's, never a kind named template); any other as it is, as a MIME without its
             // parameters, else as an extension
             var semicolon = name.IndexOf(';');
-            lock (_gate)
-                return name.StartsWith('.') ? _extensions?.GetValueOrDefault(name[1..])
-                       : _keys?.GetValueOrDefault(name)
-                         ?? (semicolon >= 0 ? _keys?.GetValueOrDefault(name[..semicolon].Trim()) : null)
-                         ?? _extensions?.GetValueOrDefault(name);
+            // the tables as an addition last published them, each read once
+            var keys = _keys;
+            var extensions = _extensions;
+            return name.StartsWith('.') ? extensions?.GetValueOrDefault(name[1..])
+                   : keys?.GetValueOrDefault(name)
+                     ?? (semicolon >= 0 ? keys?.GetValueOrDefault(name[..semicolon].Trim()) : null)
+                     ?? extensions?.GetValueOrDefault(name);
         }
     }
 
@@ -132,17 +134,19 @@ public sealed class @this : global::app.type.kind.@this
         lock (_gate)
         {
             if (kind.IsEmpty) { _format = kind; return; }
-            _kinds.RemoveAll(k => string.Equals(k.Name, kind.Name, System.StringComparison.OrdinalIgnoreCase));
-            _kinds.Add(kind);
+            // the new kinds, made apart, then published whole: a reader sees the kinds before or after, never between
+            global::app.type.kind.@this[] kinds = [.. System.Array.FindAll(_kinds,
+                k => !string.Equals(k.Name, kind.Name, System.StringComparison.OrdinalIgnoreCase)), kind];
             var keys = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
             var extensions = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
-            foreach (var entry in _kinds)
+            foreach (var entry in kinds)
             {
                 foreach (var key in entry.Keys) keys.TryAdd(key, entry);
                 foreach (var extension in entry.Extension) extensions.TryAdd(extension.TrimStart('.'), entry);
             }
             _keys = keys;
             _extensions = extensions;
+            _kinds = kinds;
         }
     }
 }
