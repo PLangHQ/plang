@@ -594,5 +594,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         await KeepAlive.DisposeAsync();
         // The store lets its database go; one never asked for holds nothing.
         if (_store.IsValueCreated) _store.Value.Dispose();
+        // The step cache lets its entries and their expiry timers go.
+        Cache.Dispose();
     }
 }

@@ -43,4 +43,8 @@ public sealed class Memory : ICache
         var existing = _cache.AddOrGetExisting(key, value, policy);
         return Task.FromResult(existing == null);
     }
+
+    /// <summary>The cache let go with its app: a MemoryCache's expiry timers keep it — and every entry it holds —
+    /// alive past its app until it is disposed.</summary>
+    public void Dispose() => _cache.Dispose();
 }
