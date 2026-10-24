@@ -7,8 +7,6 @@ namespace app.origin;
 /// </summary>
 internal sealed class code : @this
 {
-    private global::app.module.@this? _module;
-
     /// <summary>The code, its types scanned from its facts on first ask, path's schemes among them.</summary>
     internal code()
     {
@@ -24,8 +22,8 @@ internal sealed class code : @this
 
     public global::app.type.list.@this type { get; }
 
-    // the actions, discovered once, born with the app the code is made for: that app answers for them
-    public global::app.module.@this Module(global::app.@this app) => _module ??= new global::app.module.@this(app);
+    // the actions, born with the app the code is made for: that app answers for them
+    public global::app.module.@this Module(global::app.@this app) => new global::app.module.@this(app);
 
     public System.Threading.Tasks.Task<global::app.data.@this?> Goal(global::app.type.item.path.@this source, global::app.@this app)
         => System.Threading.Tasks.Task.FromResult<global::app.data.@this?>(null);
