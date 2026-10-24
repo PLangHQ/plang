@@ -96,6 +96,17 @@ public class BirthTests
     }
 
     [Test]
+    public async Task AValuesKeptList_IsMadeWhenAProgramAddsAMember()
+    {
+        var context = global::PLang.Tests.Parent.Actor.Context;
+        var text = context.App.type.list["text"];
+
+        var born = Bytes(() => new global::app.data.@this("x", new global::app.type.item.text.@this("v", text), context: context));
+
+        await Assert.That(born).IsLessThan(600L).Because("a value's kept list is made when a program adds a member");
+    }
+
+    [Test]
     public async Task AnActorsPermissionView_IsOneView()
     {
         var actor = new global::app.actor.@this(new global::app.actor.role.user(), global::PLang.Tests.Parent.Actor.App);
