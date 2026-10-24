@@ -1,8 +1,8 @@
 namespace PLang.Tests.App.Types;
 
 /// <summary>A sub app keeps its parent's type list whole under a layer of its own: a type it reaches is the parent's
-/// own object, what it adds is its own alone, a kind on a type its parent holds is refused naming the type, and the list
-/// a sub app is over refuses its own app's additions, saying why.</summary>
+/// own object, what it adds is its own alone, a kind on a type its parent holds is refused naming the type, and what the
+/// parent loads after making it is the sub app's too.</summary>
 public class SharedTypeListTests
 {
     /// <summary>A type a test adds to an app.</summary>
@@ -61,14 +61,15 @@ public class SharedTypeListTests
     }
 
     [Test]
-    public async Task TheSharedList_RefusesItsOwnAppsAddition()
+    public async Task AParentLoadingAfterMakingASubApp_IsTheSubAppsToo()
     {
         await using var parent = new global::app.@this("/parent").Testing();
         await using var child = new global::app.@this("/child", parent.actor.list.User).Testing();
 
         var added = parent.type.list.Add(typeof(SharedProbe), parent.actor.list.System.Context);
 
-        await Assert.That(added.Error?.Key).IsEqualTo("TypesShared");
-        await Assert.That(child.type.list.Contains("sharedprobe")).IsFalse();
+        await added.IsSuccess();
+        await Assert.That(child.type.list.Contains("sharedprobe")).IsTrue().Because("a sub app reads its parent's list live");
+        await Assert.That(child.type.list["sharedprobe"]).IsSameReferenceAs(parent.type.list["sharedprobe"]);
     }
 }
