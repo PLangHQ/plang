@@ -1,0 +1,3 @@
+/ a test's app is made by the runner's actor that runs it: in a test, %!app.parent% is the runner.
+Start
+- assert %!app.parent% is true, "a test's app has its runner as its parent"

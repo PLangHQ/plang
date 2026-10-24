@@ -1,0 +1,6 @@
+/ a binding another test made on every step's start never reaches this one: its steps run with nothing of it bound —
+/ a leaked binding would call a goal this test doesn't have, and the step would fail.
+Start
+- set %ran% = 1
+- set %ran% = %ran% + 1
+- assert %ran% equals 2, "this test's steps ran with nothing another test bound"
