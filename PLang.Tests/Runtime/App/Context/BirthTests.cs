@@ -23,6 +23,30 @@ public class BirthTests
     }
 
     [Test]
+    public async Task AContextsSystemVariables_AreMadeWhenFirstAsked()
+    {
+        var actor = global::PLang.Tests.Parent.Actor.App.actor.list.User;
+
+        var born = Bytes(() => new global::app.actor.context.@this(actor.App, actor));
+
+        await Assert.That(born).IsLessThan(17 * 1024L).Because("a memory's system variables are made when first asked");
+    }
+
+    [Test]
+    public async Task ASystemVariable_IsReadUnderTheMemory_AndShadowedByASet()
+    {
+        await using var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor).Testing();
+        var memory = app.actor.list.User.Context.Variable;
+
+        await Assert.That((await memory.Get("GUID")).IsInitialized).IsTrue();
+        await Assert.That(memory.GetAll().Select(each => each.Key).Last()).IsEqualTo("Identity")
+            .Because("the system's variables come after the memory's own");
+        await memory.Set("Now", "set");
+        await Assert.That((await memory.Value("Now")).ToString()).IsEqualTo("set");
+        await Assert.That(memory.GetAll().Count(each => string.Equals(each.Key, "Now", System.StringComparison.OrdinalIgnoreCase))).IsEqualTo(1);
+    }
+
+    [Test]
     public async Task AnActorsPermissionView_IsOneView()
     {
         var actor = new global::app.actor.@this("probe", global::PLang.Tests.Parent.Actor.App);
