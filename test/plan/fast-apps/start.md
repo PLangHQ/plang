@@ -12,7 +12,7 @@ This is the fast-apps half of the snapshot plan ("Frozen parts and children", `t
 
 1. **A new app is made from a parent.** It takes what's the same for every app made from the same code (the code's facts, the type list and its actions, the loaded goals) and makes the rest itself: its folder, memory, channels, store, the settings' run layer and its bindings. (3)
 2. **Its System is born from the parent's actor that calls.** The door is handed the calling actor, and the parent is that actor's app (`actor/this.cs:88`). The System is a new actor: it takes the caller's identity (`:101`) and its cancellation is linked to the caller's token (`:117`), so it stops when the caller stops. Its context, channels, permission and settings are its own (an actor holds its app's context, channels and settings' root, `:108`, `:120`, `:122`, so it can't be another app's System). (3, 4)
-3. **`app.parent` keeps its word:** the app whose actor made this one. In this process it is the app itself; across processes it is today's link (`parent/this.cs:25`). An app has one parent at most. In a test, `%!app.parent%` becomes the runner. (4)
+3. **`app.parent` keeps its word:** the app whose actor made this one. Across processes it is today's link (`parent/this.cs:25`); one parent at most. The in-process parent is not built in this branch (Ingi, 18); it's built with its first user, with PlangOS's end of a call folded in (backlog 9); until then a test's `%!app.parent%` stays false. (4, 18)
 4. **Shared whole, or the app's own, decided at birth.** A child takes its parent's type list and its actions whole; a child whose program loads code (`code.load`, `module/code/this.Load.cs:19`) isn't made from the same code, so it's born with its own list, its own actions and its own goals (a goal holds its app's type list, `goal/this.cs:344`). Never copied at the first change: the tester tried it (§23), and values made before the copy held the parent's types while values made after held the copy's, so `type == type` was false for one type inside one app. A shared list refuses an addition with an error that says why (`TypesShared`). (5)
 5. **The scope** (6): the five stages below. Left for later: C (the generator writes the facts; cold start only), D (157, approved, a small win after A), §19–§22's trims, and large data (§25–§27).
 6. **The proof measures a request app too, not only the suites** (7): a request app's size at birth, and memory flat over a few thousand requests.
@@ -34,12 +34,12 @@ This is the fast-apps half of the snapshot plan ("Frozen parts and children", `t
 
 0. **Measure** (tester): on fast-apps as cut, an app's birth (time and bytes), the C# sweep, `plang --test`, and a request app born 3,000 times (time, bytes, memory after). The baseline every stage is measured against.
 1. **The step cache is disposed** (coder). Independent of the rest; a leak (§29: 73.5 KB kept per request with `cache for …`, 223 MB after 3k requests).
-2. **The door** (coder): `new app.@this(path, actor)`; the System born from the caller; `app.parent` holds the app in this process; the code's facts read once and taken through the parent; the runner and the C# tests make their apps through it. Each child still makes its own type list, from the parent's facts (A: birth 26–29 ms → ~3.5 ms).
+2. **The door** (coder): `new app.@this(path, actor)`, internal (Ingi, 17); the System born from the caller; the code's facts read once and taken through the parent; the runner and the C# tests make their apps through it. Each child still makes its own type list, from the parent's facts (A: birth 26–29 ms → ~3.5 ms).
 3. **What's the same is shared** (coder): the type list and its actions whole, or the program's own when it adds code; goals through the parent; a binding on a shared object held on the binding context; the kind lookup without the type's lock.
 4. **A birth makes only what's asked for** (coder): B, without §10's entries made on first ask (a shared list makes its entries once per code; they aren't needed). Birth ~3.5 ms → ~0.1 ms.
 5. **The run path** (coder): the list's snapshot reads, the empty store, class facts once. `plang --test` ~8 → ~5 s.
 
-Each locked item comes to Ingi with its code before it's built (decision 5). By stage: **2**: app (the constructor's parameter; `parent` holds an in-process app). **3**: type (a shared list's refusal), events (a binding held on the binding context). **4**: module (`module.Action` as `list<action>`), type (`Alias`/`Internal` without `init`; path's scheme kind classes), call (how the call list is made), data (`Properties` made when asked). **5**: private, by the surface golden.
+Each locked item comes to Ingi with its code before it's built (decision 5). By stage: **2**: none (the door is internal, 17; the in-process parent deferred, 18). **3**: type (a shared list's refusal), events (a binding held on the binding context). **4**: module (`module.Action` as `list<action>`), type (`Alias`/`Internal` without `init`; path's scheme kind classes), call (how the call list is made), data (`Properties` made when asked). **5**: private, by the surface golden.
 
 ## Not carried over from test-speed
 
@@ -76,7 +76,7 @@ Each locked item comes to Ingi with its code before it's built (decision 5). By 
 
 | surface | plang path | C# path | file path | checks |
 |---|---|---|---|---|
-| the parent | `%!app.parent%` | `app.parent` | `PLang/app/parent/this.cs` | the app whose actor made this one; in process the app, across processes the link; one at most |
+| the parent | `%!app.parent%` | `app.parent` | `PLang/app/parent/this.cs` | the app whose actor made this one; across processes the link; one at most; the in-process parent deferred (18) |
 | the child's System | `%!app.actor.list.system%` | `actor.list.System` | `PLang/app/actor/list/this.cs` | born from the calling actor: its identity, its cancellation; its own context, channels, permission, settings |
 | the code's facts | — | private to `type.list` | `PLang/app/type/list/` | read once per code; reached through the parent; no static; no new name on a surface |
 | the type list | `%!app.type.list%` | `type.list` | `PLang/app/type/list/this.cs` | shared whole or the app's own, decided at birth; a shared list refuses an addition, saying why |

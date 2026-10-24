@@ -17,9 +17,7 @@ Stage1
 / RequestAppsLeaveNothingBehindTests (red today: the step cache's MemoryCache stays)
 
 Stage2
-/ a test's app has a parent: in a test, %!app.parent% is the runner
-- call /plan/fast-apps/app/parent/TestAppHasItsRunnerAsParent
-/ the command line's app has none: %!app.parent% is false when nothing made it — C# test ParentTests
+/ (the in-process parent is deferred to its first user, decision 18: a test's %!app.parent% stays false; its test TestAppHasItsRunnerAsParent went to the backlog with it)
 / a child's System is born from the actor that calls: it has the caller's identity — C# test ChildSystemTests
 / (AChildsSystem_HasItsCallersIdentity)
 / a child stops when the actor that made it stops: cancelling the caller cancels the child — C# test ChildSystemTests
