@@ -346,9 +346,11 @@ public sealed partial class @this
         var pr = Pr(source);
         var context = app.actor.list.System.Context;
         // the goal held while its .pr is as it was read; else, while the parent's goals are this app's too, the one
-        // the parent loads, as itself; else this app's own read — one read in flight for each .pr
+        // the parent loads, as itself; else this app's own read — one read in flight for each .pr, which asks for the
+        // held goal again first: a read that ended between this load's ask and its turn has added it
         var loaded = await app.goal.list.Held(pr, context) is { } goal ? context.Ok(goal)
-            : await app.goal.list.Take(source, context) ?? await app.goal.list.Reading(pr, () => Read(pr, app));
+            : await app.goal.list.Take(source, context) ?? await app.goal.list.Reading(pr, async () =>
+                await app.goal.list.Held(pr, context) is { } held ? context.Ok(held) : await Read(pr, app));
         if (loaded.Success && await loaded.Value() is @this { IsSetup: true })
             return context.Error(new global::app.error.@this($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
         return loaded;
