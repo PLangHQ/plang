@@ -115,6 +115,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
     public @this(string name, app.@this app, CancellationToken parentToken = default, @this? fallback = null)
+        : this(name, app, parentToken, fallback, console: false) { }
+
+    /// <param name="console">Whether this actor's channels begin as the console's standard ones, wired when first used.</param>
+    internal @this(string name, app.@this app, CancellationToken parentToken, @this? fallback, bool console)
         : base(app.type.list[typeof(@this)])
     {
         Name = name;
@@ -124,7 +128,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
         Context = new context.@this(app, this, parentToken: _cts.Token);
-        _channels = new global::app.channel.list.@this(app, this);
+        _channels = new global::app.channel.list.@this(app, this, console);
         // %MyIdentity% and %Identity% are not set here: the memory is born holding them (variable.list), computed from
         // whoever asks, so an actor born at any time has them at once and no set — nor anything bound to one — runs.
     }

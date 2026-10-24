@@ -329,6 +329,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     {
         this.origin = origin;
         _shutdownCts = origin.Shutdown();
+        Console = autoWireConsoleChannels;
         _path = absolutePath;
         _started = DateTimeOffset.UtcNow;
         // the app's disk, holding the app's folder as what / is
@@ -378,23 +379,16 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
                 actor.list.System.Context);
         });
 
-        // Auto-wire console channels for ad-hoc App constructions (sub-process
-        // test fixtures, embedded scenarios, C# tests, the `plang --test` child
-        // app). These are NOT the interactive terminal owner, so their input is
-        // a non-blocking EOF sink — a prompt fails fast with ChannelEof instead
-        // of reading the shared process stdin (which deadlocks under parallel
-        // tests). Ask I/O goes through channels: a caller that wants to answer
-        // registers its own input/ask channel (e.g. tests' CannedAnswerChannel).
-        // The one interactive owner — the CLI (Executor) — constructs with
-        // autoWireConsoleChannels:false and calls WireDefaultConsoleChannels
-        // itself to bind real stdin.
-        // Each actor's channels are wired when it first uses them: an app that never writes makes none.
-        if (autoWireConsoleChannels)
-        {
-            actor.list.System.Channel.Standard();
-            actor.list.User.Channel.Standard();
-        }
     }
+
+    /// <summary>Whether the app's System and User are born with the console's standard channels, wired when each first
+    /// uses its channels — the app's choice at its birth. Ad-hoc constructions (sub-process test fixtures, embedded
+    /// scenarios, C# tests, the <c>plang --test</c> child app) are NOT the interactive terminal owner, so their input is a
+    /// non-blocking EOF sink: a prompt fails fast with ChannelEof instead of reading the shared process stdin (which
+    /// deadlocks under parallel tests). A caller that wants to answer registers its own input/ask channel. The one
+    /// interactive owner, the CLI (Executor), is made without them and calls WireDefaultConsoleChannels to bind real
+    /// stdin.</summary>
+    internal bool Console { get; }
 
     /// <summary>
     /// Verifies the all-three-roles invariant on every I/O actor (System, User).

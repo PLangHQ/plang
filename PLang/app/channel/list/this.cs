@@ -15,11 +15,12 @@ namespace app.channel.list;
 /// </summary>
 public sealed class @this : global::app.type.item.@this, IAsyncDisposable
 {
-    // The channels by name, made on the list's first use — with the console's standard ones when the list was marked
-    // standard before it (an actor that never writes makes none).
+    // The channels by name, made on the list's first use — with the console's standard ones when the list was born
+    // standard (an actor that never writes makes none).
     private ConcurrentDictionary<string, channel.@this>? _table;
     private readonly object _gate = new();
-    private bool _standard;
+    // whether the list's first rows are the console's standard channels: the app's choice, made at its birth
+    private readonly bool _standard;
     private readonly app.@this _app;
 
     // The channels by name, as they are now: made, wired, on the first use — the one door every other reads through.
@@ -36,17 +37,6 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
                 System.Threading.Volatile.Write(ref _table, channels);
                 return channels;
             }
-        }
-    }
-
-    /// <summary>Marks this list's first rows as the console's standard channels, wired when the list is first used, with
-    /// an input that reads as EOF (no shared stdin). Marked after its first use is plang broken.</summary>
-    internal void Standard()
-    {
-        lock (_gate)
-        {
-            if (_table != null) throw new InvalidOperationException("the standard channels are wired at the list's first use; it was used before it was marked");
-            _standard = true;
         }
     }
 
@@ -106,10 +96,15 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     public static readonly string[] Defaults = [Output, Error, Input];
 
     /// <summary>The channels of <paramref name="actor"/> — or of a Service, which is no actor (null).</summary>
-    public @this(app.@this app, global::app.actor.@this? actor) : base(app.type.list[typeof(@this)])
+    public @this(app.@this app, global::app.actor.@this? actor) : this(app, actor, standard: false) { }
+
+    /// <summary>The channels of <paramref name="actor"/>, whose first rows, when <paramref name="standard"/>, are the
+    /// console's standard channels, wired at the list's first use with an input that reads as EOF (no shared stdin).</summary>
+    internal @this(app.@this app, global::app.actor.@this? actor, bool standard) : base(app.type.list[typeof(@this)])
     {
         _app = app;
         Actor = actor;
+        _standard = standard;
     }
 
     /// <summary>
