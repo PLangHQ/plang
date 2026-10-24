@@ -17,7 +17,17 @@ public partial class @this
     /// <c>%greeting%</c>).</summary>
     internal static readonly StringComparer Comparer = StringComparer.OrdinalIgnoreCase;
 
-    private readonly ConcurrentDictionary<string, data.@this> _variables = new(Comparer);
+    // What this memory holds by name, made at its first write: a memory nothing is set in holds none.
+    private ConcurrentDictionary<string, data.@this>? _table;
+
+    // The table a write lands in — made, the first made kept, on the first.
+    private ConcurrentDictionary<string, data.@this> Table
+        => _table ?? System.Threading.Interlocked.CompareExchange(ref _table, new(Comparer), null) ?? _table;
+
+    // What this memory holds by name as it stands, for a read: nothing until the first write.
+    private IReadOnlyDictionary<string, data.@this> _variables
+        => (IReadOnlyDictionary<string, data.@this>?)System.Threading.Volatile.Read(ref _table)
+           ?? System.Collections.Immutable.ImmutableDictionary<string, data.@this>.Empty;
     private actor.context.@this _context;
 
     /// <summary>How deep a chain of references this flow is resolving (a variable holding a variable…) —
@@ -135,7 +145,7 @@ public partial class @this
 
             var had = _variables.TryGetValue(name, out var prev);
             var before = had ? prev!.Peek() : null;
-            _variables[name] = dv;
+            Table[name] = dv;
             return had && ReferenceEquals(prev, dv) ? (dv, false, null) : (dv, true, before);
         }
 
@@ -169,12 +179,12 @@ public partial class @this
             // into a value already captured elsewhere.
             var rebound = new data.@this(name, value, context: _context);
             var prevValue = existing.Peek();
-            _variables[name] = rebound;
+            Table[name] = rebound;
             return (rebound, true, prevValue);
         }
 
         var binding = new data.@this(name, value, context: _context);
-        _variables[name] = binding;
+        Table[name] = binding;
         return (binding, true, null);
     }
 
@@ -222,7 +232,7 @@ public partial class @this
 
         if (await Before("set", name, item) is { } refused) return refused;
         data.@this? stored = null;
-        var binding = _variables.GetOrAdd(name, _ => stored = new data.@this(name, item, context: _context));
+        var binding = Table.GetOrAdd(name, _ => stored = new data.@this(name, item, context: _context));
         return ReferenceEquals(binding, stored) ? await After(name, null, binding) : binding;
     }
 
@@ -241,7 +251,7 @@ public partial class @this
         var copy = value.Copy();
         if (ReferenceEquals(copy, value)) return read;
         var binding = new data.@this(name, copy, context: _context);
-        if (keeper == null) return _variables.GetOrAdd(name, binding);
+        if (keeper == null) return Table.GetOrAdd(name, binding);
         keeper.Set(name, binding);
         return binding;
     }
@@ -266,7 +276,7 @@ public partial class @this
         // Rebind — the same rebind Set does.
         var rebound = new data.@this(name, value, context: _context);
         if (frame != null) frame.Set(name, rebound);
-        else if (!_variables.TryUpdate(name, rebound, expected)) return await Get(name);
+        else if (!Table.TryUpdate(name, rebound, expected)) return await Get(name);
         return await After(name, expected.Peek(), rebound);
     }
 
@@ -347,7 +357,7 @@ public partial class @this
     {
         if (!_variables.TryGetValue(name, out var binding)) return _context.NotFound(name);
         if (await Before("remove", name, binding) is { } refused) return refused;
-        if (!_variables.TryRemove(name, out var removed)) return _context.NotFound(name);
+        if (!Table.TryRemove(name, out var removed)) return _context.NotFound(name);
         return type is { } variable && variable.IsBoundAfter("remove", _context) ? await variable.on.remove.After(Named(name), removed, _context) : removed;
     }
 
@@ -426,7 +436,7 @@ public partial class @this
 
         foreach (var key in toRemove)
         {
-            _variables.TryRemove(key, out _);
+            Table.TryRemove(key, out _);
         }
     }
 
@@ -445,7 +455,7 @@ public partial class @this
             // System context vars (! prefix) — skip, they're per-execution
             if (kvp.Key.StartsWith("!")) continue;
 
-            clone._variables[kvp.Key] = kvp.Value.Clone();
+            clone.Table[kvp.Key] = kvp.Value.Clone();
         }
         clone.Context = Context;
         return clone;
@@ -464,7 +474,7 @@ public partial class @this
         foreach (var key in _variables.Keys)
         {
             if (!snapshot.Contains(key))
-                _variables.TryRemove(key, out _);
+                Table.TryRemove(key, out _);
         }
     }
 
