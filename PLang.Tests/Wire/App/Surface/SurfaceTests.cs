@@ -136,12 +136,29 @@ public class SurfaceTests
             .IsEqualTo("").Because("the core's surface changed: an addition needs Ingi's yes, then AcceptTheSurface re-pins it and the commit names the decision");
     }
 
-    // What differs between two surfaces: the lines one has that the other doesn't, "+ " ours, "- " pinned.
+    // What differs between two surfaces: each line under the class (or type, or action) it belongs to, counted, so a
+    // member added, dropped or changed in one class shows whatever other classes hold — "+ " ours, "- " pinned.
     private static string Diff(string[] ours, string[] pinned)
     {
-        var added = ours.Except(pinned).Take(20).ToList();
-        var removed = pinned.Except(ours).Take(20).ToList();
+        var have = Counted(ours);
+        var had = Counted(pinned);
+        var added = have.SelectMany(each => Enumerable.Repeat(each.Key, each.Value - had.GetValueOrDefault(each.Key))).Take(20);
+        var removed = had.SelectMany(each => Enumerable.Repeat(each.Key, each.Value - have.GetValueOrDefault(each.Key))).Take(20);
         return string.Join("\n", added.Select(l => "+ " + l).Concat(removed.Select(l => "- " + l)));
+    }
+
+    // Each line of a surface under its section — the unindented line above it — with how many times it is there.
+    private static Dictionary<string, int> Counted(string[] lines)
+    {
+        var counted = new Dictionary<string, int>(System.StringComparer.Ordinal);
+        var section = "";
+        foreach (var line in lines)
+        {
+            if (line.Length > 0 && line[0] != ' ') section = line;
+            var key = line.Length > 0 && line[0] == ' ' ? $"{section}  ⟶ {line.TrimStart()}" : line;
+            counted[key] = counted.GetValueOrDefault(key) + 1;
+        }
+        return counted;
     }
 
     [Test]
