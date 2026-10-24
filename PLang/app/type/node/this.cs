@@ -24,36 +24,57 @@ public class @this<T, L> : @this
     // The app the concept is born with — used only for the app's own work (its list, reading its own files
     // as the system), never in place of an asker's context.
     private readonly global::app.@this _app;
-    private readonly System.Lazy<L> _list;
-    // The class of the concept's own settings, when its element names one (test: IConcept<test.setting>).
-    private readonly System.Type? _setting;
+    // the types the concept's type is found in
+    private readonly global::app.type.list.@this _types;
+    // the list, once made, and the gate that makes it once
+    private L? _list;
+    private bool _made;
+    private object? _gate;
 
     /// <summary>The app's node for <typeparamref name="T"/>, its list made from the class on first read.</summary>
-    public @this(global::app.@this app)
-        : this(app, app.type.list, new System.Lazy<L>(() => T.List(app), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication)) { }
+    public @this(global::app.@this app) : base(app.type.list[typeof(global::app.type.node.@this)])
+    {
+        _app = app;
+        _types = app.type.list;
+    }
 
     /// <summary>A node over the types <paramref name="types"/> and the list <paramref name="list"/> it is born with — the
     /// types' own node, born before the app holds them.</summary>
-    private protected @this(global::app.@this app, global::app.type.list.@this types, L list) : this(app, types, new System.Lazy<L>(list)) { }
-
-    private @this(global::app.@this app, global::app.type.list.@this types, System.Lazy<L> list)
+    private protected @this(global::app.@this app, global::app.type.list.@this types, L list)
         : base(types[typeof(global::app.type.node.@this)])
     {
         _app = app;
+        _types = types;
         _list = list;
-        _setting = typeof(T).GetInterfaces()
-            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(item.setting.IConcept<>))
-            ?.GetGenericArguments()[0];
-        type = types[typeof(T)];
+        _made = true;
     }
 
     /// <summary>The concept's type — the type list's entry for its class (<c>%!app.goal.type.name%</c> is <c>goal</c>):
-    /// its facts, its events (<c>.on</c>).</summary>
-    public global::app.type.@this type { get; }
+    /// its facts, its events (<c>.on</c>). Found when first asked: the list answers the same entry every time.</summary>
+    public global::app.type.@this type => _type ??= _types[typeof(T)];
+    private global::app.type.@this? _type;
 
     /// <summary>The X's loaded so far — the list class T names, with its own work. Made on first
-    /// read; a concept whose list belongs to the asker has none here (its <c>List</c> says so).</summary>
-    public L list => _list.Value;
+    /// read, once; a concept whose list belongs to the asker has none here (its <c>List</c> says so).</summary>
+    public L list => System.Threading.Volatile.Read(ref _made) ? _list!
+        : System.Threading.LazyInitializer.EnsureInitialized(ref _list, ref _made, ref _gate, () => T.List(_app))!;
+
+    // The class of the concept's own settings, when its element names one (test: IConcept<test.setting>) — worked out
+    // the first time the node is asked for its setting.
+    private System.Type? _setting
+    {
+        get
+        {
+            if (System.Threading.Volatile.Read(ref _settingRead)) return _settingClass;
+            _settingClass = typeof(T).GetInterfaces()
+                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(item.setting.IConcept<>))
+                ?.GetGenericArguments()[0];
+            System.Threading.Volatile.Write(ref _settingRead, true);
+            return _settingClass;
+        }
+    }
+    private System.Type? _settingClass;
+    private bool _settingRead;
 
     // The list the asker sees — its own for a concept whose list belongs to the asker, else the app's.
     // Navigation always asks through here: one path for every concept.
@@ -105,7 +126,7 @@ public class @this<T, L> : @this
         if (string.Equals(key, "list", System.StringComparison.OrdinalIgnoreCase))
             return new data.@this(key, Of(parent.Context), parent: parent);
         // the concept's own settings (%!app.test.setting%), as the asker's settings build them
-        if (_setting is { } @class && string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase) && _setting is { } @class)
             return await parent.Context.Setting.Get(@class) ?? parent.Context.NotFound(key);
         if (string.Equals(key, "type", System.StringComparison.OrdinalIgnoreCase))
             return new data.@this(key, type, parent: parent);
