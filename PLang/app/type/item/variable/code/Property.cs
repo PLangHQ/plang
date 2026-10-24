@@ -34,7 +34,7 @@ public sealed class Property : Hop
             // a member a program added to a variable's own value is kept beside it in its binding — read after the
             // value's own, there and wherever the binding's copy went (a list's row); never a `!` property: those are
             // the variable's, read with !
-            if ((!read.Success || !read.IsInitialized) && previous.Kept[Name] is { } property)
+            if ((!read.Success || !read.IsInitialized) && previous.HasKept && previous.Kept[Name] is { } property)
                 return new global::app.data.@this(Name, await property.Value(), parent: previous);
             return read;
         }

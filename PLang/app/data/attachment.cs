@@ -9,8 +9,17 @@ internal sealed class attachment
 {
     public Properties Properties { get; set; } = new();
 
-    public global::app.type.item.kept.list.@this Kept { get; set; } = new();
+    /// <summary>The members a program added — made the first time one is asked for; the first made is the one kept.</summary>
+    public global::app.type.item.kept.list.@this Kept
+    {
+        get => _kept ?? System.Threading.Interlocked.CompareExchange(ref _kept, new(), null) ?? _kept;
+        set => _kept = value;
+    }
+    private global::app.type.item.kept.list.@this? _kept;
+
+    /// <summary>Whether a program added any member — asked without making the list.</summary>
+    public bool HasKept => _kept is { Count: > 0 };
 
     /// <summary>A copy for a new variable over the same value.</summary>
-    public attachment Copy() => new() { Properties = Properties.Clone(), Kept = Kept.Copy() };
+    public attachment Copy() => new() { Properties = Properties.Clone(), _kept = _kept?.Copy() };
 }
