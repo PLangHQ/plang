@@ -371,7 +371,7 @@ public sealed partial class @this
     {
         var context = app.actor.list.System.Context;
         // what is bound before a goal loads is the goal type's (its own, and each actor's hold), handed the .pr
-        if (await app.goal.type.on.load.BeforeAt(app.goal.type, pr, context, context.Ok()) is { } answer
+        if (await app.goal.type.Before("load", pr, context, context.Ok()) is { } answer
             && (!answer.Success || answer.Handled))
             return answer;
         try

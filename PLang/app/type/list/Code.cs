@@ -71,7 +71,7 @@ public sealed partial class @this
         internal IReadOnlyList<Subclass> Subclasses { get; }
 
         /// <summary>The token readers it ships under a serializer folder: the type they read, the kind each names.</summary>
-        internal IReadOnlyList<(string Type, string Kind, ConstructorInfo Made)> Typed { get; }
+        internal IReadOnlyList<Token> Typed { get; }
 
         /// <summary>The whole-payload readers it ships under a serializer folder, by the type and kind they read.</summary>
         internal IReadOnlyList<Payload> Read { get; }
@@ -120,10 +120,10 @@ public sealed partial class @this
         // name its type goes by (its word, else its namespace): a module's serializer folder reads the one type the
         // module declares by its word ([PlangType("ask")] in app.module.output); a folder with no such type registers
         // under its last segment.
-        private (List<(string, string, ConstructorInfo)>, List<Payload>) Readers(Assembly assembly)
+        private (List<Token>, List<Payload>) Readers(Assembly assembly)
         {
             var classes = Classes;
-            var typed = new List<(string, string, ConstructorInfo)>();
+            var typed = new List<Token>();
             var read = new List<Payload>();
             // the word each namespace declares its one item type by ([PlangType]); none when it declares none, or more
             var words = classes.Where(t => t.Namespace != null && typeof(global::app.type.item.@this).IsAssignableFrom(t))
@@ -148,7 +148,7 @@ public sealed partial class @this
                     && typeof(global::app.type.reader.ITypeReader).IsAssignableFrom(type)
                     && type.GetConstructor(System.Type.EmptyTypes) is { } ctor)
                 {
-                    typed.Add((typeName, ((global::app.type.reader.ITypeReader)ctor.Invoke(null)).Kind, ctor));
+                    typed.Add(new Token(typeName, ctor));
                     continue;
                 }
 
@@ -186,6 +186,24 @@ public sealed partial class @this
         }
 
         public void Deconstruct(out System.Type clr, out string owner) => (clr, owner) = (Clr, Owner!);
+    }
+
+    /// <summary>A token reader a serializer folder ships — the type it reads, the kind its own instance names (one made
+    /// here to ask it), and its constructor, so each list makes the reader it holds.</summary>
+    internal sealed class Token
+    {
+        internal string Type { get; }
+        internal string Kind { get; }
+        internal ConstructorInfo Made { get; }
+
+        internal Token(string type, ConstructorInfo made)
+        {
+            Type = type;
+            Kind = ((global::app.type.reader.ITypeReader)made.Invoke(null)).Kind;
+            Made = made;
+        }
+
+        public void Deconstruct(out string type, out string kind, out ConstructorInfo made) => (type, kind, made) = (Type, Kind, Made);
     }
 
     /// <summary>A whole-payload reader a serializer folder ships — its static Read, by the type and kind it reads, as a
