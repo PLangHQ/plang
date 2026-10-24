@@ -132,10 +132,28 @@ public class SurfaceTests
     {
         var ours = (await Surface()).Split('\n');
         var pinned = System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), Pinned)).Split('\n');
+        await Assert.That(Diff(ours, pinned))
+            .IsEqualTo("").Because("the core's surface changed: an addition needs Ingi's yes, then AcceptTheSurface re-pins it and the commit names the decision");
+    }
+
+    // What differs between two surfaces: the lines one has that the other doesn't, "+ " ours, "- " pinned.
+    private static string Diff(string[] ours, string[] pinned)
+    {
         var added = ours.Except(pinned).Take(20).ToList();
         var removed = pinned.Except(ours).Take(20).ToList();
-        await Assert.That(string.Join("\n", added.Select(l => "+ " + l).Concat(removed.Select(l => "- " + l))))
-            .IsEqualTo("").Because("the core's surface changed: an addition needs Ingi's yes, then AcceptTheSurface re-pins it and the commit names the decision");
+        return string.Join("\n", added.Select(l => "+ " + l).Concat(removed.Select(l => "- " + l)));
+    }
+
+    [Test]
+    public async Task AMemberDroppedFromAClass_Shows_ThoughAnotherClassHasTheSameLine()
+    {
+        var pinned = System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), Pinned)).Split('\n');
+        // one class's parameterless constructor, a line many classes have
+        var at = System.Array.IndexOf(pinned, "  ctor()");
+        var dropped = pinned.Where((_, i) => i != at).ToArray();
+
+        await Assert.That(pinned.Count(l => l == "  ctor()")).IsGreaterThan(1).Because("the line is one several classes have");
+        await Assert.That(Diff(dropped, pinned)).IsNotEqualTo("").Because("a class lost a constructor");
     }
 
     // Re-pins surface_golden.txt from C#: run by hand, once the change is decided.
