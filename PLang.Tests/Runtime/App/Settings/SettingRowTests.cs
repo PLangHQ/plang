@@ -39,10 +39,10 @@ public class SettingRowTests
     // A saved row outlives the App: the next one on the same folder reads it.
     [Test] public async Task Row_IsReadByTheNextApp()
     {
-        await using (var app = new global::app.@this(_dir))
+        await using (var app = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor))
             await Save(app.actor.list.User, os: false);
 
-        await using var again = new global::app.@this(_dir);
+        await using var again = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor);
         await Assert.That(await Os(again.actor.list.User.Context)).IsEqualTo("false");
         await Assert.That(await Os(again.actor.list.System.Context)).IsEqualTo("true");
     }
@@ -61,7 +61,7 @@ public class SettingRowTests
     // A typed-list option of choices round-trips through the row: goal.list's visibility.
     [Test] public async Task Row_TypedListOfChoices_IsReadBack()
     {
-        await using (var app = new global::app.@this(_dir))
+        await using (var app = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor))
         {
             var setting = (await app.actor.list.User.Setting.Get<global::app.goal.list.setting.@this>());
             var ctx = app.actor.list.User.Context;
@@ -71,7 +71,7 @@ public class SettingRowTests
             await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
 
-        await using var again = new global::app.@this(_dir);
+        await using var again = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor);
         await Assert.That(await Listed<global::app.goal.list.setting.@this>(again, s => s.Visibility))
             .IsEquivalentTo(new[] { "Public", "Private" });
     }
@@ -79,7 +79,7 @@ public class SettingRowTests
     // A typed-list option of text round-trips through the row: test's include.
     [Test] public async Task Row_TypedListOfText_IsReadBack()
     {
-        await using (var app = new global::app.@this(_dir))
+        await using (var app = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor))
         {
             var setting = (await app.actor.list.User.Setting.Get<global::app.test.setting.@this>());
             setting.Include = new global::app.type.item.list.@this<global::app.type.item.text.@this>(
@@ -88,7 +88,7 @@ public class SettingRowTests
             await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
 
-        await using var again = new global::app.@this(_dir);
+        await using var again = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor);
         await Assert.That(await Listed<global::app.test.setting.@this>(again, s => s.Include))
             .IsEquivalentTo(new[] { "smoke", "fast" });
     }
@@ -98,14 +98,14 @@ public class SettingRowTests
     // reader of its own, read through its Create; reading it threw before the base reader's removal.
     [Test] public async Task AppSetting_Culture_IsReadByTheNextApp()
     {
-        await using (var app = new global::app.@this(_dir))
+        await using (var app = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor))
         {
             var setting = (await app.actor.list.User.Setting.Get<global::app.setting.@this>());
             setting.Culture = global::app.type.item.culture.@this.Create("is-IS", app.type.list[typeof(global::app.type.item.culture.@this)])!;
             await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
 
-        await using var again = new global::app.@this(_dir);
+        await using var again = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor);
         await again.actor.list.User.Setting.Load();
         await Assert.That((await again.actor.list.User.Setting.Get<global::app.setting.@this>()).Culture.Name).IsEqualTo("is-IS");
     }
@@ -113,7 +113,7 @@ public class SettingRowTests
     // The user falls back to the system's row; the user's own row wins over it.
     [Test] public async Task UserFallsBackToSystem_OwnRowWins()
     {
-        await using var app = new global::app.@this(_dir).Testing();
+        await using var app = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor).Testing();
         await Save(app.actor.list.System, os: false);
         await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("false");
 
@@ -125,7 +125,7 @@ public class SettingRowTests
     // This run's value wins over the saved row.
     [Test] public async Task ThisRun_WinsOverTheRow()
     {
-        await using var app = new global::app.@this(_dir).Testing();
+        await using var app = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor).Testing();
         await Save(app.actor.list.User, os: false);
         app.actor.list.User.Context.Setting.Set("app.goal.list.setting.os", app.actor.list.User.Context.Ok(true));
         await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("true");
@@ -134,7 +134,7 @@ public class SettingRowTests
     // Removing the row goes back to the defaults.
     [Test] public async Task Remove_GoesBackToTheDefaults()
     {
-        await using var app = new global::app.@this(_dir).Testing();
+        await using var app = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor).Testing();
         await Save(app.actor.list.User, os: false);
         await (await app.actor.list.User.Setting.Remove((await app.actor.list.User.Setting.Get<global::app.goal.list.setting.@this>()))).IsSuccess();
         await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("true");
@@ -143,7 +143,7 @@ public class SettingRowTests
     // A module's own setting saved as a row reaches the action-param seam (its module key).
     [Test] public async Task ModuleRow_ReachesTheSeam()
     {
-        await using var app = new global::app.@this(_dir).Testing();
+        await using var app = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor).Testing();
         var llm = (global::app.module.llm.setting.@this)(await Read("%!llm.setting%", app.actor.list.User.Context)).Peek()!;
         llm.Cache = app.actor.list.User.Context.Choice(global::app.module.cache.type.cache.skip);
         await (await app.actor.list.User.Setting.Save(llm)).IsSuccess();

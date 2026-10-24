@@ -17,7 +17,7 @@ public class JsonStructureTests
     [Test]
     public async Task ANavigatedJsonList_PrintsInATemplateAsAnEqualPlangList()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var answer = await ctx.App.type.list["item"].kind["json"]!.Decode(System.Text.Encoding.UTF8.GetBytes(Indented), ctx);
         answer.Name = "answer";
@@ -34,7 +34,7 @@ public class JsonStructureTests
     [Test]
     public async Task AJsonValue_RelayedAsJson_ReadsBackTheSame()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var json = ctx.App.type.list["item"].kind["json"]!;
         var answer = await json.Decode(System.Text.Encoding.UTF8.GetBytes(Indented), ctx);

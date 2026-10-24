@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Serialization;
 
 public class FailureMatrixTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/tmp/FailureMatrixTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this app = new global::app.@this("/tmp/FailureMatrixTests-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task PropertiesSet_DataInstanceValue_ThrowsArgumentException()
@@ -28,7 +28,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
     [Test] public async Task SigningVerify_AfterWireByteTamper_ReturnsDataHashMismatch()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-fm-" + Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-fm-" + Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var plang = app.actor.list.User.Context.Format("application/plang");
 
         var d = new global::app.data.@this("x", "untampered", context: app.actor.list.User.Context);

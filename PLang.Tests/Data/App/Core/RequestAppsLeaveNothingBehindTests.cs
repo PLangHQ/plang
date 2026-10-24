@@ -8,7 +8,7 @@ public class RequestAppsLeaveNothingBehindTests
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private static async Task<(System.WeakReference app, System.WeakReference cache)> Request()
     {
-        var app = new global::app.@this("/app").Testing();
+        var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var set = global::PLang.Tests.Shared.Make.Action(ctx, "variable", "set",
             global::PLang.Tests.Shared.Make.Param(ctx, "Name", "%answer%", "variable"), ("Value", "kept for a minute"));

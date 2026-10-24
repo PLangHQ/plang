@@ -9,7 +9,7 @@ public class FailureReportTests
 {
     [Test] public async Task AFailedAssertion_IsReportedAsTheTestReadIt_NotFilledAgainInTheRunner()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         context.Variable.Set("who", "Checkout");
         var goal = Make.Goal(context, "Checkout", "/Checkout.test.goal",
@@ -19,7 +19,7 @@ public class FailureReportTests
         await result.IsFailure();
 
         // the runner, in its own app, inside its own goal, holding a %who% of its own
-        await using var runner = new global::app.@this("/runner").Testing();
+        await using var runner = new global::app.@this("/runner", global::PLang.Tests.Parent.Actor).Testing();
         var reporting = runner.actor.list.User.Context;
         reporting.Variable.Set("who", "Test");
         var run = new global::app.test.@this(runner.type.list) { Goal = goal };

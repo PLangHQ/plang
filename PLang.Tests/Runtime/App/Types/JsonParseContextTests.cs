@@ -10,7 +10,7 @@ namespace PLang.Tests.Runtime.App.Types;
 public class JsonParseContextTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-        "plang-json-ctx-" + System.Guid.NewGuid().ToString("N")[..8])).TestSigning();
+        "plang-json-ctx-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).TestSigning();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task ATypedRow_TheSystemOpenedFirst_IsTheUsersWhenTheUserReadsIt()

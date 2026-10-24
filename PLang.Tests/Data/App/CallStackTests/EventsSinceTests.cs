@@ -6,7 +6,7 @@ public class EventsSinceTests
 {
     private static (global::app.@this app, ActionEntity action) BuildLive(string name)
     {
-        var app = new global::app.@this("/test").Testing();
+        var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var goal = new Goal(app.type.list) { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.actor.list.User.Context) };
         var step = new Step(app.type.list) { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity(app.type.list) { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = step };

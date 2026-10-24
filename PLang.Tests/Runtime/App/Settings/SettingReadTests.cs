@@ -13,7 +13,7 @@ public class SettingReadTests
 
     [Test] public async Task ClassOption_IsItsDefault()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var read = await Read("%!app.goal.list.setting.os%", app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("true");
@@ -21,7 +21,7 @@ public class SettingReadTests
 
     [Test] public async Task ClassOption_TakesThisRunsValue()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         ctx.Setting.Set("app.goal.list.setting.os", ctx.Ok(false));
 
@@ -31,7 +31,7 @@ public class SettingReadTests
 
     [Test] public async Task Class_IsOneInstance()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var read = await Read("%!app.goal.list.setting%", app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That(read.Peek()).IsTypeOf<global::app.goal.list.setting.@this>();
@@ -40,7 +40,7 @@ public class SettingReadTests
     // A module's own class is read from the module; the system's run value reaches the user.
     [Test] public async Task ModuleOption_FallsBackToTheSystem()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         app.actor.list.System.Setting.Set("llm.setting.cache", app.actor.list.System.Context.Ok("skip"));
 
         var read = await Read("%!llm.setting.cache%", app.actor.list.User.Context);
@@ -50,7 +50,7 @@ public class SettingReadTests
     // Outside a build the app holds no build: %!build% is the module, its settings the build's class.
     [Test] public async Task BuildCache_IsUsedByDefault()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var read = await Read("%!build.setting.cache%", app.actor.list.User.Context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("use");
     }
@@ -58,7 +58,7 @@ public class SettingReadTests
     // An action's option: its default, then this run's (the action's own, then the module's).
     [Test] public async Task ActionOption_DefaultThenThisRun()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("use");
 
@@ -72,7 +72,7 @@ public class SettingReadTests
     // A record option: its members' defaults, then this run's record — a member it leaves out keeps its default.
     [Test] public async Task ActionRecordOption_MembersDefaultThenThisRun()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await Assert.That((await (await Read("%!llm.query.setting.limit.token%", ctx)).Value())?.ToString()).IsEqualTo("16000");
 
@@ -85,7 +85,7 @@ public class SettingReadTests
     // A record option's default is the record's own; it writes itself as text (a container as its json).
     [Test] public async Task ActionRecordOption_CatalogShowsItsDefault()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var limit = app.Module("llm")["query"]!.Property["limit"]!;
         await Assert.That(limit.HasDefault).IsTrue();
@@ -97,7 +97,7 @@ public class SettingReadTests
     // %!llm% is the module itself; its settings and its actions' are each one .setting away.
     [Test] public async Task Module_IsTheModule_ItsSettingsUnderSetting()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var llm = await Read("%!llm%", ctx);
         await llm.IsSuccess();
@@ -117,7 +117,7 @@ public class SettingReadTests
     // A setting is always under .setting: the module's name alone reaches no option.
     [Test] public async Task OptionWithoutSetting_IsNoSetting()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var read = await Read("%!llm.cache%", app.actor.list.User.Context);
         await Assert.That(read.IsInitialized).IsFalse();
     }
@@ -125,7 +125,7 @@ public class SettingReadTests
     // Writing an option a setting doesn't have is an error result, not a crash.
     [Test] public async Task UnknownOption_WriteIsAnError()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var set = await new global::app.type.item.variable.parser.@this("%!app.goal.list.setting.foo%", ctx.App.type.list).Variable.Single()
             .Set(new global::app.data.@this("foo", 1, context: ctx), ctx);
@@ -135,7 +135,7 @@ public class SettingReadTests
     // An action's option named like an action member (identity.get's Name) reads the option, not the action.
     [Test] public async Task ActionOption_NotTheActionsMember()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         ctx.Setting.Set("identity.get.setting.name", ctx.Ok("alice"));
         await Assert.That((await (await Read("%!identity.get.setting.name%", ctx)).Value())?.ToString()).IsEqualTo("alice");
@@ -144,7 +144,7 @@ public class SettingReadTests
     // A module that shares its name with one of the app's members is shadowed: %!variable% is the app's.
     [Test] public async Task AppMember_AnswersBeforeTheModule()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var read = await Read("%!variable%", app.actor.list.User.Context);
         await Assert.That(read.Peek()).IsNotTypeOf<global::app.module.@this>();
     }
@@ -153,7 +153,7 @@ public class SettingReadTests
     // builds it from; the system's reads don't see the user's write.
     [Test] public async Task OwnerOption_WrittenThroughItsPath()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var written = await new global::app.type.item.variable.parser.@this("%!app.goal.list.setting.os%", ctx.App.type.list).Variable.Single()
             .Set(new global::app.data.@this("os", false, context: ctx), ctx);
@@ -165,7 +165,7 @@ public class SettingReadTests
 
     [Test] public async Task UnknownPath_IsNotFound()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         // a name that is neither the app's nor a module's: unset, not an error
         var read = await Read("%!nothing.here%", app.actor.list.User.Context);
         await Assert.That(read.IsInitialized).IsFalse();
@@ -174,7 +174,7 @@ public class SettingReadTests
     // A binding in memory answers before the settings: %!app% is the app.
     [Test] public async Task Binding_AnswersFirst()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var read = await Read("%!app%", app.actor.list.User.Context);
         await Assert.That(read.IsInitialized).IsTrue();
         await Assert.That(read.Peek()).IsNotTypeOf<global::app.type.item.setting.@this>();

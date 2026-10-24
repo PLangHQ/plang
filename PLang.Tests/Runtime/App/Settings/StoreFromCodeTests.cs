@@ -21,7 +21,7 @@ public class StoreFromCodeTests
     [Test]
     public async Task TheStores_AreTheDefaultProvidersOpening()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var probe = new Probe();
         app.Code.Register<global::app.store.code.IStore>(probe);
         await app.Code.SetDefault<global::app.store.code.IStore>("probe").IsSuccess();

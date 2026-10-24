@@ -7,7 +7,7 @@ namespace PLang.Tests.App.VariablesTests;
 // scope issue (%goal% not reaching the deep call), not node navigation.
 public class GoalStepCountNavTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/test").Testing();
+    private readonly global::app.@this _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]

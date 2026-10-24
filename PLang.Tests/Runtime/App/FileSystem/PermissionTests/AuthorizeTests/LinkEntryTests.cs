@@ -20,7 +20,7 @@ public class LinkEntryTests : System.IAsyncDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "secret.txt"), "outside");
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(root, "src"));
         System.IO.File.WriteAllText(System.IO.Path.Combine(root, "src", "a.txt"), "a");
-        app = new global::app.@this(root).TestSigning();
+        app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
         user = app.actor.list.User.Context;
     }
 

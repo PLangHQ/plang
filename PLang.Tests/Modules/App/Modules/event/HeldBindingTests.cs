@@ -7,7 +7,7 @@ public class HeldBindingTests
     [Test]
     public async Task ABindingOnASharedTypeEntry_IsTheBindingAppsOwn()
     {
-        await using var parent = new global::app.@this("/parent").Testing();
+        await using var parent = new global::app.@this("/parent", global::PLang.Tests.Parent.Actor).Testing();
         var caller = parent.actor.list.User;
         var sibling = new global::app.@this("/sibling", caller).Testing();
         var binding = new global::app.@this("/binding", caller).Testing();

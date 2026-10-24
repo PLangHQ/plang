@@ -34,7 +34,7 @@ public class SharedGoalTests
     [Test]
     public async Task AChild_FindsItsParentsGoal()
     {
-        await using var parent = new global::app.@this(_dir).Testing();
+        await using var parent = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor).Testing();
         var read = await Loaded(parent);
         await using var child = new global::app.@this(_dir, parent.actor.list.User).Testing();
 
@@ -44,7 +44,7 @@ public class SharedGoalTests
     [Test]
     public async Task AGoalChangedOnDisk_IsReadAgain()
     {
-        await using var parent = new global::app.@this(_dir).Testing();
+        await using var parent = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor).Testing();
         var before = await Loaded(parent);
         Built("""{"name":"Start","path":"/Start.goal","step":[],"child":[{"name":"Added","path":"/Start.goal","step":[]}]}""");
         await using var child = new global::app.@this(_dir, parent.actor.list.User).Testing();

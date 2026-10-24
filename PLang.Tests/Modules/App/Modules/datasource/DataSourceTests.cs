@@ -16,7 +16,7 @@ public class DataSourceTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_ds_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).TestSigning();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning();
     }
 
     [After(Test)]
@@ -36,7 +36,7 @@ public class DataSourceTests
     [Test]
     public async Task AppDispose_DisposesItsStore()
     {
-        var app = new global::app.@this(_tempDir).Testing();
+        var app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing();
         var store = app.store;
         await store.Set("probe", "k", new Data("k", "held", context: app.actor.list.System.Context));
         await Assert.That((await (await store.Get<global::app.type.item.@this>("probe", "k")).Value())?.ToString()).IsEqualTo("held");
@@ -367,7 +367,7 @@ public class DataSourceTests
     [Test]
     public async Task App_UsesInMemory_WhenTestingEnabled()
     {
-        await using var engine = new global::app.@this(_tempDir).TestSigning();
+        await using var engine = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning();
         await engine.test.list.Open();
 
         // app.store is in-memory under Testing — no .data directory created.
@@ -386,7 +386,7 @@ public class DataSourceTests
     [Test]
     public async Task App_UsesFileBacked_ByDefault()
     {
-        await using var engine = new global::app.@this(_tempDir).TestSigning();
+        await using var engine = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning();
         // Testing not enabled → file-backed .data/data.sqlite.
 
         var ds = engine.store;

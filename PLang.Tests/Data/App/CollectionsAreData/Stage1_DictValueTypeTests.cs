@@ -9,7 +9,7 @@ namespace PLang.Tests.App.CollectionsAreData;
 // repointing in Stage1_DictNavigationAndWriterTests.
 public class Stage1_DictValueTypeTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/tmp/Stage1DictVT-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this app = new global::app.@this("/tmp/Stage1DictVT-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]

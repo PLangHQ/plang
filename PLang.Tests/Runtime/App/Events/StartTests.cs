@@ -13,7 +13,7 @@ public class StartTests
     private readonly List<global::app.@event.binding.@this> _bound = new();
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/test").Testing();
+    public void Setup() => _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
 
     [After(Test)]
     public async Task Cleanup()

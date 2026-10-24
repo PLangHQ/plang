@@ -14,7 +14,7 @@ public class ActorIdentityTests : System.IAsyncDisposable
     public ActorIdentityTests()
     {
         System.IO.Directory.CreateDirectory(_root);
-        _app = new global::app.@this(_root).TestSigning();
+        _app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).TestSigning();
     }
 
     public async System.Threading.Tasks.ValueTask DisposeAsync()

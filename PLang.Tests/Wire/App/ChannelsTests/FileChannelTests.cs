@@ -10,7 +10,7 @@ public class FileChannelTests
     {
         var dir = Path.Combine(Path.GetTempPath(), "plang_filech_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
-        var app = new global::app.@this(dir).Testing();
+        var app = new global::app.@this(dir, global::PLang.Tests.Parent.Actor).Testing();
         return (app, app.actor.list.User.Context, dir);
     }
 

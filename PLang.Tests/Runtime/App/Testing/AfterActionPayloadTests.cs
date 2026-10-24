@@ -13,7 +13,7 @@ public class AfterActionPayloadTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test").Testing();
+        _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
     }
 
     [After(Test)]

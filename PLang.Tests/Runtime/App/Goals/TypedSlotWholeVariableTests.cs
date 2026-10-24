@@ -24,7 +24,7 @@ public class TypedSlotWholeVariableTests
     [Arguments("%missing%/")]
     public async Task FileExists_OnAVariableNamingAMissingFile_AnswersAPathThatIsEmpty(string given)
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("missing", "/nothere");
 
@@ -39,7 +39,7 @@ public class TypedSlotWholeVariableTests
     [Test]
     public async Task ADurationSlot_GivenAWholeVariableHoldingText_ReadsADuration()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("wait", "10ms");
         var goal = await Loaded(app, """
@@ -62,7 +62,7 @@ public class TypedSlotWholeVariableTests
     [Test]
     public async Task ATypedSlot_SettlingAReferenceToUnreadContent_DoesNotReadIt()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var unread = ctx.App.type.list[new global::app.type.@this("item", "json"), ctx].Make("{\"a\":1}", ctx);
         await ctx.Variable.Set("j", new global::app.data.@this("j", unread, context: ctx));
@@ -79,7 +79,7 @@ public class TypedSlotWholeVariableTests
     [Test]
     public async Task AnOpenSlot_KeepsTheVariablesOwnType()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("missing", "/nothere");
         var goal = await Loaded(app, """

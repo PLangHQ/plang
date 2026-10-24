@@ -13,12 +13,12 @@ namespace PLang.Tests.App.CollectionsAreData;
 // disambiguates by wrapper type (dict→{}, list→[]).
 public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/tmp/Stage3Arrays-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this app = new global::app.@this("/tmp/Stage3Arrays-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static global::app.@this NewApp()
         => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-arrays-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-arrays-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
 
     [Test]
     public async Task UnwrapJsonArray_ProducesListOfData_NotRaw()

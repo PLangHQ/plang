@@ -20,7 +20,7 @@ public class RealPathGateTests : System.IAsyncDisposable
         outside = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-real-out-" + System.Guid.NewGuid().ToString("N")[..8])).FullName;
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "secret.txt"), "outside");
         System.IO.File.WriteAllText(System.IO.Path.Combine(root, "a.txt"), "inside");
-        app = new global::app.@this(root).TestSigning();
+        app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
         user = app.actor.list.User.Context;
         channel = new Asking(user);
         app.actor.list.User.Channel.Register(channel);
@@ -73,7 +73,7 @@ public class RealPathGateTests : System.IAsyncDisposable
         if (System.OperatingSystem.IsWindows()) return;
         var alias = System.IO.Path.Combine(outside, "alias");
         System.IO.Directory.CreateSymbolicLink(alias, root);
-        await using var aliased = new global::app.@this(alias).TestSigning();
+        await using var aliased = new global::app.@this(alias, global::PLang.Tests.Parent.Actor).TestSigning();
         var asking = new Asking(aliased.actor.list.User.Context);
         aliased.actor.list.User.Channel.Register(asking);
         var ctx = aliased.actor.list.User.Context;

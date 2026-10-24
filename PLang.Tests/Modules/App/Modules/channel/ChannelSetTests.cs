@@ -10,7 +10,7 @@ public class ChannelSetTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app").Testing();
+        _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         _app.goal.list.Add(new global::app.goal.@this(_app.type.list)
         {
             Name = "LogIt",

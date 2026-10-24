@@ -7,7 +7,7 @@ namespace PLang.Tests.App.CallbackTests;
 /// </summary>
 public class ErrorCallbackTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/errcb-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+    private readonly global::app.@this _app = new global::app.@this("/tmp/errcb-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]

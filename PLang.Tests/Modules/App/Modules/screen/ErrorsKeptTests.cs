@@ -13,7 +13,7 @@ public class ErrorsKeptTests : IDisposable
     public ErrorsKeptTests()
     {
         _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_errors_" + Guid.NewGuid().ToString("N"))).FullName;
-        _app = new global::app.@this(_root).Testing();
+        _app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
     }
 
     public void Dispose()

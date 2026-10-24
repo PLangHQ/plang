@@ -12,7 +12,7 @@ public class IWriterContractTests : System.IAsyncDisposable
 {
     // Born-with-context: serialized records are born from this app's user context.
     private readonly global::app.@this app = new global::app.@this(
-        "/tmp/iwriter-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/iwriter-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static (Utf8JsonWriter jw, MemoryStream ms) MakeWriter()

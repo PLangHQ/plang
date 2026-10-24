@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Serialization;
 
 public class SchemaLayerFormatTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/tmp/SchemaLayer-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this app = new global::app.@this("/tmp/SchemaLayer-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     // Render a value through the json IWriter exactly as the wire writer's

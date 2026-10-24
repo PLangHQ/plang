@@ -129,7 +129,7 @@ public class StartTests
     [Test]
     public async Task Values_LeaveOutTheCallersWords()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.System.Context;
         var start = Start.Parse(["--debug", "--call.setting.timing=false"]);
 
@@ -145,7 +145,7 @@ public class StartTests
     [Test]
     public async Task Set_ARefusedFlag_WritesNoneOfTheOthers()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.System.Context;
         var store = app.actor.list.System.Setting;
         var start = Start.Parse(["--math.setting.equal.digits=3", "--nothing.here=1"]);

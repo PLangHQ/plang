@@ -4,7 +4,7 @@ namespace PLang.Tests.App;
 public class AppNodesTests
 {
     private static global::app.@this NewApp() => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-        "plang-nodes-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        "plang-nodes-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
 
     private static System.Threading.Tasks.ValueTask<global::app.data.@this> Read(string variable, global::app.actor.context.@this context)
         => new global::app.type.item.variable.@this(variable.Trim('%'), context.App.type.list).Start(context);

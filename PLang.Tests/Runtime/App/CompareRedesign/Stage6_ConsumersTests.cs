@@ -11,7 +11,7 @@ namespace PLang.Tests.App.CompareRedesign;
 public class Stage6_ConsumersTests
 {
     private static global::app.@this NewApp() => new(System.IO.Path.Combine(
-        System.IO.Path.GetTempPath(), "plang-stage6-" + System.Guid.NewGuid().ToString("N")[..8]));
+        System.IO.Path.GetTempPath(), "plang-stage6-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     private static Data D(global::app.@this app, object? v, string typeName)
         => new("x", v, app.actor.list.User.Context.App.type.list[typeName], context: app.actor.list.User.Context);

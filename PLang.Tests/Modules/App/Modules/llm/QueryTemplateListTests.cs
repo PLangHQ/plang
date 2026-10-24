@@ -11,7 +11,7 @@ public class QueryTemplateListTests
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "llm_template_list_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(dir);
-        await using var app = new global::app.@this(dir).Testing();
+        await using var app = new global::app.@this(dir, global::PLang.Tests.Parent.Actor).Testing();
         var handler = LlmTestHelper.SetupMockHttp(app);
         string? sent = null;
         handler.Handler = async request =>

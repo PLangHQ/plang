@@ -26,7 +26,7 @@ public class WireTemplateOutputTests
     [Test]
     public async Task TemplateWire_IntoJson_WritesItsVariablesValues()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("x", "m-1");
 
@@ -41,7 +41,7 @@ public class WireTemplateOutputTests
     [Test]
     public async Task TemplateWire_InAPr_IsItsSliceAsAuthored()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("x", "m-1");
 

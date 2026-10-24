@@ -11,7 +11,7 @@ public class SetTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app").Testing();
+        _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     }
 
     [Test]

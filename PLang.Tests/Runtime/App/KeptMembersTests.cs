@@ -23,7 +23,7 @@ public class KeptMembersTests
     [Test]
     public async Task TheApp_KeepsAMember_ForEveryAsker()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
 
         await (await Set(app.actor.list.User.Context, "%!app.home%", app.actor.list.User.Context.Text("lights"))).IsSuccess();
 
@@ -34,7 +34,7 @@ public class KeptMembersTests
     [Test]
     public async Task ACall_KeepsAMember_AsLongAsItLives()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await using var frame = ctx.call.Push(names: null, await ctx.call.Setting());
         var call = new global::app.data.@this("call", frame, context: ctx);
@@ -47,7 +47,7 @@ public class KeptMembersTests
     [Test]
     public async Task AVariablesOwnValue_KeepsAMember_InItsBinding()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("name", new global::app.data.@this("name", "Ingi", context: ctx));
 
@@ -62,7 +62,7 @@ public class KeptMembersTests
     [Test]
     public async Task AnAddedMember_IsNoProperty()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("name", new global::app.data.@this("name", "Ingi", context: ctx));
 
@@ -74,7 +74,7 @@ public class KeptMembersTests
     [Test]
     public async Task AProperty_IsNoMember()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("x", new global::app.data.@this("x", "box", context: ctx));
 
@@ -89,7 +89,7 @@ public class KeptMembersTests
     [Test]
     public async Task AnAddedMember_RidesTheWire()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("name", new global::app.data.@this("name", "Ingi", context: ctx));
         await (await Set(ctx, "%name.lang%", ctx.Text("is"))).IsSuccess();
@@ -108,7 +108,7 @@ public class KeptMembersTests
     [Test]
     public async Task AnAddedMember_RidesTheStore()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("name", new global::app.data.@this("name", "Ingi", context: ctx));
         await (await Set(ctx, "%name.lang%", ctx.Text("is"))).IsSuccess();
@@ -124,7 +124,7 @@ public class KeptMembersTests
     [Test]
     public async Task APlainValueInsideAnother_IsRefused()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("d", new global::app.data.@this("d", new Dictionary<string, object?> { ["note"] = "x" }, context: ctx));
 
@@ -138,7 +138,7 @@ public class KeptMembersTests
     [Test]
     public async Task AnOwnMember_IsNeverWrittenOver_NorShadowed()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         var set = await Set(ctx, "%!app.module%", ctx.Text("mine"));
@@ -151,7 +151,7 @@ public class KeptMembersTests
     [Test]
     public async Task ASettingsTypo_StillRefuses()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
 
         var set = await Set(app.actor.list.User.Context, "%!app.goal.list.setting.foo%", (global::app.type.item.number.@this)1);
 
@@ -161,11 +161,11 @@ public class KeptMembersTests
     [Test]
     public async Task TheAppsMembers_RideItsSnapshot()
     {
-        var src = new global::app.@this("/src").Testing();
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         await (await Set(src.actor.list.User.Context, "%!app.home%", src.actor.list.User.Context.Text("lights"))).IsSuccess();
 
         var snap = src.Snapshot(src.actor.list.User.Context);
-        await using var dst = new global::app.@this("/dst").Testing();
+        await using var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(snap, dst.actor.list.User.Context);
 
         await Assert.That(await Read(dst.actor.list.User.Context, "%!app.home%")).IsEqualTo("lights");

@@ -16,7 +16,7 @@ public class TaskTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/tmp/task-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        _app = new global::app.@this("/tmp/task-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         _errors = new System.IO.MemoryStream();
         _app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
             global::app.channel.list.@this.Error, _errors, global::app.channel.ChannelDirection.Output, ownsStream: false)
@@ -68,7 +68,7 @@ public class TaskTests
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(root, ".build"));
         try
         {
-            await using var app = new global::app.@this(root).Testing();
+            await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
             var ctx = app.actor.list.User.Context;
             app.goal.list.Add(Make.Goal(ctx, "Slow", "/Slow.goal", Make.Step("sleep", Make.Action(ctx, "timer", "sleep", ("Duration", "300ms")))));
             var start = Make.Goal(ctx, "Start", "/Start.goal", Make.Step("call Slow in parallel",

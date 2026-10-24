@@ -5,7 +5,7 @@ namespace PLang.Tests;
 /// written through it — calls read what they capture through their context's settings.</summary>
 public static class TestCalls
 {
-    private static readonly global::app.@this App = new global::app.@this("/tmp/plang-call-tests").Testing();
+    private static readonly global::app.@this App = new global::app.@this("/tmp/plang-call-tests", global::PLang.Tests.Parent.Actor).Testing();
 
     public static System.Func<global::app.actor.setting.@this> Settings(System.Collections.Generic.IDictionary<string, object?>? options = null)
     {

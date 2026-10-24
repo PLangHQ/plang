@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Decider;
 // the decider is certain of it or not.
 public class PickOptionTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing();
+    private readonly global::app.@this _app = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os"), global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;

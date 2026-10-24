@@ -14,7 +14,7 @@ public class SettingNodeTests
     // set %!…diff% = true, then set %!…diff.deep% = true: the node is on, and so is its member.
     [Test] public async Task ANodeSetWholeAndByItsMembers_KeepsBoth()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.System.Context;
         ctx.Setting.Set(Path + ".diff", ctx.Ok(true));
         ctx.Setting.Set(Path + ".diff.deep", ctx.Ok(true));
@@ -27,7 +27,7 @@ public class SettingNodeTests
     // %!…diff.enabled% and %!…diff.disabled% answer, whatever the node holds.
     [Test] public async Task ANode_AnswersEnabledAndDisabled()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.System.Context;
 
         await Assert.That((await (await Read("%!app.call.setting.diff.enabled%", ctx)).Value())?.ToString()).IsEqualTo("false");
@@ -38,7 +38,7 @@ public class SettingNodeTests
     // A node read as a bool is whether it is on.
     [Test] public async Task ANode_ReadAsABool_IsWhetherItIsOn()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.System.Context;
         await Assert.That(await (await Read("%!app.call.setting.diff%", ctx)).ToBooleanAsync()).IsFalse();
 
@@ -49,7 +49,7 @@ public class SettingNodeTests
     // A node takes a bool or its members — a number written onto it is refused.
     [Test] public async Task ANode_RefusesAValueThatIsNoBool()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var applied = new global::app.call.setting.@this(new global::app.type.@this(typeof(global::app.call.setting.@this))).Apply(
             new Dictionary<string, object?> { ["diff"] = 5 }, app.actor.list.System.Context);
 

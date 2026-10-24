@@ -14,7 +14,7 @@ public class SettingOwnerTests
     // stack that reads it on every push.
     [Test] public async Task CallStack_TakesAPlangSet()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await Assert.That((await app.actor.list.User.Context.call.Timing()).Value).IsFalse();
 
@@ -29,7 +29,7 @@ public class SettingOwnerTests
     // The system's value (a CLI flag) reaches both actors' stacks — the user falls back to it.
     [Test] public async Task CallStack_TakesTheSystemsValue()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await (await app.actor.list.System.Setting.Flag("app.call.setting", new Dictionary<string, object?> { ["history"] = true }, app.actor.list.System.Context)).IsSuccess();
         await Assert.That((await app.actor.list.System.Context.call.History()).Value).IsTrue();
         await Assert.That((await app.actor.list.User.Context.call.History()).Value).IsTrue();
@@ -39,7 +39,7 @@ public class SettingOwnerTests
     // that actor's stack, never another's.
     [Test] public async Task CallStack_TakesItsContextsValue_AndNoOthers()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await (await app.actor.list.User.Context.Setting.Flag("app.call.setting", new Dictionary<string, object?> { ["timing"] = true }, app.actor.list.User.Context)).IsSuccess();
         await Assert.That((await app.actor.list.User.Context.call.Timing()).Value).IsTrue();
         await Assert.That((await app.actor.list.System.Context.call.Timing()).Value).IsFalse();
@@ -48,7 +48,7 @@ public class SettingOwnerTests
     // Debug, once born, takes a later value under its path.
     [Test] public async Task Debug_TakesALaterValue()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         app.Debug = new global::app.module.debug.@this(app.actor.list.System.Context);
         await Assert.That((await app.Debug.Setting()).Length.Max.ToInt32()).IsEqualTo(500);
 
@@ -59,7 +59,7 @@ public class SettingOwnerTests
     // A value the option can't take is refused at the flag, and nothing is written.
     [Test] public async Task Flag_RefusesAValueItsOptionCantTake()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var set = await app.actor.list.System.Setting.Flag("app.test.setting", new Dictionary<string, object?> { ["format"] = "nonsense" }, app.actor.list.System.Context);
         await set.IsFailure();
         await Assert.That((await app.actor.list.System.Context.Setting.Get<global::app.test.setting.@this>()).Format.Value.ToString())
@@ -69,7 +69,7 @@ public class SettingOwnerTests
     // The app's own setting, read through the app: %!app.setting.create%.
     [Test] public async Task AppSetting_ReadsThroughTheApp()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await Assert.That((await (await Read("%!app.setting.create%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("false");
 
         await (await app.actor.list.System.Setting.Flag("app.setting", new Dictionary<string, object?> { ["create"] = true }, app.actor.list.System.Context)).IsSuccess();
@@ -80,7 +80,7 @@ public class SettingOwnerTests
     // as skip in a goal, and a `set default` on it leaves the CLI's value.
     [Test] public async Task ASettingTheCliWrote_ReadsAsWritten_AndASetDefaultLeavesIt()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         // as the CLI does it: build mode born, then the flag's values written
         app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
         var path = new global::app.module.build.setting.@this(new global::app.type.@this(typeof(global::app.module.build.setting.@this))).Path;
@@ -107,13 +107,13 @@ public class SettingOwnerTests
         System.IO.Directory.CreateDirectory(dir);
         try
         {
-            await using (var first = new global::app.@this(dir))
+            await using (var first = new global::app.@this(dir, global::PLang.Tests.Parent.Actor))
             {
                 var saved = new global::app.test.setting.@this(new global::app.type.@this(typeof(global::app.test.setting.@this))) { Timeout = System.TimeSpan.FromSeconds(7) };
                 await (await first.actor.list.System.Setting.Save(saved)).IsSuccess();
             }
 
-            await using var app = new global::app.@this(dir);
+            await using var app = new global::app.@this(dir, global::PLang.Tests.Parent.Actor);
             await app.Load();
             await Assert.That((await app.actor.list.User.Context.Setting.Get<global::app.test.setting.@this>()).Timeout.Value.TotalSeconds).IsEqualTo(7);
         }

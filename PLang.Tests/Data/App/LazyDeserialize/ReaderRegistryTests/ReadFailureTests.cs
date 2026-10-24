@@ -17,7 +17,7 @@ public class ReadFailureTests
     // a typed Data error, not an uncaught exception.
     private static global::app.@this NewApp()
         => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-readfail-" + System.Guid.NewGuid().ToString("N")[..8]));
+            "plang-readfail-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     [Test] public async Task Read_OfMalformedJson_ProducesError_NotThrow()
     {

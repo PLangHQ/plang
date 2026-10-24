@@ -10,7 +10,7 @@ namespace PLang.Tests.App.CompareRedesign;
 public class Stage4_RankTests
 {
     private static global::app.@this NewApp() => new(System.IO.Path.Combine(
-        System.IO.Path.GetTempPath(), "plang-stage4r-" + System.Guid.NewGuid().ToString("N")[..8]));
+        System.IO.Path.GetTempPath(), "plang-stage4r-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     private static Data D(global::app.@this app, object? v, string typeName)
         => new("x", v, app.actor.list.User.Context.App.type.list[typeName], context: app.actor.list.User.Context);
@@ -42,7 +42,7 @@ public class Stage4_RankTests
         // async reconcile orders the real values, so comparing forces both operands to be read
         await using var app = NewApp();
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-rank-" + System.Guid.NewGuid().ToString("N")[..8]);
-        await using var app2 = new global::app.@this(root);
+        await using var app2 = new global::app.@this(root, global::PLang.Tests.Parent.Actor);
         var p = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "cfg.json"));
         await (await p.WriteText("5", app2.actor.list.User.Context)).IsSuccess();
         var pending = await p.Decoded(app2.actor.list.User.Context);   // raw-backed, unparsed

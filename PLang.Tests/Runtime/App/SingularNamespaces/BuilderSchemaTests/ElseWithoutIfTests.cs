@@ -9,7 +9,7 @@ namespace PLang.Tests.App.SingularNamespaces.BuilderSchemaTests;
 /// refused by the action list's <c>Validate</c> with <c>ElseWithoutIf</c>.</summary>
 public class ElseWithoutIfTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.goal.step.action.@this If() =>
@@ -147,7 +147,7 @@ public class ElseWithoutIfTests : System.IAsyncDisposable
     public async Task LoneIf_OverIndentedSteps_NeedsNoChild()
     {
         // `- if %count% > 0` with steps indented under it: its body comes from the layout (build.fold).
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.System.Context;
         var goal = global::app.goal.@this.Parse("G\n- if %count% > 0\n    - call ProcessItems\n",
             global::app.type.item.path.@this.Resolve("/G.goal", ctx), ctx)!;
@@ -163,7 +163,7 @@ public class ElseWithoutIfTests : System.IAsyncDisposable
     [Test]
     public async Task StepValidate_KeepsTheChainsKey_ForTheBuilderToRouteBy()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.System.Context;
         var goal = global::app.goal.@this.Parse("G\n- else\n- if %n% > 5, call Big\n",
             global::app.type.item.path.@this.Resolve("/G.goal", ctx), ctx)!;
@@ -193,7 +193,7 @@ public class ElseWithoutIfTests : System.IAsyncDisposable
     [Test]
     public async Task ElseWithoutIf_InSettle_GoesToSourceErrorOnly_AndCarriesTheFix()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var shared = app.actor.list.User.Context;
         const string fix = "- if %x% == 1, write out \"one\", else write out \"other\"";
@@ -226,7 +226,7 @@ public class ElseWithoutIfTests : System.IAsyncDisposable
     [Test]
     public async Task ElseWithoutIf_NamesItsStep_WhenTheActionHoldsOne()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("if %x% == 1, write out \"one\"", If()), Make.Step("else"));
         var elseStep = goal.Step[1];
         elseStep.Code.Add(Else().In(elseStep));

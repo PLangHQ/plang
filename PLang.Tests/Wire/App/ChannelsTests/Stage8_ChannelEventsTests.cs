@@ -12,7 +12,7 @@ namespace PLang.Tests.App.ChannelsTests;
 public class Stage8_ChannelEventsTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this(
-        "/tmp/s8-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/s8-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
@@ -230,7 +230,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task TheChannelTypesWrite_FiresForEveryChannel_UserAndServiceAlike()
     {
-        await using var app = new global::app.@this("/tmp/s8-cross").Testing();
+        await using var app = new global::app.@this("/tmp/s8-cross", global::PLang.Tests.Parent.Actor).Testing();
         var userLogger = StreamChannel.Memory("logger");
         var serviceLogger = StreamChannel.Memory("logger");
         app.actor.list.User.Channel.Register(userLogger);

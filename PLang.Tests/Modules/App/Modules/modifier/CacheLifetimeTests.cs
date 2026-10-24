@@ -7,7 +7,7 @@ public class CacheLifetimeTests
     [Test]
     public async Task DisposingAnApp_DisposesItsStepCache()
     {
-        var app = new global::app.@this("/app").Testing();
+        var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         await app.Cache.SetAsync("kept", ctx.Ok("a value"), new CacheSettings { DurationMs = 60_000, Sliding = false });
         await Assert.That(await app.Cache.GetAsync("kept")).IsNotNull();

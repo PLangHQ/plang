@@ -8,7 +8,7 @@ public class PrStepLineTests
     [Test]
     public async Task AnUnindentedStep_WritesItsIndent()
     {
-        await using var app = new global::app.@this(Root).Testing();
+        await using var app = new global::app.@this(Root, global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var goal = await global::PLang.Tests.Shared.RealGoalLoad.Read(app,
             System.IO.File.ReadAllText(System.IO.Path.Combine(Root, ".build", "setdeciderkey.pr")),

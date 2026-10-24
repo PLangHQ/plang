@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Serialization;
 public class TextStreamSerializerTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this(
-        "/tmp/txtser-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/txtser-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 

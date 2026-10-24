@@ -13,7 +13,7 @@ public class ChannelReadBoundaryTests
 {
     private static global::app.@this NewApp()
         => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-chan-" + System.Guid.NewGuid().ToString("N")[..8]));
+            "plang-chan-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     // Builds an input stream channel carrying `mime` over `body`, wired into the
     // actor's Channels (so the boundary can reach Format + context).

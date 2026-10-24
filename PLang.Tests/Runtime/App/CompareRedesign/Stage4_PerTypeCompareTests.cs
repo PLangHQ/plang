@@ -9,11 +9,11 @@ namespace PLang.Tests.App.CompareRedesign;
 // antisymmetry holds. Ordering math is sync — Stage 5 awaits the values.
 public class Stage4_PerTypeCompareTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.@this NewApp() => new(System.IO.Path.Combine(
-        System.IO.Path.GetTempPath(), "plang-stage4-" + System.Guid.NewGuid().ToString("N")[..8]));
+        System.IO.Path.GetTempPath(), "plang-stage4-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     private async Task<Comparison> Cmp(global::app.@this app, object? a, object? b,
         string? aType = null, string? bType = null)

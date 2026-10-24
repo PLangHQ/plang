@@ -16,7 +16,7 @@ public class TableTypeTests
 {
     private static global::app.@this NewApp()
         => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-table-" + System.Guid.NewGuid().ToString("N")[..8]));
+            "plang-table-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     private const string Csv = "name,age\nAda,36\nGrace,40\n";
 

@@ -11,7 +11,7 @@ public class NestedRegisteredTypeRoundTripTests
 {
     private static global::app.@this NewApp()
         => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-nested-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-nested-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
 
     [Test]
     public async Task Image_WithPathFacet_BothNodesDispatched_OnWire()

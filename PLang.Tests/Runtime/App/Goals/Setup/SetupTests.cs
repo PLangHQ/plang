@@ -16,7 +16,7 @@ public class SetupTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-setup-test-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).TestSigning();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning();
     }
 
     [After(Test)]

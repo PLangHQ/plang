@@ -9,7 +9,7 @@ public class CallKnobReadTests
     [Test]
     public async Task TheCallSettingsTiming_ReadsAsSet()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         await Assert.That(await Read("%!app.call.setting.timing%", context)).IsEqualTo("false");
 

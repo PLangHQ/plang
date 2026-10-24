@@ -18,7 +18,7 @@ public class ExecuteVerbTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-execute-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new global::app.@this(root).Testing();
+        return new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
     }
 
     private sealed class CannedChannel : global::app.channel.@this

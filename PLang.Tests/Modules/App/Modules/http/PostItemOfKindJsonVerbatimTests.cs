@@ -23,7 +23,7 @@ public class PostItemOfKindJsonVerbatimTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_post_json_verbatim_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir);
+        _app = new PLangEngine(_tempDir, global::PLang.Tests.Parent.Actor);
 
         _handler = new MockHandler();
         var provider = new Default(_handler) { Name = "test" };

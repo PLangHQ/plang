@@ -28,7 +28,7 @@ public class ActionSlotIsByTypeTests
         _dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_actionslot_" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_dir);
-        _app = new global::app.@this(_dir);
+        _app = new global::app.@this(_dir, global::PLang.Tests.Parent.Actor);
         await Task.CompletedTask;
     }
 

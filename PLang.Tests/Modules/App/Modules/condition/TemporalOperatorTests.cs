@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Modules.condition;
 // covered only at the low-level Stage4_PerTypeCompareTests, never through Operator.
 public class TemporalOperatorTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private readonly Default _eval = new();

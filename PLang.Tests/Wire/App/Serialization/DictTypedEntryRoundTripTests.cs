@@ -9,7 +9,7 @@ public class DictTypedEntryRoundTripTests
 {
     private static global::app.@this NewApp()
         => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-dictentry-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-dictentry-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
 
     // Acceptance test for the context-never-null work: a dict of nested typed entries
     // ({type,value}, no @schema) round-trips through the Store wire with each entry's type

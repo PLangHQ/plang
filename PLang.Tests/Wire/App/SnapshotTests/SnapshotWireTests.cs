@@ -17,13 +17,13 @@ public class SnapshotWireTests
     [Test]
     public async Task Variables_SurviveWireRoundTrip_WithValueAndType()
     {
-        var src = new global::app.@this("/src").Testing();
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         await src.actor.list.User.Context.Variable.Set("count", 42L);
         await src.actor.list.User.Context.Variable.Set("name", "plang");
 
         var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context));
 
-        var dst = new global::app.@this("/dst").Testing();
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(wired, dst.actor.list.User.Context);
 
         await Assert.That((await (await dst.actor.list.User.Context.Variable.Get("count")).Value())?.ToString()).IsEqualTo("42");
@@ -35,12 +35,12 @@ public class SnapshotWireTests
     {
         // The App's Mode rides the wire as one value: building here, so the destination builds
         // and its Test (Testing() sets one) is cleared.
-        var src = new global::app.@this("/src").Testing();
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         src.Build = new global::app.module.build.@this(src.actor.list.System.Context);
 
         var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context));
 
-        var dst = new global::app.@this("/dst").Testing();
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(wired, dst.actor.list.User.Context);
 
         await Assert.That(dst.Build != null).IsTrue();
@@ -58,7 +58,7 @@ public class SnapshotWireTests
         // Build a frame section by hand the way call.@this.Capture does, then drive
         // it through the wire. The int keys must come back as int (not long) so
         // CallStack.Restore's Read<int> resolves them.
-        var src = new global::app.@this("/src").Testing();
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         var snap = new global::app.snapshot.@this(src.actor.list.User.Context);
         // Emulate one captured frame's scalar shape.
         var cs = snap.Section("CallStack");
@@ -106,7 +106,7 @@ public class SnapshotWireTests
         // STRING (the disk shape), read it back, and Resume — re-entering the
         // captured step and running to success with nothing held in memory.
         var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-wire-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-wire-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
 
         var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
@@ -139,7 +139,7 @@ public class SnapshotWireTests
         // the `resume` verb's Data<snapshot> param triggers at the action boundary —
         // then Resume re-enters the suspended step and succeeds.
         var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
 
         var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
@@ -187,7 +187,7 @@ public class SnapshotWireTests
         //  - The stack unwinds: the entry goal Start runs its POST-call step.
         //  - Survivor vars are intact.
         var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-mid-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-mid-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         await context.Variable.Set("keep", "alive");
         await context.Variable.Set("i", 1L);
@@ -240,7 +240,7 @@ public class SnapshotWireTests
         // NOT Deserialize directly. Isolates whether that conversion yields a
         // navigable snapshot.@this and whether the edit survives resume.
         var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-aspath-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-aspath-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
 
         var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
@@ -282,7 +282,7 @@ public class SnapshotWireTests
         // its json content — the snapshot's own sections, nested Data self-describing via @schema —
         // NOT the top-level plang wire envelope. (A resumable save uses a plang-registered extension.)
         var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-fs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-fs-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         await context.Variable.Set("x", 1L);
 
@@ -313,7 +313,7 @@ public class SnapshotWireTests
         // from app.Snapshot(error) (throw-time: SnapshotAt + error.CallFrames), the
         // path Error.Callback uses in the .test.goal — not app.Snapshot(app.actor.list.User.Context) (live).
         var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
 
         var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
@@ -354,7 +354,7 @@ public class SnapshotWireTests
         // honours a typed-string snapshot end-to-end (the cast must reach this Data;
         // see RawStringInSnap counterpart: an untyped string loses the edit).
         var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-typed-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-typed-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
 
         var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
@@ -387,7 +387,7 @@ public class SnapshotWireTests
         // %snap.variables.x% (read), edit it (set), then resume — the edit flows
         // into resumed execution. Mirrors the .test.goal.
         var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-nav-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-nav-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
 
         var goal = new Goal(app.type.list) { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context) };
@@ -423,12 +423,12 @@ public class SnapshotWireTests
     [Test]
     public async Task EmptyApp_WireIsValidJson_AndRestoresClean()
     {
-        var src = new global::app.@this("/src").Testing();
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         var json = await src.SnapshotToWire(src.Snapshot(src.actor.list.User.Context));
 
         await Assert.That(json.StartsWith("{")).IsTrue();
 
-        var dst = new global::app.@this("/dst").Testing();
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore((await (await src.SnapshotFromWire(json, dst.actor.list.User.Context)).Value())!, dst.actor.list.User.Context);
 
         await Assert.That(dst.Build != null).IsFalse();

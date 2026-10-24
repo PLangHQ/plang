@@ -6,7 +6,7 @@ public class AppSnapshotTests
     public async Task App_Snapshot_WalksISnapshottedProperties_AndAggregatesIntoTree()
     {
         // Every owner captures its own section; the App's section carries its Mode (no presence bits).
-        var app = new global::app.@this("/test").Testing();
+        var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var snap = app.Snapshot(app.actor.list.User.Context);
 
         await Assert.That(snap.HasSection("Variables")).IsTrue();
@@ -21,13 +21,13 @@ public class AppSnapshotTests
     [Test]
     public async Task App_Restore_DispatchesEachSubtree_ToMatchingThisRestore()
     {
-        var src = new global::app.@this("/src").Testing();
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         await src.actor.list.User.Context.Variable.Set("x", 1);
         src.Build = new global::app.module.build.@this(src.actor.list.System.Context);   // building — Mode is Build
 
         var snap = src.Snapshot(src.actor.list.User.Context);
 
-        var dst = new global::app.@this("/dst").Testing();   // testing — restore sets it from the captured Mode
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();   // testing — restore sets it from the captured Mode
         await dst.Restore(snap, dst.actor.list.User.Context);
 
         await Assert.That((await (await dst.actor.list.User.Context.Variable.Get("x")).Value())?.ToString()).IsEqualTo("1");
@@ -38,7 +38,7 @@ public class AppSnapshotTests
     [Test]
     public async Task App_Snapshot_OmitsReconstructOnBuildSubsystems()
     {
-        var app = new global::app.@this("/test").Testing();
+        var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var snap = app.Snapshot(app.actor.list.User.Context);
 
         await Assert.That(snap.HasSection("Modules")).IsFalse();
@@ -56,10 +56,10 @@ public class AppSnapshotTests
     [Test]
     public async Task App_Cache_NotInSnapshot_FreshAppHasEmptyCache()
     {
-        var src = new global::app.@this("/src").Testing();
+        var src = new global::app.@this("/src", global::PLang.Tests.Parent.Actor).Testing();
         var snap = src.Snapshot(src.actor.list.User.Context);
 
-        var dst = new global::app.@this("/dst").Testing();
+        var dst = new global::app.@this("/dst", global::PLang.Tests.Parent.Actor).Testing();
         await dst.Restore(snap, dst.actor.list.User.Context);
 
         await Assert.That(dst.Cache).IsTypeOf<global::app.module.cache.Memory>();

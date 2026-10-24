@@ -13,7 +13,7 @@ namespace PLang.Tests.App.CollectionsAreData;
 public class Stage5_ListDictOpsTests
 {
     private global::app.@this _app = null!;
-    [Before(Test)] public void Setup() => _app = new global::app.@this("/app").Testing();
+    [Before(Test)] public void Setup() => _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     [After(Test)] public async Task TearDown() { await _app.DisposeAsync(); }
     private global::app.actor.context.@this Ctx() => _app.actor.list.User.Context;
     private Data D(object? v) => _app.Data("", v);

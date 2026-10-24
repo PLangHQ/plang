@@ -12,7 +12,7 @@ namespace PLang.Tests.App.LazyDeserialize.IntegrationCutsTests;
 // preserved. Arithmetic promotes-then-narrows; double⊕decimal raises.
 public class Cut5_NumberTowerRoundTrip : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     // A number serialized to its text form and read back through the

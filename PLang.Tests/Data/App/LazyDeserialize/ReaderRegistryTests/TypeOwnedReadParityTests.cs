@@ -11,7 +11,7 @@ namespace PLang.Tests.App.LazyDeserialize.ReaderRegistryTests;
 // handled.
 public class TypeOwnedReadParityTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task PathRead_MatchesPriorJsonConverterRead()
@@ -20,7 +20,7 @@ public class TypeOwnedReadParityTests : System.IAsyncDisposable
         // path.Read re-houses exactly that. Same subclass + same wire form for
         // absolute and http inputs.
         await using var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-pathread-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-pathread-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var r = new global::app.type.reader.@this();
         var rc = new global::app.type.reader.ReadContext(ctx);

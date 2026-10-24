@@ -12,12 +12,12 @@ namespace PLang.Tests.App.Settings;
 /// </summary>
 public class SettingsTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx()
     {
-        var engine = new EngineType("/app");
+        var engine = new EngineType("/app", global::PLang.Tests.Parent.Actor);
         return new global::app.actor.context.@this(engine, engine.actor.list.User, new Variables(engine.actor.list.User.Context));
     }
 
@@ -40,7 +40,7 @@ public class SettingsTests : System.IAsyncDisposable
     [Test]
     public async Task Set_KeepsAnAddressWithoutLooking()
     {
-        await using var app = new EngineType("/app");
+        await using var app = new EngineType("/app", global::PLang.Tests.Parent.Actor);
         var store = app.actor.list.System.Setting;
 
         await store.Set("app.no.such.setting.option", 1).IsSuccess();
@@ -55,7 +55,7 @@ public class SettingsTests : System.IAsyncDisposable
     [Test]
     public async Task Set_StringArray_BindsToListOfPath()
     {
-        await using var app = new EngineType("/app");
+        await using var app = new EngineType("/app", global::PLang.Tests.Parent.Actor);
         var settings = new Dictionary<string, object?>
         {
             ["files"] = new List<object?> { "a.goal", "b.goal" },
@@ -78,7 +78,7 @@ public class SettingsTests : System.IAsyncDisposable
     [Test]
     public async Task Set_OneString_BindsAsAListOfOne()
     {
-        await using var app = new EngineType("/app");
+        await using var app = new EngineType("/app", global::PLang.Tests.Parent.Actor);
 
         var result = await app.actor.list.System.Setting.Flag("build.setting", new Dictionary<string, object?> { ["files"] = "a.goal" }, app.actor.list.System.Context);
         await Assert.That(result.Success).IsTrue().Because(result.Error?.Message ?? "ok");
@@ -143,7 +143,7 @@ public class SettingsTests : System.IAsyncDisposable
     [Test]
     public async Task UserContext_FallsBackTo_TheSystemsSetting()
     {
-        var engine = new EngineType("/app");
+        var engine = new EngineType("/app", global::PLang.Tests.Parent.Actor);
         engine.actor.list.System.Setting.Set("llm.setting.cache", engine.actor.list.System.Context.Ok(false));
 
         var read = await engine.actor.list.User.Context.Setting.Get(Query(engine), "cache");
@@ -154,7 +154,7 @@ public class SettingsTests : System.IAsyncDisposable
     [Test]
     public async Task SystemContext_DoesNotSee_TheUsersSetting()
     {
-        var engine = new EngineType("/app");
+        var engine = new EngineType("/app", global::PLang.Tests.Parent.Actor);
         engine.actor.list.User.Setting.Set("llm.setting.cache", engine.actor.list.User.Context.Ok(false));
 
         var read = await engine.actor.list.System.Context.Setting.Get(Query(engine), "cache");

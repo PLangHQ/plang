@@ -14,7 +14,7 @@ public class LazyMaterialisationTests
 {
     private static global::app.@this NewApp()
         => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-lazymat-" + System.Guid.NewGuid().ToString("N")[..8]));
+            "plang-lazymat-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     [Test] public async Task Value_MaterialisesViaReader_WhenValueNull_AndRawSet()
     {

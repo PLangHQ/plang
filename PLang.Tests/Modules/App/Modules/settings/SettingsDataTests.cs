@@ -15,7 +15,7 @@ public class SettingsDataTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_settings_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).Testing();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing();
     }
 
     [After(Test)]
@@ -85,7 +85,7 @@ public class SettingsDataTests
     public async Task ActorDataSource_IsCreatedLazily()
     {
         // an app kept on disk (a test session's store is in memory): the store opens where it lives on first use
-        await using var onDisk = new global::app.@this(_tempDir).TestSigning();
+        await using var onDisk = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning();
         var dbDir = System.IO.Path.Combine(_tempDir, ".data");
         await Assert.That(onDisk.store).IsNotNull();
         await Assert.That(System.IO.Directory.Exists(dbDir)).IsFalse();
@@ -100,7 +100,7 @@ public class SettingsDataTests
     [Test]
     public async Task ASavedSetting_LivesInTheSettingsOwnStore()
     {
-        await using (var onDisk = new global::app.@this(_tempDir).TestSigning())
+        await using (var onDisk = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning())
         {
             var ctx = onDisk.actor.list.System.Context;
             var llm = await Llm(ctx);
@@ -112,7 +112,7 @@ public class SettingsDataTests
             await Assert.That(inData.IsInitialized && inData.Peek() is { IsNull: false }).IsFalse();
         }
 
-        await using var again = new global::app.@this(_tempDir).TestSigning();
+        await using var again = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning();
         var read = await new global::app.type.item.variable.@this("!llm.setting.cache", again.type.list).Start(again.actor.list.System.Context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("skip");
     }
@@ -123,7 +123,7 @@ public class SettingsDataTests
     public async Task Settings_CorruptDatabase_ReturnsSettingsError()
     {
         // an app kept on disk: its store is the file (a test session's store is in memory)
-        await using var onDisk = new global::app.@this(_tempDir).TestSigning();
+        await using var onDisk = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning();
 
         // Corrupt the database file — overwrite with garbage
         var dbPath = System.IO.Path.Combine(_tempDir, ".data", "data.sqlite");

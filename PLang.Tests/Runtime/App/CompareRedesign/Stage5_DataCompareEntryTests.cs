@@ -13,7 +13,7 @@ public class Stage5_DataCompareEntryTests
     {
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-stage5-" + System.Guid.NewGuid().ToString("N")[..8]);
-        return new(root);
+        return new(root, global::PLang.Tests.Parent.Actor);
     }
 
     private static Data D(global::app.@this app, object? v, string typeName)

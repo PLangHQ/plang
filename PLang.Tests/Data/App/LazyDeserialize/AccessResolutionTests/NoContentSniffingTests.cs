@@ -12,7 +12,7 @@ namespace PLang.Tests.App.LazyDeserialize.AccessResolutionTests;
 public class NoContentSniffingTests : System.IAsyncDisposable
 {
     private readonly global::app.@this _app = new global::app.@this(
-        "/tmp/NoContentSniffingTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/NoContentSniffingTests-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     // A `{` prefix is not enough to auto-pick json. Without `as json`,

@@ -15,13 +15,13 @@ public class DataMemberTests
 
     [Test] public async Task BeforeAnyAction_IsUnset()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await Assert.That((await Read(app.actor.list.User.Context)).IsInitialized).IsFalse();
     }
 
     [Test] public async Task AfterAnAction_IsItsResult()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var user = app.actor.list.User.Context;
         var result = await SetX(user, 5);
         await result.IsSuccess();
@@ -31,7 +31,7 @@ public class DataMemberTests
 
     [Test] public async Task EachActor_ItsOwn()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var system = app.actor.list.System.Context;
         await (await SetX(system, 7)).IsSuccess();
 

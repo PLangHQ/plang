@@ -15,7 +15,7 @@ public class MyIdentityResolverTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_myid_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).TestSigning();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning();
         (_app).TestIdentity();
     }
 
@@ -83,7 +83,7 @@ public class MyIdentityResolverTests
     public async Task MyIdentity_UpdatedAfterSetDefault()
     {
         // the real identity provider (TestIdentity answers one fixed identity for every call)
-        await using var real = new global::app.@this(System.IO.Path.Combine(_tempDir, "real")).TestSigning().Consenting();
+        await using var real = new global::app.@this(System.IO.Path.Combine(_tempDir, "real"), global::PLang.Tests.Parent.Actor).TestSigning().Consenting();
         var _app = real;
         var context = _app.actor.list.System.Context;
 

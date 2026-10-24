@@ -19,7 +19,7 @@ public class UnpackedLinkTests : IDisposable
         _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_link_" + Guid.NewGuid().ToString("N"))).FullName;
         _outside = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_link_out_" + Guid.NewGuid().ToString("N"))).FullName;
         System.IO.File.WriteAllText(Path.Combine(_outside, "secret.txt"), "outside");
-        _app = new global::app.@this(_root).Testing();
+        _app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
         _channel = new Asking(Context);
         _app.actor.list.User.Channel.Register(_channel);
     }

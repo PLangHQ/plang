@@ -13,7 +13,7 @@ namespace PLang.Tests.App.LazyDeserialize.AccessResolutionTests;
 //   if text, the string. No structured parse on scalar access.
 public class ScalarAccessTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     // A binary value is NOT guessed as text, even when the bytes happen to be
@@ -48,7 +48,7 @@ public class ScalarAccessTests : System.IAsyncDisposable
     [Test] public async Task Scalar_VariableInterpolation_BareVarIsRaw_DottedNavigates()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-scalarvar-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            System.IO.Path.GetTempPath(), "plang-scalarvar-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         ctx.Variable.Set("cfg", global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg"));
 

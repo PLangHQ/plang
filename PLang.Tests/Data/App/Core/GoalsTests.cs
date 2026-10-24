@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Core;
 // by its address through the type; a call's name is found by the list, from where it is called.
 public class GoalsTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.goal.list.@this Goals() => new(app.actor.list.User.Context.App);
@@ -149,7 +149,7 @@ public class GoalsTests : System.IAsyncDisposable
         var dir = TempApp();
         try
         {
-            await using var engine = new global::app.@this(dir).Testing();
+            await using var engine = new global::app.@this(dir, global::PLang.Tests.Parent.Actor).Testing();
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "normalgoal.pr"),
                 """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","step":[]}""");
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "setup.pr"),
@@ -171,7 +171,7 @@ public class GoalsTests : System.IAsyncDisposable
         var dir = TempApp();
         try
         {
-            await using var engine = new global::app.@this(dir).Testing();
+            await using var engine = new global::app.@this(dir, global::PLang.Tests.Parent.Actor).Testing();
             var pr = System.IO.Path.Combine(dir, ".build", "setup.pr");
             System.IO.File.WriteAllText(pr, """{"name":"Setup","path":"/Setup.goal","step":[]}""");
 
@@ -186,7 +186,7 @@ public class GoalsTests : System.IAsyncDisposable
     public async Task Load_RefusesAHeldSetupGoal()
     {
         // rooted where Named's paths resolve, so the held goal's .pr is the one loaded
-        await using var app = new global::app.@this(this.app.filesystem.root.Absolute).Testing();
+        await using var app = new global::app.@this(this.app.filesystem.root.Absolute, global::PLang.Tests.Parent.Actor).Testing();
         app.goal.list.Add(Named("SetupDb", "/setup/SetupDb.goal"));
 
         var result = await app.goal.Load("/setup/SetupDb.goal");
@@ -232,7 +232,7 @@ public class GoalsTests : System.IAsyncDisposable
         var dir = TempApp();
         try
         {
-            await using var engine = new global::app.@this(dir).Testing();
+            await using var engine = new global::app.@this(dir, global::PLang.Tests.Parent.Actor).Testing();
             var goal = Named("Helper", "/a/Helper.goal");
             engine.goal.list.Add(goal);
 
@@ -251,7 +251,7 @@ public class GoalsTests : System.IAsyncDisposable
         var dir = TempApp();
         try
         {
-            await using var engine = new global::app.@this(dir).Testing();
+            await using var engine = new global::app.@this(dir, global::PLang.Tests.Parent.Actor).Testing();
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "start.pr"),
                 """{"name":"Start","path":"/Start.goal","step":[],"child":[{"name":"Show","path":"/Start.goal","step":[]}]}""");
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "Start.goal"), "Start\n");

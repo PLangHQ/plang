@@ -13,7 +13,7 @@ public class SeparatorTests
         return dir!;
     }
 
-    private static global::app.@this Os() => new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+    private static global::app.@this Os() => new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os"), global::PLang.Tests.Parent.Actor).Testing().Building();
 
     // each offer as the formal line writes it, and as the decider is shown it
     private static async Task<(List<string> Written, List<string> Shown)> Offered(IReadOnlyList<global::app.type.item.@this> offers, global::app.actor.context.@this context)
@@ -70,7 +70,7 @@ public class SeparatorTests
     [Test]
     public async Task ANamedSeparator_RidesThePrByName_ALiteralByItsCharacters()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var line = await RoundTrip("\"line\"");
         var commaSpace = await RoundTrip("\", \"");
@@ -104,7 +104,7 @@ public class SeparatorTests
     [Test]
     public async Task SplitByLine_JoinWithComma_ALiteralItself_AndAVariableNamingOne()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         global::app.goal.step.action.@this Keep(string name) => Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", name, "variable"), ("Value", "%!data%"));
 

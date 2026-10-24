@@ -18,7 +18,7 @@ public class AskAnswerTests : System.IAsyncDisposable
     {
         outside = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-askanswer-" + System.Guid.NewGuid().ToString("N")[..8])).FullName;
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "secret.txt"), "outside");
-        app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-askanswer-root-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-askanswer-root-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         user = app.actor.list.User.Context;
         channel = new Counting(user);
         app.actor.list.User.Channel.Register(channel);

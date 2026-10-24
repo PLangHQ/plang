@@ -18,7 +18,7 @@ public class VariablesSnapshotTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test").Testing();
+        _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
     }
 
     // Fresh Variables — after filtering system vars (!app, Now, GUID, etc.) — snapshots to an empty dict.

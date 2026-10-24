@@ -10,7 +10,7 @@ public class DebugAttachTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test").Testing();
+        _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         _app.actor.list.System.Channel.Register(global::app.channel.type.stream.@this.Memory(global::app.channel.list.@this.Error));
         _capture = (global::app.channel.type.stream.@this)_app.actor.list.System.Channel.Get(global::app.channel.list.@this.Error)!;
     }

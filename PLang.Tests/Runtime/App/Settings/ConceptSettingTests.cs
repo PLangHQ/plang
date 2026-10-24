@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Settings;
 // list settings stay %!app.goal.list.setting%, and %!app.goal.setting% is not a second path to them.
 public class ConceptSettingTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private async Task<global::app.data.@this> Read(string text, global::app.actor.context.@this ctx)
@@ -13,7 +13,7 @@ public class ConceptSettingTests : System.IAsyncDisposable
 
     [Test] public async Task TestsSettings_AreReadThroughTheConceptType()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var read = await Read("%!app.test.setting.timeout%", app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That(await app.actor.list.User.Context.Written((await read.Value())!)).IsEqualTo("30s");
@@ -21,7 +21,7 @@ public class ConceptSettingTests : System.IAsyncDisposable
 
     [Test] public async Task AWriteThroughTheConceptType_IsThisRunsSetting()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var set = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
             global::PLang.Tests.Shared.Make.Param(context, "Name", "%!app.test.setting.parallel%", "variable"), ("value", 1)).Start(context);
@@ -34,7 +34,7 @@ public class ConceptSettingTests : System.IAsyncDisposable
     // A choice option takes its text through the one convert walk: `set %!app.test.setting.format% = 'junit'`.
     [Test] public async Task AChoiceOption_IsSetFromItsText()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var set = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
             global::PLang.Tests.Shared.Make.Param(context, "Name", "%!app.test.setting.format%", "variable"), ("value", "junit")).Start(context);
@@ -45,7 +45,7 @@ public class ConceptSettingTests : System.IAsyncDisposable
     // A value the option can't take is refused, and this run holds nothing for it.
     [Test] public async Task AValueTheOptionCantTake_IsRefused()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var set = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
             global::PLang.Tests.Shared.Make.Param(context, "Name", "%!app.test.setting.format%", "variable"), ("value", "csv")).Start(context);
@@ -57,7 +57,7 @@ public class ConceptSettingTests : System.IAsyncDisposable
     // goal that is unset. The goal list's settings are its list's.
     [Test] public async Task GoalsTypeNamesNoSettings_ItsListDoes()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var none = await Read("%!app.goal.setting%", context);
         await Assert.That(none.IsInitialized).IsFalse();

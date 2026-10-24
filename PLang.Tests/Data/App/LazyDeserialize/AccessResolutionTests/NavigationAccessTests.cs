@@ -13,7 +13,7 @@ public class NavigationAccessTests
 {
     private static global::app.@this NewApp()
         => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-nav-" + System.Guid.NewGuid().ToString("N")[..8]));
+            "plang-nav-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     [Test] public async Task Navigation_KnownType_MaterialisesViaReader_AndNavigates()
     {

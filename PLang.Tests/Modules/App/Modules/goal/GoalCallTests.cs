@@ -10,7 +10,7 @@ public class GoalCallTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app").Testing();
+        _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         // Register a stub goal that call.cs can find
         _app.goal.list.Add(new global::app.goal.@this(_app.type.list)
         {

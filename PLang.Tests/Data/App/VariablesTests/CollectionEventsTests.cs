@@ -8,7 +8,7 @@ namespace PLang.Tests.App.VariablesTests;
 // the stored value. A name's first set is a set; the same Data set again changes nothing and fires nothing.
 public class CollectionEventsTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/tmp/CollectionEventsTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this app = new global::app.@this("/tmp/CollectionEventsTests-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.@event.on.own On => app.variable.type.Own();
@@ -83,7 +83,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
     [Test]
     public async Task Restore_DoesNotAnswerUntilItsSetsHaveFinished()
     {
-        await using var source = new global::app.@this("/tmp/CollectionEventsTests-src-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        await using var source = new global::app.@this("/tmp/CollectionEventsTests-src-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
         await source.actor.list.User.Context.Variable.Set("x", 1L);
         var snap = source.Snapshot(source.actor.list.User.Context);
 

@@ -27,7 +27,7 @@ public class FluidTextTests
 
     [Test] public async Task Duration_RendersAsItsText_NotADate()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.System.Context;
         var holder = global::app.type.item.@this.Create(new Dictionary<string, object?>
             { ["timeout"] = ctx.Duration(System.TimeSpan.FromSeconds(30)) }, ctx);
@@ -37,7 +37,7 @@ public class FluidTextTests
 
     [Test] public async Task TextFilter_WritesAContainerAsItsJson()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.System.Context;
         var limit = app.Module("llm")["query"]!.Property["limit"]!.Default!;
         var holder = global::app.type.item.@this.Create(new Dictionary<string, object?> { ["limit"] = limit }, ctx);

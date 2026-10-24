@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Modules.builder;
 public class StepCodeFromValueTests : System.IAsyncDisposable
 {
     private readonly global::app.@this _app = new global::app.@this(
-        "/tmp/step-code-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/step-code-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test] public async Task ADictHandedToAStepsCode_IsRefusedWithWhy()

@@ -13,7 +13,7 @@ public class MutationInvalidatesRawTests
 {
     private static global::app.@this NewApp()
         => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-mutraw-" + System.Guid.NewGuid().ToString("N")[..8]));
+            "plang-mutraw-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
 
     private static data RawBacked(global::app.actor.context.@this ctx)
         => global::PLang.Tests.Shared.Make.FromRaw("5", ctx.App.type.list[new type("number", "int"), ctx], ctx, "n");

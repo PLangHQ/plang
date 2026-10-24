@@ -12,7 +12,7 @@ namespace PLang.Tests.App.LazyDeserialize.AccessResolutionTests;
 public class PropertyAccessTests : System.IAsyncDisposable
 {
     private readonly global::app.@this _app = new global::app.@this(
-        "/tmp/PropertyAccessTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        "/tmp/PropertyAccessTests-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test] public async Task PropertyRead_ReadsFromProperties_NotValue()

@@ -18,7 +18,7 @@ public class LoudRunTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-loud-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir).Testing();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing();
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, new System.IO.MemoryStream(),
             ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });

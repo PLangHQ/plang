@@ -16,7 +16,7 @@ public class ForeachStringNotIterableTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/app").Testing();
+    public void Setup() => _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }

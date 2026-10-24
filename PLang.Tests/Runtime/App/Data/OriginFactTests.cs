@@ -9,7 +9,7 @@ public class OriginFactTests
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_origin_" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(dir);
-        await using var app = new global::app.@this(dir).Testing();
+        await using var app = new global::app.@this(dir, global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "config.json"), "{\"db\": \"main\"}");
 

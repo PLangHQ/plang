@@ -11,7 +11,7 @@ public class VariableResolveTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/test").Testing();
+    public void Setup() => _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }

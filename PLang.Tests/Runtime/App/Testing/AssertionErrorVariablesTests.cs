@@ -26,7 +26,7 @@ public class AssertionErrorVariablesTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test").Testing();
+        _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
     }
 
     private Data D(object? value) => value == null ? new Data("", context: _app.actor.list.User.Context) : _app.actor.list.User.Context.Ok(value);
