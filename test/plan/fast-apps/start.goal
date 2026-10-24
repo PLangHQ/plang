@@ -1,0 +1,66 @@
+/ fast-apps: a new app is made from the actor that calls, taking what's the same for every app made from the same
+/ code and making the rest itself. This goal is the plan's index and its proof: each stage is a goal, each comment a
+/ behaviour we want, and the step under it runs the test that proves it. Tests live under this plan's folder at the
+/ path of what they test. The plang here is intent: each test is written so it builds and goes red before its stage,
+/ and the coder makes it green. The text is start.md; what tests can't show (the measurements) is there too.
+Start
+- call Stage1
+- call Stage2
+- call Stage3
+- call Stage4
+- call Stage5
+
+Stage1
+/ an app's step cache goes with its app: disposing the app disposes its cache — C# test CacheLifetimeTests
+/ (today app/this.cs:174 makes a Memory cache and DisposeAsync never disposes it)
+/ a request app leaves nothing behind: 3,000 request apps made and disposed, memory after stays flat — C# test
+/ RequestAppsLeaveNothingBehindTests (red today: the step cache's MemoryCache stays)
+
+Stage2
+/ a test's app has a parent: in a test, %!app.parent% is the runner
+- call /plan/fast-apps/app/parent/TestAppHasItsRunnerAsParent
+/ the command line's app has none: %!app.parent% is false when nothing made it — C# test ParentTests
+/ a child's System is born from the actor that calls: it has the caller's identity — C# test ChildSystemTests
+/ (AChildsSystem_HasItsCallersIdentity)
+/ a child stops when the actor that made it stops: cancelling the caller cancels the child — C# test ChildSystemTests
+/ (AChildsSystem_StopsWithItsCaller)
+/ a child's System is its own actor: a variable it sets, a channel it registers and a setting it writes are not the
+/ caller's — C# test ChildSystemTests (AChildsSystem_KeepsItsOwnMemoryChannelsAndSettings)
+/ the code's facts are read once per code: a second app made from the same code reads no class — C# test
+/ CodeFactsTests (ASecondApp_ReadsNoClass)
+
+Stage3
+/ a child takes its parent's type list whole: a type in the child is the parent's own object — C# test
+/ SharedTypeListTests (AChildsType_IsItsParentsType)
+/ a shared list refuses an addition and says why (TypesShared) — C# test SharedTypeListTests
+/ (ASharedTypeList_RefusesAnAddition_SayingWhy)
+/ a program that loads code is born with its own list: the plugin's type joins its app, and only its app
+- call /plan/fast-apps/app/type/plugin/PluginTypeJoinsOnlyItsApp
+- call /plan/fast-apps/app/type/plugin/SiblingDoesNotSeeThePluginType
+/ an action says whether it adds to the code; the runner asks it by navigating, never by its name — C# test
+/ AddsCodeTests (CodeLoad_SaysItAddsCode, ATestReachingCodeLoad_IsBornWithItsOwnList)
+/ a binding one test makes on a shared goal doesn't reach another test (a guard: red under its mutation)
+- call /plan/fast-apps/app/event/BindingStaysInItsTest
+- call /plan/fast-apps/app/event/SiblingDoesNotSeeTheBinding
+/ a binding on a shared type entry is the binding app's own — C# test HeldBindingTests
+/ (ABindingOnASharedTypeEntry_IsTheBindingAppsOwn)
+/ a child finds the goal its parent read: the same goal object, no second .pr read — C# test SharedGoalTests
+/ (AChild_FindsItsParentsGoal)
+/ a goal changed on disk is read again on its next use, with no time window — C# test SharedGoalTests
+/ (AGoalChangedOnDisk_IsReadAgain)
+/ the kind lookup takes no lock: two apps sharing a type look up its kinds at once — C# test KindLookupTests
+
+Stage4
+/ a birth makes only what's asked for: a bare app's birth makes no module action, no code provider, no store file —
+/ C# test BirthTests (ABareApp_MakesNothingNotAsked)
+/ path's schemes are kind classes: file, http and https resolve with nothing added to the type list at birth — C# test
+/ PathSchemeTests (TheSchemes_AreKindsOfPath)
+/ what's made on first ask is the same as what a birth made before: every module's actions, every setting's default,
+/ the system variables — the existing suites are this stage's guard
+
+Stage5
+/ a list's positional read takes no lock: list[i] and its count read its snapshot — C# test ListSnapshotReadTests
+/ an in-memory store nothing has written answers empty without opening SQLite — C# test EmptyStoreTests
+/ (AnUnwrittenStore_AnswersEmpty_WithoutOpening)
+/ class facts are read once per code: choice sets, action properties, setting paths and defaults — C# test
+/ ClassFactsTests
