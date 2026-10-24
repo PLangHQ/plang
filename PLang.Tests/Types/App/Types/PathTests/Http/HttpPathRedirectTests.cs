@@ -28,7 +28,7 @@ public class HttpPathRedirectTests
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-http-redirect-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
-        var app = new AppEngine(dir);
+        var app = new AppEngine(dir, global::PLang.Tests.Parent.Actor);
         (app).TestSigning();
         return (app, app.actor.list.User.Context);
     }

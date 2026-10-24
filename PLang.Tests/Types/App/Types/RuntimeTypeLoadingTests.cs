@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Types;
 
 public class RuntimeTypeLoadingTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [global::app.Attributes.PlangType("runtime-fixture-only")]

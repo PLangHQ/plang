@@ -16,7 +16,7 @@ public class RuntimeDoubleWrapTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::app.@this("/app").Testing();
+    public void Setup() => _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -139,7 +139,7 @@ public class RuntimeDoubleWrapTests
     {
         // list.query builds a new list (owned construction), never an inner Data —
         // so Data<object>.Ok does not double-wrap. (list.where was replaced by list.query.)
-        var app = new global::app.@this("/app").Testing();
+        var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var users = new global::app.type.item.list.@this(app.type.list["list"]);
         var u1 = context.Dict(); u1.Set(new global::app.data.@this("age", 25L, context: context)); users.Add(new global::app.data.@this("", u1, context: context));

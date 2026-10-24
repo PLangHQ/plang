@@ -52,7 +52,7 @@ public class CleanupBindingsTests
     [Test] public async Task DateTime_Parse_Iso8601_WithTimezone_RoundTrips()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-dt-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-dt-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var dt = global::app.type.item.datetime.@this.Resolve("2024-03-15T10:30:00+02:00", app.actor.list.User.Context);
         await Assert.That(dt).IsNotNull();
         await Assert.That(dt!.Value.Year).IsEqualTo(2024);
@@ -62,7 +62,7 @@ public class CleanupBindingsTests
     [Test] public async Task Duration_Parse_DotColonForm_RoundTrips()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-d1-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-d1-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var d = global::app.type.item.duration.@this.Resolve("1.02:03:04", app.actor.list.User.Context);
         await Assert.That(d).IsNotNull();
         await Assert.That(d!.Value.Days).IsEqualTo(1);
@@ -72,7 +72,7 @@ public class CleanupBindingsTests
     [Test] public async Task Duration_Parse_Iso8601_PT5M_RoundTrips()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-d2-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+            "plang-d2-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var d = global::app.type.item.duration.@this.Resolve("PT5M", app.actor.list.User.Context);
         await Assert.That(d).IsNotNull();
         await Assert.That(d!.Value).IsEqualTo(System.TimeSpan.FromMinutes(5));

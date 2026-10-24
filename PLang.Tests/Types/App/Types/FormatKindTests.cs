@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Types;
 // Each test pins a way the old extension/MIME tables answered wrong.
 public class FormatKindTests
 {
-    private static global::app.@this NewApp() => new global::app.@this("/test").Testing();
+    private static global::app.@this NewApp() => new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
 
     [Test] public async Task MimeWithParameters_IsTheMediaType()
     {

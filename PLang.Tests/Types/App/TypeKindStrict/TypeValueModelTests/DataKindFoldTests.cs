@@ -11,7 +11,7 @@ namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 // `Type.Kind`, the single owner of the build-time subtype refinement.
 public class DataKindFoldTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task Data_HasNoStoredKindField()

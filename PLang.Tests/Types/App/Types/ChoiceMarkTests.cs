@@ -7,7 +7,7 @@ public class ChoiceMarkTests
     [Test]
     public async Task AMarkedSet_IsAKindOfChoice_WithItsOptions()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
 
         var choice = app.type.list["choice"];
 

@@ -11,7 +11,7 @@ public class SettingsAreInternalTests
     public async Task EverySettingsSubtype_IsInternal()
     {
         await using var app = new global::app.@this(
-            "/tmp/plang_settings_" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+            "/tmp/plang_settings_" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var leaked = app.type.list.Items()
             .Where(t => t.ClrType is { } clr
                         && typeof(global::app.type.item.setting.@this).IsAssignableFrom(clr)

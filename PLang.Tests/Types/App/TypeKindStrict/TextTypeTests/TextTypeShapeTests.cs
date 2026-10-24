@@ -40,7 +40,7 @@ public class TextTypeShapeTests
     // variable: a template that is only the variable answers through the variable's own lookup instead.
     [Test] public async Task Template_NavigationMiss_NamesThePlangTypeReached()
     {
-        await using var app = new global::app.@this("/tmp/text-miss-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/text-miss-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var grid = new global::app.type.table.@this(new[] { "name" },
             new IReadOnlyDictionary<string, object?>[] { new Dictionary<string, object?> { ["name"] = "Ada" } },
@@ -58,7 +58,7 @@ public class TextTypeShapeTests
     // text's description is its teaching file's (os/system/type/text/type.description.md)
     [Test] public async Task Text_Description_TeachesKindFromExtension()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var desc = await app.type.list["text"].Description(ctx).Text(ctx);
         await Assert.That(desc.Contains("extension", System.StringComparison.OrdinalIgnoreCase)).IsTrue();

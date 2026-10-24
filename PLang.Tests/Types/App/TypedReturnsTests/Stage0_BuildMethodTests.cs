@@ -21,7 +21,7 @@ public class Stage0_BuildMethodTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/app");
+        _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor);
         _app.module.Register("typedreturns", "noopbuild", typeof(NoopBuild));
         _app.module.Register("typedreturns", "buildfails", typeof(BuildFails));
         _app.module.Register("typedreturns", "buildbareok", typeof(BuildBareOk));

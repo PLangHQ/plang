@@ -6,7 +6,7 @@ public class TemplateKindTests
 {
     [Test] public async Task AChoiceOfTemplateKind_IsPlang_AndRefusesAnyOther()
     {
-        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         global::app.data.@this<global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>> Kind(string name)
             => new global::app.data.@this("Template", name, context: ctx).As<global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>>();
@@ -23,7 +23,7 @@ public class TemplateKindTests
     // a row's template is its kind, by name: one that names no kind of template is refused at read, saying the kinds
     [Test] public async Task ARowsTemplate_NamingNoKind_IsRefusedAtRead()
     {
-        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var row = "{\"name\":\"x\",\"type\":{\"name\":\"text\",\"template\":\"fluid\"},\"value\":\"hi %name%\"}";
 
@@ -42,7 +42,7 @@ public class TemplateKindTests
     // loads as the variable, never read as the snapshot's own structure, and is the snapshot the variable holds
     [Test] public async Task AVariableRow_OfAStructureType_LoadsAsTheVariable()
     {
-        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var pr = """
             {"name": "Start", "step": [{"index": 0, "text": "resume %snap%", "line": {"number": 2},
@@ -61,7 +61,7 @@ public class TemplateKindTests
     // a variable's name is its string: `Name=%a%`, marked a template by the build, still reads eagerly as the name
     [Test] public async Task AVariableNameRow_StillReadsAsTheName()
     {
-        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         var name = (await ctx.Action("variable.set(Name=%a%, Value=\"A\")")).Property["Name"]!.Value;
@@ -73,7 +73,7 @@ public class TemplateKindTests
     // under snapshot still reads through the snapshot's reader
     [Test] public async Task AnErrorRowHoldingAVariable_IsContent_ASnapshotObjectIsASnapshot()
     {
-        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var plang = ctx.App.type.list["wire"].kind["plang"]!;
         var error = "{\"name\":\"e\",\"type\":{\"name\":\"error\",\"template\":\"plang\"},\"value\":\"%err%\","
@@ -90,7 +90,7 @@ public class TemplateKindTests
 
     [Test] public async Task ATemplateFile_IsTextsFormat_NotTheChoiceSetNamedTemplate()
     {
-        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
 
         var type = app.type.list.Extension(".template", ctx);

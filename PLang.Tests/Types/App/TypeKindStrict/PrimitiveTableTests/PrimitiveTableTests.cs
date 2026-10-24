@@ -7,7 +7,7 @@ namespace PLang.Tests.App.TypeKindStrict.PrimitiveTableTests;
 // text owns "string" as its alias.
 public class PrimitiveTableTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    private readonly global::app.@this app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.type.list.@this Types => app.actor.list.User.Context.App.type.list;

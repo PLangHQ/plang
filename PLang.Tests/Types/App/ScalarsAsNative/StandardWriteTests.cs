@@ -15,7 +15,7 @@ public class StandardWriteTests
     [Test]
     public async Task AnUnnamedDuration_IsWrittenInTheAskersStandard()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var span = global::app.type.item.duration.@this.Create(System.TimeSpan.FromSeconds(90), context);
 
@@ -27,7 +27,7 @@ public class StandardWriteTests
     [Test]
     public async Task ANamedDuration_IgnoresTheSetting()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         context.Setting.Set("app.type.duration.setting.standard", "short");
         var iso = global::app.type.item.duration.@this.Create(System.TimeSpan.FromSeconds(90),
@@ -39,7 +39,7 @@ public class StandardWriteTests
     [Test]
     public async Task AnUnnamedSize_IsWrittenInTheAskersStandard()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         var size = global::app.type.item.size.@this.Create(100_000_000L, context);
 
@@ -51,7 +51,7 @@ public class StandardWriteTests
     [Test]
     public async Task ANamedSize_IgnoresTheSetting()
     {
-        await using var app = new global::app.@this("/app").Testing();
+        await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         context.Setting.Set("app.type.size.setting.standard", "iec");
         var si = global::app.type.item.size.@this.Create(100_000_000L,

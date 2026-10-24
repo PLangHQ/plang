@@ -14,7 +14,7 @@ public class RegistryFoldTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/tmp/regfold-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+        _app = new global::app.@this("/tmp/regfold-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
         _types = new global::app.type.list.@this();
     }
 

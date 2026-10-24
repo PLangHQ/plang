@@ -7,7 +7,7 @@ public class CollectedTypeTests
     // A concept for the test: named by its namespace tail ("probe"), answering for its own Name.
     [Test] public async Task Get_AnswersTheMatchingElement_Or404()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var probes = new global::app.type.node.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
         probes.list.Add(new Probe.@this("a"));
         probes.list.Add(new Probe.@this("b"));
@@ -23,7 +23,7 @@ public class CollectedTypeTests
 
     [Test] public async Task TheNode_HoldsItsElementsType_AndItsClassIsANode()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await Assert.That(app.goal.type.Name).IsEqualTo("goal");
         await Assert.That(app.type.list[app.goal.GetType()].Name).IsEqualTo("node");
         await Assert.That(app.goal.Type.Name).IsEqualTo("node");
@@ -31,7 +31,7 @@ public class CollectedTypeTests
 
     [Test] public async Task AppType_HoldsTheTypeNamedType_ItsGetAnswersByNameOrAlias()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         await Assert.That(app.type.type.Name).IsEqualTo("type");
 
         var text = await app.type.Get("string", app.actor.list.User.Context);
@@ -47,7 +47,7 @@ public class CollectedTypeTests
 
     [Test] public async Task AppType_Navigation_AMemberFirst_ThenAType()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var parent = new global::app.data.@this("type", app.type, context: app.actor.list.User.Context);
 
         var list = await app.type.Get(parent, "list");
@@ -79,7 +79,7 @@ public class CollectedTypeTests
     // %!app.type% is the type system: every type plang doesn't keep for itself, each with its facts
     [Test] public async Task Face_OfAppType_IsTheTypeSystem_EveryTypeWithItsFacts()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var face = await Out(app, app.type);
         await Assert.That(face).StartsWith("[");
         await Assert.That(face).Contains("\"word\":\"text\"");
@@ -91,7 +91,7 @@ public class CollectedTypeTests
     // %!app.type.list% is the list: written alone, its items, each a type's face
     [Test] public async Task Face_OfAppTypeList_IsItsTypes()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var face = await Out(app, app.type.list);
         await Assert.That(face).StartsWith("[");
         await Assert.That(face).Contains("\"text\"");
@@ -102,7 +102,7 @@ public class CollectedTypeTests
     // facts are navigated
     [Test] public async Task Face_OfOneType_IsItsWord_AndItsFactsAreNavigated()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var context = app.actor.list.User.Context;
         await Assert.That(await context.Written(app.type.list["number"])).IsEqualTo("number");
         await Assert.That(await Out(app, app.type.list["number"])).IsEqualTo("{\"name\":\"number\"}");
@@ -114,7 +114,7 @@ public class CollectedTypeTests
 
     [Test] public async Task A_TypeInTheStoreView_StaysItsIdentity()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var store = await Out(app, app.type.list["number"], global::app.View.Store);
         await Assert.That(store).IsEqualTo("{\"name\":\"number\"}");
     }
@@ -122,7 +122,7 @@ public class CollectedTypeTests
     // A concept execution is inside, while nothing is inside one (no goal is running): its current is NotFound.
     [Test] public async Task Current_WithNothingInside_IsNotFound()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var current = app.goal.current(app.actor.list.User.Context);
         await Assert.That(current.Success).IsFalse();
         await Assert.That(current.Error!.Status.Code.ToInt32()).IsEqualTo(404);

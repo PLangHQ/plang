@@ -11,7 +11,7 @@ public class ImageFormatTests
         System.IO.Directory.CreateDirectory(root);
         try
         {
-            await using var app = new global::app.@this(root).Testing();
+            await using var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
             var ctx = app.actor.list.User.Context;
             var target = global::app.type.item.path.@this.Resolve(System.IO.Path.Combine(root, "photo.png"), ctx)!;
             var saved = await target.Save(ctx.Ok(ctx.Image(Png, "png")), ctx);
@@ -36,7 +36,7 @@ public class ImageFormatTests
     // A value that isn't an image asks image to be born from it; nothing makes an image of a dict.
     [Test] public async Task AnImageFormat_RefusesAValueNothingMakesAnImageOf()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var dict = ctx.Ok(new System.Collections.Generic.Dictionary<string, object?> { ["a"] = 1L });
         var result = await app.type.list.Stamp("image/png", ctx).kind.Encode(new System.IO.MemoryStream(), dict, ctx);
@@ -47,7 +47,7 @@ public class ImageFormatTests
     // A text is an image's location; one that names nothing there is refused for that.
     [Test] public async Task AnImageFormat_GivenATextNamingNothing_IsNotFound()
     {
-        await using var app = new global::app.@this("/test").Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
         var result = await app.type.list.Stamp("image/png", ctx).kind.Encode(new System.IO.MemoryStream(), ctx.Ok("not an image"), ctx);
         await Assert.That(result.Success).IsFalse();

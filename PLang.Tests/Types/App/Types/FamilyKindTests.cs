@@ -12,7 +12,7 @@ namespace PLang.Tests.App.Types
         [Test]
         public async Task AFamilysSubclass_IsOneOfItsKinds_AndItsValueReadsAsIt()
         {
-            await using var app = new global::app.@this("/app").Testing();
+            await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
             var types = new global::app.type.list.@this();
             await types.Add(typeof(Gadget.Gadget).Assembly, Ctx(app)).IsSuccess();
             var mouse = new Gadget.Mouse();
@@ -28,7 +28,7 @@ namespace PLang.Tests.App.Types
         [Test]
         public async Task QuerysClausesAreItsKinds_PathsSchemesAreNotHeldTwice()
         {
-            await using var app = new global::app.@this("/app").Testing();
+            await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
 
             await Assert.That(app.type.list["query"].kind["where"]).IsNotNull();
             await Assert.That(app.type.list["path"].kind["file"]).IsTypeOf<global::app.type.item.path.scheme.@this>();

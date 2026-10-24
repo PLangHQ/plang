@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Types;
 /// </summary>
 public class OsReferenceTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/tmp/os-reference-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
+    private readonly global::app.@this _app = new global::app.@this("/tmp/os-reference-" + System.Guid.NewGuid().ToString("N")[..6], global::PLang.Tests.Parent.Actor).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     // What each root holds: the app, the error in play, the goal and step in play, and the builder's own %goal% and
