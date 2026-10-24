@@ -70,6 +70,19 @@ public class BirthTests
     }
 
     [Test]
+    public async Task ASubAppsCodeProviders_AreMadeAtTheirFirstUse()
+    {
+        var born = Bytes(() =>
+        {
+            var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor);
+            _ = app.DisposeAsync();
+            return app;
+        });
+
+        await Assert.That(born).IsLessThan(130_000L).Because("an app's code providers are made at its registry's first use");
+    }
+
+    [Test]
     public async Task AnAppsStart_ReadLater_IsWhenItWasBorn()
     {
         var before = System.DateTimeOffset.UtcNow;
