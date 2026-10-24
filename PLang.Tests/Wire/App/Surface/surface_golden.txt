@@ -622,7 +622,7 @@ interface app.module.IClass
   virtual Validate() : System.Threading.Tasks.Task<app.error.this>
 
 interface app.module.IClause
-  abstract Bind(app.goal.step.action.this clause, app.goal.step.action.this action) : System.Void
+  abstract Bind(app.goal.step.action.this clause, app.goal.step.action.this action, app.event.on.own on) : System.Void
 
 interface app.module.ICodeGenerated
   abstract Start() : System.Threading.Tasks.Task<app.data.this>

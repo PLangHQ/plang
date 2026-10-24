@@ -7,7 +7,8 @@ namespace app.module;
 /// </summary>
 public interface IClause
 {
-    /// <summary>Binds <paramref name="clause"/> — the program's on.* action — on <paramref name="action"/>'s own
-    /// events: the ones this kind of clause answers, on the side it answers them.</summary>
-    void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action);
+    /// <summary>Binds <paramref name="clause"/> — the program's on.* action — on <paramref name="on"/>,
+    /// <paramref name="action"/>'s own events, which the action hands over when it takes its clause: the ones this kind
+    /// of clause answers, on the side it answers them.</summary>
+    void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action, global::app.@event.on.own on);
 }

@@ -260,6 +260,11 @@ public partial class @this
     /// read does once a step's code is in. A step action attaches to nothing.</summary>
     internal virtual void Attach(@this? before) { }
 
+    /// <summary>Takes <paramref name="clause"/>, read after this action, on its own events — the one door to an item's
+    /// own events: what the program binds when it is read stays on the item, and what is bound while it runs is held
+    /// by the context that binds it.</summary>
+    internal void Take(global::app.module.IClause handler, clause.@this clause) => handler.Bind(clause, this, Own());
+
     /// <summary>Whether this action belongs to <paramref name="before"/>, the step action it follows (a clause does: it
     /// is that action's) — a step action is its own, so after a condition it stands beside it.</summary>
     internal virtual bool Belongs(@this? before) => false;

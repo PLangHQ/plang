@@ -18,9 +18,8 @@ public partial class OnCache : IContext, IClause
 
     public Task<global::app.data.@this> Start() => Task.FromResult(Context.Ok());
 
-    public void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action)
+    public void Bind(global::app.goal.step.action.@this clause, global::app.goal.step.action.@this action, global::app.@event.on.own on)
     {
-        var on = action.Own();
         on.Bind("start", global::app.@event.When.before, side => new global::app.@event.binding.clause.@this(
             side, clause, action, (handler, _, result, context) => ((OnCache)handler).Begin(result, context)));
         on.Bind("start", global::app.@event.When.after, side => new global::app.@event.binding.clause.@this(

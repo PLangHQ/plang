@@ -480,8 +480,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// one level, itself.</summary>
     protected internal virtual @this? Level(int depth, global::app.actor.context.@this context) => depth == 0 ? this : null;
 
-    /// <summary>This value's own events, given to it by its first binding — what a binding is added to.</summary>
-    internal global::app.@event.on.own Own()
+    /// <summary>This value's own events, given to it by its first binding — what a clause its program's read attaches is
+    /// added to (<c>action.Take</c>). A binding made while a program runs is held by the context that binds it, never
+    /// here: an item can be every app's that shares it.</summary>
+    private protected global::app.@event.on.own Own()
     {
         if (_on is global::app.@event.on.own events) return events;
         var shared = on;
