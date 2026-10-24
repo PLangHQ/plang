@@ -24,34 +24,26 @@ public class @this<T, L> : @this
     // The app the concept is born with — used only for the app's own work (its list, reading its own files
     // as the system), never in place of an asker's context.
     private readonly global::app.@this _app;
-    // the types the concept's type is found in
-    private readonly global::app.type.list.@this _types;
     // the list, once made, and the gate that makes it once
     private L? _list;
     private bool _made;
     private object? _gate;
 
     /// <summary>The app's node for <typeparamref name="T"/>, its list made from the class on first read.</summary>
-    public @this(global::app.@this app) : base(app.type.list[typeof(global::app.type.node.@this)])
-    {
-        _app = app;
-        _types = app.type.list;
-    }
+    public @this(global::app.@this app) : base(app.type.list[typeof(global::app.type.node.@this)]) => _app = app;
 
-    /// <summary>A node over the types <paramref name="types"/> and the list <paramref name="list"/> it is born with — the
-    /// types' own node, born before the app holds them.</summary>
-    private protected @this(global::app.@this app, global::app.type.list.@this types, L list)
-        : base(types[typeof(global::app.type.node.@this)])
+    /// <summary>A node of the type <paramref name="node"/>, born holding its list <paramref name="list"/> — the types' own
+    /// node, born before the app holds them.</summary>
+    private protected @this(global::app.@this app, global::app.type.@this node, L list) : base(node)
     {
         _app = app;
-        _types = types;
         _list = list;
         _made = true;
     }
 
-    /// <summary>The concept's type — the type list's entry for its class (<c>%!app.goal.type.name%</c> is <c>goal</c>):
-    /// its facts, its events (<c>.on</c>). Found when first asked: the list answers the same entry every time.</summary>
-    public global::app.type.@this type => _type ??= _types[typeof(T)];
+    /// <summary>The concept's type — the app's types' entry for its class (<c>%!app.goal.type.name%</c> is <c>goal</c>):
+    /// its facts, its events (<c>.on</c>). Found when first asked: the types answer the same entry every time.</summary>
+    public global::app.type.@this type => _type ??= _app.type.list[typeof(T)];
     private global::app.type.@this? _type;
 
     /// <summary>The X's loaded so far — the list class T names, with its own work. Made on first
@@ -59,22 +51,9 @@ public class @this<T, L> : @this
     public L list => System.Threading.Volatile.Read(ref _made) ? _list!
         : System.Threading.LazyInitializer.EnsureInitialized(ref _list, ref _made, ref _gate, () => T.List(_app))!;
 
-    // The class of the concept's own settings, when its element names one (test: IConcept<test.setting>) — worked out
-    // the first time the node is asked for its setting.
-    private System.Type? _setting
-    {
-        get
-        {
-            if (System.Threading.Volatile.Read(ref _settingRead)) return _settingClass;
-            _settingClass = typeof(T).GetInterfaces()
-                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(item.setting.IConcept<>))
-                ?.GetGenericArguments()[0];
-            System.Threading.Volatile.Write(ref _settingRead, true);
-            return _settingClass;
-        }
-    }
-    private System.Type? _settingClass;
-    private bool _settingRead;
+    // The class of the concept's own settings, when its element names one (test: IConcept<test.setting>): a fact of the
+    // class, as the code that made the concept's type read it.
+    private System.Type? _setting => type.Declared?.Setting;
 
     // The list the asker sees — its own for a concept whose list belongs to the asker, else the app's.
     // Navigation always asks through here: one path for every concept.

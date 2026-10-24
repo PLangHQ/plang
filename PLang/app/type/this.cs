@@ -838,6 +838,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // identity alone.
     private readonly list.@this? _list;
 
+    /// <summary>What this type's class declares of itself, as the code that made the type read it (once per code); null
+    /// for a type that is its identity alone.</summary>
+    internal list.@this.Class? Declared => _list is { } types && ClrType is { } clr ? types.code[clr] : null;
+
     /// <summary>The app's type list this type is in — what a value holding it asks the app's other types of (a text
     /// reading the variables it holds); null for a type that is its identity alone.</summary>
     internal list.@this? Types => _list ?? Family._list;

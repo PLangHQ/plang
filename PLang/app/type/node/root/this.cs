@@ -10,7 +10,7 @@ public sealed class @this : global::app.type.node.@this<global::app.type.@this, 
     public @this(global::app.@this app) : this(app, global::app.type.@this.List(app)) { }
 
     // The app's types, over the list it is born with: they are its own types too.
-    private @this(global::app.@this app, global::app.type.list.@this types) : base(app, types, types) { }
+    private @this(global::app.@this app, global::app.type.list.@this types) : base(app, types[typeof(global::app.type.node.@this)], types) { }
 
     /// <summary>Written alone, the type system: every type plang doesn't keep for itself, each with its facts — its
     /// name (the namespace), the word it goes by when it declares one, its description, example and aliases, and its

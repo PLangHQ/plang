@@ -44,10 +44,30 @@ public sealed partial class @this
             Internal = clr.GetProperty("Internal", BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
                 ?.GetValue(null) is true;
             Offer = Declared<IReadOnlyList<global::app.type.item.@this>>("Offer");
+            _clr = clr;
 
             T? Declared<T>(string member) where T : class
                 => clr.GetProperty(member, BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
                     ?.GetValue(null) as T;
+        }
+
+        private readonly System.Type _clr;
+        private System.Type? _setting;
+        private bool _settingRead;
+
+        /// <summary>The class of the concept's own settings, when the class names one (<c>IConcept&lt;test.setting&gt;</c>);
+        /// null when it names none. Worked out the first time it is asked, once per code.</summary>
+        internal System.Type? Setting
+        {
+            get
+            {
+                if (System.Threading.Volatile.Read(ref _settingRead)) return _setting;
+                _setting = _clr.GetInterfaces()
+                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.setting.IConcept<>))
+                    ?.GetGenericArguments()[0];
+                System.Threading.Volatile.Write(ref _settingRead, true);
+                return _setting;
+            }
         }
     }
 
