@@ -92,16 +92,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     // The list this one is a layer over — a sub app's, over its parent's; null for a list an app made from its code.
     private readonly @this? _parent;
 
-    /// <summary>Whether a layer is over this list: an app made by one of its actors shares its types, so nothing is
-    /// added to it from here on.</summary>
-    internal bool Shared { get; private set; }
-
     /// <summary>Whether this list, a layer, holds types of its own — what its app loaded beside its parent's.</summary>
     internal bool HasOwn => _parent != null && !_named.IsEmpty;
-
-    // An addition this list refuses: its types are shared with the apps it was made for.
-    private error.@this Refused()
-        => new("this app's types are shared with the apps its actors made: nothing is added to them", "TypesShared", 400);
 
     // The entry is one this list holds itself, not one of the list it is a layer over.
     private bool Holds(global::app.type.@this entry)
@@ -178,7 +170,6 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             return context.Error(new error.@this($"{clr.FullName} is not a plang type — only items are.", "TypeLoadNotAType", 400));
         // The class that already owns the name adds nothing new: the same answer, whatever the name.
         if (Types.FirstOrDefault(t => t.Names(claimed)) is { } type && type.ClrType == clr) return context.Ok(type);
-        if (Shared) return context.Error(Refused());
         // what the class declares of itself, as the code's facts read it
         var aliases = code[clr].Alias;
         if (aliases.Prepend(claimed).FirstOrDefault(Sealed.Contains) is { } sealedWord)
@@ -209,7 +200,6 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     {
         // An assembly the startup scan read brings nothing new: its types and kinds are in.
         if (Assemblies.Contains(assembly)) return context.Ok(new List<global::app.type.@this>());
-        if (Shared) return context.Error(Refused());
 
         System.Type[] exported;
         try { exported = assembly.GetExportedTypes(); }
@@ -256,13 +246,12 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     }
 
     // Puts a kind on the empty kind of the type it was born holding (the startup scan calls it while loading) — on a
-    // type this list holds itself: a type it shares with its parent can't hold a kind one of the apps over it adds,
-    // and a list that is shared takes none. Answers the refusal; null when the kind is held.
+    // type this list holds itself: a type it shares with its parent can't hold a kind one of the apps over it adds.
+    // Answers the refusal; null when the kind is held.
     private error.@this? Hold(global::app.type.kind.@this kind)
     {
         if (kind.Owner is not { kind: global::app.type.kind.empty.@this root } owner)
             throw new InvalidOperationException($"kind '{kind.Name}' names no type it is a kind of.");
-        if (Shared) return Refused();
         if (!Holds(owner))
             return new error.@this($"'{kind.Name}' is a kind of {owner.Name}, which this app shares with the app that "
                 + $"made it: a sub app can't add a kind to {owner.Name} yet", "TypesShared", 400);

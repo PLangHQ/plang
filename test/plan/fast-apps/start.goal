@@ -34,8 +34,8 @@ Stage3
 / (ATypeASubAppAdds_IsOnlyItsOwn)
 / a kind added to a type its parent holds is refused, naming the type (TypesShared), until sub apps own their code —
 / C# test SharedTypeListTests (AKindOnAParentsType_IsRefused_NamingIt)
-/ the list a sub app is over refuses its own app's additions, saying why — C# test SharedTypeListTests
-/ (TheSharedList_RefusesItsOwnAppsAddition)
+/ what a parent loads after making a sub app is the sub app's too — C# test SharedTypeListTests
+/ (AParentLoadingAfterMakingASubApp_IsTheSubAppsToo)
 / the plugin's type joins only the sub app that loaded it, and its sibling never sees it
 - call /plan/fast-apps/app/type/plugin/PluginTypeJoinsOnlyItsApp
 - call /plan/fast-apps/app/type/plugin/SiblingDoesNotSeeThePluginType

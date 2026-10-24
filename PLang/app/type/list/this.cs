@@ -25,13 +25,12 @@ public sealed partial class @this
 
     /// <summary>A sub app's types: a layer of its own over <paramref name="parent"/>'s list, which it holds whole as its
     /// first row and reads through — no entry copied, so a type it reaches is its parent's own object. What it loads is
-    /// its layer's alone, read from the facts of its own code; the list it is over is shared from here on.</summary>
+    /// its layer's alone, read from the facts of its own code; what the list it is over loads later is this one's too.</summary>
     internal @this(@this parent) : base(new List<object?>())
     {
         code = new Code();
         _parent = parent;
         parent.Load();
-        parent.Shared = true;
         Reader = new(code, parent.Reader);
         base.Add(parent);
         // the scan is its parent's: this list reads no class of its own until it loads one
