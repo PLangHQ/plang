@@ -74,6 +74,41 @@ What would end it, untested: an app that never writes opens no SQLite at all (st
 has written answers empty without opening SQLite", `store/sqlite/this.cs:59–73`). A request app that only reads
 then adds no pool group. Stage 5's rerun of `RequestApps` shows whether that closes it.
 
+## Stage 2 — the door (`d56b3fe22`; the branch tip's code is the same), 3 rounds, `bench/results/stage2.txt`
+
+Measured after the host's symlink fix (no DLL in `bin/` is a link). Each app twice: **root** is `new app.@this(path)`
+as today; **child** is `new app.@this(path, actor)` through the internal door, its actor the User of one
+server-like app made once (before the first count). A child is born with console channels (the door has no flag);
+the root request app is born without, as before.
+
+| | stage 1 (root) | **stage 2 root** | **stage 2 child** | load |
+|---|---|---|---|---|
+| a birth | Debug 25.7–27.2 ms, 5.2 MB | Debug 25.7–28.0 ms, Release 28.6–31.9 ms, **6.05 MB** | **Debug 13.0–14.6 ms, Release 15.9–16.7 ms, 4.5 MB** | 1.3–2.8 |
+| a request app × 3,000 | Release 21.6–22.0 ms, 6.6–6.9 MB; held 0.9 → 3.2 → 3.8 → 4.4 | Release 20.9–21.6 ms, **7.0–7.2 MB**; held 1.0 → 3.4 → 3.9 → 4.5 | **Release 13.0–13.5 ms, 5.9 MB**; Debug 14.8–17.3 ms, 6.2 MB; held 2.5 → 4.0 → 4.6 → 5.1 | 1.2–1.7 |
+| the C# sweep | 98–103 s | 104–106 s; Wire's 6 known; **Types 2 and Data 2 red** (below) | — (only Types makes its apps through the door so far) | 1.2–2.7 |
+| `plang --test` | 16.6–17.1 s | 16.9–18.5 s: 298 pass, 2 fail, 3 stale | — (the runner still makes root apps) | 2.5–2.8 |
+
+(Two readings were taken at load 11 and 17 and are not used: round 1's Release root request, 39.9 ms, and its Release
+child request, 27.7 ms. Both reran at load ~1.3 in rounds 2–3.)
+
+- **A child is born in half the time of a root, and allocates 26 % less**: 13–16 ms against 26–32 ms, 4.5 against
+  6.05 MB. A child request runs in 13 ms against 21 ms. **This is not yet the plan's stage 2 target (~3.5 ms):** each
+  child still makes its own type list from the parent's facts (the plan says so), and the other 10–13 ms is still being
+  spent in the birth. I haven't profiled where; say if you want it.
+- **The root got heavier**: a root birth allocates **6.05 MB, up from 5.2 MB** (+0.85 MB), and a root request 7.0–7.4 MB,
+  up from 6.6–6.9. Time did not move. This is the cost of the stage 2 code on the path that makes a root app, which the
+  command line still takes. I haven't looked for which part.
+- **Held memory per request is the same as stage 1** (~0.55–0.6 KB, the sqlite pool bookkeeping above) for root and
+  child alike. The child's start is 1.6 MB higher (2.5 against 0.9): the one server-like app is made before the first
+  count and stays held.
+- **The reds are plan tests written red before their stage**, all named in `test/plan/fast-apps/start.goal`:
+  Types `AChildsType_IsItsParentsType` (the child's type list is not the parent's reference),
+  `ASharedTypeList_RefusesAnAddition_SayingWhy` (no `TypesShared` yet); Data `AGoalChangedOnDisk_IsReadAgain`,
+  `AChild_FindsItsParentsGoal` (goals not yet through the parent); `plang --test`
+  `/plan/fast-apps/app/parent/TestAppHasItsRunnerAsParent` (architect decision 18 deferred the in-process parent).
+  `BareLiteralJudgedByForm` and Wire's six are the known reds from stage 0. There is no coder
+  `baseline-failures.txt` on the branch, so these are matched by name against `start.goal`, not against a baseline.
+
 ## Not measured here
 
 - A class scanned twice in one process (stage 2's check): it needs a count of `GetTypes` calls, which comes with
