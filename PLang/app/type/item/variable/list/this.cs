@@ -56,23 +56,11 @@ public partial class @this
     public @this(actor.context.@this context)
     {
         Context = context;
-        // System variables are born WITH context — a computed lifts its factory result
-        // through the registry, so it must hold a context at birth (not stamped after) — each
-        // holding the app's type for what it is (the app's types exist before its actors).
-        var datetime = context.App.type.list[typeof(app.type.item.datetime.@this)];
-        _variables["Now"] = new data.DynamicData("Now", asker => asker.Ok(DateTimeOffset.Now), context, datetime);
-        _variables["NowUtc"] = new data.DynamicData("NowUtc", asker => asker.Ok(DateTimeOffset.UtcNow), context, datetime);
-        _variables["GUID"] = new data.DynamicData("GUID", asker => asker.Ok(Guid.NewGuid()), context,
-            context.App.type.list[typeof(app.type.item.guid.@this)]);
-        // %MyIdentity% — the app's own identity; %Identity% — who the asking actor acts for: its identity's public key
-        // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read from the asker's
-        // actor, so a setDefault or rename is reflected, and born with the memory — not set — so an actor born at any
-        // time has them at once and nothing bound to a variable's set runs for them.
-        // a step holds an identity without its private key
-        _variables["MyIdentity"] = new data.DynamicData("MyIdentity", asker => asker.Ok(asker.Actor.DefaultIdentity?.Public()), context);
-        _variables["Identity"] = new data.DynamicData("Identity",
-            asker => asker.Ok((asker.Actor.Identity ?? asker.Actor.DefaultIdentity)?.PublicKey), context);
+        _system = new system(context);
     }
+
+    // The system's variables, under this memory's own: what a name nothing else holds reads last.
+    private readonly system _system;
 
     /// <summary>
     /// Stores a Data under its own Data.Name.
@@ -293,7 +281,7 @@ public partial class @this
     {
         if (string.IsNullOrEmpty(name)) return null;
         if (_context.call.Current is { } frame && frame.TryGet(name, out var framed)) return framed;
-        return _variables.TryGetValue(name, out var v) ? v : Outer?.Peek(name);
+        return _variables.TryGetValue(name, out var v) ? v : Outer?.Peek(name) ?? _system[name];
     }
 
     /// <summary>The value-counterpart to <see cref="Get"/>: hand back the VALUE a
@@ -312,7 +300,7 @@ public partial class @this
         if (_context.call.Current is { } frame && frame.TryGet(name, out var framed))
             return System.Threading.Tasks.ValueTask.FromResult(framed);
         if (_variables.TryGetValue(name, out var root)) return System.Threading.Tasks.ValueTask.FromResult(root);
-        return Outer?.Get(name) ?? System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name));
+        return Outer?.Get(name) ?? System.Threading.Tasks.ValueTask.FromResult(_system[name] ?? _context.NotFound(name));
     }
 
     /// <summary>
@@ -345,7 +333,7 @@ public partial class @this
     {
         if (_context.call.Current is { } frame && frame.TryGet(name, out _))
             return true;
-        return _variables.ContainsKey(name) || (Outer?.Contains(name) ?? false);
+        return _variables.ContainsKey(name) || (Outer?.Contains(name) ?? false) || _system[name] != null;
     }
 
     /// <summary>
@@ -383,7 +371,8 @@ public partial class @this
     {
         get
         {
-            var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys)
+            // the current call's, then this memory's own, then the system's under it
+            var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys).Concat(_system.All.Select(each => each.Key))
                 .Where(n => !n.StartsWith('!'))
                 .Distinct(StringComparer.OrdinalIgnoreCase);
             var variables = new global::app.type.item.list.@this<global::app.type.item.variable.@this>(
@@ -401,22 +390,25 @@ public partial class @this
     /// Gets all variable names.
     /// </summary>
     public IEnumerable<string> GetNames()
-    {
-        return _variables.Keys.Where(k => !k.StartsWith("!"));
-    }
+        // this memory's own, then the system's under it that no own name shadows
+        => _variables.Keys.Where(k => !k.StartsWith("!"))
+            .Concat(_system.All.Select(each => each.Key).Where(name => !_variables.ContainsKey(name)));
 
     /// <summary>
     /// Gets all variables ordered by last update.
     /// </summary>
     public IEnumerable<KeyValuePair<string, data.@this>> GetAll()
     {
-        // what a read sees: the current call's names first (they shadow the actor's), then the memory
+        // what a read sees: the current call's names first (they shadow the actor's), then the memory, then the system's
+        // variables under it
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (_context.call.Current is { } frame)
             foreach (var name in frame.Names)
                 if (!name.StartsWith('!') && seen.Add(name) && frame.TryGet(name, out var framed))
                     yield return new(name, framed);
         foreach (var kvp in _variables.Where(kvp => !kvp.Key.StartsWith("!")).OrderByDescending(kvp => kvp.Value.Updated))
+            if (seen.Add(kvp.Key)) yield return kvp;
+        foreach (var kvp in _system.All)
             if (seen.Add(kvp.Key)) yield return kvp;
     }
 
@@ -486,6 +478,8 @@ public partial class @this
                 continue;
             dict[kvp.Key] = kvp.Value.Peek();
         }
+        foreach (var (name, system) in _system.All)
+            dict.TryAdd(name, system.Peek());
         return dict;
     }
 
