@@ -10,15 +10,9 @@ public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyn
 {
     public @this(global::app.@this app) : base(new List<object?>(), app.type.list[typeof(@this)])
     {
-        System = new actor.@this("System", app, app.ShutdownToken, null, app.Console);
-        // the runtime's shared os folder is the system's to write: every actor reads and runs there, only it writes
-        System.Permission.Stand(app.filesystem.os,
-            global::app.type.item.permission.Verb.read, global::app.type.item.permission.Verb.execute,
-            global::app.type.item.permission.Verb.write, global::app.type.item.permission.Verb.delete);
-        // the stores' folder is the system's alone: it opens the stores there; no other actor reaches it
-        System.Permission.Stand(app.filesystem.store,
-            global::app.type.item.permission.Verb.read, global::app.type.item.permission.Verb.write, global::app.type.item.permission.Verb.delete);
-        User = new actor.@this("User", app, System.CancellationToken, System, app.Console);
+        // each born with its role: what it stands on the app's folders is its permission view's, made at its first ask
+        System = new actor.@this(new actor.role.system(), app, app.ShutdownToken, null, app.Console);
+        User = new actor.@this(new actor.role.user(), app, System.CancellationToken, System, app.Console);
         Add(System);
         Add(User);
     }

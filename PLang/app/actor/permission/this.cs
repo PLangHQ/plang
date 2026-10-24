@@ -24,9 +24,8 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     public @this(global::app.actor.@this actor)
     {
         _actor = actor;
-        // Every actor's standing grant on the runtime's shared os folder: it reads and runs what is there (the
-        // builder's goals, /system/error/show). Writing there is the system actor's alone (Stand).
-        Stand(actor.App.filesystem.os, Verb.read, Verb.execute);
+        // what the actor stands on its app's folders, as its role answers
+        actor.Role.Stand(this, actor.App);
     }
 
     /// <summary>

@@ -30,10 +30,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static global::app.actor.list.@this List(global::app.@this app) => new(app);
 
     /// <summary>
-    /// Name of the actor ("System", "Service", or "User").
+    /// Name of the actor ("System" or "User") — the name its role goes by.
     /// </summary>
     [global::app.LlmBuilder]
-    public string Name { get; }
+    public string Name => Role.Name;
+
+    /// <summary>What this actor is in its app — the system or a user: its name, and what it stands on the app's
+    /// folders.</summary>
+    internal role.@this Role { get; }
 
     /// <summary>The key this actor's row for the setting at <paramref name="address"/> is kept under in the settings'
     /// store (<c>user!app.test.setting</c>).</summary>
@@ -114,14 +118,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public global::app.actor.setting.@this Setting => _setting ??= new(this, _fallback?.Setting);
 
     /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
-    public @this(string name, app.@this app, CancellationToken parentToken = default, @this? fallback = null)
-        : this(name, app, parentToken, fallback, console: false) { }
-
+    /// <param name="role">What the actor is in its app: the system or a user.</param>
     /// <param name="console">Whether this actor's channels begin as the console's standard ones, wired when first used.</param>
-    internal @this(string name, app.@this app, CancellationToken parentToken, @this? fallback, bool console)
+    internal @this(role.@this role, app.@this app, CancellationToken parentToken = default, @this? fallback = null, bool console = false)
         : base(app.type.list[typeof(@this)])
     {
-        Name = name;
+        Role = role;
         App = app;
         _fallback = fallback;
         _cts = parentToken == default

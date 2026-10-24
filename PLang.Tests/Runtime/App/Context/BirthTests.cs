@@ -17,7 +17,7 @@ public class BirthTests
     {
         var app = global::PLang.Tests.Parent.Actor.App;
 
-        var born = Bytes(() => new global::app.actor.@this("probe", app));
+        var born = Bytes(() => new global::app.actor.@this(new global::app.actor.role.user(), app));
 
         await Assert.That(born).IsLessThan(23 * 1024L).Because("an actor's tasks and permission view are made when first asked");
     }
@@ -83,9 +83,22 @@ public class BirthTests
     }
 
     [Test]
+    public async Task ASubAppsSystemPermissionView_IsMadeAtItsFirstAsk()
+    {
+        var born = Bytes(() =>
+        {
+            var app = new global::app.@this("/birth", global::PLang.Tests.Parent.Actor);
+            _ = app.DisposeAsync();
+            return app;
+        });
+
+        await Assert.That(born).IsLessThan(97_000L).Because("the system's standing grants are its view's, made at its first ask");
+    }
+
+    [Test]
     public async Task AnActorsPermissionView_IsOneView()
     {
-        var actor = new global::app.actor.@this("probe", global::PLang.Tests.Parent.Actor.App);
+        var actor = new global::app.actor.@this(new global::app.actor.role.user(), global::PLang.Tests.Parent.Actor.App);
 
         await Assert.That(actor.Permission).IsSameReferenceAs(actor.Permission);
         await Assert.That(actor.Task).IsSameReferenceAs(actor.Task);
