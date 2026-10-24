@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # fast-apps' benchmark: the four measurements every stage is accepted against (test/plan/fast-apps/start.md,
 # "What tests can't show"). Run from anywhere:
-#   .bot/fast-apps/tester/bench/run.sh <label> [rounds]
+#   .bot/fast-apps/tester/bench/run.sh <label> [rounds]      (BENCH_MODES="root child" from stage 2 on)
 # Each round, back to back: an app's birth (Debug and Release), a request app born 3,000 times (Debug and
 # Release), the C# sweep (./dev.sh test --force), and plang --test from test/. The load is written beside every
 # number. Results append to .bot/fast-apps/tester/bench/results/<label>.txt.
@@ -38,10 +38,14 @@ bench() { # $1 = configuration, $2 = the test
 }
 
 for r in $(seq 1 "$rounds"); do
-  bench Debug Birth
-  bench Release Birth
-  bench Debug RequestApps
-  bench Release RequestApps
+  # BENCH_MODES="root child" measures each app twice: as a root and as a child made through the door (stage 2 on)
+  for mode in ${BENCH_MODES:-root}; do
+    export BENCH_MODE=$mode
+    bench Debug Birth
+    bench Release Birth
+    bench Debug RequestApps
+    bench Release RequestApps
+  done
 
   calm; l=$(load); t=$(now)
   ./dev.sh test --force > "$here/results/last-sweep.log" 2>&1 || true
