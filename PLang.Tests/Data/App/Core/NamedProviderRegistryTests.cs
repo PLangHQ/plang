@@ -118,9 +118,8 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Get_NoneRegistered_ReturnsError()
     {
-        // Use a bare registry with no built-in registrations
-        var bare = new EngineProviders(_app.actor.list.User.Context);
-        var result = bare.Get<IKey>();
+        // an interface no built-in provider serves
+        var result = _app.Code.Get<IUnserved>();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
@@ -316,9 +315,8 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task GetOrDefault_WhenNoneRegistered_ReturnsFallback()
     {
-        var bare = new EngineProviders(_app.actor.list.User.Context);
-        var fallback = new MockSigningProvider("fallback");
-        var result = bare.GetOrDefault<ISigning>(fallback);
+        var fallback = new Unserved("fallback");
+        var result = _app.Code.GetOrDefault<IUnserved>(fallback);
         await Assert.That(result).IsSameReferenceAs(fallback);
     }
 
@@ -331,12 +329,21 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Has_WhenNoneRegistered_ReturnsFalse()
     {
-        var bare = new EngineProviders(_app.actor.list.User.Context);
-        await Assert.That(bare.Has<ISigning>()).IsFalse();
+        await Assert.That(_app.Code.Has<IUnserved>()).IsFalse();
     }
 
     #endregion
 
+
+    // An interface no built-in provider serves.
+    public interface IUnserved : global::app.module.code.ICode;
+
+    private sealed class Unserved(string name) : IUnserved
+    {
+        public string Name { get; } = name;
+        public bool IsBuiltIn { get; set; }
+        public string? Source { get; set; }
+    }
 
     private class MockSigningProvider : ISigning
     {

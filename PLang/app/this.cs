@@ -328,7 +328,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // Debug/Build are born on their flag (--debug/--build), not at
         // startup — null = off. Presence is the enable signal (no IsEnabled).
         // the code providers, the built-ins registered at the registry's first use
-        Code = new AppCode(actor.list.System.Context, builtIn: true);
+        Code = new AppCode(actor.list.System.Context);
         // the actions, a layer of its own over the ones the origin answers
         module = new(this, origin.Module(this));
         goal = new(this);

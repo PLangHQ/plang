@@ -22,20 +22,11 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     private readonly actor.context.@this Context;
 
-    // whether the registry holds the built-in providers: an app's does, a bare registry holds none
-    private readonly bool _builtIn;
+    /// <summary>The registry of <paramref name="context"/>'s app, holding the built-in providers — registered at its
+    /// first use, so an app that asks for none makes none.</summary>
+    public @this(actor.context.@this context) => Context = context;
 
-    public @this(actor.context.@this context) : this(context, builtIn: false) { }
-
-    /// <summary>The registry of <paramref name="context"/>'s app, holding the built-in providers when
-    /// <paramref name="builtIn"/> — registered at its first use, so an app that asks for none makes none.</summary>
-    internal @this(actor.context.@this context, bool builtIn)
-    {
-        Context = context;
-        _builtIn = builtIn;
-    }
-
-    // The registry's tables, made at its first use — with the built-in providers when it holds them.
+    // The registry's tables, made at its first use, with the built-in providers.
     private sealed class tables
     {
         internal readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> Providers = new();
@@ -61,7 +52,7 @@ public sealed partial class @this : IAsyncDisposable
             {
                 if (_tables is { } held) return held;
                 var tables = new tables();
-                if (_builtIn) BuiltIns(tables);
+                BuiltIns(tables);
                 System.Threading.Volatile.Write(ref _tables, tables);
                 return tables;
             }
