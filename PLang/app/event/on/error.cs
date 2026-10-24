@@ -19,12 +19,14 @@ public sealed class error : global::app.@event.@this
     {
         if (!IsBound(item, context)) return failed;
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            foreach (var binding in Of(level.on).before)
-            {
-                if (!binding.For(item, context)) continue;
-                var answer = await binding.Start(item, failed, context);
-                if (!ReferenceEquals(answer, failed)) return answer;
-            }
+            // the level's own clauses, then what each actor of the asker's app holds for it
+            foreach (var @event in At(level, context))
+                foreach (var binding in @event.before)
+                {
+                    if (!binding.For(item, context)) continue;
+                    var answer = await binding.Start(item, failed, context);
+                    if (!ReferenceEquals(answer, failed)) return answer;
+                }
         return failed;
     }
 }

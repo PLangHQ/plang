@@ -42,15 +42,12 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         System.Func<@this, binding.list.@this> side)
     {
         int outer = -1, inner = -1;
-        var sources = Sources(context);
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            for (var source = 0; source < sources; source++)
-                if (At(level, source, context) is { } @event && side(@event).Count > 0)
-                {
-                    if (outer < 0) outer = depth;
-                    inner = depth;
-                    break;
-                }
+            if (IsBoundAt(level, context, side))
+            {
+                if (outer < 0) outer = depth;
+                inner = depth;
+            }
         return (outer, inner);
     }
 
@@ -66,9 +63,8 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     private bool IsBoundAt(global::app.type.item.@this level, global::app.actor.context.@this context,
         System.Func<@this, binding.list.@this> side)
     {
-        var sources = Sources(context);
-        for (var source = 0; source < sources; source++)
-            if (At(level, source, context) is { } @event && side(@event).Count > 0) return true;
+        foreach (var @event in At(level, context))
+            if (side(@event).Count > 0) return true;
         return false;
     }
 
@@ -80,25 +76,74 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     {
         if (!IsBoundBefore(level, context)) return null;
         var answer = result;
-        var sources = Sources(context);
-        for (var source = 0; source < sources; source++)
+        foreach (var @event in At(level, context))
         {
-            if (At(level, source, context)?.before is not { Count: > 0 } side) continue;
+            if (@event.before is not { Count: > 0 } side) continue;
             answer = await side.Start(item, answer, context);
             if (!answer.Success || answer.Handled) return answer;
         }
         return answer;
     }
 
-    // Where this event is bound at a level: the level's own events (what its program bound when it was read), then the
-    // hold of each actor of the asker's app (what was bound while a program ran), in the actor list's order.
-    private static int Sources(global::app.actor.context.@this context) => 1 + context.App.actor.list.CountRaw;
+    // This event where it is bound at a level, outward: the level's own events (what its program bound when it was
+    // read), then each actor's hold in the asker's app (what was bound while a program ran), in the actor list's order;
+    // inward the reverse.
+    private protected Sources At(global::app.type.item.@this level, global::app.actor.context.@this context, bool inward = false)
+        => new(this, level, context.App.actor.list, inward);
 
-    // This event at a level, from one of its sources: the level's own (0), or the one an actor of the asker's app
-    // holds for it; null where that source has nothing of it.
-    private @this? At(global::app.type.item.@this level, int source, global::app.actor.context.@this context)
-        => source == 0 ? Of(level.on)
-         : context.App.actor.list[source - 1].Context.on.Of(level)?.Bound(Name);
+    // The places this event can be bound at one level, walked without allocating: each is a set of events that takes
+    // bindings — the level's own, or one an actor holds for the level — and answers the event by its name, if it was
+    // ever bound there. (Events no binding gave an item are the shared empty ones, closed to bindings: nothing there.)
+    private protected struct Sources
+    {
+        private readonly @this _event;
+        private readonly global::app.type.item.@this _level;
+        private readonly global::app.actor.list.@this _actors;
+        private readonly bool _inward;
+        private readonly int _count;
+        // the next actor whose hold is asked, and whether the level's own events were
+        private int _next;
+        private bool _owned;
+
+        internal Sources(@this @event, global::app.type.item.@this level, global::app.actor.list.@this actors, bool inward)
+        {
+            _event = @event;
+            _level = level;
+            _actors = actors;
+            _inward = inward;
+            _count = actors.CountRaw;
+            _next = inward ? _count - 1 : 0;
+            _owned = false;
+            Current = null!;
+        }
+
+        public readonly Sources GetEnumerator() => this;
+
+        public @this Current { get; private set; }
+
+        public bool MoveNext()
+        {
+            while (Next() is var (found, place))
+            {
+                if (!found) return false;
+                if (place?.Bound(_event.Name) is not { } held) continue;
+                Current = held;
+                return true;
+            }
+            return false;
+        }
+
+        // The next place, in the walk's direction: outward the level's own events, then each actor's hold; inward each
+        // actor's hold, then the level's own. Found is false past the last; the place is null where nothing was bound.
+        private (bool Found, global::app.@event.on.own? Place) Next()
+        {
+            if (!_inward && !_owned) return (_owned = true, _level.on as global::app.@event.on.own);
+            if (_inward ? _next >= 0 : _next < _count)
+                return (true, _actors[_inward ? _next-- : _next++].Context.on.Of(_level));
+            if (_inward && !_owned) return (_owned = true, _level.on as global::app.@event.on.own);
+            return (false, null);
+        }
+    }
 
     /// <summary>
     /// Starts what is bound before <paramref name="item"/>'s event at each of its levels, outermost first
@@ -119,12 +164,10 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         int depth, global::app.actor.context.@this context, global::app.data.@this? result)
     {
         var answer = result ?? context.Ok();
-        var sources = Sources(context);
         for (; item.Level(depth, context) is { } level; depth++)
-            // the level's own first, then each actor's hold
-            for (var source = 0; source < sources; source++)
+            foreach (var @event in At(level, context))
             {
-                if (At(level, source, context)?.before is not { Count: > 0 } side) continue;
+                if (@event.before is not { Count: > 0 } side) continue;
                 answer = await side.Start(item, answer, context);
                 if (!answer.Success || answer.Handled) return answer;
             }
@@ -147,14 +190,9 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     private async System.Threading.Tasks.ValueTask<global::app.data.@this> After(global::app.type.item.@this item,
         global::app.data.@this result, int depth, global::app.actor.context.@this context)
     {
-        var sources = Sources(context);
         for (; depth >= 0; depth--)
-        {
-            var level = item.Level(depth, context)!;
-            // each actor's hold first, then the level's own: the reverse of before
-            for (var source = sources - 1; source >= 0; source--)
-                if (At(level, source, context)?.after is { Count: > 0 } side) result = await side.Start(item, result, context);
-        }
+            foreach (var @event in At(item.Level(depth, context)!, context, inward: true))
+                if (@event.after is { Count: > 0 } side) result = await side.Start(item, result, context);
         return result;
     }
 
