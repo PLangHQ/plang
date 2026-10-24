@@ -48,7 +48,7 @@ Each locked item comes to Ingi with its code before it's built (decision 5). By 
 - The hidden goal reader app (`goal/program/this.cs`): the parent's goals are the shared goals.
 - The 1-second freshness window (3d90ec3f2): a goal changed within a second read stale; the stat keeps it fresh.
 - §10's entries made on first ask, and the `Fill()` hook on the list base for one subclass.
-- The test `Session` static: one parent per test process.
+- The test `Session` static holding the code's facts: the C# tests hold one parent app per test process instead (a test-code static, the test process's root, as the CLI's root app is Executor's local; architect, 11).
 - `held`'s shape (`origin/test-speed event/held/this.cs`): the idea stays whole, but `IsShared` is a static type switch over goal, step, action and type (a **fork**: each shared item answers for itself), and `On`/`Own` are static helpers with a switch over levels (**stray helper**: they belong to the context's hold).
 - §14's call-list makers (closures standing in for a reference) and §15's explicit "system variables last" in `GetAll`: each gets a second look before it's built.
 - "No stat for a path with one place" (§20): it changes what an `exists` costs; out of scope.

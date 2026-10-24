@@ -22,6 +22,11 @@ What came up on item-doors and goes on after it, so nothing waits on us (Ingi, 2
 7. **The done plans' tests move into the concept tree** (CLAUDE.md "Running plang Tests"). item-doors' nine (`test/plan/item-doors/app/goal/*`, `app/type/**`) go to `test/app/…` at the same paths, and app-systems' and kind-is-type's plan folders are in the same state. `start.md`, `start.goal` and `done.list` stay as each plan's record. The builder rebuilds the moved tests' `.pr`; nobody hand-edits them. This was not done before the merge: runtime2 takes no commit of its own, so it goes on the next branch.
 8. **The Windows run of LinkSpotTests (the junction test), StoresFolderTests and RealPathGateReCheckProbeTests**, waiting for room on the host's C: drive. A folder link is removed with `Directory.Delete(p, recursive: false)` (`path/file/filesystem/this.cs:108`), which never deletes contents, so the worst a red can show is a delete that fails. A red is fixed on a branch off runtime2.
 
+## From fast-apps
+
+9. **The end of a parent link that answers a call has one owner** (fast-apps 11). PlangOS's shell answers a call from its host in its own private `Called` (`module/screen/type/screen/display/this.cs:255`, bare names only, `:265`). fast-apps stage 2 puts the same end on `parent/this.cs` for a parent in the same process. Move display's onto it, so there is one.
+10. **A request app's store and the server's** (fast-apps 11, with 317a). A child is rooted in its own folder, but a test's app and, later, a request app are rooted at the same folder as the app that made them (`test/list/this.cs:178`). A test's store is in memory, scoped by the app's id; a request app's file store would open the server's `.data/`. That's the actors' stores question (item 4).
+
 ## Already on the list (see their decisions)
 
 - The OBP-root follow-up: `v3-triage.md` §B (decision 280) and §D, the filesystem as a plang type (315c), the terminal's ToString and an `IWriter` location primitive (315b), E (a folder's `Absolute` in OS form), per-actor identities, archived identities' rows read as foreign until saved again (316b), R5 (a note).
