@@ -64,7 +64,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// in-memory list (live for the App's lifetime) and "a" grants to the
     /// actor's permission setting, saved in the settings' store.
     /// </summary>
-    public permission.@this Permission { get; private set; } = null!;
+    public permission.@this Permission
+        => _permission ?? System.Threading.Interlocked.CompareExchange(ref _permission, new permission.@this(this), null) ?? _permission;
+
+    // the permission view, made when first asked; the first made is the one kept (it holds the grants)
+    private permission.@this? _permission;
 
     private readonly global::app.channel.list.@this _channels;
 
@@ -76,11 +80,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     [global::app.LlmBuilder]
     public global::app.channel.list.@this Channel => _channels;
 
-    private readonly global::app.task.list.@this _tasks;
+    // the tasks, made when first asked; the first made is the one kept (it lists what runs)
+    private global::app.task.list.@this? _tasks;
 
     /// <summary>The tasks this actor runs — the goal calls made in parallel on it, each listed while it runs.</summary>
     [global::app.LlmBuilder]
-    public global::app.task.list.@this Task => _tasks;
+    public global::app.task.list.@this Task
+        => _tasks ?? System.Threading.Interlocked.CompareExchange(ref _tasks, new global::app.task.list.@this(this), null) ?? _tasks;
 
     /// <summary>
     /// Back-reference to the app.
@@ -118,9 +124,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
         Context = new context.@this(app, this, parentToken: _cts.Token);
-        Permission = new permission.@this(this);
         _channels = new global::app.channel.list.@this(app, this);
-        _tasks = new global::app.task.list.@this(this);
         // %MyIdentity% and %Identity% are not set here: the memory is born holding them (variable.list), computed from
         // whoever asks, so an actor born at any time has them at once and no set — nor anything bound to one — runs.
     }
