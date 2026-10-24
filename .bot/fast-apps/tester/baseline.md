@@ -217,7 +217,9 @@ The type list, the module registry and goals are shared through the parent; the 
   (**55×**), a request app 22 ms → 3.9 ms (**5.6×**) and 6.7 MB → 1.6 MB (**4×**), the sweep **1.6–3×** (103–136 s
   against 44.5–64.6 s; 2.3–3× leaving out the slow first round), `plang --test` **1.2–2×** (17–27 s against 13.5–13.9 s). The plan's targets were ~3.5 ms (stage 2) and ~0.1 ms (stage 4): the birth is already under the first and
   within 5× of the second, with stage 4 (a birth makes only what's asked for) still to come.
-- **The plan test `TestAppHasItsRunnerAsParent` passes now** (`plang --test` went from 2 fails to 1).
+- **`plang --test` went from 2 fails to 1 because `TestAppHasItsRunnerAsParent` is gone, not because it passes.** The
+  coder's `6a7e5a517` (decision 18: the in-process parent isn't built) removed it from the branch. An earlier line
+  here said it passed; that was wrong. See "The parent in a test's app" below.
 - **The root is unchanged** at 6.05 MB and 27–30 ms a birth (the coder's two allocation fixes are queued), and its
   request app allocates a little more than at stage 2 (7.35 against 7.0–7.2 MB Release; I have not looked for it).
 
@@ -244,6 +246,34 @@ all of it one array (the sqlite pool table, 32 KB); no other type grew. What the
 
 The cache at line 515 is a static in production code, filled once and bounded by the number of classes, so it is not
 growth; I note it because the plan says "no static in production" for the code's facts.
+
+## The root after the allocation fixes — the tip `783ad353f` (code `a2ae81cb1`), `bench/results/stage3b.txt`
+
+Root only (`BENCH_ONLY=1 BENCH_MODES=root`), 3 rounds, load 1.1–2.7. The two fixes found at `15e96ecc8` are in.
+
+| | stage 0 | stage 3 root | **after the fixes** | load |
+|---|---|---|---|---|
+| a birth | 27–32 ms, 5.2 MB | Debug 27.6–29.5 ms, Release 27.1–30.8 ms; 6.05 MB | **Debug 18.6–19.8 ms, Release 19.2–20.5 ms; 2.89 MB** | 1.2–2.7 |
+| a request app × 3,000 | Release 21–22 ms, 6.6–6.9 MB | Release 21.2–22.0 ms, 7.35 MB; Debug 23.3–25.6 ms, 7.40 MB | **Release 17.8–18.2 ms, 4.25 MB; Debug 20.2–20.9 ms, 4.41 MB**; held 0.9 → 3.4 → 3.9 → 4.5 (unchanged) | 1.1–1.6 |
+
+- **A root birth allocates 2.89 MB: less than half of what it did (6.05 MB) and 45 % less than stage 0 (5.2 MB).** It is
+  also 30 % faster (about 19 ms, from 27–30). A root request app allocates 4.25 MB, down from 7.35 MB (stage 0: 6.7 MB)
+  and runs in 18 ms, from 21–22.
+- **The 7.35 MB against stage 2's 7.0–7.2 is moot now**: the root is 3 MB under both. I did not look for what made it
+  0.15 MB higher.
+- The child's rows are unchanged by this (child births are 0.46–0.56 ms, 646–654 KB at `94acb909b`); I did not rerun them.
+
+## The parent in a test's app
+
+- `TestAppHasItsRunnerAsParent` (`test/plan/fast-apps/app/parent/`) is not in my tree, tracked or untracked, and
+  `start.goal` line 20 says it went to the backlog with decision 18. My stage 2 run (`d56b3fe22`) had it red, and the
+  stage 3 run (`94acb909b`) no longer has it.
+- **`%!app.parent%` in a test's app today is false, and nothing links it.** Checked with a scratch test (not committed)
+  on `783ad353f`, reading `%!app.parent%` the way a step does: in a root app and in a child made through the door,
+  `app.parent` is an `app.parent.this` whose `IsTruthy()` is false and whose `Link` is not set. `Link` is set in
+  two places only, `module/screen/type/screen/display/this.cs:73` (PlangOS's screen) and
+  `module/terminal/type/process/this.cs:206` (a process this app started). So it is not truthy with nothing linking it:
+  no bug.
 
 ## Not measured here
 
