@@ -182,8 +182,9 @@ public class @this : global::app.channel.type.session.@this
         return await Read(ResolveEncoding().GetBytes(line), ct);
     }
 
-    // what was read past the last message's end: the start of the next one
-    private byte[] _ahead = new byte[1 << 16];
+    // what was read past the last message's end: the start of the next one — empty until the first read (a channel
+    // that only writes never holds one), then grown as a read needs room
+    private byte[] _ahead = [];
     private int _held;
 
     /// <summary>The next message, without its end; null when the stream ends first (a part read before the end is
@@ -209,7 +210,7 @@ public class @this : global::app.channel.type.session.@this
             }
             // what was searched holds no end (an end may straddle the next read: search again from just before it)
             searched = Math.Max(0, _held - end.Length + 1);
-            if (_held == _ahead.Length) System.Array.Resize(ref _ahead, _ahead.Length * 2);
+            if (_held == _ahead.Length) System.Array.Resize(ref _ahead, Math.Max(1 << 16, _ahead.Length * 2));
             var read = await Stream.ReadAsync(_ahead.AsMemory(_held), ct);
             if (read == 0)
             {
