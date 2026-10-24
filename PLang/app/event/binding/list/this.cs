@@ -25,12 +25,6 @@ public abstract class @this : IReadOnlyList<binding.@this>
 
     /// <summary>Binds <paramref name="handler"/> here for <paramref name="actor"/>, in <paramref name="scope"/>,
     /// for the items <paramref name="filter"/> takes; answers the binding.</summary>
-    internal binding.@this Add(
-        System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, System.Threading.Tasks.Task<global::app.data.@this>> handler,
-        global::app.actor.@this actor, binding.Scope scope,
-        System.Func<global::app.type.item.@this, global::app.actor.context.@this, bool> filter)
-        => Add(side => new binding.@this(side, handler, actor, scope, filter));
-
     /// <summary>Binds the binding <paramref name="make"/> makes on this side — a kind of binding (a mock) is born
     /// knowing the list it is on; answers it.</summary>
     internal T Add<T>(System.Func<@this, T> make) where T : binding.@this

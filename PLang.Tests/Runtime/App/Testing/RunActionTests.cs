@@ -147,7 +147,7 @@ public class RunActionTests
         void Probe(global::app.@this childApp)
         {
             if (!childApp.filesystem.root.Absolute.StartsWith(_tempDir)) return;
-            childApp.type.list["action"].HeldIn(childApp).Bind("start", global::app.@event.When.before,
+            childApp.actor.list.User.Context.on.Bind(childApp.type.list["action"], "start", global::app.@event.When.before,
                 async (_, _, context) =>
                 {
                     lock (depthLock)
@@ -160,7 +160,7 @@ public class RunActionTests
                     lock (depthLock) currentDepth--;
                     return context.Ok();
                 },
-                childApp.actor.list.User, global::app.@event.binding.Scope.actor);
+                global::app.@event.binding.Scope.actor);
         }
 
         _app.test.list.Made += Probe;

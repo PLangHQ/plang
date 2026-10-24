@@ -13,8 +13,8 @@ public class CreateEventTests : System.IAsyncDisposable
 
     private global::app.@event.binding.@this On(string type, global::app.@event.When when,
         System.Func<global::app.data.@this, global::app.actor.context.@this, global::app.data.@this> handler)
-        => app.type.list[type].HeldIn(app).Bind("create", when,
-            (_, data, c) => System.Threading.Tasks.Task.FromResult(handler(data, c)), app.actor.list.User, global::app.@event.binding.Scope.actor);
+        => app.actor.list.User.Context.on.Bind(app.type.list[type], "create", when,
+            (_, data, c) => System.Threading.Tasks.Task.FromResult(handler(data, c)), global::app.@event.binding.Scope.actor);
 
     [Test] public async Task ABeforeThatRefuses_IsTheResult_NothingIsMade()
     {

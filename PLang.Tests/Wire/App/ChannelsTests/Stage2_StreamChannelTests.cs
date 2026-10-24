@@ -341,11 +341,11 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var ch = StreamChannel.Memory("output");
         app.actor.list.User.Channel.Register(ch);
         string? seen = null;
-        ch.HeldIn(app).Bind("write", global::app.@event.When.before, async (_, data, ctx) =>
+        app.actor.list.User.Context.on.Bind(ch, "write", global::app.@event.When.before, async (_, data, ctx) =>
         {
             seen = (await data.Value())?.ToString();
             return ctx.Ok();
-        }, app.actor.list.User, global::app.@event.binding.Scope.actor);
+        }, global::app.@event.binding.Scope.actor);
 
         await ch.WriteText("  Saved Start");
 

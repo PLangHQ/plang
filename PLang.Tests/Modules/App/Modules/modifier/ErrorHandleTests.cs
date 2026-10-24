@@ -231,12 +231,12 @@ public class ErrorHandleTests
             Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>()),
         };
-        action.HeldIn(_app).Bind("start", global::app.@event.When.before, async (_, _, _) =>
+        _app.actor.list.User.Context.on.Bind(action, "start", global::app.@event.When.before, async (_, _, _) =>
         {
             var answer = await attempt();
             if (answer.Success) answer.Handled = true;
             return answer;
-        }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
+        }, global::app.@event.binding.Scope.actor);
         return global::PLang.Tests.Shared.Make.With(action, clauses);
     }
 

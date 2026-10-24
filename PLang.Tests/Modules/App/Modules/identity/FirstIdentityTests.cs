@@ -16,12 +16,12 @@ public class FirstIdentityTests
 
             var gets = 0;
             foreach (var who in new[] { app.actor.list.User, app.actor.list.System })
-                app.type.list["action"].HeldIn(app).Bind("start", global::app.@event.When.before, (item, _, c) =>
+                who.Context.on.Bind(app.type.list["action"], "start", global::app.@event.When.before, (item, _, c) =>
                 {
                     if (item is global::app.goal.step.action.@this { Name: "get" } a && a.Module.Name == "identity")
                         System.Threading.Interlocked.Increment(ref gets);
                     return Task.FromResult(c.Ok());
-                }, who, global::app.@event.binding.Scope.actor);
+                }, global::app.@event.binding.Scope.actor);
 
             var identity = await new global::app.goal.step.action.@this(new global::app.module.identity.Get(ctx), ctx).Start(ctx);
             await identity.IsSuccess();

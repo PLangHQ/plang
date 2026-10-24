@@ -94,8 +94,8 @@ public class QueryCacheTests
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("born")));
         var births = 0;
-        _app.type.list["text"].HeldIn(_app).Bind("create", global::app.@event.When.after,
-            (_, data, _) => { births++; return Task.FromResult(data); }, Ctx.Actor, global::app.@event.binding.Scope.actor);
+        Ctx.on.Bind(_app.type.list["text"], "create", global::app.@event.When.after,
+            (_, data, _) => { births++; return Task.FromResult(data); }, global::app.@event.binding.Scope.actor);
 
         var query = LlmTestHelper.MakeQuery(Ctx, userText: "a birth");
         await query.Attach(null, Ctx);

@@ -96,8 +96,8 @@ public class DebugViewTests : System.IAsyncDisposable
     [Test]
     public async Task ABindingDump_IsItsName()
     {
-        var binding = _app.type.list["action"].HeldIn(_app).Bind("start", global::app.@event.When.before,
-            (_, _, c) => System.Threading.Tasks.Task.FromResult(c.Ok()), _app.actor.list.User, global::app.@event.binding.Scope.actor);
+        var binding = _app.actor.list.User.Context.on.Bind(_app.type.list["action"], "start", global::app.@event.When.before,
+            (_, _, c) => System.Threading.Tasks.Task.FromResult(c.Ok()), global::app.@event.binding.Scope.actor);
 
         var written = await binding.Debug(Ctx);
 

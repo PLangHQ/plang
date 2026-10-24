@@ -53,12 +53,12 @@ public class AskAnswerTests : System.IAsyncDisposable
     // a binding before the input's ask that answers "a" in the channel's place — what a step's `on ask on "input"`
     // binding does — never answers a consent: it may watch it, never answer it
     private void Binding()
-        => channel.HeldIn(app).ask.before.Add((item, data, ctx) =>
+        => app.actor.list.User.Context.on.Bind(channel, "ask", global::app.@event.When.before, (item, data, ctx) =>
         {
             var answer = ctx.Ok("a");
             answer.Handled = true;
             return Task.FromResult(answer);
-        }, app.actor.list.User, global::app.@event.binding.Scope.actor, (item, ctx) => true);
+        }, global::app.@event.binding.Scope.actor);
 
     [Test] public async Task ABindingOnTheInputsAsk_DoesNotAnswerARead()
     {

@@ -61,21 +61,6 @@ public sealed class own : @this
     /// nothing was ever bound under that name. What a read asks: it makes nothing.</summary>
     internal override global::app.@event.@this? Bound(string name) => _events.GetValueOrDefault(name);
 
-    /// <summary>Binds <paramref name="handler"/> on the event named <paramref name="event"/>, <paramref name="when"/>
-    /// it runs, for <paramref name="actor"/> in <paramref name="scope"/>; it fires for every item.</summary>
-    public binding.@this Bind(string @event, When when,
-        System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, System.Threading.Tasks.Task<global::app.data.@this>> handler,
-        global::app.actor.@this actor, binding.Scope scope)
-        => Bind(@event, when, handler, actor, scope, binding.@this.Always);
-
-    /// <summary>Binds <paramref name="handler"/> on the event named <paramref name="event"/>, <paramref name="when"/>
-    /// it runs, for <paramref name="actor"/> in <paramref name="scope"/>, for the items <paramref name="filter"/> takes.</summary>
-    public binding.@this Bind(string @event, When when,
-        System.Func<global::app.type.item.@this, global::app.data.@this, global::app.actor.context.@this, System.Threading.Tasks.Task<global::app.data.@this>> handler,
-        global::app.actor.@this actor, binding.Scope scope,
-        System.Func<global::app.type.item.@this, global::app.actor.context.@this, bool> filter)
-        => Bind(@event, when, side => new binding.@this(side, handler, actor, scope, filter));
-
     /// <summary>Binds the binding <paramref name="make"/> makes on the event named <paramref name="event"/>,
     /// <paramref name="when"/> it runs — a kind of binding (a mock) that is its own handler.</summary>
     public T Bind<T>(string @event, When when, System.Func<binding.list.@this, T> make) where T : binding.@this

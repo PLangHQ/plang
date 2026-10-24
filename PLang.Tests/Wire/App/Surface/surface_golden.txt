@@ -531,8 +531,6 @@ class app.event.on.load : app.event.this
 class app.event.on.miss : app.event.this
 
 class app.event.on.own : app.event.on.this
-  Bind(System.String event, app.event.When when, System.Func<app.type.item.this, app.data.this, app.actor.context.this, System.Threading.Tasks.Task<app.data.this>> handler, app.actor.this actor, app.event.binding.Scope scope) : app.event.binding.this
-  Bind(System.String event, app.event.When when, System.Func<app.type.item.this, app.data.this, app.actor.context.this, System.Threading.Tasks.Task<app.data.this>> handler, app.actor.this actor, app.event.binding.Scope scope, System.Func<app.type.item.this, app.actor.context.this, System.Boolean> filter) : app.event.binding.this
   Bind<T>(System.String event, app.event.When when, System.Func<app.event.binding.list.this, T> make) : T
   override Item[System.String] : app.event.this { get; }
   override ask : app.event.on.ask { get; }
