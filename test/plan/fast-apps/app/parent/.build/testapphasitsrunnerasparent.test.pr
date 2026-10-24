@@ -1,0 +1,53 @@
+{
+  "name": "Start",
+  "comment": "a test's app is made by the runner's actor that runs it: in a test, %!app.parent% is the runner.",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert %!app.parent% is true, \"a test's app has its runner as its parent\"",
+      "line": {
+        "number": 3,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.parent%",
+              "variable": [
+                {
+                  "text": "%!app.parent%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "parent"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a test's app has its runner as its parent"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "TestAppHasItsRunnerAsParent.test.goal",
+  "hash": "f4588e86427d4cdaf15de30e91da6ae234390d46016bddd55bd686955d0f1eae"
+}

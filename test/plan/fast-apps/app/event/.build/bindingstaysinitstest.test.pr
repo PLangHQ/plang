@@ -1,0 +1,360 @@
+{
+  "name": "Start",
+  "comment": "a binding a test makes while it runs is its own: bound app-wide on every step's start, it fires for this test's steps.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %seen% = 0",
+      "line": {
+        "number": 3,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%seen%",
+              "variable": [
+                {
+                  "text": "%seen%",
+                  "code": [
+                    {
+                      "variable": "seen"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "on %!app.type.step.on.start%, before, call Seen, scope app",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "event",
+                "template": "plang"
+              },
+              "value": "%!app.type.step.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.type.step.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "step"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "Seen"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Scope",
+              "type": {
+                "name": "choice",
+                "kind": "scope"
+              },
+              "value": "app"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %after% = 1",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%after%",
+              "variable": [
+                {
+                  "text": "%after%",
+                  "code": [
+                    {
+                      "variable": "after"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %seen% is greater than 0, \"the binding fired for this test's own steps\"",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "greaterThan",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%seen%",
+              "variable": [
+                {
+                  "text": "%seen%",
+                  "code": [
+                    {
+                      "variable": "seen"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the binding fired for this test's own steps"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Seen",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %seen% = %seen% + 1",
+          "line": {
+            "number": 9,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "math",
+              "name": "add",
+              "property": [
+                {
+                  "name": "A",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%seen%",
+                  "variable": [
+                    {
+                      "text": "%seen%",
+                      "code": [
+                        {
+                          "variable": "seen"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "B",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ],
+              "default": [
+                {
+                  "name": "overflow",
+                  "type": {
+                    "name": "choice",
+                    "kind": "overflow"
+                  },
+                  "value": "Promote"
+                },
+                {
+                  "name": "precision",
+                  "type": {
+                    "name": "choice",
+                    "kind": "precision"
+                  },
+                  "value": "Error"
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%seen%",
+                  "variable": [
+                    {
+                      "text": "%seen%",
+                      "code": [
+                        {
+                          "variable": "seen"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 0 uses math.add, which the decider was not sure of (0.96)"
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "b712a249419099fbe012cb9a7f44fc13df765c9903ea8e0a19d78fd087a5d9b6"
+    }
+  ],
+  "visibility": "Public",
+  "file": "BindingStaysInItsTest.test.goal",
+  "hash": "d14d716aaa0815a5126cd08eb5e5cd51b022010a749acf03cf5c51d533d8bb93"
+}

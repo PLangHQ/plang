@@ -1,0 +1,227 @@
+{
+  "name": "Start",
+  "comment": "a plugin's type joins only the app that loaded it: a test beside the one that loads TypeProvider.dll holds no \"money\".",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %types% = %!app.type.list%",
+      "line": {
+        "number": 3,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%types%",
+              "variable": [
+                {
+                  "text": "%types%",
+                  "code": [
+                    {
+                      "variable": "types"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.type.list%",
+              "variable": [
+                {
+                  "text": "%!app.type.list%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "list"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "any %types% where \"name\" == \"money\", write to %joined%",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "any",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%types%",
+              "variable": [
+                {
+                  "text": "%types%",
+                  "code": [
+                    {
+                      "variable": "types"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "name"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "money"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%joined%",
+              "variable": [
+                {
+                  "text": "%joined%",
+                  "code": [
+                    {
+                      "variable": "joined"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 1 uses list.any, which the decider was not sure of (0.95)"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %joined% is false, \"another test's plugin type never reaches this app\"",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%joined%",
+              "variable": [
+                {
+                  "text": "%joined%",
+                  "code": [
+                    {
+                      "variable": "joined"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "another test's plugin type never reaches this app"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "SiblingDoesNotSeeThePluginType.test.goal",
+  "hash": "73ddf8b7d3fa29afbfae3db7208c968de357d58c9f761b324e97006d4e8bebab"
+}

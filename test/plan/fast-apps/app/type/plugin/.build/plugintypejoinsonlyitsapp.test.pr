@@ -1,0 +1,307 @@
+{
+  "name": "Start",
+  "comment": "a program that loads code is an app of its own: the plugin's type joins its app's list, reached like a built-in.\nTypeProvider.dll declares \"money\" (TestFixtures/TypeProvider/Money.cs), copied next to this test.",
+  "step": [
+    {
+      "index": 0,
+      "text": "code.load Path=TypeProvider.dll",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "code",
+          "name": "load",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "TypeProvider.dll"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %types% = %!app.type.list%",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%types%",
+              "variable": [
+                {
+                  "text": "%types%",
+                  "code": [
+                    {
+                      "variable": "types"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.type.list%",
+              "variable": [
+                {
+                  "text": "%!app.type.list%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "list"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "any %types% where \"name\" == \"money\", write to %joined%",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "any",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%types%",
+              "variable": [
+                {
+                  "text": "%types%",
+                  "code": [
+                    {
+                      "variable": "types"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "name"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "money"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%joined%",
+              "variable": [
+                {
+                  "text": "%joined%",
+                  "code": [
+                    {
+                      "variable": "joined"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 2 uses list.any, which the decider was not sure of (0.96)"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %joined% is true, \"the plugin's type joined this app's list\"",
+      "line": {
+        "number": 7,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%joined%",
+              "variable": [
+                {
+                  "text": "%joined%",
+                  "code": [
+                    {
+                      "variable": "joined"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the plugin's type joined this app's list"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %!app.type.money.name% equals \"money\", \"and is reached like a built-in\"",
+      "line": {
+        "number": 8,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "money"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.type.money.name%",
+              "variable": [
+                {
+                  "text": "%!app.type.money.name%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "money"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "and is reached like a built-in"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visibility": "Public",
+  "file": "PluginTypeJoinsOnlyItsApp.test.goal",
+  "hash": "84be9d1b5a450430f758235f706e44d03dc78835050523bbd07fa63da64950ea"
+}
