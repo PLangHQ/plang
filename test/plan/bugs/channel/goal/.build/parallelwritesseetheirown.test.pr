@@ -1,0 +1,469 @@
+{
+  "name": "Start",
+  "comment": "Writes in parallel to a goal channel: each call of the goal sees its own message, whatever else is written meanwhile.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set channel \"shown\" call Shown",
+      "line": {
+        "number": 3,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "channel",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "shown"
+            },
+            {
+              "name": "Goal",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "Shown"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %items% = [\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"9\",\"10\",\"11\",\"12\",\"13\",\"14\",\"15\",\"16\",\"17\",\"18\",\"19\",\"20\"]",
+      "line": {
+        "number": 4,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%items%",
+              "variable": [
+                {
+                  "text": "%items%",
+                  "code": [
+                    {
+                      "variable": "items"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "foreach %items%, call Each item=%item%, in parallel, write to %task%",
+      "line": {
+        "number": 5,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%items%",
+              "variable": [
+                {
+                  "text": "%items%",
+                  "code": [
+                    {
+                      "variable": "items"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Parallel",
+              "type": {
+                "name": "parallel"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "item",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Each"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"item","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 2 uses variable.set, which the decider was not sure of (0.84)"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "wait for %task%",
+      "line": {
+        "number": 6,
+        "indent": 0
+      },
+      "code": [
+        {
+          "module": "task",
+          "name": "wait",
+          "property": [
+            {
+              "name": "Task",
+              "type": {
+                "name": "task",
+                "template": "plang"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Each",
+      "step": [
+        {
+          "index": 0,
+          "text": "write %item% to \"shown\" channel",
+          "line": {
+            "number": 9,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "output",
+              "name": "write",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%item%",
+                  "variable": [
+                    {
+                      "text": "%item%",
+                      "code": [
+                        {
+                          "variable": "item"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "channel",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "shown"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "f31e659e70ac9999c2e95c751eaefa82be1310c830f9dde0b600985e97a37992"
+    },
+    {
+      "name": "Shown",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %seen% = %message%",
+          "line": {
+            "number": 12,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%seen%",
+                  "variable": [
+                    {
+                      "text": "%seen%",
+                      "code": [
+                        {
+                          "variable": "seen"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%message%",
+                  "variable": [
+                    {
+                      "text": "%message%",
+                      "code": [
+                        {
+                          "variable": "message"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "sleep for 100ms",
+          "line": {
+            "number": 13,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "timer",
+              "name": "sleep",
+              "property": [
+                {
+                  "name": "Duration",
+                  "type": {
+                    "name": "duration"
+                  },
+                  "value": "100ms"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "assert %seen% equals %message%, \"the goal channel's call kept its own message\"",
+          "line": {
+            "number": 14,
+            "indent": 0
+          },
+          "code": [
+            {
+              "module": "assert",
+              "name": "equals",
+              "property": [
+                {
+                  "name": "Expected",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%message%",
+                  "variable": [
+                    {
+                      "text": "%message%",
+                      "code": [
+                        {
+                          "variable": "message"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Actual",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%seen%",
+                  "variable": [
+                    {
+                      "text": "%seen%",
+                      "code": [
+                        {
+                          "variable": "seen"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "the goal channel's call kept its own message"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "visibility": "Private",
+      "hash": "6b484a7c9ed0818d768a0dbfa8a857b19ed7af36febe597011a1d2760e8b14d3"
+    }
+  ],
+  "visibility": "Public",
+  "file": "ParallelWritesSeeTheirOwn.test.goal",
+  "hash": "b5f2b17b512499764c146b65b4aa773533b8061cf5716a487ea2bf8603dc4587"
+}
