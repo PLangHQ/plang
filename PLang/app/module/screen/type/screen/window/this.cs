@@ -48,7 +48,7 @@ public sealed class @this : screen.@this
     {
         var file = global::app.type.item.path.file.@this.Resolve("/errors.jsonl", context);
         var json = context.App.type.list.Mime("application/json");
-        var lines = file.Kind(context).kind;
+        var kind = file.Kind(context).kind;
         await foreach (var sent in errors.ReadAllAsync())
         {
             // what came up is what the shell wrote through its json channel: read back through the json kind; what
@@ -62,7 +62,7 @@ public sealed class @this : screen.@this
                 .Set("error", error.Success && await error.Value() is { IsNull: false } what ? what : (Text)System.Text.Encoding.UTF8.GetString(sent));
             var value = new global::app.data.@this("error", record, context: context);
             using var stream = new MemoryStream();
-            if (!(await lines.Encode(stream, value, context)).Success) continue;
+            if (!(await kind.Encode(stream, value, context)).Success) continue;
             var line = System.Text.Encoding.UTF8.GetString(stream.ToArray());
             await file.Append(line, context);
         }
