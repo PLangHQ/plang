@@ -5,6 +5,7 @@ What came up on item-doors and goes on after it, so nothing waits on us (Ingi, 2
 ## What runtime2 needs before it replaces v0.1 (Ingi, 2026-10-25: "yes that is what I mean. I agree on the order")
 
 In this order, one branch at a time, after packages and `bugs` (cut 2026-10-25 from runtime2 3a29633f8; it takes N1, N3–N5, N8, N10, N11, N14–N17 below, the goal channel's race, the LLM tests' answers in a file, the Windows window, and the three yeses as its stage 7; plan `.bot/bugs/architect/plan/start.md`):
+0. JSON Lines (Ingi, 2026-10-25, bugs 45: "2.yes"), a small branch: a json-lines kind (`.jsonl`, `application/x-ndjson`, always compact) for the three line writers. With it comes the json writer's setting (`%!type.json.setting.format%`, `formatted | compact`, default formatted), and the six `.llm.json` files are rewritten from themselves.
 1. Stores per actor and an app per request (items 4 and 10; 317a). A webserver can't run without it.
 2. Snapshot and resume (`test/plan/snapshot/start.md`): an ask over a stateless channel.
 3. The LLM provider and writer (parked branches): the builder's quality.
