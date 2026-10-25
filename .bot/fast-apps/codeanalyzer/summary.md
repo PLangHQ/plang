@@ -1,18 +1,16 @@
 # codeanalyzer summary (fast-apps)
 
-**Version:** v3
+**Version:** v4
 
-**What this is:** The third fast-apps review (decisions 75–78, tip f4f754455): review2's findings checked against the coder's fixes, and every file the branch touched read again (84 files; the 48 changed since review2 weigh most). Read only; not built or run. Report: `.bot/fast-apps/codeanalyzer/review3.md`. The speed row (`Tools/Bench/run.sh`) is not in: the architect asked for it after stage 6 lands.
+**What this is:** The fourth fast-apps review (decisions 81–85, stage 6, tip 02aff152e) and the first bench row I recorded. The 23 production files changed since review3 were read whole against review3's findings; stage 6 (56 packages out of `PLang.csproj`, `Sdk.Web` → `Sdk`, the test projects' runtime identifier) was checked for removed namespaces still named in source. Read only. Report: `.bot/fast-apps/codeanalyzer/review4.md`.
 
-**What was done:** Three readers read the files; I re-grepped the two blocking claims. All of review2's blocking findings are fixed at the root (`Registry.Under` is a loop again, the rule-35 members are gone, the store decides in-memory once, the hot getters read the field first). Two small new blocking findings came with the fixes: `type/reader/this.cs:50,77,80` tells the code's reader from a layer's by a null `Shipped` (decision 40 OPEN 2 again), and `call/list/this.cs:210-212` checks the stack depth after the frame is built, so a thrown overflow leaks a diff-capture scope (`call/this.cs:257-262`). Non-blocking: the goal index's key is mutable state, `Has<T>()` constructs the shipped provider, `system.cs` `Row` allocates per miss, residue around the goal stamp, older smells by file.
+**What was done:** Both blocking findings of review3 are fixed at the root (the reader's `Shipped` is non-null in both kinds; the call frame past the depth is refused before it is made). No new blocking by the branch's rules. Open: `Registry.Add(kind)` holds, then runs a full `Guard()`, three times per root birth (the likely cause of the root birth's +110 KB, outside its band); setup now adds every `.pr` it reads; `QRCoder-ImageSharp` is a hidden dependency; small names. No removed package's namespace is named in source (`WebUtilities` and `Nethereum.Util` stay). Bench (`Tools/Bench/run.sh`, load 16): held memory flat, sub birth −12 KB, request apps lower, `plang --test` 5.6 s with the same counts, sweep 37.3 s, incremental build 9.1 s on the rerun; the clean build (90.5 s, rerun 74.9 s at load 13.7) is not settled and needs a quiet-machine run.
 
-**Next:** the coder fixes the two blocking ones and the listed non-blocking ones; I run the bench after stage 6 and send the row.
+**Next:** the coder fixes `Add(kind)`'s order and re-measures the root birth; someone runs the build row at load under 3.
 
 **Code example:**
 ```csharp
-// new blocking: a layer told from the code's reader by a null     type/reader/this.cs:50,77,80
-private readonly Lazy<shipped>? _shipped;
-private protected @this() { }
-private shipped? Shipped => _shipped?.Value;
-// root: Shipped answers non-null in both kinds (the layer passes an empty one, or the second table is a virtual)
+// holds first, then guards: a refused kind stays held, and the origin's three schemes pay three full scans   type/list/Registry.cs:229
+if ((Hold(kind) ?? Guard()) is { } refused) throw new AppException(refused);
+// root: Guard checks the incoming kind before it is held (or Add undoes the hold), and the schemes go in as one batch
 ```

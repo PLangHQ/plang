@@ -50,6 +50,8 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-25 | fast-apps | d1fb4dd29 (review4-build-rerun) | 13.66 | - | - | - | - | - | - | - | - | 74.9 s | 9.1 s |
+| 2026-10-25 | fast-apps | d1fb4dd29 (review4-02aff152e) | 16.25 | 0.14 ms, 110 KB | 18.48 ms, 2488 KB | 1.85 ms, 541 KB | 16.56 ms, 3720 KB | 1.6 → 2.1 → 2.1 → 2.1 → 1.9 | 0.1 → 2.0 → 1.9 → 1.9 → 1.1 | 5.6 s (298 pass, 1 fail) | 37.3 s (red: Wire) | 90.5 s | 79.4 s |
 | 2026-10-25 | fast-apps | 26c9e0b9c (stage6-after) | 15.83 | - | - | - | - | - | - | - | - | 87.9 s | 11.8 s |
 | 2026-10-25 | fast-apps | 37501ee53 (stage6-packages) | 20.87 | - | - | - | - | - | - | - | - | 65.4 s | 10.6 s |
 | 2026-10-25 | fast-apps | f4f754455 (stage6-before) | 9.89 | - | - | - | - | - | - | - | - | 45.9 s | 11.5 s |

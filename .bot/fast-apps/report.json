@@ -84,6 +84,43 @@
         "health": "fail: 2 small blocking; review2's blocking all fixed",
         "notes": "bench row pending stage 6; no build/tests/ObpScan"
       }
+    },
+    {
+      "id": "0a9a5da5-8b5b-46d6-b826-4fa09d4cbe7e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T05:43:50Z",
+      "intent": "Fourth fast-apps review (81-85) and the bench row",
+      "before": {
+        "assumptions": "tip 02aff152e; 24 production files changed since review3; stage 6 is project files",
+        "risk": "fixes to fixes; clean-build number taken under a shared machine"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review4.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Fourth review at 02aff152e: review3 findings against fixes 81-84, 23 changed files read whole, stage 6 namespace check; no new blocking. Read only."
+        },
+        {
+          "paths": [
+            "Tools/Bench/record.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Two bench rows appended (full run at load 16.25; build-only rerun at load 13.66). Held memory flat; root birth +110 KB; clean build not settled under load."
+        }
+      ],
+      "timestamp_end": "2026-10-25T06:06:35Z",
+      "after": {
+        "status": "review4 written: .bot/fast-apps/codeanalyzer/review4.md",
+        "health": "fail, small: Add(kind) hold-then-guard cost; setup behaviour change; QRCoder-ImageSharp",
+        "notes": "bench loads 13-16; clean build needs a quiet run"
+      }
     }
   ]
 }
