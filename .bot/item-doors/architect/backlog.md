@@ -12,6 +12,11 @@ In this order, one branch at a time, after packages and the three-yeses branch:
 
 `Documentation/Runtime2/todos.md` is being triaged by plang-docs (Ingi's "1 yes"): done and stale entries go, citing their evidence; open ones stay, short, grouped under the themes above, and are walked through with Ingi one theme at a time.
 
+## Before plang 2.0b is published (Ingi, 2026-10-25: "this will be the version that I'll publish")
+
+Checks to make before the release, not branches:
+- **Brotli** (Ingi: "let's not remove it yet, but keep eye on it before we release plang 2.0b"). The archive module's `brotli` kind (`archive/type/archive/kind/brotli/this.cs`) uses .NET's `BrotliStream`, Google's C library bundled in the runtime (10.0.13 today). A crafted `.br` can make Google's decoder read past its buffer (fixed upstream Feb 2026, released Oct 2026; bugsink.com/blog/bye-bye-brotli). Unpacking is capped by `archive.setting.Max` (`compression/this.cs:47`), and plang's HTTP client doesn't decompress responses. Before 2.0b: check whether the .NET runtime it ships on carries the fixed brotli. If not, drop the kind (gzip and zip cover packing).
+
 ## Very far backlog: image formats and metadata (Ingi, 2026-10-25, after packages 7)
 
 Ingi: "very far into future (this is not something you should suggest taking when I ask, it's just some very far backlog item)". This section is never offered as next work. It's kept only so the findings aren't lost.
