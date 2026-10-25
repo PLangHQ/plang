@@ -44,3 +44,47 @@ Each claim in `doc/`, how it was checked, and the result. `plang` is `PlangConso
 | 30c | when-a-step-fails | `Step n build error`, `Planner validation failed` lines | template only; never printed | unverified |
 | 31 | start | a run never builds; an unbuilt goal answers `GoalNotBuilt` | `PLang/app/goal/list/this.cs:60-63`; claim 5 | pass |
 | 32 | start | the build output is `.pr` files in `.build/` | claim 19 | pass |
+
+## Slice 2: the programmer
+
+Scratch apps `p1`, `p2`, `p3` were built with the decider key saved and run with `plang`. "Tests" are `cd test && plang --test <path>`; each passed with the counts given.
+
+| # | Page | Claim | Check | Result |
+|---|---|---|---|---|
+| 40 | goals-and-steps | steps run top to bottom; `Start` first; `plang Name` runs `Name` | p1 output order; claim 7 | pass |
+| 41 | goals-and-steps | the file counts as `Found 1 goals`, the rest build as `Building sub-goal:`, all in one `.build/start.pr` | p1 build output; `ls .build` | pass |
+| 42 | goals-and-steps | `GoalUnreached` printed when a built step did not reach a goal | p2 first builds: `'Flaky'`/`'Early' … not reached` when their calls were mis-built | pass for that case; the plain "no step calls it" case not run |
+| 43 | goals-and-steps | indented `on error` lines belong to the step | p2 step 5 built to `goal.call` + `on.error` | pass |
+| 44 | goals-and-steps | `/ ` starts a comment | test goals begin with `/ ` lines and pass | pass (by test); not run in a scratch goal alone |
+| 45 | variables | `set`, `%name%` in text, dict/list literals, `%person.name%`, `%person.langs[1]%`, `[i]` | p1 output `Hello Ada`, `Ada`, `is`, `en` | pass |
+| 46 | variables | `%x% + 1` builds as `math.add` then `variable.set`, with a retry message | p3 build output; p3 `marks` counted | pass |
+| 47 | variables | `add "alpha" to list %items%` | `test/module/variable/scoping` 1/1 | pass (by test) |
+| 48 | variables | unset reads null; `is empty` true for unset, empty list, empty dict, missing field | `test/module/condition/if` 7/7 (`MissingIsEmpty`) | pass |
+| 49 | variables | `%!data%` holds the last result; `write to` keeps it | p1 `.pr`: `variable.set` Value `%!data%`; p1 output `42` | pass |
+| 50 | variables | scoping: called goal sees caller's variables; fresh names land with the caller; parameters end with the call; loop item ends with the loop | tests `module/variable/scoping` 1/1, `module/goal/call` 5/5, `module/loop/foreach` 4/4 | pass |
+| 51 | variables | `%!error.message%` is the handled error's text | p2 output `caught: boom` | pass |
+| 52 | conditions | `if %n% is 3, call Three`, `if %n% > 2`, only the true one runs | p1 `n is three`; p2 `n is big` | pass |
+| 53 | conditions | `and`, `or`, `==` | `test/module/condition/compound` 2/2 | pass (by test) |
+| 54 | conditions | `else call` on one line; indented body skipped when false | `test/module/condition/if` 7/7 (`elsebranch`, `substepsfalse`) | pass (by test) |
+| 55 | conditions | `return` inside `if`: `early`, else `late` | p2 output `early` for `done=true`; `IfReturnReturns` passes | pass (the `late` branch by test only) |
+| 56 | conditions | operator list is on the condition module's page | `os/system/modules/condition/start.md` exists; `module/condition/operator` 12/12 | pass |
+| 57 | loops | `foreach %list%, call Say item=%item%` prints each | p1 `lang: en`, `lang: is` | pass |
+| 58 | loops | body writes reach the caller; item ends; dict with item and key; empty list | `module/loop/foreach` 4/4 | pass (by test) |
+| 59 | calling-goals | `call Greet`; `call Double n=21, write to %answer%` gives 42 | p1, p2 outputs | pass |
+| 60 | calling-goals | `return "x"` answers the goal | p2 output `early` | pass |
+| 61 | calling-goals | plain call waits; `Parallel=true` answers a task | `module/goal/call` 5/5 | pass (by test, action form); the words that make the builder pick `Parallel` not tried |
+| 62 | calling-goals | a call built as `Name="Early done=true"` stopped the run with `GoalNotFound (404)`; renaming the variable and rebuilding fixed it | p2, two builds | pass (one occurrence; cause unknown) |
+| 63 | errors | unhandled error prints key, status, step; exit 1 | p2 run 1 | pass |
+| 64 | errors | `read missing.txt, on error 404, write out …` prints and goes on | p2 output `no such file` and later lines | pass |
+| 65 | errors | separate `on error retry 2 times` and `on error ignore` lines: `%attempts%` = 3 | p2 output `attempts: 3` | pass |
+| 66 | errors | both clauses on one line fail to build (`StepsBroken`, Order not given) | p2 first build | pass |
+| 67 | errors | `module/on/error` has 14 passing tests (chains, GoalFirst, nested) | test run 14/14 | pass |
+| 68 | events | `before action output.write call Mark` runs Mark before writes (`marks: 2`) | p3 output | pass; why 2 and not 3 not traced |
+| 69 | events | `before each goal call X` fires for runtime goals too | p2 first run printed `before a goal` 3 times before `Greet ran` | pass as observed; cause unverified |
+| 70 | events | the other bind forms | `os/system/modules/on/event.description.md`; `module/on/event` 3/3 | pass for the text and the tests; which forms the tests bind not checked |
+| 71 | events | `on.unbind` removes a binding | `os/system/modules/on/unbind.description.md` only | unverified |
+| 72 | how-a-step-becomes-an-action | step to action table | `jq` over `.build/start.pr` of p1, p2, p3 | pass |
+| 73 | how-a-step-becomes-an-action | the `jq` line prints index, text and actions | ran it | pass |
+| 74 | how-a-step-becomes-an-action | action form `module.action(Param=value)` with `;` | tests such as `PlainCallWaits.test.goal` pass | pass (by test) |
+| 75 | how-a-step-becomes-an-action | four modules have a generated `start.md` | `ls os/system/modules/*/start.md`: condition, file, loop, screen | pass |
+| 76 | how-a-step-becomes-an-action | a rebuild with nothing changed builds nothing | claim 18c | pass |

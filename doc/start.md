@@ -24,5 +24,6 @@ A run never builds. A goal that has not been built answers `GoalNotBuilt (404)` 
 1. [Install](install.md) gets a `plang` command on your machine.
 2. [Your first goal](first-goal.md) writes a goal that reads a JSON file and prints one field, builds it and runs it.
 3. [When a step fails](when-a-step-fails.md) says what a failed build looks like and what to change.
+4. To write programs: [goals and steps](goals-and-steps.md), [variables](variables.md), [conditions](conditions.md), [loops](loops.md), [calling goals](calling-goals.md), [errors](errors.md), [events](events.md), and [how a step becomes an action](how-a-step-becomes-an-action.md).
 
 [verify.md](verify.md) lists how each claim in these pages was checked, and which ones could not be.
