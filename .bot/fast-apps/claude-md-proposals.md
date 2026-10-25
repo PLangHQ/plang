@@ -9,3 +9,13 @@
 - **The boy scout rule.** A file a branch touches is left better: its older smells are fixed in the branch, not deferred as "pre-existing". A reviewer's scope is every file the branch touched, read whole, not only the diff's lines; it marks an older finding with the commit it came from. A fix is scaled to its smell (a rename where a rename does it). Only a file the branch never touches leaves its smells to another branch. (Ingi, fast-apps 66: "improve when we chance to improve … with incremental improvements come great gains".)
 - **No runtime code for tests.** A production member that only tests call is removed with the tests that exist for it; a test of real behaviour reaches it through the door production uses. (Ingi, fast-apps 35.)
 ```
+
+## architect — v1 — 2026-10-25 (2)
+**Target:** /CLAUDE.md
+**Why:** Ingi (fast-apps 67): "the code analyzer should also record the speed of running plang apps, memory not growing, and time running tests, compile c#, keeps within what we are doing so we can quickly catch if it suddenly changes". fast-apps built the speed (a sub app born in 0.5 ms, `plang --test` ~5 s, memory flat), and nothing yet keeps a later branch from losing it unseen.
+**Proposed change:** add a section after "Running plang Tests":
+```markdown
+## Speed record
+- `Tools/Bench/run.sh` measures, gated on the machine's load: a sub app's and a root app's birth (time, bytes), a request app (time, bytes) with its held memory after 3,000 requests and a rest, `plang --test`'s time, the C# sweep's time, and the C# build (clean and incremental). Each run appends a row to `Tools/Bench/record.md` (date, branch, commit, load, each number); each number's noise band is at the record's top.
+- Codeanalyzer runs it at every review and compares with the last row recorded on the branch's parent. A number outside its band is a finding: blocking unless the branch's decisions explain it. Held memory that grows with the request count always blocks.
+```
