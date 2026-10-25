@@ -38,7 +38,7 @@ public class ConsoleChannelTests
 
         await written.IsSuccess();
         await Assert.That(System.Text.Encoding.UTF8.GetString(stream.ToArray()))
-            .IsEqualTo($"[{Video.Length} bytes]{System.Environment.NewLine}");
+            .IsEqualTo($"[{Video.Length} bytes]\n");
     }
 
     [Test]
@@ -64,7 +64,7 @@ public class ConsoleChannelTests
 
         await written.IsSuccess();
         var text = System.Text.Encoding.UTF8.GetString(stream.ToArray());
-        await Assert.That(text.EndsWith(System.Environment.NewLine)).IsTrue();
+        await Assert.That(text.EndsWith('\n')).IsTrue();
         await Assert.That(text.TrimStart().StartsWith('{')).IsTrue();
         await Assert.That(text).Contains("hello");
     }
@@ -127,12 +127,41 @@ public class ConsoleChannelTests
         await Assert.That((await answer.Value())?.ToString()).IsEqualTo("Ada");
         var asked = System.Text.Encoding.UTF8.GetString(output.ToArray());
         if (format == null)
-            await Assert.That(asked).IsEqualTo($"what is your name?{System.Environment.NewLine}");
+            await Assert.That(asked).IsEqualTo("what is your name?\n");
         else
         {
             await Assert.That(asked.TrimStart().StartsWith('{')).IsTrue();
             await Assert.That(asked).Contains("\"ask\"");
             await Assert.That(asked).Contains("what is your name?");
         }
+    }
+
+    // A line ends at its LF on every OS: a console reads a Linux file's LF lines and a Windows program's CR LF lines
+    // alike, and writes an LF
+    [Test]
+    public async Task AConsole_ReadsLfAndCrLfLinesAlike()
+    {
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        var input = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("unix\nwindows\r\nlast\n"));
+        var channel = new global::app.channel.type.console.@this(app.actor.list.User.Channel, "lines", input,
+            global::app.channel.ChannelDirection.Bidirectional);
+        app.actor.list.User.Channel.Register(channel);
+
+        var read = new List<string?>();
+        for (var i = 0; i < 3; i++) read.Add((await (await channel.Read()).Value())?.ToString());
+
+        await Assert.That(read).IsEquivalentTo(new[] { "unix", "windows", "last" });
+    }
+
+    [Test]
+    public async Task AConsole_WritesAnLf()
+    {
+        var (app, stream) = await Console(null);
+        await using var _ = app;
+
+        await (await app.actor.list.User.Channel[global::app.channel.list.@this.Output]
+            .WriteAsync(app.actor.list.User.Context.Ok("hello"))).IsSuccess();
+
+        await Assert.That(System.Text.Encoding.UTF8.GetString(stream.ToArray())).IsEqualTo("hello\n");
     }
 }

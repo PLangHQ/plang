@@ -62,7 +62,7 @@ public class PlangRuntimeTests : IDisposable
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("hello kernel" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("hello kernel\n");
     }
 
     // --- Step 2: IEvent + Event resolution ---
@@ -114,6 +114,6 @@ public class PlangRuntimeTests : IDisposable
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("hello runtime" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("hello runtime\n");
     }
 }

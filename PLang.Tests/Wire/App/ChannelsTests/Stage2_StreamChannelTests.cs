@@ -314,7 +314,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         // 'é' is one byte in latin-1 (0xE9) but two bytes in UTF-8.
         await ch.WriteText("é");
 
-        var expected = global::System.Text.Encoding.Latin1.GetBytes("é" + global::System.Environment.NewLine);
+        var expected = global::System.Text.Encoding.Latin1.GetBytes("é\n");
         await Assert.That(capture.ToArray()).IsEquivalentTo(expected);
         await Assert.That(capture.ToArray()[0]).IsEqualTo((byte)0xE9);
     }

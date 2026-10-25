@@ -36,7 +36,7 @@ public class WholeMessageTests
         await Task.WhenAll(messages.Select(message => Task.Run(() => channel.WriteAsync(user.Ok(message)))));
 
         var lines = System.Text.Encoding.UTF8.GetString(capture.ToArray())
-            .Split(System.Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries);
         await Assert.That(lines.Order()).IsEquivalentTo(messages.Order());
     }
 }
