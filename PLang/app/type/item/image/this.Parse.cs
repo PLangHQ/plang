@@ -39,6 +39,9 @@ public sealed partial class @this
             && bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P') return "webp";
         // BMP: BM
         if (bytes[0] == 0x42 && bytes[1] == 0x4D) return "bmp";
+        // TIFF: II*\0 (little-endian) or MM\0* (big-endian)
+        if ((bytes[0] == 'I' && bytes[1] == 'I' && bytes[2] == 0x2A && bytes[3] == 0x00)
+            || (bytes[0] == 'M' && bytes[1] == 'M' && bytes[2] == 0x00 && bytes[3] == 0x2A)) return "tif";
         return null;
     }
 }

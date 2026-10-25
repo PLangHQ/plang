@@ -44,7 +44,7 @@ public sealed class MemberName
     public bool IsFlagged => Flag is not ("contract" or "clean") && !Flag.StartsWith("bool");
 
     private bool IsPlural => Plural(Words.Count == 0 ? "" : Words[^1]);
-    private bool HasVerb => Words.Any(Verbs.Contains);
+    public bool HasVerb => Words.Any(Verbs.Contains);
 
     /// <summary>The name's own verdict cell — and, where it can, the name it should be.</summary>
     public string Flag

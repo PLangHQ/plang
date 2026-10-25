@@ -19,6 +19,16 @@ public sealed class TypeScan
 
     public string FullName => $"{_type.ContainingNamespace?.ToDisplayString()}.{_type.Name}".TrimStart('.');
 
+    /// <summary>One line per member that carries a shape flag — <c>file:line  Type.Member  flags</c> — for a scan over a
+    /// tree, where caller sets are not asked for.</summary>
+    public IEnumerable<string> Shapes(string root)
+    {
+        var declNs = _type.ContainingNamespace?.ToDisplayString() ?? "";
+        foreach (var member in _type.GetMembers().Where(Member.IsScannable).Select(s => new Member(s, declNs)))
+            if (member.Shape is { Length: > 0 } shape)
+                yield return $"{member.Where(root)}  {_type.Name}.{member.Name}  {shape}";
+    }
+
     public async Task<string> Render()
     {
         var declNs = _type.ContainingNamespace?.ToDisplayString() ?? "";
@@ -31,20 +41,21 @@ public sealed class TypeScan
 
         var sb = new StringBuilder();
         sb.AppendLine().AppendLine($"## {FullName}").AppendLine();
-        sb.AppendLine("| Member | Lines | Name flag | Callers (namespaces) | Ownership hint |");
-        sb.AppendLine("|--------|-------|-----------|----------------------|----------------|");
+        sb.AppendLine("| Member | Lines | Name flag | Shape flag | Callers (namespaces) | Ownership hint |");
+        sb.AppendLine("|--------|-------|-----------|------------|----------------------|----------------|");
 
         var summary = new Summary();
         for (int i = 0; i < members.Count; i++)
         {
             var member = members[i];
             var ownership = member.Judge(callers[i]);
-            summary.Add(member.Name, member.Lines, ownership);
+            var shape = member.Shape;
+            summary.Add(member.Name, member.Lines, shape, ownership);
 
             var lenCell = member.Lines > 15 ? $"**{member.Lines}**" : member.Lines.ToString();
             var callerCell = callers[i].Count == 0 ? "(none/internal)"
                 : string.Join(", ", callers[i].Distinct().Select(Concept.Short).Take(4));
-            sb.AppendLine($"| {member.Name} | {lenCell} | {member.Name.Flag} | {callerCell} | {ownership.Verdict} |");
+            sb.AppendLine($"| {member.Name} | {lenCell} | {member.Name.Flag} | {shape} | {callerCell} | {ownership.Verdict} |");
         }
 
         sb.Append(summary.Footer());

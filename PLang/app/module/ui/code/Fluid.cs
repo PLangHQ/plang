@@ -6,7 +6,6 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
 using app.type.item.path;
 using app.error;
-using app.type.item.path;
 using app.goal;
 
 namespace app.module.ui.code;
@@ -17,10 +16,11 @@ public class Fluid : ITemplate
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    private FluidParser CreateParser()
+    // The parser with plang's tags and operators.
+    private FluidParser Parser()
     {
         var parser = new FluidParser();
-        parser.RegisterExpressionTag("callGoal", CallGoalTagAsync);
+        parser.RegisterExpressionTag("callGoal", CallGoal);
         // A template's order (`>`, `<`, `>=`, `<=`) is the values' own: liquid's operators order only its own number
         // and string classes, so a plang value would never order.
         parser.RegisteredOperators[">"] = (left, right) => new Ordered(left, right, global::app.data.Comparison.Greater, false);
@@ -58,10 +58,11 @@ public class Fluid : ITemplate
     {
         // Null-safe: [IsNotNull] guards the .pr path, but direct C# composition can
         // init Template to null — fail gracefully rather than throw.
-        if (action.Template == null || (await action.Template.Value()) is not { } templateVal)
+        if (action.Template == null || (await action.Template.Value()) is not { } template)
             return action.Context.Error(new global::app.error.ValidationError(
                 "ui.render requires a template", "MissingTemplate"));
-        var templateContent = templateVal.ToString() ?? "";
+        // the template's characters, handed to Fluid's parser (the .NET boundary)
+        var templateContent = template.Clr<string>() ?? "";
         var isFile = action.IsFile == null ? null : (await action.IsFile.Value());
         string? sourceFile = null;
         // What the render is: the content-kind entity the template file's extension names (a .json template is
@@ -70,25 +71,23 @@ public class Fluid : ITemplate
         global::app.type.@this? format = null;
 
         // Resolve template content: file or inline
-        if (isFile?.Value == true || (isFile == null && LooksLikeFilePath(templateContent)))
+        if (isFile?.Value == true || (isFile == null && IsPath(templateContent)))
         {
-            var pathData = path.Resolve(templateContent, action.Context);
-            if (!await pathData.AsBooleanAsync(action.Context))
+            var path = global::app.type.item.path.@this.Resolve(templateContent, action.Context);
+            if (!await path.AsBooleanAsync(action.Context))
                 return action.Context.Error(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
-            sourceFile = pathData.Relative(action.Context).Raw;
-            format = pathData.Kind(action.Context) is { kind.IsEmpty: false } formatted ? formatted : null;
-            var readResult = await pathData.Read(action.Context);
-            var read = readResult.Success ? await readResult.Value() : null;
-            if (!readResult.Success)
-                return action.Context.Error(readResult.Error
-                    ?? new ServiceError("Template read failed", "IOError", 500));
-            templateContent = read?.ToString() ?? "";
+            sourceFile = path.Relative(action.Context).Raw;
+            format = path.Kind(action.Context) is { kind.IsEmpty: false } formatted ? formatted : null;
+            // a template file is UTF-8 text, whatever its extension
+            var bytes = await path.Bytes(action.Context);
+            if (!bytes.Success) return action.Context.Error(bytes.Error!);
+            templateContent = System.Text.Encoding.UTF8.GetString((await bytes.Value())?.Value ?? []);
         }
 
         // Parse
-        var parser = CreateParser();
+        var parser = Parser();
         if (!parser.TryParse(templateContent, out var fluidTemplate, out var parseError))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
@@ -149,7 +148,7 @@ public class Fluid : ITemplate
         });
 
         // Configure file provider for {% include %} / {% render %} tags
-        var includes = new PlangFileProvider(GetTemplateBaseDir(action), action.Context);
+        var includes = new PlangFileProvider(Folder(action), action.Context);
         options.FileProvider = includes;
 
         var fluidContext = new TemplateContext(options);
@@ -197,13 +196,18 @@ public class Fluid : ITemplate
                 : action.Context.Ok(new global::app.type.item.text.@this(rendered,
                     action.Context.App.type.list[typeof(global::app.type.item.text.@this)]));
         }
+        // a program's error inside the template — an unknown goal, a failed include — is the render's answer, whole
+        catch (AppException ex)
+        {
+            return action.Context.Error(ex.Error);
+        }
+        // Fluid reaches a member by reflection, which wraps what the member threw
+        catch (System.Reflection.TargetInvocationException ex) when (ex.InnerException is AppException thrown)
+        {
+            return action.Context.Error(thrown.Error);
+        }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            // Fluid wraps what the template's code threw (a TargetInvocationException): a program's error
-            // inside the template — an unknown goal, a failed include — is the render's answer, whole.
-            for (var inner = ex; inner != null; inner = inner.InnerException)
-                if (inner is AppException exception) return action.Context.Error(exception.Error);
-
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
             // Its Message is the useless "Exception has been thrown by the target of an invocation" — dig to
             // the real inner fault (and its type) so a bad navigation/coercion in the template is named.
@@ -390,7 +394,7 @@ public class Fluid : ITemplate
     /// Heuristic: a string looks like a file path if it contains a dot-extension
     /// and no Liquid syntax markers. Used only when IsFile is null (auto-detect).
     /// </summary>
-    private static bool LooksLikeFilePath(string template)
+    private bool IsPath(string template)
     {
         if (string.IsNullOrWhiteSpace(template)) return false;
         // If it contains Liquid delimiters, it's inline content
@@ -403,10 +407,9 @@ public class Fluid : ITemplate
     }
 
     /// <summary>
-    /// Gets the base directory for template file resolution (includes).
-    /// Resolves from the calling goal's directory, or app root as fallback.
+    /// The folder a template's includes resolve from: the calling goal's, or the app's root.
     /// </summary>
-    private static global::app.type.item.path.@this GetTemplateBaseDir(Render action)
+    private global::app.type.item.path.@this Folder(Render action)
     {
         var context = action.Context;
         var goalPath = context.call.Goal?.Path;
@@ -422,31 +425,29 @@ public class Fluid : ITemplate
     /// Custom Fluid tag handler for {% callGoal 'GoalName' %} or {% callGoal GoalName %}.
     /// Invokes a PLang goal and writes the result into template output.
     /// </summary>
-    private static async ValueTask<Completion> CallGoalTagAsync(
+    private async ValueTask<Completion> CallGoal(
         global::Fluid.Ast.Expression expression, TextWriter writer, System.Text.Encodings.Web.TextEncoder encoder,
-        TemplateContext context)
+        TemplateContext template)
     {
-        var app = (app.@this)context.AmbientValues["app"];
-        var plangContext = (global::app.actor.context.@this)context.AmbientValues["context"];
+        var app = (app.@this)template.AmbientValues["app"];
+        var context = (global::app.actor.context.@this)template.AmbientValues["context"];
 
         // A failed call fails the render — the render's result is the error, never an
         // "[Error: …]" printed into output that reads as success.
-        var goalNameValue = await expression.EvaluateAsync(context);
-        var goalName = goalNameValue?.ToStringValue() ?? "";
-        if (string.IsNullOrEmpty(goalName))
+        var name = (await expression.EvaluateAsync(template)).ToStringValue();
+        if (string.IsNullOrEmpty(name))
             throw new global::app.error.AppException("callGoal requires a goal name", "MissingGoalName", 400);
 
-        var data = await app.goal.list.Find(goalName);
+        var data = await app.goal.list.Find(name);
         if (!data.Success) throw new global::app.error.AppException(data.Error!);
         if (data.Peek() is not global::app.goal.@this goal)
-            throw new global::app.error.GoalNotFoundException(goalName);
+            throw new global::app.error.GoalNotFoundException(name);
 
-        var result = await goal.Start(plangContext);
-        if (!result.Success)
-            throw new global::app.error.AppException($"callGoal '{goalName}' failed: {result.Error?.Message}",
-                result.Error?.Key ?? "GoalFailed", result.Error?.Status ?? 500);
+        var result = await goal.Start(context);
+        if (!result.Success) throw new global::app.error.AppException(result.Error!);
 
-        await writer.WriteAsync((await result.Value())?.ToString() ?? "");
+        // the goal's answer writes itself as the template writes any value
+        await FluidValue.Create(await result.Value(), template.Options).WriteToAsync(writer, encoder, template.CultureInfo);
         return Completion.Normal;
     }
 
@@ -458,19 +459,23 @@ public class Fluid : ITemplate
     // provider answers it with an error naming it.
     private sealed class PlangFileProvider : IFileProvider
     {
-        // Fluid asks for an include by its name with this extension added when it has none.
+        // An include's name with this extension, added when it has none, is its key: Fluid asks for a name as written
+        // and with the extension, and both find the one include.
         private const string Extension = ".liquid";
-        private readonly global::app.type.item.path.@this _basePath;
+        private readonly global::app.type.item.path.@this _folder;
         private readonly global::app.actor.context.@this _context;
-        private readonly Dictionary<string, string> _read = new(StringComparer.OrdinalIgnoreCase);
-        // Every include named by a literal, found or not — a name outside it was named by a variable.
-        private readonly HashSet<string> _named = new(StringComparer.OrdinalIgnoreCase);
+        // Every include named by a literal, by its key: its text, or null when it isn't there. A name with no key
+        // here was named by a variable.
+        private readonly Dictionary<string, string?> _include = new(StringComparer.OrdinalIgnoreCase);
 
-        public PlangFileProvider(global::app.type.item.path.@this basePath, global::app.actor.context.@this context)
+        public PlangFileProvider(global::app.type.item.path.@this folder, global::app.actor.context.@this context)
         {
-            _basePath = basePath;
+            _folder = folder;
             _context = context;
         }
+
+        private string Key(string name)
+            => name.EndsWith(Extension, StringComparison.OrdinalIgnoreCase) ? name : name + Extension;
 
         /// <summary>Reads every include <paramref name="template"/> names, and the includes they name.</summary>
         public async Task Load(IFluidTemplate template, FluidParser parser)
@@ -480,47 +485,39 @@ public class Fluid : ITemplate
             while (pending.TryDequeue(out var next))
                 foreach (var name in new Included().In(next))
                 {
-                    var asked = name.EndsWith(Extension, StringComparison.OrdinalIgnoreCase) ? name : name + Extension;
-                    if (!_named.Add(asked) || await Text(asked) is not { } text) continue;
-                    _read[asked] = text;
-                    if (parser.TryParse(text, out var partial, out _)) pending.Enqueue(partial);
+                    var key = Key(name);
+                    if (_include.ContainsKey(key)) continue;
+                    var text = _include[key] = await Text(key);
+                    if (text != null && parser.TryParse(text, out var partial, out _)) pending.Enqueue(partial);
                 }
         }
 
-        // The include's text — Fluid's name, or the name as written (without the added extension); null when
-        // neither is there. The probe and the read go through AuthGate(Read): an out-of-root include
-        // (`{% include '../../etc/passwd' %}`) is a prompt or a denial, never a silent read, and a failed
-        // probe or read fails the render; only "absent" is not found. Content that decodes to bytes
-        // (octet-stream, an unmapped extension) is UTF-8 text.
-        private async Task<string?> Text(string asked)
+        // The include's text — its key, or the name without the added extension; null when neither is there. The
+        // probe and the read go through AuthGate(Read): an out-of-root include (`{% include '../../etc/passwd' %}`)
+        // is a prompt or a denial, never a silent read, and a failed probe or read fails the render; only "absent"
+        // is not found. An include is UTF-8 text, whatever its extension.
+        private async Task<string?> Text(string key)
         {
-            foreach (var candidate in new[] { asked, asked[..^Extension.Length] })
+            foreach (var name in new[] { key, key[..^Extension.Length] })
             {
-                if (string.IsNullOrEmpty(candidate)) continue;
-                var resolved = _basePath.Combine(candidate);
-                var exists = await resolved.Exists(_context);
-                if (!exists.Success)
-                    throw new global::app.error.AppException($"include '{candidate}': {exists.Error?.Message}",
-                        exists.Error?.Key ?? "IncludeFailed", exists.Error?.Status ?? 500);
-                if ((exists.Peek() as global::app.type.item.@bool.@this)?.Value != true) continue;
-                var landed = await resolved.Read(_context);
-                var read = landed.Success ? await landed.Value() : null;
-                if (!landed.Success)
-                    throw new global::app.error.AppException($"include '{candidate}': {landed.Error?.Message}",
-                        landed.Error?.Key ?? "IncludeFailed", landed.Error?.Status ?? 500);
-                return read is global::app.type.item.binary.@this bin
-                    ? System.Text.Encoding.UTF8.GetString(bin.Value)
-                    : read?.ToString() ?? "";
+                if (string.IsNullOrEmpty(name)) continue;
+                var path = _folder.Combine(name);
+                var exists = await path.Exists(_context);
+                if (!exists.Success) throw new global::app.error.AppException(exists.Error!);
+                if (!await exists.ToBooleanAsync()) continue;
+                var bytes = await path.Bytes(_context);
+                if (!bytes.Success) throw new global::app.error.AppException(bytes.Error!);
+                return System.Text.Encoding.UTF8.GetString((await bytes.Value())?.Value ?? []);
             }
             return null;
         }
 
         public IFileInfo GetFileInfo(string subpath)
-            => _read.TryGetValue(subpath, out var text) ? new Include(subpath, text)
-             : _named.Contains(subpath) ? new NotFoundFileInfo(subpath)
-             : throw new global::app.error.AppException(
-                 $"include '{subpath}' is named by a variable — an include is read before the render, so write its name out",
-                 "IncludeNotLiteral", 400);
+            => !_include.TryGetValue(Key(subpath), out var text)
+                ? throw new global::app.error.AppException(
+                    $"include '{subpath}' is named by a variable — an include is read before the render, so write its name out",
+                    "IncludeNotLiteral", 400)
+                : text is null ? new NotFoundFileInfo(subpath) : new Include(subpath, text);
 
         public IDirectoryContents GetDirectoryContents(string subpath)
             => new NotFoundDirectoryContents();

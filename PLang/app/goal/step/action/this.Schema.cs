@@ -72,24 +72,31 @@ public partial class @this : global::app.type.item.note.IAbout
     {
         get
         {
-            if (_returnComputed) return _return;
-            _returnComputed = true;
+            // a catalog row is read by every app over it at once: the type is published before the flag that says so
+            if (System.Threading.Volatile.Read(ref _returnComputed)) return _return;
+            _return = Signature();
+            System.Threading.Volatile.Write(ref _returnComputed, true);
+            return _return;
 
-            var handler = Handler;
-            if (handler == null || App == null) return null;
-            // the handler's own Start() — the dispatcher is ICodeGenerated's, implemented explicitly (not public)
-            var start = handler.GetMethod("Start", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
-            if (start == null) return null;
+            // the type Start()'s signature names
+            global::app.type.@this? Signature()
+            {
+                var handler = Handler;
+                if (handler == null || App == null) return null;
+                // the handler's own Start() — the dispatcher is ICodeGenerated's, implemented explicitly (not public)
+                var start = handler.GetMethod("Start", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
+                if (start == null) return null;
 
-            var ret = start.ReturnType;
-            if (ret.IsGenericType && ret.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>))
-                ret = ret.GetGenericArguments()[0];
+                var ret = start.ReturnType;
+                if (ret.IsGenericType && ret.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>))
+                    ret = ret.GetGenericArguments()[0];
 
-            if (ret == typeof(global::app.data.@this)) return _return = App.type.list["item"];
-            if (!ret.IsGenericType || ret.GetGenericTypeDefinition() != typeof(global::app.data.@this<>))
-                return null;
-            var t = ret.GetGenericArguments()[0];
-            return _return = t == typeof(object) ? App.type.list["item"] : App.type.list[t];
+                if (ret == typeof(global::app.data.@this)) return App.type.list["item"];
+                if (!ret.IsGenericType || ret.GetGenericTypeDefinition() != typeof(global::app.data.@this<>))
+                    return null;
+                var t = ret.GetGenericArguments()[0];
+                return t == typeof(object) ? App.type.list["item"] : App.type.list[t];
+            }
         }
     }
 

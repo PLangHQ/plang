@@ -8,13 +8,14 @@ namespace ObpScan;
 /// Each row reports its verdict via <see cref="Add"/>; the type asks for the <see cref="Footer"/>.</summary>
 public sealed class Summary
 {
-    private int _members, _nameFlags, _longFlags, _misplaced;
+    private int _members, _nameFlags, _shapeFlags, _longFlags, _misplaced;
     private readonly Dictionary<string, int> _clusters = new();
 
-    public void Add(MemberName name, int lines, Ownership ownership)
+    public void Add(MemberName name, int lines, string shape, Ownership ownership)
     {
         _members++;
         if (name.IsFlagged) _nameFlags++;
+        if (shape.Length > 0) _shapeFlags++;
         if (lines > 15) _longFlags++;
         if (ownership.ForeignConcept is { } concept)
         {
@@ -27,7 +28,7 @@ public sealed class Summary
     {
         var sb = new StringBuilder();
         sb.AppendLine();
-        sb.AppendLine($"**{_members} members — flagged: {_nameFlags} name, {_longFlags} long, {_misplaced} misplaced-hint.**");
+        sb.AppendLine($"**{_members} members — flagged: {_nameFlags} name, {_shapeFlags} shape, {_longFlags} long, {_misplaced} misplaced-hint.**");
         foreach (var (concept, count) in _clusters.Where(c => c.Value >= 3).OrderByDescending(c => c.Value))
             sb.AppendLine($"> ⚠ **missing-type signal**: {count} members whose callers live in `{concept}` — "
                 + $"a `{concept}` concept is likely trapped in this type.");

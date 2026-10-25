@@ -142,8 +142,9 @@ public class SurfaceTests
     {
         var have = Counted(ours);
         var had = Counted(pinned);
-        var added = have.SelectMany(each => Enumerable.Repeat(each.Key, each.Value - had.GetValueOrDefault(each.Key))).Take(20);
-        var removed = had.SelectMany(each => Enumerable.Repeat(each.Key, each.Value - have.GetValueOrDefault(each.Key))).Take(20);
+        // a line there fewer times on one side is none added on it
+        var added = have.SelectMany(each => Enumerable.Repeat(each.Key, Math.Max(0, each.Value - had.GetValueOrDefault(each.Key)))).Take(20);
+        var removed = had.SelectMany(each => Enumerable.Repeat(each.Key, Math.Max(0, each.Value - have.GetValueOrDefault(each.Key)))).Take(20);
         return string.Join("\n", added.Select(l => "+ " + l).Concat(removed.Select(l => "- " + l)));
     }
 
@@ -171,6 +172,18 @@ public class SurfaceTests
 
         await Assert.That(pinned.Count(l => l == "  ctor()")).IsGreaterThan(1).Because("the line is one several classes have");
         await Assert.That(Diff(dropped, pinned)).IsNotEqualTo("").Because("a class lost a constructor");
+    }
+
+    [Test]
+    public async Task ALineThereFewerTimes_Shows_AsDropped()
+    {
+        var pinned = System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), Pinned)).Split('\n');
+        // the blank line between sections: one key, there many times
+        var at = System.Array.IndexOf(pinned, "");
+        var fewer = pinned.Where((_, i) => i != at).ToArray();
+
+        await Assert.That(Diff(fewer, pinned)).IsEqualTo("- ").Because("one blank line fewer, and nothing else");
+        await Assert.That(Diff(pinned, fewer)).IsEqualTo("+ ").Because("one blank line more, and nothing else");
     }
 
     // Re-pins surface_golden.txt from C#: run by hand, once the change is decided.

@@ -25,7 +25,6 @@ public partial class @this
 
     [Store, LlmBuilder, Debug, Default]
     [JsonPropertyName("action")]
-    [Newtonsoft.Json.JsonProperty("action")]
     public string Name { get; set; } = "";
 
     /// <summary>The action's own name — "read". It never borrows the module's identity; a site that

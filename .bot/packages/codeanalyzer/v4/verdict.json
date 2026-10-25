@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "screen.setting.max follows archive.setting; Bitmap compares width x height to max/4 before any decode with the flag named in BadFrame; SurfaceTests.Diff clamp has its red test; PngTests 5/5, plang --test 292 pass 1 fail (the parent). Notes: Draw reads the setting on every draw; _max is a mirror." }

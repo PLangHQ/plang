@@ -7,7 +7,7 @@ Companion to `obp-scan.md`. The scan procedure fails when it's done by fluent re
 New top-level dev-tool project: **`Tools/ObpScan/`** (`Tools/ObpScan/ObpScan.csproj`, `net10.0` console). NOT under `PLang.Generators/` — that's the shipped netstandard2.0 analyzer assembly; a console tool that loads a workspace doesn't belong there. `Tools/` is a new folder for dev utilities (nothing else needs to ship it).
 
 - References: `Microsoft.CodeAnalysis.CSharp`, `Microsoft.CodeAnalysis.Workspaces.MSBuild`, `Microsoft.Build.Locator`.
-- Not in the main solution build path, **not a build gate, never runs on build.** **Runtime ~15s** (one MSBuild load + parallel per-member SymbolFinder) — no long timeout needed. On-demand ONLY — I run it when Ingi asks for an OBP scan: `dotnet run --project Tools/ObpScan -- <type-or-file>` → prints the table → done.
+- Not in the main solution build path, **not a build gate, never runs on build.** **Runtime ~15s** (one MSBuild load + parallel per-member SymbolFinder) — no long timeout needed. On-demand ONLY — I run it when Ingi asks for an OBP scan: `dotnet run --project Tools/ObpScan -- <type-or-file>` → prints the table → done. Over a whole tree, the shape flags alone (no caller sets, ~40 s with the load): `dotnet run --project Tools/ObpScan -- --tree PLang/app` → one line per flagged member, `file:line  Type.Member  flags`, and the counts.
 
 ## What it computes (the three columns of the table)
 
@@ -18,6 +18,7 @@ Load the solution once (`MSBuildWorkspace.OpenSolutionAsync`) — needed because
 2. **Mechanical flags — pure machine, no judgment** (this is the part that "can't be reassured into 'good name'"):
    - **Name:** tokenize the member name by camelCase → words; drop `Is/Has/Async`; flag if **>1 content word** OR any token is a **verb** (a small verb lexicon: Compute/Split/Get/Set/Run/Build/Make/Find/Resolve/Render/Validate/…). `FirstConditionIndex` → [First, Condition, Index] → flag. `ComputeBranchChain` → verb `Compute` → flag.
    - **Length:** method body line count > ~15 → flag.
+   - **Shape:** what the signature shows about a collection, which a name can't. `RAW-COLLECTION`: a verb-named public method whose return (a Task's, unwrapped) is a raw `System.Collections.*` collection or an array; the collection should be the API, its own type. `GET-TWIN (X)`: a `GetX` beside a member `X`, one thing exposed twice. `MUTABLE-COLLECTION`: a public property or field typed `List`/`Dictionary`/`HashSet`/`SortedDictionary`/`Queue`/`Stack`, whose add and evict discipline lives in other files (public fields are scanned for this alone).
 
 3. **Ownership data — machine computes, human judges:** for each member, `SymbolFinder.FindReferencesAsync(memberSymbol, solution)` → the set of **calling types + their namespaces**. Emit them. Auto-hint when **every caller's namespace ≠ the declaring type's namespace** (e.g. `SplitAtConditions` declared in `app.goal…actions`, called only from `app.module.action.condition`) — that's the misplaced-behavior signal. The tool flags the hint; the final "is that caller's *concept* different" call stays the reader's.
 
@@ -26,14 +27,14 @@ Load the solution once (`MSBuildWorkspace.OpenSolutionAsync`) — needed because
 Markdown to stdout, one row per member, no member omitted:
 
 ```
-| Member | Lines | Name flag | Callers (namespaces) | Ownership hint | 
-|--------|-------|-----------|----------------------|----------------|
-| ComputeBranchChain | 19 | VERB+NOUN (Compute·BranchChain) | condition, test.discover | callers ∉ declaring ns → MISPLACED |
-| SplitAtConditions  | 26 | VERB+NOUN + long | condition | callers ∉ declaring ns → MISPLACED |
-| Add                | 1  | clean | (internal) | own | 
+| Member | Lines | Name flag | Shape flag | Callers (namespaces) | Ownership hint |
+|--------|-------|-----------|------------|----------------------|----------------|
+| ComputeBranchChain | 19 | VERB+NOUN (Compute·BranchChain) | | condition, test.discover | callers ∉ declaring ns → MISPLACED |
+| GetNames           | 4  | VERB+NOUN (Get·Names) | RAW-COLLECTION | (none/internal) | own |
+| Add                | 1  | clean | | (internal) | own |
 ```
 
-Plus a footer summary: "N members, M flagged (K name, L length, P misplaced-hint)" and the cluster call-out — **≥3 flagged members whose callers share one foreign namespace = a missing type** (the four condition methods → the orchestration type that should exist).
+Plus a footer summary: "N members, M flagged (K name, S shape, L length, P misplaced-hint)" and the cluster call-out — **≥3 flagged members whose callers share one foreign namespace = a missing type** (the four condition methods → the orchestration type that should exist).
 
 ## The split this enforces (why it fixes the real failure)
 

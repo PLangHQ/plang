@@ -256,10 +256,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>
-    /// Sniffs the magic bytes of <paramref name="value"/> (a <c>byte[]</c>) via
-    /// ImageSharp's <c>DetectFormat</c>, and compares the format's primary
-    /// extension to <paramref name="requiredKind"/>. Returns <c>(true, null)</c>
-    /// on match, <c>(false, actualKind)</c> on mismatch.
+    /// Sniffs the magic bytes of <paramref name="value"/> (a <c>byte[]</c>) for the image kind they name, and
+    /// compares it to <paramref name="requiredKind"/>. Returns <c>(true, null)</c> on match,
+    /// <c>(false, actualKind)</c> on mismatch; bytes no image kind names are <c>(false, null)</c>.
     /// </summary>
     public (bool ok, string? actualKind) ValidateKind(object value, string requiredKind)
     {
@@ -272,26 +271,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             _ => Bytes
         };
         if (bytes == null || bytes.Length == 0) return (false, null);
-        try
-        {
-            var fmt = SixLabors.ImageSharp.Image.DetectFormat(bytes);
-            if (fmt == null) return (false, null);
-            // ImageSharp's IImageFormat exposes FileExtensions (e.g. ["gif"],
-            // ["jpg","jpeg"]); the canonical form for "kind" is the shortest.
-            string? actual = null;
-            foreach (var ext in fmt.FileExtensions)
-            {
-                if (actual == null || ext.Length < actual.Length) actual = ext;
-            }
-            if (actual == null) return (false, null);
-            if (string.Equals(actual, requiredKind, System.StringComparison.OrdinalIgnoreCase))
-                return (true, null);
-            return (false, actual);
-        }
-        // bytes that are no image format ImageSharp knows are the probe's "no" — anything else bubbles
-        catch (System.Exception ex) when (ex is SixLabors.ImageSharp.UnknownImageFormatException or SixLabors.ImageSharp.InvalidImageContentException)
-        {
-            return (false, null);
-        }
+        if (Sniff(bytes) is not { } actual) return (false, null);
+        return string.Equals(actual, requiredKind, System.StringComparison.OrdinalIgnoreCase) ? (true, null) : (false, actual);
     }
 }

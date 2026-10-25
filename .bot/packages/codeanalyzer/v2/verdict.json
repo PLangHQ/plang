@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "F1 (Bitmap), F2 (TIFF tests) and F3 are fixed. F4: removing the window's bare catch left only catch(FormatException) on the frame-decode thread, and Skia throws System.Exception on a PNG with a valid header and junk data (probed), which ends the host; wrap Skia's failure as FormatException in Bitmap's reader and pin it with a PngTests case." }

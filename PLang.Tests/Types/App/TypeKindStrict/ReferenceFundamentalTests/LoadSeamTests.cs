@@ -29,7 +29,7 @@ public class LoadSeamTests
     [After(Test)]
     public void Cleanup() => _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
 
-    // A full 1x1 PNG (ImageSharp DetectFormat identifies it as png).
+    // A full 1x1 PNG (its magic bytes name it png).
     private static readonly byte[] Png1x1 =
     {
         0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,

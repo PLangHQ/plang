@@ -1,14 +1,13 @@
 using app.error;
 using app.Utils;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Bitmap = global::app.module.screen.type.screen.code.Bitmap;
 using Native = global::app.module.screen.type.screen.window.code.Window;
 using Text = global::app.type.item.text.@this;
 
 namespace app.module.screen.type.screen.window;
 
 /// <summary>
-/// A screen that is a window on the host (Windows): frames drawn into it are decoded (JPEG/PNG, ImageSharp) off the
+/// A screen that is a window on the host (Windows): frames drawn into it are decoded (JPEG/PNG, SkiaSharp) off the
 /// window's thread and shown as BGRA pixels; a message from PlangOS's screen goes to it whole. What the person does in
 /// it reaches OnInput one at a time per app (on.code.Gate), newest last — input and the clipboard as values, the rest
 /// as text; moves are thinned in the window. Closing it calls OnClose.
@@ -16,6 +15,8 @@ namespace app.module.screen.type.screen.window;
 public sealed class @this : screen.@this
 {
     private readonly Native _window;
+    // screen.setting.max as the last draw read it: a frame's pixels at most this
+    private volatile global::app.type.item.size.@this _max = null!;
 
     private @this(string title, int width, int height, Native window) : base(title, width, height) => _window = window;
 
@@ -113,13 +114,15 @@ public sealed class @this : screen.@this
         if (_window.Closed) return context.Ok();   // closed: nothing to draw on
 
         var value = await frame.Value();
+        // the most a frame's pixels take, as the setting says now; the decode thread reads the newest
+        _max = (await context.Setting.Get<global::app.module.screen.setting.@this>()).Max;
         if (value is Text t)
         {
             // A line from a browser: a frame (decoded by the window's own thread, newest only — this
             // step returns at once, so input behind it never waits) or the pointer the page wants.
             var line = t.Clr<string>() ?? "";
             if (line.StartsWith("{\"rect", StringComparison.Ordinal)) _window.Patch(line);   // {"rects":…} or {"rect":…}
-            else if (line.Contains("\"frame\":\"", StringComparison.Ordinal)) _window.Offer(line, Decode);
+            else if (line.Contains("\"frame\":\"", StringComparison.Ordinal)) _window.Offer(line, offered => Present(offered, context));
             else if (Field(line, "cursor") is { } css) _window.Cursor(css);
             return context.Ok();
         }
@@ -131,11 +134,11 @@ public sealed class @this : screen.@this
 
         try
         {
-            if (Pixels(encoded) is { } px) _window.Present(px.bgra, px.w, px.h);
+            _window.Present(new Bitmap(encoded, _max));
         }
-        catch (Exception ex) when (ex is UnknownImageFormatException or InvalidImageContentException)
+        catch (AppException ex)
         {
-            return context.Error(new ActionError("Not an image: " + ex.Message, "BadFrame", 400));
+            return context.Error(ex.Error);
         }
         return context.Ok();
     }
@@ -146,15 +149,18 @@ public sealed class @this : screen.@this
 
     internal override void Close() => _window.Close();
 
-    private static (byte[] bgra, int w, int h)? Decode(string line)
-        => Frame(line) is { } encoded ? Pixels(encoded) : null;
-
-    private static (byte[] bgra, int w, int h)? Pixels(byte[] encoded)
+    // a browser's frame line, on the window's decode thread: its picture shown, or, when it is none, the error
+    // reported (no step waits for it to answer)
+    private void Present(string line, global::app.actor.context.@this context)
     {
-        using var image = Image.Load<Bgra32>(encoded);
-        var bgra = new byte[image.Width * image.Height * 4];
-        image.CopyPixelDataTo(bgra);
-        return (bgra, image.Width, image.Height);
+        try
+        {
+            _window.Present(new Bitmap(Frame(line), _max));
+        }
+        catch (AppException ex)
+        {
+            _ = context.Actor.Channel.Report(context.Error(ex.Error));
+        }
     }
 
     // "key":"value" from a one-line JSON message, without parsing a 200 KB frame line
@@ -168,17 +174,16 @@ public sealed class @this : screen.@this
         return end < 0 ? null : line[start..end];
     }
 
-    // {"frame":"<base64>",...} → the image bytes; anything else → null
-    private static byte[]? Frame(string? line)
+    // {"frame":"<base64>",...} → the image bytes; a line without them is an AppException carrying BadFrame
+    private static byte[] Frame(string line)
     {
-        if (line == null) return null;
-        const string key = "\"frame\":\"";
-        var start = line.IndexOf(key, StringComparison.Ordinal);
-        if (start < 0) return null;
-        start += key.Length;
-        var end = line.IndexOf('"', start);
-        if (end < 0) return null;
-        try { return Convert.FromBase64String(line[start..end]); }
-        catch (FormatException) { return null; }
+        if (Field(line, "frame") is not { } base64) throw new AppException(new Error("Not an image: the line holds no frame", "BadFrame", 400));
+        try { return Convert.FromBase64String(base64); }
+        catch (FormatException ex)
+        {
+            var error = new Error("Not an image: the frame isn't base64", "BadFrame", 400);
+            error.list.Add(Error.FromException(ex));
+            throw new AppException(error, ex);
+        }
     }
 }

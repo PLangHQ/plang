@@ -1,0 +1,102 @@
+
+
+Project `PLang` has the following vulnerable packages
+   [net10.0]: 
+   Top-level Package           Requested   Resolved   Severity   Advisory URL                                     
+   > SixLabors.ImageSharp      2.1.13      2.1.13     Moderate   https://github.com/advisories/GHSA-gwg2-r3hj-4w44
+                                                      High       https://github.com/advisories/GHSA-j3p4-wp97-rph4
+                                                      High       https://github.com/advisories/GHSA-j9gm-c75j-xc9q
+                                                      Moderate   https://github.com/advisories/GHSA-wmxv-xphr-5c9g
+                                                      High       https://github.com/advisories/GHSA-jjfr-hcj7-qf5w
+
+
+
+Project `PLangConsole` has the following vulnerable packages
+   [net10.0]: 
+   Transitive Package          Resolved   Severity   Advisory URL                                     
+   > SixLabors.ImageSharp      2.1.13     Moderate   https://github.com/advisories/GHSA-gwg2-r3hj-4w44
+                                          High       https://github.com/advisories/GHSA-j3p4-wp97-rph4
+                                          High       https://github.com/advisories/GHSA-j9gm-c75j-xc9q
+                                          Moderate   https://github.com/advisories/GHSA-wmxv-xphr-5c9g
+                                          High       https://github.com/advisories/GHSA-jjfr-hcj7-qf5w
+
+
+
+The given project `PLang.Generators` has no vulnerable packages given the current sources.
+
+
+Project `PLang.Tests.Data` has the following vulnerable packages
+   [net10.0]: 
+   Transitive Package          Resolved   Severity   Advisory URL                                     
+   > SixLabors.ImageSharp      2.1.13     Moderate   https://github.com/advisories/GHSA-gwg2-r3hj-4w44
+                                          High       https://github.com/advisories/GHSA-j3p4-wp97-rph4
+                                          High       https://github.com/advisories/GHSA-j9gm-c75j-xc9q
+                                          Moderate   https://github.com/advisories/GHSA-wmxv-xphr-5c9g
+                                          High       https://github.com/advisories/GHSA-jjfr-hcj7-qf5w
+
+
+
+Project `PLang.Tests.Generator` has the following vulnerable packages
+   [net10.0]: 
+   Transitive Package          Resolved   Severity   Advisory URL                                     
+   > SixLabors.ImageSharp      2.1.13     Moderate   https://github.com/advisories/GHSA-gwg2-r3hj-4w44
+                                          High       https://github.com/advisories/GHSA-j3p4-wp97-rph4
+                                          High       https://github.com/advisories/GHSA-j9gm-c75j-xc9q
+                                          Moderate   https://github.com/advisories/GHSA-wmxv-xphr-5c9g
+                                          High       https://github.com/advisories/GHSA-jjfr-hcj7-qf5w
+
+
+
+Project `PLang.Tests.Modules` has the following vulnerable packages
+   [net10.0]: 
+   Transitive Package          Resolved   Severity   Advisory URL                                     
+   > SixLabors.ImageSharp      2.1.13     Moderate   https://github.com/advisories/GHSA-gwg2-r3hj-4w44
+                                          High       https://github.com/advisories/GHSA-j3p4-wp97-rph4
+                                          High       https://github.com/advisories/GHSA-j9gm-c75j-xc9q
+                                          Moderate   https://github.com/advisories/GHSA-wmxv-xphr-5c9g
+                                          High       https://github.com/advisories/GHSA-jjfr-hcj7-qf5w
+
+
+
+Project `PLang.Tests.Runtime` has the following vulnerable packages
+   [net10.0]: 
+   Transitive Package          Resolved   Severity   Advisory URL                                     
+   > SixLabors.ImageSharp      2.1.13     Moderate   https://github.com/advisories/GHSA-gwg2-r3hj-4w44
+                                          High       https://github.com/advisories/GHSA-j3p4-wp97-rph4
+                                          High       https://github.com/advisories/GHSA-j9gm-c75j-xc9q
+                                          Moderate   https://github.com/advisories/GHSA-wmxv-xphr-5c9g
+                                          High       https://github.com/advisories/GHSA-jjfr-hcj7-qf5w
+
+
+
+Project `PLang.Tests.Shared` has the following vulnerable packages
+   [net10.0]: 
+   Transitive Package          Resolved   Severity   Advisory URL                                     
+   > SixLabors.ImageSharp      2.1.13     Moderate   https://github.com/advisories/GHSA-gwg2-r3hj-4w44
+                                          High       https://github.com/advisories/GHSA-j3p4-wp97-rph4
+                                          High       https://github.com/advisories/GHSA-j9gm-c75j-xc9q
+                                          Moderate   https://github.com/advisories/GHSA-wmxv-xphr-5c9g
+                                          High       https://github.com/advisories/GHSA-jjfr-hcj7-qf5w
+
+
+
+Project `PLang.Tests.Types` has the following vulnerable packages
+   [net10.0]: 
+   Transitive Package          Resolved   Severity   Advisory URL                                     
+   > SixLabors.ImageSharp      2.1.13     Moderate   https://github.com/advisories/GHSA-gwg2-r3hj-4w44
+                                          High       https://github.com/advisories/GHSA-j3p4-wp97-rph4
+                                          High       https://github.com/advisories/GHSA-j9gm-c75j-xc9q
+                                          Moderate   https://github.com/advisories/GHSA-wmxv-xphr-5c9g
+                                          High       https://github.com/advisories/GHSA-jjfr-hcj7-qf5w
+
+
+
+Project `PLang.Tests.Wire` has the following vulnerable packages
+   [net10.0]: 
+   Transitive Package          Resolved   Severity   Advisory URL                                     
+   > SixLabors.ImageSharp      2.1.13     Moderate   https://github.com/advisories/GHSA-gwg2-r3hj-4w44
+                                          High       https://github.com/advisories/GHSA-j3p4-wp97-rph4
+                                          High       https://github.com/advisories/GHSA-j9gm-c75j-xc9q
+                                          Moderate   https://github.com/advisories/GHSA-wmxv-xphr-5c9g
+                                          High       https://github.com/advisories/GHSA-jjfr-hcj7-qf5w
+

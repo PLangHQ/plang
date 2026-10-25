@@ -46,6 +46,17 @@ public class ImageValidateKindTests : System.IAsyncDisposable
         await Assert.That(actual).IsEqualTo("png");
     }
 
+    [Test]
+    [Arguments(new byte[] { 0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00 })]   // II*\0, little-endian
+    [Arguments(new byte[] { 0x4D, 0x4D, 0x00, 0x2A, 0x00, 0x00, 0x00, 0x08 })]   // MM\0*, big-endian
+    public async Task ValidateKind_TiffBytesMatchingTif_OkTrue(byte[] tiff)
+    {
+        var img = Ctx.Image(tiff, "image/tiff");
+        var (ok, actual) = img.ValidateKind(tiff, "tif");
+        await Assert.That(ok).IsTrue();
+        await Assert.That(actual).IsNull();
+    }
+
     [Test] public async Task ValidateKind_GarbageBytes_OkFalse()
     {
         var garbage = new byte[] { 0, 1, 2, 3, 4, 5 };

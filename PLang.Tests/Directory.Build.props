@@ -37,9 +37,8 @@
        entry point, which a class library must not have; Shared gets
        TUnit.Assertions/Core in its own csproj). -->
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'PLang.Tests.Shared'">
-    <PackageReference Include="TUnit" Version="1.13.11" />
-    <PackageReference Include="NSubstitute" Version="5.3.0" />
-    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="TUnit" Version="1.76.0" />
+    <PackageReference Include="coverlet.collector" Version="10.1.0" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)Shared\PLang.Tests.Shared.csproj" />
   </ItemGroup>
 
@@ -52,6 +51,7 @@
 
   <!-- <OutDir>/os links to the repo's os tree, in a test as in a run (Shared is a library, never run). -->
   <Import Project="$(MSBuildThisFileDirectory)..\os.targets" Condition="'$(MSBuildProjectName)' != 'PLang.Tests.Shared'" />
+  <Import Project="$(MSBuildThisFileDirectory)..\native.targets" />
 
   <!-- The former GlobalUsings.cs, declared once for all test projects.
        Mirror of PLang/App/GlobalUsings.cs where applicable. -->

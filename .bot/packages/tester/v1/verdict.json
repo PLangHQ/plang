@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "No new red names; plan tests red when their change is reverted; one minor finding: the include-both-names test does not pin read-once." }
