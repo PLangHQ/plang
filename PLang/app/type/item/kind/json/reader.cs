@@ -56,7 +56,9 @@ public ref struct Reader : IReader
     public int Int() => _r.TokenType == JsonTokenType.Number && _r.TryGetInt32(out var value) ? value : throw Refusal("an int");
     public long Long() => _r.TokenType == JsonTokenType.Number && _r.TryGetInt64(out var value) ? value : throw Refusal("a long");
     // The token's raw text, read by number's one rule (an integer long or past it exact, else double).
-    public object Number() => global::app.type.item.number.@this.Parse(System.Text.Encoding.UTF8.GetString(_r.ValueSpan))!;
+    public object Number() => _r.TokenType == JsonTokenType.Number
+        && global::app.type.item.number.@this.Parse(System.Text.Encoding.UTF8.GetString(_r.ValueSpan)) is { } value
+        ? value : throw Refusal("a number");
     public float Float() => _r.TokenType == JsonTokenType.Number && _r.TryGetSingle(out var value) ? value : throw Refusal("a float");
     public double Double() => _r.TokenType == JsonTokenType.Number && _r.TryGetDouble(out var value) ? value : throw Refusal("a double");
     public decimal Decimal() => _r.TokenType == JsonTokenType.Number && _r.TryGetDecimal(out var value) ? value : throw Refusal("a decimal");
