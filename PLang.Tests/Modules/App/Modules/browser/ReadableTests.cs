@@ -22,7 +22,7 @@ public class ReadableTests : IDisposable
         File.WriteAllText(Path.Combine(_outside, "secret.html"), "<p>not mine</p>");
         _app = new global::app.@this(_root, global::PLang.Tests.Parent.Actor).Testing();
         // each ask here is answered no: a page that asks is refused
-        _app.actor.list.User.Context.Actor!.Channel.Register(new CannedAnswerChannel("n"));
+        _app.actor.list.User.Context.Actor!.Channel.Register(new CannedAnswerChannel(_app.actor.list.User.Context.Actor!.Channel, "n"));
     }
 
     public void Dispose()

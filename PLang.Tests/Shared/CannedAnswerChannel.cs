@@ -13,7 +13,7 @@ internal sealed class CannedAnswerChannel : global::app.channel.@this
 {
     private readonly string _answer;
 
-    public CannedAnswerChannel(string answer)
+    public CannedAnswerChannel(global::app.channel.list.@this channels, string answer) : base(channels)
     {
         _answer = answer;
         Name = "input";

@@ -25,7 +25,7 @@ public sealed class Live : IAnswer
         var headers = new Dictionary<string, object>();
         if (!string.IsNullOrEmpty(key))
             headers["Authorization"] = $"Bearer {key}";
-        var streamed = (action.OnStream == null ? null : await action.OnStream.Value()) != null;
+        var streamed = await action.IsStreamed();
 
         var send = new request(context)
         {

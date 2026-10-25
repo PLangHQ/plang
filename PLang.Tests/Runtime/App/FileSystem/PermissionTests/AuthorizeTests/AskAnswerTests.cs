@@ -20,7 +20,7 @@ public class AskAnswerTests : System.IAsyncDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "secret.txt"), "outside");
         app =new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-askanswer-root-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         user = app.actor.list.User.Context;
-        channel = new Counting(user);
+        channel = new Counting(user.Actor!.Channel, user);
         app.actor.list.User.Channel.Register(channel);
     }
 
@@ -31,7 +31,7 @@ public class AskAnswerTests : System.IAsyncDisposable
     {
         private readonly global::app.actor.context.@this _ctx;
         public int Count { get; private set; }
-        public Counting(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Counting(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)

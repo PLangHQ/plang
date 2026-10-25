@@ -20,7 +20,7 @@ public class DebugSmokeTests
         // Debug.Write routes via System.Channels.Get("debug") ?? Resolve("error").
         // Register a memory channel as "error" on System so debug output lands in a
         // capture buffer instead of the real stderr stream the channel was wired to.
-        _app.actor.list.System.Channel.Register(global::app.channel.type.stream.@this.Memory(
+        _app.actor.list.System.Channel.Register(global::app.channel.type.stream.@this.Memory(_app.actor.list.System.Channel,
             global::app.channel.list.@this.Error));
         _capture = (global::app.channel.type.stream.@this)
             (_app.actor.list.System.Channel.Get(global::app.channel.list.@this.Error))!;

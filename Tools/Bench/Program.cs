@@ -14,10 +14,10 @@ using PLang.Tests;
 var mode = args.Length > 1 ? args[1] : "root";
 var child = mode == "child";
 var root = Environment.GetEnvironmentVariable("BENCH_ROOT") ?? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../test"));
-var server = new Lazy<global::app.@this>(() => new global::app.@this(root, autoWireConsoleChannels: false).Testing());
+var server = new Lazy<global::app.@this>(() => new global::app.@this(root, wiring: global::app.Wiring.none).Testing());
 global::app.@this Make(bool console) => child
     ? new global::app.@this(root, server.Value.actor.list.User)
-    : new global::app.@this(root, autoWireConsoleChannels: console);
+    : new global::app.@this(root, wiring: console ? global::app.Wiring.console : global::app.Wiring.none);
 
 static double Held()
 {

@@ -31,9 +31,9 @@ public class CdpEventTests : IDisposable
         // Chromium says nothing until the listener is there: the pipe is empty until it is, so no event is read (and
         // dropped, heard by no one) before the listener is added
         using var chromium = new System.IO.Pipes.AnonymousPipeServerStream(System.IO.Pipes.PipeDirection.Out);
-        var pipe = new global::app.channel.type.stream.@this("pipe",
+        var pipe = new global::app.channel.type.stream.@this(_app.actor.list.User.Channel, "pipe",
             new System.IO.Pipes.AnonymousPipeClientStream(System.IO.Pipes.PipeDirection.In, chromium.ClientSafePipeHandle), ownsStream: true)
-            { Framed = true, Actor = _app.actor.list.User.Context.Actor! };
+            { Framed = true };
         var heard = new List<int>();
         var all = new TaskCompletionSource();
         var random = new Random(1);

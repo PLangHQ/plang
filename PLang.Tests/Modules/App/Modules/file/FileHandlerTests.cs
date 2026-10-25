@@ -535,7 +535,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(TempPath("real.txt"), "I exist");
 
         var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain", Framed = true });
@@ -572,7 +572,7 @@ public class FileHandlerTests : IDisposable
     public async Task Integration_FileNotExists_FlowsThroughVariables_ToOutput()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain", Framed = true });

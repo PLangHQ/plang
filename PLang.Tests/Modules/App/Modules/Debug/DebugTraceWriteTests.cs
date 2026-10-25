@@ -15,7 +15,7 @@ public class DebugTraceWriteTests
     {
         await using var app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
         var captured = new System.IO.MemoryStream();
-        app.actor.list.System.Channel.Register(new global::app.channel.type.stream.@this(
+        app.actor.list.System.Channel.Register(new global::app.channel.type.stream.@this(app.actor.list.System.Channel,
             global::app.channel.list.@this.Debug, captured,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         app.Debug = new global::app.module.debug.@this(app.actor.list.System.Context);

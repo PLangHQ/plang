@@ -20,7 +20,7 @@ public class DeleteMoveWindowTests : System.IAsyncDisposable
         outside = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-window-out-" + System.Guid.NewGuid().ToString("N")[..8]);
         app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
         user = app.actor.list.User.Context;
-        app.actor.list.User.Channel.Register(new Granting(user));
+        app.actor.list.User.Channel.Register(new Granting(user.Actor!.Channel, user));
     }
 
     public async System.Threading.Tasks.ValueTask DisposeAsync()
@@ -33,7 +33,7 @@ public class DeleteMoveWindowTests : System.IAsyncDisposable
     private sealed class Granting : global::app.channel.@this
     {
         private readonly global::app.actor.context.@this _ctx;
-        public Granting(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Granting(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)

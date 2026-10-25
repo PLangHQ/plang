@@ -168,24 +168,27 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         }
     }
 
-    /// <summary>Takes this module out of the app — emptied too, so anyone still holding it finds no actions.</summary>
-    public System.Threading.Tasks.ValueTask<bool> Remove(actor.context.@this context)
+    /// <summary>Takes this module out of the app — emptied too, so anyone still holding it finds no actions. Answers
+    /// true when it is taken out, false when the app held it no longer, or the refusal (ModuleShared) when it is the
+    /// module of the app this one was made from.</summary>
+    public System.Threading.Tasks.ValueTask<data.@this<global::app.type.item.@bool.@this>> Remove(actor.context.@this context)
         => Root.Remove(this, context.App.module, context);
 
     // One of this registry's modules taken out, asked by `asker`'s registry.
-    private System.Threading.Tasks.ValueTask<bool> Remove(@this module, @this asker, actor.context.@this context)
+    private System.Threading.Tasks.ValueTask<data.@this<global::app.type.item.@bool.@this>> Remove(@this module, @this asker, actor.context.@this context)
         // the fact itself, not a flag: a change to the asker's own rows it holds, one to a row below it is its origin's
         // to answer
         => ReferenceEquals(this, asker) ? Drop(module, context) : asker.App.origin.Remove(module, context);
 
     /// <summary>Takes <paramref name="module"/>, one this registry holds, out of it, for every app over it too —
-    /// emptied, so anyone still holding it finds no actions.</summary>
-    internal async System.Threading.Tasks.ValueTask<bool> Drop(@this module, actor.context.@this context)
+    /// emptied, so anyone still holding it finds no actions. True when it was taken out, false when it was no longer
+    /// held.</summary>
+    internal async System.Threading.Tasks.ValueTask<data.@this<global::app.type.item.@bool.@this>> Drop(@this module, actor.context.@this context)
     {
-        if (!await list.Remove(module, context)) return false;
+        if (!await list.Remove(module, context)) return context.Ok<global::app.type.item.@bool.@this>(false);
         System.Threading.Interlocked.Decrement(ref _own);
         module.Clear();
-        return true;
+        return context.Ok<global::app.type.item.@bool.@this>(true);
     }
 
     /// <summary>Takes one action: its catalog action, born from its class as the subtype the class says it is (a

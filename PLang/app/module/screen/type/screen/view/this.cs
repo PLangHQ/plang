@@ -18,7 +18,8 @@ namespace app.module.screen.type.screen.view;
 public sealed class @this : screen.@this
 {
     private readonly Shown _shown;
-    private readonly BlockingCollection<byte[]> _messages = new();
+    // what PlangOS sent, in order, each with the most a frame's rectangle may take as its sender read it
+    private readonly BlockingCollection<(byte[] Message, global::app.type.item.size.@this Max)> _messages = new();
     private readonly Func<global::app.type.item.@this, Task> _said;
     private readonly Func<Task> _closing;
     private code.Video? _video;
@@ -30,12 +31,17 @@ public sealed class @this : screen.@this
     // the app's image<png> type, the type its picture is born holding
     private readonly global::app.type.@this _png;
 
+    // a frame it was given and refused (past screen.setting.max, one its bytes can't make): told where the app's
+    // errors go, as the window tells it
+    private readonly Action<global::app.error.@this> _report;
+
     private @this(string title, int width, int height, Func<global::app.type.item.@this, Task> said, Func<Task> closing,
-        global::app.type.@this png)
+        Action<global::app.error.@this> report, global::app.type.@this png)
         : base(title, width, height)
     {
         _said = said;
         _closing = closing;
+        _report = report;
         _png = png;
         _shown = new Shown(width, height, Decoded);
         new Thread(Apply) { IsBackground = true, Name = "screen view: " + title }.Start();
@@ -51,6 +57,7 @@ public sealed class @this : screen.@this
             => call == null ? Task.CompletedTask
                 : global::app.module.on.code.Gate.Call(call, new global::app.data.@this("!data", value, context: context), context);
         var view = new @this(title, width, height, value => Call(onInput, value), () => Call(onClose, (Text)"{\"closed\":true}"),
+            Report(context),
             context.App.type.list[new global::app.type.@this("image", "png"), context]);
         return context.Ok<screen.@this>(view);
     }
@@ -73,14 +80,14 @@ public sealed class @this : screen.@this
 
     /// <summary>A message from PlangOS's screen: frames and echoes in order (their own thread), a message from its
     /// PLang to OnInput; the pointer and copied text mean nothing without a window.</summary>
-    internal override bool Show(byte[] message)
+    internal override bool Show(byte[] message, global::app.type.item.size.@this max)
     {
         if (_closed || message.Length == 0) return false;
         if (Interlocked.Exchange(ref _told, 1) == 0 && _media.Codecs is { Length: > 0 } codecs)
             _ = _said((Text)("{\"codecs\":" + System.Text.Json.JsonSerializer.Serialize(codecs) + "}"));
         switch (message[0])
         {
-            case 1 or 3 or 4 or 7: _messages.Add(message); return true;
+            case 1 or 3 or 4 or 7: _messages.Add((message, max)); return true;
             case >= 10 and <= 13: return _media.Take(message);
             case 9: _ = _said((Text)("{\"guest\":" + System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1) + "}")); return true;
             case 2 or 5: return true;
@@ -88,9 +95,10 @@ public sealed class @this : screen.@this
         }
     }
 
-    internal override Task<global::app.data.@this> Draw(global::app.data.@this frame, global::app.actor.context.@this context)
-        => Task.FromResult(frame.Peek()?.RawBytes is { } bytes && Show(bytes) ? context.Ok()
-            : context.Error(new global::app.error.ActionError("A view shows what PlangOS's screen sends, nothing else.", "BadFrame", 400)));
+    internal override async Task<global::app.data.@this> Draw(global::app.data.@this frame, global::app.actor.context.@this context)
+        => frame.Peek()?.RawBytes is { } bytes && Show(bytes, await Max(context))
+            ? context.Ok()
+            : context.Error(new global::app.error.ActionError("A view shows what PlangOS's screen sends, nothing else.", "BadFrame", 400));
 
     internal override Task<global::app.data.@this> Send(global::app.data.@this line, global::app.actor.context.@this context)
         => Task.FromResult(context.Error(new global::app.error.ActionError("A view shows frames; its input comes from this app's input (screen.listen).", "NotSupported", 400)));
@@ -143,7 +151,7 @@ public sealed class @this : screen.@this
 
     private void Apply()
     {
-        foreach (var m in _messages.GetConsumingEnumerable())
+        foreach (var (m, max) in _messages.GetConsumingEnumerable())
         {
             var started = System.Diagnostics.Stopwatch.GetTimestamp();
             if (m.Length == 9 && m[0] is 3 or 4)
@@ -156,12 +164,12 @@ public sealed class @this : screen.@this
             }
             try
             {
-                if (_shown.Apply(m) != null) Interlocked.Increment(ref _frames);
+                if (_shown.Apply(m, max) != null) Interlocked.Increment(ref _frames);
             }
-            catch (Exception ex) when (ex is ArgumentException or IndexOutOfRangeException or InvalidOperationException)
-            {
-                // a bad message is skipped; what follows puts the picture right
-            }
+            // refused (a rectangle past the max): told; one its own bytes contradict is skipped — what follows puts
+            // the picture right
+            catch (global::app.error.AppException ex) { _report(ex.Error); }
+            catch (Exception ex) when (ex is ArgumentException or IndexOutOfRangeException or InvalidOperationException) { }
             _bytes += m.Length;
             Stats(System.Diagnostics.Stopwatch.GetTimestamp() - started);
         }

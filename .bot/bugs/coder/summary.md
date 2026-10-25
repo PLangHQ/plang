@@ -23,15 +23,36 @@ packages' Windows window, and Ingi's three yeses. The plan is the architect's, a
   exception answers as itself.
 - **Stage 3 — readers answer their errors** (add1f6d30, cdc347f82). N10 json `Number()` checks its token. N11 size,
   parallel and choice decline with `DeclinedException` (SizeInvalid / ParallelInvalid / ChoiceInvalid); kind's
-  Descend/Enumerate throw an AppException with its Error, Convert answers NotConvertible.
+  Convert answers NotConvertible. kind's base Descend/Enumerate stay plain exceptions (5aaa05258): no plang step
+  reaches them, so they are plang-is-broken guards.
 - Boy scout: the test runner's crash answers `Error.FromException` (546c3b072).
 
+- **Stage 4 — a goal channel runs its goal like a call** (fa3e9272b, 3edb17b4e, c74ec9771). One door,
+  `context.Run(actor, then)`: right here when it's the context's own actor, else a child made from it. The goal
+  channel (the writer's flow) and `goal.call` with a named actor (`actor.list.Use`) both go through it; the race
+  (19/20 writes answered with another's message) is gone. Proven in C# and by the two plang tests the builder built.
+- **Stage 5 — the command line refuses what it can't read** (2f3bffd46, a45546a5c). ArgumentRefused naming the
+  argument and the form that works: a second goal, a setting written as a goal, a mode word given a value, a mode
+  turned off beside its setting, one property in two cases. `%path%` is `app.filesystem.root`.
+- **Stage 6 — paths and the Windows window** (362cd6c03, 22faad482, 89fd7afdc, db0339f00). N15: `path.Holds` is the
+  one containment rule, asked by IsUnder and ValidatePath (a sibling `/root2` is no place in `/root`). N17:
+  OsTrustTests asks IsUnder. The window holds a `Shown`: its own frame code and QOI decoder are gone; `Shown.Put`
+  and `Shown.Apply` bound each rectangle by `screen.setting.max` (`Bitmap.Fits`, the one rule) before any decode,
+  which closes the Linux view's unbounded w*h too; an offer is `(frame, max)` and the window reports a refusal its
+  one way; the `_max` mirror is gone. Linux green and a win-x64 build; the window waits for the Windows run.
+- **Stage 7 — Ingi's three yeses** (66f0456c0, 363bfd5da, 9746789e1, 93495fdf8, ad0caedd7). `module.Remove` answers
+  `data<bool>` (ModuleShared answered, not thrown). The console flag is `app.Wiring { console, none }`. A channel is
+  born of its actor's channels: the base takes its list, `Actor` is the list's, Register and Set guard a channel born
+  elsewhere, and every late `Actor =` stamp is gone. The surface golden was re-pinned for each, naming fast-apps N1–N3.
+- Also: the `| json` filter escapes `< > &` itself, so a page stays safe whatever the json writer writes (9f65bf639).
+
 ## In progress / next
-- Stage 4: the goal channel runs its goal in a context made from the writer's (`writer.Child(channel's actor)`,
-  the message in an isolated first frame). Waiting on plang-tester's minimal race goal for the red plang test.
-- Stages 5–7 per the plan.
-- With Ingi: OpenAi.cs's older smells (the envelope cache entry); a readable json file writer (the six answer files
-  are rewritten from themselves when it lands).
+- The json writer setting (`%!type.json.setting.format%`, `formatted | compact`): its shape is approved, but it
+  waits on Ingi's answer about a json-lines kind for the line writers (errors.jsonl, the headless cursor line, json
+  channel lines). Then the six `.llm.json` files are rewritten from themselves, no OpenAI.
+- The Windows run (the window, APatchBeforeTheFirstFrame, the path probes).
+- The gate: the llm tests once live (`--test.setting.llm=live`), and the full gate.
+- Kept for llm-provider by Ingi: OpenAi.cs's older smells (the envelope cache entry, its static helpers).
 
 ## Code example
 ```csharp

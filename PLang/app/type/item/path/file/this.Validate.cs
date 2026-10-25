@@ -32,9 +32,12 @@ public sealed partial class @this
         if (string.IsNullOrWhiteSpace(path))
             throw new ArgumentException("path cannot be empty", nameof(path));
 
-        // the app's folder and the runtime's os folder, as its filesystem holds them
-        var rootAbsolutePath = app.filesystem.root.Absolute.AdjustPathToOs().TrimEnd(PathHelper.DirectorySeparatorChar);
-        var osAbsolutePath = app.filesystem.os.Absolute;
+        // the app's folder and the runtime's os folder, as its filesystem holds them; what is in them is asked of them,
+        // by the one containment rule (a sibling that starts with a folder's name is no place in it)
+        var root = app.filesystem.root;
+        var os = app.filesystem.os;
+        var comparison = global::app.type.item.path.@this.RootComparison;
+        var rootAbsolutePath = root.Absolute.AdjustPathToOs().TrimEnd(PathHelper.DirectorySeparatorChar);
 
         if (IsOsRooted(path))
         {
@@ -43,7 +46,7 @@ public sealed partial class @this
         }
         else if (IsPlangRooted(path))
         {
-            if (!path.StartsWith(rootAbsolutePath) && !path.StartsWith(osAbsolutePath))
+            if (!root.Holds(path, comparison) && !os.Holds(path, comparison))
                 path = PathHelper.GetFullPath(PathHelper.Join(rootAbsolutePath, path));
         }
         else
@@ -51,8 +54,8 @@ public sealed partial class @this
             path = PathHelper.GetFullPath(PathHelper.Join(rootAbsolutePath, path));
         }
 
-        // Out-of-rootAbsolutePath paths are returned as-is — Authorize is the gate, not this method.
-        if (!path.StartsWith(rootAbsolutePath, global::app.type.item.path.@this.RootComparison))
+        // Out-of-root paths are returned as-is — Authorize is the gate, not this method.
+        if (!root.Holds(path, comparison))
             return path;
 
         // of the places it names, the first that is there; else the first whose folder is there (a new file lands
@@ -76,12 +79,17 @@ public sealed partial class @this
     private static IReadOnlyList<string> Places(string absolute, global::app.@this app)
     {
         var separator = PathHelper.DirectorySeparatorChar;
-        var root = app.filesystem.root.Absolute.AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
-        var os = app.filesystem.os.Absolute.AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
-        if (absolute.StartsWith(root, StringComparison.OrdinalIgnoreCase))
-            return [absolute, PathHelper.GetFullPath(os + absolute[root.Length..])];
-        if (absolute.StartsWith(os, StringComparison.OrdinalIgnoreCase))
-            return [PathHelper.GetFullPath(root + absolute[os.Length..]), absolute];
+        var comparison = global::app.type.item.path.@this.RootComparison;
+        var rootSystem = app.filesystem.root.Combine("system");
+        var osSystem = app.filesystem.os.Combine("system");
+        var root = rootSystem.Absolute.AdjustPathToOs().TrimEnd(separator) + separator;
+        var os = osSystem.Absolute.AdjustPathToOs().TrimEnd(separator) + separator;
+        // the place under the system folder, past its separator; the folder itself is its own place in both
+        string Under(string folder) => absolute[System.Math.Min(folder.Length, absolute.Length)..];
+        if (rootSystem.Holds(absolute, comparison))
+            return [absolute, PathHelper.GetFullPath(os + Under(root))];
+        if (osSystem.Holds(absolute, comparison))
+            return [PathHelper.GetFullPath(root + Under(os)), absolute];
         return [absolute];
     }
 

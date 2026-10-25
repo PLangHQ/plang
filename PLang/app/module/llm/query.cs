@@ -57,6 +57,9 @@ public partial class query : IContext
     [GoalCallback("chunk")]
     public partial data.@this<global::app.goal.step.action.@this>? OnStream { get; init; }
 
+    /// <summary>Whether this ask streams: it names a call for each chunk.</summary>
+    internal async Task<bool> IsStreamed() => OnStream != null && await OnStream.Value() != null;
+
     /// <summary>JSON schema string the LLM must conform to. When set, format defaults to "json".</summary>
     /// <summary>
     /// Optional schema describing the expected response shape. Accepts any value the

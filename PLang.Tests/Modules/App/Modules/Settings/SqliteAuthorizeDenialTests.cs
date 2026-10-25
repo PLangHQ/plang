@@ -16,7 +16,7 @@ public class SqliteAuthorizeDenialTests
         public int AskCount;
         private readonly string _answer;
         private readonly global::app.actor.context.@this _ctx;
-        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(global::app.channel.list.@this channels, string answer, global::app.actor.context.@this ctx) : base(channels) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
@@ -37,7 +37,7 @@ public class SqliteAuthorizeDenialTests
     [Test] public async Task SqliteOpen_DataSourceOutsideRoot_DeniedAnswer_DoesNotOpenDb()
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new CannedChannel(app.actor.list.User.Channel, "n", app.actor.list.User.Context));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "external.sqlite");
         var dbPath = app.actor.list.User.Context.File(outOfRoot);
@@ -54,7 +54,7 @@ public class SqliteAuthorizeDenialTests
     {
         var app = NewApp(out _);
         var user = app.actor.list.User;
-        user.Channel.Register(new CannedChannel("n", user.Context));
+        user.Channel.Register(new CannedChannel(user.Channel, "n", user.Context));
         var folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
         var outOfRoot = System.IO.Path.Combine(folder, "external.sqlite");
         var grant = global::app.type.item.permission.@this.Request(user, outOfRoot, global::app.type.item.permission.Verb.write);
@@ -70,7 +70,7 @@ public class SqliteAuthorizeDenialTests
     [Test] public async Task SqliteOpen_DataSourceInRoot_OpensSilently()
     {
         var app = NewApp(out var root);
-        var ch = new CannedChannel("UNEXPECTED", app.actor.list.User.Context);
+        var ch = new CannedChannel(app.actor.list.User.Channel, "UNEXPECTED", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var dbPath = app.actor.list.User.Context.File(System.IO.Path.Combine(root, "data.sqlite"));
         using var store = new global::app.store.sqlite.@this(dbPath, false, app.actor.list.User.Context);

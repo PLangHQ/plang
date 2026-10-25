@@ -122,9 +122,12 @@ public class Fluid : ITemplate
         options.ValueConverters.Add(value =>
             value is global::app.type.item.@this item ? Item.Liquid(item, action.Context, options, culture) : null);
 
-        // `{{ x | json }}` writes the value through plang's json format, as the json writer shows it, compact
-        // (liquid's `json: true` indent is not honoured). Liquid's own json filter reflects the C# object behind
-        // the value (IsSequence, RawBytes, …). The value is taken as it is: a text holding %…% is those characters.
+        // `{{ x | json }}` writes the value through plang's json format, as the json writer shows it (liquid's
+        // `json: true` indent is not honoured). Liquid's own json filter reflects the C# object behind the value
+        // (IsSequence, RawBytes, …). The value is taken as it is: a text holding %…% is those characters. A page
+        // renders it as it is (no encoder), so the json is made safe for the page here, whatever the json format
+        // writes: < > & escaped, which json reads back the same — they can stand only inside a json string, so a
+        // value's </script> never closes the page's script.
         options.Filters.AddFilter("json", async (input, _, _) =>
         {
             var value = new global::app.data.@this("", input is Item plang ? plang.Held
@@ -132,7 +135,8 @@ public class Fluid : ITemplate
             using var json = new MemoryStream();
             var answer = await action.Context.App.type.list.Mime("application/json").Encode(json, value, action.Context);
             if (!answer.Success) throw new AppException(answer.Error!);
-            return new StringValue(System.Text.Encoding.UTF8.GetString(json.ToArray()));
+            return new StringValue(System.Text.Encoding.UTF8.GetString(json.ToArray())
+                .Replace("<", "\\u003C").Replace(">", "\\u003E").Replace("&", "\\u0026"));
         });
 
         // `{{ x | text }}` writes the value as plang's text format writes it — a leaf bare, a container as its json:

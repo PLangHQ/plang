@@ -19,7 +19,7 @@ public class ChannelReadBoundaryTests
     // actor's Channels (so the boundary can reach Format + context).
     private static stream Input(global::app.@this app, string mime, byte[] body)
     {
-        var ch = new stream("c", new System.IO.MemoryStream(body), global::app.channel.ChannelDirection.Input) { Mime = mime };
+        var ch = new stream(app.actor.list.User.Channel, "c", new System.IO.MemoryStream(body), global::app.channel.ChannelDirection.Input) { Mime = mime };
         app.actor.list.User.Channel.Register(ch);
         return ch;
     }

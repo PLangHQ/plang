@@ -67,14 +67,14 @@ public class SubAppStoresShapesProbeTests : System.IAsyncDisposable
     private sealed class Asking : global::app.channel.@this
     {
         private readonly global::app.actor.context.@this _ctx;
-        public Asking(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Asking(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
             => Task.FromResult(action.Context.Ok("n"));
     }
 
-    private static void Mute(global::app.actor.@this actor) => actor.Channel.Register(new Asking(actor.Context));
+    private static void Mute(global::app.actor.@this actor) => actor.Channel.Register(new Asking(actor.Channel, actor.Context));
 
     private static async Task<bool> Passes(global::app.actor.context.@this ctx, string path, Verb verb)
         => (await ctx.File(path).Authorize(verb, ctx)).Success;

@@ -25,10 +25,10 @@ public class WholeMessageTests
     [Test]
     public async Task WritersSideBySide_EachLineIsOneWholeMessage()
     {
-        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
         var user = app.actor.list.User.Context;
         var capture = new Yielding();
-        var channel = new global::app.channel.type.stream.@this("out", capture,
+        var channel = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "out", capture,
             global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain", Framed = true };
         app.actor.list.User.Channel.Register(channel);
 

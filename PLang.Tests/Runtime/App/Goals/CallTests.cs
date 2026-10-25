@@ -16,7 +16,7 @@ public class CallTests
     {
         _app = new global::app.@this("/tmp/call-" + System.Guid.NewGuid().ToString("N")[..8], global::PLang.Tests.Parent.Actor).Testing();
         _errors = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
+        _app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Error, _errors, global::app.channel.ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Framed = true });
     }
@@ -41,10 +41,10 @@ public class CallTests
     {
         var closed = new System.IO.MemoryStream();
         closed.Dispose();
-        _app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
+        _app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Error, closed, global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         var system = new System.IO.MemoryStream();
-        _app.actor.list.System.Channel.Register(new global::app.channel.type.stream.@this(
+        _app.actor.list.System.Channel.Register(new global::app.channel.type.stream.@this(_app.actor.list.System.Channel,
             global::app.channel.list.@this.Error, system, global::app.channel.ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Framed = true });
 

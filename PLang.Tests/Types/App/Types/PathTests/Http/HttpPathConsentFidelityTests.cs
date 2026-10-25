@@ -22,7 +22,7 @@ public class HttpPathConsentFidelityTests
         public string LastQuestion = "";
         public string Answer = "n";
         private readonly global::app.actor.context.@this _ctx;
-        public CapturingChannel(global::app.actor.context.@this ctx)
+        public CapturingChannel(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels)
         {
             _ctx = ctx;
             Name = "input";
@@ -45,7 +45,7 @@ public class HttpPathConsentFidelityTests
             "plang-http-consent-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
         var app = new AppEngine(dir, global::PLang.Tests.Parent.Actor);
-        var ch = new CapturingChannel(app.actor.list.User.Context);
+        var ch = new CapturingChannel(app.actor.list.User.Channel, app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         return (app, app.actor.list.User.Context, ch);
     }

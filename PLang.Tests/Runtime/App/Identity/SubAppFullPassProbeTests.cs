@@ -238,9 +238,10 @@ public class SubAppFullPassProbeTests : System.IAsyncDisposable
         var module = sub.module.Named("variable") ?? maker.module.Named("variable");
         await Assert.That(module).IsNotNull();
 
-        var refused = Assert.Throws<global::app.error.AppException>(() => module!.Remove(sub.actor.list.System.Context).AsTask().GetAwaiter().GetResult());
+        var refused = await module!.Remove(sub.actor.list.System.Context);
 
-        await Assert.That(refused!.Error.Key).IsEqualTo("ModuleShared");
+        await refused.IsFailure();
+        await Assert.That(refused.Error!.Key).IsEqualTo("ModuleShared");
         await Assert.That(maker.module.Named("variable")).IsNotNull();
     }
 

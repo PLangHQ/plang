@@ -493,9 +493,11 @@ public sealed partial class @this
         var request = asked[0].at.Request(context.Actor, asked[0].verb);
         var consented = await context.Actor.Permission.Ask(question.ToString(), request, context, async persist =>
         {
-            // one grant per place, holding every verb asked there (a move's source: read and delete)
+            // one grant per place, holding every verb asked there (a move's source: read and delete); a grant that
+            // couldn't be kept (an "always" whose save failed) is the answer, never a yes
             foreach (var each in asked.GroupBy(a => a.at.Absolute))
-                await each.First().at.Keep(context.Actor, each.Select(a => a.verb), persist, context);
+                if (await each.First().at.Keep(context.Actor, each.Select(a => a.verb), persist, context) is { Success: false } unkept)
+                    return unkept;
             return await PerformTransfer(destination, isMove, overwrite, tree, context);
         });
         return data.@this<global::app.type.item.path.@this>.From(consented);

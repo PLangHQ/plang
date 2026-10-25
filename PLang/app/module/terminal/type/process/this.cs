@@ -55,7 +55,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Its stdin as a channel: what is sent to it is written there, one writer at a time; closed, it reads
     /// the end.</summary>
     internal global::app.channel.type.stream.@this input => _input ??=
-        new("stdin", Os!.Input.BaseStream, global::app.channel.ChannelDirection.Output, ownsStream: true) { Actor = StartedBy! };
+        new(StartedBy!.Channel, "stdin", Os!.Input.BaseStream, global::app.channel.ChannelDirection.Output, ownsStream: true);
 
     /// <summary>Its stdout as a channel of lines, in its encoding (a last line with no newline is a line too).</summary>
     internal global::app.channel.type.stream.@this output => _output ??= Lines("stdout", Os!.Output.BaseStream);
@@ -64,8 +64,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal global::app.channel.type.stream.@this error => _error ??= Lines("stderr", Os!.Error.BaseStream);
 
     private global::app.channel.type.stream.@this Lines(string name, Stream stream)
-        => new(name, stream, global::app.channel.ChannelDirection.Input, ownsStream: true)
-            { Framed = true, End = "\n", KeepsLast = true, Encoding = OutputEncoding, Actor = StartedBy! };
+        => new(StartedBy!.Channel, name, stream, global::app.channel.ChannelDirection.Input, ownsStream: true)
+            { Framed = true, End = "\n", KeepsLast = true, Encoding = OutputEncoding };
 
     /// <summary>The OS process, handed to the step that started it to run it to its end (<c>terminal.start</c>): that
     /// step owns it from here and disposes it; this item holds it no longer.</summary>
@@ -218,7 +218,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                     Remote.Answered(reply);
                     continue;
                 }
-                screen?.Show(message);
+                if (screen != null) screen.Show(message, await screen.Max(context));
                 if (onOutput != null)
                     await global::app.module.on.code.Gate.Call(onOutput,
                         new Data("!data", new global::app.type.item.binary.@this(message, context.App.type.list["binary"]), context.App.type.list["binary"], context: context), context);

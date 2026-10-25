@@ -69,8 +69,20 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         => Task.FromResult(context.Error(new ActionError("This screen takes no input (it isn't PlangOS's display).", "NotSupported", 400)));
 
     /// <summary>A message from PlangOS's screen, straight to it (no goal per frame): what
-    /// <c>terminal.open … binary output to %screen%</c> does with each one. False when it takes none.</summary>
-    internal virtual bool Show(byte[] message) => false;
+    /// <c>terminal.open … binary output to %screen%</c> does with each one, a frame's rectangles each at most
+    /// <paramref name="max"/> (<c>screen.setting.max</c>, as the sender read it). False when it takes none.</summary>
+    internal virtual bool Show(byte[] message, global::app.type.item.size.@this max) => false;
+
+    /// <summary>The most a frame's picture, or each of its rectangles, takes: <c>screen.setting.max</c>, as
+    /// <paramref name="context"/>'s settings say now.</summary>
+    internal async Task<global::app.type.item.size.@this> Max(global::app.actor.context.@this context)
+        => (await context.Setting.Get<global::app.module.screen.setting.@this>()).Max;
+
+    /// <summary>Where a screen opened in <paramref name="context"/> tells a frame it refused, on its own threads: the
+    /// actor's channels' report, where the app's errors go (no step waits for it). Made before the screen is — the
+    /// window's native part is born first — so it asks no screen.</summary>
+    internal static Action<global::app.error.@this> Report(global::app.actor.context.@this context)
+        => error => _ = context.Actor.Channel.Report(context.Error(error));
 
     /// <summary>An element's events were reached: its clicks are its own from now on.</summary>
     internal virtual void Bind(string selector) { }

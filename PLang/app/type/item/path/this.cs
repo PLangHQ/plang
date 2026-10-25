@@ -168,16 +168,21 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// </summary>
     public global::app.type.item.@bool.@this IsUnder(@this root) => IsUnder(root, RootComparison);
 
-    // The one containment check, by comparison: the root's rule, or case-blind where a folder is held in any case (the
-    // stores' folder, as a case-blind disk opens it).
-    private protected bool IsUnder(@this root, StringComparison comparison)
+    // Containment by comparison: the root's rule, or case-blind where a folder is held in any case (the stores'
+    // folder, as a case-blind disk opens it).
+    private protected bool IsUnder(@this root, StringComparison comparison) => root.Holds(Absolute, comparison);
+
+    /// <summary>The one containment rule: whether this folder holds <paramref name="location"/>, an absolute location
+    /// — the folder itself, or one under it past a separator (<c>/root2</c> is not under <c>/root</c>). Asked of a
+    /// location still a string too (a path being resolved), so the rule is one wherever it is asked.</summary>
+    internal bool Holds(string location, StringComparison comparison)
     {
-        var rootAbs = root.Absolute;
-        if (string.IsNullOrEmpty(rootAbs)) return false;
-        var rootWithSep = rootAbs.EndsWith(PathHelper.DirectorySeparatorChar) || rootAbs.EndsWith(PathHelper.AltDirectorySeparatorChar)
-            ? rootAbs
-            : rootAbs + PathHelper.DirectorySeparatorChar;
-        return Absolute.StartsWith(rootWithSep, comparison) || string.Equals(Absolute, rootAbs, comparison);
+        var folder = Absolute;
+        if (string.IsNullOrEmpty(folder)) return false;
+        var under = folder.EndsWith(PathHelper.DirectorySeparatorChar) || folder.EndsWith(PathHelper.AltDirectorySeparatorChar)
+            ? folder
+            : folder + PathHelper.DirectorySeparatorChar;
+        return location.StartsWith(under, comparison) || string.Equals(location, folder, comparison);
     }
 
     /// <summary>

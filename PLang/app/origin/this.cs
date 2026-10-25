@@ -50,6 +50,6 @@ internal interface @this
     void Register(global::app.module.@this module, string action, System.Type type);
 
     /// <summary>A module below the app's layer taken out by <paramref name="context"/>: the code takes its own out (for
-    /// the sub apps over it too); an actor refuses it.</summary>
-    System.Threading.Tasks.ValueTask<bool> Remove(global::app.module.@this module, global::app.actor.context.@this context);
+    /// the sub apps over it too), true or false as it held it; an actor answers its refusal.</summary>
+    System.Threading.Tasks.ValueTask<global::app.data.@this<global::app.type.item.@bool.@this>> Remove(global::app.module.@this module, global::app.actor.context.@this context);
 }

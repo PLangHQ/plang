@@ -20,7 +20,7 @@ public class Stage4_BuilderCatalogTests
     {
         var app = new global::app.@this("/tmp/s4cat-b", global::PLang.Tests.Parent.Actor).Testing();
         global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
-        app.actor.list.User.Channel.Register(StreamChannel.Memory("logger"));
+        app.actor.list.User.Channel.Register(StreamChannel.Memory(app.actor.list.User.Channel, "logger"));
 
         var inventory = app.actor.list.User.Channel.list.Select(channel => channel.Name).ToList();
         await Assert.That(inventory).Contains("output");

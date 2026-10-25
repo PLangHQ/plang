@@ -26,7 +26,7 @@ After: a test's requests to OpenAI and their answers are kept in a file beside t
 This is a feature of `plang --test` for every plang app's tests, not just ours.
 
 - One sender for the request, chosen once for the app (decision 5): `module/llm/code/IAnswer`. Its shipped default is `Live` (OpenAI's endpoint and key; when llm-provider lands, each provider owns its own send). The other is `Saved`, one test's file. The test registers `Saved` on its own app when `test.setting.llm` is `saved`, as it already opens its own store in memory, and each app has its own code registry (`app/this.cs:336`). There's no `if testing` where the request is sent (`OpenAi.cs:228`). Two llm tests run in parallel are each answered from their own file only.
-- The file is text a reviewer reads in a diff: one list of {request, response}, in first-asked order. It holds the request body and the endpoint path, never a header, so the key never lands in it.
+- The file is text a reviewer reads in a diff: one list of {request, response}, in first-asked order. It holds the request body only (one endpoint answers every request, so the body is the whole question), never a header, so the key never lands in it.
 - A changed prompt is a different body, so it's a new entry; its old answer is never served for it.
 - The key is asked only when a request goes out live.
 - On a pass, the file is rewritten to the entries the run used.

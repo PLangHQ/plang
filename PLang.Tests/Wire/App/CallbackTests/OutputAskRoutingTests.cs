@@ -18,7 +18,7 @@ public class OutputAskRoutingTests
     private sealed class TestMessageChannel : global::app.channel.type.message.@this
     {
         private readonly global::app.actor.context.@this _ctx;
-        public TestMessageChannel(string name, global::app.actor.context.@this ctx)
+        public TestMessageChannel(global::app.channel.list.@this channels, string name, global::app.actor.context.@this ctx) : base(channels)
         {
             Name = name;
             _ctx = ctx;
@@ -51,7 +51,7 @@ public class OutputAskRoutingTests
         var app = NewApp();
         var context = app.actor.list.User.Context;
 
-        var msg = new TestMessageChannel("input", app.actor.list.User.Context);
+        var msg = new TestMessageChannel(app.actor.list.User.Channel, "input", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(msg);
 
         var handler = new ask(context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?", context: context) };
@@ -64,7 +64,7 @@ public class OutputAskRoutingTests
     {
         var app = NewApp();
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("Alice\n"));
-        var ch = new global::app.channel.type.stream.@this("i", ms,
+        var ch = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "i", ms,
             global::app.channel.ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
         // a channel reads in its list's context: registered on the user actor
@@ -87,7 +87,7 @@ public class OutputAskRoutingTests
     [Test] public async Task MessageChannelAsk_ReturnsDataAsk_WithSuspendShape()
     {
         var app = NewApp();
-        var ch = new TestMessageChannel("input", app.actor.list.User.Context);
+        var ch = new TestMessageChannel(app.actor.list.User.Channel, "input", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var action = new ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "Allow X?", context: app.actor.list.User.Context)
         };
@@ -100,7 +100,7 @@ public class OutputAskRoutingTests
     [Test] public async Task MessageChannelAsk_AttachesSnapshotToReturnedData()
     {
         var app = NewApp();
-        var ch = new TestMessageChannel("input", app.actor.list.User.Context);
+        var ch = new TestMessageChannel(app.actor.list.User.Channel, "input", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         var action = new ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "?", context: app.actor.list.User.Context)
         };

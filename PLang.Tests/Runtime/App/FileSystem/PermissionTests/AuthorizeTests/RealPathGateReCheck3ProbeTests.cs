@@ -22,7 +22,7 @@ public class RealPathGateReCheck3ProbeTests : System.IAsyncDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(outside, "secret.txt"), "outside");
         app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
         user = app.actor.list.User.Context;
-        channel = new Asking(user);
+        channel = new Asking(user.Actor!.Channel, user);
         app.actor.list.User.Channel.Register(channel);
     }
 
@@ -37,7 +37,7 @@ public class RealPathGateReCheck3ProbeTests : System.IAsyncDisposable
         private readonly global::app.actor.context.@this _ctx;
         public int Count { get; private set; }
         public string? Question { get; private set; }
-        public Asking(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Asking(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override async Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)

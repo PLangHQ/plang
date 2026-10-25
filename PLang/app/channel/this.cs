@@ -20,10 +20,16 @@ public enum ChannelDirection
 /// to extend — they pick the one matching their transport's nature:
 ///   - <see cref="Session.@this"/>: kept-open connection. Ask blocks until answer arrives.
 ///   - <see cref="Message.@this"/>: one-shot exchange. Ask returns Suspend; resume via callback.
+///
+/// A channel is born of its actor's channels, and is reached by name only once it is registered there.
 /// </summary>
 [global::app.Attributes.PlangType("channel")]
 public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDisposable
 {
+    /// <summary>A channel born of <paramref name="channels"/>, its actor's channels: they are its owner from birth, and
+    /// its actor is theirs. Being reached by name there is a separate act (<see cref="list.@this.Register"/>).</summary>
+    protected @this(global::app.channel.list.@this channels) => Channels = channels;
+
     /// <summary>A structure — written through the reflection kind, its [Out]/[Debug] members.</summary>
     public override bool IsLeaf => false;
 
@@ -88,16 +94,16 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public DateTime Created { get; } = DateTime.UtcNow;
 
     /// <summary>
-    /// The actor this channel belongs to — set by the Channels collection on Register. Its context is the one
-    /// the channel's events fire in.
+    /// The actor this channel belongs to — its channels' actor. A Service's channels belong to no actor; the
+    /// channel's events then fire in its app's system context.
     /// </summary>
-    public global::app.actor.@this Actor { get; internal set; } = null!;
+    public global::app.actor.@this Actor => Channels.Actor!;
 
     /// <summary>
-    /// The Channels collection this channel belongs to — set by
-    /// <see cref="app.channel.list.@this.Register"/>; the channel's events fire in its context.
+    /// The channels this one was born of — its actor's; whether it is reached by name there is whether it was
+    /// registered (<see cref="app.channel.list.@this.Register"/>).
     /// </summary>
-    public global::app.channel.list.@this Channels { get; internal set; } = null!;
+    public global::app.channel.list.@this Channels { get; }
 
     /// <summary>
     /// Whether reading is supported. Default tracks Direction + IsOpen; concretes can override.
@@ -128,9 +134,9 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// </summary>
     public abstract Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default);
 
-    // The context the channel's events fire in — its actor's, else its list's app's system context (a
-    // Service-owned list has no actor); null for a channel that belongs to no list.
-    private protected global::app.actor.context.@this? Context => Actor?.Context ?? Channels?.App.actor.list.System.Context;
+    // The context the channel's events fire in — its actor's, else its channels' app's system context (a
+    // Service-owned list has no actor).
+    private protected global::app.actor.context.@this Context => Channels.Actor?.Context ?? Channels.App.actor.list.System.Context;
 
     /// <summary>Whether the channel takes writes now — a list's <c>Get</c> answers only a channel that does.
     /// A goal channel doesn't while its own goal body runs, so a body writing to its own name can't loop.</summary>
@@ -139,8 +145,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// <summary>Writes <paramref name="text"/> — a write of that text through <see cref="WriteAsync"/>, so it fires
     /// <c>on.write</c> as any write does. The channel frames it (a text channel ends the line).</summary>
     public Task<global::app.data.@this> WriteText(string text, CancellationToken ct = default)
-        => WriteAsync((Context ?? throw new InvalidOperationException(
-            $"channel '{Name}' belongs to no list — it has no context to write text in")).Ok(text), ct);
+        => WriteAsync(Context.Ok(text), ct);
 
     /// <summary>
     /// Public write entry, through the channel's <c>on.write</c>: what is bound before it is handed the data —
@@ -150,7 +155,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// </summary>
     public virtual async Task<global::app.data.@this> WriteAsync(global::app.data.@this data, CancellationToken ct = default)
     {
-        var context = Context ?? data.Context;
+        var context = Context;
         var answer = await on.write.Before(this, context, data);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);
@@ -170,13 +175,12 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     }
 
     /// <summary>
-    /// Public read entry, through the channel's <c>on.read</c> — as <see cref="WriteAsync"/>. A channel that
-    /// belongs to no list has no context to fire in, and reads plainly.
+    /// Public read entry, through the channel's <c>on.read</c> — as <see cref="WriteAsync"/>.
     /// </summary>
     public virtual async Task<global::app.data.@this> ReadAsync(CancellationToken ct = default)
     {
         var context = Context;
-        var answer = context != null ? await on.read.Before(this, context) : null;
+        var answer = await on.read.Before(this, context);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);
         else
@@ -185,10 +189,10 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
                 result = global::app.data.@this.FromError(new global::app.error.ServiceError(
-                    $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex }, context!);
+                    $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex }, context);
             }
         }
-        return context != null ? await on.read.After(this, result, context) : result;
+        return await on.read.After(this, result, context);
     }
 
     /// <summary>
@@ -243,8 +247,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// </summary>
     protected async Task<global::app.data.@this> Read(byte[] raw, CancellationToken ct = default)
     {
-        var context = Context ?? throw new InvalidOperationException(
-            $"channel '{Name}' belongs to no list — it has no context to read in");
+        var context = Context;
         var format = await Format(context);
         // text comes in the channel's encoding (a program's output in UTF-16, wsl.exe's): a value's text is UTF-8
         var encoding = ResolveEncoding();

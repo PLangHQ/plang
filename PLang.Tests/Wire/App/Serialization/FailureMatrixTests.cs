@@ -70,7 +70,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task ChannelWrite_OnInputOnlyChannel_ReturnsServiceErrorChannelReadOnly()
     {
-        var ch = new global::app.channel.type.stream.@this("stdin", new MemoryStream(), global::app.channel.ChannelDirection.Input, ownsStream: false);
+        var ch = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "stdin", new MemoryStream(), global::app.channel.ChannelDirection.Input, ownsStream: false);
         var result = await ch.Write(app.Ok("x"));
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelReadOnly");
@@ -78,7 +78,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task ChannelRead_OnOutputOnlyChannel_ReturnsServiceErrorChannelWriteOnly()
     {
-        var ch = new global::app.channel.type.stream.@this("stdout", new MemoryStream(), global::app.channel.ChannelDirection.Output, ownsStream: false);
+        var ch = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "stdout", new MemoryStream(), global::app.channel.ChannelDirection.Output, ownsStream: false);
         app.actor.list.User.Channel.Register(ch);
         var result = await ch.Read();
         await result.IsFailure();
@@ -88,7 +88,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
     [Test] public async Task ChannelAsk_OnClosedPipe_ReturnsServiceErrorChannelEof()
     {
         // Empty MemoryStream — ReadLineAsync returns null (EOF).
-        var ch = new global::app.channel.type.stream.@this("input", new MemoryStream(),
+        var ch = new global::app.channel.type.stream.@this(app.actor.list.User.Channel, "input", new MemoryStream(),
             global::app.channel.ChannelDirection.Bidirectional);
         var action = new global::app.module.output.ask(app.actor.list.User.Context)
         {

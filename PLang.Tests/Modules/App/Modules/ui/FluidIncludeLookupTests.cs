@@ -8,7 +8,7 @@ public class FluidIncludeLookupTests
     {
         public int Asked;
         private readonly global::app.actor.context.@this _ctx;
-        public Canned(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public Canned(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
@@ -24,7 +24,7 @@ public class FluidIncludeLookupTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(root, "p", "ok.liquid"), "IN_ROOT");
         var app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
         var user = app.actor.list.User;
-        var asking = new Canned(user.Context);
+        var asking = new Canned(user.Channel, user.Context);
         user.Channel.Register(asking);
         var goal = new Goal(app.type.list) { Name = "Host", Path = global::app.type.item.path.@this.Resolve("/host.goal", user.Context) };
         await using var inGoal = user.Context.call.Push(goal, await user.Context.call.Setting());

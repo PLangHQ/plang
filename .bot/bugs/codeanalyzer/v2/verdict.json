@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "F1-F8 fixed: Shown has one door for a frame's rectangles in both forms (bound all, decode, cut), the view reports a refused frame, and the other findings are closed or ruled. Root birth +48 KB is all stage 1's two new types and IAnswer. Tests red under mutation, green at the tip." }

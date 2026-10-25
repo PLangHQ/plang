@@ -74,7 +74,7 @@ public class IfHandlerTests : IDisposable
     private async Task<string> Written(string text, params Action[] actions)
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Framed = true });
@@ -396,7 +396,7 @@ public class IfHandlerTests : IDisposable
     {
         await Event();
         var written = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, written,
             ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });

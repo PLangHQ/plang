@@ -34,7 +34,7 @@ public class PlangRuntimeTests : IDisposable
     public async Task Kernel_Execute_RunsStepActions()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain", Framed = true });
@@ -98,7 +98,7 @@ public class PlangRuntimeTests : IDisposable
     public async Task PlangRuntime_SimpleGoal_ExecutesThroughRunGoal()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(_app.actor.list.User.Channel,
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain", Framed = true });

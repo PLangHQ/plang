@@ -19,13 +19,13 @@ Stage1
 / a changed prompt is a new question: the old answer is never served for it — C# test LlmAnswersFileTests
 / (AChangedPrompt_IsNotServedTheOldAnswer)
 / the key never lands in the file: it holds the request body and the endpoint path, never a header — C# test
-/ LlmAnswersFileTests (TheKey_NeverLandsInTheFile)
+/ LlmAnswersFileTests (TheKey_IsNeverInTheFile)
 / test.setting.llm=live asks OpenAI and writes nothing — C# test LlmAnswersFileTests (Live_WritesNothing)
 / the cache's own test still proves the cache: a first ask misses, a second hits
 - call /module/llm/LlmCache
 
 Stage2
-/ export refuses: exporting a private key waits for critical actions — C# test IdentityExportTests
+/ export refuses: exporting a private key waits for critical actions — C# test IdentityPrivateKeyLeakTests
 / (Export_Refuses_UntilCriticalActions, TheExportQuestion_IsNeverAsked)
 / a failed "always" save answers its error, not Ok — C# test GrantKeepTests (AFailedAlwaysSave_AnswersItsError)
 / a one-time yes on the os folder keeps its standing grant: read and execute stay — C# test GrantKeepTests
@@ -49,7 +49,7 @@ Stage4
 Stage5
 / each command line plang can't read is refused, naming the argument — C# test StartRefusalTests (a second
 / positional, a dotted positional, --test=module/x, --debug=false with a debug setting, a repeat differing in case)
-/ %path% is the landed root, not the folder as typed — C# test ExecutorTests (APathIsSeededFromTheRoot)
+/ %path% is the landed root, not the folder as typed — C# test StartRefusalTests (APath_IsSeededFromTheRoot)
 
 Stage6
 / a path beside the root that starts with its name is not in it (/root2 is not under /root) — C# test
@@ -57,8 +57,8 @@ Stage6
 / OsTrustTests passes on Windows: no / separator in its compare — the Windows run
 / the window applies frames through Shown and decodes QOI through Qoi; a frame larger than screen.setting.max is
 / BadFrame before any decode, whatever its message says — C# test WindowFrameTests (Linux, through the shared code)
-/ a patch before the first frame decodes nothing and breaks nothing — C# test WindowFrameTests
-/ (APatchBeforeTheFirstFrame)
+/ a patch before the first frame decodes nothing and breaks nothing — the Windows run (APatchBeforeTheFirstFrame:
+/ the window's decode thread is Win32's)
 
 Stage7
 / module.remove answers data: true removed, false not there, ModuleShared refused — C# test ModuleRemoveTests

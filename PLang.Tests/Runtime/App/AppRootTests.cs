@@ -11,7 +11,7 @@ public class AppRootTests
     {
         public int AskCount;
         private readonly global::app.actor.context.@this _ctx;
-        public AskCountingChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public AskCountingChannel(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
@@ -35,7 +35,7 @@ public class AppRootTests
         {
             await using var runner = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
             await using var app = new global::app.@this(runner.filesystem.root.Absolute, global::PLang.Tests.Parent.Actor).Testing();
-            var ch = new AskCountingChannel(app.actor.list.User.Context);
+            var ch = new AskCountingChannel(app.actor.list.User.Channel, app.actor.list.User.Context);
             app.actor.list.User.Channel.Register(ch);
 
             await (await app.actor.list.User.Context.File(System.IO.Path.Combine(root, "in.txt")).Touch(app.actor.list.User.Context)).IsSuccess();

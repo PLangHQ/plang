@@ -36,10 +36,10 @@ public class PngTests
         var shown = new byte[W * H * 4];
         new Random(7).NextBytes(shown);
         var view = (View)(await View.Start("png", W, H, null, null, context).Value())!;
-        await Assert.That(view.Show(Frame(shown))).IsTrue();
+        var max = await Max(context);
+        await Assert.That(view.Show(Frame(shown), max)).IsTrue();
 
         // the view applies frames on its own thread: its picture is read until it holds the frame
-        var max = await Max(context);
         Bitmap? read = null;
         for (var i = 0; i < 100 && read?.Pixels.SequenceEqual(shown) != true; i++)
         {

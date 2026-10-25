@@ -14,7 +14,7 @@ public class UnreachedTests : System.IAsyncDisposable
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "unreached-" + System.Guid.NewGuid().ToString("N")[..6]);
         System.IO.Directory.CreateDirectory(root);
         app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
-        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
+        app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(app.actor.list.User.Channel,
             "builder", warnings, global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain", Framed = true });
     }
 

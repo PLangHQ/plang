@@ -33,7 +33,7 @@ public class FileSystemPermissionFlowTests
     {
         private readonly string _answer;
         private readonly global::app.actor.context.@this _ctx;
-        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(global::app.channel.list.@this channels, string answer, global::app.actor.context.@this ctx) : base(channels) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(action.Context.Ok(_answer));
@@ -42,7 +42,7 @@ public class FileSystemPermissionFlowTests
     private sealed class StatelessChannel : global::app.channel.type.message.@this
     {
         private readonly global::app.actor.context.@this _ctx;
-        public StatelessChannel(global::app.actor.context.@this ctx) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public StatelessChannel(global::app.channel.list.@this channels, global::app.actor.context.@this ctx) : base(channels) { _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
     }
@@ -90,7 +90,7 @@ public class FileSystemPermissionFlowTests
     public async Task InRootPath_ReturnsOk_NoAskIssued(string method)
     {
         var app = NewApp(out var root);
-        app.actor.list.User.Channel.Register(new CannedChannel("UNEXPECTED", app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new CannedChannel(app.actor.list.User.Channel, "UNEXPECTED", app.actor.list.User.Context));
         PrepareForRead(root, method);
         var targetPath = method switch
         {
@@ -110,7 +110,7 @@ public class FileSystemPermissionFlowTests
     public async Task OutOfRoot_StreamChannel_BlocksAndCompletes_GrantStored(string method)
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new CannedChannel("a", app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new CannedChannel(app.actor.list.User.Channel, "a", app.actor.list.User.Context));
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
@@ -141,7 +141,7 @@ public class FileSystemPermissionFlowTests
     public async Task OutOfRoot_MessageChannel_ReturnsDataAsk_WithSnapshot(string method)
     {
         var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new StatelessChannel(app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new StatelessChannel(app.actor.list.User.Channel, app.actor.list.User.Context));
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
@@ -166,7 +166,7 @@ public class FileSystemPermissionFlowTests
     public async Task Exists_ThroughNavigation_OutOfRoot_IsRefused()
     {
         await using var app = NewApp(out _);
-        app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new CannedChannel(app.actor.list.User.Channel, "n", app.actor.list.User.Context));
         var context = app.actor.list.User.Context;
         var outside = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-out-" + System.Guid.NewGuid().ToString("N")[..8] + ".txt");
         System.IO.File.WriteAllText(outside, "there");

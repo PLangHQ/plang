@@ -60,7 +60,10 @@ public class NonNullInvariantTests
         await Assert.That(actor).IsNotNull();
         await Assert.That(channels).IsNotNull();
         var ctx = new System.Reflection.NullabilityInfoContext();
-        await Assert.That(ctx.Create(actor!).WriteState).IsEqualTo(System.Reflection.NullabilityState.NotNull);
-        await Assert.That(ctx.Create(channels!).WriteState).IsEqualTo(System.Reflection.NullabilityState.NotNull);
+        await Assert.That(ctx.Create(actor!).ReadState).IsEqualTo(System.Reflection.NullabilityState.NotNull);
+        await Assert.That(ctx.Create(channels!).ReadState).IsEqualTo(System.Reflection.NullabilityState.NotNull);
+        // born with the channel, never set after: neither has a setter
+        await Assert.That(actor!.CanWrite).IsFalse();
+        await Assert.That(channels!.CanWrite).IsFalse();
     }
 }

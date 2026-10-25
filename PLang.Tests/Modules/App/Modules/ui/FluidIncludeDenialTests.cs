@@ -20,7 +20,7 @@ public class FluidIncludeDenialTests
         public int AskCount;
         private readonly string _answer;
         private readonly global::app.actor.context.@this _ctx;
-        public CannedChannel(string answer, global::app.actor.context.@this ctx) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(global::app.channel.list.@this channels, string answer, global::app.actor.context.@this ctx) : base(channels) { _answer = answer; _ctx = ctx; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(_ctx.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(_ctx.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
@@ -41,7 +41,7 @@ public class FluidIncludeDenialTests
     [Test] public async Task FluidInclude_TemplateOutsideRoot_DeniedByAuthGate()
     {
         var app = NewApp(out var root);
-        app.actor.list.User.Channel.Register(new CannedChannel("n", app.actor.list.User.Context));
+        app.actor.list.User.Channel.Register(new CannedChannel(app.actor.list.User.Channel, "n", app.actor.list.User.Context));
         // Anchor the goal under the App root so GetTemplateBaseDir picks
         // the goal's parent; the include path "../../foreign/secret.liquid"
         // walks out and AuthGate denies.
@@ -71,7 +71,7 @@ public class FluidIncludeDenialTests
     [Test] public async Task FluidInclude_InRootTemplate_RendersSilently()
     {
         var app = NewApp(out var root);
-        var ch = new CannedChannel("UNEXPECTED", app.actor.list.User.Context);
+        var ch = new CannedChannel(app.actor.list.User.Channel, "UNEXPECTED", app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(ch);
         // In-root partial: goal at /host.goal, partial at /partials/footer.liquid.
         var partialsDir = System.IO.Path.Combine(root, "partials");

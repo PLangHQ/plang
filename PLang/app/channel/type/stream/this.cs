@@ -20,9 +20,11 @@ public class @this : global::app.channel.type.session.@this
     [System.Text.Json.Serialization.JsonIgnore]
     public global::System.IO.Stream Stream { get; }
 
-    public @this(string name, global::System.IO.Stream stream,
+    /// <summary>A channel born of <paramref name="channels"/> over <paramref name="stream"/>, closed with it when it
+    /// owns it.</summary>
+    public @this(global::app.channel.list.@this channels, string name, global::System.IO.Stream stream,
         ChannelDirection direction = ChannelDirection.Bidirectional,
-        bool ownsStream = true)
+        bool ownsStream = true) : base(channels)
     {
         Name = name;
         Stream = stream;
@@ -30,9 +32,9 @@ public class @this : global::app.channel.type.session.@this
         _ownsStream = ownsStream;
     }
 
-    /// <summary>In-memory bidirectional channel (testing / capture).</summary>
-    public static @this Memory(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
-        => new(name, new MemoryStream(), direction, ownsStream: true);
+    /// <summary>In-memory bidirectional channel (testing / capture), born of <paramref name="channels"/>.</summary>
+    public static @this Memory(global::app.channel.list.@this channels, string name, ChannelDirection direction = ChannelDirection.Bidirectional)
+        => new(channels, name, new MemoryStream(), direction, ownsStream: true);
 
     /// <summary>Each text message ends with <see cref="End"/> — console and pipe ergonomics (NDJSON) — and a read takes
     /// one message. A stream that carries one value (a file, a request body) is not framed.</summary>
