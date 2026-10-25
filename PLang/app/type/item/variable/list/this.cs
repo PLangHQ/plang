@@ -17,6 +17,10 @@ public partial class @this
     /// <c>%greeting%</c>).</summary>
     internal static readonly StringComparer Comparer = StringComparer.OrdinalIgnoreCase;
 
+    // A name the system keeps (`!data`, `!event`, `!app`): never a program's variable, so a listing, a clear, a
+    // clone or a snapshot of the program's leaves it out.
+    private bool IsSystem(string name) => name.StartsWith('!');
+
     // What this memory holds by name, made at its first write: a memory nothing is set in holds none.
     private ConcurrentDictionary<string, data.@this>? _rows;
 
@@ -369,7 +373,7 @@ public partial class @this
         var result = new Dictionary<string, string>();
         foreach (var (name, data) in _variables)
         {
-            if (name.StartsWith("!")) continue; // skip system variables
+            if (IsSystem(name)) continue; // skip system variables
             if (data.Updated > since)
                 result[name] = data.Peek()?.ToString() ?? "(null)";
         }
@@ -385,7 +389,7 @@ public partial class @this
         {
             // the current call's, then this memory's own, then the system's under it
             var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys).Concat(_system.Names)
-                .Where(n => !n.StartsWith('!'))
+                .Where(n => !IsSystem(n))
                 .Distinct(StringComparer.OrdinalIgnoreCase);
             var variables = new global::app.type.item.list.@this<global::app.type.item.variable.@this>(
                 _context.App.type.list[typeof(global::app.type.item.list.@this<global::app.type.item.variable.@this>)]);
@@ -403,8 +407,8 @@ public partial class @this
     /// </summary>
     public IEnumerable<string> GetNames()
         // this memory's own, then the system's under it that no own name shadows
-        => _variables.Keys.Where(k => !k.StartsWith("!"))
-            .Concat(_system.Names.Where(name => !name.StartsWith('!') && !_variables.ContainsKey(name)));
+        => _variables.Keys.Where(k => !IsSystem(k))
+            .Concat(_system.Names.Where(name => !IsSystem(name) && !_variables.ContainsKey(name)));
 
     /// <summary>
     /// Gets all variables ordered by last update.
@@ -416,12 +420,12 @@ public partial class @this
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (_context.call.Current is { } frame)
             foreach (var name in frame.Names)
-                if (!name.StartsWith('!') && seen.Add(name) && frame.TryGet(name, out var framed))
+                if (!IsSystem(name) && seen.Add(name) && frame.TryGet(name, out var framed))
                     yield return new(name, framed);
-        foreach (var kvp in _variables.Where(kvp => !kvp.Key.StartsWith("!")).OrderByDescending(kvp => kvp.Value.Updated))
+        foreach (var kvp in _variables.Where(kvp => !IsSystem(kvp.Key)).OrderByDescending(kvp => kvp.Value.Updated))
             if (seen.Add(kvp.Key)) yield return kvp;
         foreach (var kvp in _system.All)
-            if (!kvp.Key.StartsWith('!') && seen.Add(kvp.Key)) yield return kvp;
+            if (!IsSystem(kvp.Key) && seen.Add(kvp.Key)) yield return kvp;
     }
 
     /// <summary>
@@ -430,7 +434,7 @@ public partial class @this
     public void Clear()
     {
         var toRemove = _variables
-            .Where(kvp => !kvp.Key.StartsWith("!"))
+            .Where(kvp => !IsSystem(kvp.Key))
             .Select(kvp => kvp.Key)
             .ToList();
 
@@ -450,7 +454,7 @@ public partial class @this
         foreach (var kvp in _variables)
         {
             // System context vars (! prefix) — skip, they're per-execution
-            if (kvp.Key.StartsWith("!")) continue;
+            if (IsSystem(kvp.Key)) continue;
 
             clone.Rows[kvp.Key] = kvp.Value.Clone();
         }
@@ -483,12 +487,12 @@ public partial class @this
         var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         foreach (var kvp in _variables)
         {
-            if (!includeSystem && kvp.Key.StartsWith("!"))
+            if (!includeSystem && IsSystem(kvp.Key))
                 continue;
             dict[kvp.Key] = kvp.Value.Peek();
         }
         foreach (var (name, system) in _system.All)
-            if (includeSystem || !name.StartsWith('!')) dict.TryAdd(name, system.Peek());
+            if (includeSystem || !IsSystem(name)) dict.TryAdd(name, system.Peek());
         return dict;
     }
 
@@ -505,7 +509,7 @@ public partial class @this
         var vars = new global::app.type.item.dict.@this(_context.App.type.list[typeof(global::app.type.item.dict.@this)]);
         foreach (var kvp in _variables)
         {
-            if (kvp.Key.StartsWith("!")) continue;
+            if (IsSystem(kvp.Key)) continue;
             vars.Set(kvp.Key, kvp.Value);
         }
         return vars;

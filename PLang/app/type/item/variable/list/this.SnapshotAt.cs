@@ -34,7 +34,7 @@ public partial class @this
             // Same skip rule as Clone(): the !-prefixed rows hold live references back into the App graph —
             // deep-cloning them walks the whole runtime and overflows the stack. Snapshotting is a projection of
             // USER variable state, not of infrastructure handles.
-            if (kvp.Key.StartsWith("!")) continue;
+            if (IsSystem(kvp.Key)) continue;
             // Carry the live Data instance by clone so mutations on `copy` don't bleed back.
             copy.Rows[kvp.Key] = kvp.Value.Clone();
         }
