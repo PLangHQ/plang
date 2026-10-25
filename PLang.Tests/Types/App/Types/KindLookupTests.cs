@@ -20,6 +20,44 @@ public class KindLookupTests
         await Assert.That(kinds.Kinds).Contains(late);
     }
 
+    // What tells "no lock" from "a lock" apart: another thread holds the type's gate (the lock an addition takes),
+    // and a lookup still answers, from the table the last addition published. A locked lookup would wait for it.
+    [Test]
+    public async Task ALookup_AnswersWhileTheGateIsHeld()
+    {
+        var kinds = Kinds("probe");
+        var first = new global::app.type.kind.@this("first");
+        kinds.Add(first);
+        _ = kinds["first"]; // the table published, as an addition's next look makes it
+
+        var gate = typeof(global::app.type.kind.empty.@this)
+            .GetField("_gate", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(kinds)!;
+        using var held = new System.Threading.ManualResetEventSlim();
+        using var release = new System.Threading.ManualResetEventSlim();
+        var holder = new System.Threading.Thread(() =>
+        {
+            lock (gate)
+            {
+                held.Set();
+                release.Wait();
+            }
+        });
+        holder.Start();
+        held.Wait();
+        try
+        {
+            var looked = Task.Run(() => kinds["first"]);
+            var answered = await Task.WhenAny(looked, Task.Delay(System.TimeSpan.FromSeconds(2))) == looked;
+            await Assert.That(answered).IsTrue().Because("a lookup never waits for the gate an addition holds");
+            await Assert.That(await looked).IsSameReferenceAs(first);
+        }
+        finally
+        {
+            release.Set();
+            holder.Join();
+        }
+    }
+
     [Test]
     public async Task ReadersLookingUpWhileKindsComeIn_AlwaysFindWhatWasThere()
     {
