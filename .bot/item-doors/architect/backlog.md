@@ -12,6 +12,11 @@ In this order, one branch at a time, after packages and the three-yeses branch:
 
 `Documentation/Runtime2/todos.md` is being triaged by plang-docs (Ingi's "1 yes"): done and stale entries go, citing their evidence; open ones stay, short, grouped under the themes above, and are walked through with Ingi one theme at a time.
 
+## Image formats and metadata (Ingi, 2026-10-25, after packages 7)
+
+- **Metadata built into plang** (Ingi: "I think Metadata is something we would like built into plang"). The library is MetadataExtractor (Drew Noakes; pure C#; Apache-2.0; since 2015, its Java original since 2002; 12M downloads; active). It reads EXIF, IPTC, XMP, GPS and ICC, read only, from JPEG, PNG, WebP, GIF, BMP, TIFF, PSD, HEIC/AVIF and camera RAW, and also from MP4/MOV, AVI, WAV and MP3. So a file plang can't decode still answers its metadata. The shape for the plan: `%photo.metadata.…%` read lazily on navigation, a fact of what the file is. Open: whether its owner is the image or the content reference (`file`/`url`), since video and audio carry metadata too. Writing or stripping it: Skia's re-encode drops it all. When: Ingi's to say (the architect's suggestion: a small branch after the bugs branch). Security reads it before it's built (untrusted bytes; GPS is personal data, shown only when navigated to).
+- **Readers for formats Skia can't read, each a kind of image with its own reader, added when a step needs one** (Ingi: "rest can be on some future list"): TIFF (LibTiff.Net, pure C#, BSD), PDF pages (Docnet.Core over PDFium, MIT/BSD), animated GIF writing (AnimatedGif, MIT), camera RAW (Sdcb.LibRaw over LibRaw: LGPL-2.1 or CDDL), HEIC (LibHeifSharp over libheif: LGPL-3.0 and HEVC patents, so last). For anything to any file, Magick.NET under packages 6's four rules.
+
 ## To discuss with Ingi
 
 0. **A new C# project** (Ingi, 2026-10-23: "is this a new c# project, start from scratch, copy over what we need, same intent just structred differently", then "I actually want to discuss new project, but that can be later add it to the list"). Not discussed yet. Starting points: the ABP idea (Ingi: "app based pattern, app.snapshot.start() { .. }", every node entered by its Start, its body a block that navigates from the root), handlers as blocks with their carriers resolved before Start (§3), and what fast-apps learns about a birth.
