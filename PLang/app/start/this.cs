@@ -30,8 +30,10 @@ public sealed class @this
         property = properties;
     }
 
-    /// <summary>The start <paramref name="args"/> write: the first argument that is no property is the goal; every
-    /// other is a property, a <c>--</c> one a flag.</summary>
+    /// <summary>The start <paramref name="args"/> write: the one argument that is no property is the goal; every
+    /// other is a property, a <c>--</c> one a flag. A line it can't read — a second goal, a setting's path written as
+    /// the goal, one property written twice in different case — is an AppException carrying ArgumentRefused, naming
+    /// the argument and the form that says what was meant.</summary>
     public static @this Parse(string[] args)
     {
         string? goal = null;
@@ -39,8 +41,12 @@ public sealed class @this
         for (var i = 0; i < args.Length; i++)
         {
             var arg = args[i];
-            if (goal == null && !IsProperty(arg))
+            if (!IsProperty(arg))
             {
+                if (goal != null)
+                    throw Refused($"'{arg}' is a second goal: the line names one goal, '{goal}'. A value is {arg}=…, a setting --{arg}=….");
+                if (IsSettingPath(arg))
+                    throw Refused($"'{arg}' is no goal: a setting is written --{arg}=…, a value {arg}=….");
                 goal = arg;
                 continue;
             }
@@ -117,13 +123,16 @@ public sealed class @this
     }
 
     private static bool IsProperty(string arg)
-    {
-        if (string.IsNullOrWhiteSpace(arg)) return false;
-        if (arg.StartsWith("--")) return true;
-        if (arg.Contains('=')) return true;
-        if (arg.Contains('.') && !arg.EndsWith(".goal")) return true;
-        return false;
-    }
+        => !string.IsNullOrWhiteSpace(arg) && (arg.StartsWith("--") || arg.Contains('='));
+
+    // A dotted word that is no path (no separator, not ./ or ../, not a .goal): a setting's path missing its --.
+    private static bool IsSettingPath(string arg)
+        => arg.Contains('.') && !arg.StartsWith('.') && !arg.Contains('/') && !arg.Contains('\\')
+           && !arg.EndsWith(".goal", StringComparison.OrdinalIgnoreCase);
+
+    // What the line can't be read as: the run's answer, before any app reads it.
+    internal static global::app.error.AppException Refused(string why)
+        => new(new global::app.error.@this(why, "ArgumentRefused", 400));
 
     // A value as written: JSON first (numbers, booleans, null, objects, arrays), else the text, its shell quotes off.
     private static object Value(string raw)

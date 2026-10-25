@@ -49,10 +49,12 @@ public class ActorChoiceTests
     [Test]
     public async Task GoalCall_SystemActor_RunsOnSystemContext()
     {
-        // the goal copies its parameter into %seen% — a write that reaches the actor it ran for
+        // the goal copies its parameter into %seen%, then answers the actor it runs as
         _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal(Ctx, "TestGoal",
             Make.Step("set %seen% = %onSystem%",
-                Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "seen", "variable"), Make.Param(Ctx, "Value", "%onSystem%", "variable"))))));
+                Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "seen", "variable"), Make.Param(Ctx, "Value", "%onSystem%", "variable"))),
+            Make.Step("return %!app.actor.current%",
+                Make.Action(Ctx, "goal", "return", Make.Param(Ctx, "Data", "%!app.actor.current%", "variable"))))));
         var action = new global::app.module.goal.Call(Ctx)
         {
             Name = new Data("", Ctx.Text("TestGoal"), context: Ctx).As<global::app.goal.@this>(),
@@ -61,9 +63,11 @@ public class ActorChoiceTests
                 new List<Data> { new Data("onSystem", "yes", context: Ctx) }, Ctx.App.type.list["list"]),
         };
 
-        await (await action.Start()).IsSuccess();
+        var ran = await action.Start();
+        await ran.IsSuccess();
 
-        await Assert.That((await _app.actor.list.System.Context.Variable.Get("seen")).HasValue).IsTrue();
+        // it ran as the actor named, and nothing it set reached the caller's memory
+        await Assert.That((await ran.Value()) as global::app.actor.@this).IsSameReferenceAs(_app.actor.list.System);
         await Assert.That((await _app.actor.list.User.Context.Variable.Get("seen")).HasValue).IsFalse();
     }
 

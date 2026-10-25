@@ -35,8 +35,6 @@ namespace PLang
 			if (args.Length > 0 && args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
 				args = ["--build", .. args[1..]];
 
-			var start = global::app.start.@this.Parse(args);
-
 			// The CLI is the one interactive terminal owner: opt out of the
 			// ctor's non-interactive auto-wire and bind real stdin explicitly so
 			// `output.ask` prompts read the user's keystrokes. Ad-hoc/test apps
@@ -44,6 +42,11 @@ namespace PLang
 			var app = new global::app.@this(startupDirectory, autoWireConsoleChannels: false);
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.System);
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
+
+			// a line it can't read is the run's answer, the argument named
+			global::app.start.@this start;
+			try { start = global::app.start.@this.Parse(args); }
+			catch (global::app.error.AppException ex) { return (null, app.actor.list.System.Context.Error(ex.Error)); }
 
 			// A flag is a setting's path: --channel.setting.format=plang is this run's value for
 			// %!app.channel.setting.format%, on the system actor (the user falls back to it); the mode words alone
@@ -60,10 +63,22 @@ namespace PLang
 			// its own: they are written at its setting's path
 			var words = start.property.Items().Where(property => property.IsFlag && modes.ContainsKey(property.Name)).ToList();
 			foreach (var word in words)
+			{
 				if (word.Value is IDictionary<string, object?>)
 					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
 						$"'--{word.Name}' takes no settings: write them at its setting's path, --{store.Address(modes[word.Name])}={{…}} or --{store.Address(modes[word.Name], "<option>")}=value.",
 						"UnknownSetting", 400)));
+				// a mode word is on or off; any other value it would drop — the line says what it meant another way
+				if (word.Value is not bool)
+					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
+						$"'--{word.Name}={word.Value}' gives --{word.Name} a value it takes none of: it is on (--{word.Name}) or off (--{word.Name}=false). "
+						+ (string.Equals(word.Name, "debug", StringComparison.OrdinalIgnoreCase)
+							? $"To debug one goal, --{store.Address(modes[word.Name], "goal")}={word.Value}."
+							: string.Equals(word.Name, "test", StringComparison.OrdinalIgnoreCase)
+								? $"To test {word.Value}, --test path={word.Value} (or --test {word.Value})."
+								: $"Its settings are --{store.Address(modes[word.Name], "<option>")}=value."),
+						"ArgumentRefused", 400)));
+			}
 			// the flags that are settings' paths (the mode words left out), each checked by its setting, then all
 			// written — the command line's values, the last word; a typo is the run's answer, and nothing is written
 			var set = await start.Set(store, app.actor.list.System.Context, modes.Keys);
@@ -73,6 +88,12 @@ namespace PLang
 			// A mode is on when its word is given (and not false), or when the run writes its setting.
 			bool On(string mode) => words.Any(word => string.Equals(word.Name, mode, StringComparison.OrdinalIgnoreCase) && word.Value is not false)
 				|| values.KeyNames.Any(address => store.Of(address) == modes[mode]);
+			// a mode turned off while the line writes its setting says two things: the run's answer, naming both
+			foreach (var word in words.Where(word => word.Value is false))
+				if (values.KeyNames.FirstOrDefault(address => store.Of(address) == modes[word.Name]) is { } address)
+					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
+						$"'--{word.Name}=false' turns {word.Name} off, and '--{address}' turns it on: write one of them.",
+						"ArgumentRefused", 400)));
 
 			// The modes' defaults, under the command line's values: a debug run shows each step's time, so this run's
 			// call stacks time their frames, unless the line set timing itself (--call.setting.timing=false still says not).
@@ -98,8 +119,9 @@ namespace PLang
 			if (On("test"))
 			{
 				// a folder or test named on the command line is the starting folder's, resolved once here
+				// none named, the root the app landed on — the build and the test runner compare paths with it
 				if (!start.property.Has("path"))
-					await userVars.Set("path", start.Goal == null ? startupDirectory
+					await userVars.Set("path", start.Goal == null ? app.filesystem.root
 						: global::app.type.item.path.@this.Resolve("/" + start.Goal.TrimStart('/', '\\'), app.actor.list.User.Context));
 				await app.test.list.Open();
 			}
@@ -109,7 +131,7 @@ namespace PLang
 			{
 				app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
 				if (!start.property.Has("path"))
-					await userVars.Set("path", startupDirectory);
+					await userVars.Set("path", app.filesystem.root);
 
 				// A build that skips the cache flows DOWN to llm.query as llm's cache setting, so llm.query reads its
 				// own `action.Cache` (which resolves %!llm.query.setting.cache% → %!llm.setting.cache% →
