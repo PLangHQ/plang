@@ -4,7 +4,7 @@ What came up on item-doors and goes on after it, so nothing waits on us (Ingi, 2
 
 ## What runtime2 needs before it replaces v0.1 (Ingi, 2026-10-25: "yes that is what I mean. I agree on the order")
 
-In this order, one branch at a time, after packages and the three-yeses branch:
+In this order, one branch at a time, after packages and `bugs` (cut 2026-10-25 from runtime2 3a29633f8; it takes N1, N3–N5, N8, N10, N11, N14–N17 below, the goal channel's race, the LLM tests' answers in a file, the Windows window, and the three yeses as its stage 7; plan `.bot/bugs/architect/plan/start.md`):
 1. Stores per actor and an app per request (items 4 and 10; 317a). A webserver can't run without it.
 2. Snapshot and resume (`test/plan/snapshot/start.md`): an ask over a stateless channel.
 3. The LLM provider and writer (parked branches): the builder's quality.
@@ -16,6 +16,7 @@ In this order, one branch at a time, after packages and the three-yeses branch:
 
 Checks to make before the release, not branches:
 - **Brotli** (Ingi: "let's not remove it yet, but keep eye on it before we release plang 2.0b"). The archive module's `brotli` kind (`archive/type/archive/kind/brotli/this.cs`) uses .NET's `BrotliStream`, Google's C library bundled in the runtime (10.0.13 today). A crafted `.br` can make Google's decoder read past its buffer (fixed upstream Feb 2026, released Oct 2026; bugsink.com/blog/bye-bye-brotli). Unpacking is capped by `archive.setting.Max` (`compression/this.cs:47`), and plang's HTTP client doesn't decompress responses. Before 2.0b: check whether the .NET runtime it ships on carries the fixed brotli. If not, drop the kind (gzip and zip cover packing).
+- **The release goals** (Ingi, 2026-10-25, bugs 2: "2.yes"). `Publish/Publish.goal:20` publishes the deleted PlangWindowForms for win-x64, and `Publish/Nuget.goal` packs and pushes the deleted PlangTests as `PlangLibrary.Tests`. Drop those steps, then run the release pipeline end to end once before publishing.
 
 ## Very far backlog: image formats and metadata (Ingi, 2026-10-25, after packages 7)
 
