@@ -67,6 +67,16 @@ public class NamedProviderRegistryTests
         await Assert.That(registry.All().ToList()).IsEquivalentTo(new global::app.module.code.ICode[] { math! });
     }
 
+    // Whether an interface has a provider is answered from what the code ships, making nothing.
+    [Test]
+    public async Task AskingWhetherOneIsThere_MakesNone()
+    {
+        var registry = new EngineProviders(_app.actor.list.System.Context);
+
+        await Assert.That(registry.Has<global::app.module.math.code.IMath>()).IsTrue();
+        await Assert.That(registry.All().Any()).IsFalse();
+    }
+
     [Test]
     public async Task Register_FirstProvider_BecomesDefault()
     {

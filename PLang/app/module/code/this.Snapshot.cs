@@ -29,12 +29,18 @@ public sealed partial class @this : ISnapshot
         var registrations = new List<Registration>();
         var overrides = new List<DefaultOverride>();
         var types = s.Context.App.type.list;
-        // what was made so far: a shipped provider nothing asked for is neither registered nor chosen
-        var rows = System.Threading.Volatile.Read(ref _rows);
-
-        foreach (var (type, dict) in rows?.Providers ?? [])
+        // what was made so far: a shipped provider nothing asked for is neither registered nor chosen, and a registry
+        // never used holds neither
+        if (System.Threading.Volatile.Read(ref _rows) is not { } rows)
         {
-            rows!.Defaults.TryGetValue(type, out var currentDefaultName);
+            s.Write("registrations", registrations);
+            s.Write("defaultOverrides", overrides);
+            return;
+        }
+
+        foreach (var (type, dict) in rows.Providers)
+        {
+            rows.Defaults.TryGetValue(type, out var currentDefaultName);
 
             foreach (var (name, provider) in dict)
             {

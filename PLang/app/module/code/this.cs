@@ -26,8 +26,8 @@ public sealed partial class @this : IAsyncDisposable
     /// first use, so an app that asks for none makes none.</summary>
     public @this(actor.context.@this context) => Context = context;
 
-    // The registry's rows, made at its first use, knowing what the code ships for each interface.
-    private sealed class rows
+    // The registry's table, made at its first use, knowing what the code ships for each interface.
+    private sealed class table
     {
         internal readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, ICode>> Providers = new();
         // The default's name per interface. A default is selection, and selection is the registry's: one
@@ -59,12 +59,12 @@ public sealed partial class @this : IAsyncDisposable
         }
     }
 
-    private rows? _rows;
+    private table? _rows;
     private readonly object _gate = new();
 
     // The rows as they are now: made, knowing what the code ships, on the first use — the one door every other reads
     // through.
-    private rows Rows
+    private table Rows
     {
         get
         {
@@ -72,7 +72,7 @@ public sealed partial class @this : IAsyncDisposable
             lock (_gate)
             {
                 if (_rows is { } again) return again;
-                rows = new rows();
+                rows = new table();
                 Ship(rows);
                 System.Threading.Volatile.Write(ref _rows, rows);
                 return rows;
@@ -182,7 +182,9 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Checks if any provider is registered for the given type.
     /// </summary>
-    public bool Has<T>() where T : class, ICode => Rows.Of(typeof(T)) is { IsEmpty: false };
+    /// <remarks>Answered from what the code ships and what was made, making nothing.</remarks>
+    public bool Has<T>() where T : class, ICode
+        => Rows.Shipped.ContainsKey(typeof(T)) || Rows.Providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
 
     // --- Non-generic methods (single source of truth) ---
 
@@ -198,7 +200,7 @@ public sealed partial class @this : IAsyncDisposable
 
     // Registers provider for providerType in rows; the first for a type becomes its default. False when a provider
     // of its name is already there.
-    private bool Put(rows rows, System.Type providerType, ICode provider)
+    private bool Put(table rows, System.Type providerType, ICode provider)
     {
         var typeDict = rows.Of(providerType)
             ?? rows.Providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
@@ -258,7 +260,7 @@ public sealed partial class @this : IAsyncDisposable
     // interface is asked for. Each module owns its default provider — this is the single registration point. Every
     // built-in is stamped so the snapshot capture skips them: a fresh App's registry holds the same set, so they don't
     // ride along in the payload.
-    private void Ship(rows rows)
+    private void Ship(table rows)
     {
         var ed25519 = new Lazy<ICode>(() => new Ed25519());
         Ship<ISigning>(rows, ed25519);
@@ -284,5 +286,5 @@ public sealed partial class @this : IAsyncDisposable
         Ship<global::app.store.code.IStore>(rows, new(() => new global::app.store.code.Sqlite()));
     }
 
-    private void Ship<T>(rows rows, Lazy<ICode> provider) where T : class, ICode => rows.Shipped[typeof(T)] = provider;
+    private void Ship<T>(table rows, Lazy<ICode> provider) where T : class, ICode => rows.Shipped[typeof(T)] = provider;
 }
