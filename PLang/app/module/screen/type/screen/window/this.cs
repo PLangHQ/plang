@@ -64,7 +64,7 @@ public sealed class @this : screen.@this
             using var stream = new MemoryStream();
             if (!(await lines.Encode(stream, value, context)).Success) continue;
             var line = System.Text.Encoding.UTF8.GetString(stream.ToArray());
-            await (await (await file.Exists(context)).ToBooleanAsync() ? file.Append(line, context) : file.WriteText(line, context));
+            await file.Append(line, context);
         }
     }
 

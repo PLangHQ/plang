@@ -65,7 +65,7 @@ public sealed class @this : browser.@this
                 browser._emit = Deliver;
                 _ = Task.Run(async () =>
                 {
-                    await foreach (var line in frames.Reader.ReadAllAsync()) await Deliver((global::app.type.item.text.@this)line);
+                    await foreach (var line in frames.Reader.ReadAllAsync()) await Deliver(new global::app.type.item.text.@this(line, context.App.type.list[typeof(global::app.type.item.text.@this)]));
                 });
             }
             browser.Watched();
