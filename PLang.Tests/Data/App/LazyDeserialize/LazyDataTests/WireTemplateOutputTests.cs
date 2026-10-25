@@ -26,7 +26,7 @@ public class WireTemplateOutputTests
     [Test]
     public async Task TemplateWire_IntoJson_WritesItsVariablesValues()
     {
-        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        await using var app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing().Compact();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("x", "m-1");
 

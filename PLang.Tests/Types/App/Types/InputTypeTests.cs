@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Types;
 /// </summary>
 public class InputTypeTests : IAsyncDisposable
 {
-    private readonly global::app.@this _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing();
+    private readonly global::app.@this _app = new global::app.@this("/app", global::PLang.Tests.Parent.Actor).Testing().Compact();
     public async ValueTask DisposeAsync() => await _app.DisposeAsync();
     private global::app.actor.context.@this Context => _app.actor.list.User.Context;
     private global::app.type.list.@this Types => _app.type.list;

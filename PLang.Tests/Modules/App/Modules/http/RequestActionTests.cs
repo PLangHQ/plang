@@ -32,7 +32,7 @@ public class RequestActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_http_req_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new PLangEngine(_tempDir, global::PLang.Tests.Parent.Actor);
+        _app = new PLangEngine(_tempDir, global::PLang.Tests.Parent.Actor).Compact();
 
         _handler = new MockHttpMessageHandler();
         var provider = new Default(_handler) { Name = "test" };

@@ -1818,6 +1818,15 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   Write(app.type.item.this value) : System.Threading.Tasks.ValueTask
   ctor(System.Text.Json.Utf8JsonWriter writer, app.View view, app.actor.context.this context)
 
+enum app.type.item.kind.json.layout [Choice, PlangType]
+  static const compact : app.type.item.kind.json.layout
+  static const formatted : app.type.item.kind.json.layout
+
+class app.type.item.kind.json.setting.this : app.type.item.setting.this
+  Format : app.type.item.choice.this<app.type.item.kind.json.layout> { get; set; } [Default, Out, Store]
+  ctor(app.type.this type)
+  static Internal : System.Boolean { get; }
+
 class app.type.item.kind.json.source : app.type.item.source
   ctor(System.Object raw, app.type.this type, app.type.item.kind.json.this json, app.type.item.path.this origin = …, System.Collections.Generic.IReadOnlyList<app.type.item.variable.this> variable = …, System.Boolean built = …)
   override AsBooleanAsync(app.actor.context.this context) : System.Threading.Tasks.Task<System.Boolean>
@@ -3541,6 +3550,8 @@ type app.type.item.duration.setting
 
 type app.type.item.input.modifier.list
   .list : list<modifier>
+
+type app.type.item.kind.json.setting
 
 type app.type.item.note
   .line : list<app.type.item.note.line>

@@ -24,7 +24,7 @@ public class QueryToolTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_llm_tools_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing();
+        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).Testing().Compact();
         _handler = LlmTestHelper.SetupMockHttp(_app);
     }
 
@@ -666,7 +666,7 @@ public class QueryToolTests
 
         await result.IsSuccess();
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
-        await Assert.That(secondReq).Contains("userId\\u0027 is not an argument of GetWeather");
+        await Assert.That(secondReq).Contains("userId' is not an argument of GetWeather");
     }
 
     #endregion
