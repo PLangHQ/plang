@@ -84,6 +84,36 @@ public class WindowFrameTests : System.IAsyncDisposable
         await Assert.That(refused!.Error.Key).IsEqualTo("BadFrame");
     }
 
+    // a size past what an int holds (2³¹), in either form, is the frame's BadFrame — never an overflow, which a checked
+    // build would throw out of the decode loop
+    [Test]
+    public async Task ASizePastAnInt_IsBadFrame_InEitherForm()
+    {
+        var max = await Max();
+        var binary = Frame(4, 4, [1, 2, 3, 4, 5]);
+        BinaryPrimitives.WriteUInt32LittleEndian(binary.AsSpan(11), 2147483648u);
+        var refused = await Assert.That(() => new Shown(W, H).Apply(binary, max)).Throws<global::app.error.AppException>();
+        await Assert.That(refused!.Error.Key).IsEqualTo("BadFrame");
+        var text = await Assert.That(() => new Shown(W, H).Apply("{\"rect\":[0,0,2147483648,4],\"qoi\":\"AAAA\"}", max))
+            .Throws<global::app.error.AppException>();
+        await Assert.That(text!.Error.Key).IsEqualTo("BadFrame");
+    }
+
+    // a move whose fields are at the ends of an int (x at 2³¹−1, dx at −2³¹) moves nothing, and throws nothing
+    [Test]
+    public async Task AMoveAtTheEndsOfAnInt_MovesNothing()
+    {
+        var max = await Max();
+        using var m = new MemoryStream();
+        m.WriteByte(7);
+        var i32 = new byte[4];
+        void Int(int v) { BinaryPrimitives.WriteInt32LittleEndian(i32, v); m.Write(i32); }
+        Int(int.MaxValue); Int(int.MaxValue); Int(int.MaxValue); Int(int.MaxValue); Int(int.MinValue); Int(int.MinValue);
+        m.Write(BitConverter.GetBytes((ushort)0));
+
+        await Assert.That(new Shown(W, H).Apply(m.ToArray(), max)).IsNull();
+    }
+
     // a rectangle no bigger than the max but claiming more pixels than its bytes can hold as QOI (5 bytes for 5000×5000)
     // is refused before a buffer of its claimed size is made
     [Test]

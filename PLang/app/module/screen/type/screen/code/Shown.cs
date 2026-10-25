@@ -53,11 +53,15 @@ internal sealed class Shown
         {
             if (at + 20 > m.Length) return null;
             int x = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(at)), y = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(at + 4));
-            int w = (int)BinaryPrimitives.ReadUInt32LittleEndian(m.AsSpan(at + 8)), h = (int)BinaryPrimitives.ReadUInt32LittleEndian(m.AsSpan(at + 12));
-            var n = (int)BinaryPrimitives.ReadUInt32LittleEndian(m.AsSpan(at + 16));
-            if (at + 20 + n > m.Length) return null;
-            parts[i] = new Part(x, y, w, h, m.AsMemory(at + 20, n));
-            at += 20 + n;
+            // the sizes as sent, wide: one past what an int holds is no rectangle, refused before it is narrowed
+            uint w = BinaryPrimitives.ReadUInt32LittleEndian(m.AsSpan(at + 8)), h = BinaryPrimitives.ReadUInt32LittleEndian(m.AsSpan(at + 12));
+            uint n = BinaryPrimitives.ReadUInt32LittleEndian(m.AsSpan(at + 16));
+            if (w > int.MaxValue || h > int.MaxValue)
+                throw new global::app.error.AppException(new global::app.error.@this(
+                    $"Not an image: a rectangle claims {w}×{h}, past what a picture can be", "BadFrame", 400));
+            if (at + 20L + n > m.Length) return null;
+            parts[i] = new Part(x, y, (int)w, (int)h, m.AsMemory(at + 20, (int)n));
+            at += 20 + (int)n;
         }
         return Put(parts, max, m[0] == 7 ? m : null);
     }
@@ -156,32 +160,37 @@ internal sealed class Shown
     }
 
     // the move: what is on the screen both where it is and where it lands, row by row in the order that doesn't
-    // overwrite what is still to be moved (within a row the copy is overlap-safe)
+    // overwrite what is still to be moved (within a row the copy is overlap-safe). Its fields are cut to the screen in
+    // long, so no field a page sends overflows; what is left lies on the screen, so it is an int again.
     private Rect? Move(byte[] m)
     {
-        int x = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(1)), y = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(5));
-        int w = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(9)), h = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(13));
-        int dx = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(17)), dy = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(21));
+        long x = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(1)), y = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(5));
+        long w = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(9)), h = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(13));
+        long dx = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(17)), dy = BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(21));
+        long width = Bitmap.Width, height = Bitmap.Height;
         var left = Math.Max(x, Math.Max(0, -dx));
         var top = Math.Max(y, Math.Max(0, -dy));
-        var right = Math.Min(x + w, Math.Min(Bitmap.Width, Bitmap.Width - dx));
-        var bottom = Math.Min(y + h, Math.Min(Bitmap.Height, Bitmap.Height - dy));
+        var right = Math.Min(x + w, Math.Min(width, width - dx));
+        var bottom = Math.Min(y + h, Math.Min(height, height - dy));
         if (right <= left || bottom <= top) return null;
-        var bytes = (right - left) * 4;
-        for (var i = 0; i < bottom - top; i++)
+        // on the screen both where it is and where it lands: every one of these is within it
+        int l = (int)left, t = (int)top, r = (int)right, b = (int)bottom, mx = (int)dx, my = (int)dy;
+        var bytes = (r - l) * 4;
+        for (var i = 0; i < b - t; i++)
         {
-            var row = dy > 0 ? bottom - 1 - i : top + i;
-            Bitmap.Pixels.AsSpan((row * Bitmap.Width + left) * 4, bytes).CopyTo(Bitmap.Pixels.AsSpan(((row + dy) * Bitmap.Width + left + dx) * 4, bytes));
+            var row = my > 0 ? b - 1 - i : t + i;
+            Bitmap.Pixels.AsSpan((row * Bitmap.Width + l) * 4, bytes).CopyTo(Bitmap.Pixels.AsSpan(((row + my) * Bitmap.Width + l + mx) * 4, bytes));
         }
-        return new Rect(left + dx, top + dy, right - left, bottom - top);
+        return new Rect(l + mx, t + my, r - l, b - t);
     }
 
-    // a rectangle's pixels in, cut to the screen
+    // a rectangle's pixels in, cut to the screen (a place off the screen is nothing; the rest is an int)
     private Rect? Copy(int x, int y, int w, int h, byte[] rect)
     {
+        if (x < 0 || y < 0 || x >= Bitmap.Width || y >= Bitmap.Height) return null;
         var rows = Math.Min(h, Bitmap.Height - y);
         var cols = Math.Min(w, Bitmap.Width - x);
-        if (rows <= 0 || cols <= 0 || x < 0 || y < 0) return null;
+        if (rows <= 0 || cols <= 0) return null;
         for (var row = 0; row < rows; row++)
             rect.AsSpan(row * w * 4, cols * 4).CopyTo(Bitmap.Pixels.AsSpan(((y + row) * Bitmap.Width + x) * 4));
         return new Rect(x, y, cols, rows);
