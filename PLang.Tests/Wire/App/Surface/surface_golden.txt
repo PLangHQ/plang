@@ -943,7 +943,7 @@ class app.module.this : app.type.item.this, app.type.item.ICreate<app.module.thi
   Name : System.String { get; } [Debug, LlmBuilder, Out]
   Notes : app.type.item.file.this { get; } [LlmBuilder]
   Register(System.String module, System.String actionName, System.Type type) : System.Void
-  Remove(app.actor.context.this context) : System.Threading.Tasks.ValueTask<System.Boolean>
+  Remove(app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this<app.type.item.bool.this>>
   list : app.type.item.list.this<app.module.this> { get; } [LlmBuilder]
   override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
   override Get(app.data.this parent, System.String key, System.Boolean isIndex) : System.Threading.Tasks.ValueTask<app.data.this>

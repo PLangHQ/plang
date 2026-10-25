@@ -1,7 +1,8 @@
 namespace app.module.module;
 
 /// <summary>
-/// Unregisters all actions for a module by name. A module not there is Get's own NotFound.
+/// Unregisters all actions for a module by name. A module not there is Get's own NotFound; one the app shares with
+/// the app it was made from is refused (ModuleShared).
 /// </summary>
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
@@ -12,8 +13,5 @@ public partial class Remove : IContext
 
     public Task<data.@this> Start() => Name.Use(async name =>
         await (await Context.App.module.Get(name.ToString(), Context)).Use<global::app.module.@this>(async module =>
-        {
-            await module.Remove(Context);
-            return Context.Ok();
-        }));
+            (data.@this)await module.Remove(Context)));
 }

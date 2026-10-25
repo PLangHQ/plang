@@ -213,9 +213,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         => throw new global::app.error.AppException(new global::app.error.@this($"the module '{module.Name}' is shared with the "
             + $"app that made this one: a sub app adds its own modules, not actions to '{module.Name}'", "ModuleShared", 400));
 
-    System.Threading.Tasks.ValueTask<bool> global::app.origin.@this.Remove(global::app.module.@this module, global::app.actor.context.@this context)
-        => throw new global::app.error.AppException(new global::app.error.@this($"the module '{module.Name}' is shared with the "
-            + $"app that made this one: a sub app takes out only its own modules", "ModuleShared", 400));
+    System.Threading.Tasks.ValueTask<global::app.data.@this<global::app.type.item.@bool.@this>> global::app.origin.@this.Remove(global::app.module.@this module, global::app.actor.context.@this context)
+        => new(context.Error<global::app.type.item.@bool.@this>(new global::app.error.@this($"the module '{module.Name}' is shared with the "
+            + $"app that made this one: a sub app takes out only its own modules", "ModuleShared", 400)));
 
     /// <summary>
     /// Cancels this actor. If System, cascades to User and Service.
