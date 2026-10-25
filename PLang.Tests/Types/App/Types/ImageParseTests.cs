@@ -50,6 +50,15 @@ public class ImageParseTests : System.IAsyncDisposable
         await Assert.That(img!.Mime).IsEqualTo("image/jpeg");
     }
 
+    [Test]
+    [Arguments(new byte[] { 0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00 })]   // II*\0, little-endian
+    [Arguments(new byte[] { 0x4D, 0x4D, 0x00, 0x2A, 0x00, 0x00, 0x00, 0x08 })]   // MM\0*, big-endian
+    public async Task FromBytes_TiffMagicBytes_PicksImageTiff(byte[] tiff)
+    {
+        var img = image.FromBytes(tiff, app.actor.list.User.Context);
+        await Assert.That(img!.Mime).IsEqualTo("image/tiff");
+    }
+
     [Test] public async Task FromBytes_NonImageBytes_ReturnsNull_NoThrow()
     {
         await Assert.That(image.FromBytes(new byte[] { 0x00, 0x01, 0x02, 0x03 }, app.actor.list.User.Context)).IsNull();
