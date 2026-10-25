@@ -31,28 +31,28 @@ public class OpenAiImageDenialTests
         return new global::app.@this(root, global::PLang.Tests.Parent.Actor).Testing();
     }
 
-    [Test] public async Task ImageAttachment_PathOutsideRoot_DeniedAnswer_NotIncludedInRequest()
+    [Test] public async Task ImageAttachment_PathOutsideRoot_DeniedAnswer_IsTheAnswer_NoBytes()
     {
-        var app = NewApp(out _);
+        await using var app = NewApp(out _);
         app.actor.list.User.Channel.Register(new CannedChannel(app.actor.list.User.Channel, "n", app.actor.list.User.Context));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "img.png");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 137, 80, 78, 71 });
+        // the file in plang's OS-rooted form, so the read reaches the gate on both OSes: //x on Unix (a single / is the
+        // app's root), C:\x on Windows
+        var form = System.OperatingSystem.IsWindows() ? outOfRoot : "/" + outOfRoot;
 
-        // Drive the handler the way the LLM Query flow does — through
-        // ResolveImage. Denial → AuthGate fails inside the file's Read
-        // → ResolveImage falls through (no bytes shipped). PNG magic bytes
-        // (89 50 4E 47) base64-encode to a string starting with "iVBOR" —
-        // it MUST NOT appear in the wire content.
-        var content = await global::app.module.llm.code.OpenAi.ResolveImage(outOfRoot, app, app.actor.list.User.Context);
-        var serialized = System.Text.Json.JsonSerializer.Serialize(content);
-        await Assert.That(serialized).DoesNotContain("iVBOR");
+        // Drive the handler the way the LLM Query flow does — through ResolveImage. The read asks the gate, the
+        // answer is "n": the denial is ResolveImage's answer, carried whole, and nothing of the file ships.
+        var thrown = await Assert.ThrowsAsync<global::app.error.AppException>(async () =>
+            await global::app.module.llm.code.OpenAi.ResolveImage(form, app, app.actor.list.User.Context));
+        await Assert.That(thrown!.Error.Key).IsEqualTo("PermissionDenied");
     }
 
     [Test] public async Task ImageAttachment_PathInRoot_BytesShipBase64Encoded()
     {
-        var app = NewApp(out var root);
+        await using var app = NewApp(out var root);
         var file = System.IO.Path.Combine(root, "in.png");
         System.IO.File.WriteAllBytes(file, new byte[] { 137, 80, 78, 71 });
         // In-root: AuthGate fast-passes inside ReadAsDataUri; bytes ship
