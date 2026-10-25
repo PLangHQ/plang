@@ -34,36 +34,38 @@ public sealed partial class @this : ISnapshot
         var table = System.Threading.Volatile.Read(ref _table);
 
         if (table != null)
-        foreach (var (type, dict) in table.Providers)
         {
-            table.Defaults.TryGetValue(type, out var currentDefaultName);
-
-            foreach (var (name, provider) in dict)
+            foreach (var (type, dict) in table.Providers)
             {
-                if (!provider.IsBuiltIn)
-                    registrations.Add(new Registration(types[typeof(Registration)])
+                table.Defaults.TryGetValue(type, out var currentDefaultName);
+
+                foreach (var (name, provider) in dict)
+                {
+                    if (!provider.IsBuiltIn)
+                        registrations.Add(new Registration(types[typeof(Registration)])
+                        {
+                            TypeName = type.AssemblyQualifiedName ?? type.FullName!,
+                            ProviderName = name,
+                            Source = provider.Source,
+                        });
+                }
+
+                // Compare current default to the built-in default this type was *born* with
+                // (tracked as the built-ins are registered, so SetDefault can't erase the evidence).
+                // If they differ, the user changed the selection — emit an override so Restore
+                // re-applies it over the built-ins a fresh App's registry holds.
+                // No built-in for the type → emit unconditionally so the chosen default survives.
+                table.BuiltIn.TryGetValue(type, out var bornDefault);
+                if (currentDefaultName != null
+                    && (bornDefault == null
+                        || !string.Equals(currentDefaultName, bornDefault, StringComparison.OrdinalIgnoreCase)))
+                {
+                    overrides.Add(new DefaultOverride(types[typeof(DefaultOverride)])
                     {
                         TypeName = type.AssemblyQualifiedName ?? type.FullName!,
-                        ProviderName = name,
-                        Source = provider.Source,
+                        ProviderName = currentDefaultName,
                     });
-            }
-
-            // Compare current default to the built-in default this type was *born* with
-            // (tracked as the built-ins are registered, so SetDefault can't erase the evidence).
-            // If they differ, the user changed the selection — emit an override so Restore
-            // re-applies it over the built-ins a fresh App's registry holds.
-            // No built-in for the type → emit unconditionally so the chosen default survives.
-            table.BuiltIn.TryGetValue(type, out var bornDefault);
-            if (currentDefaultName != null
-                && (bornDefault == null
-                    || !string.Equals(currentDefaultName, bornDefault, StringComparison.OrdinalIgnoreCase)))
-            {
-                overrides.Add(new DefaultOverride(types[typeof(DefaultOverride)])
-                {
-                    TypeName = type.AssemblyQualifiedName ?? type.FullName!,
-                    ProviderName = currentDefaultName,
-                });
+                }
             }
         }
 
