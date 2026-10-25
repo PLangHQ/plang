@@ -94,8 +94,8 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public DateTime Created { get; } = DateTime.UtcNow;
 
     /// <summary>
-    /// The actor this channel belongs to — its channels' actor (null for a Service's channels, which belong to no
-    /// actor). Its context is the one the channel's events fire in.
+    /// The actor this channel belongs to — its channels' actor. A Service's channels belong to no actor; the
+    /// channel's events then fire in its app's system context.
     /// </summary>
     public global::app.actor.@this Actor => Channels.Actor!;
 
@@ -145,8 +145,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// <summary>Writes <paramref name="text"/> — a write of that text through <see cref="WriteAsync"/>, so it fires
     /// <c>on.write</c> as any write does. The channel frames it (a text channel ends the line).</summary>
     public Task<global::app.data.@this> WriteText(string text, CancellationToken ct = default)
-        => WriteAsync((Context ?? throw new InvalidOperationException(
-            $"channel '{Name}' belongs to no list — it has no context to write text in")).Ok(text), ct);
+        => WriteAsync(Context.Ok(text), ct);
 
     /// <summary>
     /// Public write entry, through the channel's <c>on.write</c>: what is bound before it is handed the data —
@@ -156,7 +155,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// </summary>
     public virtual async Task<global::app.data.@this> WriteAsync(global::app.data.@this data, CancellationToken ct = default)
     {
-        var context = Context ?? data.Context;
+        var context = Context;
         var answer = await on.write.Before(this, context, data);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);
@@ -176,13 +175,12 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     }
 
     /// <summary>
-    /// Public read entry, through the channel's <c>on.read</c> — as <see cref="WriteAsync"/>. A channel that
-    /// belongs to no list has no context to fire in, and reads plainly.
+    /// Public read entry, through the channel's <c>on.read</c> — as <see cref="WriteAsync"/>.
     /// </summary>
     public virtual async Task<global::app.data.@this> ReadAsync(CancellationToken ct = default)
     {
         var context = Context;
-        var answer = context != null ? await on.read.Before(this, context) : null;
+        var answer = await on.read.Before(this, context);
         global::app.data.@this result;
         if (answer is { Success: false } or { Handled: true }) result = Refused(answer);
         else
@@ -191,10 +189,10 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
                 result = global::app.data.@this.FromError(new global::app.error.ServiceError(
-                    $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex }, context!);
+                    $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex }, context);
             }
         }
-        return context != null ? await on.read.After(this, result, context) : result;
+        return await on.read.After(this, result, context);
     }
 
     /// <summary>
@@ -249,8 +247,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// </summary>
     protected async Task<global::app.data.@this> Read(byte[] raw, CancellationToken ct = default)
     {
-        var context = Context ?? throw new InvalidOperationException(
-            $"channel '{Name}' belongs to no list — it has no context to read in");
+        var context = Context;
         var format = await Format(context);
         // text comes in the channel's encoding (a program's output in UTF-16, wsl.exe's): a value's text is UTF-8
         var encoding = ResolveEncoding();
