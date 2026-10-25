@@ -6,21 +6,25 @@ namespace app.actor.permission;
 
 /// <summary>
 /// Per-actor permission view — <c>actor.Permission.Find/Add/Revoke</c>.
-/// Two homes unified behind one Find:
-///   - <b>Session ("y")</b> — unsigned, lives in an in-memory list, dies
-///     when the App exits.
+/// Three homes, behind one Find:
+///   - <b>Standing</b> — what the actor's role stands on the app's folders (the os folder, the stores'), in memory for
+///     the run, never asked or persisted; only a Stand replaces one, no revoke reaches it, and only these open the
+///     stores' folder (<see cref="Stands"/>).
+///   - <b>Once ("y")</b> — unsigned, in memory, dies when the App exits; beside the standing grants, never in their
+///     place.
 ///   - <b>Persisted ("a")</b> — the actor's own permission setting
 ///     (<c>%!app.actor.permission.setting%</c>), one row per actor holding all its saved grants, signed
 ///     whole when it is saved and verified whole when it is read; a tampered row reads as no grants.
 /// The setting is the actor's own: a user never holds the system's grants.
-/// <c>Permission.Path</c> is the natural key — granting the same path twice overwrites.
+/// <c>Permission.Path</c> is the natural key in each home — granting the same path twice there overwrites.
 /// </summary>
 public sealed class @this : global::app.type.item.setting.ISetting<setting.@this>
 {
     private readonly global::app.actor.@this _actor;
     // what the actor's role stands on the app's folders (Stand), each with the folder it was stood on, and what it said
     // "y" to (Add): kept apart, so a one-time yes never replaces a standing grant on the same place, and a revoke never
-    // reaches one
+    // reaches one. The place is the folder the role stood on, not a copy of a grant's path: a grant's path is the
+    // pattern it allows, and one place carries several (the folder exactly, and all under it).
     private readonly List<(path Place, global::app.data.@this Grant)> _standing = new();
     private readonly List<global::app.data.@this> _once = new();
     private readonly object _lock = new();
