@@ -51,14 +51,17 @@ namespace PLang
 			// A flag is a setting's path: --channel.setting.format=plang is this run's value for
 			// %!app.channel.setting.format%, on the system actor (the user falls back to it); the mode words alone
 			// (--build, --test, --debug) switch their mode on. A flag no setting takes is the run's answer.
-			// each mode word's settings class
-			var modes = new Dictionary<string, System.Type>(StringComparer.OrdinalIgnoreCase)
-			{
-				["debug"] = typeof(global::app.module.debug.setting.@this),
-				["test"] = typeof(global::app.test.setting.@this),
-				["build"] = typeof(global::app.module.build.setting.@this),
-			};
 			var store = app.actor.list.System.Setting;
+			// each mode word: its settings class, and the form that says what a value given to the word meant
+			var modes = new Dictionary<string, (System.Type Setting, Func<object?, string> Meant)>(StringComparer.OrdinalIgnoreCase)
+			{
+				["debug"] = (typeof(global::app.module.debug.setting.@this),
+					value => $"To debug one goal, --{store.Address(typeof(global::app.module.debug.setting.@this), "goal")}={value}."),
+				["test"] = (typeof(global::app.test.setting.@this),
+					value => $"To test {value}, --test path={value} (or --test {value})."),
+				["build"] = (typeof(global::app.module.build.setting.@this),
+					_ => $"Its settings are --{store.Address(typeof(global::app.module.build.setting.@this), "<option>")}=value."),
+			};
 			// the mode words the line gives — the Executor's own, never a setting's path; a mode word takes no settings of
 			// its own: they are written at its setting's path
 			var words = start.property.Items().Where(property => property.IsFlag && modes.ContainsKey(property.Name)).ToList();
@@ -66,17 +69,13 @@ namespace PLang
 			{
 				if (word.Value is IDictionary<string, object?>)
 					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
-						$"'--{word.Name}' takes no settings: write them at its setting's path, --{store.Address(modes[word.Name])}={{…}} or --{store.Address(modes[word.Name], "<option>")}=value.",
+						$"'--{word.Name}' takes no settings: write them at its setting's path, --{store.Address(modes[word.Name].Setting)}={{…}} or --{store.Address(modes[word.Name].Setting, "<option>")}=value.",
 						"UnknownSetting", 400)));
 				// a mode word is on or off; any other value it would drop — the line says what it meant another way
 				if (word.Value is not bool)
 					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
 						$"'--{word.Name}={word.Value}' gives --{word.Name} a value it takes none of: it is on (--{word.Name}) or off (--{word.Name}=false). "
-						+ (string.Equals(word.Name, "debug", StringComparison.OrdinalIgnoreCase)
-							? $"To debug one goal, --{store.Address(modes[word.Name], "goal")}={word.Value}."
-							: string.Equals(word.Name, "test", StringComparison.OrdinalIgnoreCase)
-								? $"To test {word.Value}, --test path={word.Value} (or --test {word.Value})."
-								: $"Its settings are --{store.Address(modes[word.Name], "<option>")}=value."),
+						+ modes[word.Name].Meant(word.Value),
 						"ArgumentRefused", 400)));
 			}
 			// the flags that are settings' paths (the mode words left out), each checked by its setting, then all
@@ -87,10 +86,10 @@ namespace PLang
 
 			// A mode is on when its word is given (and not false), or when the run writes its setting.
 			bool On(string mode) => words.Any(word => string.Equals(word.Name, mode, StringComparison.OrdinalIgnoreCase) && word.Value is not false)
-				|| values.KeyNames.Any(address => store.Of(address) == modes[mode]);
+				|| values.KeyNames.Any(address => store.Of(address) == modes[mode].Setting);
 			// a mode turned off while the line writes its setting says two things: the run's answer, naming both
 			foreach (var word in words.Where(word => word.Value is false))
-				if (values.KeyNames.FirstOrDefault(address => store.Of(address) == modes[word.Name]) is { } address)
+				if (values.KeyNames.FirstOrDefault(address => store.Of(address) == modes[word.Name].Setting) is { } address)
 					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
 						$"'--{word.Name}=false' turns {word.Name} off, and '--{address}' turns it on: write one of them.",
 						"ArgumentRefused", 400)));
