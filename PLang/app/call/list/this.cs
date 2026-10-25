@@ -98,7 +98,7 @@ public sealed partial class @this : global::app.type.item.@this
     /// </summary>
     [global::app.LlmBuilder]
     public global::app.error.list.@this Audit
-        => LazyInitializer.EnsureInitialized(ref _audit, () => new(Errors));
+        => _audit ?? LazyInitializer.EnsureInitialized(ref _audit, () => new(Errors));
     private global::app.error.list.@this? _audit;
 
     /// <summary>

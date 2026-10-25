@@ -41,8 +41,15 @@ internal sealed class system
     /// <summary>The system variable <paramref name="name"/> names, made on its first ask; null for any other name.</summary>
     internal data.@this? this[string name] => Row(name) is var row and >= 0 ? this[row] : null;
 
-    // the variable of the table's row, made on its first ask
-    private data.@this this[int row] => (_made ??= new data.@this?[Table.Length])[row] ??= Table[row].Make(this);
+    // the variable of the table's row, made on its first ask; the first made is the one kept
+    private data.@this this[int row]
+    {
+        get
+        {
+            var made = _made ?? System.Threading.LazyInitializer.EnsureInitialized(ref _made, static () => new data.@this?[Table.Length]);
+            return made[row] ?? System.Threading.LazyInitializer.EnsureInitialized(ref made[row], () => Table[row].Make(this))!;
+        }
+    }
 
     /// <summary>Whether <paramref name="name"/> is a system variable's — asked without making it.</summary>
     internal bool Contains(string name) => Row(name) >= 0;

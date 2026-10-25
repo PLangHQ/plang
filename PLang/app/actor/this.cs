@@ -74,7 +74,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// actor's permission setting, saved in the settings' store.
     /// </summary>
     public permission.@this Permission
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _permission, () => new(this));
+        => _permission ?? System.Threading.LazyInitializer.EnsureInitialized(ref _permission, () => new(this));
 
     // the permission view, made when first asked; the first made is the one kept (it holds the grants)
     private permission.@this? _permission;
@@ -95,7 +95,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The tasks this actor runs — the goal calls made in parallel on it, each listed while it runs.</summary>
     [global::app.LlmBuilder]
     public global::app.task.list.@this Task
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _tasks, () => new(this));
+        => _tasks ?? System.Threading.LazyInitializer.EnsureInitialized(ref _tasks, () => new(this));
 
     /// <summary>
     /// Back-reference to the app.
@@ -122,7 +122,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// to the system's (<c>app.actor.list.System.Setting</c>). Made when first asked; the first made is the one kept
     /// (it holds the settings' store).</summary>
     public global::app.actor.setting.@this Setting
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _setting, () => new(this, _fallback?.Setting));
+        => _setting ?? System.Threading.LazyInitializer.EnsureInitialized(ref _setting, () => new(this, _fallback?.Setting));
 
     /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
     /// <param name="role">What the actor is in its app: the system or a user.</param>

@@ -115,7 +115,7 @@ public sealed class @this : IDisposable
     // Scoped door: chains to the parent context's door, or (at a root context) to its actor's — so an
     // in-memory read walks this → parents → the actor's → the system's → [Default].
     public global::app.actor.setting.@this Setting
-        => System.Threading.LazyInitializer.EnsureInitialized(ref _setting, () => new(this, Parent?.Setting ?? Actor.Setting));
+        => _setting ?? System.Threading.LazyInitializer.EnsureInitialized(ref _setting, () => new(this, Parent?.Setting ?? Actor.Setting));
 
     /// <summary>
     /// What this context's file paths read and write once their gate has passed: the one it was born with,
