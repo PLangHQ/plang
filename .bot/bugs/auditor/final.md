@@ -100,3 +100,25 @@ Codeanalyzer (PASS, two reviews): agrees on the design, the bench attribution an
 Tester (PASS, 13 mutations): agrees on the sampled mutations; the plan's test names, ActorRun's weak asserts and the
 streamed test were not looked at. Security (PASS, two Lows fixed): the screen bound is sound for ordinary sizes; the
 Release-only overflow (B1) escaped it. Debug and Release differ here, so security's probes (run in Debug) could not see it.
+
+## Update — B1, B2, C1, C2 closed at 4f5efd748 (PASS)
+
+Re-checked the lines, not the commit messages.
+
+- **B1** (53ea314d0): `Shown.cs:56-64` reads w, h, n as `uint`; a size past `int.MaxValue` is BadFrame before narrowing; `at + 20L + n`
+  is compared in long and `n` fits an int after it. `Move` (`:166-190`) reads its fields into long and cuts to the screen
+  in long; `-dx` of `int.MinValue` gives left ≥ right, so nothing moves, and every `(int)` after the cut lies on the screen.
+  `Copy` refuses an off-screen place before subtracting. WindowFrameTests: `ASizePastAnInt_IsBadFrame_InEitherForm` and
+  `AMoveAtTheEndsOfAnInt_MovesNothing` (the coder ran them red under `-c Release` against the old Shown).
+- **B2** (516266bb9): `path/file/this.Operations.cs:496-500` returns the first failed `Keep`; GrantKeepTests
+  `AnAlwaysAnswer_WhoseSaveFailed_IsNotAYes_ForACopy`.
+- **C1** (5164afd04): `channel/this.cs` uses `Context` as non-null; the "belongs to no list" throws, `context != null`,
+  `context!` and the stale comments are gone. `Channels.Actor?.` stays for a Service's list.
+- **C2** (20e090b7a): export notes and examples say it refuses; only `PickListTests.TheStageOneRequest` moved in
+  `pick_golden.json` (the example step texts), re-pinned by the Explicit accept, which asks no decider.
+- Names and X8 (4f5efd748): start.goal/start.md say what the tests are called; `AppConsoleTests` is new.
+
+At 4f5efd748: sweep Modules 1,387, Types 973, Data 879, Generator 191, Runtime 1,389 green; Wire 610 with 6 red (the
+parent's). `plang --test` without llm: 305 total, 294 pass, 1 fail (the parent's), 3 stale, 7 skipped; tree clean.
+I did not run a Release test myself; the Release failure/pass of the two B1 tests rests on the coder's run. The next-branch
+list X1–X10 stands (X8 and the plan names are done). **Verdict: PASS. Next: docs.**
