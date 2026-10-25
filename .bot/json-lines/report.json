@@ -75,6 +75,34 @@
         "health": "fail",
         "notes": "coder next (F1, F2)"
       }
+    },
+    {
+      "id": "7b3ac734-11c3-4046-ae85-824b18d22c2b",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T23:05:38Z",
+      "timestamp_end": "2026-10-25T23:05:38Z",
+      "intent": "Re-review json-lines review 1 fixes",
+      "before": {
+        "assumptions": "coder tip db75159fd",
+        "risk": "cursor line shape; writer disposal"
+      },
+      "plan": ".bot/json-lines/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/json-lines/codeanalyzer/review2.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS"
+        }
+      ],
+      "after": {
+        "status": "review2 written",
+        "health": "pass",
+        "notes": "tester next"
+      }
     }
   ]
 }
