@@ -1,0 +1,15 @@
+/ Each write to a goal channel is answered by its own call of the goal, 20 writes at once.
+Start
+- set channel "shown" call Shown
+- set %items% = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"]
+- foreach %items%, call Ask item=%item%, in parallel, write to %task%
+- wait for %task%
+
+Ask
+- write %item% to "shown" channel, write to %answer%
+- assert %answer% equals %item%, "the write was answered by its own message"
+
+Shown
+- set %seen% = %message%
+- sleep for 100ms
+- return %seen%

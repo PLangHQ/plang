@@ -1,0 +1,14 @@
+/ Writes in parallel to a goal channel: each call of the goal sees its own message, whatever else is written meanwhile.
+Start
+- set channel "shown" call Shown
+- set %items% = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"]
+- foreach %items%, call Each item=%item%, in parallel, write to %task%
+- wait for %task%
+
+Each
+- write %item% to "shown" channel
+
+Shown
+- set %seen% = %message%
+- sleep for 100ms
+- assert %seen% equals %message%, "the goal channel's call kept its own message"
