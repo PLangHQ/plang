@@ -117,6 +117,31 @@ public class BirthTests
     }
 
     [Test]
+    public async Task AValuesAttachment_AndItsPropertiesBag_AreMadeWhenAsked()
+    {
+        var context = global::PLang.Tests.Parent.Actor.Context;
+        var text = context.App.type.list["text"];
+
+        var born = Bytes(() => new global::app.data.@this("x", new global::app.type.item.text.@this("v", text), context: context));
+
+        await Assert.That(born).IsLessThan(250L).Because("a value's attachment and its properties bag are made when asked");
+    }
+
+    [Test]
+    public async Task AFaceOfAValue_SharesItsProperties_AndACopyTakesItsOwn()
+    {
+        var context = global::PLang.Tests.Parent.Actor.Context;
+        var value = new global::app.data.@this("x", new global::app.type.item.text.@this("v", context.App.type.list["text"]), context: context);
+
+        value.Properties["tag"] = "one";
+        var copy = value.Copy("y");
+        copy.Properties["tag"] = "two";
+
+        await Assert.That(await value.Properties.Value("tag")).IsEqualTo("one");
+        await Assert.That(await copy.Properties.Value("tag")).IsEqualTo("two");
+    }
+
+    [Test]
     public async Task AnActorsPermissionView_IsOneView()
     {
         var actor = new global::app.actor.@this(new global::app.actor.role.user(), global::PLang.Tests.Parent.Actor.App);
