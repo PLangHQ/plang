@@ -125,14 +125,14 @@ public sealed partial class @this
             // parent's line and is not a step of the source
             var sb = new StringBuilder();
             sb.Append(Comment).Append('\n').Append(Name);
-            void Written(global::app.goal.step.@this step)
+            void Append(global::app.goal.step.@this step)
             {
                 sb.Append('\n').Append(step.Comment).Append('\n').Append(step.Text);
                 foreach (var action in step.Code.Items())
                     foreach (var body in action.Child.Items())
-                        if (body.Line.Number != step.Line.Number) Written(body);
+                        if (body.Line.Number != step.Line.Number) Append(body);
             }
-            foreach (var step in Step.Items()) Written(step);
+            foreach (var step in Step.Items()) Append(step);
 
             _hash = Convert.ToHexString(
                 SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()))).ToLowerInvariant();
@@ -261,14 +261,14 @@ public sealed partial class @this
         // The prior steps are every step as the .pr holds it, a condition's folded body included (the
         // source lists an indented body as steps of its own, as the hash walks them).
         var prior = new List<global::app.goal.step.@this>();
-        void Held(global::app.goal.step.@this step)
+        void Collect(global::app.goal.step.@this step)
         {
             prior.Add(step);
             foreach (var action in step.Code.Items())
                 foreach (var body in action.Child.Items())
-                    if (body.Line.Number != step.Line.Number) Held(body);
+                    if (body.Line.Number != step.Line.Number) Collect(body);
         }
-        foreach (var step in existing.Step.Items()) Held(step);
+        foreach (var step in existing.Step.Items()) Collect(step);
         if (prior.Count > 0)
         {
             var consumed = new HashSet<int>();

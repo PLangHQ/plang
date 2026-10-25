@@ -115,25 +115,26 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// </summary>
     public Identity? Identity { get; set; }
 
-    private readonly @this? _fallback;
+    // the system actor, whose settings answer what this one's don't; none for the system itself
+    private readonly @this? _system;
     private global::app.actor.setting.@this? _setting;
 
     /// <summary>This actor's settings — the root its contexts' layers chain to; the user's falls back
     /// to the system's (<c>app.actor.list.System.Setting</c>). Made when first asked; the first made is the one kept
     /// (it holds the settings' store).</summary>
     public global::app.actor.setting.@this Setting
-        => _setting ?? System.Threading.LazyInitializer.EnsureInitialized(ref _setting, () => new(this, _fallback?.Setting));
+        => _setting ?? System.Threading.LazyInitializer.EnsureInitialized(ref _setting, () => new(this, _system?.Setting));
 
-    /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
+    /// <param name="system">The system actor, whose settings answer what this one's don't — given for the user.</param>
     /// <param name="role">What the actor is in its app: the system or a user.</param>
     /// <param name="console">Whether this actor's channels begin as the console's standard ones, wired when first used.</param>
-    internal @this(role.@this role, app.@this app, CancellationToken parentToken = default, @this? fallback = null, bool console = false)
+    internal @this(role.@this role, app.@this app, CancellationToken parentToken = default, @this? system = null, bool console = false)
         : base(app.type.list[typeof(@this)])
     {
         Role = role;
         on = new(this);
         App = app;
-        _fallback = fallback;
+        _system = system;
         _cts = parentToken == default
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);

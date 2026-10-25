@@ -266,7 +266,7 @@ public sealed class @this : IDisposable
         {
             if (_actor!.Address(row.Name) is not { } address) continue;
             var value = await row.Value();
-            // A row that could NOT be read — an older-shape row 790 drops — is kept WITH its error, never
+            // A row that could NOT be read — an older-shape row no reader takes — is kept WITH its error, never
             // silently skipped: its read named the key and how to fix it (delete it and set it again). It is
             // said on the debug channel now, and held so a read of that setting answers the error (loud), not
             // a silent default. A row that read to nothing (a null value) is simply absent.

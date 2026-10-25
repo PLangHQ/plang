@@ -43,10 +43,10 @@ public sealed class Default : IIdentity
 
         var (items, err) = await LoadAll(action);
         if (err != null) return action.Context.Error<Identity>(err);
-        var __an = (await action.Name.Value())?.Clr<string>();
-        if (items.Exists(i => string.Equals(i.Name, __an, StringComparison.OrdinalIgnoreCase)))
+        var name = (await action.Name.Value())?.Clr<string>();
+        if (items.Exists(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase)))
             return action.Context.Error<Identity>(new ActionError($"Identity '{await action.Name.Value()}' already exists", "DuplicateName", 409));
-        if (await Consent(action, $"create the identity '{__an}'", __an!, global::app.type.item.permission.Verb.write) is { } refused)
+        if (await Consent(action, $"create the identity '{name}'", name!, global::app.type.item.permission.Verb.write) is { } refused)
             return data.@this<Identity>.From(refused);
 
         var genResult = await GenerateIdentity(action, (await action.Name.Value())!.Clr<string>()!, (await action.Default.Value())!.Value, (action.Provider == null ? null : (await action.Provider.Value())?.Clr<string>()));
@@ -113,8 +113,8 @@ public sealed class Default : IIdentity
         var (items, err) = await LoadAll(action);
         if (err != null) return action.Context.Error<Identity>(err);
 
-        var __nm = (await action.Name.Value())?.Clr<string>();
-        var target = items.Find(i => string.Equals(i.Name, __nm, StringComparison.OrdinalIgnoreCase));
+        var name = (await action.Name.Value())?.Clr<string>();
+        var target = items.Find(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase));
         if (target == null)
             return action.Context.Error<Identity>(new ActionError($"Identity '{await action.Name.Value()}' not found", "NotFound", 404));
 
@@ -151,10 +151,10 @@ public sealed class Default : IIdentity
 
         var (items, err) = await LoadAll(action);
         if (err != null) return action.Context.Error<Identity>(err);
-        var __nn = (await action.NewName.Value())?.Clr<string>();
-        if (items.Exists(i => string.Equals(i.Name, __nn, StringComparison.OrdinalIgnoreCase)))
+        var name = (await action.NewName.Value())?.Clr<string>();
+        if (items.Exists(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase)))
             return action.Context.Error<Identity>(new ActionError($"Identity '{await action.NewName.Value()}' already exists", "DuplicateName", 409));
-        if (await Consent(action, $"rename the identity '{identity.Name}' to '{__nn}'", identity.Name, global::app.type.item.permission.Verb.write) is { } refused)
+        if (await Consent(action, $"rename the identity '{identity.Name}' to '{name}'", identity.Name, global::app.type.item.permission.Verb.write) is { } refused)
             return data.@this<Identity>.From(refused);
 
         // One row holds every identity, so the rename is one write: the old name out, the new one in.

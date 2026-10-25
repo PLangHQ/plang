@@ -132,7 +132,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private void Register(@this module, string action, System.Type type, @this asker)
     {
         // the fact itself, not a flag: a change to the asker's own rows it holds, one to a row below it is its origin's
-        // to answer (decision 40)
+        // to answer
         if (!ReferenceEquals(this, asker)) asker.App.origin.Register(module, action, type);
         else module.Add(action, type);
     }
@@ -175,7 +175,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // One of this registry's modules taken out, asked by `asker`'s registry.
     private System.Threading.Tasks.ValueTask<bool> Remove(@this module, @this asker, actor.context.@this context)
         // the fact itself, not a flag: a change to the asker's own rows it holds, one to a row below it is its origin's
-        // to answer (decision 40)
+        // to answer
         => ReferenceEquals(this, asker) ? Drop(module, context) : asker.App.origin.Remove(module, context);
 
     /// <summary>Takes <paramref name="module"/>, one this registry holds, out of it, for every app over it too —

@@ -159,15 +159,15 @@ public sealed partial class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Checks if any provider is registered for the given type.
-    /// </summary>
-    /// <summary>
     /// Iterates all provider instances across all types.
     /// Used for disposal and inspection.
     /// </summary>
     public IEnumerable<ICode> All() => _providers.Values
         .SelectMany(dict => dict.Values);
 
+    /// <summary>
+    /// Checks if any provider is registered for the given type.
+    /// </summary>
     public bool Has<T>() where T : class, ICode
     {
         return _providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;

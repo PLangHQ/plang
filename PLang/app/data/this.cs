@@ -112,6 +112,11 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<@this> Follow(actor.context.@this ctx)
         => IsVariable && await _item.Get(ctx) is { } named ? named : this;
 
+    /// <summary>This Data settled for <paramref name="view"/> — the view decides: plang's own store keeps it as written; a
+    /// view that crosses (Out) or dumps (Debug) uses it, a reference a copy of the Data it names, a name that reads
+    /// nothing the error. What a signature hashes and holds, as one.</summary>
+    public System.Threading.Tasks.ValueTask<@this> Settle(View view) => view.Settle(this);
+
     /// <summary>The Data this is, as it is here and now, read with this Data's own context where it stands —
     /// carrying this Data's own name and its result flags (Returned, ReturnDepth, Handled), never another's.
     /// <list type="bullet">
@@ -128,11 +133,6 @@ public partial class @this
     /// it something the signature doesn't cover.</item>
     /// <item>A failure, and any other Data, answers itself.</item>
     /// </list></summary>
-    /// <summary>This Data settled for <paramref name="view"/> — the view decides: plang's own store keeps it as written; a
-    /// view that crosses (Out) or dumps (Debug) uses it, a reference a copy of the Data it names, a name that reads
-    /// nothing the error. What a signature hashes and holds, as one.</summary>
-    public System.Threading.Tasks.ValueTask<@this> Settle(View view) => view.Settle(this);
-
     public virtual async System.Threading.Tasks.ValueTask<@this> Settle()
     {
         if (!HasVariable || _error != null || Signature != null) return this;

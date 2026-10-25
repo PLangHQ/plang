@@ -71,8 +71,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             // whose key is the path its kind names — no reader for it pre-1.0, so it is fixed by hand (loud)
             if (type?.kind is { IsEmpty: false } k) { data.Fail(Unreadable(k.Name, null)); return null; }
             // a bare base setting (a node — a module/action with no class of its own) is not made FROM a record;
-            // it reads as absent, as the base setting read did before 789. A clean decline (no Fail) that the
-            // record reader answers with the null value, never the loud SettingsUnreadable.
+            // it reads as absent: a clean decline (no Fail) that the record reader answers with the null value, never
+            // the loud SettingsUnreadable.
             return null;
         }
         data.Fail(new global::app.error.@this(

@@ -241,7 +241,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private error.@this? Take(global::app.type.kind.@this kind, @this asker)
     {
         // the fact itself, not a flag: a change to the asker's own rows it holds, one to a row below it is its origin's
-        // to answer (decision 40)
+        // to answer
         if (!ReferenceEquals(this, asker)) return asker._origin.Hold(kind);
         Put(kind);
         return null;

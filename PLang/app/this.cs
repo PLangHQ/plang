@@ -367,13 +367,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     }
 
     /// <summary>
-    /// Verifies the all-three-roles invariant on every I/O actor (System, User).
-    /// Returns Data.Error on first missing channel; Ok otherwise. PlangConsole
-    /// (or any entry point) must register Output/Error/Input on each before
-    /// goal execution. <see cref="Start"/> calls this and surfaces failure as
-    /// MissingRequiredChannelAtBoot before any user code runs.
-    /// </summary>
-    /// <summary>
     /// Wires the console standard streams onto the given actor's Channels under
     /// the well-known names ("output", "error", "input"), with real interactive
     /// stdin as the input source. The interactive CLI (Executor) calls this for

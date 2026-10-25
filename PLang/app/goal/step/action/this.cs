@@ -73,12 +73,6 @@ public partial class @this
     [JsonIgnore]
     public bool Synthetic { get; set; } = true;
 
-    /// <summary>
-    /// Pre-built handler instance for inline C# composition. When set,
-    /// <see cref="DispatchAsync"/> uses it directly instead of resolving via
-    /// <c>Modules.GetCodeGenerated</c>. Null on PR-loaded actions (the dispatch
-    /// path resolves a fresh handler per execution).
-    /// </summary>
     [JsonIgnore]
     /// <summary>
     /// A C#-composed action carrying provided params (via <c>app.Run</c>). Dispatch runs the
@@ -114,11 +108,6 @@ public partial class @this
         Step = context.call.Step;
     }
 
-    /// <summary>
-    /// True for any condition chain action: condition.if, condition.elseif, or condition.else.
-    /// Used by the condition.Decision type to split an orchestrated step's actions into per-branch
-    /// groups.
-    /// </summary>
     /// <summary>Whether this action holds its step's answer — what the actions before it produce (a <c>write to %x%</c>):
     /// a keep of <c>%!data%</c> does; no other action.</summary>
     [JsonIgnore]
@@ -401,12 +390,4 @@ public partial class @this
         if (error != null) return (null, error);
         return await code!.Resolve(this, context);
     }
-
-    /// <summary>
-    /// PLang name of the action's return type T (when Start() returns Task&lt;Data&lt;T&gt;&gt;).
-    /// Null when Start() returns bare <c>Task&lt;Data&gt;</c> — i.e. void: the action has no
-    /// meaningful value to write to a variable. Compile.llm uses this to choose the Type
-    /// for a trailing <c>variable.set</c> after a <c>write to %x%</c>.
-    /// </summary>
-
 }
