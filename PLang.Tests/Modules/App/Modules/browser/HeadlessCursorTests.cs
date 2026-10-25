@@ -1,23 +1,33 @@
 namespace PLang.Tests.App.Modules.browser;
 
 /// <summary>
-/// The cursor a headless browser sends up beside its frames goes to OnFrame as itself; the channel OnFrame writes it to
-/// makes it a line — one line, ended once by the channel's End.
+/// The cursor a headless browser sends up beside its frames is a text line on the frames' protocol, written as text —
+/// one compact line whatever json's layout — and the window finds the cursor in it the way it reads every line.
 /// </summary>
 public class HeadlessCursorTests
 {
+    // the cursor's line, written as headless writes it
+    private static async Task<string> Line(global::app.@this app)
+    {
+        var context = app.actor.list.User.Context;
+        using var stream = new System.IO.MemoryStream();
+        await (await app.type.list["text"].kind.Encode(stream, context.Ok(new global::app.module.browser.type.cursor.@this("pointer")), context)).IsSuccess();
+        return System.Text.Encoding.UTF8.GetString(stream.ToArray());
+    }
+
     [Test]
-    public async Task TheCursor_IsOneLine_EndedOnce()
+    public async Task TheCursor_IsOneCompactLine_WithJsonFormatted()
     {
         await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
-        var user = app.actor.list.User;
-        var capture = new System.IO.MemoryStream();
-        user.Channel.Register(new global::app.channel.type.stream.@this(user.Channel, "out", capture,
-            global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain", Framed = true });
 
-        await user.Channel.Get("out")!.WriteAsync(new global::app.data.@this("!data",
-            new global::app.module.browser.type.cursor.@this("pointer"), context: user.Context));
+        await Assert.That(await Line(app)).IsEqualTo("{\"cursor\":\"pointer\"}");
+    }
 
-        await Assert.That(System.Text.Encoding.UTF8.GetString(capture.ToArray())).IsEqualTo("{\"cursor\":\"pointer\"}\n");
+    [Test]
+    public async Task TheWindow_FindsTheCursorInTheLine()
+    {
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+
+        await Assert.That(global::app.module.screen.type.screen.window.code.Window.Field(await Line(app), "cursor")).IsEqualTo("pointer");
     }
 }
