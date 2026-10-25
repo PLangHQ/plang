@@ -157,15 +157,23 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     System.Threading.CancellationTokenSource global::app.origin.@this.Shutdown()
         => CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
 
-    // a sub app is made in its app's folder or under it: rooted anywhere else (an ancestor's, a sibling's), what its app
-    // keeps there (its stores) would be plain in-root for it
+    // a sub app is made in its app's folder or under it, never in its app's stores folder or under it: rooted anywhere
+    // else (an ancestor's, a sibling's, the stores'), what its app keeps there (its stores) would be plain in-root for it.
+    // Its app's stores are the only ones to check down a chain of makers: its app was itself made in its own maker's
+    // folder or under it — at that maker's root, its stores folder is the maker's; under it, the maker's stores lie
+    // outside it.
     global::app.type.item.path.file.filesystem.@this global::app.origin.@this.Filesystem(string absolutePath)
     {
         var filesystem = new global::app.type.item.path.file.filesystem.@this(absolutePath);
-        if (filesystem.root.IsUnder(App.filesystem.root).Value) return filesystem;
-        throw new global::app.error.AppException(new global::app.error.@this(
-            $"a sub app is made in its maker's folder or under it: {filesystem.root.Absolute} is not in {App.filesystem.root.Absolute}",
-            "OutsideItsMaker", 400));
+        if (!filesystem.root.IsUnder(App.filesystem.root).Value)
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"a sub app is made in its maker's folder or under it: {filesystem.root.Absolute} is not in {App.filesystem.root.Absolute}",
+                "OutsideItsMaker", 400));
+        if (filesystem.root.IsUnder(App.filesystem.store).Value)
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"a sub app is never made in its maker's stores folder: {filesystem.root.Absolute} is in {App.filesystem.store.Absolute}",
+                "OutsideItsMaker", 400));
+        return filesystem;
     }
 
     global::app.type.list.@this global::app.origin.@this.type => App.type.list;
