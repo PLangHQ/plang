@@ -96,9 +96,24 @@ public sealed partial class @this
     /// Null for a goal with no Path.</summary>
     public global::app.type.item.path.@this? Folder => Path?.Parent;
 
-    /// <summary>The .pr this goal is built to (<see cref="Pr"/>); none without a Path.</summary>
+    /// <summary>The .pr this goal is built to (<see cref="Pr"/>); none without a Path. Made once from its Path, again
+    /// only when the Path is another.</summary>
     [Debug]
-    public global::app.type.item.path.@this? PrPath => Path is { Absolute.Length: > 0 } source ? Pr(source) : null;
+    public global::app.type.item.path.@this? PrPath
+    {
+        get
+        {
+            if (Path is not { Absolute.Length: > 0 } source) return null;
+            if (System.Threading.Volatile.Read(ref _pr) is { } made && ReferenceEquals(made.Source, source)) return made.Pr;
+            var pr = Pr(source);
+            System.Threading.Volatile.Write(ref _pr, new Built(source, pr));
+            return pr;
+        }
+    }
+
+    // The .pr made from the Path it was made from, held whole so a read never sees one without the other.
+    private sealed record Built(global::app.type.item.path.@this Source, global::app.type.item.path.@this Pr);
+    private Built? _pr;
 
     /// <summary>The .pr a .goal is built to: <c>X.goal</c> → <c>.build/x.pr</c> beside it. A static on the goal type by
     /// exception — a rule about where a goal's build lands, read before there is a goal: by <see cref="PrPath"/>,

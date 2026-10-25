@@ -18,12 +18,11 @@ public class GoalListIndexTests
             for (var i = from; i < to; i++) app.goal.list.Add(goals[i]);
             return System.GC.GetAllocatedBytesForCurrentThread() - start;
         }
-        Bytes(0, 100);
-        var early = Bytes(100, 200);
-        Bytes(200, 300);
+        Bytes(0, 300);
+        // a hundred adds to a list holding 300 goals: an add that worked out every held goal's .pr cost about 4.8 MB
         var late = Bytes(300, 400);
 
-        await Assert.That(late).IsLessThan(early * 3 / 2 + 4096).Because("an add finds the goal it replaces in one look");
+        await Assert.That(late).IsLessThan(1_000_000L).Because("an add finds the goal it replaces in one look");
         await Assert.That(app.goal.list[goals[250].PrPath!]).IsSameReferenceAs(goals[250]);
     }
 

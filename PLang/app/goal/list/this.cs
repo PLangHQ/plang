@@ -76,16 +76,28 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     /// </summary>
     public void Add(goal.@this goal)
     {
-        if (goal.PrPath == null)
+        if (goal.PrPath is not { } pr)
             throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
         lock (_gate)
         {
-            for (int i = 0; i < CountRaw; i++)
-                if (Equals(this[i].PrPath, goal.PrPath)) { RemoveAt(i); break; }
+            // the goal held from the same .pr, found in one look, gives way — its row, by reference
+            if (_held.TryGetValue(pr, out var held))
+            {
+                var at = 0;
+                foreach (var each in Items())
+                {
+                    if (ReferenceEquals(each, held)) { RemoveAt(at); break; }
+                    at++;
+                }
+            }
             base.Add((global::app.type.item.@this)goal);
+            _held[pr] = goal;
             _app = _system = null;
         }
     }
+
+    // The goal held for each .pr, beside the rows: changed only by Add, under the gate; read without it.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<global::app.type.item.path.@this, goal.@this> _held = new();
 
     /// <summary>
     /// The goal a call names, as seen from the goal it is called FROM. The caller's own chain answers
@@ -275,5 +287,5 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     }
 
     /// <summary>The goal read from <paramref name="pr"/>, when it is held; null when it isn't.</summary>
-    public goal.@this? this[global::app.type.item.path.@this pr] => Items().FirstOrDefault(g => Equals(g.PrPath, pr));
+    public goal.@this? this[global::app.type.item.path.@this pr] => _held.GetValueOrDefault(pr);
 }
