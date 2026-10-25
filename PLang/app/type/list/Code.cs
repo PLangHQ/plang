@@ -164,10 +164,20 @@ public sealed partial class @this
             Kind = Classes
                 .Where(t => typeof(global::app.type.kind.@this).IsAssignableFrom(t) && t is { IsAbstract: false, ContainsGenericParameters: false }
                     && t.GetConstructor([typeof(global::app.type.@this)]) != null)
-                .Select(t => new KindClass(t)).Where(each => each.Owner != null).ToList();
+                .Select(t => Owner(t) is { } owner ? new KindClass(t, owner) : null).OfType<KindClass>().ToList();
             // a Mark is asked of every class (a value: nothing made for one with none), kept for one that has one
             Marks = Classes.Select(t => new Mark(t)).Where(mark => mark.Codec != null || mark.List || mark.Choice).ToList();
             (Tokens, Payloads) = Readers(assembly);
+
+            // the type a kind class is a kind of: the T of the kind<T> it derives from, by its name; none for a class
+            // that is no kind<T>
+            static string? Owner(System.Type clr)
+            {
+                for (var parent = clr.BaseType; parent != null; parent = parent.BaseType)
+                    if (parent.IsGenericType && parent.GetGenericTypeDefinition() == typeof(global::app.type.kind.@this<>))
+                        return global::app.type.item.@this.NameOf(parent.GetGenericArguments()[0]);
+                return null;
+            }
         }
 
         // The token readers the assembly ships, by their serializer namespace — a subclass kind's own reader is the one in
@@ -232,38 +242,24 @@ public sealed partial class @this
         }
     }
 
-    /// <summary>A kind class the startup scan holds: born from the entry of the type it is a kind of — the T of the
-    /// kind&lt;T&gt; it derives from, by its name; no owner for a class that is no kind&lt;T&gt;.</summary>
-    internal sealed class KindClass
-    {
-        internal System.Type Clr { get; }
-        internal string? Owner { get; }
+    /// <summary>A kind class the startup scan holds, born from the entry of the type it is a kind of (its owner, by
+    /// name).</summary>
+    internal sealed record KindClass(System.Type Clr, string Owner);
 
-        internal KindClass(System.Type clr)
-        {
-            Clr = clr;
-            for (var parent = clr.BaseType; parent != null && Owner == null; parent = parent.BaseType)
-                if (parent.IsGenericType && parent.GetGenericTypeDefinition() == typeof(global::app.type.kind.@this<>))
-                    Owner = global::app.type.item.@this.NameOf(parent.GetGenericArguments()[0]);
-        }
-
-        public void Deconstruct(out System.Type clr, out string owner) => (clr, owner) = (Clr, Owner!);
-    }
-
-    /// <summary>A token reader a serializer folder ships — the type it reads, and the reader, made once per code: it
-    /// holds nothing of an app's, so every list holds the same one. Its kind is the one it names.</summary>
+    /// <summary>A token reader a serializer folder ships — the name of the type it reads, and the reader, made once per
+    /// code: it holds nothing of an app's, so every list holds the same one. Its kind is the one it names.</summary>
     internal sealed class Token
     {
-        internal string Type { get; }
+        internal string Name { get; }
         internal global::app.type.reader.ITypeReader Reader { get; }
 
-        internal Token(string type, ConstructorInfo made)
+        internal Token(string name, ConstructorInfo made)
         {
-            Type = type;
+            Name = name;
             Reader = (global::app.type.reader.ITypeReader)made.Invoke(null);
         }
 
-        public void Deconstruct(out string type, out global::app.type.reader.ITypeReader reader) => (type, reader) = (Type, Reader);
+        public void Deconstruct(out string name, out global::app.type.reader.ITypeReader reader) => (name, reader) = (Name, Reader);
     }
 
     /// <summary>A whole-payload reader a serializer folder ships — its static Read, by the type and kind it reads, as a
@@ -271,13 +267,13 @@ public sealed partial class @this
     /// (source.Value's parse-failure catch) see the real JsonException/FormatException and author their own error.</summary>
     internal sealed class Payload
     {
-        internal string Type { get; }
+        internal string Name { get; }
         internal string Kind { get; }
         internal global::app.type.reader.@this.Read Read { get; }
 
-        internal Payload(string type, string kind, MethodInfo method)
+        internal Payload(string name, string kind, MethodInfo method)
         {
-            Type = type;
+            Name = name;
             Kind = kind;
             Read = (raw, k, ctx) =>
             {
@@ -290,8 +286,8 @@ public sealed partial class @this
             };
         }
 
-        public void Deconstruct(out string type, out string kind, out global::app.type.reader.@this.Read read)
-            => (type, kind, read) = (Type, Kind, Read);
+        public void Deconstruct(out string name, out string kind, out global::app.type.reader.@this.Read read)
+            => (name, kind, read) = (Name, Kind, Read);
     }
 
     /// <summary>A class the second pass marks: each format it declares (written by its own encode, read by its own
@@ -345,5 +341,5 @@ public sealed partial class @this
 
     /// <summary>A class that is a kind of a family: the family's name, its kind's name, the kind class over the family,
     /// and the reader it ships, when it ships one.</summary>
-    internal sealed record Subclass(System.Type Clr, string Family, string Kind, System.Type Made, System.Type? Reader);
+    internal sealed record Subclass(System.Type Clr, string Family, string Kind, System.Type Class, System.Type? Reader);
 }

@@ -235,10 +235,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     // Holds a kind (the startup scan calls it while loading), asked of the list that holds its type. Answers the
     // refusal; null when the kind is held.
     private error.@this? Hold(global::app.type.kind.@this kind)
-        => (kind.Owner?.Types ?? this).Take(kind, this);
+        => (kind.Owner?.Types ?? this).Hold(kind, this);
 
     // A kind asked of this list, the one holding its type, by `asker`.
-    private error.@this? Take(global::app.type.kind.@this kind, @this asker)
+    private error.@this? Hold(global::app.type.kind.@this kind, @this asker)
     {
         // the fact itself, not a flag: a change to the asker's own rows it holds, one to a row below it is its origin's
         // to answer
@@ -333,7 +333,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         foreach (var subclass in library.Subclasses)
             if (Named(subclass.Family) is { } owner && owner.kind[subclass.Kind] == null)
             {
-                if (Hold((global::app.type.kind.@this)System.Activator.CreateInstance(subclass.Made, subclass.Kind, subclass.Clr, owner)!) is { } refused)
+                if (Hold((global::app.type.kind.@this)System.Activator.CreateInstance(subclass.Class, subclass.Kind, subclass.Clr, owner)!) is { } refused)
                     return refused;
 
                 // a subclass kind that ships its own reader (separator) reads under its family and kind — a
