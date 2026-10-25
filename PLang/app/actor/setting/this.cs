@@ -7,8 +7,8 @@ namespace app.actor.setting;
 /// this run's values (<c>set %!x%</c>, the CLI flags) ← the step's own. Each actor has one
 /// (<c>app.actor.list.System.Setting</c>, <c>app.actor.list.User.Setting</c>, the user's falling back to the system's) that holds
 /// the actor's rows; a context's own layer (<c>context.Setting</c>) chains up to its actor's, so a
-/// goal-local value shadows the rest. The rows are read once, when the app starts (<see cref="Load"/>);
-/// after that a setting is built in memory. The rows live in the settings' own store,
+/// goal-local value shadows the rest. Each actor's rows are read once, the first time a row is asked for (the app
+/// asks at its start, <see cref="Load"/>); after that a setting is built in memory. The rows live in the settings' own store,
 /// <c>/.data/setting/data.sqlite</c> — never the app's data — made by the root of the chain.
 /// </summary>
 public sealed class @this : IDisposable

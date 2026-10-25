@@ -73,12 +73,12 @@ public partial class @this
     [JsonIgnore]
     public bool Synthetic { get; set; } = true;
 
-    [JsonIgnore]
     /// <summary>
     /// A C#-composed action carrying provided params (via <c>app.Run</c>). Dispatch runs the
     /// normal path; the generated Resolve passes through the seed's *set* params (no round-trip)
     /// while filling the UNSET ones from setting → [Default]. Null on the .pr path.
     /// </summary>
+    [JsonIgnore]
     public module.ICodeGenerated? Seed { get; init; }
 
     /// <summary>An action read or built field by field (a <c>.pr</c> row, a catalog element), born holding its type
