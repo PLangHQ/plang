@@ -18,6 +18,20 @@ Checks to make before the release, not branches:
 - **Brotli** (Ingi: "let's not remove it yet, but keep eye on it before we release plang 2.0b"). The archive module's `brotli` kind (`archive/type/archive/kind/brotli/this.cs`) uses .NET's `BrotliStream`, Google's C library bundled in the runtime (10.0.13 today). A crafted `.br` can make Google's decoder read past its buffer (fixed upstream Feb 2026, released Oct 2026; bugsink.com/blog/bye-bye-brotli). Unpacking is capped by `archive.setting.Max` (`compression/this.cs:47`), and plang's HTTP client doesn't decompress responses. Before 2.0b: check whether the .NET runtime it ships on carries the fixed brotli. If not, drop the kind (gzip and zip cover packing).
 - **The release goals** (Ingi, 2026-10-25, bugs 2: "2.yes"). `Publish/Publish.goal:20` publishes the deleted PlangWindowForms for win-x64, and `Publish/Nuget.goal` packs and pushes the deleted PlangTests as `PlangLibrary.Tests`. Drop those steps, then run the release pipeline end to end once before publishing.
 
+## From bugs (the auditor's X1–X10, `.bot/bugs/auditor/final.md`, and the line)
+
+- X1: the duration, clipboard and input readers still throw a raw FormatException (`duration/serializer/Reader.cs:24,27`); bugs fixed only N11's four.
+- X2: other containment copies outside `path.Holds` (`path/file/this.cs:132–140`, `build/code/Default.cs:39`).
+- X3: `Window.cs:203`'s stale `z` deflate comment.
+- X4: `module/remove.cs:16` is a bare `Task<Data>`, and its teaching.
+- X5: `OsTrustTests`' `'/'` at `:141,151,169`.
+- X6: stale "auto-wire" wording after `app.Wiring`.
+- X7: docs: `bans.md:35`, `good_to_know.md:110`, `filesystem-permission.md:71`.
+- X9: no test that a streamed ask goes live past the saved answers.
+- Debug builds unchecked, Release checked (`PLang.csproj:38–39`): an overflow only Release throws can't be seen by a test (the auditor's B1). Whether Debug checks too is Ingi's.
+- The Linux view's message queue is unbounded (security, bugs 32).
+- The Windows run (item 8 below) gains APatchBeforeTheFirstFrame and a case-blind disk.
+
 ## Very far backlog: image formats and metadata (Ingi, 2026-10-25, after packages 7)
 
 Ingi: "very far into future (this is not something you should suggest taking when I ask, it's just some very far backlog item)". This section is never offered as next work. It's kept only so the findings aren't lost.
