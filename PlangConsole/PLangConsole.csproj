@@ -12,6 +12,9 @@
 		<PublishSingleFile>false</PublishSingleFile>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
+		<!-- every restore, a publish's for another runtime too, keeps the assets of the machine's own runtime, which a dev
+		     build (below) runs on -->
+		<RuntimeIdentifiers>$([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier)</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
@@ -37,7 +40,17 @@
 		<BundleResource Include="Info.plist" />
 	</ItemGroup>
 
+	<!-- A build with no runtime named (dev, the gate) runs on the machine that builds it: its native assets are that
+	     machine's alone, not every runtime's. The output stays bin/<config>/net10.0/plang. A publish names its runtime
+	     (-r). After the osx block, so a Mac's dev build is no app bundle. -->
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' == '' And '$(Configuration)' != 'Release'">
+		<RuntimeIdentifier>$([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier)</RuntimeIdentifier>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<SelfContained>false</SelfContained>
+	</PropertyGroup>
+
 	<!-- <OutDir>/os links to the repo's os tree, so /system/* resolves to the live os/system tree during dev. -->
 	<Import Project="..\os.targets" />
+	<Import Project="..\native.targets" />
 
 </Project>

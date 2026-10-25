@@ -1,0 +1,10 @@
+<Project>
+  <!-- A package's native symbols (runtimes/*/native/*.pdb — SkiaSharp's are ~95 MB each) never reach a build's
+       output or a publish: the native libraries are copied, their debug symbols are not. -->
+  <Target Name="NoNativeSymbols" AfterTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <NativeCopyLocalItems Remove="@(NativeCopyLocalItems)" Condition="'%(Extension)' == '.pdb'" />
+      <RuntimeTargetsCopyLocalItems Remove="@(RuntimeTargetsCopyLocalItems)" Condition="'%(Extension)' == '.pdb'" />
+    </ItemGroup>
+  </Target>
+</Project>

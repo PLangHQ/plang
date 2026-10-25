@@ -52,6 +52,7 @@
 
   <!-- <OutDir>/os links to the repo's os tree, in a test as in a run (Shared is a library, never run). -->
   <Import Project="$(MSBuildThisFileDirectory)..\os.targets" Condition="'$(MSBuildProjectName)' != 'PLang.Tests.Shared'" />
+  <Import Project="$(MSBuildThisFileDirectory)..\native.targets" />
 
   <!-- The former GlobalUsings.cs, declared once for all test projects.
        Mirror of PLang/App/GlobalUsings.cs where applicable. -->
