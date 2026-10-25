@@ -23,8 +23,6 @@ public abstract class @this : IReadOnlyList<binding.@this>
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
-    /// <summary>Binds <paramref name="handler"/> here for <paramref name="actor"/>, in <paramref name="scope"/>,
-    /// for the items <paramref name="filter"/> takes; answers the binding.</summary>
     /// <summary>Binds the binding <paramref name="make"/> makes on this side — a kind of binding (a mock) is born
     /// knowing the list it is on; answers it.</summary>
     internal T Add<T>(System.Func<@this, T> make) where T : binding.@this
