@@ -81,6 +81,8 @@ public class MissingDeciderKeyTests
         await Assert.That(decided.Error!.Key).IsEqualTo("MissingDeciderKey");
         await Assert.That(decided.Error.Message).Contains("%!llm.decider.setting.key%");
         await Assert.That(decided.Error.Message).Contains("TYPESAFE_API_KEY");
+        // why no one could be asked rides whole, as the cause
+        await Assert.That(decided.Error.list.Select(cause => cause.Key)).Contains("ChannelEof");
         await Assert.That(service.CallCount).IsEqualTo(0);
     }
 

@@ -61,6 +61,8 @@ public class MissingKeyTests
         await Assert.That(asked.Error!.Key).IsEqualTo("MissingLlmKey");
         await Assert.That(asked.Error.Message).Contains("%!llm.setting.key%");
         await Assert.That(asked.Error.Message).Contains("OPENAI_API_KEY");
+        // why no one could be asked rides whole, as the cause
+        await Assert.That(asked.Error.list.Select(cause => cause.Key)).Contains("ChannelEof");
     }
 
     // a sensitive value writes **** in a text template and every view but plang's store, where it is whole
