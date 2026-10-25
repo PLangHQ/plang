@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "c1837a736: grants per role unchanged, always stood before the view is published (CompareExchange), no race/re-entrancy hole, sub app grants confined to its own os/.data. Carry S-A (latent): a sub app rooted above its maker sees the maker's .data as in-root; red probe pushed." }
