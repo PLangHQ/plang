@@ -6,8 +6,6 @@ public sealed class error : global::app.@event.@this
 {
     internal error(binding.list.before before, binding.list.after after) : base("error", before, after) { }
 
-    protected override global::app.@event.@this Of(global::app.@event.on.@this on) => on.error;
-
     /// <summary>
     /// The failure <paramref name="failed"/> handed to what is bound on <paramref name="item"/>'s error, level by
     /// level, in the order added: the first binding that takes it answers — anything but the failure handed back

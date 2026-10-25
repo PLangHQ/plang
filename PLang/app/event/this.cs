@@ -25,10 +25,6 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// <summary>What is started after it.</summary>
     public binding.list.after after { get; }
 
-    /// <summary>This event as <paramref name="on"/> holds it — the same event of another level; null at a level whose
-    /// type doesn't have it (a declared event, on a level of another type).</summary>
-    protected virtual @this? Of(global::app.@event.on.@this on) => on[Name];
-
     /// <summary>Whether anything is bound on this event, before or after it, at any of <paramref name="item"/>'s
     /// levels — so a door whose before is handed something it would have to make asks first.</summary>
     public bool IsBound(global::app.type.item.@this item, global::app.actor.context.@this context)

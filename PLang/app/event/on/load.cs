@@ -4,7 +4,4 @@ namespace app.@event.on;
 /// from (there is no goal yet); after it, the goal.</summary>
 public sealed class load : global::app.@event.@this
 {
-    internal load(binding.list.before before, binding.list.after after) : base("load", before, after) { }
-
-    protected override global::app.@event.@this Of(global::app.@event.on.@this on) => on.load;
-}
+    internal load(binding.list.before before, binding.list.after after) : base("load", before, after) { }}

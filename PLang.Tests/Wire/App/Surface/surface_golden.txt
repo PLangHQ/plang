@@ -512,21 +512,17 @@ class app.event.binding.this : app.type.item.this, app.type.item.ICreate<app.eve
   Scope : app.event.binding.Scope { get; }
 
 class app.event.on.ask : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.create : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.declared : app.event.this
 
 class app.event.on.error : app.event.this
   Catch(app.type.item.this item, app.data.this failed, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.hit : app.event.this
 
 class app.event.on.load : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.miss : app.event.this
 
@@ -544,16 +540,12 @@ class app.event.on.own : app.event.on.this
   override write : app.event.on.write { get; }
 
 class app.event.on.read : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.remove : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.set : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.start : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.on.this : app.type.item.this
   Names : System.Collections.Generic.IEnumerable<System.String> { get; }
@@ -572,7 +564,6 @@ class app.event.on.this : app.type.item.this
   virtual write : app.event.on.write { get; }
 
 class app.event.on.write : app.event.this
-  protected override Of(app.event.on.this on) : app.event.this
 
 class app.event.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
@@ -588,7 +579,6 @@ abstract class app.event.this : app.type.item.this, app.type.item.ICreate<app.ev
   before : app.event.binding.list.before { get; }
   override ToString() : System.String
   protected override Type : app.type.this { get; }
-  protected virtual Of(app.event.on.this on) : app.event.this
 
 class app.module.ActionAttribute : System.Attribute
   Cacheable : System.Boolean { get; set; }
