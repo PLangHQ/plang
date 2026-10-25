@@ -15,7 +15,7 @@ public class ActorPermissionStorageTests
     private static global::app.@this NewApp(string? root = null)
     {
         var app = new global::app.@this(root ?? System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-st-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor);
+            "plang-st-" + System.Guid.NewGuid().ToString("N")[..8]));
         // Real grant signing, but skip the identity recreate-loop (production identity
         // re-read fails verify → recreated keygen+sign each call, ~850ms).
         (app).TestIdentity();

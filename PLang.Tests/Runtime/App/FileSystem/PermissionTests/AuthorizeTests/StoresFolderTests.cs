@@ -20,7 +20,7 @@ public class StoresFolderTests : System.IAsyncDisposable
         key = System.IO.Path.Combine(root, ".data", "setting", "data.sqlite");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(key)!);
         System.IO.File.WriteAllText(key, "the identity's private key");
-        app = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestSigning();
+        app = new global::app.@this(root).TestSigning();
         channel = new Asking(app.actor.list.User.Context);
         app.actor.list.User.Channel.Register(channel);
     }
@@ -142,7 +142,7 @@ public class StoresFolderTests : System.IAsyncDisposable
 public class StoresFolderOpenTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this(
-        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-stores-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).TestSigning();
+        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-stores-" + System.Guid.NewGuid().ToString("N")[..8])).TestSigning();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 

@@ -16,14 +16,14 @@ public class TestingClassTests
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::app.@this("/test", global::PLang.Tests.Parent.Actor).Testing();
+        _app = new global::app.@this("/test").Testing();
     }
 
     // A plain App is not testing: no session is open until a run opens one.
     [Test]
     public async Task NewInstance_IsEnabled_FalseByDefault()
     {
-        await using var plain = new global::app.@this("/test", global::PLang.Tests.Parent.Actor);
+        await using var plain = new global::app.@this("/test");
         await Assert.That(plain.test.list.Session == null).IsTrue();
         await Assert.That(plain.Mode.Value).IsEqualTo(global::app.Mode.Run);
     }
@@ -32,7 +32,7 @@ public class TestingClassTests
     [Test]
     public async Task OpenAndClose_TheSession_IsTheTestingState()
     {
-        await using var plain = new global::app.@this("/test", global::PLang.Tests.Parent.Actor);
+        await using var plain = new global::app.@this("/test");
         await plain.test.list.Open();
         await Assert.That(plain.Mode.Value).IsEqualTo(global::app.Mode.Test);
         await plain.test.list.Close();
@@ -66,7 +66,7 @@ public class TestingClassTests
     [Test]
     public async Task TestSession_IsCurrent_AndTakesTheWrites()
     {
-        await using var plain = new global::app.@this("/test", global::PLang.Tests.Parent.Actor);
+        await using var plain = new global::app.@this("/test");
         var test = new global::app.test.@this(_app.type.list) { Goal = new global::app.goal.@this(_app.type.list) { Name = "Start" } };
         var session = await plain.test.list.Open(test);
 

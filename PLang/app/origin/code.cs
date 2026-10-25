@@ -26,6 +26,8 @@ internal sealed class code : @this
 
     public bool Console { get; }
 
+    public bool Testing => false;
+
     public global::app.type.list.@this type { get; }
 
     // the actions, born with the app the code is made for: that app answers for them

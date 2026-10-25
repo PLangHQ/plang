@@ -189,6 +189,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // its maker wired for itself
     bool global::app.origin.@this.Console => true;
 
+    bool global::app.origin.@this.Testing => App.Mode.Value == global::app.Mode.Test;
+
     global::app.type.list.@this global::app.origin.@this.type => App.type.list;
 
     global::app.module.@this global::app.origin.@this.Module(global::app.@this app) => App.module;

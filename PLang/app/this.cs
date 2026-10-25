@@ -234,11 +234,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.module.build.@this? Build { get; set; }
 
     /// <summary>What this App is doing — derived from what it holds: building when it has a Build,
-    /// testing while its test session is open, otherwise running. Not a stored field, so there is no
+    /// testing while its test session is open or while the app that made it is testing, otherwise running. Not a stored field, so there is no
     /// second truth; the App branches on this, never on the presence itself.</summary>
     public global::app.type.item.choice.@this<global::app.Mode> Mode
         => Build != null ? global::app.Mode.Build
-         : test.list.Session != null ? global::app.Mode.Test
+         : test.list.Session != null || origin.Testing ? global::app.Mode.Test
          : global::app.Mode.Run;
 
     /// <summary>

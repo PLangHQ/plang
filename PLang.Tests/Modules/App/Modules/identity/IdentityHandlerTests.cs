@@ -16,7 +16,7 @@ public class IdentityHandlerTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_identity_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::app.@this(_tempDir, global::PLang.Tests.Parent.Actor).TestSigning().Consenting();
+        _app = new global::app.@this(_tempDir).TestSigning().Consenting();
     }
 
     [After(Test)]
@@ -42,7 +42,7 @@ public class IdentityHandlerTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_id_row_" + Guid.NewGuid().ToString("N")[..8]);
         string key;
-        await using (var first = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Consenting())
+        await using (var first = new global::app.@this(root).Consenting())
         {
             var ctx = first.actor.list.System.Context;
             var create = new Create(ctx) { Name = (global::app.type.item.text.@this)"keeper", Default = (global::app.type.item.@bool.@this)true };
@@ -52,7 +52,7 @@ public class IdentityHandlerTests
             key = ((Identity)(await made.Value())!).PublicKey;
         }
 
-        await using var next = new global::app.@this(root, global::PLang.Tests.Parent.Actor).Consenting();
+        await using var next = new global::app.@this(root).Consenting();
         var user = next.actor.list.User.Context;
         var get = new Get(user);
         await get.Attach(null, user);
@@ -72,7 +72,7 @@ public class IdentityHandlerTests
         // This test validates the ACTUAL ed25519 keypair (32-byte base64), so it needs the
         // real signing provider — not the class fixture's test-signing. Own real app, own key.
         await using var realApp = new global::app.@this(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang_id_real_" + Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Consenting();
+            System.IO.Path.GetTempPath(), "plang_id_real_" + Guid.NewGuid().ToString("N")[..8])).Consenting();
         var realCtx = realApp.actor.list.System.Context;
         var handler = new Create(realCtx) { Name = (global::app.type.item.text.@this)"test", Default = (global::app.type.item.@bool.@this)true };
         await handler.Attach(null, realCtx);

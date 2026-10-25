@@ -56,7 +56,7 @@ public class ForeignSignedOwnRowTests
         System.IO.File.WriteAllText(secret, "outside");
 
         // the attacker, in their own checkout, grants the user the secret file and ships the store
-        await using (var shipped = new global::app.@this(root, global::PLang.Tests.Parent.Actor))
+        await using (var shipped = new global::app.@this(root))
         {
             shipped.Code.Register<global::app.module.identity.code.IIdentity>(new Attacker { IsBuiltIn = true });
             shipped.Code.SetDefault<global::app.module.identity.code.IIdentity>("attacker-identity");
@@ -67,7 +67,7 @@ public class ForeignSignedOwnRowTests
 
         // the victim opens the cloned app with their own identity: the shipped row isn't theirs — refused loud, as an
         // unsigned own row is, never a grant
-        await using var victim = new global::app.@this(root, global::PLang.Tests.Parent.Actor).TestIdentity();
+        await using var victim = new global::app.@this(root).TestIdentity();
         var victimUser = victim.actor.list.User;
         var refused = await Assert.ThrowsAsync<global::app.error.AppException>(
             async () => await victimUser.Permission.Find(victimUser.Context.File(secret), Verb.read));

@@ -20,6 +20,11 @@ internal interface @this
     /// owner, which wires its own.</summary>
     bool Console { get; }
 
+    /// <summary>Whether the app is testing from its birth, before any session of its own opens: the code, never; an
+    /// actor, when its own app is testing — so every app a testing app's actors make, a chain of them too, keeps its
+    /// stores in memory.</summary>
+    bool Testing { get; }
+
     /// <summary>The types the app's type list is a layer over: the code's own; an actor's app's.</summary>
     global::app.type.list.@this type { get; }
 
