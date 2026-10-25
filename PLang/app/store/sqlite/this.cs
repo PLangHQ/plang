@@ -33,8 +33,11 @@ public sealed class @this : global::app.store.@this
     // An in-memory database lives as long as a connection to it: this one, held for the store's life.
     private SqliteConnection? _sentinel;
 
-    // The database as each verb finds it: blank (in memory, never opened, so nothing written to it) or connected.
-    private readonly database _blank, _connected;
+    // The database as each verb finds it: blank (in memory, never opened, so nothing written to it) or connected — the
+    // connected one made at the first verb that reaches the database.
+    private readonly database _blank;
+    private database? _connected;
+    private database Connected => _connected ?? System.Threading.LazyInitializer.EnsureInitialized(ref _connected, () => new connected(this));
 
     // A row is a whole Data in plang's own format (application/plang).
     private global::app.type.kind.@this Format => Context.App.type.list["wire"].kind["plang"]!;
@@ -51,7 +54,6 @@ public sealed class @this : global::app.store.@this
         _memory = memory;
         Context = context;
         _blank = new blank(this);
-        _connected = new connected(this);
     }
 
     public override Task<data.@this<T>> Get<T>(string table, string key) => Database.Get<T>(table, key);
@@ -69,7 +71,7 @@ public sealed class @this : global::app.store.@this
     // What the database is now: an in-memory one nothing has opened holds nothing, so it answers empty; once opened,
     // or on disk, the connection.
     private database Database
-        => _memory && System.Threading.Volatile.Read(ref _opened) == null ? _blank : _connected;
+        => _memory && System.Threading.Volatile.Read(ref _opened) == null ? _blank : Connected;
 
     // A list of rows, none in it.
     private global::app.type.item.list.@this Empty => new(Context.App.type.list[typeof(global::app.type.item.list.@this)]);
@@ -156,7 +158,7 @@ public sealed class @this : global::app.store.@this
         internal override Task<data.@this<global::app.type.item.list.@this>> GetAll<T>(string table)
             => Task.FromResult(Store.Context.Ok<global::app.type.item.list.@this>(Store.Empty));
 
-        internal override Task<data.@this> Set(string table, string key, data.@this data) => Store._connected.Set(table, key, data);
+        internal override Task<data.@this> Set(string table, string key, data.@this data) => Store.Connected.Set(table, key, data);
 
         internal override Task<data.@this> Remove(string table, string key) => Task.FromResult(Store.Context.Ok());
 
@@ -244,37 +246,19 @@ public sealed class @this : global::app.store.@this
             return connectionString;
         }
 
-        internal async Task<data.@this<T>> Get<T>(string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-        {
-            try
+        internal Task<data.@this<T>> Get<T>(string key) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+            => Run(key, $"SELECT data FROM [{Name}] WHERE key = @key;", error => _store.Context.Error<T>(error), async cmd =>
             {
-                using var connection = new SqliteConnection(await _made.Value);
-                connection.Open();
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText = $"SELECT data FROM [{Name}] WHERE key = @key;";
                 cmd.Parameters.AddWithValue("@key", key);
-
                 var result = cmd.ExecuteScalar();
                 if (result == null || result == DBNull.Value)
                     return _store.Context.Ok<T>(default!);
                 return await _store.Hydrate<T>(result.ToString()!);
-            }
-            catch (global::app.error.AppException ex) { return _store.Context.Error<T>(ex.Error); }
-            catch (Exception ex)
-            {
-                return _store.Context.Error<T>(SettingsError.FromException(ex, _given, key));
-            }
-        }
+            });
 
-        internal async Task<data.@this<global::app.type.item.list.@this>> GetAll<T>() where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-        {
-            try
+        internal Task<data.@this<global::app.type.item.list.@this>> GetAll<T>() where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
+            => Run(null, $"SELECT key, data FROM [{Name}];", error => _store.Context.Error<global::app.type.item.list.@this>(error), async cmd =>
             {
-                using var connection = new SqliteConnection(await _made.Value);
-                connection.Open();
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText = $"SELECT key, data FROM [{Name}];";
-
                 // Read all rows first (the reader is sync), then deserialize each — keeps the
                 // connection lifetime tight and the await off the open reader.
                 var raws = new List<(string Key, string Data)>();
@@ -289,23 +273,12 @@ public sealed class @this : global::app.store.@this
                     if (loaded.Success && !loaded.Peek().IsNull) list.Add(loaded.Copy(key));
                 }
                 return _store.Context.Ok<global::app.type.item.list.@this>(list);
-            }
-            catch (global::app.error.AppException ex) { return _store.Context.Error<global::app.type.item.list.@this>(ex.Error); }
-            catch (Exception ex)
-            {
-                return _store.Context.Error<global::app.type.item.list.@this>(SettingsError.FromException(ex, _given));
-            }
-        }
+            });
 
-        internal async Task<data.@this> Set(string key, data.@this data)
-        {
-            try
+        internal Task<data.@this> Set(string key, data.@this data)
+            => Run(key, $@"INSERT INTO [{Name}] (key, data) VALUES (@key, @data)
+                           ON CONFLICT(key) DO UPDATE SET data = @data;", error => _store.Context.Error(error), async cmd =>
             {
-                using var connection = new SqliteConnection(await _made.Value);
-                connection.Open();
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText = $@"INSERT INTO [{Name}] (key, data) VALUES (@key, @data)
-                                     ON CONFLICT(key) DO UPDATE SET data = @data;";
                 cmd.Parameters.AddWithValue("@key", key);
                 // Store view ships every [Store]-tagged property (incl. [Sensitive] like
                 // Identity.PrivateKey). The store owns its TEXT↔stream bridge: serialize to a
@@ -315,54 +288,40 @@ public sealed class @this : global::app.store.@this
                 if (!serialized.Success) return _store.Context.Error(serialized.Error!);
                 cmd.Parameters.AddWithValue("@data", System.Text.Encoding.UTF8.GetString(ms.ToArray()));
                 cmd.ExecuteNonQuery();
-
                 return _store.Context.Ok();
-            }
-            catch (global::app.error.AppException ex) { return _store.Context.Error(ex.Error); }
-            catch (Exception ex)
-            {
-                return _store.Context.Error(SettingsError.FromException(ex, _given, key));
-            }
-        }
+            });
 
-        internal async Task<data.@this> Remove(string key)
-        {
-            try
+        internal Task<data.@this> Remove(string key)
+            => Run(key, $"DELETE FROM [{Name}] WHERE key = @key;", error => _store.Context.Error(error), cmd =>
             {
-                using var connection = new SqliteConnection(await _made.Value);
-                connection.Open();
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText = $"DELETE FROM [{Name}] WHERE key = @key;";
                 cmd.Parameters.AddWithValue("@key", key);
                 cmd.ExecuteNonQuery();
+                return Task.FromResult(_store.Context.Ok());
+            });
 
-                return _store.Context.Ok();
-            }
-            catch (global::app.error.AppException ex) { return _store.Context.Error(ex.Error); }
-            catch (Exception ex)
+        internal Task<data.@this<global::app.type.item.@bool.@this>> Exists(string key)
+            => Run(key, $"SELECT COUNT(*) FROM [{Name}] WHERE key = @key;", error => _store.Context.Error<global::app.type.item.@bool.@this>(error), cmd =>
             {
-                return _store.Context.Error(SettingsError.FromException(ex, _given, key));
-            }
-        }
+                cmd.Parameters.AddWithValue("@key", key);
+                var count = Convert.ToInt64(cmd.ExecuteScalar());
+                return Task.FromResult(_store.Context.Ok<global::app.type.item.@bool.@this>(count > 0));
+            });
 
-        internal async Task<data.@this<global::app.type.item.@bool.@this>> Exists(string key)
+        // One statement on this table, once it exists: its connection opened and its command made, the statement's
+        // answer, or — when anything fails — the failure in the verb's own shape, naming the table and the key.
+        private async Task<TData> Run<TData>(string? key, string text, Func<global::app.error.@this, TData> failed,
+            Func<SqliteCommand, Task<TData>> statement)
         {
             try
             {
                 using var connection = new SqliteConnection(await _made.Value);
                 connection.Open();
                 using var cmd = connection.CreateCommand();
-                cmd.CommandText = $"SELECT COUNT(*) FROM [{Name}] WHERE key = @key;";
-                cmd.Parameters.AddWithValue("@key", key);
-
-                var count = Convert.ToInt64(cmd.ExecuteScalar());
-                return _store.Context.Ok<global::app.type.item.@bool.@this>(count > 0);
+                cmd.CommandText = text;
+                return await statement(cmd);
             }
-            catch (global::app.error.AppException ex) { return _store.Context.Error<global::app.type.item.@bool.@this>(ex.Error); }
-            catch (Exception ex)
-            {
-                return _store.Context.Error<global::app.type.item.@bool.@this>(SettingsError.FromException(ex, _given, key));
-            }
+            catch (global::app.error.AppException ex) { return failed(ex.Error); }
+            catch (Exception ex) { return failed(SettingsError.FromException(ex, _given, key)); }
         }
     }
 
