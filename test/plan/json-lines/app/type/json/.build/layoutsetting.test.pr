@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "comment": "json is written formatted by default, compact when %!app.type.kind.json.setting.format% says; every character as itself.",
+  "comment": "json is written formatted by default, compact when %!app.type.kind.json.setting.layout% says; every character as itself.",
   "step": [
     {
       "index": 0,
@@ -324,7 +324,7 @@
     },
     {
       "index": 5,
-      "text": "set %!app.type.kind.json.setting.format% = \"compact\"",
+      "text": "set %!app.type.kind.json.setting.layout% = \"compact\"",
       "line": {
         "number": 8,
         "indent": 0
@@ -339,10 +339,10 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%!app.type.kind.json.setting.format%",
+              "value": "%!app.type.kind.json.setting.layout%",
               "variable": [
                 {
-                  "text": "%!app.type.kind.json.setting.format%",
+                  "text": "%!app.type.kind.json.setting.layout%",
                   "code": [
                     {
                       "variable": "!app"
@@ -360,7 +360,7 @@
                       "property": "setting"
                     },
                     {
-                      "property": "format"
+                      "property": "layout"
                     }
                   ]
                 }
@@ -388,7 +388,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 5 uses variable.set, which the decider was not sure of (0.74)"
+          "message": "step 5 uses variable.set, which the decider was not sure of (0.62)"
         }
       ]
     },
@@ -519,6 +519,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 7 uses variable.set, which the decider was not sure of (0.89)"
         }
       ]
     },
@@ -729,6 +735,6 @@
     }
   ],
   "visibility": "Public",
-  "file": "FormatSetting.test.goal",
-  "hash": "770a07698dcb5fc21d4fe3e2e4342718a2f6160f8d54c94cfe8aa3a2d3ce5e42"
+  "file": "LayoutSetting.test.goal",
+  "hash": "678ba52e2e012a9a5dcca16d7d2523c75bfd2b12364b60e99281f7f20a12c079"
 }
