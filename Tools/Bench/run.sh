@@ -38,8 +38,9 @@ calm() {
   load=$l
 }
 now() { echo $(( $(date +%s%N) / 1000000 )); }
-# the end of a measurement also reads the load: another session's build started mid-run shows in the row (the 1-minute
-# load lags, so it is a floor)
+# the end of a single-threaded measurement (birth, request) also reads the load: another session's build started mid-run
+# shows in the row (the 1-minute load lags, so it is a floor). Not after a build, the sweep or plang --test: they load
+# the machine themselves (~8 on 8 cpus), so an end load there says nothing about a neighbour.
 since() { local ms=$(( $(now) - $1 )); printf '%d.%d' $((ms / 1000)) $((ms % 1000 / 100)); }
 peek() {
   local l; l=$(cut -d' ' -f1 /proc/loadavg)
@@ -57,13 +58,11 @@ if want build; then
   calm; t=$(now)
   ./dev.sh build > "$work/last-build-clean.log" 2>&1
   [ $? -eq 0 ] && row_build_clean="$(since "$t") s" || row_build_clean="FAILED"
-  peek
   # one internal file's time moves; PLang compiles again, what is built on its public surface does not
   touch "$repo/PLang/app/test/timing/this.cs"
   calm; t=$(now)
   ./dev.sh build > "$work/last-build-incr.log" 2>&1
   [ $? -eq 0 ] && row_build_incr="$(since "$t") s" || row_build_incr="FAILED"
-  peek
 fi
 
 # the tool, built Release once (after the build above: the Debug build is what the sweep and plang --test run)
@@ -99,7 +98,6 @@ if want ptest; then
   w=$(since "$t")
   c() { grep -aEc "^  \[$1\]" "$work/last-ptest.log"; }
   p_test="$w s ($(c Pass) pass, $(c Fail) fail)"
-  peek
 fi
 
 s_sweep="-"
@@ -109,7 +107,6 @@ if want sweep; then
   red=$(grep -aE '^=== .* FAILED' "$work/last-sweep.log" | grep -aoE '^=== [A-Za-z]+' | cut -c5- | tr '\n' ',' )
   red="${red%,}"
   s_sweep="$(since "$t") s (red: ${red:-none})"
-  peek
 fi
 
 # the row goes in under the marker, newest first

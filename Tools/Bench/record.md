@@ -34,8 +34,8 @@ load 1–3). A difference inside the band is noise; outside it is a change worth
 | Held MB after the rest | ±0.2 MB (root 1.7–1.8, sub 2.6) | 2 runs |
 | `plang --test`, s | ±0.5 s (4.7–5.6); the coder saw 5.0–5.4 at load ~12 | 3 rounds |
 | C# sweep, s | **±7 s** (40.6, 41.6, 54.7: 14 s apart at one load, in Modules and Runtime) | 3 rounds |
-| C# build, clean, s | **±3 s when the machine is quiet** (48.7, 53.5); one run took 168 s because another session's build ran alongside it, and says so only in the end load. A clean build is the number most hurt by a neighbour. | 3 runs |
-| C# build, incremental, s | ±1.2 s (11.6, 12.6, 13.8) | 3 runs |
+| C# build, clean, s | **±10 s when the machine is quiet** (33.8, 33.8, 47.5, 48.7, 53.5, 53.8 over 8 runs on 2 tips); two runs took 93 and 168 s with another session's compiler running beside them. A clean build is the number most hurt by a neighbour: a clean build above 60 s with `VBCSCompiler` busy elsewhere (`ps`) is the neighbour, run it again. | 8 runs |
+| C# build, incremental, s | ±2 s (9.5, 10.1, 10.6, 11.6, 12.6, 13.8; 14.9 and 22.7 once each, with a neighbour) | 8 runs |
 
 The sweep's red suites and `plang --test`'s counts are not noisy: they are a name, and any new name is a regression
 (at stage 5 the sweep's 6 red are `Wire`'s, the same names as at stage 0; `plang --test` fails
@@ -50,6 +50,7 @@ per birth + dispose; a request app is born, a goal loaded and run, disposed, × 
 | Date | Branch | Commit | Load | Sub birth | Root birth | Sub request | Root request | Held, sub (MB) | Held, root (MB) | `plang --test` | C# sweep | Build, clean | Build, incr. |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 <!-- rows -->
+| 2026-10-25 | fast-apps | fb4e80b9d / d050b9f50 (builds only, 5 runs) | 2.9 at start | - | - | - | - | - | - | - | - | 33.8–53.8 s (93.4 once beside a neighbour's build) | 9.5–14.9 s (22.7 once) |
 | 2026-10-25 | fast-apps | d050b9f50 (review5-d050b9f50) | 12.71 | 0.27 ms, 110 KB | 29.83 ms, 2360 KB | - | - | - | - | - | - | 98.3 s | 15.6 s |
 | 2026-10-25 | fast-apps | dec53e6c4 (review4 N1) | 2.59 | 0.15 ms, 110 KB | 18.62 ms, 2359 KB | - | - | - | - | - | - | - | - |
 | 2026-10-25 | fast-apps | d1fb4dd29 (review4-build-rerun) | 13.66 | - | - | - | - | - | - | - | - | 74.9 s | 9.1 s |
