@@ -200,6 +200,14 @@ public sealed class Default : IIdentity
         var identity = await ResolveIdentityAsync(action, name);
         if (!identity.Success) return identity;
         var exported = (await identity.Value())!;
+        // an app gives out only an identity it holds itself: one its origin answers (a sub app's, its maker's) is the
+        // maker's, never the sub app's to give — refused before anyone is asked
+        var (items, err) = await LoadAll(action);
+        if (err != null) return action.Context.Error<Identity>(err);
+        if (!items.Exists(i => string.Equals(i.PublicKey, exported.PublicKey, StringComparison.Ordinal)))
+            return action.Context.Error<Identity>(new ActionError(
+                $"the identity '{exported.Name}' is not this app's own: it is the app's that made this one, and only that app gives out its key",
+                "IdentityNotOwn", 403));
         // what a yes means, said plainly: the key leaves as text the step can send anywhere — this once
         if (await Consent(action, $"export the private key of the identity '{exported.Name}' — the step gets the key as text it " +
                 "can send anywhere, for this call only; you are asked every time, and the answer is never kept", exported.Name,
