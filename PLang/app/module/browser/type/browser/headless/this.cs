@@ -17,8 +17,8 @@ public sealed class @this : browser.@this
 {
     private readonly cdp.session.@this _page;
     private readonly string _format;
-    // sends a line up beside the frames (the pointer the page wants)
-    private Func<string, Task>? _emit;
+    // sends a value up beside the frames (the pointer the page wants): OnFrame writes it, and its channel ends the line
+    private Func<global::app.type.item.@this, Task>? _emit;
     private string _lastCursor = "default";
     private long _lastCursorAsk;
     private int _cursorBusy;
@@ -60,12 +60,12 @@ public sealed class @this : browser.@this
             });
             if (onFrame != null)
             {
-                Task Deliver(string line) => global::app.module.on.code.Gate.Call(onFrame,
-                    new global::app.data.@this("!data", line, context.App.type.list["text"], context: context), context);
+                Task Deliver(global::app.type.item.@this value) => global::app.module.on.code.Gate.Call(onFrame,
+                    new global::app.data.@this("!data", value, context: context), context);
                 browser._emit = Deliver;
                 _ = Task.Run(async () =>
                 {
-                    await foreach (var line in frames.Reader.ReadAllAsync()) await Deliver(line);
+                    await foreach (var line in frames.Reader.ReadAllAsync()) await Deliver((global::app.type.item.text.@this)line);
                 });
             }
             browser.Watched();
@@ -198,10 +198,8 @@ public sealed class @this : browser.@this
                 var css = value.GetString()!;
                 if (css == _lastCursor) return;
                 _lastCursor = css;
-                // the cursor writes itself: the line it is, beside the frames
-                using var stream = new MemoryStream();
-                var encoded = await context.App.type.list.Mime("application/json").Encode(stream, context.Ok(new cursor.@this(css)), context);
-                if (encoded.Success) await _emit!(Encoding.UTF8.GetString(stream.ToArray()));
+                // the cursor goes up as itself, beside the frames: the channel OnFrame writes it to makes it a line
+                await _emit!(new cursor.@this(css));
             }
             catch (Exception ex) when (ex is TimeoutException or JsonException or IOException or InvalidOperationException)
             {
