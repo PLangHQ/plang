@@ -15,15 +15,18 @@ public class ImageSharpReachProbeTests
         return b;
     }
 
+    // Asked through the image type's own door (an image's size, as a program reads %image.width%): the size is read only
+    // for the formats the image type reads a header of, so these bytes never reach a TIFF decoder.
     [Test]
-    public async Task Identify_OnA24ByteBigTiff_AnswersQuickly()
+    public async Task AnImagesSize_OfA24ByteBigTiff_AnswersQuickly()
     {
-        var bytes = BigTiff();
+        await using var app = new global::app.@this("/imageprobe", global::PLang.Tests.Parent.Actor).Testing();
+        var image = new global::app.type.item.image.@this(BigTiff(), app.type.list["image"]);
         // the read runs on a thread of its own so a read that never ends fails the test, not the run (it stays pinned
         // until the process ends)
         var read = System.Threading.Tasks.Task.Run(() =>
         {
-            try { SixLabors.ImageSharp.Image.Identify(bytes); } catch (System.Exception) { /* a refusal is fine */ }
+            try { _ = image.Width; } catch (global::app.error.AppException) { /* a refusal is fine */ }
         });
         var answered = read.Wait(3000);
         await Assert.That(answered).IsTrue().Because("24 bytes held the reader past 3 s");

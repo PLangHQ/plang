@@ -305,10 +305,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
     }
 
-    // An image's size, read from its header. Bytes that can't be identified are an error, never a 0×0 image.
+    // The formats whose size the image type reads from their header, by the name the bytes' magic gives them. A
+    // constant: readonly, never written, the same for every app. TIFF is not among them: its decoder can be held by
+    // 24 bytes (a BigTIFF's IFD count), so its header is never read.
+    private static readonly System.Collections.Generic.HashSet<string> Sized =
+        new(["JPEG", "PNG", "GIF", "BMP", "WEBP"], System.StringComparer.OrdinalIgnoreCase);
+
+    // An image's size, read from its header — for a format whose size the image type reads; the format told by its
+    // magic bytes alone, before any decoder runs. Bytes that can't be identified are an error, never a 0×0 image.
     private (int w, int h) ProbeDimensions()
     {
         if (Bytes.Length == 0) return (0, 0);
+        var format = SixLabors.ImageSharp.Image.DetectFormat(Bytes);
+        if (format is null || !Sized.Contains(format.Name))
+            throw new global::app.error.AppException(new global::app.error.@this(
+                $"an image's size is read for {string.Join(", ", Sized)}; these bytes are {format?.Name ?? "no image format known"}",
+                "ImageSizeUnread", 415));
         var info = SixLabors.ImageSharp.Image.Identify(Bytes);
         return (info.Width, info.Height);
     }
