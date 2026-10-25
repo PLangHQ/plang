@@ -31,8 +31,14 @@ ImageSharp 4.x (and 3.2.0, which backports it) runs a licence check in `build/Si
 
 Sizes (MB), PlangConsole: Debug bin 67 → 28; publish linux-x64 17 → 27, win-x64 18 → 29, osx-arm64 32.
 
+## Codeanalyzer's review (packages 13)
+- F1: a screen's picture has one owner, `PLang/app/module/screen/type/screen/code/Bitmap.cs` (BGRA pixels, width, height). It reads PNG/JPEG into itself (`new Bitmap(bytes)`, FormatException when no image) and writes itself as PNG (`Png`). Shown's canvas and the native window's are a Bitmap, so the `(bgra, w, h)` tuple, `Window.Pixels` and the window's swallowed decode catch are gone. A bad frame line on the decode thread is reported as BadFrame. Shown wasn't made the owner itself: it is a fixed-size canvas with a video decoder and a lock, while a decoded frame takes its size from its bytes.
+- F2: the TIFF magics are pinned by FromBytes and ValidateKind tests (each red without the lines).
+- F3: three unused usings out of crypto's Default. `Tools/obp-longmethods.py` names `Tools/ObpScan`.
+- Per commit, `plang --test '--test.setting.exclude=["llm"]'`: 292 pass, 1 fail (the baseline's), 3 stale, 7 skipped (6 of them llm).
+
 ## Next
-- `Tools/Bench/run.sh` row at the tip, then codeanalyzer.
+- Codeanalyzer's re-review.
 - `scratch/skiasharp` (pushed) holds the measurement commits; delete it once packages merges.
 
 ## Code example
