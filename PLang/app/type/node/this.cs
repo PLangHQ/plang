@@ -51,10 +51,6 @@ public class @this<T, L> : @this
     public L list => System.Threading.Volatile.Read(ref _made) ? _list!
         : System.Threading.LazyInitializer.EnsureInitialized(ref _list, ref _made, ref _gate, () => T.List(_app))!;
 
-    // The class of the concept's own settings, when its element names one (test: IConcept<test.setting>): a fact of the
-    // class, as the code that made the concept's type read it.
-    private System.Type? _setting => type.Facts(typeof(T)).Setting;
-
     // The list the asker sees — its own for a concept whose list belongs to the asker, else the app's.
     // Navigation always asks through here: one path for every concept.
     private protected L Of(actor.context.@this context) => T.Of(context) ?? list;
@@ -104,8 +100,10 @@ public class @this<T, L> : @this
     {
         if (string.Equals(key, "list", System.StringComparison.OrdinalIgnoreCase))
             return new data.@this(key, Of(parent.Context), parent: parent);
-        // the concept's own settings (%!app.test.setting%), as the asker's settings build them
-        if (string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase) && _setting is { } @class)
+        // the concept's own settings (%!app.test.setting%), as the asker's settings build them: the class its element
+        // names (test: IConcept<test.setting>), a fact of the class as the code that made the concept's type read it
+        if (string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
+            && type.Facts(typeof(T)).Setting is { } @class)
             return await parent.Context.Setting.Get(@class) ?? parent.Context.NotFound(key);
         if (string.Equals(key, "type", System.StringComparison.OrdinalIgnoreCase))
             return new data.@this(key, type, parent: parent);

@@ -52,9 +52,9 @@ public sealed partial class @this : global::app.type.item.@this
     // nothing finds none).
     private readonly global::app.type.list.@this _types;
     private global::app.type.@this? _callType, _bindingType, _isolatedType, _datetimeType, _dictType, _errorsType;
-    private global::app.type.@this _call => _callType ??= _types[typeof(call.@this)];
-    private global::app.type.@this _binding => _bindingType ??= _types[typeof(call.binding.@this)];
-    private global::app.type.@this _isolated => _isolatedType ??= _types[typeof(call.isolated.@this)];
+    private global::app.type.@this Call => _callType ??= _types[typeof(call.@this)];
+    private global::app.type.@this Binding => _bindingType ??= _types[typeof(call.binding.@this)];
+    private global::app.type.@this Isolated => _isolatedType ??= _types[typeof(call.isolated.@this)];
 
     /// <summary>The app's datetime type — a frame's start and end are of it.</summary>
     internal global::app.type.@this Datetime => _datetimeType ??= _types[typeof(global::app.type.item.datetime.@this)];
@@ -181,28 +181,28 @@ public sealed partial class @this : global::app.type.item.@this
     /// <param name="setting">What the stack captures, as its async caller read it (<see cref="Setting"/>).</param>
     /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
     public call.@this Push(global::app.goal.@this goal, setting.@this setting, IEnumerable<global::app.data.@this>? names = null)
-        => Enter(new call.@this(_call, this, goal, setting, names));
+        => Enter(new call.@this(Call, this, goal, setting, names));
 
     /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
     /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
     public call.@this Push(IEnumerable<global::app.data.@this>? names, setting.@this setting, global::app.goal.step.action.@this? held = null)
-        => Enter(new call.binding.@this(_binding, _current.Value, this, names, held, setting));
+        => Enter(new call.binding.@this(Binding, _current.Value, this, names, held, setting));
 
     /// <summary>Pushes a frame with memory of its own, born with <paramref name="names"/>: every write under it stays
     /// in it (a tool's goal, a shortcut's). A task's run starts its chain with one whose <paramref name="caller"/> is
     /// the frame its caller was in — reads fall through to the caller's frames and memory.</summary>
     public call.@this Isolate(IEnumerable<global::app.data.@this>? names, setting.@this setting,
         global::app.goal.step.action.@this? held = null, call.@this? caller = null)
-        => Enter(new call.isolated.@this(_isolated, caller ?? _current.Value, this, names, held, setting));
+        => Enter(new call.isolated.@this(Isolated, caller ?? _current.Value, this, names, held, setting));
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
     public call.@this Push(global::app.goal.step.@this step, setting.@this setting)
-        => Enter(new call.@this(_call, this, step, setting));
+        => Enter(new call.@this(Call, this, step, setting));
 
     /// <summary>Pushes the frame of an action starting: its step's goal, its step and itself — an action composed
     /// in C# holds no step. <paramref name="variables"/> is the store for diff capture (when Diff is on).</summary>
     public call.@this Push(global::app.goal.step.action.@this action, setting.@this setting, Variables? variables = null)
-        => Enter(new call.@this(_call, this, action, setting, variables));
+        => Enter(new call.@this(Call, this, action, setting, variables));
 
     // The frame a frame pushed now is called from — the current one; past MaxDepth (the caller's own depth) the
     // overflow.
