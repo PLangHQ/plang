@@ -12,4 +12,7 @@ public interface IAnswer : ICode
     /// <summary>The answer to <paramref name="body"/>, the request as the API takes it, for <paramref name="action"/>:
     /// the response's body, or the error that came back.</summary>
     Task<data.@this> Ask(data.@this body, query action);
+
+    /// <summary>Keeps what a passing run asked, where the answers are kept: Ok, or the error that kept them from it.</summary>
+    Task<data.@this> Keep(global::app.actor.context.@this context);
 }

@@ -40,4 +40,7 @@ public sealed class Live : IAnswer
         };
         return await new global::app.goal.step.action.@this(send, context).Start(context);
     }
+
+    /// <summary>OpenAI keeps nothing of a run.</summary>
+    public Task<data.@this> Keep(global::app.actor.context.@this context) => Task.FromResult(context.Ok());
 }

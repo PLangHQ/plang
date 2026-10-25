@@ -237,7 +237,8 @@ miss and then a hit.
 - `--test.setting.llm=live` asks the LLM every time, the file neither read nor written: the check that the LLM still
   takes the requests. The default is `saved`.
 
-The file is plain json, indented, one `{request, response}` per question: review it in the diff like the test.
+The file is a list of exchanges, one `{request, response}` per question, saved through the path in plang's json:
+review it in the diff like the test.
 
 ## v2 .pr File Format
 

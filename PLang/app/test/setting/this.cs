@@ -22,7 +22,7 @@ public sealed class @this : global::app.type.item.setting.@this
     /// <summary>Where a test's llm questions are answered: <c>saved</c> (the default), from the file beside the test
     /// (<c>X.test.llm.json</c>), a question not in it asked once and added, and the file kept to what a passing run
     /// asked; or <c>live</c>, every one asked of the llm, the file neither read nor written.</summary>
-    [Out, Store] public global::app.type.item.choice.@this<global::app.test.llm> Llm { get; set; } = global::app.test.llm.saved;
+    [Out, Store] public global::app.type.item.choice.@this<global::app.module.llm.type.answer> Llm { get; set; } = global::app.module.llm.type.answer.saved;
 
     /// <summary>How many tests run at once; 0 (the default) is one per processor — a default the same on every
     /// machine, so it reads (and is taught) the same everywhere.</summary>

@@ -41,7 +41,7 @@ public class LlmAnswersFileTests
             await (await new global::app.type.item.variable.parser.@this("%!llm.setting.key%", app.type.list).Variable.Single()
                 .Set(context.Ok(context.Text(key)), context)).IsSuccess();
 
-        var saved = new Saved(global::app.type.item.path.@this.Resolve(Goal, context), app.Code.Get<IAnswer>().Provider!, context);
+        var saved = new Saved(global::app.type.item.path.@this.Resolve(Goal, context), app.Code.Get<IAnswer>().Provider!);
         app.Code.Register<IAnswer>(saved);
         app.Code.SetDefault<IAnswer>(saved.Name);
 
@@ -52,6 +52,11 @@ public class LlmAnswersFileTests
         await (await saved.Keep(context)).IsSuccess();
         return ((await result.Value())?.ToString(), openAi);
     }
+
+    // each saved request's user message, as the file holds it
+    private async Task<List<string>> Questions()
+        => System.Text.Json.Nodes.JsonNode.Parse(await System.IO.File.ReadAllTextAsync(File))!.AsArray()
+            .Select(exchange => exchange!["request"]!["messages"]!.AsArray().Last()!["content"]!.GetValue<string>()).ToList();
 
     [Test]
     public async Task ANewQuestion_IsAskedOnce_ThenRead()
@@ -74,9 +79,9 @@ public class LlmAnswersFileTests
         await Assert.That(changed.OpenAi.CallCount).IsEqualTo(1).Because("a changed prompt is a new question");
         await Assert.That(changed.Answer).IsEqualTo("six");
 
-        var file = await System.IO.File.ReadAllTextAsync(File);
-        await Assert.That(file).Contains("3+3").Because("the new question is added");
-        await Assert.That(file).DoesNotContain("2+2").Because("the file keeps what the run asked, no more");
+        var file = await Questions();
+        await Assert.That(file).Contains("What is 3+3?").Because("the new question is added");
+        await Assert.That(file).DoesNotContain("What is 2+2?").Because("the file keeps what the run asked, no more");
     }
 
     [Test]
@@ -86,7 +91,10 @@ public class LlmAnswersFileTests
         var run = await Run("What is 2+2?", "four", key);
 
         await Assert.That(run.OpenAi.LastRequest!.Headers.Authorization?.Parameter).IsEqualTo(key).Because("the key went with the request");
+        // the file as it is, and as what it holds: no escaping hides the key
         await Assert.That(await System.IO.File.ReadAllTextAsync(File)).DoesNotContain(key);
+        await Assert.That(System.Text.Json.Nodes.JsonNode.Parse(await System.IO.File.ReadAllTextAsync(File))!.ToJsonString(
+            new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping })).DoesNotContain(key);
     }
 
     // Two of plang's own llm tests, run at once by the test runner, each in its app: each file holds both tests'

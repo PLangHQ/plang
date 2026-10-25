@@ -138,11 +138,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var setting = await context.Setting.Get<global::app.test.setting.@this>();
         // its llm questions answered from the file beside it, unless the run asks live: registered on its own app, whose
         // code registry is its alone
-        var saved = setting.Llm.Value == global::app.test.llm.saved
-            && app.Code.Get<global::app.module.llm.code.IAnswer>() is { Provider: { } live }
-            ? new global::app.module.llm.code.Saved(Goal.Path!, live, user) : null;
-        if (saved != null)
+        if (setting.Llm.Value == global::app.module.llm.type.answer.saved)
         {
+            var saved = new global::app.module.llm.code.Saved(Goal.Path!, app.Code.Get<global::app.module.llm.code.IAnswer>().Provider!);
             app.Code.Register<global::app.module.llm.code.IAnswer>(saved);
             app.Code.SetDefault<global::app.module.llm.code.IAnswer>(saved.Name);
         }
@@ -161,8 +159,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             if (timedOut()) Complete(Status.Timeout);
             else Complete(result);
             // a passing run's answers kept: the file holds what it asked, no more
-            if (saved != null && Status == Status.Pass && await saved.Keep(user) is { Success: false } unkept)
-                Complete(Status.Fail, unkept.Error);
+            if (Status == Status.Pass && await app.Code.Get<global::app.module.llm.code.IAnswer>().Provider!.Keep(user) is { Success: false } kept)
+                Complete(Status.Fail, kept.Error);
         }
         catch (System.OperationCanceledException) when (timedOut())
         {

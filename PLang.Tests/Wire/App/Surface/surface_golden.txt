@@ -3623,6 +3623,8 @@ type error
 
 type event
 
+type exchange
+
 type file
   .path : path
 

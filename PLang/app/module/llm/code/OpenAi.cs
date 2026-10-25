@@ -61,8 +61,8 @@ public sealed class OpenAi : ILlm
 
         // --- Config: the llm module's settings; the endpoint and key are the answer's (Live asks the key when it sends) ---
         var llm = await context.Setting.Get<global::app.module.llm.setting.@this>();
-        var (answer, unanswered) = app.Code.Get<IAnswer>();
-        if (answer == null) return context.Error(unanswered!);
+        var (answer, error) = app.Code.Get<IAnswer>();
+        if (answer == null) return context.Error(error!);
         var model = ((action.Model == null ? null : await action.Model.Value())?.ToString()) is { Length: >0 } __m ? __m : llm.Model.ToString();
 
         // --- Validate ---
