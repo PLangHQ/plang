@@ -36,6 +36,8 @@ and costs what it uses: born in about 0.1 MB instead of about 5 MB, reading its 
 | 49, 51 — security S-A, S4 | a sub app is made in its maker's folder or under it, never in its maker's stores folder (`OutsideItsMaker`) | a92ac889e, 394f8f43f | `actor/this.cs` (origin's `Filesystem`), `origin/*`, `app/this.cs`, `PLang.Tests/Shared/Parent.cs` (rooted at `/`) |
 | 56 — stage 5 | (1) each store's in-memory database is its own, and one nothing wrote answers without opening SQLite; (3) a setting class's path and members are its code's facts | 343657480, bf538555f | `store/{code/*,sqlite/this.cs}`, `type/list/Code.cs`, `type/item/setting/this.cs`, `actor/setting/this.cs` |
 | 57 | one door to a class's facts on a type, `type.Facts(clr)` | b8be3c7bb | `type/this.cs` and its callers |
+| 58 | a goal's .pr made once from its Path; a goal list finds the goal it holds for a .pr in one look (a private index beside its rows). The runner's list is every test app's parent: each add had walked every held goal's .pr under the lock | c63628481 (red 38dc51689) | `goal/this.cs`, `goal/list/this.cs` — plang --test about 15 s → 5.5–5.9 s |
+| 60 | discovery makes the tests at the runner's width, in the listing's order | 33b6d3698 (guard b4199cc15) | `test/list/this.cs` — plang --test 5.0–5.4 s at load 11–13 |
 
 ### Stage 4, a birth makes only what's asked for
 
@@ -76,8 +78,8 @@ saved about 300 B, inside the noise, with no red test.
 - **Only the shipped identity provider can ask the origin** (Default.cs): an IIdentity loaded from a DLL can't
   (41, with 266).
 - **Stage 5 (2), a list's positional reads from its snapshot** (55, 56): measured inside the noise; not built.
-- **Where `plang --test`'s time goes** (about 15 s; none of stage 5's three moved it): with the tester, a measurement
-  (56).
+- **The report's coverage walk in parallel** (59, 60): it fell away. After 58 it is 0.13–0.19 s, inside the run's
+  noise; the 3.3 s was 58's lock.
 - **19 parts 2 and 3**:
   - a kind a sub app adds to its maker's type, refused as TypesShared until the kind lookup starts from the asker's app;
   - a sub app's loaded code going away with it (a collectible load context, class-keyed caches held by their app).
