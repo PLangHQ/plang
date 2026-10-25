@@ -16,6 +16,13 @@ public class Fluid : ITemplate
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
+    // how a template writes its values, by its format's mime: a page escapes them for html; a template of any other
+    // format, or an inline one, writes them as they are
+    private readonly Dictionary<string, System.Text.Encodings.Web.TextEncoder> _encoder = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["text/html"] = System.Text.Encodings.Web.HtmlEncoder.Default,
+    };
+
     // The parser with plang's tags and operators.
     private FluidParser Parser()
     {
@@ -127,7 +134,7 @@ public class Fluid : ITemplate
         // (IsSequence, RawBytes, …). The value is taken as it is: a text holding %…% is those characters. A page
         // renders it as it is (no encoder), so the json is made safe for the page here, whatever the json format
         // writes: < > & escaped, which json reads back the same — they can stand only inside a json string, so a
-        // value's </script> never closes the page's script.
+        // value's </script> never closes the page's script. Safe as it is, a page writes it unescaped: a `"` stays a `"`.
         options.Filters.AddFilter("json", async (input, _, _) =>
         {
             var value = new global::app.data.@this("", input is Item plang ? plang.Held
@@ -136,7 +143,15 @@ public class Fluid : ITemplate
             var answer = await action.Context.App.type.list.Mime("application/json").Encode(json, value, action.Context);
             if (!answer.Success) throw new AppException(answer.Error!);
             return new StringValue(System.Text.Encoding.UTF8.GetString(json.ToArray())
-                .Replace("<", "\\u003C").Replace(">", "\\u003E").Replace("&", "\\u0026"));
+                .Replace("<", "\\u003C").Replace(">", "\\u003E").Replace("&", "\\u0026"), encode: false);
+        });
+
+        // `{{ x | raw }}` writes trusted html as it is in a page: the value written through its own write, unescaped.
+        options.Filters.AddFilter("raw", async (input, _, context) =>
+        {
+            using var raw = new StringWriter();
+            await input.WriteToAsync(raw, NullEncoder.Default, context.CultureInfo);
+            return new StringValue(raw.ToString(), encode: false);
         });
 
         // `{{ x | text }}` writes the value as plang's text format writes it — a leaf bare, a container as its json:
@@ -177,14 +192,17 @@ public class Fluid : ITemplate
             }
         }
 
-        // Render with HTML encoding for security (XSS prevention)
+        // A page's values are escaped for html (callGoal's answer among them); any other template writes them as they are
         try
         {
             // Fluid asks for an include through a synchronous file provider: every include the template
             // names is read first, through the gate, so the render reads them from memory.
             await includes.Load(fluidTemplate, parser);
             var writer = new StringWriter();
-            await fluidTemplate.RenderAsync(writer, NullEncoder.Default, fluidContext);
+            // the encoder the template's format names by its mime; an inline template, or one of any other format, none
+            var encoder = format?.kind.Mime.Select(mime => _encoder.GetValueOrDefault(mime)).FirstOrDefault()
+                ?? NullEncoder.Default;
+            await fluidTemplate.RenderAsync(writer, encoder, fluidContext);
             var rendered = writer.ToString();
             // The rendered characters go through the declared format's OWN birth (kind.Decode — the same door a
             // url served that format decodes through, content.@this): a .json template is born an unread
