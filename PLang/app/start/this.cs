@@ -44,9 +44,9 @@ public sealed class @this
             if (!IsProperty(arg))
             {
                 if (goal != null)
-                    throw Refused($"'{arg}' is a second goal: the line names one goal, '{goal}'. A value is {arg}=…, a setting --{arg}=….");
+                    throw new global::app.error.AppException(Refused($"'{arg}' is a second goal: the line names one goal, '{goal}'. A value is {arg}=…, a setting --{arg}=…."));
                 if (IsSettingPath(arg))
-                    throw Refused($"'{arg}' is no goal: a setting is written --{arg}=…, a value {arg}=….");
+                    throw new global::app.error.AppException(Refused($"'{arg}' is no goal: a setting is written --{arg}=…, a value {arg}=…."));
                 goal = arg;
                 continue;
             }
@@ -130,9 +130,9 @@ public sealed class @this
         => arg.Contains('.') && !arg.StartsWith('.') && !arg.Contains('/') && !arg.Contains('\\')
            && !arg.EndsWith(".goal", StringComparison.OrdinalIgnoreCase);
 
-    // What the line can't be read as: the run's answer, before any app reads it.
-    internal static global::app.error.AppException Refused(string why)
-        => new(new global::app.error.@this(why, "ArgumentRefused", 400));
+    /// <summary>What the line can't be read as, <paramref name="why"/>: the run's answer (ArgumentRefused), whoever
+    /// reads the line — the parse, or the run reading its mode words.</summary>
+    internal static global::app.error.@this Refused(string why) => new(why, "ArgumentRefused", 400);
 
     // A value as written: JSON first (numbers, booleans, null, objects, arrays), else the text, its shell quotes off.
     private static object Value(string raw)

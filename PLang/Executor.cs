@@ -43,10 +43,17 @@ namespace PLang
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.System);
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
 
+			// the run's answer when it doesn't start: the app made for it let go, the error the answer
+			async Task<(global::app.@this? Engine, global::app.data.@this? Error)> Refused(global::app.data.@this error)
+			{
+				await app.DisposeAsync();
+				return (null, error);
+			}
+
 			// a line it can't read is the run's answer, the argument named
 			global::app.start.@this start;
 			try { start = global::app.start.@this.Parse(args); }
-			catch (global::app.error.AppException ex) { return (null, app.actor.list.System.Context.Error(ex.Error)); }
+			catch (global::app.error.AppException ex) { return await Refused(app.actor.list.System.Context.Error(ex.Error)); }
 
 			// A flag is a setting's path: --channel.setting.format=plang is this run's value for
 			// %!app.channel.setting.format%, on the system actor (the user falls back to it); the mode words alone
@@ -68,20 +75,19 @@ namespace PLang
 			foreach (var word in words)
 			{
 				if (word.Value is IDictionary<string, object?>)
-					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
+					return await Refused(app.actor.list.System.Context.Error(new global::app.error.@this(
 						$"'--{word.Name}' takes no settings: write them at its setting's path, --{store.Address(modes[word.Name].Setting)}={{…}} or --{store.Address(modes[word.Name].Setting, "<option>")}=value.",
 						"UnknownSetting", 400)));
 				// a mode word is on or off; any other value it would drop — the line says what it meant another way
 				if (word.Value is not bool)
-					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
+					return await Refused(app.actor.list.System.Context.Error(global::app.start.@this.Refused(
 						$"'--{word.Name}={word.Value}' gives --{word.Name} a value it takes none of: it is on (--{word.Name}) or off (--{word.Name}=false). "
-						+ modes[word.Name].Meant(word.Value),
-						"ArgumentRefused", 400)));
+						+ modes[word.Name].Meant(word.Value))));
 			}
 			// the flags that are settings' paths (the mode words left out), each checked by its setting, then all
 			// written — the command line's values, the last word; a typo is the run's answer, and nothing is written
 			var set = await start.Set(store, app.actor.list.System.Context, modes.Keys);
-			if (!set.Success) return (null, set);
+			if (!set.Success) return await Refused(set);
 			var values = (await set.Value())!;
 
 			// A mode is on when its word is given (and not false), or when the run writes its setting.
@@ -90,9 +96,8 @@ namespace PLang
 			// a mode turned off while the line writes its setting says two things: the run's answer, naming both
 			foreach (var word in words.Where(word => word.Value is false))
 				if (values.KeyNames.FirstOrDefault(address => store.Of(address) == modes[word.Name].Setting) is { } address)
-					return (null, app.actor.list.System.Context.Error(new global::app.error.@this(
-						$"'--{word.Name}=false' turns {word.Name} off, and '--{address}' turns it on: write one of them.",
-						"ArgumentRefused", 400)));
+					return await Refused(app.actor.list.System.Context.Error(global::app.start.@this.Refused(
+						$"'--{word.Name}=false' turns {word.Name} off, and '--{address}' turns it on: write one of them.")));
 
 			// The modes' defaults, under the command line's values: a debug run shows each step's time, so this run's
 			// call stacks time their frames, unless the line set timing itself (--call.setting.timing=false still says not).
@@ -110,7 +115,7 @@ namespace PLang
 			if (On("debug"))
 			{
 				app.Debug = new Debug(app.actor.list.System.Context);
-				if (await app.Debug.Activate() is { } refused) return (null, app.actor.list.System.Context.Error(refused));
+				if (await app.Debug.Activate() is { } refused) return await Refused(app.actor.list.System.Context.Error(refused));
 			}
 
 			// Test mode: its setting names the actor the run's session opens on. What it tests is the positional (a folder

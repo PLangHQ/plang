@@ -19,8 +19,8 @@ public sealed class @this
             && !string.Equals(before.Name, property.Name, StringComparison.Ordinal))
         {
             var dashes = property.IsFlag ? "--" : "";
-            throw global::app.start.@this.Refused(
-                $"'{dashes}{before.Name}' and '{dashes}{property.Name}' are one {(property.IsFlag ? "setting" : "value")} written twice in different case: write it once.");
+            throw new global::app.error.AppException(global::app.start.@this.Refused(
+                $"'{dashes}{before.Name}' and '{dashes}{property.Name}' are one {(property.IsFlag ? "setting" : "value")} written twice in different case: write it once."));
         }
         _property[(property.Name, property.IsFlag)] = property;
     }
