@@ -346,6 +346,22 @@ public class RenderTests : IDisposable
         await Assert.That(output).Contains("I am a partial");
     }
 
+    // one include named both ways in one template — with its .liquid and without — is the one include, read once
+    [Test]
+    public async Task Render_Include_NamedWithAndWithoutItsExtension_RendersBoth()
+    {
+        WriteTemplateFile("partial.liquid", "P");
+        var context = _app.actor.list.User.Context;
+        var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% include 'partial.liquid' %}-{% include 'partial' %}",
+            IsFile = (global::app.type.item.@bool.@this)false
+        };
+
+        var result = await _provider.Render(action);
+
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("P-P");
+    }
+
     [Test]
     public async Task Render_Include_InheritsVariables()
     {
