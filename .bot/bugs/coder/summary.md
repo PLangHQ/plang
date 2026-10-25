@@ -45,12 +45,30 @@ packages' Windows window, and Ingi's three yeses. The plan is the architect's, a
   born of its actor's channels: the base takes its list, `Actor` is the list's, Register and Set guard a channel born
   elsewhere, and every late `Actor =` stamp is gone. The surface golden was re-pinned for each, naming fast-apps N1–N3.
 - Also: the `| json` filter escapes `< > &` itself, so a page stays safe whatever the json writer writes (9f65bf639).
+- **A page escapes what it writes** (bugs 44: ca721e342, 1886e9f71, fb65c2064, 204b37559). `ui/code/Fluid.cs` picks
+  its encoder by the template format's own mime from `_encoder` (text/html, image/svg+xml → HtmlEncoder); any other
+  template, and an inline one, writes values as they are, so the builder's prompts are unchanged. callGoal's answer
+  goes through the same encoder. `| json` is written unencoded (it belongs in a script, never an attribute); `| raw`
+  is new (Fluid 2.40 has none) and writes a value through its own write, unescaped. The render's catch-all now holds
+  the fault whole as its cause (`list = [Error.FromException(ex)]`).
+- **From the Windows run** (bugs 46–47):
+  - 003494d74: `call/list` Push refuses a frame as CallStackOverflow also when the thread's stack runs short
+    (`RuntimeHelpers.TryEnsureSufficientExecutionStack`): 1500 frames fit 8 MB, not Windows' 1 MB, and an overflow
+    ends the process. StackDepthTests runs a self-calling goal on a 256 KB thread. The exception's `MaxDepth` is `Depth`.
+  - cf8558c25: `LlmTestHelper.Mock(app, handler)` is the one door for a test's llm HTTP mock; it gives the app a
+    test key, so no mocked test needs OPENAI_API_KEY (83 were red without it).
+  - aa58ceb9b: OpenAiImageDenialTests names its out-of-root file in plang's OS-rooted form (`//tmp/x` on Unix), so
+    the denial is really reached on Linux.
+  - d2abb8292: a framed stream channel's `End` is `"\n"` on every OS (was Environment.NewLine, so on Windows LF
+    lines never read); CR LF still reads as one end.
 
 ## In progress / next
 - The json writer setting (`%!type.json.setting.format%`, `formatted | compact`): its shape is approved, but it
   waits on Ingi's answer about a json-lines kind for the line writers (errors.jsonl, the headless cursor line, json
   channel lines). Then the six `.llm.json` files are rewritten from themselves, no OpenAI.
-- The Windows run (the window, APatchBeforeTheFirstFrame, the path probes).
+- The Windows run (the window, APatchBeforeTheFirstFrame, the path probes), and the host's rerun of d2abb8292.
+  Left for the windows branch: Test_Complete's ≥1 ms duration, the 152 KB first-ask bound, and
+  `terminal/type/process/this.cs:232` (a child's stdin line with the OS newline).
 - The gate: the llm tests once live (`--test.setting.llm=live`), and the full gate.
 - Kept for llm-provider by Ingi: OpenAi.cs's older smells (the envelope cache entry, its static helpers).
 
