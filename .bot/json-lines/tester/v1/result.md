@@ -17,7 +17,7 @@
 | cursor written as text (`headless/this.cs:205`) | back to json | **nothing** (finding 1) |
 | blank line skipped (`jsonl/this.cs:52`) | removed | ABlankLine_IsSkipped + 3 |
 | CR trimmed (`jsonl/this.cs:51`) | removed | nothing: json reads a trailing CR as whitespace, an equivalent mutation |
-| pasted json laid on one line (`jsonl/writer.cs:61`) | always re-lay | none red the other way; always re-lay is output-equal, so not mutated further; removing the re-lay is covered by JsonContent_IsOneLine / …InADict (red when the condition is forced off, not shown here) |
+| pasted json laid on one line (`jsonl/writer.cs:61`) | never re-lay (`if (true)`) | JsonContent_IsOneLine, JsonContentInADict_IsOneLine |
 | layout read (`json/this.cs:54`) | always indented | Json_IsCompact_WhenTheSettingSays, TheLayout_IsSetAlongItsPath |
 | layout default (`json/setting/this.cs:14`) | compact | Json_IsFormatted_ByDefault, TheLayout_IsReadAlongItsPath |
 | llm tool result as text (`OpenAi.cs:534`) | back to json | **nothing** (finding 2) |
