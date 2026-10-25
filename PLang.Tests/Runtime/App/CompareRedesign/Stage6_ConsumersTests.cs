@@ -199,7 +199,7 @@ public class Stage6_ConsumersTests
         // item-leaf/ToRaw collapse at the bind site.
         var src = await File.ReadAllTextAsync(SourceOf(typeof(global::app.store.sqlite.@this)));
         await Assert.That(src).DoesNotContain("ToRaw");
-        await Assert.That(src).Contains("Store.Format.Encode(ms, data, Store.Context, global::app.View.Store)");
+        await Assert.That(src).Contains("_store.Format.Encode(ms, data, _store.Context, global::app.View.Store)");
     }
 
     [Test]
