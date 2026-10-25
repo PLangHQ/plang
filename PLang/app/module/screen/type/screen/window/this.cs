@@ -43,11 +43,12 @@ public sealed class @this : screen.@this
 
     // PlangOS's errors (what its desktop lists, sent up through the shell's errorlog channel), kept in errors.jsonl in
     // the app's folder — read on the host, no copying from the screen. Each a record: when, where, the error itself,
-    // written by the json writer, one per line; kept across starts.
+    // written in the file's own format (JSON Lines, a record a line); kept across starts.
     internal static async Task Kept(System.Threading.Channels.ChannelReader<byte[]> errors, global::app.actor.context.@this context)
     {
         var file = global::app.type.item.path.file.@this.Resolve("/errors.jsonl", context);
         var json = context.App.type.list.Mime("application/json");
+        var lines = file.Kind(context).kind;
         await foreach (var sent in errors.ReadAllAsync())
         {
             // what came up is what the shell wrote through its json channel: read back through the json kind; what
@@ -61,8 +62,8 @@ public sealed class @this : screen.@this
                 .Set("error", error.Success && await error.Value() is { IsNull: false } what ? what : (Text)System.Text.Encoding.UTF8.GetString(sent));
             var value = new global::app.data.@this("error", record, context: context);
             using var stream = new MemoryStream();
-            if (!(await json.Encode(stream, value, context)).Success) continue;
-            var line = System.Text.Encoding.UTF8.GetString(stream.ToArray()) + "\n";
+            if (!(await lines.Encode(stream, value, context)).Success) continue;
+            var line = System.Text.Encoding.UTF8.GetString(stream.ToArray());
             await (await (await file.Exists(context)).ToBooleanAsync() ? file.Append(line, context) : file.WriteText(line, context));
         }
     }
