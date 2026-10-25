@@ -53,10 +53,10 @@ public sealed class @this
 
             // read as the app's goals read every .pr (through the goal's on.load, stamped, held); a setup file that
             // doesn't read or parse is the answer — setup doesn't run past it
+            // a candidate is setup's by its path, the convention that names it, so what it holds is setup's: asked
+            // before anything is read
             var read = await _goals.Read(file, context);
             if (!read.Success) return read;
-            // only setup goals are setup's: a goal at a setup path that isn't one (another name) is not kept
-            if (await read.Value() is global::app.goal.@this { IsSetup: false } other) await _goals.Remove(other, context);
         }
 
         return context.Ok();
