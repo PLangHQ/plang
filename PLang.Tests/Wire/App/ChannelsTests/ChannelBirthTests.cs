@@ -12,6 +12,34 @@ public class ChannelBirthTests
         return (System.GC.GetAllocatedBytesForCurrentThread() - from) / 20;
     }
 
+    // a channel is born of its actor's channels: its actor is theirs
+    [Test]
+    public async Task AChannelsActor_IsItsChannelsActor()
+    {
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        var user = global::app.channel.type.stream.@this.Memory(app.actor.list.User.Channel, "probe");
+        var system = global::app.channel.type.stream.@this.Memory(app.actor.list.System.Channel, "probe");
+
+        await Assert.That(user.Actor).IsSameReferenceAs(app.actor.list.User);
+        await Assert.That(system.Actor).IsSameReferenceAs(app.actor.list.System);
+        await Assert.That(user.Channels).IsSameReferenceAs(app.actor.list.User.Channel);
+    }
+
+    // a channel is named only where it was born: one born of the user's channels is refused by the system's, which
+    // keep what they had
+    [Test]
+    public async Task AChannelBornOfAnotherActorsChannels_IsRefused_AndTheListIsUnchanged()
+    {
+        await using var app = new global::app.@this("/test", wiring: global::app.Wiring.none).Testing();
+        var system = app.actor.list.System.Channel;
+        var before = system.Get(global::app.channel.list.@this.Output);
+        var stray = global::app.channel.type.stream.@this.Memory(app.actor.list.User.Channel, global::app.channel.list.@this.Output);
+
+        await Assert.That(() => system.Register(stray)).Throws<InvalidOperationException>();
+        await Assert.That(async () => await system.Set(stray)).Throws<InvalidOperationException>();
+        await Assert.That(system.Get(global::app.channel.list.@this.Output)).IsSameReferenceAs(before);
+    }
+
     [Test]
     public async Task AStreamChannelThatNeverReads_HoldsNoReadBuffer()
     {
