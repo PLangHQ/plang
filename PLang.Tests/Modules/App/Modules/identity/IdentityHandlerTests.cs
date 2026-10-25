@@ -78,14 +78,11 @@ public class IdentityHandlerTests
         await handler.Attach(null, realCtx);
         var result = await handler.Start();
         await result.IsSuccess();
-        // create hands the step the identity without its key; the key pair is read through export, its one door
+        // create hands the step the identity without its key; the key pair is the one its owner's row holds
         await Assert.That(((await result.Value()) as Identity)!.PrivateKey).IsEqualTo("");
-        var export = new Export(realCtx) { Name = (global::app.type.item.text.@this)"test" };
-        await export.Attach(null, realCtx);
-        var exported = await export.Start();
-        await exported.IsSuccess();
-
-        var identity = (await exported.Value()) as Identity;
+        Identity? identity = null;
+        foreach (var row in (await realApp.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity.Items(realCtx))
+            if ((await row.Value()) is Identity stored && stored.Name == "test") identity = stored;
         await Assert.That(identity).IsNotNull();
         await Assert.That(identity!.PublicKey).IsNotNull();
         await Assert.That(identity.PrivateKey).IsNotNull();
@@ -636,57 +633,12 @@ public class IdentityHandlerTests
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
     }
 
-    // --- export ---
-
-    [Test]
-    public async Task Export_NonExistentName_ReturnsError()
-    {
-        var handler = new Export(Ctx) { Name = (global::app.type.item.text.@this)"nosuch" };
-        await handler.Attach(null, Ctx);
-        var result = await handler.Start();
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
-    }
-
     // The private key the identity's owner holds — its row in the system's identity setting.
     private async Task<string> StoredKey(string name)
     {
         foreach (var row in (await _app.actor.list.System.Setting.Get<global::app.module.identity.setting.@this>()).Identity.Items(Ctx))
             if ((await row.Value()) is Identity identity && identity.Name == name) return identity.PrivateKey;
         return "";
-    }
-
-    [Test]
-    public async Task Export_ReturnsFullIdentity()
-    {
-        var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"exportme", Default = (global::app.type.item.@bool.@this)true };
-        await create.Attach(null, Ctx);
-        await (await create.Start()).IsSuccess();
-        var expectedKey = await StoredKey("exportme");
-
-        var handler = new Export(Ctx) { Name = (global::app.type.item.text.@this)"exportme" };
-        await handler.Attach(null, Ctx);
-        var result = await handler.Start();
-        await result.IsSuccess();
-        var identity = (await result.Value()) as Identity;
-        await Assert.That(identity!.PrivateKey).IsEqualTo(expectedKey);
-        await Assert.That(identity.PublicKey).IsNotNull();
-    }
-
-    [Test]
-    public async Task Export_NullName_ReturnsDefaultIdentity()
-    {
-        var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"mydefault", Default = (global::app.type.item.@bool.@this)true };
-        await create.Attach(null, Ctx);
-        await (await create.Start()).IsSuccess();
-        var expectedKey = await StoredKey("mydefault");
-
-        var handler = new Export(Ctx) { Name = null };
-        await handler.Attach(null, Ctx);
-        var result = await handler.Start();
-        await result.IsSuccess();
-        var identity = (await result.Value()) as Identity;
-        await Assert.That(identity!.PrivateKey).IsEqualTo(expectedKey);
     }
 
     // --- get by-name does NOT overwrite %MyIdentity% ---
@@ -735,7 +687,7 @@ public class IdentityHandlerTests
         await Assert.That(identity.IsDefault).IsTrue();
     }
 
-    // --- export gives out only an identity the app holds: none is made to be given out ---
+    // --- export refuses until critical actions, and makes no identity to give out ---
 
     [Test]
     public async Task Export_NullName_OnAnAppHoldingNone_IsRefused_AndMakesNone()
@@ -744,7 +696,7 @@ public class IdentityHandlerTests
         await handler.Attach(null, Ctx);
         var result = await handler.Start();
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("IdentityNotOwn");
+        await Assert.That(result.Error!.Key).IsEqualTo("ExportWaitsForCriticalActions");
         await Assert.That(await StoredKey("default")).IsEqualTo("");
     }
 }

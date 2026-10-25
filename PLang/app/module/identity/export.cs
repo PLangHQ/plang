@@ -3,8 +3,8 @@ using app.module.identity.code;
 namespace app.module.identity;
 
 /// <summary>
-/// Exports the private key of an identity.
-/// Returns the raw private key string.
+/// Exports the private key of an identity: refused until critical actions, which ask more than a yes before a key
+/// leaves the app.
 /// PLang: export identity 'alice' private key, write to %privateKey%
 /// </summary>
 [Action("export")]
