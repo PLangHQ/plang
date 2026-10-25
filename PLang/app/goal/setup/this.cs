@@ -55,6 +55,8 @@ public sealed class @this
             // doesn't read or parse is the answer — setup doesn't run past it
             var read = await _goals.Read(file, context);
             if (!read.Success) return read;
+            // only setup goals are setup's: a goal at a setup path that isn't one (another name) is not kept
+            if (await read.Value() is global::app.goal.@this { IsSetup: false } other) await _goals.Remove(other, context);
         }
 
         return context.Ok();
