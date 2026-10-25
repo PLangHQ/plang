@@ -22,6 +22,8 @@ Checks to make before the release, not branches:
 
 ## From json-lines
 
+- **The auditor's next-branch list** (json-lines 21): `.bot/json-lines/auditor/final.md`, the older smells in `type/item/list/this.cs` and `type/item/this.cs` (X1, X2), and window's `Said` (C3).
+
 - **A missing decider key is an opaque 403** (doc2, 2026-10-25): a first build with no TypeSafe key ends in HttpError 403 with a trace from api.typesafe.ai. It should be what the OpenAI key does (`llm.setting.Asked`, `MissingLlmKey`): ask, or name both ways to give it (`llm.decider.setting.key`, `TYPESAFE_API_KEY`; `module/llm/decider.setting.cs:20–29`, `code/TypeSafe.cs:28–41`). It's a stranger's first contact, so it belongs on the 2.0b checklist.
 
 - **The build's nothing-altered check misses a dict literal's keys** (plang-builder, json-lines 12): in 1 of 4 cache-skip builds the builder wrote `{"a": 1}`'s key as `k`, and the check passed it. The committed .pr is good. The check (`Documentation/v0.2/build-checks.md`) should compare a literal's keys too. The builder bot's.
