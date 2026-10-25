@@ -39,7 +39,7 @@
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'PLang.Tests.Shared'">
     <PackageReference Include="TUnit" Version="1.76.0" />
     <PackageReference Include="NSubstitute" Version="6.2.0" />
-    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="coverlet.collector" Version="10.1.0" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)Shared\PLang.Tests.Shared.csproj" />
   </ItemGroup>
 
