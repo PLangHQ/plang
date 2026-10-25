@@ -40,7 +40,7 @@ public class TypedPropertyCatalogTests
     [Before(Test)]
     public void Setup()
     {
-        _types = new global::app.origin.code().type;
+        _types = new global::app.origin.code(global::app.Wiring.none).type;
         // the fixtures' assembly comes in as code.load brings one in
         _types.Add(typeof(TypedPropertyCatalogTests).Assembly, global::PLang.Tests.Parent.Actor.Context);
     }

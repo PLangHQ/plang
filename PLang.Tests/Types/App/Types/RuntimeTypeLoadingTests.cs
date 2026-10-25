@@ -30,7 +30,7 @@ public class RuntimeTypeLoadingTests : System.IAsyncDisposable
 
     [Test] public async Task LoadDll_PlangTypeClass_RegistersViaRegistryRegisterRuntime()
     {
-        var types = new global::app.origin.code().type;
+        var types = new global::app.origin.code(global::app.Wiring.none).type;
         types.Add(TestAssembly, Ctx);
         // The fixture types in this file should be in the registry.
         await Assert.That(types.Contains("runtime-fixture-only")).IsTrue();
@@ -40,7 +40,7 @@ public class RuntimeTypeLoadingTests : System.IAsyncDisposable
     [Test] public async Task Register_AnOwnedName_FailsWithTheOneNameError()
     {
         // One name, one class: "string" is owned (by text), so a runtime registration of it fails loudly.
-        var types = new global::app.origin.code().type;
+        var types = new global::app.origin.code(global::app.Wiring.none).type;
         var result = types.Add(typeof(System.Uri), Ctx, "string");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error?.Message).Contains("one name, one class");
@@ -50,7 +50,7 @@ public class RuntimeTypeLoadingTests : System.IAsyncDisposable
     [Test] public async Task Register_ABuiltInTypesOwnName_FailsWithTheOneNameError()
     {
         // A built-in type cannot be replaced by a runtime registration — "number" stays number's.
-        var types = new global::app.origin.code().type;
+        var types = new global::app.origin.code(global::app.Wiring.none).type;
         var result = types.Add(typeof(System.Uri), Ctx, "number");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error?.Message).Contains("one name, one class");
@@ -71,7 +71,7 @@ public class RuntimeTypeLoadingTests : System.IAsyncDisposable
         // identity's CLR type would let a runtime DLL compose the body that
         // gets signed under the actor's key.
         var asm = System.Reflection.Assembly.LoadFrom(IdentityShadowDll);
-        var result = new global::app.origin.code().type.Add(asm, Ctx);
+        var result = new global::app.origin.code(global::app.Wiring.none).type.Add(asm, Ctx);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error?.Key).IsEqualTo("TypeLoadCollision");
         await Assert.That(result.Error?.Message).Contains("identity");
@@ -86,7 +86,7 @@ public class RuntimeTypeLoadingTests : System.IAsyncDisposable
 
     [Test] public async Task AddType_ASealedWordAsAlias_FailsWith_TypeLoadCollision()
     {
-        var result = new global::app.origin.code().type.Add(typeof(AliasShadow), Ctx, "aliasshadow");
+        var result = new global::app.origin.code(global::app.Wiring.none).type.Add(typeof(AliasShadow), Ctx, "aliasshadow");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error?.Key).IsEqualTo("TypeLoadCollision");
         await Assert.That(result.Error?.Message).Contains("identity");
@@ -101,7 +101,7 @@ public class RuntimeTypeLoadingTests : System.IAsyncDisposable
     // An alias another class already owns is the same one-name-one-class refusal as a word — answered, not thrown.
     [Test] public async Task AddType_AnAliasAnotherClassOwns_FailsWith_TypeLoadCollision()
     {
-        var types = new global::app.origin.code().type;
+        var types = new global::app.origin.code(global::app.Wiring.none).type;
         await types.Add(typeof(AliasOwner), Ctx, "aliasowned").IsSuccess();
 
         var result = types.Add(typeof(AliasTaker), Ctx, "aliastaker");
@@ -114,7 +114,7 @@ public class RuntimeTypeLoadingTests : System.IAsyncDisposable
         // The loaded assembly holds a `this`-named class in a namespace ending `.callback` and declares no
         // word. Nothing is guessed from a folder: it goes by its namespace, which claims no sealed word.
         var asm = System.Reflection.Assembly.LoadFrom(CallbackInferredShadowDll);
-        var types = new global::app.origin.code().type;
+        var types = new global::app.origin.code(global::app.Wiring.none).type;
         var result = types.Add(asm, Ctx);
         await result.IsSuccess();
         await Assert.That(types.Contains("callback")).IsFalse();
@@ -125,7 +125,7 @@ public class RuntimeTypeLoadingTests : System.IAsyncDisposable
         // The carve-out covers the names the signing pipeline assumes are
         // built-in. Lookup is OrdinalIgnoreCase so a DLL declaring
         // `[PlangType("Identity")]` can't slip past the comparison.
-        var sealedSet = new global::app.origin.code().type.Sealed;
+        var sealedSet = new global::app.origin.code(global::app.Wiring.none).type.Sealed;
         await Assert.That(sealedSet.Contains("identity")).IsTrue();
         await Assert.That(sealedSet.Contains("IDENTITY")).IsTrue();
         await Assert.That(sealedSet.Contains("signature")).IsTrue();

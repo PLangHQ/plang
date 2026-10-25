@@ -9,7 +9,7 @@ internal sealed class code : @this
 {
     /// <summary>The code, its types scanned from its facts on first ask, path's schemes among them; the app it is made
     /// for born wired as <paramref name="wiring"/> says.</summary>
-    internal code(Wiring wiring = Wiring.none)
+    internal code(Wiring wiring)
     {
         _wiring = wiring;
         type = new global::app.type.list.@this(this);

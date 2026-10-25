@@ -20,7 +20,7 @@ public class TypeProviderDllRoundtripTests : System.IAsyncDisposable
     [Test] public async Task LoadDll_Money_RegistersType_WritesExpectedWireString()
     {
         var asm = LoadFixture();
-        var types = new global::app.origin.code().type;
+        var types = new global::app.origin.code(global::app.Wiring.none).type;
         var result = types.Add(asm, app.actor.list.User.Context);
 
         await Assert.That(result.Success).IsTrue();

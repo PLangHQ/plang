@@ -22,7 +22,7 @@ public class TypeOwnedReadParityTests : System.IAsyncDisposable
         await using var app = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-pathread-" + System.Guid.NewGuid().ToString("N")[..8]), global::PLang.Tests.Parent.Actor).Testing();
         var ctx = app.actor.list.User.Context;
-        var r = new global::app.origin.code().type.Reader;
+        var r = new global::app.origin.code(global::app.Wiring.none).type.Reader;
         var rc = new global::app.type.reader.ReadContext(ctx);
 
         foreach (var raw in new[] { "/srv/app/r.json", "https://example.com/x" })
@@ -41,7 +41,7 @@ public class TypeOwnedReadParityTests : System.IAsyncDisposable
         // gone): a base64 digest + the kind-carried algorithm rebuild the value.
         var bytes = new byte[] { 1, 2, 3, 4, 250, 99 };
         var b64 = System.Convert.ToBase64String(bytes);
-        var r = new global::app.origin.code().type.Reader;
+        var r = new global::app.origin.code(global::app.Wiring.none).type.Reader;
         var rc = new global::app.type.reader.ReadContext(app.actor.list.User.Context);
         var via = r.Of("hash", null)!(b64, "keccak256", rc) as global::app.module.crypto.type.hash.@this;
         await Assert.That(via).IsNotNull();
@@ -53,7 +53,7 @@ public class TypeOwnedReadParityTests : System.IAsyncDisposable
     {
         // duration's Read parses ISO-8601 to the same TimeSpan the format-layer
         // TimeSpanIso8601 converter produced (XmlConvert.ToTimeSpan).
-        var r = new global::app.origin.code().type.Reader;
+        var r = new global::app.origin.code(global::app.Wiring.none).type.Reader;
         var rc = new global::app.type.reader.ReadContext(app.actor.list.User.Context);
         var via = r.Of("duration", "iso8601")!("PT30S", "iso8601", rc);
         await Assert.That(((global::app.type.item.@this)via!).Clr<System.TimeSpan>()).IsEqualTo(System.Xml.XmlConvert.ToTimeSpan("PT30S"));
