@@ -156,7 +156,7 @@ public partial class @this
         try
         {
             var rendered = await asked.Value();
-            if (asked.Success) return new @this(Name, rendered, context: _context) { Attachment = Attachment.Copy() };
+            if (asked.Success) return new @this(Name, rendered, context: _context) { Attachment = Carried?.Copy() };
             why = asked.Error!;
         }
         // a partial template throws for a name it can't read; here that is this value's answer, on the Data
@@ -229,13 +229,14 @@ public partial class @this
     internal bool HasProperties => Carried?.HasProperties ?? false;
 
     /// <summary>What this variable's value carries — its properties and its added members, together: a face of this
-    /// variable shares it, a copy takes a copy of it. Made when first asked, the first made kept.</summary>
+    /// variable shares it, a copy takes a copy of what it carries (none when it carries none). Made when first asked,
+    /// the first made kept.</summary>
     [JsonIgnore]
     [LlmIgnore]
     internal virtual attachment Attachment
     {
         get => System.Threading.LazyInitializer.EnsureInitialized(ref _attachment, static () => new());
-        set => _attachment = value;
+        [param: System.Diagnostics.CodeAnalysis.AllowNull] set => _attachment = value;
     }
     private attachment? _attachment;
 
@@ -751,7 +752,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Attachment = Attachment.Copy(),
+            Attachment = Carried?.Copy(),
             Signature = signature ?? Signature,
         };
     }
@@ -768,7 +769,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Attachment = Attachment.Copy(),
+            Attachment = Carried?.Copy(),
         };
     }
 
@@ -1001,7 +1002,7 @@ public class DynamicData : @this
     internal override attachment Attachment
     {
         get => _find(Context)?.Attachment ?? base.Attachment;
-        set => base.Attachment = value;
+        [param: System.Diagnostics.CodeAnalysis.AllowNull] set => base.Attachment = value;
     }
 
     internal override attachment? Carried => _find(Context)?.Carried ?? base.Carried;
@@ -1020,7 +1021,7 @@ public class DynamicData : @this
         global::app.type.item.signature.@this? signature = null)
     {
         var ctx = context ?? Context;
-        return new @this(name, _cell.Compute(ctx), context: ctx) { Attachment = Attachment.Copy() };
+        return new @this(name, _cell.Compute(ctx), context: ctx) { Attachment = Carried?.Copy() };
     }
 }
 
