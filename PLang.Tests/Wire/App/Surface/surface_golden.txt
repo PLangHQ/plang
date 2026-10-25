@@ -101,7 +101,7 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Tags() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
   Timing() : System.Threading.Tasks.ValueTask<app.type.item.bool.this>
   Variables : app.type.item.variable.list.this { get; }
-  ctor(app.type.list.this types, System.Func<app.actor.setting.this> settings, app.error.list.this audit)
+  ctor(app.type.list.this types, System.Func<app.actor.setting.this> settings)
   override IsLeaf : System.Boolean { get; }
   protected override Write(app.type.format.IWriter writer) : System.Threading.Tasks.ValueTask
 

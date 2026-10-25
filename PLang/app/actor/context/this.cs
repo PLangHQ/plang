@@ -145,8 +145,7 @@ public sealed class @this : IDisposable
         // Stamp context on Variables (propagates to all existing Data)
         Variable.Context = this;
         // a frame's values are the app's types
-        call = new(app.type.list,
-            () => Setting, new global::app.error.list.@this(app.type.list[typeof(global::app.error.list.@this)]));
+        call = new(app.type.list, () => Setting);
 
         // %!app% and %!context% are the memory's system variables, under it: the goal, step, error, test and channels in
         // play are the app's shortcuts (/system/shortcut/: %!goal%, %!step%, %!error%, %!test%, %!channel%), each
