@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "F1: the ask error carried as MissingDeciderKey/MissingLlmKey cause is unpinned (dropping the line leaves every test green). Design clean; bench in band." }
