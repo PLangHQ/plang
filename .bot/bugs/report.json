@@ -7,13 +7,50 @@
       "timestamp_start": "2026-10-25T14:00:00Z",
       "timestamp_end": "2026-10-25T15:57:06Z",
       "intent": "Cut the bugs branch from runtime2 and write its plan from the decided items.",
-      "before": { "assumptions": "Each item's direction is already decided (item-doors backlog, fast-apps N1-N3, packages 13-23); the plan states intent, the coder proposes code.", "risk": "Stage 1 (LLM answers in a file) is the only one whose shape is open; line numbers in older audits have drifted." },
+      "before": {
+        "assumptions": "Each item's direction is already decided (item-doors backlog, fast-apps N1-N3, packages 13-23); the plan states intent, the coder proposes code.",
+        "risk": "Stage 1 (LLM answers in a file) is the only one whose shape is open; line numbers in older audits have drifted."
+      },
       "plan": ".bot/bugs/architect/plan/start.md",
       "actions": [
-        { "paths": [".bot/bugs/architect/plan/start.md", ".bot/bugs/architect/plan/start.goal"], "type": "create", "category": "doc", "confidence": "high", "context": "Seven stages; each item's site re-read at 3a29633f8 and stale lines fixed (N3, N4, N8, N16)." },
-        { "paths": [".bot/bugs/architect/summary.md", ".bot/item-doors/architect/backlog.md"], "type": "decision", "category": "doc", "confidence": "high", "context": "Ingi: Window.cs to this branch (1); Publish/*.goal to the 2.0b checklist (2); the plan (3)." }
+        {
+          "paths": [
+            ".bot/bugs/architect/plan/start.md",
+            ".bot/bugs/architect/plan/start.goal"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Seven stages; each item's site re-read at 3a29633f8 and stale lines fixed (N3, N4, N8, N16)."
+        },
+        {
+          "paths": [
+            ".bot/bugs/architect/summary.md",
+            ".bot/item-doors/architect/backlog.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi: Window.cs to this branch (1); Publish/*.goal to the 2.0b checklist (2); the plan (3)."
+        }
       ],
-      "after": { "status": "plan drafted, sent to the coder for its read", "health": "no code changed", "notes": "Coder places the plan at test/plan/bugs/ after pushback." }
+      "after": {
+        "status": "plan drafted, sent to the coder for its read",
+        "health": "no code changed",
+        "notes": "Coder places the plan at test/plan/bugs/ after pushback."
+      }
+    },
+    {
+      "id": "6d0ec51b-f0a6-4588-94e6-654d7c4f1734",
+      "bot": "coder",
+      "timestamp_start": "2026-10-25T16:04:34.905212+00:00",
+      "intent": "Place the bugs plan and implement it stage by stage, starting with stage 1 (a test's LLM answers from a file)",
+      "before": {
+        "assumptions": "plan at architect 1e45a60a8; baseline = Wire's 6 snapshot reds, plang 1 fail + 3 no .pr",
+        "risk": "stage 1 changes llm.query's send path in production"
+      },
+      "plan": ".bot/bugs/coder/v1/plan.md",
+      "actions": []
     }
   ]
 }

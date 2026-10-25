@@ -1,7 +1,5 @@
 # bugs
 
-Draft by the architect. The coder places it at `test/plan/bugs/start.md` (with `start.goal`), then this copy goes.
-
 ## Why
 
 The last three audits left bugs that no branch owned: item-doors' auditor list (`.bot/item-doors/auditor/final.md` §Next-branch, N1–N18), the goal channel's race (proven red by plang-tester, 2026-10-25), and the Windows window's leftovers from packages. Ingi put them on one branch after packages ("1. yes", 2026-10-25), with his three yeses from fast-apps as its last stage. One more joins it because it costs money: `plang --test` calls OpenAI on every run for its six llm tests (Ingi: "not on that branch, I think it should be [with] all the fixes on item door").
