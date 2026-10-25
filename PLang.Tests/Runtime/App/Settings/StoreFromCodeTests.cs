@@ -11,7 +11,7 @@ public class StoreFromCodeTests
         public string? Source { get; set; }
         public List<string> Files { get; } = new();
 
-        public global::app.store.@this Open(global::app.type.item.path.@this file, System.Func<bool> memory, global::app.actor.context.@this context)
+        public global::app.store.@this Open(global::app.type.item.path.@this file, bool memory, global::app.actor.context.@this context)
         {
             Files.Add(file.ToString());
             return new global::app.store.sqlite.@this(file, memory, context);

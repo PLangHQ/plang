@@ -8,7 +8,7 @@ namespace app.store.sqlite;
 /// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (a whole Data in plang's own format).
 /// WAL mode for concurrent reads. Each table made by its first statement.
 /// Connection per operation (SQLite pools internally via connection string).
-/// Born ready: where the database lives is decided, and the database opened, at the first verb.
+/// Born knowing where its database lives, for its life; the database opened at the first verb.
 /// </summary>
 public sealed class @this : global::app.store.@this
 {
@@ -17,9 +17,9 @@ public sealed class @this : global::app.store.@this
 
     protected override string Kind => "sqlite";
 
-    // Where the database lives: in memory when this answers yes at the first verb, else in this file.
+    // Where the database lives: in memory, else in this file.
     private readonly global::app.type.item.path.@this? _file;
-    private readonly System.Func<bool> _memory;
+    private readonly bool _memory;
     // The in-memory database's name: the store's own, made with it, so no other store reaches it.
     private readonly string _name = "store-" + System.Guid.NewGuid().ToString("N");
     // The store's own context — system-owned. Its result Data is born from it, and its rows are written
@@ -41,10 +41,10 @@ public sealed class @this : global::app.store.@this
     private bool _disposed;
 
     /// <summary>
-    /// A store in <paramref name="file"/>, or in memory, a database of its own, when <paramref name="memory"/> answers
-    /// yes as the store opens. Nothing is opened here — the first verb opens it.
+    /// A store in <paramref name="file"/>, or in memory, a database of its own, when <paramref name="memory"/>.
+    /// Nothing is opened here — the first verb opens it.
     /// </summary>
-    public @this(global::app.type.item.path.@this? file, System.Func<bool> memory, actor.context.@this context)
+    public @this(global::app.type.item.path.@this? file, bool memory, actor.context.@this context)
         : base(context.App.type.list[new global::app.type.@this("store", "sqlite"), context])
     {
         _file = file;
@@ -69,7 +69,7 @@ public sealed class @this : global::app.store.@this
     // What the database is now: an in-memory one nothing has opened holds nothing, so it answers empty; once opened,
     // or on disk, the connection.
     private database Database
-        => System.Threading.Volatile.Read(ref _opened) == null && _memory() ? _blank : _connected;
+        => _memory && System.Threading.Volatile.Read(ref _opened) == null ? _blank : _connected;
 
     // A list of rows, none in it.
     private global::app.type.item.list.@this Empty => new(Context.App.type.list[typeof(global::app.type.item.list.@this)]);
@@ -82,7 +82,7 @@ public sealed class @this : global::app.store.@this
 
     private async Task<string> Open()
     {
-        if (_memory())
+        if (_memory)
         {
             var memory = new SqliteConnectionStringBuilder
             {

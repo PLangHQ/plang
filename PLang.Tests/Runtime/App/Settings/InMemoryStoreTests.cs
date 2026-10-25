@@ -33,7 +33,7 @@ public class InMemoryStoreTests
 
         var born = Bytes(async () =>
         {
-            using var store = new global::app.store.sqlite.@this(null, () => true, context);
+            using var store = new global::app.store.sqlite.@this(null, true, context);
             await store.Get<global::app.type.item.text.@this>("probe", "key");
         });
 

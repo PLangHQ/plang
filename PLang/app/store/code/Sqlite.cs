@@ -7,6 +7,6 @@ public sealed class Sqlite : IStore
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public global::app.store.@this Open(global::app.type.item.path.@this file, System.Func<bool> memory, global::app.actor.context.@this context)
+    public global::app.store.@this Open(global::app.type.item.path.@this file, bool memory, global::app.actor.context.@this context)
         => new global::app.store.sqlite.@this(file, memory, context);
 }

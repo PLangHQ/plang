@@ -9,7 +9,7 @@ namespace app.store.code;
 /// </summary>
 public interface IStore : ICode
 {
-    /// <summary>The store at <paramref name="file"/> — in memory when <paramref name="memory"/> answers yes as it opens
-    /// (a test app's), a database of the store's own — born with <paramref name="context"/>.</summary>
-    global::app.store.@this Open(global::app.type.item.path.@this file, System.Func<bool> memory, global::app.actor.context.@this context);
+    /// <summary>The store at <paramref name="file"/> — in memory when <paramref name="memory"/> (a test app's), a
+    /// database of the store's own — born with <paramref name="context"/>. Where it lives is the store's for its life.</summary>
+    global::app.store.@this Open(global::app.type.item.path.@this file, bool memory, global::app.actor.context.@this context);
 }
