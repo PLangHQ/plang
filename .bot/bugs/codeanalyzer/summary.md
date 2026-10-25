@@ -1,16 +1,14 @@
 # codeanalyzer summary (bugs)
 
-**Version:** v1
+**Version:** v2
 
-**What this is:** The bugs branch (runtime2 3a29633f8 → ad0caedd7): a test's llm answers from a file, consent fixes (N1/N3/N4/N5/N8/S1), the readers (N10/N11), the goal channel and named-actor call through `actor.context.Run`, the command line (N16/N14), `path.Holds`, the Windows window over a shared `Shown`, `module.Remove` answering data, `app.Wiring`, a channel born of its actor's channels.
+**What this is:** The bugs branch (runtime2 3a29633f8 → 4b23498ee): a test's llm answers from a file, consent fixes, the readers, the goal channel and named-actor call through `actor.context.Run`, the command line, `path.Holds`, the Windows window over a shared `Shown`, `module.Remove` answering data, `app.Wiring`, a channel born of its actor's channels.
 
-**What was done:** Read the touched production files (whole where more than a line), ran the bench parts for the diff, `plang --test` with the llm goals offline (300 pass, 1 baseline fail), and three announced mutations (N15, the twin race, S1: each red). A throwaway probe showed `Window.Apply` lets an `AggregateException` out of `Parallel.For` (F1). `Tools/Bench/Program.cs` moved to `Wiring`.
+**What was done:** v1 FAIL: `Window.Apply`'s text-frame rects ran `Shown.Put` in `Parallel.For`, so a refused rectangle reached the decode thread as an `AggregateException` (probed); the view swallowed BadFrame; six smell findings. v2 PASS: `Shown` has one door for a frame's rectangles in both forms, the view reports, F3–F8 closed or ruled. Root birth +48 KB bisected: all of it is stage 1's `answer`/`exchange` types and `IAnswer`. `Tools/Bench` moved to `Wiring`.
 
-**Verdict:** FAIL — F1 (blocker, the decode thread), F2 (view swallows BadFrame), F3–F8 smell findings. Coder next.
-
-**Next:** the coder fixes F1/F2 (and the smells it agrees with); I re-read the window path and the new test red-without-change. The Windows run and the json writer's setting are not in this review.
+**Next:** tester and security. Not reviewed: the Windows run, the json writer's setting.
 
 **Code example:**
 ```csharp
-Parallel.For(0, parts.Length, i => changed[i] = screen.Put(…, max));   // Window.cs:344 — Put throws AppException; Parallel wraps it
+return Put(parts, max, m[0] == 7 ? m : null);   // Shown.Apply(byte[]); Apply(string) ends the same way: one door, every part bounded first
 ```

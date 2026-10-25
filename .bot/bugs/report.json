@@ -100,6 +100,34 @@
         "health": "fail",
         "notes": "coder next for F1/F2"
       }
+    },
+    {
+      "id": "15b9fbd3-1c35-492e-bfbf-566a360fe20d",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T18:30:29Z",
+      "timestamp_end": "2026-10-25T18:30:29Z",
+      "intent": "Re-review bugs F1-F8 fixes and attribute root birth +48 KB",
+      "before": {
+        "assumptions": "coder tip 4b23498ee",
+        "risk": "the new Shown door; Executor disposing the app"
+      },
+      "plan": ".bot/bugs/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/bugs/codeanalyzer/review2.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS; birth bisect: +42 KB all in stage 1 (answer, exchange, IAnswer)."
+        }
+      ],
+      "after": {
+        "status": "review2 written",
+        "health": "pass",
+        "notes": "tester and security next"
+      }
     }
   ]
 }
