@@ -51,21 +51,24 @@ Stage3
 / (AGoalReadAfterTheSubAppLoadsCode_StaysItsOwn)
 / a goal changed on disk is read again on its next use, with no time window — C# test SharedGoalTests
 / (AGoalChangedOnDisk_IsReadAgain)
-/ the kind lookup takes no lock: two apps sharing a type look up its kinds at once — C# test KindLookupTests
+/ the kind lookup takes no lock: two apps sharing a type look up its kinds at once, and a lookup answers while an
+/ addition holds the type's gate — C# test KindLookupTests (ALookup_AnswersWhileTheGateIsHeld)
 / every app is made from something, its lists a layer over it: an app made from the code holds what it loads in its
 / own layer and may still change the code under it, which is its own — C# test OriginTests
 
 Stage4
-/ a birth makes only what's asked for: a bare app's birth makes no module action, no code provider, no store file —
-/ C# test BirthTests (ABareApp_MakesNothingNotAsked)
-/ path's schemes are kind classes: file, http and https resolve with nothing added to the type list at birth — C# test
-/ PathSchemeTests (TheSchemes_AreKindsOfPath)
+/ a birth makes only what's asked for: an actor's tasks and permission, a context's system variables are made when
+/ first asked — C# test BirthTests (AnActorsTasksAndPermission_AreMadeWhenFirstAsked,
+/ AContextsSystemVariables_AreMadeWhenFirstAsked)
+/ (dropped: path's schemes as kind classes, PathSchemeTests — stage 4's 14, root birth only, which a sub app never
+/ pays: decision 42)
 / what's made on first ask is the same as what a birth made before: every module's actions, every setting's default,
 / the system variables — the existing suites are this stage's guard
 
 Stage5
-/ a list's positional read takes no lock: list[i] and its count read its snapshot — C# test ListSnapshotReadTests
-/ an in-memory store nothing has written answers empty without opening SQLite — C# test EmptyStoreTests
-/ (AnUnwrittenStore_AnswersEmpty_WithoutOpening)
+/ (dropped: a list's positional read from its snapshot, ListSnapshotReadTests — stage 5's (2), measured inside the
+/ noise: decision 56)
+/ an in-memory store nothing has written answers empty without opening SQLite — C# test InMemoryStoreTests
+/ (ABlankStoresRead_OpensNoDatabase)
 / class facts are read once per code: choice sets, action properties, setting paths and defaults — C# test
-/ ClassFactsTests
+/ BirthTests (ARequestReadsItsSettingClassesFacts_OncePerCode)
