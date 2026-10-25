@@ -26,10 +26,20 @@ packages' Windows window, and Ingi's three yeses. The plan is the architect's, a
   Descend/Enumerate throw an AppException with its Error, Convert answers NotConvertible.
 - Boy scout: the test runner's crash answers `Error.FromException` (546c3b072).
 
+- **Stage 4 — a goal channel runs its goal like a call** (fa3e9272b, 3edb17b4e, c74ec9771). One door,
+  `context.Run(actor, then)`: right here when it's the context's own actor, else a child made from it. The goal
+  channel (the writer's flow) and `goal.call` with a named actor (`actor.list.Use`) both go through it; the race
+  (19/20 writes answered with another's message) is gone. Proven in C# and by the two plang tests the builder built.
+- **Stage 5 — the command line refuses what it can't read** (2f3bffd46, a45546a5c). ArgumentRefused naming the
+  argument and the form that works: a second goal, a setting written as a goal, a mode word given a value, a mode
+  turned off beside its setting, one property in two cases. `%path%` is `app.filesystem.root`.
+- **Stage 6 so far** (362cd6c03, 22faad482). N15: `path.Holds` is the one containment rule, asked by IsUnder and
+  ValidatePath. N17: OsTrustTests asks IsUnder.
+
 ## In progress / next
-- Stage 4: the goal channel runs its goal in a context made from the writer's (`writer.Child(channel's actor)`,
-  the message in an isolated first frame). Waiting on plang-tester's minimal race goal for the red plang test.
-- Stages 5–7 per the plan.
+- Stage 6's Windows window: its shape (Window onto Shown and Qoi, the frame bound in Shown, each offer carrying its
+  own decoding) is with the architect.
+- Stage 7: Ingi's three yeses.
 - With Ingi: OpenAi.cs's older smells (the envelope cache entry); a readable json file writer (the six answer files
   are rewritten from themselves when it lands).
 
