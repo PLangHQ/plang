@@ -9,7 +9,7 @@ ordered-guard decision trees are legitimately flat; leave them).
 
 This is a HEURISTIC finder (brace-matching with string/comment masking), not an
 exact parser — eyeball the top hits. The exact home is an H4 pass in
-`tools/ObpScan` (Roslyn: measure each MethodDeclarationSyntax.Body line span);
+`Tools/ObpScan` (Roslyn: measure each MethodDeclarationSyntax.Body line span);
 emit it as a WARNING, never a build error, because ~20% of long methods are
 legitimate.
 
