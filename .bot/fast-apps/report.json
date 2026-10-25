@@ -263,6 +263,34 @@
         "health": "pass with notes",
         "notes": "dev.sh does not restore dependents when a referenced project's packages change; one more quiet clean-build row needed"
       }
+    },
+    {
+      "id": "0aee99ec-7d7b-4649-9708-88615eab7915",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-25T09:00:49Z",
+      "intent": "Eighth fast-apps review: the last read before the merge (decision 103)",
+      "before": {
+        "assumptions": "tip 5665127ef; commits since review7 plus 49aaf8199",
+        "risk": "dev.sh change could leave a stale restore"
+      },
+      "plan": ".bot/fast-apps/codeanalyzer/v8/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fast-apps/codeanalyzer/review8.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PASS: ChannelNames gone, export reads once, image size gate and probes gone, dev.sh restore stamp verified by a build; nothing blocks."
+        }
+      ],
+      "timestamp_end": "2026-10-25T09:00:49Z",
+      "after": {
+        "status": "review8 written: .bot/fast-apps/codeanalyzer/review8.md",
+        "health": "pass",
+        "notes": "dev.sh link-flag unset not yet on the tip"
+      }
     }
   ]
 }
