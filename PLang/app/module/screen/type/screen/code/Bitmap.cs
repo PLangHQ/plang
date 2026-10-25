@@ -13,15 +13,16 @@ internal sealed class Bitmap
     /// <summary>A blank one, its pixels pinned: a canvas that lives as long as its screen.</summary>
     internal Bitmap(int width, int height) : this(width, height, GC.AllocateArray<byte>(width * height * 4, pinned: true)) { }
 
-    /// <summary>An encoded picture (PNG, JPEG) read for a screen <paramref name="width"/> × <paramref name="height"/>.
-    /// One that reads as no picture, or whose header claims more than the screen (refused before its pixels are
-    /// made), is an AppException carrying BadFrame, the decoder's own exception its cause when it threw one.</summary>
-    internal Bitmap(byte[] encoded, int width, int height)
+    /// <summary>An encoded picture (PNG, JPEG) read, its pixels at most <paramref name="max"/>
+    /// (<c>screen.setting.max</c>). One that reads as no picture, or whose header claims more (refused before its
+    /// pixels are made), is an AppException carrying BadFrame, the decoder's own exception its cause when it threw one.</summary>
+    internal Bitmap(byte[] encoded, global::app.type.item.size.@this max)
     {
         var info = SkiaSharp.SKBitmap.DecodeBounds(encoded);
-        // the sides compared one by one: no product of what the header claims is ever made
+        // width × height fits a long for any two ints; × 4 is taken off the max instead, so nothing overflows
         var why = info.Width <= 0 || info.Height <= 0 ? "no image format reads the frame"
-            : info.Width > width || info.Height > height ? $"the frame claims {info.Width}×{info.Height}, more than the screen's {width}×{height}"
+            : (long)info.Width * info.Height > max.Value / 4
+                ? $"the frame claims {info.Width}×{info.Height}, more pixels than screen.setting.max ({max}) holds; raise it with --screen.setting.max=1GiB"
             : null;
         Exception? cause = null;
         if (why == null)

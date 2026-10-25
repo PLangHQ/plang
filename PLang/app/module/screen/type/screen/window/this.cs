@@ -1,5 +1,6 @@
 using app.error;
 using app.Utils;
+using Bitmap = global::app.module.screen.type.screen.code.Bitmap;
 using Native = global::app.module.screen.type.screen.window.code.Window;
 using Text = global::app.type.item.text.@this;
 
@@ -14,6 +15,8 @@ namespace app.module.screen.type.screen.window;
 public sealed class @this : screen.@this
 {
     private readonly Native _window;
+    // screen.setting.max as the last draw read it: a frame's pixels at most this
+    private volatile global::app.type.item.size.@this _max = null!;
 
     private @this(string title, int width, int height, Native window) : base(title, width, height) => _window = window;
 
@@ -111,6 +114,8 @@ public sealed class @this : screen.@this
         if (_window.Closed) return context.Ok();   // closed: nothing to draw on
 
         var value = await frame.Value();
+        // the most a frame's pixels take, as the setting says now; the decode thread reads the newest
+        _max = (await context.Setting.Get<global::app.module.screen.setting.@this>()).Max;
         if (value is Text t)
         {
             // A line from a browser: a frame (decoded by the window's own thread, newest only — this
@@ -129,7 +134,7 @@ public sealed class @this : screen.@this
 
         try
         {
-            _window.Present(encoded);
+            _window.Present(new Bitmap(encoded, _max));
         }
         catch (AppException ex)
         {
@@ -150,7 +155,7 @@ public sealed class @this : screen.@this
     {
         try
         {
-            _window.Present(Frame(line));
+            _window.Present(new Bitmap(Frame(line), _max));
         }
         catch (AppException ex)
         {

@@ -39,11 +39,12 @@ public class PngTests
         await Assert.That(view.Show(Frame(shown))).IsTrue();
 
         // the view applies frames on its own thread: its picture is read until it holds the frame
+        var max = await Max(context);
         Bitmap? read = null;
         for (var i = 0; i < 100 && read?.Pixels.SequenceEqual(shown) != true; i++)
         {
             await Task.Delay(20);
-            read = new Bitmap(view.Picture.Bytes, W, H);
+            read = new Bitmap(view.Picture.Bytes, max);
         }
 
         await Assert.That(read).IsNotNull();
@@ -54,47 +55,86 @@ public class PngTests
 
     [Test]
     public async Task BytesThatAreNoImage_AreRefusedAsAFrame()
-        => await RefusedAsBadFrame([1, 2, 3, 4, 5, 6, 7, 8]);
-
-    // refused when drawn on a screen width × height (this test's, unless named)
-    private static async Task RefusedAsBadFrame(byte[] bytes, int width = W, int height = H)
     {
-        var refused = await Assert.That(() => new Bitmap(bytes, width, height)).Throws<global::app.error.AppException>();
-        await Assert.That(refused!.Error.Key).IsEqualTo("BadFrame");
+        await using var app = new global::app.@this("/pngtests", global::PLang.Tests.Parent.Actor).Testing();
+        await RefusedAsBadFrame([1, 2, 3, 4, 5, 6, 7, 8], await Max(app.actor.list.User.Context));
     }
 
-    // a PNG whose header and CRCs are right, 50000×50000 declared, its data five junk bytes: the decoder fails inside
+    // a PNG whose header and CRCs are right, 50000×50000 declared, its data five junk bytes: with a max that lets
+    // it through, the decoder fails inside
     [Test]
     public async Task APngWhosePixelsAreJunk_IsRefusedAsAFrame()
     {
-        using var png = new MemoryStream();
-        png.Write([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
-        var header = new byte[13];
-        BinaryPrimitives.WriteUInt32BigEndian(header, 50000);
-        BinaryPrimitives.WriteUInt32BigEndian(header.AsSpan(4), 50000);
-        header[8] = 8; header[9] = 6;   // 8-bit RGBA
-        Chunk(png, "IHDR", header);
-        Chunk(png, "IDAT", [1, 2, 3, 4, 5]);
-        Chunk(png, "IEND", []);
-        await RefusedAsBadFrame(png.ToArray(), 50000, 50000);
+        await using var app = new global::app.@this("/pngtests", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        await SetMax("16 GiB", context);
+        await RefusedAsBadFrame(Png(50000, 50000, [1, 2, 3, 4, 5]), await Max(context));
     }
 
-    // a frame whose header claims more than the screen: refused before the decoder makes a pixel
+    // a frame whose pixels would take more than screen.setting.max (128 MiB): refused before the decoder makes one,
+    // the message naming the setting
     [Test]
-    public async Task APngThatClaimsMoreThanTheScreen_IsRefusedAsAFrame()
+    public async Task APngThatClaimsMoreThanTheMax_IsRefusedAsAFrame()
+    {
+        await using var app = new global::app.@this("/pngtests", global::PLang.Tests.Parent.Actor).Testing();
+        var refused = await RefusedAsBadFrame(Png(8000, 8000, [1, 2, 3, 4, 5]), await Max(app.actor.list.User.Context));
+        await Assert.That(refused.Error.Message).Contains("--screen.setting.max=");
+    }
+
+    // a frame past a low max is refused; the max raised, the same frame reads
+    [Test]
+    public async Task AFramePastTheMax_ReadsOnceTheMaxIsRaised()
+    {
+        await using var app = new global::app.@this("/pngtests", global::PLang.Tests.Parent.Actor).Testing();
+        var context = app.actor.list.User.Context;
+        var png = BlankPng(600, 600);   // 600 × 600 × 4 = 1.44 MB of pixels
+        await SetMax("1 MiB", context);
+        await RefusedAsBadFrame(png, await Max(context));
+
+        await SetMax("2 MiB", context);
+        var read = new Bitmap(png, await Max(context));
+        await Assert.That((read.Width, read.Height)).IsEqualTo((600, 600));
+    }
+
+    private static async Task<global::app.type.item.size.@this> Max(global::app.actor.context.@this context)
+        => (await context.Setting.Get<global::app.module.screen.setting.@this>()).Max;
+
+    private static async Task SetMax(string max, global::app.actor.context.@this context)
+        => await (await new global::app.type.item.variable.parser.@this("%!screen.setting.max%", context.App.type.list).Variable.Single()
+            .Set(context.Ok(context.Text(max)), context)).IsSuccess();
+
+    private static async Task<global::app.error.AppException> RefusedAsBadFrame(byte[] bytes, global::app.type.item.size.@this max)
+    {
+        var refused = await Assert.That(() => new Bitmap(bytes, max)).Throws<global::app.error.AppException>();
+        await Assert.That(refused!.Error.Key).IsEqualTo("BadFrame");
+        return refused;
+    }
+
+    // a w×h 8-bit RGBA PNG holding idat as its data
+    private static byte[] Png(int w, int h, byte[] idat)
     {
         using var png = new MemoryStream();
         png.Write([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
         var header = new byte[13];
-        BinaryPrimitives.WriteUInt32BigEndian(header, 8000);
-        BinaryPrimitives.WriteUInt32BigEndian(header.AsSpan(4), 8000);
+        BinaryPrimitives.WriteInt32BigEndian(header, w);
+        BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(4), h);
         header[8] = 8; header[9] = 6;   // 8-bit RGBA
         Chunk(png, "IHDR", header);
-        Chunk(png, "IDAT", [1, 2, 3, 4, 5]);
+        Chunk(png, "IDAT", idat);
         Chunk(png, "IEND", []);
-        await RefusedAsBadFrame(png.ToArray());
-        await Assert.That(() => new Bitmap(png.ToArray(), W, H)).Throws<global::app.error.AppException>()
-            .WithMessageContaining("more than the screen's");
+        return png.ToArray();
+    }
+
+    // a w×h PNG of transparent black: each row its filter byte and zeros, deflated
+    private static byte[] BlankPng(int w, int h)
+    {
+        using var raw = new MemoryStream();
+        using (var z = new System.IO.Compression.ZLibStream(raw, System.IO.Compression.CompressionLevel.SmallestSize, true))
+        {
+            var row = new byte[w * 4 + 1];
+            for (var y = 0; y < h; y++) z.Write(row);
+        }
+        return Png(w, h, raw.ToArray());
     }
 
     private static void Chunk(MemoryStream png, string kind, byte[] data)

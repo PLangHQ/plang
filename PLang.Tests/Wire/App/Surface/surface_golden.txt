@@ -3473,6 +3473,8 @@ type app.module.math.setting
 
 type app.module.math.setting.equal
 
+type app.module.screen.setting
+
 type app.module.screen.type.element.list
 
 type app.module.signing.setting

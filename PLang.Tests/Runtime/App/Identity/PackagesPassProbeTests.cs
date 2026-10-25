@@ -116,10 +116,12 @@ public class PackagesPassProbeTests
     public async Task ABlankPng_ThatClaims8000x8000_IsRefusedBeforeItsPixelsAreAllocated()
     {
         var png = BlankPng(8000, 8000);
+        await using var app = new global::app.@this("/probe", global::PLang.Tests.Parent.Actor).Testing();
+        var max = (await app.actor.list.User.Context.Setting.Get<global::app.module.screen.setting.@this>()).Max;
         var peakBefore = System.Diagnostics.Process.GetCurrentProcess().PeakWorkingSet64;
         global::app.error.AppException? refused = null;
         global::app.module.screen.type.screen.code.Bitmap? decoded = null;
-        try { decoded = new global::app.module.screen.type.screen.code.Bitmap(png, 1920, 1080); }
+        try { decoded = new global::app.module.screen.type.screen.code.Bitmap(png, max); }
         catch (global::app.error.AppException ex) { refused = ex; }
         var peakAfter = System.Diagnostics.Process.GetCurrentProcess().PeakWorkingSet64;
 

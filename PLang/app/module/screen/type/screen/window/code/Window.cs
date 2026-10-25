@@ -90,11 +90,9 @@ internal sealed class Window
         return error;
     }
 
-    /// <summary>A new picture (PNG, JPEG) for the window, drawn at the next paint; one that isn't a picture at most
-    /// the window's size is an AppException carrying BadFrame.</summary>
-    public void Present(byte[] encoded)
+    /// <summary>A new picture for the window; drawn at the next paint.</summary>
+    public void Present(Bitmap bitmap)
     {
-        var bitmap = new Bitmap(encoded, width, height);
         lock (gate) this.bitmap = bitmap;
         Interlocked.Increment(ref Frames);
         if (hwnd != IntPtr.Zero) InvalidateRect(hwnd, IntPtr.Zero, false);
